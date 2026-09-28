@@ -8,9 +8,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "check": "eslint . && node --test \"test/*.test.mjs\"",
+    "check": "node bin/validar-config.mjs && eslint . && node --test \"test/*.test.mjs\"",
     "test": "node --test \"test/*.test.mjs\"",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "validar": "node bin/validar-config.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
