@@ -823,3 +823,315 @@ test('apuração de enquete que lança: desfazer volta a "votando"; na prorroga�
   assert.deepEqual(rod.anf.estado().empatadas, { e1: { a: true, b: true } });
   assert.equal(rod.anf.estado().prazo, rod.relogio.agora() + rod.config.tempos.prorrogacaoSeg * 1000);
 });
+
+// ---------- D-037: Ctrl+Z desfaz a abertura enquanto nenhum voto chegou ----------
+
+// Um canal espião que roda `antes` uma vez, no começo da primeira transação: é
+// o voto que chega entre a conferência prévia e o "fechando" do desfazer.
+function canalComVotoNaTransacao(sessao, antes) {
+  let feito = false;
+  return {
+    ...sessao.host,
+    async transacao(caminho, fn) {
+      if (!feito) {
+        feito = true;
+        await antes();
+      }
+      return sessao.host.transacao(caminho, fn);
+    },
+  };
+}
+
+test('desfazer a abertura sem votos: a rodada volta ao passo anterior, como se não tivesse aberto', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const { anf, alunos, indiceDe } = sessao;
+  const antes = anf.estado();
+  // Act
+  await anf.desfazer();
+  // Assert
+  const e = anf.estado();
+  assert.deepEqual([e.indice, e.tipo, e.subfase], [indiceDe('personas'), 'personas', 'ativo']);
+  assert.equal(e.geracao, antes.geracao + 2, 'duas transições: "fechando" e a volta');
+  assert.equal(e.equipesTravadas, true, 'as equipes continuam travadas');
+  assert.deepEqual(e.equipesAbertas, antes.equipesAbertas);
+  for (const campo of ['rodada', 'prazo', 'abertoEm', 'forcadas']) assert.equal(e[campo], undefined, `sem "${campo}" de rodada`);
+  await assert.rejects(alunos.e1[0].decidir('r1', 'e1', 'a'), NEGADO);
+  // O Espaço seguinte abre a rodada de novo, normalmente.
+  await anf.avancar();
+  assert.deepEqual([anf.estado().tipo, anf.estado().subfase], ['rodada', 'decidindo']);
+  await alunos.e1[0].decidir('r1', 'e1', 'a');
+});
+
+test('desfazer a abertura de enquete: volta ao bloco; depois de uma enquete apurada, volta a ela apurada', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const { anf, indiceDe } = sessao;
+  const iTermometro = indiceDe('enquete', { enquete: 'termometro' });
+  await anf.criarSala();
+  await anf.pularPara(iTermometro);
+  // Act: o termômetro (modo "todas") depois do bloco
+  await anf.desfazer();
+  // Assert
+  assert.deepEqual([anf.estado().indice, anf.estado().tipo, anf.estado().subfase], [iTermometro - 1, 'bloco', 'ativo']);
+  assert.equal(anf.estado().enquete, undefined);
+  // Arrange: o termômetro apurado, e o Espaço por engano abre a "depois"
+  await anf.avancar();
+  await anf.encerrar();
+  await anf.avancar();
+  assert.deepEqual([anf.estado().enquete, anf.estado().momento, anf.estado().subfase], ['entrada', 'depois', 'votando']);
+  // Act
+  await anf.desfazer();
+  // Assert
+  const e = anf.estado();
+  assert.deepEqual([e.tipo, e.enquete, e.momento, e.afirmacao, e.subfase], ['enquete', 'termometro', 'unico', '*', 'apurada']);
+  assert.ok(await sessao.host.ler(s('enquetes', 'termometro', 'unico')), 'a apuração do termômetro continua lá');
+});
+
+test('desfazer a abertura com voto já registrado: recusa sem mexer no estado', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const { anf, alunos } = sessao;
+  await alunos.e1[0].decidir('r1', 'e1', 'a');
+  const antes = anf.estado();
+  // Act + Assert
+  await assert.rejects(anf.desfazer(), /Já chegou 1 voto; não dá para desfazer a abertura/);
+  assert.deepEqual(anf.estado(), antes, 'nenhuma transição: os celulares nem piscam');
+});
+
+test('desfazer a abertura: voto que chega antes do "fechando" reabre a votação com o mesmo prazo, e conta', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 2 } });
+  const { alunos, relogio } = sessao;
+  relogio.passar(10_000);
+  const espiao = canalComVotoNaTransacao(sessao, () => alunos.e1[0].decidir('r1', 'e1', 'b'));
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  const antes = anf.estado();
+  // Act
+  await assert.rejects(anf.desfazer(), /Já chegou 1 voto; não dá para desfazer a abertura/);
+  // Assert
+  const e = anf.estado();
+  assert.deepEqual([e.indice, e.subfase, e.prazo, e.abertoEm], [antes.indice, 'decidindo', antes.prazo, antes.abertoEm]);
+  assert.equal(e.geracao, antes.geracao + 2);
+  await alunos.e1[1].decidir('r1', 'e1', 'b');
+  relogio.passar(60_000);
+  await anf.encerrar();
+  assert.deepEqual((await lerResultados(sessao, 'r1')).e1.contagem, { a: 0, b: 2, c: 0 });
+});
+
+test('desfazer a abertura: prazo que vence durante a espera volta com os segundos que faltavam no Ctrl+Z', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const { alunos, relogio } = sessao;
+  relogio.passar(80_000); // faltam 10 s dos 90
+  const espiao = canalComVotoNaTransacao(sessao, async () => {
+    await alunos.e1[0].decidir('r1', 'e1', 'a');
+    relogio.passar(30_000); // a espera passou do prazo
+  });
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  // Act
+  await assert.rejects(anf.desfazer(), /não dá para desfazer a abertura/);
+  // Assert
+  assert.equal(anf.estado().subfase, 'decidindo');
+  assert.equal(anf.estado().prazo, relogio.agora() + 10_000);
+});
+
+test('desfazer a abertura pausada que recusa: volta pausada, com o mesmo restante', async () => {
+  // Arrange: sem travas, porque pausada a regra recusaria o voto (a pausa
+  // congela a votação); o caso prova só que a reabertura respeita a pausa.
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 }, travas: false });
+  const { alunos, relogio } = sessao;
+  relogio.passar(20_000);
+  await sessao.anf.pausar();
+  const espiao = canalComVotoNaTransacao(sessao, () => alunos.e1[0].decidir('r1', 'e1', 'a'));
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  const antes = anf.estado();
+  relogio.passar(5_000);
+  // Act
+  await assert.rejects(anf.desfazer(), /não dá para desfazer a abertura/);
+  // Assert
+  const e = anf.estado();
+  assert.deepEqual([e.subfase, e.prazo, e.restanteMs], ['decidindo', undefined, antes.restanteMs]);
+});
+
+test('desfazer a abertura: voto que chega durante o "fechando" é recusado pela trava e não conta', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const { alunos } = sessao;
+  let leituras = 0;
+  let recusa = null;
+  const espiao = {
+    ...sessao.host,
+    async ler(caminho) {
+      // A segunda leitura das decisões é a de depois do "fechando" confirmado.
+      if (caminho === s('decisoes', 'r1') && ++leituras === 2) {
+        await alunos.e1[0].decidir('r1', 'e1', 'a').catch((e) => { recusa = e; });
+      }
+      return sessao.host.ler(caminho);
+    },
+  };
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  // Act
+  await anf.desfazer();
+  // Assert
+  assert.equal(leituras, 2, 'conferência prévia e leitura depois do "fechando"');
+  assert.match(String(recusa), NEGADO);
+  assert.equal(anf.estado().tipo, 'personas');
+  assert.equal(await sessao.host.ler(s('decisoes', 'r1')), null);
+});
+
+test('desfazer a abertura na uma_por_vez: volta à afirmação anterior; na primeira, com voto, recusa', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const { anf, relogio, config } = sessao;
+  await anf.criarSala();
+  const aluno = sessao.novoAluno('aluno-1');
+  await aluno.entrar();
+  await anf.avancar(); // entrada "antes", a1
+  await aluno.votar('entrada', 'antes', 'a1', 3);
+  relogio.passar(5000);
+  await anf.avancar(); // a2
+  relogio.passar(1000);
+  // Act: o Espaço de a2 foi por engano
+  await anf.desfazer();
+  // Assert: a1 de novo em votação, com o voto dela guardado
+  const e = anf.estado();
+  assert.deepEqual([e.tipo, e.afirmacao, e.subfase], ['enquete', 'a1', 'votando']);
+  assert.equal(e.prazo, relogio.agora() + config.tempos.enqueteSeg * 1000);
+  assert.equal(await sessao.host.ler(s('votosEnquete', 'entrada', 'antes', 'a1', 'aluno-1')), 3);
+  // Act + Assert: em a1 já chegou voto, e o Ctrl+Z não volta ao lobby
+  await assert.rejects(anf.desfazer(), /Já chegou 1 voto/);
+  assert.equal(anf.estado().afirmacao, 'a1');
+});
+
+test('desfazer a abertura: a contagem à mão (offline) conta como voto; zerada, a enquete "antes" volta ao lobby', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const { anf } = sessao;
+  await anf.criarSala();
+  await anf.avancar();
+  await anf.contagemManual('a1', [0, 2, 0, 0, 0]);
+  // Act + Assert
+  await assert.rejects(anf.desfazer(), /Já chegaram 2 votos/);
+  await anf.contagemManual('a1', [0, 0, 0, 0, 0]);
+  await anf.desfazer();
+  assert.deepEqual([anf.estado().indice, anf.estado().tipo], [0, 'lobby']);
+});
+
+test('desfazer a abertura: passo anterior sem apuração (pulado) e prorrogação recusam sem mexer no estado', async () => {
+  // Arrange: do lobby direto à enquete "depois"; o termômetro antes dela nunca abriu
+  const sessao = montarSessao(V);
+  await sessao.anf.criarSala();
+  await sessao.anf.pularPara(sessao.indiceDe('enquete', { momento: 'depois' }));
+  const antes = sessao.anf.estado();
+  // Act + Assert
+  await assert.rejects(sessao.anf.desfazer(), /passo anterior/);
+  assert.deepEqual(sessao.anf.estado(), antes);
+  // Arrange: prorrogação (só abre depois de uma apuração)
+  const rod = await prepararRodada({ porEquipe: { e1: 2 } });
+  await rod.alunos.e1[0].decidir('r1', 'e1', 'a');
+  await rod.alunos.e1[1].decidir('r1', 'e1', 'b');
+  await rod.anf.encerrar();
+  assert.equal(rod.anf.estado().subfase, 'prorrogacao');
+  // Act + Assert
+  await assert.rejects(rod.anf.desfazer(), /Nada para desfazer/);
+});
+
+// Revisão da D-037, achado 1: offline, toda decisão da rodada é do
+// apresentador (forcadas), e "nenhum voto" era sempre verdade. O Ctrl+Z
+// apagava as 6 decisões registradas sem avisar.
+test('desfazer a abertura da rodada: decisão do apresentador conta como voto, e recusa sem mexer no estado', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1, e2: 1 } });
+  const { anf } = sessao;
+  await anf.decidirPorEquipe('e1', 'a');
+  await anf.decidirPorEquipe('e2', 'b');
+  const antes = anf.estado();
+  // Act + Assert
+  await assert.rejects(anf.desfazer(), /Já chegaram 2 votos \(contando as decisões do apresentador\); não dá para desfazer a abertura/);
+  assert.deepEqual(anf.estado(), antes, 'as decisões do apresentador continuam lá');
+});
+
+// Achado 1, caso 2: o primeiro Ctrl+Z desfaz a apuração (sorteio -> decidindo) e
+// o segundo desfazia a "abertura" de uma rodada que não abriu por engano.
+test('desfazer a abertura da rodada já apurada uma vez (semente gravada): recusa sem mexer no estado', async () => {
+  // Arrange: todas no piloto, sem voto nem decisão do apresentador
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const { anf, host } = sessao;
+  await anf.encerrar();
+  await anf.desfazer();
+  assert.equal(anf.estado().subfase, 'decidindo');
+  const antes = anf.estado();
+  // Act + Assert
+  await assert.rejects(anf.desfazer(), /já foi apurada uma vez/);
+  assert.deepEqual(anf.estado(), antes);
+  assert.equal(typeof (await host.ler(s('sementes', 'r1'))), 'number');
+});
+
+// Achado 2: a volta para a enquete apurada montava o estado do zero, sem a
+// contagem à mão. O Ctrl+Z seguinte reabria a enquete com os contadores zerados.
+test('desfazer a abertura depois de uma enquete contada à mão: a contagem volta junto, e reabrir a mantém', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const { anf, host, indiceDe } = sessao;
+  await anf.criarSala();
+  await anf.pularPara(indiceDe('enquete', { enquete: 'termometro' }));
+  await anf.contagemManual('t1', [1, 2, 3, 4, 5]);
+  await anf.contagemManual('t2', [0, 0, 1, 0, 0]);
+  await anf.encerrar();
+  const apurada = await host.ler(s('enquetes', 'termometro', 'unico'));
+  await anf.avancar(); // o Espaço por engano abre a "depois"
+  // Act
+  await anf.desfazer(); // desfaz a abertura: volta ao termômetro apurado
+  await anf.desfazer(); // desfaz a apuração: reabre o termômetro
+  // Assert
+  assert.equal(anf.estado().subfase, 'votando');
+  assert.deepEqual(anf.estado().manual, { t1: [1, 2, 3, 4, 5], t2: [0, 0, 1, 0, 0] });
+  await anf.encerrar();
+  const refeita = await host.ler(s('enquetes', 'termometro', 'unico'));
+  assert.deepEqual([refeita.metodo, refeita.histogramas, refeita.n], [apurada.metodo, apurada.histogramas, apurada.n]);
+});
+
+// Achado 4: a rede cai depois do "fechando" do desfazer. O telão mostrava
+// "Apurando…", o Ctrl+Z seguinte reabria a votação aberta por engano e o Enter a
+// apurava. Com a marca, o anfitrião sabe que o "fechando" é de um desfazer, e o
+// Ctrl+Z seguinte retoma o desfazer.
+test('desfazer a abertura interrompido depois do "fechando": fica marcado, e o Ctrl+Z seguinte retoma o desfazer', async () => {
+  // Arrange: a transação da volta falha uma vez (a rede caiu)
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  let transacoes = 0;
+  const espiao = {
+    ...sessao.host,
+    transacao(caminho, fn) {
+      if (++transacoes === 2) return Promise.reject(new Error('SEM_RESPOSTA: a rede caiu.'));
+      return sessao.host.transacao(caminho, fn);
+    },
+  };
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  // Act
+  await assert.rejects(anf.desfazer(), /a rede caiu/);
+  // Assert
+  assert.equal(anf.estado().subfase, 'fechando');
+  assert.equal(anf.desfazendoAbertura(), true);
+  await anf.desfazer();
+  assert.deepEqual([anf.estado().tipo, anf.estado().subfase], ['personas', 'ativo']);
+  assert.equal(anf.desfazendoAbertura(), false);
+});
+
+test('fechamento comum interrompido não fica marcado como desfazer', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 1 } });
+  const espiao = { ...sessao.host, ler: (caminho) => (caminho === s('decisoes', 'r1') ? Promise.reject(new Error('rede')) : sessao.host.ler(caminho)) };
+  const anf = outroAnfitriao(sessao, espiao);
+  await anf.carregarSala();
+  // Act
+  await assert.rejects(anf.encerrar(), /rede/);
+  // Assert
+  assert.equal(anf.estado().subfase, 'fechando');
+  assert.equal(anf.desfazendoAbertura(), false);
+});

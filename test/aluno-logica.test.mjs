@@ -299,3 +299,18 @@ test('crachá: curto, estável, derivado do uid e com o nome da equipe', () => {
   assert.equal(codigoCracha('x1'), codigoCracha('x1'));
   assert.equal(new Set(codigos).size, 20, 'os 20 uids de teste dão crachás diferentes');
 });
+
+// Revisão da D-037, achado 5: o voto guardado no aparelho durante a janela
+// aberta por engano (desfeita pelo Ctrl+Z) era reenviado depois de recarregar,
+// na reabertura legítima da mesma etapa. A janela é o abertoEm.
+test('pendenteAindaVale: voto guardado de outra janela da mesma etapa (outro abertoEm) não vale', () => {
+  // Arrange
+  const votoA1 = { tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', valor: 3, abertoEm: 0 };
+  const decisaoA = { tipo: 'decisao', rodada: 'r1', equipe: 'e1', opcao: 'a', abertoEm: 200 };
+  // Act + Assert
+  assert.equal(pendenteAindaVale(votoA1, enquete('votando')), true, 'mesma janela');
+  assert.equal(pendenteAindaVale(votoA1, enquete('votando', { abertoEm: 90_000 })), false, 'janela reaberta depois do desfazer');
+  assert.equal(pendenteAindaVale(decisaoA, rodada('decidindo')), true);
+  assert.equal(pendenteAindaVale(decisaoA, rodada('prorrogacao', { empatadas: { e1: { a: true, b: true } } })), true, 'a prorrogação é a mesma janela');
+  assert.equal(pendenteAindaVale(decisaoA, rodada('decidindo', { abertoEm: 500_000 })), false);
+});

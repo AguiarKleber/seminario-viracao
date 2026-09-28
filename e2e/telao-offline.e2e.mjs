@@ -123,9 +123,62 @@ async function avancarAte(teste, descricao, maximo = 6) {
   return esperarEstado(teste, descricao);
 }
 
+// D-038: a barra só aparece com o mouse encostado na borda de baixo (ou com H).
 async function mostrarBarra() {
-  await page.mouse.move(200 + Math.random() * 50, 300);
+  const { height } = page.viewportSize();
+  await page.mouse.move(200 + Math.random() * 50, height - 12);
   await page.waitForFunction(() => !document.getElementById('barra').hidden);
+}
+
+const barraVisivel = () => page.evaluate(() => !document.getElementById('barra').hidden);
+
+// D-040: dentro das fatias do sorteio, em cada tamanho, os rótulos visíveis não
+// se sobrepõem, nenhum passa da própria fatia, e o texto tem contraste de pelo
+// menos 4,5:1 sobre a fatia (na hachurada, sobre o halo que o contorna).
+async function conferirRotulosFatias() {
+  const vistos = new Set();
+  for (const [largura, altura] of TAMANHOS) {
+    await page.setViewportSize({ width: largura, height: altura });
+    await page.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a && document.querySelector('.grafico-fatias svg'), [largura, altura]);
+    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const r = await page.evaluate(() => {
+      const G = globalThis.Viracao.graficos;
+      const hex = (cor) => {
+        const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(cor);
+        return m ? '#' + m.slice(1, 4).map((x) => Number(x).toString(16).padStart(2, '0')).join('') : null;
+      };
+      const svg = document.querySelector('.grafico-fatias svg');
+      const textos = Array.from(svg.querySelectorAll('text'));
+      const caixas = textos.map((n) => n.getBoundingClientRect());
+      const cruza = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+      const sobrepostos = [];
+      for (let i = 0; i < caixas.length; i += 1) for (let j = i + 1; j < caixas.length; j += 1) if (cruza(caixas[i], caixas[j]) > 1) sobrepostos.push(`"${textos[i].textContent}" × "${textos[j].textContent}"`);
+      const foraDaFatia = [];
+      const semContraste = [];
+      const curtos = [];
+      textos.forEach((n, i) => {
+        const fatia = svg.querySelector(`rect.fatia[data-linha="${n.dataset.linha}"][data-carta="${n.dataset.carta}"]`);
+        if (!fatia) return foraDaFatia.push(`"${n.textContent}" sem fatia`);
+        const f = fatia.getBoundingClientRect();
+        const c = caixas[i];
+        if (c.left < f.left - 0.5 || c.right > f.right + 0.5) foraDaFatia.push(`"${n.textContent}" (${Math.round(c.left)}–${Math.round(c.right)} fora de ${Math.round(f.left)}–${Math.round(f.right)})`);
+        const estilo = getComputedStyle(n);
+        const fundo = fatia.getAttribute('fill')?.startsWith('url(') ? hex(estilo.stroke) : hex(getComputedStyle(fatia).fill);
+        const k = G.contraste(hex(estilo.fill), fundo);
+        if (!(k >= 4.5)) semContraste.push(`"${n.textContent}" ${k.toFixed(2)}:1`);
+        if (n.dataset.curto) curtos.push(n.dataset.curto);
+      });
+      return { sobrepostos, foraDaFatia, semContraste, curtos };
+    });
+    const tamanho = `${largura}×${altura}`;
+    assert.deepEqual(r.sobrepostos, [], `fatias em ${tamanho}: rótulos sobrepostos`);
+    assert.deepEqual(r.foraDaFatia, [], `fatias em ${tamanho}: rótulo fora da fatia`);
+    assert.deepEqual(r.semContraste, [], `fatias em ${tamanho}: rótulo com contraste abaixo de 4,5:1`);
+    for (const c of r.curtos) vistos.add(c);
+  }
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.waitForFunction(() => innerWidth === 1024);
+  return vistos;
 }
 
 async function clicarBarra(acao) {
@@ -292,6 +345,70 @@ await page.click('[data-acao="comecar-offline"]');
 await esperarTela('lobby');
 await conferirTela('lobby-offline');
 
+// D-038: a barra do apresentador só aparece com H ou com o mouse na borda de
+// baixo, e some sozinha 3 s depois de o mouse sair dela.
+{
+  assert.equal(await barraVisivel(), false, 'a barra não aparece sozinha ao começar a sessão');
+  await page.mouse.move(400, 300);
+  await page.mouse.move(520, 420);
+  await page.waitForTimeout(400);
+  assert.equal(await barraVisivel(), false, 'mouse no meio da tela não mostra a barra');
+  await page.mouse.move(520, 768 - 70); // perto, mas fora da faixa de 48 px
+  await page.waitForTimeout(300);
+  assert.equal(await barraVisivel(), false, 'fora da faixa da borda, a barra continua escondida');
+  await page.mouse.move(520, 768 - 10);
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 2000 });
+  await page.mouse.move(520, 300);
+  const saiu = Date.now();
+  await page.waitForTimeout(1500);
+  assert.equal(await barraVisivel(), true, 'a barra não some antes de 3 s');
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3000 });
+  const durou = Date.now() - saiu;
+  assert.ok(durou >= 2800 && durou <= 4200, `a barra some cerca de 3 s depois de o mouse sair da borda (${durou} ms)`);
+  // H mostra a barra, e ela também some sozinha em 3 s (D-038: "some sozinha
+  // depois de 3 s" vale para os dois jeitos de abrir). H com ela aberta esconde.
+  await page.mouse.move(520, 300);
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 1000 });
+  const abriuPeloH = Date.now();
+  await page.waitForTimeout(1500);
+  assert.equal(await barraVisivel(), true, 'aberta pelo H, a barra não some antes de 3 s');
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3500 })
+    .catch(() => assert.fail('aberta pelo H, a barra não sumiu sozinha em 5 s'));
+  const durouH = Date.now() - abriuPeloH;
+  assert.ok(durouH >= 2800 && durouH <= 4500, `aberta pelo H, a barra some cerca de 3 s depois (${durouH} ms)`);
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 1000 });
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 1000 });
+  // Quem usa só o teclado: com o foco dentro da barra, ela não some no meio da
+  // navegação por Tab.
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 1000 });
+  await page.evaluate(() => document.querySelector('#barra button:not([disabled])')?.focus());
+  await page.waitForTimeout(3600);
+  assert.equal(await barraVisivel(), true, 'com o foco dentro dela, a barra fica aberta');
+  await page.evaluate(() => document.activeElement?.blur());
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 4500 })
+    .catch(() => assert.fail('sem o foco dentro dela, a barra não sumiu em 4,5 s'));
+  // Revisão da D-038, achado 3: o mouse parado na borda de baixo (para tirar o
+  // cursor do caminho, ou antes do Alt+Tab) segurava a barra projetada por cima
+  // do sorteio. Parado ali, ela some em 3 s; o próximo movimento na borda a traz.
+  await page.mouse.move(530, 768 - 6);
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 2000 });
+  const parou = Date.now();
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 4500 })
+    .catch(() => assert.fail('com o mouse parado na borda de baixo, a barra não sumiu em 4,5 s'));
+  const parada = Date.now() - parou;
+  assert.ok(parada >= 2800, `parado na borda, a barra some depois de cerca de 3 s, e não antes (${parada} ms)`);
+  await page.mouse.move(540, 768 - 6);
+  await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 2000 });
+  await page.mouse.move(520, 300);
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 4500 });
+  // Os atalhos continuam valendo com a barra escondida: o Espaço logo abaixo
+  // abre a enquete sem a barra ter aparecido.
+}
+
 // Revisão da F2, achado 26: offline também há uma aba escritora só. Outra aba do
 // mesmo navegador oferece "Retomar", mas a trava recusa; antes, as duas gravavam
 // a árvore inteira no mesmo localStorage e uma apagava as apurações da outra.
@@ -373,9 +490,35 @@ let downloadsAntesR = downloads.length;
 
 for (const r of ['r1', 'r2', 'r3']) {
   await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r}`);
+  if (r === 'r1') {
+    // D-037: o Espaço abriu a rodada antes da hora. Ctrl+Z (com confirmação, foco
+    // no "Cancelar") desfaz a abertura: sem voto, a tela volta ao bloco.
+    const aberta = await estado();
+    await page.keyboard.press('Control+z');
+    await page.waitForFunction(() => document.getElementById('modal').open && /Desfazer a abertura desta votação/.test(document.getElementById('modal').textContent));
+    await page.keyboard.press('Enter'); // o foco está no "Cancelar"
+    await page.waitForFunction(() => !document.getElementById('modal').open);
+    assert.equal((await estado()).geracao, aberta.geracao, 'Enter na confirmação cancela');
+    await page.keyboard.press('Control+z');
+    await confirmarModal();
+    const voltou = await esperarEstado((e) => e.indice === aberta.indice - 1, 'volta ao passo de antes da rodada');
+    assert.deepEqual([voltou.tipo, voltou.subfase, voltou.rodada], ['bloco', 'ativo', undefined]);
+    await esperarTela('bloco');
+    await avancarPara((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', 'rodada r1 de novo');
+  }
   for (const [eq, op] of Object.entries(plano[r])) await decidirPelaBarra(nomes[eq], letraDe(r, op));
   await esperarEstado((e) => Object.keys(e.forcadas || {}).length === Object.keys(plano[r]).length, `decisões de ${r} gravadas`);
   if (r === 'r1') {
+    // Revisão da D-037, achado 1: offline, toda decisão é do apresentador, e o
+    // Ctrl+Z apagava as decisões já registradas. A confirmação as cita, e o
+    // anfitrião recusa sem mexer no estado.
+    const decidida = await estado();
+    await page.keyboard.press('Control+z');
+    await page.waitForFunction(() => /não decidiu por nenhuma equipe/.test(document.getElementById('modal').textContent));
+    await confirmarModal();
+    await page.waitForFunction(() => /contando as decisões do apresentador\); não dá para desfazer a abertura/.test(document.getElementById('aviso')?.textContent || ''));
+    const depois = await estado();
+    assert.deepEqual([depois.geracao, depois.forcadas], [decidida.geracao, decidida.forcadas], 'as decisões do apresentador continuam lá');
     await conferirTela('rodada-decidindo');
     // A barra do apresentador, para revisão visual (fica fora dos critérios do
     // corpo do telão: é do apresentador, e some sozinha).
@@ -413,6 +556,10 @@ for (const r of ['r1', 'r2', 'r3']) {
     assert.ok(!(aviso.visivel && /automaticamente/.test(aviso.texto)), `o salvamento automático não avisa na tela: "${aviso.texto}"`);
     assert.match(await page.textContent('[data-barra-salvo]'), /^estado salvo às \d{2}:\d{2} \(r1\)$/);
     await conferirTela('rodada-sorteio', { esperarMs: 3200 });
+    const curtosVistos = await conferirRotulosFatias();
+    assert.ok(curtosVistos.size > 0, 'pelo menos um rótulo curto aparece dentro de uma fatia');
+    const aprovados = new Set(Object.values(configNode.cartas).map((c) => c.curto));
+    assert.ok([...curtosVistos].every((c) => aprovados.has(c)), `os rótulos vêm do "curto" do config (${[...curtosVistos].join(', ')})`);
   }
   await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r}`);
   await esperarTela('rodada-resultado');
@@ -708,6 +855,14 @@ await page.evaluate(async () => {
   }
 });
 await page.waitForFunction(() => /3 de 3/.test(document.querySelector('.equipe-status[data-equipe="e1"]')?.textContent || ''));
+{
+  const antes = await estado();
+  await page.keyboard.press('Control+z');
+  await confirmarModal();
+  await page.waitForFunction(() => /Já chegaram 8 votos; não dá para desfazer a abertura/.test(document.getElementById('aviso')?.textContent || ''));
+  const depois = await estado();
+  assert.deepEqual([depois.subfase, depois.prazo, depois.geracao], ['decidindo', antes.prazo, antes.geracao], 'com voto, recusa sem mexer no estado');
+}
 await conferirTela('rodada-decidindo-celulares');
 await page.keyboard.press('Enter');
 await confirmarModal();

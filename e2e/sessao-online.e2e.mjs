@@ -219,6 +219,9 @@ async function jogar({ site, navegador, vigiar }) {
   await servirSdk(ctxTelao);
   // let: no fim, outra máquina assume a sala, e os ajudantes passam a falar com ela.
   let telao = await ctxTelao.newPage();
+  // D-038: a barra do apresentador só aparece com o mouse na faixa de 48 px da
+  // borda de baixo (ou com H). O telão tem 800 px de altura.
+  const mouseNaBorda = (x) => telao.mouse.move(x, 800 - 10);
   vigiar(telao, 'telão');
   await telao.goto(`${site.url}telao/?emulador=1`);
   // Autoteste das regras: o canário recusado e a versão aceita.
@@ -344,7 +347,7 @@ async function jogar({ site, navegador, vigiar }) {
   const ativosNoLobby = (texto, timeout = 20000) => telao.waitForFunction((t) => document.querySelector('.lobby [data-contagem-ativos]')?.textContent === t, texto, { timeout });
   const avisoDiz = (re, timeout = 15000) => telao.waitForFunction((fonte) => new RegExp(fonte).test(document.getElementById('aviso')?.textContent || ''), re.source, { timeout });
   async function segurarNaBarra(acao) {
-    await telao.mouse.move(300 + Math.random() * 40, 300);
+    await mouseNaBorda(300 + Math.random() * 40);
     await telao.waitForFunction(() => !document.getElementById('barra').hidden);
     await telao.locator(`#barra [data-acao="${acao}"]`).hover();
     await telao.mouse.down();
@@ -495,7 +498,9 @@ async function jogar({ site, navegador, vigiar }) {
   await caio.p.click(opcao(OA));
   await caio.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length === 1);
   const pendenteCaio = await caio.p.evaluate(() => Object.values(globalThis.Viracao.aluno.pendentes())[0]);
-  assert.deepEqual({ ...pendenteCaio }, { tipo: 'decisao', rodada: R, equipe: E1, opcao: OA });
+  // Com a janela (abertoEm) da etapa: o reenvio só vale nela (D-037).
+  const janela = await telao.evaluate(() => globalThis.Viracao.telao.estado().abertoEm);
+  assert.deepEqual({ ...pendenteCaio }, { tipo: 'decisao', rodada: R, equipe: E1, opcao: OA, abertoEm: janela });
   assert.equal(await caio.p.isDisabled(opcao(OC)), true, 'botões desabilitados enquanto envia');
   await temNota(caio, /Enviando…/, 9000);
   await conferirCelular(caio, 'decisao-enviando');
@@ -595,7 +600,7 @@ async function jogar({ site, navegador, vigiar }) {
   await telao.keyboard.press('Space');
   await telao.waitForFunction(() => globalThis.__avisos.some((x) => /Sem conexão com o serviço: o comando não foi enviado/.test(x)), null, { timeout: 5000 });
   await telao.keyboard.press('Enter');
-  await telao.mouse.move(300, 760);
+  await mouseNaBorda(300);
   await telao.waitForFunction(() => !document.getElementById('barra').hidden);
   const baixando = telao.waitForEvent('download', { timeout: 5000 });
   await telao.click('#barra [data-acao="salvar"]');
@@ -613,7 +618,7 @@ async function jogar({ site, navegador, vigiar }) {
 
   // ---------- "Continuar sem celulares" (segurar 2 s) ----------
   const antes = await estado();
-  await telao.mouse.move(300, 300);
+  await mouseNaBorda(310);
   await telao.waitForFunction(() => !document.getElementById('barra').hidden);
   const botao = telao.locator('#barra [data-acao="semCelulares"]');
   await botao.hover();
@@ -701,7 +706,7 @@ async function jogar({ site, navegador, vigiar }) {
     const atual = await estado();
     const alvo = C.passos.findIndex((p, i) => i > atual.indice && teste(p));
     assert.ok(alvo > atual.indice, `não há passo à frente: ${descricao}`);
-    await telao.mouse.move(320 + Math.random() * 40, 300);
+    await mouseNaBorda(320 + Math.random() * 40);
     await telao.waitForFunction(() => !document.getElementById('barra').hidden);
     await telao.click('#barra [data-acao="pular"]');
     await telao.waitForFunction(() => document.getElementById('modal').open);
@@ -760,7 +765,7 @@ async function jogar({ site, navegador, vigiar }) {
   await pularPara((p) => p.tipo === 'fim', 'fim');
   for (const c of cel) await esperarTela(c, 'fim');
   await conferirCelular(cel[0], 'fim');
-  await telao.mouse.move(360, 320);
+  await mouseNaBorda(360);
   await telao.waitForFunction(() => !document.getElementById('barra').hidden);
   await telao.click('#barra [data-acao="entrada"]');
   await telao.waitForFunction(() => document.querySelector('#barra [data-acao="entrada"]')?.getAttribute('aria-pressed') === 'false');
@@ -769,7 +774,7 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarTela(dani, 'entradaFechada');
   await conferirCelular(dani, 'entrada-fechada');
   // O apresentador reabre: quem esperava entra sozinho.
-  await telao.mouse.move(380, 330);
+  await mouseNaBorda(380);
   await telao.waitForFunction(() => !document.getElementById('barra').hidden);
   await telao.click('#barra [data-acao="entrada"]');
   await esperarTela(dani, 'fim', 20000);

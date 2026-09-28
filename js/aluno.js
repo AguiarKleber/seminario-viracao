@@ -532,7 +532,10 @@
     return app.dados.decisoes?.[app.uid] ?? null;
   }
 
-  function votar(pendente) {
+  function votar(escolha) {
+    // A janela em que o voto foi dado: depois de recarregar, o reenvio só vale
+    // nela (pendenteAindaVale), e não numa reabertura da mesma etapa (D-037).
+    const pendente = { ...escolha, abertoEm: app.dados.estado?.abertoEm };
     const caminho = caminhoDe(pendente);
     if (emVoo(app.envios.get(caminho))) return; // botão desabilitado enquanto envia
     // 1. Primeiro no aparelho: se a página cair agora, o voto não se perde.

@@ -248,6 +248,7 @@ celular; os `longos`, nas legendas do telão.
 {
   "id": "acidente",
   "titulo": "Acidente: 20 dias parado",
+  "curto": "Acidente",
   "narrativa": "Sofri um acidente e fiquei 20 dias sem poder trabalhar.",
   "peso": 2,
   "rodadas": ["r2", "r3"],
@@ -259,6 +260,15 @@ celular; os `longos`, nas legendas do telão.
 
 - `titulo`: no sorteio e no resultado do telão. `narrativa` (opcional): no
   celular.
+- `curto` (opcional, D-040): o nome da carta escrito **dentro da fatia** do
+  sorteio, junto da chance ("Normal 55%"). Texto de até 12 caracteres; acima de
+  10 o validador avisa, porque quase nunca cabe. O telão só escreve o rótulo
+  quando ele cabe na largura da fatia; se não cabe, a fatia fica só com a
+  porcentagem (ou sem nada, se nem ela cabe), sem reticências cortando a
+  palavra. Na prática, só as fatias largas levam o nome: nas estreitas, o que
+  identifica as graves é a chance escrita sob o nome da equipe ("cartas graves
+  4%"). A carta grave usa o mesmo estilo das outras. Sem `curto`, a fatia leva
+  só a porcentagem, como antes.
 - `peso`: inteiro, 0 ou mais. Peso 0 nunca sai.
 - `rodadas` (opcional): em que rodadas a carta pode sair. Sem a chave, em todas.
   Lista vazia é erro.
@@ -493,7 +503,7 @@ com espaço também deixa o efeito sem `soma`.
   mesma lista.
 - **Aviso** não impede, mas merece atenção: afirmação longa, bloco sem título,
   tempo mínimo maior que o da decisão, roteiro acima do teto, persona sem
-  equipe, BOM no começo do arquivo, chave desconhecida fora da linguagem de
+  equipe, rótulo `curto` com mais de 10 caracteres, BOM no começo do arquivo, chave desconhecida fora da linguagem de
   efeitos (que é só descartada).
 
 Erros comuns:
@@ -508,6 +518,7 @@ Erros comuns:
 | `… não existe` | Referência a um id que não está no arquivo (opção, persona, rodada, enquete) |
 | `nenhuma carta possível …` | Os pesos daquela combinação somam 0 |
 | `lista vazia: a carta nunca sairia` | `"rodadas": []`: tire a chave para valer em todas |
+| `rótulo curto com N caracteres (mais de 12)` | O `curto` da carta está longo: é o nome na fatia, não o título. Uma palavra basta |
 
 ### As conferências de equilíbrio
 

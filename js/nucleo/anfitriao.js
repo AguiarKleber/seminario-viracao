@@ -43,6 +43,14 @@
     const base = 'salas/' + sala;
     let uid = opcoes.uid || null;
     let atual = null;
+    // O "fechando" do desfazer da abertura (D-037), guardado só na memória desta
+    // janela: { geracao, subfase, pausado, restante }. Se a rede cai depois dele,
+    // o estado no banco é igual ao de um fechamento comum; com a marca, o telão
+    // diz "Desfazendo a abertura…" (e não "Apurando…"), o Ctrl+Z seguinte retoma
+    // o desfazer em vez de reabrir, e o Enter pede confirmação. Não vai ao banco
+    // porque o estado tem $outro: false (seriam regras novas); depois de
+    // recarregar, o "fechando" volta a ser tratado como um fechamento comum.
+    let marcaDesfazer = null;
 
     const cam = (...partes) => [base, ...partes].join('/');
 
@@ -412,6 +420,159 @@
       });
     }
 
+    // ---------- Desfazer a abertura (D-037) ----------
+
+    // Um Espaço a mais abre a próxima votação. O Ctrl+Z desfaz essa abertura
+    // enquanto nenhum voto chegou, e o fluxo normal não ganha passo nenhum.
+
+    // Quantos votos a etapa aberta já tem, lidos do servidor. Na enquete, conta
+    // aparelhos (e não folhas: quem votou nas 3 afirmações do modo "todas" é um
+    // voto); na uma_por_vez, só a afirmação aberta, porque a anterior tem os
+    // votos dela e continua valendo. A contagem à mão do offline também é voto:
+    // desfazer apagaria mãos que o apresentador já contou.
+    // Na rodada, a decisão do apresentador também é voto: offline, toda decisão é
+    // dele, e "nenhum voto chegou" era sempre verdade; o desfazer apagava as
+    // decisões já registradas sem avisar.
+    async function votosDaAbertura(e) {
+      if (e.tipo === 'rodada') {
+        const decisoes = await canal.ler(cam('decisoes', e.rodada));
+        const doCelular = Object.values(decisoes || {}).reduce((s, porUid) => s + Object.keys(porUid || {}).length, 0);
+        return doCelular + Object.keys(e.forcadas || {}).length;
+      }
+      const todas = e.afirmacao === '*';
+      const abertas = todas ? Object.keys(config.enquetes[e.enquete].afirmacoes) : [e.afirmacao];
+      const maos = abertas.reduce((s, a) => s + (tem(e.manual, a) ? lista(e.manual[a]).reduce((x, y) => x + y, 0) : 0), 0);
+      if (maos > 0) return maos;
+      const lidos = await canal.ler(todas ? cam('votosEnquete', e.enquete, e.momento) : cam('votosEnquete', e.enquete, e.momento, e.afirmacao));
+      const uids = new Set();
+      for (const porUid of todas ? Object.values(lidos || {}) : [lidos]) for (const u of Object.keys(porUid || {})) uids.add(u);
+      return uids.size;
+    }
+
+    function recusaPorVotos(n, e) {
+      const quantos = n === 1 ? 'Já chegou 1 voto' : `Já chegaram ${n} votos`;
+      const doApresentador = e.tipo === 'rodada' && Object.keys(e.forcadas || {}).length > 0 ? ' (contando as decisões do apresentador)' : '';
+      return new Error(`${quantos}${doApresentador}; não dá para desfazer a abertura. A votação continua aberta.`);
+    }
+
+    // Para onde o desfazer volta, calculado ANTES da fase 1: o que não dá para
+    // desfazer é recusado sem tocar no estado. Devolve a função que monta o
+    // estado de volta a partir do do servidor.
+    async function voltaDaAbertura(e) {
+      if (e.tipo === 'enquete') {
+        const ordem = lista(config.enquetes[e.enquete].ordemAfirmacoes);
+        const i = ordem.indexOf(e.afirmacao);
+        // uma_por_vez depois da primeira: volta à afirmação anterior, em votação,
+        // com prazo novo (o antigo não fica guardado), e pausada se estava.
+        if (e.afirmacao !== '*' && i > 0) {
+          return (srv) => {
+            const t = agora();
+            const duracao = config.tempos.enqueteSeg * 1000;
+            const anterior = { ...srv, subfase: 'votando', afirmacao: ordem[i - 1], abertoEm: t };
+            return typeof srv.restanteMs === 'number'
+              ? { ...anterior, prazo: null, restanteMs: duracao }
+              : { ...anterior, prazo: t + duracao, restanteMs: null };
+          };
+        }
+      }
+      if (e.indice === 0) throw new Error('Nada para desfazer: não há passo antes deste.');
+      const p = passos[e.indice - 1];
+      // O estado de volta é montado do zero, e não copiado: rodada, prazo,
+      // forcadas e contagem à mão são desta votação e não podem sobrar no passo
+      // anterior. As equipes ficam como estão: destravar deixaria o celular
+      // trocar de equipe depois da distribuição dos atrasados.
+      const comum = (srv) => ({ indice: p.indice, tipo: p.tipo, equipesTravadas: srv.equipesTravadas === true, equipesAbertas: srv.equipesAbertas ?? null });
+      if (p.tipo === 'enquete') {
+        // Só se chega à enquete seguinte com esta apurada. Sem apuração, ela foi
+        // pulada, e voltar a ela a abriria (ou a mostraria "apurada" sem nada).
+        const apuracao = await canal.ler(cam('enquetes', p.enquete, p.momento));
+        if (!apuracao) {
+          throw new Error('Não dá para desfazer a abertura: o passo anterior foi pulado e não tem apuração. Encerre esta votação.');
+        }
+        const enq = config.enquetes[p.enquete];
+        const afirmacao = enq.modo === 'uma_por_vez' ? lista(enq.ordemAfirmacoes).at(-1) : '*';
+        // Contada à mão, a contagem volta junto: os histogramas da apuração manual
+        // são exatamente as contagens digitadas. Sem isto, o Ctrl+Z seguinte (o
+        // desfazer da apuração) reabria a enquete com os contadores zerados, e
+        // tudo o que o apresentador contou se perdia.
+        const manual = apuracao.metodo === 'manual' ? {} : null;
+        if (manual) for (const [a, h] of Object.entries(apuracao.histogramas || {})) manual[a] = lista(h).slice();
+        return (srv) => ({ ...comum(srv), subfase: 'apurada', enquete: p.enquete, momento: p.momento, afirmacao, ...(manual ? { manual } : {}) });
+      }
+      // Nenhum roteiro põe uma rodada logo antes de outra votação; reconstruir o
+      // "resultado" dela sem o abertoEm e as forcadas deixaria o desfazer dela
+      // capenga. Melhor recusar do que voltar a um estado que não existiu.
+      if (p.tipo === 'rodada') throw new Error('Não dá para desfazer a abertura: o passo anterior é uma rodada. Encerre esta votação.');
+      const subfase = N().roteiro.subfasesDe(p.tipo)[0];
+      return (srv) => ({ ...comum(srv), subfase, ...(p.tipo === 'comparativo' ? { enquete: p.enquete } : {}) });
+    }
+
+    // Em duas fases, como o fechamento, para não perder voto nem contar voto de
+    // uma janela aberta por engano:
+    // 1. "fechando" (geracao + 1): a regra passa a recusar voto novo;
+    // 2. a transação confirma;
+    // 3. lê do servidor os votos desta etapa;
+    // 4a. nenhum: volta ao passo (ou à afirmação) de antes;
+    // 4b. algum: reabre a mesma votação, com o mesmo prazo, e recusa.
+    // Antes da fase 1, uma conferência dos votos já registrados recusa sem
+    // transição nenhuma: no caso comum (Ctrl+Z tarde demais), o celular nem
+    // pisca a tela de "votação encerrada".
+    // Se a rede cai entre as fases, a sala fica em "fechando". Com a marca desta
+    // janela, o Ctrl+Z seguinte retoma o desfazer. Se o telão recarregou (ou é
+    // outra máquina), a marca se perdeu e vale o fechamento interrompido comum:
+    // o Ctrl+Z reabre a votação e o outro Ctrl+Z tenta de novo.
+    async function desfazerAbertura(e) {
+      const t0 = agora();
+      const pausado = typeof e.restanteMs === 'number';
+      const restante = pausado ? e.restanteMs : Math.max(0, e.prazo - t0);
+      const volta = await voltaDaAbertura(e);
+      // A rodada com semente já foi apurada uma vez: este "decidindo" veio do
+      // desfazer da apuração, e não de um Espaço por engano. Desfazer a abertura
+      // aqui apagaria as decisões de uma rodada jogada de verdade.
+      if (e.tipo === 'rodada' && typeof (await canal.ler(cam('sementes', e.rodada))) === 'number') {
+        throw new Error('Esta rodada já foi apurada uma vez (o Ctrl+Z anterior desfez a apuração, e não a abertura); não dá para desfazer a abertura. A votação continua aberta.');
+      }
+      const previos = await votosDaAbertura(e);
+      if (previos > 0) throw recusaPorVotos(previos, e);
+      const marca = { geracao: e.geracao + 1, subfase: e.subfase, pausado, restante };
+      // A marca vem antes da transição: o aviso do "fechando" já sai com ela, e o
+      // telão não pisca "Apurando…" diante da turma.
+      marcaDesfazer = marca;
+      let fechando;
+      try {
+        fechando = await transicionar((srv) => ({ ...srv, subfase: 'fechando' }));
+      } catch (erro) {
+        // Conflito: o estado de geracao + 1 é de outra janela, e não deste
+        // desfazer. Sem rede, a marca fica: se a escrita chegar depois, o
+        // "fechando" continua reconhecido como o do desfazer.
+        if (/^CONFLITO/.test(erro.message)) {
+          marcaDesfazer = null;
+          avisar();
+        }
+        throw erro;
+      }
+      return concluirDesfazer(fechando, volta, marca);
+    }
+
+    // Os passos 3 e 4 do desfazer, também para retomá-lo depois de uma queda.
+    async function concluirDesfazer(fechando, volta, marca) {
+      const n = await votosDaAbertura(fechando);
+      if (n === 0) return transicionar(volta);
+      await transicionar((srv) => {
+        if (marca.pausado) return { ...srv, subfase: marca.subfase, prazo: null, restanteMs: marca.restante };
+        // O mesmo prazo; se ele venceu durante a espera, os segundos que faltavam
+        // no Ctrl+Z (a espera não pode comer o tempo da turma).
+        const prazo = marca.restante > 0 && srv.prazo <= agora() ? agora() + marca.restante : srv.prazo;
+        return { ...srv, subfase: marca.subfase, prazo, restanteMs: null };
+      });
+      throw recusaPorVotos(n, fechando);
+    }
+
+    // O "fechando" atual é o do desfazer da abertura feito por esta janela?
+    function desfazendoAbertura(e = atual) {
+      return Boolean(marcaDesfazer && e && e.subfase === 'fechando' && e.geracao === marcaDesfazer.geracao);
+    }
+
     // Reabre a última apuração do passo atual. Apaga resultados/{r} e refaz o
     // placar sem esta rodada, mas nunca apaga sementes/{r}: votos e semente
     // continuam lá, e encerrar de novo tira a mesma carta. Também nunca apaga
@@ -419,6 +580,10 @@
     async function desfazer() {
       const e = exigirEstado();
       const t = agora();
+      // O desfazer da abertura parou depois do "fechando" (a rede caiu): o Ctrl+Z
+      // seguinte o retoma. Reabrir a votação aberta por engano não é o que o
+      // apresentador pediu.
+      if (desfazendoAbertura(e)) return concluirDesfazer(e, await voltaDaAbertura(e), marcaDesfazer);
       // Saída de um fechamento que não conclui: se a apuração lança erro depois
       // da fase 1, o encerrar refaz a mesma conta e lança de novo, e avançar,
       // pular e decidir por equipe recusam o "fechando". A sala parava ali.
@@ -431,6 +596,9 @@
         else volta = { subfase: 'decidindo', prazo: t + config.tempos.decisaoSeg * 1000 };
         return transicionar((srv) => ({ ...srv, ...volta, restanteMs: null }));
       }
+      // Votação aberta: desfaz a abertura (D-037). A prorrogação fica de fora:
+      // ela só abre depois de uma apuração, e voltar dela não é "abrir por engano".
+      if ((e.tipo === 'enquete' && e.subfase === 'votando') || (e.tipo === 'rodada' && e.subfase === 'decidindo')) return desfazerAbertura(e);
       if (e.tipo === 'rodada' && (e.subfase === 'sorteio' || e.subfase === 'resultado')) {
         const resultados = { ...((await canal.ler(cam('resultados'))) || {}) };
         delete resultados[e.rodada];
@@ -622,7 +790,7 @@
       avancar, encerrar, desfazer, pularPara,
       maisTempo, pausar, retomar,
       decidirPorEquipe, moverMembro, removerInativos, abrirEntrada, definirEquipesAbertas, distribuirAtrasados,
-      contagemManual, exportarTotais,
+      contagemManual, exportarTotais, desfazendoAbertura,
       estado: () => atual,
     };
   }

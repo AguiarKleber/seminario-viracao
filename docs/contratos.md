@@ -38,7 +38,7 @@ exibição fica num array de strings.
   rodadas:     { [id]: { id, titulo, texto, padrao, efeitosGerais: [Efeito],
                          opcoes: { [id]: { id, rotulo, narrativa?, tendencia?, efeitos: [Efeito] } },
                          ordemOpcoes: [ids] } },
-  cartas:      { [id]: { id, titulo, narrativa?, peso, rodadas?: [ids], somenteSe?: Condicao,
+  cartas:      { [id]: { id, titulo, curto?, narrativa?, peso, rodadas?: [ids], somenteSe?: Condicao,
                          ajustesDePeso: [{ se: Condicao, soma?: n, multiplica?: n }],
                          efeitos: [Efeito], tom?: "grave", fonte? } },
   enquetes:    { [id]: { id, titulo, pareada: boolean, revelar: "ao_vivo"|"ao_encerrar"|"so_no_comparativo",
@@ -63,6 +63,8 @@ exibição fica num array de strings.
 
 **Valores padrão aplicados pela normalização** (o JSON pode omitir):
 - `obrigatoria: false`, `efeitosGerais: []`, `ajustesDePeso: []`, `todoMes: []`, `inicial: {}`;
+- `cartas[].curto` é opcional (D-040): texto não vazio de até 12 caracteres (contados por letra),
+  com aviso acima de 10; é o rótulo escrito dentro da fatia do sorteio;
 - `referencias[].persona` é opcional e precisa ser uma persona do config: com ela, a linha da
   referência no placar final atravessa só as equipes dessa persona (sem ela, todas);
 - `modo: "todas"`, `revelar: "ao_encerrar"`, `referencias: {}`;
@@ -326,7 +328,7 @@ Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras 
 | `carregarSala() → Promise<estado>` | lê `meta` e `estado` do banco: recarregar o telão, ou assumir em outra máquina. Recusa (com erro claro, antes de assumir) se `meta.roteiro` não é o `nomeRoteiro`, se `meta.hashConfig` não é o `validarConfig.hash(config)` local, ou se `estado.tipo` não bate com o passo `estado.indice`. Se `meta.hostUid` não é o `uid`, grava `meta/hostUid` = `uid` sozinho, antes de qualquer transição: a regra só aceita com o PIN (PIN_OK), e sem ele a recusa vem aqui |
 | `avancar()` | próximo passo. Na enquete `uma_por_vez` em votação, vai para a próxima afirmação (prazo novo); se estava pausada, continua pausada, com `restanteMs = enqueteSeg` inteiro e sem `prazo`. No `sorteio`, vai para o `resultado`. **Nunca fecha votação**: com `votando`, `decidindo`, `prorrogacao` ou `fechando`, lança erro |
 | `encerrar()` | fechamento em duas fases (abaixo). Também conclui um `fechando` interrompido (telão que caiu no meio) |
-| `desfazer()` | só no passo atual: rodada em `sorteio` ou `resultado` volta a `decidindo` (prazo novo, mesmo `abertoEm`, `forcadas` mantidas); enquete `apurada` volta a `votando`. Em `fechando` (a apuração lançou erro e o `encerrar` não conclui), volta à votação com prazo novo, sem apagar nada: enquete a `votando`, rodada a `prorrogacao` se há `empatadas`, senão a `decidindo`. Nos outros casos, lança erro |
+| `desfazer()` | só no passo atual: rodada em `sorteio` ou `resultado` volta a `decidindo` (prazo novo, mesmo `abertoEm`, `forcadas` mantidas); enquete `apurada` volta a `votando`. Em `fechando` (a apuração lançou erro e o `encerrar` não conclui), volta à votação com prazo novo, sem apagar nada: enquete a `votando`, rodada a `prorrogacao` se há `empatadas`, senão a `decidindo`. Com a enquete em `votando` ou a rodada em `decidindo`, **desfaz a abertura** (D-037, abaixo); a `prorrogacao` não. Nos outros casos, lança erro |
 | `pularPara(indice)` | só para a frente, e nunca com votação aberta ou em `fechando` |
 | `maisTempo(seg)` | só com votação aberta; `prazo = max(prazo, agora) + seg`; pausado, soma no `restanteMs` |
 | `pausar()` / `retomar()` | pausar grava `restanteMs` e tira o `prazo` (a votação fica congelada); retomar faz `prazo = agora + restanteMs` |
@@ -363,6 +365,44 @@ Rodada:
 - Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois }`. Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor`.
 
 Enquete: apuração `{ histogramas, n, metodo: "celular", apuradaEm }`; no momento `depois`, mais `transicao: { [afirm]: enquete.transicao(antes, depois) }`, mesmo que o "antes" tenha sido pulado (fica com 0 par).
+
+**Desfazer a abertura (D-037)**: um Espaço a mais abre a próxima votação, e o `desfazer()` com a
+enquete em `votando` (cada afirmação da `uma_por_vez` também) ou a rodada em `decidindo` a desfaz
+enquanto nenhum voto chegou. Também em duas fases, para não perder voto nem contar voto da janela
+aberta por engano:
+
+1. antes de tudo, calcula para onde volta e confere os votos já registrados. O que não dá para
+   desfazer é recusado **sem transição** (o celular nem pisca): voto já registrado
+   (`Error('Já chegou 1 voto; não dá para desfazer a abertura. …')` / `'Já chegaram N votos; …'`),
+   passo anterior que é uma rodada, ou enquete anterior sem apuração (foi pulada). Na rodada, as
+   decisões do apresentador (`estado.forcadas`) também contam como voto (a mensagem acrescenta
+   "(contando as decisões do apresentador)"), e a rodada que já tem `sementes/{r}` recusa
+   (`'Esta rodada já foi apurada uma vez …'`): o `decidindo` veio do desfazer da apuração, e não de
+   um Espaço por engano;
+2. `subfase = "fechando"` (`geracao + 1`): a regra passa a recusar voto novo;
+3. espera a confirmação;
+4. `ler()` dos votos desta etapa: na rodada, as folhas de `decisoes/{r}` mais as `forcadas`; na enquete, os aparelhos
+   em `votosEnquete/{e}/{m}` (no modo `todas`) ou só na afirmação aberta (na `uma_por_vez`). A
+   contagem à mão do offline (`estado.manual` das afirmações abertas) também conta como voto;
+5. nenhum voto: volta, com `geracao + 1`, ao estado de antes da abertura:
+   - `uma_por_vez` depois da primeira afirmação: a afirmação anterior em `votando`, com prazo novo
+     (`abertoEm` = agora); pausada, continua pausada com `restanteMs = enqueteSeg`;
+   - senão, o passo `indice - 1`, montado do zero (sem `rodada`, `prazo`, `forcadas`, `manual`),
+     com `equipesTravadas` e `equipesAbertas` como estavam: `ativo` num passo sem votação, e
+     `apurada` numa enquete (a última afirmação da `uma_por_vez`, ou `*`). Se a apuração dessa
+     enquete é `manual`, o `manual` é refeito dos histogramas dela: o `desfazer()` seguinte a reabre
+     com as contagens digitadas, e não zeradas;
+6. houve voto: reabre a mesma votação (`votando`/`decidindo`, mesmo `prazo` e `abertoEm`; se o prazo
+   venceu durante a espera, `prazo = agora + o que faltava no Ctrl+Z`; pausada, o mesmo
+   `restanteMs`) e lança o erro "Já chegaram N votos; …". O voto que chegou antes do "fechando" fica
+   e conta no `encerrar`.
+
+Se a rede cai entre as fases, a sala fica em `fechando`. O anfitrião guarda na memória a marca desse
+`fechando` (`desfazendoAbertura(estado?) → boolean`; não vai ao banco, porque o estado tem
+`$outro: false`): com ela, o telão mostra "Desfazendo a abertura…" e não "Apurando…", o
+`desfazer()` seguinte retoma o desfazer (passos 4 a 6) e o Enter pede confirmação antes de apurar.
+Depois de recarregar o telão (ou em outra máquina), a marca se perdeu e vale o fechamento
+interrompido comum: o `desfazer()` seguinte reabre a votação e o outro tenta de novo.
 
 `desfazer()` apaga `resultados/{r}` e recalcula o `placar` sem esta rodada (`null` se não sobrar nenhuma), e **nunca** apaga `sementes/{r}` nem `prorrogacoes/{r}`. Votos, semente e marca continuam lá: encerrar de novo tira a mesma carta e não abre outra prorrogação.
 
@@ -405,7 +445,7 @@ Entradas de `telaDoAluno`:
 
 Equipe válida = existe no conteúdo e está em `estado.equipesAbertas` (quando definidas). Membro numa equipe fechada aguarda a redistribuição.
 
-`pendente = { tipo: "enquete", enquete, momento, afirmacao, valor } | { tipo: "decisao", rodada, equipe, opcao }`. Vale se a mesma etapa continua em `votando` (com a afirmação `*` ou a mesma) ou em `decidindo`; na `prorrogacao`, só com a equipe e a opção em `empatadas`. Pausado ainda vale: o reenvio passa ao retomar.
+`pendente = { tipo: "enquete", enquete, momento, afirmacao, valor, abertoEm } | { tipo: "decisao", rodada, equipe, opcao, abertoEm }`. Com `abertoEm`, só vale na mesma janela (`estado.abertoEm` igual): o voto guardado na janela desfeita pelo Ctrl+Z (D-037) não entra na reabertura. Vale se a mesma etapa continua em `votando` (com a afirmação `*` ou a mesma) ou em `decidindo`; na `prorrogacao`, só com a equipe e a opção em `empatadas`. Pausado ainda vale: o reenvio passa ao retomar.
 
 ---
 
@@ -449,8 +489,14 @@ com `viewBox` igual ao tamanho real, para o texto ter o tamanho do corpo.
 - `histograma({ series: [{ hist, estilo: 'antes'|'depois'|'cheio' }] })`,
   `rotulosEscala(rotulos, { soNumeros? })`, `legendaEscala(rotulos)`,
   `tresPartes({ resumo })`, `amostra(estilo)` (legenda).
-- `fatias({ linhas: [{ chances, sorteada, graves: Set }], animar })`: os
-  ponteiros usam a mesma animação CSS e param juntos. Com `animar`, o SVG leva a
+- `fatias({ linhas: [{ chances, sorteada, graves: Set }], curtos?: { [carta]: texto }, animar })`: os
+  ponteiros usam a mesma animação CSS e param juntos. Dentro de cada fatia vai
+  "curto NN%" (D-040) quando cabe na largura (`larguraTexto` + meia fonte de folga), senão só
+  "NN%", senão nada; nunca reticências. O texto (`text.rotulo-fatia`, com `data-carta`,
+  `data-linha` e, quando leva o nome, `data-curto`) tem o tamanho do corpo e é claro ou escuro
+  conforme a cor da fatia (`contraste(a, b)`, WCAG, exportada; ≥ 4,5:1), com halo da cor oposta;
+  a fatia grave (hachurada) usa o mesmo estilo, e o halo escuro dá o contraste. A cor das fatias
+  (`COR_FATIA`) fica no `graficos.js`, e não no CSS, porque é dela que sai essa escolha. Com `animar`, o SVG leva a
   classe `fatias-animadas`, e o contorno da fatia sorteada só aparece quando os
   ponteiros param (2,6 s; o mesmo atraso do `.revelar-apos`). A chance de carta grave
   de cada equipe vai escrita sob o nome dela, no telão (`.linha-graves`).
@@ -480,6 +526,13 @@ com `viewBox` igual ao tamanho real, para o texto ter o tamanho do corpo.
 | `ligarSessao({ modo, sala, nomeRoteiro, criar, canal? }) → Promise<estado>` | cria (`criar: true`) ou carrega a sala com o `anfitriao`, liga os ouvintes, a barra e o desenho. Com `canal`, não chama `abrirCanal` |
 | `salvarEstado(motivo?)` | baixa o estado da sala (formato abaixo). O `'manual'` avisa na tela; o automático (fim de rodada) só registra "estado salvo às HH:MM (r2)" na barra do apresentador (`[data-barra-salvo]`), para o aviso não cobrir o sorteio projetado |
 | `estado()`, `sala()`, `modo()`, `chaveSessao(sala)`, `versaoApp` | leitura (e2e). Os dois e2e leem a versão daqui (e não de um `?v=1` escrito no teste), para não reprovar quando o `bin/versao.mjs` subir a versão |
+
+**Barra do apresentador (D-038):** escondida por padrão, e começar a sessão não a mostra. Aparece
+com H (liga e desliga; aberta pelo H, não some sozinha) ou com o mouse na faixa de 48 px da borda de
+baixo (`BORDA_BARRA_PX`); aberta pela borda, some 3 s depois do último movimento do mouse na faixa
+ou sobre ela, também com o mouse parado ali (só um modal aberto a segura). Movimento do mouse fora da faixa não a mostra. Os atalhos
+de teclado valem com ela escondida, e os registros discretos (salvamento automático, ativos/membros)
+continuam só nela.
 
 Também no `telao.js`: `app.lerEspelho` (só online, ligado pela seção 10)
 devolve uma cópia da árvore da sala mantida localmente; alimenta "Continuar sem
@@ -522,7 +575,7 @@ alheio).
 - "Continuar sem celulares" e "Salvar estado" não passam pela fila (socorro).
 
 **Confirmações:** as que encurtam a conversa das equipes (encerrar no tempo mínimo),
-desfazem uma apuração ou descartam dados (encerrar a enquete offline com afirmação sem
+desfazem uma apuração ou a abertura de uma votação (D-037), ou descartam dados (encerrar a enquete offline com afirmação sem
 contagem; a primeira contagem à mão com votos de celular de antes da queda) abrem com o
 foco no "Cancelar": confirmar pede Tab e Enter, ou um clique.
 

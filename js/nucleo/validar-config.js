@@ -22,6 +22,11 @@
   const RE_ROTEIRO = /^(?=[A-Za-z0-9_-]*[A-Za-z_-])[A-Za-z0-9_-]{1,24}$/;
   const MAX_EQUIPES = 6;
   const MAX_AFIRMACAO = 110;
+  // D-040: o rótulo curto vai escrito dentro da fatia do sorteio. Com mais de 10
+  // letras ele quase nunca cabe na fatia (o telão o omite, e a fatia fica só com a
+  // porcentagem); com mais de 12, não cabe nem na fatia da carta mais comum.
+  const CURTO_AVISO = 10;
+  const CURTO_MAX = 12;
   // Acima disto a conferência de "carta possível" desiste com ERRO, em vez de
   // travar o telão enumerando estados (sem a conferência, não há a garantia).
   const MAX_ESTADOS = 20000;
@@ -58,7 +63,7 @@
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'efeitosGerais', 'opcoes', 'fonte'],
     opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte'],
-    carta: ['id', 'titulo', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte'],
+    carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
@@ -503,6 +508,17 @@
   function carta(r, b, c, id, idx) {
     conferirChaves(r, b, CHAVES.carta, c, false);
     const n = { id, titulo: texto(r, b, 'titulo', c) };
+    const curto = texto(r, b, 'curto', c, true);
+    if (curto !== undefined) {
+      // Contado por letra ([...texto]), e não por unidade UTF-16: é a largura na
+      // fatia que importa, e um emoji contaria 2.
+      const letras = [...curto.trim()].length;
+      if (letras > CURTO_MAX) r.erro(junta(c, 'curto'), `rótulo curto com ${letras} caracteres (mais de ${CURTO_MAX}): não cabe na fatia do sorteio`);
+      else {
+        if (letras > CURTO_AVISO) r.aviso(junta(c, 'curto'), `rótulo curto com ${letras} caracteres (mais de ${CURTO_AVISO}): quase nunca cabe na fatia, e o telão o omite`);
+        n.curto = curto;
+      }
+    }
     copiarTextos(r, b, n, c, ['narrativa']);
     n.peso = numero(r, b, 'peso', c, { inteiro: true, naoNegativo: true });
     if (tem(b, 'tom')) {

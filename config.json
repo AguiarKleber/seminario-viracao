@@ -893,6 +893,7 @@
     {
       "id": "normal",
       "titulo": "Um mês como os outros",
+      "curto": "Normal",
       "peso": 50,
       "narrativa": "Nada fora do comum. Fechei o mês no mesmo aperto de sempre.",
       "efeitos": []
@@ -900,6 +901,7 @@
     {
       "id": "semana_boa",
       "titulo": "Uma semana boa",
+      "curto": "Semana boa",
       "peso": 12,
       "narrativa": "Bati o desafio da semana, veio gorjeta, entrou uma encomenda grande. Não dá para contar com isso no mês que vem.",
       "ajustesDePeso": [
@@ -976,6 +978,7 @@
     {
       "id": "equipamento",
       "titulo": "O instrumento de trabalho quebrou",
+      "curto": "Quebrou",
       "peso": 10,
       "narrativa": "Quebrou o que eu uso para trabalhar. Sem ele, não ganho, e o conserto sai do meu bolso.",
       "ajustesDePeso": [
@@ -1053,6 +1056,7 @@
     {
       "id": "doenca",
       "titulo": "Adoeci: uma semana parado",
+      "curto": "Doença",
       "peso": 6,
       "narrativa": "Tive que parar uma semana. MEI novo não cobre doença: o INSS exige 12 meses de contribuição.",
       "ajustesDePeso": [
@@ -1129,6 +1133,7 @@
     {
       "id": "acidente",
       "titulo": "Acidente: 20 dias parado",
+      "curto": "Acidente",
       "peso": 2,
       "rodadas": [
         "r2",
@@ -1294,6 +1299,7 @@
     {
       "id": "bloqueio",
       "titulo": "Conta bloqueada sem explicação",
+      "curto": "Bloqueio",
       "peso": 5,
       "rodadas": [
         "r2",
@@ -1393,6 +1399,7 @@
     {
       "id": "assalto",
       "titulo": "Fui assaltado",
+      "curto": "Assalto",
       "peso": 2,
       "tom": "grave",
       "somenteSe": {
@@ -1469,6 +1476,7 @@
     {
       "id": "conquista",
       "titulo": "A mobilização arrancou um reajuste",
+      "curto": "Reajuste",
       "peso": 3,
       "rodadas": [
         "r3"

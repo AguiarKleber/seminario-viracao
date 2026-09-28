@@ -304,10 +304,14 @@
   // continua aberta. Não olha o relógio (invariante I5): o prazo é a regra do
   // banco que corta. Pausado ainda vale: a etapa é a mesma, e o reenvio passa
   // quando o apresentador retomar.
-  // pendente = { tipo: 'enquete', enquete, momento, afirmacao, valor }
-  //          | { tipo: 'decisao', rodada, equipe, opcao }
+  // pendente = { tipo: 'enquete', enquete, momento, afirmacao, valor, abertoEm }
+  //          | { tipo: 'decisao', rodada, equipe, opcao, abertoEm }
+  // "A mesma etapa" é também a mesma janela (abertoEm): o voto guardado na janela
+  // aberta por engano e desfeita pelo Ctrl+Z (D-037) não entra na reabertura, que
+  // tem outro abertoEm. Pendente sem abertoEm é de antes desta conferência.
   function pendenteAindaVale(pendente, estado) {
     if (!pendente || !estado) return false;
+    if (typeof pendente.abertoEm === 'number' && pendente.abertoEm !== estado.abertoEm) return false;
     if (pendente.tipo === 'enquete') {
       return estado.tipo === 'enquete' && estado.subfase === 'votando'
         && estado.enquete === pendente.enquete && estado.momento === pendente.momento

@@ -103,8 +103,8 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 .parte-discorda { stroke: var(--antes); stroke-width: 2; }
 .barra.parte-neutro, .barra.parte-concorda { stroke: none; }
 
-.fatia-par { fill: #6b6b6b; }
-.fatia-impar { fill: #4f4f4f; }
+/* A cor de .fatia-par e .fatia-impar sai do graficos.js (COR_FATIA): é de lá que
+   o rótulo dentro da fatia escolhe texto claro ou escuro (D-040). */
 .fatia-grave { stroke: var(--antes); stroke-width: 2; }
 .fatia-sorteada { stroke: var(--texto); stroke-width: 3; }
 /* Com animação, o contorno da sorteada só aparece quando os ponteiros param
@@ -375,7 +375,10 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .botao-grande { font-size: var(--corpo); padding: .4em 1.2em; }
 .placar-fim { margin-top: auto; }
 
-/* ---------- Barra do apresentador (sobreposta; some após 3 s sem mouse) ---------- */
+/* ---------- Barra do apresentador ----------
+ * Sobreposta ao que está projetado. Só aparece com H ou com o mouse na faixa de
+ * 48 px da borda de baixo (D-038; BORDA_BARRA_PX no telao.js), e some 3 s depois
+ * do último movimento do mouse na faixa ou sobre ela. */
 
 .barra {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;

@@ -34,6 +34,9 @@
   const TRAVA_AVANCAR_MS = 1500;
   const SEGURAR_MS = 2000;
   const ESCONDER_BARRA_MS = 3000;
+  // D-038: a barra só aparece com o mouse encostado nesta faixa de baixo (ou com
+  // H). A qualquer movimento, ela cobria o que estava projetado.
+  const BORDA_BARRA_PX = 48;
   const ATIVO_MS = 60000;
   const RODAPE_ENQUETE = 'Retrato desta turma, não pesquisa.';
   const LETRAS = 'ABCDEFGHIJ';
@@ -51,6 +54,9 @@
     chaveDesenho: null, graficos: new Map(),
     ultimoAvanco: -Infinity, inicioPasso: null,
     selo: null, wake: null, barraTimer: 0, barraVisivel: false,
+    // mouseNaBorda: o último movimento do mouse foi na faixa de baixo (sair dela
+    // recomeça os 3 s da barra).
+    mouseNaBorda: false,
     // Só online: a conexão (undefined = ainda não se sabe, e não recusa nada), a
     // hora da última reconexão forçada pelo próprio telão, a releitura adiada
     // para quando a rede voltar e o modo passivo (outra máquina assumiu).
@@ -817,7 +823,8 @@
     app.wake.ligar();
     ligarOuvintes();
     montarBarra();
-    mostrarBarra();
+    // Sem mostrarBarra() aqui (D-038): ela só aparece com H ou com o mouse na
+    // borda de baixo, e começar a sessão projetava a barra por cima do lobby.
     processarEstado(app.anf.estado());
     agendarDesenho();
     return app.anf.estado();
@@ -1299,12 +1306,18 @@
     tique();
   }
 
+  // Mesmo "fechando" no banco, duas telas: o do desfazer da abertura, feito por
+  // esta janela, não é uma apuração (o id diferente também refaz o desenho).
+  function telaDoFechando(e) {
+    return app.anf.desfazendoAbertura(e) ? { id: 'desfazendo', desenhar: telaDesfazendo } : { id: 'apurando', desenhar: telaApurando };
+  }
+
   function escolherTela(e) {
     switch (e.tipo) {
       case 'lobby': return { id: 'lobby', desenhar: telaLobby, chave: chaveLobby };
       case 'enquete':
         if (e.subfase === 'votando') return { id: 'enquete-votando', desenhar: telaEnqueteVotando, chave: chaveEnqueteVotando };
-        if (e.subfase === 'fechando') return { id: 'apurando', desenhar: telaApurando };
+        if (e.subfase === 'fechando') return telaDoFechando(e);
         return { id: 'enquete-apurada', desenhar: telaEnqueteApurada, chave: () => app.dados.enquetes?.[e.enquete]?.[e.momento] ?? null };
       case 'bloco': return { id: 'bloco', desenhar: telaBloco, chave: () => app.dados.placar };
       case 'formarEquipes': return { id: 'formar-equipes', desenhar: telaFormarEquipes, chave: chaveMembrosPorEquipe };
@@ -1312,7 +1325,7 @@
       case 'rodada':
         if (e.subfase === 'decidindo') return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
         if (e.subfase === 'prorrogacao') return { id: 'rodada-prorrogacao', desenhar: telaProrrogacao, chave: chaveDecisoes };
-        if (e.subfase === 'fechando') return { id: 'apurando', desenhar: telaApurando };
+        if (e.subfase === 'fechando') return telaDoFechando(e);
         if (e.subfase === 'sorteio') return { id: 'rodada-sorteio', desenhar: telaSorteio, chave: () => app.dados.resultados?.[e.rodada] ?? null };
         return { id: 'rodada-resultado', desenhar: telaResultado, chave: () => app.dados.resultados?.[e.rodada] ?? null };
       case 'placarFinal': return { id: 'placar-final', desenhar: telaPlacarFinal, chave: () => app.dados.placar };
@@ -1569,6 +1582,13 @@
   function telaApurando(s) {
     const { el } = D();
     D().acrescentar(s, [cabecalho(null, 'Apurando…'), el('p', { classe: 'texto-grande', texto: 'Um instante: contando os votos que o servidor aceitou.' })]);
+  }
+
+  // O "fechando" do desfazer da abertura (D-037). "Apurando…" diante da turma
+  // dizia que a votação aberta por engano estava sendo contada.
+  function telaDesfazendo(s) {
+    const { el } = D();
+    D().acrescentar(s, [cabecalho(null, 'Desfazendo a abertura…'), el('p', { classe: 'texto-grande', texto: 'Um instante: a votação foi aberta antes da hora.' })]);
   }
 
   function telaEnqueteApurada(s, e) {
@@ -1872,6 +1892,8 @@
       ]))),
       grafico('grafico-fatias', (largura, altura, fonte) => G().fatias({
         largura, altura, fonte, animar,
+        // D-040: o nome curto da carta dentro da fatia, quando cabe.
+        curtos: Object.fromEntries(Object.values(app.config.cartas).filter((c) => c.curto).map((c) => [c.id, c.curto])),
         linhas: itens.map(({ r }) => ({ chances: lista(r.chances), sorteada: r.carta, graves })),
       })),
       el('div', { classe: 'coluna-valores', estilo: estiloLinhas }, itens.map(({ eq, r }) => el('div', {
@@ -2229,7 +2251,8 @@
       encerrar: aberta || e.subfase === 'fechando',
       mais30: aberta,
       pausar: aberta,
-      desfazer: (e.tipo === 'rodada' && ['sorteio', 'resultado', 'fechando'].includes(e.subfase)) || (e.tipo === 'enquete' && ['apurada', 'fechando'].includes(e.subfase)),
+      // decidindo e votando: desfazer a abertura (D-037); a prorrogação não.
+      desfazer: (e.tipo === 'rodada' && ['decidindo', 'sorteio', 'resultado', 'fechando'].includes(e.subfase)) || (e.tipo === 'enquete' && ['votando', 'apurada', 'fechando'].includes(e.subfase)),
       decidir: e.tipo === 'rodada' && (e.subfase === 'decidindo' || e.subfase === 'prorrogacao'),
       mover: online,
       removerInativos: online,
@@ -2255,6 +2278,10 @@
     if (bs) bs.hidden = !online;
   }
 
+  // D-038: aberta pelo H ou pela borda de baixo, some sozinha 3 s depois. O
+  // texto aprovado é "some sozinha depois de 3 s" para os dois jeitos de abrir:
+  // uma barra que só fechava com outro H ficava projetada sobre o sorteio
+  // sempre que o apresentador esquecia de apertar a tecla de novo.
   function mostrarBarra() {
     const barra = app.el.barra;
     if (!app.anf) return;
@@ -2263,10 +2290,27 @@
     document.body.classList.add('barra-visivel');
     clearTimeout(app.barraTimer);
     app.barraTimer = setTimeout(() => {
-      // Não some com um menu aberto, nem com o mouse em cima dela.
-      if (app.el.modal.open || barra.matches(':hover')) return mostrarBarra();
+      // Só a seguram: um menu aberto, ou o foco do teclado dentro dela (quem usa
+      // só o teclado navega com Tab e não pode perder a barra no meio). O mouse
+      // parado em cima dela ou na borda não segura: o apresentador encosta o
+      // mouse embaixo para tirar o cursor do caminho (ou dá Alt+Tab com ele ali)
+      // e nenhum evento avisa que ele deixou de olhar. Quem usa a barra mexe o
+      // mouse, e cada movimento sobre ela recomeça os 3 s (aoMoverMouse).
+      if (app.el.modal.open || barra.contains(document.activeElement)) return mostrarBarra();
       esconderBarra();
     }, ESCONDER_BARRA_MS);
+  }
+
+  // Movimento fora da borda não mostra a barra. Ao sair da borda com ela aberta,
+  // os 3 s recomeçam: contam a partir de quando o mouse saiu, e não de quando
+  // ele entrou na faixa. Movimento sobre a barra aberta também recomeça.
+  function aoMoverMouse(ev) {
+    if (!app.anf) return;
+    const naBorda = ev.clientY >= raiz.innerHeight - BORDA_BARRA_PX;
+    const saiu = app.mouseNaBorda && !naBorda;
+    const sobreABarra = app.barraVisivel && app.el.barra.contains(ev.target);
+    app.mouseNaBorda = naBorda;
+    if (naBorda || sobreABarra || (saiu && app.barraVisivel)) mostrarBarra();
   }
 
   function esconderBarra(tambemDesligar = false) {
@@ -2343,6 +2387,11 @@
       // quem decide é o apresentador: ele pode encerrar antes, confirmando.
       if (falta > 0 && !(await confirmar(`Ainda no tempo mínimo de conversa (faltam ${F().relogio(falta * 1000)}). Encerrar a decisão agora?`, 'Encerrar agora', { focarCancelar: true }))) return;
     }
+    // O desfazer da abertura parou no meio: diante da tela parada, o Enter é o
+    // gesto natural, e apuraria a votação aberta por engano (a rodada inteira no
+    // piloto, ou a enquete com n = 0). O caminho de volta é o Ctrl+Z.
+    if (app.anf.desfazendoAbertura(e) && !(await confirmar('Esta votação foi aberta por engano, e o desfazer não terminou. Encerrar vai apurá-la assim mesmo. Para voltar ao passo anterior, cancele e use Ctrl+Z. Apurar mesmo assim?',
+      'Apurar mesmo assim', { focarCancelar: true }))) return;
     if (!(await confirmarEncerrarEnquete(e))) return;
     executar(() => app.anf.encerrar(), { geracao: e.geracao });
   }
@@ -2357,7 +2406,17 @@
     const e = app.estado;
     if (!app.anf || !e) return;
     let texto;
-    if (e.subfase === 'fechando') texto = 'A apuração não terminou. Voltar à votação, sem apagar nada?';
+    // D-037: o Espaço a mais abriu a votação. O anfitrião confere no servidor se
+    // algum voto chegou e, havendo, recusa e deixa a votação aberta.
+    const umaPorVez = e.tipo === 'enquete' && e.afirmacao !== '*' && ordemAfirmacoes(app.config.enquetes[e.enquete]).indexOf(e.afirmacao) > 0;
+    if ((e.tipo === 'enquete' && e.subfase === 'votando') || (e.tipo === 'rodada' && e.subfase === 'decidindo')) {
+      // Na rodada, a decisão do apresentador também conta como voto: offline,
+      // sem celular, "nenhum voto chegou" parecia sempre verdade.
+      const condicao = e.tipo === 'rodada' ? 'nenhum voto chegou e o apresentador não decidiu por nenhuma equipe' : 'nenhum voto chegou';
+      texto = `Desfazer a abertura desta votação? Só funciona se ${condicao}; a tela volta ${umaPorVez ? 'à afirmação anterior' : 'ao passo anterior'}.`;
+    } else if (app.anf.desfazendoAbertura(e)) {
+      texto = 'O desfazer da abertura não terminou (o serviço não respondeu). Tentar de novo? Sem voto, a tela volta ao passo anterior.';
+    } else if (e.subfase === 'fechando') texto = 'A apuração não terminou. Voltar à votação, sem apagar nada?';
     else if (e.tipo === 'rodada') texto = 'Desfazer a apuração desta rodada? As decisões e a semente continuam: encerrar de novo tira as mesmas cartas.';
     else if (e.tipo === 'enquete') texto = 'Reabrir a votação desta enquete? A apuração é apagada e refeita no próximo encerrar.';
     else return avisar('Nada para desfazer neste passo.');
@@ -2593,7 +2652,9 @@
     montarAbertura();
     ligarArrastar();
     document.addEventListener('keydown', aoTeclar);
-    document.addEventListener('mousemove', () => { if (app.anf) mostrarBarra(); });
+    document.addEventListener('mousemove', aoMoverMouse);
+    // O mouse que sai da janela pela borda de baixo não fica "na borda" para sempre.
+    document.documentElement.addEventListener('mouseleave', () => { app.mouseNaBorda = false; });
     raiz.addEventListener('resize', () => agendarDesenho());
     N().conexao.aoVoltarAVista(() => sincronizar());
     setInterval(tique, 250);

@@ -28,6 +28,38 @@
   // cabe dentro da barra; errar para mais só leva o rótulo para fora.
   const larguraTexto = (texto, fonte) => String(texto).length * fonte * 0.62;
 
+  // ---------- Contraste (WCAG 2) ----------
+
+  // O texto dentro de uma fatia precisa de 4,5:1 sobre a cor dela: o projetor
+  // lava as cores, e o cinza médio da fatia fica ainda mais perto do texto.
+  // A cor das fatias fica aqui, e não no CSS, porque é daqui que sai a escolha
+  // entre texto claro e escuro.
+  const TEXTO_CLARO = '#f2f2f2'; // --texto
+  const TEXTO_ESCURO = '#111111'; // --fundo e --texto-sobre-claro
+  const COR_FATIA = ['#6b6b6b', '#4f4f4f'];
+
+  function luminancia(hex) {
+    const n = parseInt(String(hex).slice(1), 16);
+    const canal = (v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * canal((n >> 16) & 255) + 0.7152 * canal((n >> 8) & 255) + 0.0722 * canal(n & 255);
+  }
+
+  function contraste(a, b) {
+    const [claro, escuro] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+    return (claro + 0.05) / (escuro + 0.05);
+  }
+
+  // Texto claro com halo escuro, ou escuro com halo claro: o que der mais
+  // contraste sobre a cor de fundo.
+  function textoSobre(fundo) {
+    return contraste(TEXTO_CLARO, fundo) >= contraste(TEXTO_ESCURO, fundo)
+      ? { texto: TEXTO_CLARO, halo: TEXTO_ESCURO }
+      : { texto: TEXTO_ESCURO, halo: TEXTO_CLARO };
+  }
+
   // ---------- Formas das equipes ----------
 
   const PONTOS = {
@@ -192,7 +224,12 @@
   // Uma linha por equipe, na mesma escala. O ponteiro de cada linha para no meio
   // da fatia sorteada. Todos os ponteiros usam a mesma animação, com a mesma
   // duração: param juntos (arquitetura, seção 5), e nenhuma equipe "sai antes".
-  function fatias({ largura, altura, fonte, linhas, animar = true }) {
+  // curtos: { [carta]: rótulo curto } (D-040). O rótulo vai dentro da fatia, junto
+  // da porcentagem ("Normal 56%"), só quando cabe na largura dela; se não cabe,
+  // fica só a porcentagem, e se nem ela cabe, nada. Nunca com reticências
+  // cortando a palavra: a fatia fina continua identificável pela chance de carta
+  // grave escrita sob o nome da equipe. A carta grave leva o mesmo estilo.
+  function fatias({ largura, altura, fonte, linhas, curtos = {}, animar = true }) {
     const { svg } = D();
     const h = altura / Math.max(1, linhas.length);
     const idHachura = novoId('hachura');
@@ -209,11 +246,27 @@
         const w = c.chance * largura;
         const grave = linha.graves && linha.graves.has(c.carta);
         const classe = ['fatia', grave ? 'fatia-grave' : (k % 2 === 0 ? 'fatia-par' : 'fatia-impar'), c.carta === linha.sorteada ? 'fatia-sorteada' : null];
+        const cor = COR_FATIA[k % 2];
         filhos.push(svg('rect', {
-          x: x + 1, y: topoBarra, width: Math.max(0, w - 2), height: altBarra, classe, fill: grave ? `url(#${idHachura})` : null, dados: { carta: c.carta },
+          x: x + 1, y: topoBarra, width: Math.max(0, w - 2), height: altBarra, classe, fill: grave ? `url(#${idHachura})` : cor, dados: { carta: c.carta, linha: i },
         }));
         const pct = `${Math.round(c.chance * 100)}%`;
-        if (larguraTexto(pct, fonte) + 10 < w) rotulos.push(rotulo(pct, x + w / 2, topoBarra + altBarra / 2, fonte));
+        const curto = typeof curtos[c.carta] === 'string' ? curtos[c.carta] : null;
+        // Folga de meia fonte: o halo (0,22 em) e a borda de 1 px de cada lado
+        // da fatia, e a estimativa da largura, que erra por letra.
+        const cabe = (texto) => larguraTexto(texto, fonte) + fonte * 0.5 < w;
+        const texto = curto && cabe(`${curto} ${pct}`) ? `${curto} ${pct}` : (cabe(pct) ? pct : null);
+        if (texto) {
+          // Na hachurada não há uma cor só: vale o halo escuro, que contorna a letra.
+          const cores = textoSobre(grave ? TEXTO_ESCURO : cor);
+          const r = rotulo(texto, x + w / 2, topoBarra + altBarra / 2, fonte, 'middle', 'rotulo-fatia');
+          r.style.setProperty('fill', cores.texto);
+          r.style.setProperty('stroke', cores.halo);
+          r.dataset.carta = c.carta;
+          r.dataset.linha = String(i);
+          if (texto !== pct) r.dataset.curto = curto;
+          rotulos.push(r);
+        }
         if (c.carta === linha.sorteada) alvo = x + w / 2;
         x += w;
       });
@@ -366,5 +419,5 @@
     ]);
   }
 
-  V.graficos = { forma, rotuloEquipe, histograma, rotulosEscala, legendaEscala, amostra, tresPartes, fatias, cascata, barras, qr, larguraTexto };
+  V.graficos = { forma, rotuloEquipe, histograma, rotulosEscala, legendaEscala, amostra, tresPartes, fatias, cascata, barras, qr, larguraTexto, contraste };
 })(globalThis);

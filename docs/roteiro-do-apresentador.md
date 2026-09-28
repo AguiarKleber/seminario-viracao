@@ -135,11 +135,11 @@ ativa, o Espaço e as setas vão para os slides.
 | Espaço, → ou PageDown | Avança. Duas vezes seguidas em menos de 1,5 s contam como uma. Na enquete sem celulares com as afirmações juntas, passa para a próxima afirmação | Quase sempre. **Nunca fecha votação** |
 | Enter | Encerra a votação, a decisão ou a prorrogação | Com votação aberta. Pede confirmação antes do tempo mínimo de conversa e, sem celulares, quando alguma afirmação ficou sem contagem |
 | P | Pausa ou retoma. Pausado, **ninguém consegue votar** | Com votação aberta |
-| Ctrl+Z | Desfaz, com confirmação | Depois de encerrar uma rodada ou uma enquete |
+| Ctrl+Z | Desfaz, com confirmação. Com a votação recém-aberta por um Espaço a mais, desfaz a abertura e volta à tela de antes, **se nenhum voto chegou** e, na rodada, se você não decidiu por nenhuma equipe (senão avisa "Já chegaram N votos" e a votação segue aberta). Uma rodada que já foi apurada e reaberta pelo Ctrl+Z não volta mais para trás. Se a rede falhar no meio, a tela mostra "Desfazendo a abertura…": dê Ctrl+Z de novo (o Enter pergunta antes de apurar) | Depois de encerrar uma rodada ou uma enquete; com enquete ou decisão aberta (não na prorrogação) |
 | C | Troca o critério do placar | Placar final |
 | V | Liga ou desliga o "Sem vencedor" | Placar final |
 | F | Tela cheia da página (alternativa ao F11) | Qualquer hora |
-| H | Mostra ou esconde a barra. Mostrada pela tecla, ela também some sozinha depois de 3 s | Qualquer hora |
+| H | Mostra ou esconde a barra. Mostrada pela tecla, ela também some sozinha em 3 s (fica enquanto você navega nela com Tab) | Qualquer hora |
 | 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes |
 | 1 a 5 | Soma 1 na coluna da escala; Shift + tecla desconta | Enquete sem celulares (mão levantada) |
 | ↑ e ↓ | Voltam ou avançam a afirmação que está sendo contada | Enquete sem celulares, com as afirmações juntas |
@@ -148,9 +148,12 @@ ativa, o Espaço e as setas vão para os slides.
 | Alt+Tab | Alterna entre o telão e os slides | Nos blocos |
 | Esc | Fecha a janela de confirmação ou de escolha | Com uma dessas janelas aberta |
 
-**A barra do apresentador** aparece embaixo quando o mouse se mexe e some depois
-de 3 s. Ela não some com o mouse em cima dela nem com uma janela de escolha
-aberta. À esquerda, ela mostra:
+**A barra do apresentador** fica escondida. Ela aparece com H ou com o mouse
+encostado na borda de baixo da tela, e some 3 s depois do último movimento do
+mouse na borda ou sobre ela, mesmo com o mouse parado ali (mexer o mouse no meio
+da tela não a mostra). Aberta pelo H, ela também some em 3 s. Só a seguram uma
+janela de escolha aberta ou o foco do teclado dentro dela. As teclas funcionam
+com ela escondida. À esquerda, ela mostra:
 - o passo e o atraso, por exemplo "passo 8 de 19 · +3 min de atraso";
 - o nome do passo;
 - "estado salvo às 14:05 (r1)", depois do primeiro salvamento. O salvamento

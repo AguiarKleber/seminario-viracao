@@ -47,7 +47,22 @@ after(async () => {
 // ---------- Os dois ambientes, com a mesma cara ----------
 
 function ambienteLocal() {
-  const base = V.canalLocal.criar();
+  // A hora fica parada até a próxima volta do laço de eventos, como o "now" único
+  // de uma escrita no servidor. Com o Date.now puro, virar o milissegundo entre o
+  // marcadorDeHora() e a trava "entrouEm === agora" recusava a entrada de vez em
+  // quando (o teste falhou em 2 de 6 rodadas). É o mesmo relógio do
+  // bin/simular-alunos.mjs, que anda pelo menos 1 ms a cada volta.
+  let congelada = null;
+  let ultima = 0;
+  const relogio = () => {
+    if (congelada === null) {
+      congelada = Math.max(Date.now(), ultima + 1);
+      ultima = congelada;
+      setImmediate(() => { congelada = null; });
+    }
+    return congelada;
+  };
+  const base = V.canalLocal.criar({ relogio });
   // Como no projeto real, o PIN fica em privado/, que nenhuma conta escreve.
   base.importar({ privado: { pinApresentador: PIN } });
   return {

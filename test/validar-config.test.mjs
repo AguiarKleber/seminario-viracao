@@ -98,6 +98,36 @@ test('persona compartilhada por duas equipes é permitida (D-004)', () => {
   assert.ok(!r.avisos.some((a) => a.caminho.startsWith('personas.motoboy')));
 });
 
+// D-040: o rótulo curto é opcional; com até 10 caracteres (contados por letra,
+// e não por byte: "Doença" tem 6), passa sem aviso e vai para o config normalizado.
+test('carta aceita rótulo curto opcional, contado por letra', () => {
+  // Arrange
+  const b = lerConfigTeste();
+  carta(b, 'normal').curto = 'Doença ção';
+  // Act
+  const r = validar(b);
+  // Assert
+  assert.deepEqual(r.erros, [], listar(r.erros));
+  assert.deepEqual(r.avisos, [], listar(r.avisos));
+  assert.equal(r.config.cartas.normal.curto, 'Doença ção');
+  assert.equal(r.config.cartas.chuva.curto, undefined);
+});
+
+// D-040: o rótulo curto é opcional; com até 10 caracteres (contados por letra,
+// e não por unidade UTF-16), passa sem aviso e vai para o config normalizado.
+test('carta aceita rótulo curto opcional, contado por letra', () => {
+  // Arrange
+  const b = lerConfigTeste();
+  carta(b, 'normal').curto = 'Doença ção';
+  // Act
+  const r = validar(b);
+  // Assert
+  assert.deepEqual(r.erros, [], listar(r.erros));
+  assert.deepEqual(r.avisos, [], listar(r.avisos));
+  assert.equal(r.config.cartas.normal.curto, 'Doença ção');
+  assert.equal(r.config.cartas.chuva.curto, undefined);
+});
+
 // [nome, mutação, caminho esperado, mensagem esperada, 'erro' | 'aviso']
 const MUTACOES = [
   ['campo obrigatório ausente', (b) => { delete b.titulo; }, 'titulo', /obrigatório/, 'erro'],
@@ -168,6 +198,18 @@ const MUTACOES = [
   ['regra que não foi decidida', (b) => { b.regras.cartaPor = 'jogador'; }, 'regras.cartaPor', /inválido/, 'erro'],
   ['critério de placar desconhecido', (b) => { b.regras.placarPadrao = 'felicidade'; }, 'regras.placarPadrao', /inválido/, 'erro'],
   ['tom desconhecido', (b) => { carta(b, 'acidente').tom = 'leve'; }, 'cartas.acidente.tom', /único tom é "grave"/, 'erro'],
+  // D-040: o rótulo curto vai escrito dentro da fatia do sorteio; mais de 12
+  // caracteres não cabe nem na fatia larga do projetor de 1024 px.
+  ['rótulo curto vazio', (b) => { carta(b, 'normal').curto = '  '; }, 'cartas.normal.curto', /texto vazio/, 'erro'],
+  ['rótulo curto que não é texto', (b) => { carta(b, 'normal').curto = 5; }, 'cartas.normal.curto', /precisa ser texto/, 'erro'],
+  ['rótulo curto com mais de 12 caracteres', (b) => { carta(b, 'normal').curto = 'Treze letras!'; }, 'cartas.normal.curto', /mais de 12/, 'erro'],
+  ['rótulo curto com 11 caracteres', (b) => { carta(b, 'normal').curto = 'Mês difícil'; }, 'cartas.normal.curto', /mais de 10/, 'aviso'],
+  // D-040: o rótulo curto vai escrito dentro da fatia do sorteio; mais de 12
+  // caracteres não cabe nem na fatia larga do projetor de 1024 px.
+  ['rótulo curto vazio', (b) => { carta(b, 'normal').curto = '  '; }, 'cartas.normal.curto', /texto vazio/, 'erro'],
+  ['rótulo curto que não é texto', (b) => { carta(b, 'normal').curto = 5; }, 'cartas.normal.curto', /precisa ser texto/, 'erro'],
+  ['rótulo curto com mais de 12 caracteres', (b) => { carta(b, 'normal').curto = 'Treze letras!'; }, 'cartas.normal.curto', /mais de 12/, 'erro'],
+  ['rótulo curto com 11 caracteres', (b) => { carta(b, 'normal').curto = 'Mês difícil'; }, 'cartas.normal.curto', /mais de 10/, 'aviso'],
   // Ordem do roteiro (arquitetura seção 5): rodada antes das equipes joga sem equipe nenhuma.
   ['rodada antes do formarEquipes', (b) => { const [r] = b.roteiros['60min'].splice(5, 1); b.roteiros['60min'].splice(2, 0, r); },
     'roteiros.60min[2]', /antes do "formarEquipes"/, 'erro'],

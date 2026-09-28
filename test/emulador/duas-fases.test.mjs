@@ -170,3 +170,53 @@ test('telão cai depois do "fechando": outro telão assume com o PIN e conclui a
   assert.equal(anf.estado().subfase, 'decidindo');
   await assert.rejects(telao.gravar({ [s('pulso')]: telao.marcadorDeHora() }), NEGADO);
 });
+
+// D-037: o Ctrl+Z desfaz a abertura em duas fases, como o fechamento. Contra as
+// regras reais: voto que chega durante o "fechando" é recusado, e numa corrida
+// o desfazer só volta ao passo anterior se nenhum voto ficou no banco.
+test('desfazer a abertura: sem voto volta às personas; voto durante o "fechando" é recusado', async () => {
+  const { s, telao, alunos, config, sala } = await prepararRodada({ e1: 2 });
+  const [a0] = alunos;
+  let leituras = 0;
+  const recusas = [];
+  const espiao = {
+    ...telao,
+    async ler(caminho) {
+      // A segunda leitura das decisões é a de depois do "fechando" confirmado.
+      if (caminho === s('decisoes', 'r1') && ++leituras === 2) {
+        await a0.canal.gravar({ [s('decisoes', 'r1', 'e1', a0.uid)]: 'a' }).catch((e) => recusas.push(e));
+      }
+      return telao.ler(caminho);
+    },
+  };
+  const anf = V.anfitriao.criar({ canal: espiao, config, sala, nomeRoteiro: '60min', gerarSemente: () => 7 });
+  await anf.carregarSala();
+  await anf.desfazer();
+  assert.equal(recusas.length, 1);
+  assert.match(String(recusas[0]), NEGADO);
+  assert.equal(anf.estado().tipo, 'personas');
+  assert.equal(await telao.ler(s('decisoes', 'r1')), null);
+});
+
+test('corrida: votos junto com o desfazer da abertura; volta só sem voto no banco, e reabre com cada confirmado', async () => {
+  const { s, telao, anf, alunos } = await prepararRodada({ e1: 3, e2: 3 });
+  const confirmado = {};
+  const votos = alunos.map((a, i) => new Promise((r) => setTimeout(r, i % 3)).then(() => a.canal.gravar({ [s('decisoes', 'r1', a.eq, a.uid)]: 'a' }))
+    .then(() => { confirmado[a.uid] = true; }, (e) => {
+      assert.match(String(e), NEGADO);
+      confirmado[a.uid] = false;
+    }));
+  const [desfeito] = await Promise.allSettled([anf.desfazer(), ...votos]);
+  const gravadas = (await telao.ler(s('decisoes', 'r1'))) || {};
+  const noBanco = alunos.filter((a) => gravadas[a.eq]?.[a.uid]).length;
+  const confirmados = alunos.filter((a) => confirmado[a.uid]).length;
+  assert.equal(noBanco, confirmados, 'cada voto confirmado está no banco, e nenhum recusado');
+  if (desfeito.status === 'fulfilled') {
+    assert.equal(confirmados, 0, 'só desfaz sem voto nenhum');
+    assert.equal(anf.estado().tipo, 'personas');
+  } else {
+    assert.match(String(desfeito.reason), /não dá para desfazer a abertura/);
+    assert.ok(confirmados > 0);
+    assert.equal(anf.estado().subfase, 'decidindo', 'reaberta: os votos confirmados contam no encerrar');
+  }
+});
