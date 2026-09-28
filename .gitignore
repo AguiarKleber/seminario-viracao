@@ -1,0 +1,14 @@
+node_modules/
+.env
+.env.*
+
+# Emulador do Firebase e simulador
+firebase-debug*.log
+database-debug.log
+ui-debug.log
+.firebase/
+saidas/
+
+# Playwright
+test-results/
+playwright-report/
