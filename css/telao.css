@@ -1,0 +1,435 @@
+/* O telão (arquitetura, seção 5; D-016).
+ *
+ * Tamanhos pensados para o fundo da sala: corpo nunca abaixo de 28 px, títulos
+ * em torno de 4,5vw e o placar em torno de 8vw. Tudo cabe numa tela, sem
+ * rolagem, em 1024×768 (projetor 4:3 antigo) e em 1920×1080: o e2e confere as
+ * duas coisas.
+ *
+ * Cada tamanho também tem um teto em vh: numa tela 16:9, 2,5vw dá 48 px em
+ * 1920×1080, e a mesma tela que cabe em 4:3 passa da altura (seis equipes com
+ * carta e decisão não cabem em 22 linhas). Com o teto, 16:9 fica na proporção
+ * do 4:3 (39 px em 1080 de altura), e o 4:3 continua exatamente em 2,5vw.
+ */
+
+:root {
+  --corpo: clamp(28px, min(2.5vw, 3.65vh), 64px);
+  --titulo: clamp(40px, min(4.5vw, 6vh), 110px);
+  --afirmacao: clamp(34px, min(3.4vw, 4.5vh), 84px);
+  --placar: clamp(56px, min(8vw, 12vh), 180px);
+  --espaco: clamp(10px, 1.8vh, 32px);
+  --lateral: 3.5vw;
+}
+
+html, body { height: 100%; }
+
+body.telao {
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+  font-size: var(--corpo);
+}
+
+#palco {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  padding: calc(var(--espaco) * 1.3) var(--lateral) var(--espaco);
+}
+
+.tela { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--espaco); min-height: 0; }
+
+.tela-cabecalho { display: flex; justify-content: space-between; align-items: flex-start; gap: 2vw; }
+.cabecalho-textos { display: flex; flex-direction: column; gap: .15em; min-width: 0; }
+.cabecalho-lado { flex: none; text-align: right; }
+
+.kicker {
+  color: var(--texto-2);
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+h1 {
+  font-size: var(--titulo);
+  line-height: 1.08;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+h1.afirmacao { font-size: var(--afirmacao); font-weight: 650; line-height: 1.15; }
+h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
+
+.cronometro {
+  font-size: calc(var(--corpo) * 1.5);
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+/* Tempo esgotado não pisca nem fica vermelho: é informação para o apresentador,
+   que decide quando fechar (D-010). */
+.cronometro[data-esgotado="true"] { color: var(--texto-2); }
+
+.texto-grande { font-size: calc(var(--corpo) * 1.2); line-height: 1.3; max-width: 40em; }
+.texto-secundario { color: var(--texto-2); }
+.lista-simples { display: flex; flex-direction: column; gap: .4em; }
+.lista-simples li::before { content: "— "; color: var(--texto-2); }
+
+.numero-destaque { font-size: var(--placar); line-height: 1; font-weight: 750; }
+.numero-grande { font-size: calc(var(--corpo) * 2); line-height: 1; font-weight: 750; }
+
+.dica-operador { color: var(--texto-2); }
+
+.rodape-enquete {
+  margin-top: auto;
+  color: var(--texto-2);
+  border-top: 1px solid var(--linha);
+  padding-top: calc(var(--espaco) * .6);
+}
+
+.legenda { color: var(--texto-2); display: flex; flex-wrap: wrap; align-items: center; gap: .2em .5em; }
+
+/* ---------- Gráficos medidos ---------- */
+
+.grafico { position: relative; flex: 1 1 auto; min-height: 90px; min-width: 0; }
+.grafico > svg { position: absolute; inset: 0; }
+.grafico-vazio { min-height: 0; }
+
+.segmento-piloto { fill: var(--piloto); }
+.segmento-decisoes { fill: var(--depois); }
+.segmento-sorte { stroke: var(--antes); stroke-width: 2; }
+.segmento-simples { fill: var(--neutro); }
+.marcador-fim { stroke: var(--texto); stroke-width: 4; }
+.referencia { stroke: var(--texto); stroke-width: 3; stroke-dasharray: 10 8; }
+.parte-concorda { fill: var(--depois); }
+.parte-neutro { fill: var(--piloto); }
+.parte-discorda { stroke: var(--antes); stroke-width: 2; }
+.barra.parte-neutro, .barra.parte-concorda { stroke: none; }
+
+.fatia-par { fill: #6b6b6b; }
+.fatia-impar { fill: #4f4f4f; }
+.fatia-grave { stroke: var(--antes); stroke-width: 2; }
+.fatia-sorteada { stroke: var(--texto); stroke-width: 3; }
+/* Com animação, o contorno da sorteada só aparece quando os ponteiros param
+   (2,6 s, o mesmo atraso do .revelar-apos): antes, ele entregava a resposta
+   (revisão da F2, achado 8). */
+.fatias-animadas .fatia-sorteada { stroke: transparent; animation: contornar .01s linear 2.6s forwards; }
+@keyframes contornar { to { stroke: var(--texto); } }
+.ponteiro-seta { fill: var(--texto); }
+.ponteiro-linha { stroke: var(--texto); stroke-width: 5; }
+
+/* Os ponteiros de todas as equipes usam a mesma animação, com a mesma duração:
+   param juntos (arquitetura, seção 5). */
+@keyframes ponteiro {
+  0% { transform: translateX(0); }
+  55% { transform: translateX(var(--fim)); }
+  100% { transform: translateX(var(--alvo)); }
+}
+.ponteiro-animado { animation: ponteiro 2.6s cubic-bezier(.25, .7, .25, 1) both; }
+
+@keyframes aparecer { to { opacity: 1; } }
+.revelar-apos { opacity: 0; animation: aparecer .35s ease 2.6s forwards; }
+
+.escala-legenda {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0 .6em;
+  color: var(--texto-2);
+  text-align: center;
+  line-height: 1.15;
+}
+.escala-legenda li { display: flex; flex-direction: column; align-items: center; gap: .1em; }
+.escala-legenda b { color: var(--texto); }
+.escala-em-linha { color: var(--texto-2); }
+.escala-em-linha b { color: var(--texto); }
+
+/* ---------- Abertura ---------- */
+
+.tela-abertura { font-size: clamp(18px, 1.55vw, 30px); gap: 1.2em; }
+.tela-abertura h1 { font-size: 2.2em; }
+.tela-abertura h2 { font-size: 1.1em; margin-bottom: .5em; }
+.abertura-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2em 2em; align-items: start; }
+/* O config ocupa a coluna da esquerda inteira: uma lista longa de erros não
+   empurra o "Começar" para fora da tela. */
+.abertura-grade > :first-child { grid-row: span 3; }
+.abertura-bloco {
+  display: flex; flex-direction: column; gap: .6em;
+  padding: 1em 1.2em;
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  background: var(--superficie);
+}
+.abertura-retomar { border-color: var(--texto-2); }
+.abertura-pergunta { font-size: 1.2em; font-weight: 700; }
+.abertura-status { color: var(--texto-2); }
+.abertura-ok { color: var(--texto); }
+.marca-ok { font-weight: 800; }
+.abertura-erro { color: var(--texto); font-weight: 700; }
+.lista-erros {
+  list-style: decimal; padding-left: 1.6em;
+  max-height: 40vh; overflow: auto;
+  display: flex; flex-direction: column; gap: .3em;
+}
+.lista-erros code, .lista-avisos code { color: var(--texto-2); }
+.lista-avisos summary { cursor: pointer; color: var(--texto-2); }
+.lista-avisos ul { padding-left: 1em; margin-top: .4em; display: flex; flex-direction: column; gap: .3em; max-height: 25vh; overflow: auto; }
+.zona-arquivo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6em 1em;
+  padding: .8em; border: 2px dashed var(--linha-forte); border-radius: var(--raio);
+}
+body.arrastando .zona-arquivo { border-color: var(--foco); }
+.zona-dica { color: var(--texto-2); }
+.opcoes-roteiro { display: flex; flex-direction: column; gap: .5em; }
+.opcao-roteiro { display: flex; align-items: center; gap: .6em; min-height: 48px; cursor: pointer; }
+.opcao-roteiro input { width: 1.2em; height: 1.2em; accent-color: var(--texto); }
+.abertura-acoes { display: flex; flex-wrap: wrap; gap: .7em; }
+.abertura-nota { color: var(--texto-2); }
+
+/* ---------- Lobby ---------- */
+
+.lobby { flex: 1; display: flex; align-items: center; gap: 4vw; min-height: 0; }
+.lobby-qr { flex: none; background: #fff; padding: 0; border-radius: 6px; line-height: 0; }
+.lobby-info { display: flex; flex-direction: column; gap: .35em; min-width: 0; }
+.lobby-chamada { font-size: var(--titulo); font-weight: 750; line-height: 1.05; }
+.lobby-url { overflow-wrap: anywhere; font-weight: 600; }
+.codigo-sala { font-size: var(--placar); font-weight: 800; letter-spacing: .08em; line-height: 1; }
+/* "N ativos / M membros": discreto, no tamanho do corpo (nunca menos de 28 px
+   no telão), em cinza para não competir com o número de conectados. */
+.lobby-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.lobby-offline { display: flex; flex-direction: column; gap: var(--espaco); }
+
+/* ---------- Faixa de entrada ---------- */
+
+.faixa-entrada {
+  flex: none;
+  display: flex; align-items: center; gap: .3em 1.5em;
+  padding: .5vh var(--lateral);
+  line-height: 1.15;
+  border-top: 1px solid var(--linha);
+  background: var(--superficie);
+}
+.faixa-entrada .qr { flex: none; }
+.faixa-codigo { letter-spacing: .08em; }
+
+/* ---------- Enquete ---------- */
+
+.enquete-status { display: flex; align-items: baseline; gap: .3em; }
+.lista-afirmacoes { list-style: decimal; padding-left: 1.4em; display: flex; flex-direction: column; gap: .3em; }
+.contadores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5em; }
+.contador {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .15em;
+  padding: .4em .3em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  text-align: center; line-height: 1.15;
+}
+.contador-tecla {
+  border: 2px solid var(--texto-2); border-radius: 6px;
+  min-width: 1.6em; padding: 0 .3em;
+}
+.contador-valor { font-size: var(--placar); font-weight: 750; line-height: 1.05; }
+.contador-rotulo { color: var(--texto-2); }
+
+.resumos { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.resumo-linha { display: flex; flex-direction: column; gap: .25em; }
+.resumo-texto { font-weight: 600; }
+.resumo-dados { display: flex; align-items: center; gap: 1.2em; }
+.resumo-dados .grafico { height: 1.9em; min-height: 0; }
+.resumo-estat { flex: none; white-space: nowrap; }
+.mediana { font-size: 1.35em; }
+.media { color: var(--texto-2); }
+
+/* ---------- Bloco ---------- */
+
+.tela-bloco { justify-content: flex-start; }
+.placar-resumido { display: flex; flex-direction: column; gap: .3em; }
+.placar-discreto { margin-top: auto; color: var(--texto-2); }
+.resumido-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25em 3vw; }
+/* A persona vai na linha de baixo do nome da equipe, e não entre ele e o
+   valor: ali, em 1024×768, sobravam poucos pixels e o nome virava "Ka…"
+   (revisão da F2, achado 18). */
+.resumido-linha {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 .6em;
+  padding: .15em 0; border-bottom: 1px solid var(--linha);
+}
+.resumido-linha > .equipe { grid-column: 1; grid-row: 1; }
+.resumido-persona { grid-column: 1; grid-row: 2; color: var(--texto-2); min-width: 0; overflow-wrap: anywhere; line-height: 1.15; }
+.resumido-valor { grid-column: 2; grid-row: 1 / span 2; font-weight: 700; color: var(--texto); }
+
+/* ---------- Formar equipes ---------- */
+
+.grade-equipes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--espaco); flex: 1 1 auto; min-height: 0; align-content: center; }
+.cartao-equipe {
+  flex-direction: column; align-items: flex-start; justify-content: center;
+  gap: .25em; padding: .45em .6em;
+  font-size: var(--corpo); font-weight: 500;
+  text-align: left;
+}
+.cartao-equipe .equipe { white-space: normal; }
+.cartao-equipe.fechada { background: var(--fundo); border-style: dashed; }
+.cartao-equipe.fechada .equipe { opacity: .55; }
+.cartao-equipe[aria-pressed="true"] { background: var(--superficie-2); color: var(--texto); border-color: var(--texto); }
+.cartao-equipe-detalhes { display: flex; flex-direction: column; gap: .05em; color: var(--texto-2); line-height: 1.15; }
+.equipe-situacao { font-weight: 700; color: var(--texto); }
+.cartao-equipe.fechada .equipe-situacao { color: var(--texto-2); }
+.formar-status { font-weight: 600; }
+
+/* ---------- Personas ---------- */
+
+.personas { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.persona-linha {
+  display: grid; grid-template-columns: minmax(0, 13em) minmax(0, 1fr); gap: 2vw; align-items: start;
+  padding-bottom: calc(var(--espaco) * .6);
+  border-bottom: 1px solid var(--linha);
+}
+.persona-equipes { display: flex; flex-direction: column; gap: .15em; }
+.persona-texto { display: flex; flex-direction: column; gap: .1em; line-height: 1.22; }
+
+/* ---------- Rodada ---------- */
+
+.situacao { font-size: calc(var(--corpo) * 1.05); line-height: 1.3; max-width: 46em; }
+.opcoes { display: flex; flex-direction: column; gap: .25em; }
+.opcoes li { display: flex; align-items: baseline; gap: .6em; }
+.opcoes-compactas { color: var(--texto-2); }
+.letra {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.35em; height: 1.35em;
+  border: 2px solid var(--texto); border-radius: 6px;
+  font-weight: 800; line-height: 1;
+  flex: none;
+}
+.equipes-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5em 1.5vw; margin-top: auto; }
+.equipe-status {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .2em .5em;
+  padding: .35em .6em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+}
+.equipe-status.decidida { border-color: var(--texto-2); }
+.equipe-andamento { color: var(--texto-2); flex-basis: 100%; }
+.equipe-andamento b { color: var(--texto); }
+.equipe-empate { font-weight: 700; flex-basis: 100%; }
+.botoes-opcao { display: flex; gap: .4em; }
+.botao-letra { min-width: 2em; min-height: 48px; padding: 0 .3em; font-size: max(28px, .85em); font-weight: 800; line-height: 1.3; }
+
+/* ---------- Sorteio e placar: linhas alinhadas com o gráfico ---------- */
+
+.linhas-grafico {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0 1.5vw;
+}
+.linhas-sorteio { grid-template-columns: auto minmax(0, 1fr) minmax(0, 11em); }
+.coluna-rotulos, .coluna-valores { display: grid; grid-template-rows: repeat(var(--linhas), minmax(0, 1fr)); }
+.linha-rotulo, .linha-valor { display: flex; align-items: center; min-height: 0; }
+.linha-valor { font-weight: 700; line-height: 1.12; }
+.linha-rotulo-sorteio { flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12; }
+.linha-graves { color: var(--texto-2); }
+.linha-graves b { color: var(--texto); }
+.valor-criterio { justify-content: flex-end; white-space: nowrap; }
+.carta-sorteada { font-weight: 650; }
+.criterio b { font-weight: 800; }
+.referencias { color: var(--texto-2); display: flex; flex-wrap: wrap; gap: .2em 2em; }
+.referencias b { color: var(--texto); }
+.marca-referencia { font-weight: 800; color: var(--texto); }
+
+/* ---------- Resultado ---------- */
+
+/* Uma grade só, com as linhas em subgrid: as colunas se alinham entre as
+   equipes e cada uma tem só a largura de que precisa. */
+.grade-resultados {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr);
+  gap: calc(var(--espaco) * .5) 0;
+  flex: 1 1 auto; min-height: 0; align-content: safe center;
+}
+.cartao-resultado {
+  display: grid; grid-template-columns: subgrid; grid-column: 1 / -1;
+  align-items: center; column-gap: 1.6vw;
+  padding: .2em .6em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  line-height: 1.15;
+}
+.resultado-corpo { display: flex; flex-direction: column; gap: .05em; min-width: 0; }
+.resultado-carta { font-weight: 750; }
+.resultado-decisao { color: var(--texto-2); }
+.resultado-equipe { display: flex; flex-direction: column; gap: .05em; }
+.resultado-delta { font-weight: 700; white-space: nowrap; color: var(--texto-2); }
+.cartao-resultado.destaque { border-color: var(--texto); border-width: 3px; }
+/* Carta grave: só o texto da consequência, em cor neutra, sem animação e sem
+   destaque (seção 8, "tema sensível"). */
+.cartao-resultado.grave, .cartao-resultado.grave.destaque { border-color: var(--linha-forte); border-width: 2px; }
+@keyframes destacar { from { opacity: .15; transform: translateX(-1.5vw); } to { opacity: 1; transform: none; } }
+.cartao-resultado.animada { animation: destacar .7s ease-out both; }
+
+/* ---------- Comparativo ---------- */
+
+.frase-comparativo { font-size: calc(var(--corpo) * 1.05); line-height: 1.3; }
+.aviso-comparativo { font-weight: 700; }
+.aviso-celulares { font-weight: 600; }
+.paineis { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3vw; }
+.paineis-um { grid-template-columns: minmax(0, 1fr); }
+.painel-distribuicao { display: flex; flex-direction: column; gap: .3em; min-height: 0; }
+.painel-titulo { color: var(--texto-2); }
+.paineis ~ .escala-legenda { font-size: var(--corpo); }
+
+/* ---------- Fim ---------- */
+
+.fim-acoes { display: flex; flex-wrap: wrap; gap: 1em; }
+.botao-grande { font-size: var(--corpo); padding: .4em 1.2em; }
+.placar-fim { margin-top: auto; }
+
+/* ---------- Barra do apresentador (sobreposta; some após 3 s sem mouse) ---------- */
+
+.barra {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
+  padding: 10px 16px;
+  background: rgba(17, 17, 17, .97);
+  border-top: 1px solid var(--linha-forte);
+  font-size: 18px;
+}
+.barra-info { display: flex; flex-direction: column; gap: 2px; min-width: 14em; }
+.barra-passo { font-weight: 700; }
+.barra-titulo { color: var(--texto-2); max-width: 22em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.barra-salvo { color: var(--texto-2); }
+.barra-salvo:empty { display: none; }
+.barra-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.barra-ativos:empty { display: none; }
+.barra-info .selo { align-self: flex-start; margin-top: 4px; }
+.barra-botoes { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.botao-barra { min-height: 40px; padding: .25em .7em; font-size: 17px; }
+
+/* ---------- Aviso e modal ---------- */
+
+.aviso {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 30;
+  max-width: min(92vw, 60em);
+  padding: .4em .9em;
+  background: var(--superficie-2);
+  border: 2px solid var(--texto-2); border-left-width: 10px;
+  border-radius: var(--raio);
+  font-size: 28px; font-weight: 600;
+}
+.aviso[data-tipo="erro"] { border-color: var(--texto); }
+
+.modal {
+  max-width: min(92vw, 900px);
+  padding: 1.2em 1.4em;
+  background: var(--superficie);
+  color: var(--texto);
+  border: 2px solid var(--linha-forte);
+  border-radius: var(--raio);
+  font-size: 22px;
+}
+.modal::backdrop { background: rgba(0, 0, 0, .72); }
+.modal h2 { font-size: 1.2em; margin-bottom: .6em; }
+.modal-texto { color: var(--texto-2); margin-bottom: .8em; }
+.modal-botoes { display: flex; flex-wrap: wrap; gap: .5em; }
+.modal-botoes .botao-opcao { flex: 1 1 100%; justify-content: flex-start; text-align: left; }
+.campo-cracha {
+  font: inherit; font-size: 2em; letter-spacing: .2em; text-transform: uppercase;
+  width: 5em; padding: .2em .4em; margin-bottom: .8em;
+  background: var(--fundo); color: var(--texto); border: 2px solid var(--linha-forte); border-radius: var(--raio);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ponteiro-animado { transform: translateX(var(--alvo)); }
+  .revelar-apos { opacity: 1; }
+}

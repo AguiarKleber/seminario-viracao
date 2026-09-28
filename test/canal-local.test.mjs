@@ -183,7 +183,7 @@ test('trava: estado só com geracao = anterior + 1 (e 1 na criação)', async ()
   assert.equal((await h.ler(`${S}/estado`)).geracao, 2);
 });
 
-test('trava: aluno não escreve estado, meta, conteudo, resultados, placar nem sementes', async () => {
+test('trava: aluno não escreve estado, meta, conteudo, resultados, placar, sementes nem prorrogacoes', async () => {
   // Arrange
   const { canal } = await salaPronta();
   const a = await membro(canal, 'a');
@@ -191,6 +191,7 @@ test('trava: aluno não escreve estado, meta, conteudo, resultados, placar nem s
   for (const [caminho, valor] of [
     ['estado', { geracao: 2 }], ['meta/entradaAberta', false], ['conteudo/x', 1],
     ['resultados/r1', { e1: { carta: 'x' } }], ['placar/e1', { renda: 9 }], ['sementes/r1', 1], ['pulso', 1],
+    ['prorrogacoes/r1', true], ['prorrogacoes/r1', null],
   ]) {
     await assert.rejects(a.gravar({ [`${S}/${caminho}`]: valor }), negado(), caminho);
   }
@@ -217,6 +218,27 @@ test('trava: semente gravada uma vez, nunca alterada nem apagada', async () => {
   await assert.rejects(h.gravar({ [`${S}/sementes/r1`]: null }), negado(/semente/));
   await assert.rejects(h.gravar({ [`${S}/sementes/r2`]: 'texto' }), negado(/número/));
   assert.equal(await h.ler(`${S}/sementes/r1`), 99);
+});
+
+// D-035: a marca de que a rodada já teve prorrogação segue a semente. Se o
+// desfazer (ou um anfitrião com defeito) pudesse apagá-la, refazer a rodada
+// abriria uma segunda prorrogação.
+test('trava: marca de prorrogação gravada uma vez, só true, nunca alterada nem apagada; só o anfitrião lê', async () => {
+  // Arrange
+  const { canal, h } = await salaPronta();
+  const a = await membro(canal, 'a', 'e1');
+  // Act
+  await h.gravar({ [`${S}/prorrogacoes/r1`]: true });
+  // Assert
+  await assert.rejects(h.gravar({ [`${S}/prorrogacoes/r1`]: true }), negado(/prorrogação/));
+  await assert.rejects(h.gravar({ [`${S}/prorrogacoes/r1`]: null }), negado(/prorrogação/));
+  for (const valor of [false, 1, 'sim', { x: true }]) {
+    await assert.rejects(h.gravar({ [`${S}/prorrogacoes/r2`]: valor }), negado(/true/), JSON.stringify(valor));
+  }
+  await assert.rejects(h.gravar({ [`${S}/prorrogacoes`]: { r3: true } }), negado(/nível/));
+  await assert.rejects(a.ler(`${S}/prorrogacoes/r1`), negado());
+  await assert.rejects(a.ler(`${S}/prorrogacoes`), negado());
+  assert.equal(await h.ler(`${S}/prorrogacoes/r1`), true);
 });
 
 test('trava: resultados e apurações gravados uma vez; apagar é permitido', async () => {
@@ -376,12 +398,13 @@ test('apagar a sala: só o anfitrião, e apaga tudo, inclusive as sementes', asy
   assert.deepEqual(canal.exportar(), {});
 });
 
-test('regrasVersao só aceita "v1"; autoteste e privado nunca aceitam escrita', async () => {
+test('regrasVersao só aceita a versão destas regras; autoteste e privado nunca aceitam escrita', async () => {
   // Arrange
   const canal = V.canalLocal.criar().comoUsuario('u');
   // Act + Assert
-  await canal.gravar({ 'regrasVersao/u': 'v1' });
+  await canal.gravar({ 'regrasVersao/u': 'v3' });
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v2' }), negado());
+  await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v1' }), negado());
   await assert.rejects(canal.gravar({ 'autoteste/u': true }), negado());
   await assert.rejects(canal.gravar({ 'privado/pinApresentador': '1234567890' }), negado());
   await assert.rejects(canal.gravar({ 'pedidosAnfitriao/u': 'curto' }), negado());
@@ -432,6 +455,78 @@ test('trava: depois da trava, regravar o nó inteiro do membro com a entrouEm an
   // Act + Assert
   await assert.rejects(a.gravar({ [`${S}/membros/a`]: { entrouEm, equipe: 'e2' } }), negado(/travadas/));
   assert.equal((await a.ler(`${S}/membros/a`)).equipe, 'e1');
+});
+
+test('trava: regravar o nó do membro com a mesma equipe passa pela regra da equipe, como o .validate do Firebase', async () => {
+  // Arrange: no Firebase o .validate roda em todo filho gravado, mudado ou não
+  const { canal, h } = await salaPronta({ estado: { equipesAbertas: { e1: true, e2: true } } });
+  const a = await membro(canal, 'a', 'e1');
+  const entrouEm = (await a.ler(`${S}/membros/a`)).entrouEm;
+  // Act + Assert: antes da trava, com a equipe aberta, passa
+  await a.gravar({ [`${S}/membros/a`]: { entrouEm, equipe: 'e1' } });
+  await mudarEstado(h, { equipesAbertas: { e2: true } });
+  await assert.rejects(a.gravar({ [`${S}/membros/a`]: { entrouEm, equipe: 'e1' } }), negado(/não está aberta/));
+  await mudarEstado(h, { equipesAbertas: { e1: true, e2: true }, equipesTravadas: true });
+  await assert.rejects(a.gravar({ [`${S}/membros/a`]: { entrouEm, equipe: 'e1' } }), negado(/travadas/));
+  // Sem equipe no nó, a regra da equipe não entra: quem chega depois da trava entra.
+  const b = canal.comoUsuario('b');
+  await b.gravar({ [`${S}/membros/b`]: { entrouEm: b.marcadorDeHora() } });
+  await h.gravar({ [`${S}/membros/a/equipe`]: 'e2' });
+});
+
+// Revisão da F2, achado 1: um texto, número ou booleano no lugar do nó do membro
+// não tem filhos, e as travas dos filhos (entrouEm, equipe, $outro) não viam
+// nada. Um texto de 5 MB ali ia para os 20 celulares a cada regravação.
+test('trava: o nó do membro é sempre um objeto com entrouEm; valor solto é recusado', async () => {
+  // Arrange
+  const { canal, h } = await salaPronta({ estado: { equipesTravadas: true } });
+  const a = canal.comoUsuario('a');
+  // Act + Assert
+  for (const solto of ['x'.repeat(1000), 42, true]) {
+    await assert.rejects(a.gravar({ [`${S}/membros/a`]: solto }), negado(/membro/), JSON.stringify(solto).slice(0, 12));
+  }
+  // O anfitrião também não cria um membro sem entrouEm (mover quem não existe).
+  await assert.rejects(h.gravar({ [`${S}/membros/z/equipe`]: 'e1' }), negado(/entrouEm/));
+  await a.gravar({ [`${S}/membros/a`]: { entrouEm: a.marcadorDeHora() } });
+  assert.equal(typeof (await h.ler(`${S}/membros/a`)).entrouEm, 'number');
+  // Apagar a entrouEm deixaria o membro só com a equipe: recusado; apagar o nó inteiro, não.
+  await h.gravar({ [`${S}/membros/a/equipe`]: 'e1' });
+  await assert.rejects(h.gravar({ [`${S}/membros/a/entrouEm`]: null }), negado(/entrouEm/));
+  await h.gravar({ [`${S}/membros/a`]: null });
+});
+
+// Achado 3: gravar só membros/{uid}/equipe criava o membro por uma porta que não
+// olha a entrada nem o prazo da sala. Depois, esse "membro" registrava presença
+// e votava na enquete.
+test('trava: sem registro de membro, gravar só a equipe não faz ninguém entrar (entrada fechada ou sala expirada)', async () => {
+  // Arrange
+  const { canal, h, relogio } = await salaPronta({ estado: { tipo: 'formarEquipes', equipesAbertas: { e1: true, e2: true }, equipesTravadas: false } });
+  await h.gravar({ [`${S}/meta/entradaAberta`]: false });
+  const x = canal.comoUsuario('x');
+  // Act + Assert
+  await assert.rejects(x.gravar({ [`${S}/membros/x`]: { entrouEm: x.marcadorDeHora() } }), negado(/entrada fechada/));
+  await assert.rejects(x.gravar({ [`${S}/membros/x/equipe`]: 'e1' }), negado(/entrouEm/));
+  await assert.rejects(x.gravar({ [`${S}/presenca/x`]: x.marcadorDeHora() }), negado(/não é membro/));
+  // Sala expirada, com a entrada aberta: o mesmo.
+  await h.gravar({ [`${S}/meta/entradaAberta`]: true });
+  relogio.passar(20_000_000);
+  await assert.rejects(x.gravar({ [`${S}/membros/x/equipe`]: 'e2' }), negado(/entrouEm/));
+  assert.equal(await h.ler(`${S}/membros/x`), null);
+});
+
+// Achado 6: a regra do Firebase aceita regravar a mesma entrouEm pela folha
+// (newData.val() === data.val()); o canal-local recusava. Direção inofensiva,
+// mas divergência entre os dois modos (I7).
+test('trava: regravar a mesma entrouEm pela folha passa, como no Firebase; outra hora não', async () => {
+  // Arrange
+  const { canal, relogio } = await salaPronta();
+  const a = await membro(canal, 'a');
+  const entrouEm = await a.ler(`${S}/membros/a/entrouEm`);
+  relogio.passar(5000);
+  // Act + Assert
+  await a.gravar({ [`${S}/membros/a/entrouEm`]: entrouEm });
+  await assert.rejects(a.gravar({ [`${S}/membros/a/entrouEm`]: entrouEm - 60_000 }), negado(/hora do servidor/));
+  await a.gravar({ [`${S}/membros/a/entrouEm`]: a.marcadorDeHora() });
 });
 
 test('com travas: false tudo passa (canal de apoio do simulador)', async () => {

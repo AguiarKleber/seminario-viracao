@@ -1,0 +1,247 @@
+/* O celular do aluno (arquitetura, seções 5, 9 e 10; D-016).
+ *
+ * Pensado para o celular em pé, numa mão, na sala de aula:
+ * - uma coisa por tela, de cima para baixo, sem rolagem lateral;
+ * - alvos de toque de pelo menos 48 px (os de voto, 56 px), com rótulos
+ *   curtos: o polegar erra menos, e ninguém lê parágrafo para votar;
+ * - as cores e a fonte vêm do base.css (fundo escuro, contraste de 7:1, fonte
+ *   do sistema, números tabulares), iguais às do telão;
+ * - estado nunca só por cor: o voto marcado tem fundo claro E borda, o envio
+ *   lento tem texto, a equipe tem forma, número e nome.
+ */
+
+:root {
+  --lateral-aluno: 16px;
+  --vao: 16px;
+  --alvo: 56px;
+}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+body.aluno {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-size: 18px;
+  line-height: 1.4;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* ---------- Topo: crachá e conexão ---------- */
+
+.topo {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 52px;
+  padding: 8px var(--lateral-aluno);
+  padding-top: max(8px, env(safe-area-inset-top, 0));
+  background: var(--fundo);
+  border-bottom: 1px solid var(--linha);
+}
+.cracha { display: flex; align-items: center; gap: .35em; min-width: 0; font-size: 17px; white-space: nowrap; overflow: hidden; }
+.cracha .equipe { gap: .3em; }
+.cracha-rotulo { color: var(--texto-2); }
+.cracha-codigo { font-weight: 700; letter-spacing: .06em; }
+.topo-selo { flex: none; }
+.topo-selo .selo { font-size: 14px; }
+
+/* ---------- Faixas (versão nova, telão calado) ---------- */
+
+.faixa {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px;
+  margin: 12px var(--lateral-aluno) 0;
+  padding: 10px 14px;
+  border: 2px solid var(--texto-2); border-left-width: 8px;
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  font-weight: 600;
+}
+.botao-faixa { min-height: 48px; }
+
+/* ---------- Tela ---------- */
+
+.tela-aluno {
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 20px var(--lateral-aluno) 32px;
+}
+
+.bloco { display: flex; flex-direction: column; gap: var(--vao); }
+
+.cabecalho { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cabecalho-textos { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.kicker { color: var(--texto-2); font-size: 15px; font-weight: 600; letter-spacing: .01em; }
+
+h1 { font-size: 26px; line-height: 1.18; font-weight: 750; letter-spacing: -0.005em; text-wrap: balance; overflow-wrap: anywhere; }
+h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: pretty; }
+.subtitulo { font-size: 16px; font-weight: 700; color: var(--texto-2); margin-top: 4px; }
+
+.texto { max-width: 36em; }
+.texto-2 { color: var(--texto-2); font-size: 16px; }
+.rotulo { font-weight: 700; }
+
+.cronometro-aluno {
+  flex: none;
+  min-width: 3.2em;
+  padding-top: 2px;
+  text-align: right;
+  font-size: 20px; font-weight: 700;
+  color: var(--texto-2);
+  white-space: nowrap;
+}
+.cronometro-aluno:empty { display: none; }
+
+.progresso { font-weight: 700; color: var(--texto-2); }
+
+/* Mensagens de estado: o texto diz o que é; a borda só reforça. */
+.nota {
+  padding: 10px 14px;
+  border-left: 4px solid var(--linha-forte);
+  background: var(--superficie);
+  border-radius: 0 var(--raio) var(--raio) 0;
+}
+.nota[data-tipo="erro"] { border-left-color: var(--texto); font-weight: 700; }
+
+.privacidade {
+  color: var(--texto-2); font-size: 15px;
+  padding-top: 12px; border-top: 1px solid var(--linha);
+}
+
+.botao-largo { width: 100%; min-height: var(--alvo); font-size: 19px; }
+.botao-pequeno { min-height: 48px; padding: .3em .9em; font-size: 16px; align-self: flex-start; }
+
+/* ---------- Entrada ---------- */
+
+.campo-codigo, .campo-url {
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 12px;
+  font: inherit;
+  background: var(--fundo); color: var(--texto);
+  border: 2px solid var(--linha-forte); border-radius: var(--raio);
+}
+.campo-codigo {
+  font-size: 34px; font-weight: 750; letter-spacing: .35em; text-align: center; text-transform: uppercase;
+  padding-left: calc(12px + .35em);
+}
+.campo-codigo:focus-visible, .campo-url:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.campo-codigo:disabled { opacity: .45; }
+.campo-url { min-height: 48px; font-size: 15px; }
+
+.embutido {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px;
+  border: 2px solid var(--texto); border-radius: var(--raio);
+  background: var(--superficie);
+}
+.embutido-titulo { font-size: 22px; font-weight: 750; }
+
+/* ---------- Enquete: 5 botões, um embaixo do outro ---------- */
+
+.escala { display: flex; flex-direction: column; gap: 8px; }
+.botao-escala, .botao-opcao-aluno, .botao-equipe {
+  width: 100%; min-height: var(--alvo);
+  justify-content: flex-start; text-align: left;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+.botao-escala .botao-rotulo:empty, .botao-opcao-aluno .botao-rotulo:empty, .botao-equipe .botao-rotulo:empty { display: none; }
+.escala-numero, .opcao-letra {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: 2px solid currentColor; border-radius: 50%;
+  font-size: 18px; font-weight: 800;
+}
+.escala-rotulo, .opcao-rotulo { flex: 1; min-width: 0; }
+/* O envio lento continua legível: o texto da nota diz "Enviando…", e o botão
+   escolhido fica marcado, com contorno tracejado enquanto não confirma. */
+.botao.enviando { outline: 3px dashed var(--foco); outline-offset: 2px; opacity: 1; }
+
+.navegar { display: flex; justify-content: space-between; gap: 8px; }
+.navegar .botao { flex: 1; }
+
+/* Uma linha por afirmação, com o "Mudar" à direita e o texto em até 2 linhas:
+   empilhados, os três cartões passavam da dobra em 360×740, e a confirmação e o
+   aviso de privacidade ficavam fora da tela (revisão da F2, achado 19). */
+.respostas { display: flex; flex-direction: column; gap: 10px; }
+.resposta {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.resposta-texto { font-weight: 600; }
+.resposta-voto { color: var(--texto-2); }
+.resposta-voto b { color: var(--texto); }
+.respostas-compactas { gap: 8px; }
+.respostas-compactas .resposta {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 12px;
+  padding: 8px 12px;
+}
+.respostas-compactas .resposta > .botao { grid-column: 2; grid-row: 1 / span 2; }
+.respostas-compactas .resposta-texto {
+  font-size: 16px; line-height: 1.3;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+.respostas-compactas .resposta-voto { font-size: 16px; }
+
+/* ---------- Equipes ---------- */
+
+.lista-equipes { display: flex; flex-direction: column; gap: 8px; }
+.botao-equipe .equipe { flex: 1; min-width: 0; font-size: 19px; }
+.botao-equipe .forma { width: 1.3em; height: 1.3em; }
+.equipe-conta { flex: none; font-size: 15px; font-weight: 600; opacity: .9; }
+.equipe-linha { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em; font-size: 19px; }
+.equipe-linha .forma { width: 1.2em; height: 1.2em; }
+
+/* ---------- Indicadores, mês e narrativa ---------- */
+
+.indicadores {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px;
+  margin: 0; padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.indicadores dt { color: var(--texto-2); }
+.indicadores dd { margin: 0; text-align: right; font-weight: 700; }
+.delta { color: var(--texto-2); font-weight: 500; font-size: 15px; }
+
+.mes { display: flex; flex-direction: column; gap: 6px; }
+/* Carta grave: sem cor, sem animação, sem destaque (arquitetura, seção 8). O
+   bloco fica igual aos outros de propósito. */
+.narrativa {
+  margin: 0;
+  padding: 4px 0 4px 14px;
+  border-left: 3px solid var(--linha-forte);
+  font-style: italic;
+  color: var(--texto);
+}
+
+/* ---------- Decisão ---------- */
+
+.opcoes-aluno { display: flex; flex-direction: column; gap: 8px; }
+.botao-opcao-aluno { align-items: center; gap: 12px; }
+.opcao-votos { flex: none; font-size: 15px; font-weight: 700; opacity: .9; white-space: nowrap; }
+
+.situacao-resumo {
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.situacao-resumo summary {
+  min-height: 48px; padding: 12px 14px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  cursor: pointer; font-weight: 600;
+}
+/* Com display: flex, o Chromium tira o triângulo do <summary>, e a caixa
+   parecia um cabeçalho vazio (revisão da F2, achado 17). O marcador diz que
+   abre e fecha. */
+.situacao-resumo summary::-webkit-details-marker { display: none; }
+.situacao-resumo summary::after { content: "▸ ver"; flex: none; color: var(--texto-2); font-weight: 700; }
+.situacao-resumo[open] summary::after { content: "▾ fechar"; }
+.situacao-resumo summary:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.situacao-resumo .indicadores { border: 0; border-top: 1px solid var(--linha); border-radius: 0 0 var(--raio) var(--raio); }
+
+@media (min-width: 600px) {
+  body.aluno { font-size: 19px; }
+  h1 { font-size: 30px; }
+  h1.afirmacao { font-size: 26px; }
+}

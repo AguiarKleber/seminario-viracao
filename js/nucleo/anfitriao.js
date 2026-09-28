@@ -356,15 +356,19 @@
       const s = await semente(r);
       // Fase 2: lê do servidor, e não do cache: o voto aceito antes do "fechando"
       // tem de estar aqui.
-      const [decisoes, membros, resultados] = await Promise.all([
+      const [decisoes, membros, resultados, marca] = await Promise.all([
         canal.ler(cam('decisoes', r)), canal.ler(cam('membros')), canal.ler(cam('resultados')),
+        canal.ler(cam('prorrogacoes', r)),
       ]);
       const ativas = equipesAtivas(e);
-      const jaProrrogou = Boolean(e.empatadas);
+      // Uma prorrogação só por rodada, mesmo depois do desfazer (D-035). O
+      // desfazer apaga as empatadas do estado; a marca prorrogacoes/{r}, gravada
+      // junto com a prorrogação e nunca apagada, é o que ainda lembra dela.
+      const jaProrrogou = Boolean(e.empatadas) || marca === true;
       const consolidacoes = {};
       const empatadas = {};
       for (const eq of ativas) {
-        const prorrogada = jaProrrogou && tem(e.empatadas, eq);
+        const prorrogada = Boolean(e.empatadas) && tem(e.empatadas, eq);
         const pedido = {
           rodadaId: r, votos: votosDaEquipe(decisoes, membros, eq, e.abertoEm), forcada: e.forcadas?.[eq],
           aposProrrogacao: prorrogada, semente: s, equipeId: eq,
@@ -373,8 +377,9 @@
         };
         let c = M.consolidarDecisao(config, pedido);
         // Uma prorrogação só por rodada. Se uma equipe que não estava empatada
-        // empatar agora (alguém foi movido durante a prorrogação), vai direto
-        // para a moeda, em vez de abrir outra rodada de conversa.
+        // empatar agora (alguém foi movido durante a prorrogação), ou se a
+        // rodada foi desfeita depois da prorrogação, vai direto para a moeda,
+        // em vez de abrir outra rodada de conversa.
         if (c.decisao === null && jaProrrogou) c = M.consolidarDecisao(config, { ...pedido, aposProrrogacao: true });
         if (c.decisao === null) {
           empatadas[eq] = {};
@@ -384,7 +389,12 @@
       }
       if (Object.keys(empatadas).length > 0) {
         const t = agora();
-        return gravarComEstado({ ...e, subfase: 'prorrogacao', empatadas, prazo: t + config.tempos.prorrogacaoSeg * 1000, restanteMs: null }, {});
+        // A marca vai no mesmo update do estado: ou os dois ficam, ou nenhum.
+        // Gravada à parte, uma queda entre as duas escritas deixaria uma
+        // prorrogação aberta sem a marca, e o refazer abriria outra.
+        return gravarComEstado({ ...e, subfase: 'prorrogacao', empatadas, prazo: t + config.tempos.prorrogacaoSeg * 1000, restanteMs: null }, {
+          [cam('prorrogacoes', r)]: true,
+        });
       }
       const daRodada = {};
       for (const eq of ativas) {
@@ -404,7 +414,8 @@
 
     // Reabre a última apuração do passo atual. Apaga resultados/{r} e refaz o
     // placar sem esta rodada, mas nunca apaga sementes/{r}: votos e semente
-    // continuam lá, e encerrar de novo tira a mesma carta.
+    // continuam lá, e encerrar de novo tira a mesma carta. Também nunca apaga
+    // prorrogacoes/{r}: a rodada refeita não abre uma segunda prorrogação (D-035).
     async function desfazer() {
       const e = exigirEstado();
       const t = agora();

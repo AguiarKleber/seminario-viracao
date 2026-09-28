@@ -12,3 +12,6 @@ saidas/
 # Playwright
 test-results/
 playwright-report/
+
+# Capturas do e2e do telão (geradas a cada execução)
+e2e/capturas/

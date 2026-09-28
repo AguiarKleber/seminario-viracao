@@ -11,7 +11,13 @@
     "check": "node bin/validar-config.mjs && eslint . && node --test \"test/*.test.mjs\"",
     "test": "node --test \"test/*.test.mjs\"",
     "lint": "eslint .",
-    "validar": "node bin/validar-config.mjs"
+    "validar": "node bin/validar-config.mjs",
+    "e2e": "node e2e/telao-offline.e2e.mjs",
+    "e2e:online": "node e2e/sessao-online.e2e.mjs",
+    "emulador": "node bin/emulador.mjs \"node --test test/emulador/*.test.mjs\"",
+    "simular": "node bin/simular-alunos.mjs",
+    "servir": "node bin/servir.mjs",
+    "versao": "node bin/versao.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

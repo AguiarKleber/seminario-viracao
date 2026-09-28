@@ -61,7 +61,7 @@
     carta: ['id', 'titulo', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
-    referencia: ['id', 'nome', 'renda', 'fonte'],
+    referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
     passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada'],
     efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte'],
     condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador'],
@@ -577,10 +577,14 @@
     return n;
   }
 
-  function referenciaPlacar(r, b, c, id) {
+  // persona (opcional): a referência vale só para as equipes dessa persona, e o
+  // telão desenha a linha só nelas (revisão da F2, achado 20: "Jonas com
+  // carteira assinada" atravessava as barras da Rose e do Kauã).
+  function referenciaPlacar(r, b, c, id, idx) {
     conferirChaves(r, b, CHAVES.referencia, c, false);
     const n = { id, nome: texto(r, b, 'nome', c), renda: numero(r, b, 'renda', c) };
     copiarTextos(r, b, n, c, ['fonte']);
+    if (tem(b, 'persona') && referencia(r, b.persona, junta(c, 'persona'), (x) => Object.hasOwn(idx.personas, x), 'persona')) n.persona = b.persona;
     return n;
   }
 
@@ -846,7 +850,7 @@
     montar('rodadas', (b, c, id) => rodada(r, b, c, id, idx));
     montar('cartas', (b, c, id) => carta(r, b, c, id, idx));
     montar('enquetes', (b, c, id) => enquete(r, b, c, id), { podeVazia: true });
-    montar('referencias', (b, c, id) => referenciaPlacar(r, b, c, id), { opcional: true, podeVazia: true });
+    montar('referencias', (b, c, id) => referenciaPlacar(r, b, c, id, idx), { opcional: true, podeVazia: true });
     // Referências cruzadas (efeitos, condições, rodadas das cartas) só agora,
     // com todos os ids conhecidos: a ordem das seções no arquivo não importa.
     for (const fn of r.pendentes) fn();

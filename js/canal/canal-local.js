@@ -31,6 +31,10 @@
     'geracao', 'indice', 'tipo', 'subfase', 'rodada', 'enquete', 'momento', 'afirmacao', 'abertoEm', 'prazo',
     'restanteMs', 'equipesTravadas', 'equipesAbertas', 'forcadas', 'empatadas', 'manual',
   ]);
+  // O valor que firebase/regras.json aceita em regrasVersao (test/regras.test.mjs
+  // confere que é o mesmo do regras.json e do telão, e que a versão está presa
+  // ao conteúdo das regras).
+  const REGRAS_VERSAO = 'v3';
   const LIVRES_PARA_LER = new Set(['meta', 'conteudo', 'estado', 'pulso', 'resultados', 'placar', 'enquetes', 'membros']);
 
   function negar(motivo) {
@@ -131,16 +135,27 @@
   }
 
   function conferirMembro(ctx, alvo, campo, resto) {
-    const { uid, sala, estado, agora, valor, host } = ctx;
+    const { uid, sala, estado, agora, valor, host, novaSala } = ctx;
     const meta = sala.meta || {};
     const proprio = alvo === uid;
     const entradaOk = proprio && meta.entradaAberta === true && typeof meta.expiraEm === 'number' && agora < meta.expiraEm;
     if (resto.length > 0) throw negar(`campo desconhecido em membros: "${campo}/${resto.join('/')}"`);
+    // O nó do membro, depois da escrita, é um objeto com entrouEm ou não existe
+    // (revisão da F2, achados 1 e 3; .validate de membros/$uid no regras.json).
+    // Sem isto, um texto solto no lugar do nó passava (não tem filhos para as
+    // travas abaixo olharem), e gravar só a equipe criava um membro sem passar
+    // pela entrada aberta nem pelo prazo da sala.
+    const noNovo = em(novaSala, ['membros', alvo]);
+    if (noNovo !== null && !(ehObjeto(noNovo) && typeof noNovo.entrouEm === 'number')) {
+      throw negar('o nó do membro precisa ser um objeto com entrouEm (o registro de entrada)');
+    }
     if (campo === undefined || campo === 'entrouEm') {
       if (!host && !entradaOk) throw negar('entrada fechada, sala expirada ou membro de outro uid');
       // entrouEm = now: é o que impede um aluno de forjar que entrou antes de a
-      // decisão abrir (arquitetura seção 12, "forjar entrouEm").
-      if (campo === 'entrouEm' && valor !== null && valor !== agora) throw negar('entrouEm precisa ser a hora do servidor');
+      // decisão abrir (arquitetura seção 12, "forjar entrouEm"). Regravar a
+      // mesma entrouEm passa, como no .validate do Firebase (data.val()).
+      const antiga = em(sala, ['membros', alvo, 'entrouEm']);
+      if (campo === 'entrouEm' && valor !== null && valor !== agora && valor !== antiga) throw negar('entrouEm precisa ser a hora do servidor');
       return;
     }
     if (campo === 'equipe') {
@@ -219,6 +234,7 @@
       case 'pulso':
       case 'placar':
       case 'sementes':
+      case 'prorrogacoes':
       case 'resultados':
       case 'enquetes':
         if (!host) throw negar(`só o anfitrião escreve em ${no}`);
@@ -251,7 +267,7 @@
     const [topo, a, b, ...resto] = segs;
     const valor = em(novo, segs);
     if (topo === 'regrasVersao') {
-      if (segs.length !== 2 || a !== uid || (valor !== null && valor !== 'v1')) throw negar('regrasVersao só aceita "v1" no próprio uid');
+      if (segs.length !== 2 || a !== uid || (valor !== null && valor !== REGRAS_VERSAO)) throw negar(`regrasVersao só aceita "${REGRAS_VERSAO}" no próprio uid`);
       return;
     }
     if (topo === 'pedidosAnfitriao') {
@@ -298,6 +314,16 @@
         if (a !== null) throw negar(`a semente de ${r} já foi gravada e nunca muda`);
         if (b !== null && typeof b !== 'number') throw negar('semente precisa ser número');
       }
+      // A marca de prorrogação segue a semente (D-035): o desfazer apaga o
+      // resultado e as empatadas do estado, e só ela lembra que a rodada já teve
+      // prorrogação. Apagada, refazer a rodada abriria uma segunda.
+      for (const r of new Set([...Object.keys(velha.prorrogacoes || {}), ...Object.keys(nova.prorrogacoes || {})])) {
+        if (!tocou(['salas', s, 'prorrogacoes', r])) continue;
+        const a = em(velha, ['prorrogacoes', r]);
+        const b = em(nova, ['prorrogacoes', r]);
+        if (a !== null) throw negar(`a prorrogação de ${r} já foi marcada e nunca muda`);
+        if (b !== null && b !== true) throw negar('a marca de prorrogação só aceita true');
+      }
       // Resultado e apuração: gravados de uma vez, ou apagados; nunca remendados.
       const unicos = [];
       for (const r of new Set([...Object.keys(velha.resultados || {}), ...Object.keys(nova.resultados || {})])) unicos.push(['resultados', r]);
@@ -321,7 +347,7 @@
   // mesmo que resultados/{r} aceite. Este é o nível mais raso de cada nó.
   const NIVEL_MINIMO = {
     meta: 3, conteudo: 3, estado: 3, pulso: 3, placar: 3,
-    membros: 4, presenca: 4, sementes: 4, resultados: 4, enquetes: 5, decisoes: 6, votosEnquete: 7,
+    membros: 4, presenca: 4, sementes: 4, prorrogacoes: 4, resultados: 4, enquetes: 5, decisoes: 6, votosEnquete: 7,
   };
 
   function exigirNivel(segs) {
@@ -347,6 +373,13 @@
       // Gravar o mesmo valor também passa pela regra, como no Firebase: reenviar
       // o voto depois do prazo, ou a equipe depois da trava, é recusado igual.
       if (folhas.length === 0) folhas.push(segs);
+      // No Firebase, o .validate roda em todo filho do dado gravado, mudado ou
+      // não. Regravar o nó do membro com a mesma equipe passa de novo pela regra
+      // da equipe: depois da trava (ou com a equipe fechada), é recusado lá, e
+      // aceitar aqui faria o offline divergir do online (paridade no emulador).
+      const equipe = [...segs, 'equipe'];
+      if (segs.length === 4 && segs[0] === 'salas' && segs[2] === 'membros' && em(novo, equipe) !== null
+        && !folhas.some((f) => f.length === 5 && f[4] === 'equipe')) folhas.push(equipe);
       for (const folha of folhas) conferirFolha(uid, folha, antigo, novo, agora, segs);
     }
     conferirNos(escritas, salasTocadas, antigo, novo);

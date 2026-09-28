@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#111111">
+  <title>Seminário da Viração</title>
+  <link rel="stylesheet" href="../css/base.css?v=1">
+  <link rel="stylesheet" href="../css/aluno.css?v=1">
+</head>
+<body class="aluno">
+  <header class="topo">
+    <p id="cracha" class="cracha" aria-label="Seu crachá"></p>
+    <div id="lugar-selo" class="topo-selo"></div>
+  </header>
+  <div id="faixa-versao" class="faixa" role="alert" hidden></div>
+  <div id="faixa-telao" class="faixa" role="status" hidden></div>
+  <!-- A primeira pintura já diz o que está acontecendo, antes do SDK chegar
+       (ele vem da CDN, com tempo-limite de 4 s). O aluno.js remonta a tela. -->
+  <main id="tela" class="tela-aluno" aria-live="polite">
+    <section class="bloco">
+      <p class="kicker">Seminário da Viração</p>
+      <h1>Carregando…</h1>
+    </section>
+  </main>
+
+  <!-- Só scripts clássicos, com ?v= (AGENTS.md, regra 3): o SDK do Firebase é a
+       única coisa carregada por import(), de dentro do canal. O celular não
+       carrega o motor nem o anfitrião: quem decide é o telão, e a tela sai de
+       alunoLogica.telaDoAluno. -->
+  <script src="../js/nucleo/aluno-logica.js?v=1"></script>
+  <script src="../js/canal/canal-firebase.js?v=1"></script>
+  <script src="../js/ui/formatar.js?v=1"></script>
+  <script src="../js/ui/dom.js?v=1"></script>
+  <script src="../js/ui/graficos.js?v=1"></script>
+  <script src="../js/ui/conexao.js?v=1"></script>
+  <script src="../js/aluno.js?v=1"></script>
+</body>
+</html>

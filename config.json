@@ -1,5 +1,5 @@
 {
-  "versao": "2026-09-28-rascunho",
+  "versao": "2026-09-28-validado",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -229,7 +229,7 @@
       "nome": "Verde-azulado",
       "cor": "#009E73",
       "forma": "quadrado",
-      "persona": "bike",
+      "persona": "vendedora",
       "obrigatoria": false
     },
     {
@@ -237,7 +237,7 @@
       "nome": "Azul",
       "cor": "#0072B2",
       "forma": "losango",
-      "persona": "vendedora",
+      "persona": "motorista",
       "obrigatoria": false
     },
     {
@@ -245,7 +245,7 @@
       "nome": "Vermelhão",
       "cor": "#D55E00",
       "forma": "estrela",
-      "persona": "motorista",
+      "persona": "bike",
       "obrigatoria": false
     },
     {
@@ -274,50 +274,50 @@
                 "persona": "motoboy"
               },
               "soma": {
-                "renda": 740
+                "renda": 520
               },
               "rotulo": "horas a mais (as piores horas do dia)",
-              "fonte": "Estimativa: +20 h/semana a 75% do ganho-hora médio da PNAD 2025"
+              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora médio da PNAD 2025 (pacote B de calibragem, D-024)"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": 150
+                "renda": 105
               },
               "rotulo": "horas a mais (as piores horas do dia)",
-              "fonte": "Estimativa: +20 h/semana a 75% do ganho-hora médio da PNAD 2025"
+              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora médio da PNAD 2025 (pacote B de calibragem, D-024)"
             },
             {
               "se": {
                 "persona": "vendedora"
               },
               "soma": {
-                "renda": 500
+                "renda": 350
               },
               "rotulo": "horas a mais (as piores horas do dia)",
-              "fonte": "Estimativa: +20 h/semana a 75% do ganho-hora médio da PNAD 2025"
+              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora médio da PNAD 2025 (pacote B de calibragem, D-024)"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": 930
+                "renda": 650
               },
               "rotulo": "horas a mais (as piores horas do dia)",
-              "fonte": "Estimativa: +20 h/semana a 75% do ganho-hora médio da PNAD 2025"
+              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora médio da PNAD 2025 (pacote B de calibragem, D-024)"
             },
             {
               "se": {
                 "persona": "manicure"
               },
               "soma": {
-                "renda": 700
+                "renda": 490
               },
               "rotulo": "horas a mais (as piores horas do dia)",
-              "fonte": "Estimativa: +20 h/semana a 75% do ganho-hora médio da PNAD 2025"
+              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora médio da PNAD 2025 (pacote B de calibragem, D-024)"
             },
             {
               "soma": {
@@ -1536,6 +1536,23 @@
           "texto": "Quem não prospera por conta própria é porque não se esforçou o suficiente."
         }
       ]
+    },
+    {
+      "id": "termometro_curto",
+      "titulo": "Termômetro",
+      "pareada": false,
+      "revelar": "ao_vivo",
+      "modo": "uma_por_vez",
+      "afirmacoes": [
+        {
+          "id": "t1",
+          "texto": "O aplicativo é o patrão."
+        },
+        {
+          "id": "t3",
+          "texto": "Quem não prospera por conta própria é porque não se esforçou o suficiente."
+        }
+      ]
     }
   ],
   "referencias": [
@@ -1543,7 +1560,8 @@
       "id": "clt",
       "nome": "Jonas com carteira assinada",
       "renda": 840,
-      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026); IR isento (Lei 15.270/2025); 13º e férias proporcionais a 3 meses; menos o mesmo custo de vida do Jonas"
+      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026); IR isento (Lei 15.270/2025); 13º e férias proporcionais a 3 meses; menos o mesmo custo de vida do Jonas",
+      "persona": "motoboy"
     }
   ],
   "roteiros": {
@@ -1618,7 +1636,7 @@
       },
       {
         "tipo": "enquete",
-        "enquete": "termometro",
+        "enquete": "termometro_curto",
         "momento": "unico",
         "alvoSeg": 360
       },

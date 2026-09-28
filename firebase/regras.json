@@ -1,0 +1,221 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "privado": {
+      ".read": false,
+      ".write": false
+    },
+    "pedidosAnfitriao": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isString() && newData.val().length >= 8 && newData.val().length <= 32 && newData.getPriority() === null"
+      }
+    },
+    "regrasVersao": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isString() && newData.val() === 'v3' && newData.getPriority() === null"
+      }
+    },
+    "autoteste": {
+      "$uid": {
+        ".write": false
+      }
+    },
+    "salas": {
+      "$s": {
+        ".read": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid",
+        ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid && !newData.exists()",
+        "meta": {
+          ".read": "auth != null",
+          ".write": "(!data.exists() && auth != null && root.child('privado/pinApresentador').exists() && root.child('pedidosAnfitriao/'+auth.uid).val() === root.child('privado/pinApresentador').val() && $s.matches(/^[A-HJ-NP-Z2-9]{4}$/) && newData.child('hostUid').val() === auth.uid) || (auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid)",
+          "hostUid": {
+            ".write": "auth != null && root.child('privado/pinApresentador').exists() && root.child('pedidosAnfitriao/'+auth.uid).val() === root.child('privado/pinApresentador').val() && newData.val() === auth.uid",
+            ".validate": "newData.isString()"
+          },
+          "criadaEm": {
+            ".validate": "newData.isNumber()"
+          },
+          "expiraEm": {
+            ".validate": "newData.isNumber() && newData.val() <= now + 43260000"
+          },
+          "versaoApp": {
+            ".validate": "newData.isString() || newData.isNumber()"
+          },
+          "hashConfig": {
+            ".validate": "newData.isString()"
+          },
+          "roteiro": {
+            ".validate": "newData.isString()"
+          },
+          "entradaAberta": {
+            ".validate": "newData.isBoolean()"
+          },
+          "$outro": {
+            ".validate": false
+          }
+        },
+        "conteudo": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid"
+        },
+        "estado": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid",
+          ".validate": "(!data.exists() && newData.child('geracao').val() === 1) || (data.child('geracao').isNumber() && newData.child('geracao').val() === data.child('geracao').val() + 1)",
+          "geracao": {
+            ".validate": "newData.isNumber()"
+          },
+          "indice": {
+            ".validate": "newData.isNumber()"
+          },
+          "tipo": {
+            ".validate": "newData.isString()"
+          },
+          "subfase": {
+            ".validate": "newData.isString()"
+          },
+          "rodada": {
+            ".validate": "newData.isString()"
+          },
+          "enquete": {
+            ".validate": "newData.isString()"
+          },
+          "momento": {
+            ".validate": "newData.isString()"
+          },
+          "afirmacao": {
+            ".validate": "newData.isString()"
+          },
+          "abertoEm": {
+            ".validate": "newData.isNumber()"
+          },
+          "prazo": {
+            ".validate": "newData.isNumber()"
+          },
+          "restanteMs": {
+            ".validate": "newData.isNumber()"
+          },
+          "equipesTravadas": {
+            ".validate": "newData.isBoolean()"
+          },
+          "equipesAbertas": {
+            "$eq": {
+              ".validate": "newData.val() === true"
+            }
+          },
+          "forcadas": {
+            "$eq": {
+              ".validate": "newData.isString()"
+            }
+          },
+          "empatadas": {
+            "$eq": {
+              ".validate": "newData.hasChildren()",
+              "$op": {
+                ".validate": "newData.val() === true"
+              }
+            }
+          },
+          "manual": {
+            "$a": {
+              ".validate": "newData.hasChildren()",
+              "$i": {
+                ".validate": "newData.isNumber()"
+              }
+            }
+          },
+          "$outro": {
+            ".validate": false
+          }
+        },
+        "pulso": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid",
+          ".validate": "newData.val() === now"
+        },
+        "resultados": {
+          ".read": "auth != null",
+          "$r": {
+            ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid && (!data.exists() || !newData.exists())"
+          }
+        },
+        "placar": {
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid"
+        },
+        "enquetes": {
+          ".read": "auth != null",
+          "$e": {
+            "$m": {
+              ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid && (!data.exists() || !newData.exists())"
+            }
+          }
+        },
+        "sementes": {
+          "$r": {
+            ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid && !data.exists()",
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "prorrogacoes": {
+          "$r": {
+            ".write": "auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid && !data.exists()",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "membros": {
+          ".read": "auth != null",
+          "$uid": {
+            ".validate": "newData.hasChildren(['entrouEm']) && newData.getPriority() === null",
+            ".write": "(auth != null && root.child('salas/'+$s+'/meta/hostUid').val() === auth.uid) || (auth != null && auth.uid === $uid && root.child('salas/'+$s+'/meta/entradaAberta').val() === true && root.child('salas/'+$s+'/meta/expiraEm').isNumber() && now < root.child('salas/'+$s+'/meta/expiraEm').val() && (!(root.child('salas/'+$s+'/estado/equipesTravadas').val() === true) || newData.child('equipe').val() === data.child('equipe').val()))",
+            "entrouEm": {
+              ".validate": "newData.isNumber() && (newData.val() === now || newData.val() === data.val()) && newData.getPriority() === null"
+            },
+            "equipe": {
+              ".write": "auth != null && auth.uid === $uid && !(root.child('salas/'+$s+'/estado/equipesTravadas').val() === true)",
+              ".validate": "newData.isString() && newData.val().matches(/^e[0-9]{1,2}$/) && root.child('salas/'+$s+'/conteudo/equipes/'+newData.val()).exists() && (auth.uid !== $uid || (!(root.child('salas/'+$s+'/estado/equipesTravadas').val() === true) && root.child('salas/'+$s+'/estado/equipesAbertas/'+newData.val()).val() === true)) && newData.getPriority() === null"
+            },
+            "$outro": {
+              ".validate": false
+            }
+          }
+        },
+        "presenca": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('salas/'+$s+'/membros/'+$uid).exists()",
+            ".validate": "newData.val() === now && newData.getPriority() === null"
+          }
+        },
+        "votosEnquete": {
+          "$e": {
+            "$m": {
+              "$a": {
+                "$uid": {
+                  ".read": "auth != null && auth.uid === $uid",
+                  ".write": "auth != null && auth.uid === $uid && root.child('salas/'+$s+'/membros/'+$uid).exists() && root.child('salas/'+$s+'/estado/tipo').val() === 'enquete' && root.child('salas/'+$s+'/estado/enquete').val() === $e && root.child('salas/'+$s+'/estado/momento').val() === $m && root.child('salas/'+$s+'/estado/subfase').val() === 'votando' && (root.child('salas/'+$s+'/estado/afirmacao').val() === '*' || root.child('salas/'+$s+'/estado/afirmacao').val() === $a) && root.child('salas/'+$s+'/conteudo/enquetes/'+$e+'/afirmacoes/'+$a).exists() && root.child('salas/'+$s+'/estado/prazo').isNumber() && root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').isNumber() && now <= root.child('salas/'+$s+'/estado/prazo').val() + root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').val() * 1000",
+                  ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 5 && newData.getPriority() === null"
+                }
+              }
+            }
+          }
+        },
+        "decisoes": {
+          "$r": {
+            "$eq": {
+              ".read": "auth != null && root.child('salas/'+$s+'/membros/'+auth.uid+'/equipe').val() === $eq",
+              "$uid": {
+                ".write": "auth != null && auth.uid === $uid && root.child('salas/'+$s+'/membros/'+$uid+'/equipe').val() === $eq && root.child('salas/'+$s+'/estado/tipo').val() === 'rodada' && root.child('salas/'+$s+'/estado/rodada').val() === $r && (root.child('salas/'+$s+'/estado/subfase').val() === 'decidindo' || (root.child('salas/'+$s+'/estado/subfase').val() === 'prorrogacao' && root.child('salas/'+$s+'/estado/empatadas/'+$eq).exists())) && root.child('salas/'+$s+'/membros/'+$uid+'/entrouEm').isNumber() && root.child('salas/'+$s+'/estado/abertoEm').isNumber() && root.child('salas/'+$s+'/membros/'+$uid+'/entrouEm').val() <= root.child('salas/'+$s+'/estado/abertoEm').val() && root.child('salas/'+$s+'/estado/prazo').isNumber() && root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').isNumber() && now <= root.child('salas/'+$s+'/estado/prazo').val() + root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').val() * 1000",
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,24}$/) && root.child('salas/'+$s+'/conteudo/rodadas/'+$r+'/opcoes/'+newData.val()).exists() && (root.child('salas/'+$s+'/estado/subfase').val() !== 'prorrogacao' || root.child('salas/'+$s+'/estado/empatadas/'+$eq+'/'+newData.val()).val() === true) && newData.getPriority() === null"
+              }
+            }
+          }
+        },
+        "$outro": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

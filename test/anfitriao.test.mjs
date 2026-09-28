@@ -677,20 +677,40 @@ test('carregarSala recusa roteiro ou config diferentes dos da criação, e estad
   await assert.rejects(anfitriaoComo(sessao, HOST).carregarSala(), /não bate/);
 });
 
-test('desfazer depois de prorrogação e moeda: o encerrar seguinte não abre outra prorrogação', {
-  todo: 'precisa de decisão: "uma prorrogação só por rodada" vale também depois do desfazer?',
-}, async () => {
+// D-035: uma prorrogação só por rodada, mesmo depois do desfazer. O desfazer
+// apaga o resultado e zera o estado da votação (empatadas incluídas), por isso o
+// fato "esta rodada já teve prorrogação" mora em prorrogacoes/{r}, que ele não apaga.
+test('desfazer depois de prorrogação e moeda: o encerrar seguinte não abre outra prorrogação', async () => {
   // Arrange
-  const { anf, alunos } = await prepararRodada({ porEquipe: { e1: 2 } });
+  const sessao = await prepararRodada({ porEquipe: { e1: 2 } });
+  const { anf, alunos, host } = sessao;
   await alunos.e1[0].decidir('r1', 'e1', 'a');
   await alunos.e1[1].decidir('r1', 'e1', 'b');
   await anf.encerrar(); // prorrogação
+  const marcadaAoAbrir = await host.ler(s('prorrogacoes', 'r1'));
   await anf.encerrar(); // moeda
   // Act
   await anf.desfazer();
   await anf.encerrar();
   // Assert
+  assert.equal(marcadaAoAbrir, true);
   assert.equal(anf.estado().subfase, 'sorteio');
+  assert.equal((await lerResultados(sessao, 'r1')).e1.origem, 'moeda');
+  assert.equal(await host.ler(s('prorrogacoes', 'r1')), true, 'o desfazer nunca apaga a marca');
+});
+
+test('a marca de prorrogação vale só para a própria rodada: sem ela, o empate abre a prorrogação', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 2 } });
+  const { anf, alunos, host } = sessao;
+  await host.gravar({ [s('prorrogacoes', 'r2')]: true });
+  await alunos.e1[0].decidir('r1', 'e1', 'a');
+  await alunos.e1[1].decidir('r1', 'e1', 'b');
+  // Act
+  await anf.encerrar();
+  // Assert
+  assert.equal(anf.estado().subfase, 'prorrogacao');
+  assert.equal(await host.ler(s('prorrogacoes', 'r1')), true);
 });
 
 test('avançar na enquete uma_por_vez pausada vai para a próxima afirmação e continua pausada', async () => {

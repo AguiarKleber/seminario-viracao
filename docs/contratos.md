@@ -44,7 +44,7 @@ exibição fica num array de strings.
   enquetes:    { [id]: { id, titulo, pareada: boolean, revelar: "ao_vivo"|"ao_encerrar"|"so_no_comparativo",
                          modo: "todas"|"uma_por_vez",
                          afirmacoes: { [id]: { id, texto } }, ordemAfirmacoes: [ids] } },
-  referencias: { [id]: { id, nome, renda, fonte? } },
+  referencias: { [id]: { id, nome, renda, persona?, fonte? } },
   roteiros:    { [nome]: [Passo] },
   ordem: { indicadores: [], personas: [], equipes: [], rodadas: [], cartas: [], enquetes: [], referencias: [] }
 }
@@ -63,6 +63,8 @@ exibição fica num array de strings.
 
 **Valores padrão aplicados pela normalização** (o JSON pode omitir):
 - `obrigatoria: false`, `efeitosGerais: []`, `ajustesDePeso: []`, `todoMes: []`, `inicial: {}`;
+- `referencias[].persona` é opcional e precisa ser uma persona do config: com ela, a linha da
+  referência no placar final atravessa só as equipes dessa persona (sem ela, todas);
 - `modo: "todas"`, `revelar: "ao_encerrar"`, `referencias: {}`;
 - `tempos.gracaSeg: 5`, `tempos.pulsoSeg: 10`.
 
@@ -195,7 +197,22 @@ Criação:
   - **Online → offline** ("Continuar sem celulares", ou "Carregar estado" de um JSON salvo online): o
     canal-local nasce com `uid` = `meta.hostUid` do espelho importado. Offline não há PIN, e com o uid
     padrão o `carregarSala` é recusado (`PERMISSION_DENIED`), porque o anfitrião não é o host da sala.
-- `Viracao.canalFirebase.criar({ sdk, conexao, longPolling? })`
+- `Viracao.canalFirebase.criar({ sdk, conexao, longPolling?, emulador?, ambienteLocal?, nome?, esperaConexaoMs? })`
+  - `sdk = { app, auth, database }`: os três módulos do Firebase 12.19.0, **injetados**. No navegador,
+    quem chama carrega por `import()` (só online, tempo-limite de 4 s) `firebase-app.js`,
+    `firebase-auth.js` e `firebase-database.js` da CDN gstatic; no Node, `firebase/app`,
+    `firebase/auth` e `firebase/database` do npm. O mesmo arquivo serve aos dois.
+  - `conexao`: as chaves públicas (`conexao.json`). `longPolling: true` chama `forceLongPolling()`
+    (o `?lp=1`), que vale para o contexto inteiro e precisa vir antes da primeira conexão.
+  - `emulador: true | { host?, portaAuth?, portaBanco? }` (padrão `127.0.0.1`, 9099 e 9000) liga
+    `connectAuthEmulator`/`connectDatabaseEmulator`, e **só** com `ambienteLocal: true` (o chamador
+    afirma que está na máquina de desenvolvimento) e host `127.0.0.1`/`localhost`; senão lança erro.
+    Sem `databaseURL`, usa `https://{projectId}-default-rtdb.firebaseio.com` (o namespace do emulador).
+  - `nome`: o nome do app (`initializeApp(conexao, nome)`), padrão `"viracao"`. Fixo de propósito: no
+    navegador o login anônimo fica guardado por nome de app, e um nome novo a cada carga daria um uid
+    novo a cada recarregar (I6). O simulador passa um nome por robô; dois canais vivos com o mesmo
+    nome no mesmo contexto lançam erro.
+  - `esperaConexaoMs` (10000): quanto o `ler()` espera a conexão antes de desistir.
 
 | Método | O que faz |
 |---|---|
@@ -215,25 +232,84 @@ Só no local:
 - `exportar() → objeto` (cópia da árvore inteira) e `importar(json | objeto)`, que substitui a árvore e avisa todos os ouvintes.
 - A escrita local é síncrona do começo ao fim, dentro da Promise: duas chamadas no mesmo instante são aplicadas em ordem, e a segunda já enxerga a primeira.
 
+No `canal-firebase`:
+- `ler()` usa o `get()` do SDK, que responde com o cache de um ouvinte ativo; esse cache só vale com
+  a conexão de pé (o servidor o mantém em dia, em ordem). Sem conexão, o `ler()` espera voltar e,
+  depois de `esperaConexaoMs`, rejeita com `Error('SEM_CONEXAO: …')`: nunca responde do cache velho.
+- `transacao()` liga, na primeira vez em cada caminho, um ouvinte fixo e espera o primeiro valor dele
+  (contratos, seção 7: sem cache, a função do anfitrião receberia `null` e abortaria à toa). Roda com
+  `applyLocally: false`, para o telão nunca desenhar um estado que o servidor ainda não aceitou.
+- Toda recusa das regras chega como `Error('PERMISSION_DENIED: …')` (com `code: 'PERMISSION_DENIED'`),
+  na escrita, na transação, no `ler()` e no `aoErro` do ouvinte cancelado, igual ao canal-local.
+- `ouvir()` entrega por microtarefa e só quando o valor muda (o SDK chamaria dentro do próprio
+  `onValue` quando o valor já está em cache). `aoMudarConexao()` repassa o `/.info/connected` (o SDK
+  avisa `false` ao ligar e `true` ao conectar) sem repetir o mesmo valor.
+- `agora()` = `Date.now()` + `/.info/serverTimeOffset`.
+
+Só no Firebase:
+- `reconectar()`: `goOffline()` + `goOnline()`, o ciclo de reconexão (arquitetura, seção 10). **Quando**
+  chamar é política da tela.
+- `desconectar()`: `goOffline()` sem volta ("Continuar sem celulares").
+- `apagarAoDesconectar(caminho) → Promise`: `onDisconnect().remove()`, para a `presenca`.
+- `uid() → uid|null` e `fechar() → Promise`: solta o app (`deleteApp`). O `fechar()` também encerra a
+  sessão anônima, porque o `deleteApp` do SDK 12.19.0 deixa vivo o timer de renovação do token que o
+  database liga no auth, e o Node não termina: é só para o simulador e os testes (o celular nunca
+  chama, ou perderia o uid).
+
 **Travas do `canal-local`** (espelham `firebase/regras.json`, para os testes pegarem erro do anfitrião sem rede). Violar uma delas rejeita a gravação inteira com `Error('PERMISSION_DENIED: <motivo>')`, sem gravar nenhum caminho:
-- a regra é conferida folha a folha (cada valor que muda); gravar o mesmo valor de novo também passa pela regra. As travas de nó (a `geracao` do `estado` e a gravação única de `sementes/{r}`, `resultados/{r}` e `enquetes/{e}/{m}`) valem sempre que a escrita toca o nó, mesmo sem mudar nada: regravar o estado ou uma semente idênticos é recusado, como no Firebase;
+- a regra é conferida folha a folha (cada valor que muda); gravar o mesmo valor de novo também passa pela regra. As travas de nó (a `geracao` do `estado` e a gravação única de `sementes/{r}`, `prorrogacoes/{r}`, `resultados/{r}` e `enquetes/{e}/{m}`) valem sempre que a escrita toca o nó, mesmo sem mudar nada: regravar o estado, uma semente ou uma marca de prorrogação idênticos é recusado, como no Firebase;
 - **cascata do Firebase:** lá, um `.write` concedido num ancestral vale para os descendentes e o filho não revoga. O canal-local confere folha a folha, por isso toda restrição que ele faz num filho precisa ficar, no `regras.json`, em `.validate` (ou no `.write` do ancestral). Caso conhecido: a trava de `membros/{uid}/equipe` depois de `equipesTravadas` vai no `.validate` de `equipe` (`auth.uid !== $uid || (E.equipesTravadas !== true && E.equipesAbertas[newData.val()] === true)`), e o `.write` de `membros/$uid` exige a equipe inalterada depois da trava (o `.validate` não roda no apagamento). O `--atacar` confere no emulador;
 - a permissão vem do caminho gravado ou de um ancestral, nunca de um filho: `salas/{S}` só aceita ser apagada (pelo anfitrião); `resultados` só por `resultados/{r}`, `enquetes` só por `enquetes/{e}/{m}`, e assim por diante;
 - anfitrião = `meta.hostUid` do dado **anterior** à escrita. Por isso o `criarSala` grava a `meta` sozinha antes do resto;
 - retomada (PIN_OK): com `privado/pinApresentador` existente e `pedidosAnfitriao/{uid}` igual a ele (no dado anterior), a conta grava `meta/hostUid` = o próprio uid, e só por esse caminho exato (a meta inteira continua recusada);
 - `estado` exige `geracao = anterior + 1` (ou 1 na criação); `meta` e `estado` só aceitam as chaves de `CHAVES_META` e `CHAVES_ESTADO`;
-- `resultados/{r}`, `enquetes/{e}/{m}` e `sementes/{r}` são gravados uma vez só; apagar é permitido, menos em `sementes`; semente precisa ser número;
-- o aluno não escreve `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar` nem `sementes`;
-- `membros/{uid}`: só o próprio, com a entrada aberta e a sala não expirada; `entrouEm` igual à hora do servidor; nenhum outro campo além de `entrouEm` e `equipe`;
-- `membros/{uid}/equipe` (aluno): só antes de `estado.equipesTravadas` e só numa equipe de `estado.equipesAbertas`, **mesmo quando gravada junto com o nó inteiro do membro**; qualquer escritor: só equipe que existe no conteúdo;
+- `resultados/{r}`, `enquetes/{e}/{m}`, `sementes/{r}` e `prorrogacoes/{r}` são gravados uma vez só; apagar é permitido, menos em `sementes` e `prorrogacoes`; semente precisa ser número, e a marca de prorrogação, `true` (D-035: a rodada que já teve prorrogação não abre outra, nem depois do desfazer);
+- o aluno não escreve `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `sementes` nem `prorrogacoes`;
+- `membros/{uid}`: só o próprio, com a entrada aberta e a sala não expirada; `entrouEm` igual à hora do servidor (ou igual à já gravada: regravar a mesma `entrouEm`, pelo nó ou pela folha, passa nos dois); nenhum outro campo além de `entrouEm` e `equipe`;
+- o nó `membros/{uid}`, depois de qualquer escrita (do aluno ou do anfitrião), é um objeto com `entrouEm` numérico, ou não existe (`.validate` de `membros/$uid`: `newData.hasChildren(['entrouEm'])`). Valor solto no lugar do nó (texto, número, booleano) é recusado; gravar só a `equipe` de quem não tem registro de membro é recusado (não há como virar membro sem passar pela entrada aberta e pelo prazo da sala); apagar só a `entrouEm` e deixar a equipe é recusado; apagar o nó inteiro, não;
+- `membros/{uid}/equipe` (aluno): só antes de `estado.equipesTravadas` e só numa equipe de `estado.equipesAbertas`, **mesmo quando gravada junto com o nó inteiro do membro**; qualquer escritor: só equipe que existe no conteúdo. Regravar o nó inteiro do membro **com a mesma equipe** também passa por essa regra (no Firebase o `.validate` roda em todo filho do dado gravado, mudado ou não): depois da trava, ou com a equipe fechada, é recusado. Regravar o nó com a mesma `entrouEm` (e sem equipe) passa nos dois;
 - `presenca/{uid}`: só o próprio, já membro, com a hora do servidor;
 - voto de enquete: só na chave do próprio uid, já membro, com `tipo enquete`, a mesma enquete e o mesmo momento, `subfase votando`, `estado.afirmacao` igual a `*` ou à afirmação votada, dentro de `prazo + gracaSeg`, inteiro de 1 a 5 e afirmação existente;
 - decisão: só na chave do próprio uid, na própria equipe, com a mesma rodada, `subfase decidindo` (ou `prorrogacao` com a equipe em `estado.empatadas`, e então só opção empatada), `entrouEm <= estado.abertoEm`, dentro de `prazo + gracaSeg` e opção existente;
 - sem `prazo` (etapa pausada), nenhum voto passa, como na regra do Firebase (`null + graça` não vale);
-- leitura: o aluno lê `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `enquetes` e `membros`; em `decisoes/{r}/{equipe}`, só a da própria equipe; em `votosEnquete`, só a própria folha; nunca `sementes`, `presenca` nem a sala inteira;
-- `regrasVersao/{uid}` só aceita `"v1"`; `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
+- leitura: o aluno lê `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `enquetes` e `membros`; em `decisoes/{r}/{equipe}`, só a da própria equipe; em `votosEnquete`, só a própria folha; nunca `sementes`, `prorrogacoes`, `presenca` nem a sala inteira;
+- `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v3"`); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
+  A versão fica em três lugares (`firebase/regras.json`, `REGRAS_VERSAO` em `js/telao.js` e em
+  `js/canal/canal-local.js`) e presa ao conteúdo das regras: `test/regras.test.mjs` guarda o hash
+  (sha256, 12 caracteres, do regras.json com a versão trocada por um marcador) de cada versão, e
+  falha quando o regras.json muda sem a versão subir. Mudou a regra: suba a versão nos três lugares,
+  registre o hash novo no teste, publique as regras no console e recarregue o telão.
 
 `travas: false` desliga tudo (uso do simulador e dos testes que provam o filtro da apuração).
+
+**Paridade com o `firebase/regras.json`**, conferida caso a caso no emulador por
+`test/emulador/regras-paridade.test.mjs` (`npm run emulador`): cada cenário dos testes do canal-local
+roda igual nos dois, e cada passo é aceito ou recusado do mesmo jeito. Conferido no emulador: a
+permissão vem do caminho gravado ou de um ancestral, nunca de um filho (gravar `resultados` inteiro,
+ou a `meta` inteira mudando só o `hostUid` com o PIN, é recusado), e o `.validate` de um ancestral roda
+numa escrita mais funda (gravar só `estado/geracao` é recusado).
+
+Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras online são mais estritas):
+- **Criar sala exige o PIN online** (`PIN_OK` no `.write` da `meta`, com `privado/pinApresentador`
+  existente, e código de sala `[A-HJ-NP-Z2-9]{4}`). Offline não há PIN, e o canal-local cria sala sem
+  ele. Por isso o telão online grava `pedidosAnfitriao/{uid}` antes do `criarSala()`.
+- `pulso === now` (use `marcadorDeHora()`, nunca `agora()`); tipos da `meta` (`hostUid`, `hashConfig` e
+  `roteiro` texto, `criadaEm` número, `entradaAberta` booleano, `versaoApp` texto ou número) e
+  `expiraEm <= now + 12 h + 1 min` (o minuto cobre a diferença entre o `agora()` do telão e o `now`
+  do servidor); tipos do `estado` (`geracao`, `indice`, `abertoEm`, `prazo`, `restanteMs` números;
+  `tipo`, `subfase`, `rodada`, `enquete`, `momento`, `afirmacao` textos; `equipesTravadas` booleano;
+  `equipesAbertas/{eq}` e `empatadas/{eq}/{op}` iguais a `true`; `forcadas/{eq}` texto;
+  `manual/{afirm}` lista de números). O canal-local só confere as chaves.
+- Sem `conteudo/tempos/gracaSeg` numérico, o voto é recusado online (o canal-local usa 0). O config
+  normalizado sempre traz `gracaSeg`.
+- **Prioridade (`.priority`)**: as regras exigem `newData.getPriority() === null` em todo nó que o
+  aluno grava (`pedidosAnfitriao/$uid`, `regrasVersao/$uid`, `membros/$uid` e os filhos `entrouEm` e
+  `equipe`, `presenca/$uid`, `votosEnquete/…/$uid`, `decisoes/…/$uid`), no próprio nó e em cada filho:
+  a prioridade é um valor de tamanho livre ao lado do nó, que o SDK aceita dentro do valor
+  (`{ '.value': v, '.priority': … }`), e sem a conferência um blob de MB passava e enchia a cota do
+  plano grátis. O canal-local não representa prioridade: a chave com `.` é recusada ao gravar, com um
+  erro que não é `PERMISSION_DENIED`. Conferido só no emulador (`regras-paridade.test.mjs`, "só
+  online") e no `--atacar`.
 
 ---
 
@@ -276,19 +352,19 @@ Transição de um nó só: `canal.transacao('salas/{S}/estado')`, que aborta se 
 1. `subfase = "fechando"`, com `geracao + 1`;
 2. espera a confirmação;
 3. na rodada, grava `sementes/{r}` uma vez (se já existe, reusa);
-4. `ler()` dos votos (na rodada, também `membros` e `resultados`);
+4. `ler()` dos votos (na rodada, também `membros`, `resultados` e `prorrogacoes/{r}`);
 5. apura;
 6. um único `gravar()` com `estado` (`geracao + 1`) mais `resultados`, `placar` ou `enquetes`.
 
 Rodada:
 - Conta só o voto de quem **ainda** é da equipe e tem `entrouEm <= abertoEm` (a regra já barra, e a apuração confere de novo).
 - Equipes ativas = `estado.equipesAbertas`, na ordem do config. Estado antes da rodada = `depois` da última rodada apurada, na ordem do roteiro.
-- Empate: o passo 5 grava só o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg` (o `abertoEm` não muda). Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada:** se outra equipe empatar no segundo fechamento, vai direto para a moeda.
+- Empate: o passo 5 grava o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg` (o `abertoEm` não muda), e, no mesmo `gravar()`, a marca `prorrogacoes/{r} = true`. Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada (D-035):** se outra equipe empatar no segundo fechamento, vai direto para a moeda. O mesmo vale depois do `desfazer()`: o passo 4 também lê `prorrogacoes/{r}` e, se a marca existe, todo empate vai direto para a moeda (`aposProrrogacao: true`, sem `candidatas`: a moeda fica entre as opções empatadas agora).
 - Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois }`. Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor`.
 
 Enquete: apuração `{ histogramas, n, metodo: "celular", apuradaEm }`; no momento `depois`, mais `transicao: { [afirm]: enquete.transicao(antes, depois) }`, mesmo que o "antes" tenha sido pulado (fica com 0 par).
 
-`desfazer()` apaga `resultados/{r}` e recalcula o `placar` sem esta rodada (`null` se não sobrar nenhuma), e **nunca** apaga `sementes/{r}`. Votos e semente continuam lá: encerrar de novo tira a mesma carta.
+`desfazer()` apaga `resultados/{r}` e recalcula o `placar` sem esta rodada (`null` se não sobrar nenhuma), e **nunca** apaga `sementes/{r}` nem `prorrogacoes/{r}`. Votos, semente e marca continuam lá: encerrar de novo tira a mesma carta e não abre outra prorrogação.
 
 Nada fecha por timer: o prazo serve só à regra do banco e ao cronômetro visual (D-010; arquitetura, seção A, item 3).
 
@@ -330,3 +406,265 @@ Entradas de `telaDoAluno`:
 Equipe válida = existe no conteúdo e está em `estado.equipesAbertas` (quando definidas). Membro numa equipe fechada aguarda a redistribuição.
 
 `pendente = { tipo: "enquete", enquete, momento, afirmacao, valor } | { tipo: "decisao", rodada, equipe, opcao }`. Vale se a mesma etapa continua em `votando` (com a afirmação `*` ou a mesma) ou em `decidindo`; na `prorrogacao`, só com a equipe e a opção em `empatadas`. Pausado ainda vale: o reenvio passa ao retomar.
+
+---
+
+## 9. Interface: `js/ui/*` e o telão (`js/telao.js`)
+
+Scripts clássicos, carregados depois do núcleo e do canal, nesta ordem:
+`formatar.js`, `dom.js`, `graficos.js`, `conexao.js`, `telao.js` (e antes deles
+`vendor/qrcode.js`, qrcode-generator 2.0.4, MIT, que expõe o global `qrcode`).
+O celular reusa os quatro de `js/ui/`.
+
+### `Viracao.formatar` (pt-BR, fuso America/Sao_Paulo)
+
+| Função | Exemplo |
+|---|---|
+| `moeda(n, { sinal? })` | `R$ 1.234`, `−R$ 80`, `+R$ 300` (sem centavos; sinal de menos tipográfico) |
+| `inteiro(n, { sinal? })` / `decimal(n)` / `porcento(fração)` | `7`, `3,5`, `42%`; `null` em `porcento` dá `—` ("sem votos", nunca 0%) |
+| `indicador(ind, valor, opcoes?)` | `moeda` ou `inteiro`, conforme `ind.formato` |
+| `dataHora(ms)` / `carimbo(ms)` | `28/09, 14:05` / `2026-09-28-1405` (nome de arquivo) |
+| `relogio(ms)` / `atraso(seg)` / `pessoas(n)` | `1:05` / `+3 min de atraso`, `2 min adiantado`, `no horário` / `1 pessoa` |
+
+### `Viracao.dom` (nenhum `innerHTML`)
+
+- `el(tag, atributos?, filhos?)` e `svg(tag, atributos?, filhos?)`. Atributos
+  especiais: `classe` (texto ou lista, aninhada ou não), `texto`, `ao`
+  (`{ click: fn }`), `dados` (`data-*`), `estilo` (propriedades CSS, inclusive
+  `--variavel`). Valor `false`/`null`/`undefined` não é gravado.
+- `botao(rotulo, acao, { classe, dica, titulo, desabilitado, pressionado, dados, segurarMs })`:
+  sempre faz `blur()` depois do clique; com `segurarMs`, só aciona segurando
+  (progresso em `--progresso`, de 0 a 1).
+- `limpar(no)`, `baixar(nome, texto, tipo?)` (funciona por `file://`),
+  `lerArquivo(file) → Promise<texto>`.
+
+### `Viracao.graficos` (SVG à mão)
+
+Quem chama mede o espaço e passa `largura`, `altura` e `fonte` em px; o SVG sai
+com `viewBox` igual ao tamanho real, para o texto ter o tamanho do corpo.
+
+- `forma(nome, cor, tamanho)` (`circulo`, `triangulo`, `quadrado`, `losango`,
+  `estrela`, `cruz`, `hexagono`; outra forma vira círculo com miolo) e
+  `rotuloEquipe(equipe, numero)`: forma, número e nome sempre juntos.
+- `histograma({ series: [{ hist, estilo: 'antes'|'depois'|'cheio' }] })`,
+  `rotulosEscala(rotulos, { soNumeros? })`, `legendaEscala(rotulos)`,
+  `tresPartes({ resumo })`, `amostra(estilo)` (legenda).
+- `fatias({ linhas: [{ chances, sorteada, graves: Set }], animar })`: os
+  ponteiros usam a mesma animação CSS e param juntos. Com `animar`, o SVG leva a
+  classe `fatias-animadas`, e o contorno da fatia sorteada só aparece quando os
+  ponteiros param (2,6 s; o mesmo atraso do `.revelar-apos`). A chance de carta grave
+  de cada equipe vai escrita sob o nome dela, no telão (`.linha-graves`).
+- `cascata({ dominio, linhas: [{ segmentos: [{ de, ate, estilo, rotulo, rotuloCurto? }], fim }], referencias: [{ id, valor, linhas? }] })`:
+  cada segmento tem a sua própria faixa dentro da linha da equipe (nunca um por cima do
+  outro), e os números vão numa linha de texto logo abaixo, cada um com a amostra do
+  segmento; `rotuloCurto` (sem "R$") entra quando os três não cabem na largura. Uma
+  referência com `linhas` (índices) só é desenhada nessas linhas.
+  `barras({ dominio, linhas: [{ valor, rotulo? }] })`.
+- `qr(texto, { lado })`: QR escuro sobre claro, com zona de silêncio.
+
+### `Viracao.conexao`
+
+- `criarSelo() → { elemento, definir(estado, texto?), estado() }`, com `estado` ∈
+  `conectado | reconectando | offline` (texto e ícone próprios; a cor nunca é o
+  único canal).
+- `criarWakeLock() → { suportado, ligar(), desligar(), ativo() }`: refaz o pedido
+  ao voltar à vista enquanto estiver ligado. **Quando** ligar é de quem chama.
+- `aoVoltarAVista(cb(motivo)) → desligar()`: `visibilitychange` (visível),
+  `pageshow` (persistida) e `online`.
+
+### `Viracao.telao` (o que outro agente usa)
+
+| Membro | O que faz |
+|---|---|
+| `abrirCanal(modo, { sala, uid? }) → Promise<canal>` | **o ponto de encaixe do online**. `offline`: `canalLocal.criar({ persistirEm: chaveSessao(sala), uid })`. `online`: o canal-firebase da página, já com login e autoteste das regras (seção 10); lança erro com a explicação se o serviço não está pronto |
+| `ligarSessao({ modo, sala, nomeRoteiro, criar, canal? }) → Promise<estado>` | cria (`criar: true`) ou carrega a sala com o `anfitriao`, liga os ouvintes, a barra e o desenho. Com `canal`, não chama `abrirCanal` |
+| `salvarEstado(motivo?)` | baixa o estado da sala (formato abaixo). O `'manual'` avisa na tela; o automático (fim de rodada) só registra "estado salvo às HH:MM (r2)" na barra do apresentador (`[data-barra-salvo]`), para o aviso não cobrir o sorteio projetado |
+| `estado()`, `sala()`, `modo()`, `chaveSessao(sala)`, `versaoApp` | leitura (e2e). Os dois e2e leem a versão daqui (e não de um `?v=1` escrito no teste), para não reprovar quando o `bin/versao.mjs` subir a versão |
+
+Também no `telao.js`: `app.lerEspelho` (só online, ligado pela seção 10)
+devolve uma cópia da árvore da sala mantida localmente; alimenta "Continuar sem
+celulares" e "Salvar estado".
+
+**Estado salvo** ("Salvar estado", download automático ao fim de cada rodada,
+D-015, e "Carregar estado"):
+`{ formato: "viracao-estado", versaoApp, sala, salvoEm, dados }`, com `dados` = o nó
+`salas/{S}` **sem** `votosEnquete`, `decisoes`, `presenca` e `membros` (nenhum voto
+individual sai do banco, AGENTS.md regra 8). Carregar recria o canal-local com
+`uid = dados.meta.hostUid` (seção 6) e recusa estado de outro `hashConfig`.
+
+**localStorage** (prefixo `viracao:telao:v{versaoApp}:`, hoje `v1`; o `npm run versao` muda junto): `sala:{S}` (a
+árvore do canal-local), `passo:{S}` (`{ indice, em }`, para o atraso da barra),
+`baixados:{S}` (apurações já baixadas) e `ultima` (`{ sala, roteiro, hashConfig,
+criadaEm, hostUid }`, para o "Retomar a sessão de …?").
+
+**Offline, uma aba escritora por sessão:** começar, retomar, carregar estado e seguir sem
+celulares pegam a trava `viracao:telao:{S}` (a mesma do online) antes de o canal-local
+tocar no localStorage; outra aba do mesmo navegador é recusada ("já está aberta em outra
+aba"). A sessão guardada de outra aba que segura a trava não é apagada.
+
+**Votos individuais na árvore local:** o canal-local grava a árvore inteira no
+localStorage. Nela ficam só os votos que o offline ainda usa: `votosEnquete/{e}/{m}` da
+enquete do passo atual (e o `antes` da mesma enquete quando o passo é o `depois`, para a
+transição) e `decisoes/{r}` da rodada do passo atual. A `presenca` sai sempre. A poda
+acontece ao seguir sem celulares e a cada troca de passo no offline, pelo
+`exportar`/`importar` do canal-local (as travas não deixam nem o anfitrião gravar voto
+alheio).
+
+**Fila de comandos:** um comando de cada vez, e mais:
+- online sem conexão (selo em "reconectando" por queda, e não pela reconexão que o próprio
+  telão força ao voltar à vista), o comando é recusado na hora, com aviso;
+- comando online que não termina em 10 s libera a fila (o aviso diz que ele pode chegar
+  quando a rede voltar);
+- os comandos que dependem do passo (avançar, encerrar, pausar/retomar, +30 s, desfazer,
+  pular, encerrar o jogo, decidir por equipe, abrir e fechar equipes) levam a `geracao` que
+  o apresentador via ao apertar a tecla; se o estado mudou até o comando rodar, ele é
+  descartado ("o estado mudou; confira e repita"). O mesmo se a sessão trocou;
+- "Continuar sem celulares" e "Salvar estado" não passam pela fila (socorro).
+
+**Confirmações:** as que encurtam a conversa das equipes (encerrar no tempo mínimo),
+desfazem uma apuração ou descartam dados (encerrar a enquete offline com afirmação sem
+contagem; a primeira contagem à mão com votos de celular de antes da queda) abrem com o
+foco no "Cancelar": confirmar pede Tab e Enter, ou um clique.
+
+**Enquete offline no modo `todas`:** Espaço (→, PageDown) vai para a próxima afirmação;
+na última, avisa que o Enter encerra a enquete inteira. Com votos de celular de antes da
+queda e nenhuma contagem à mão, a tela diz quantas pessoas votaram, e o Enter apura esses
+votos; a contagem à mão os substitui (métodos nunca se misturam, seção 7).
+
+---
+
+## 10. Modo online: o telão com celulares e o celular (`js/aluno.js`)
+
+### Telão online (`js/telao.js`, seção "Modo online")
+
+Só fora de `file://`. A abertura ganha o bloco "3. Com celulares" (o offline passa
+a "4. Sem celulares"), que prepara o serviço uma vez por página:
+1. `?emulador=1`, só em `localhost`/`127.0.0.1`: a conexão do emulador (projeto
+   `demo-seminario`, sem `conexao.json`). Fora disso, `../conexao.json` com
+   `no-store`; falta, erro ou `COLE_AQUI` em `apiKey`, `authDomain`, `databaseURL`,
+   `projectId` ou `appId` = só o modo sem celulares, com a explicação.
+2. SDK: `import()` de `https://www.gstatic.com/firebasejs/12.19.0/firebase-{app,auth,database}.js`,
+   num `Promise.race` de 4 s. Falhou: "Tentar de novo", que **recarrega a página** (o
+   navegador guarda a falha do `import()` de um endereço para o documento inteiro), e o
+   offline continua ali.
+3. `canalFirebase.criar({ sdk, conexao, longPolling: ?lp=1, emulador, ambienteLocal })` e `entrar()`.
+4. Autoteste: `autoteste/{uid}` tem de ser recusado e `regrasVersao/{uid} = REGRAS_VERSAO` (hoje `"v3"`)
+   tem de passar. Senão, "REGRAS ABERTAS ou DESATUALIZADAS: não use", e criar e
+   retomar ficam desabilitados.
+5. Primeira conexão acima de 8 s: sugere a "Rede restrita".
+
+- **PIN:** campo de senha, só em memória (apagado depois de ligar). Vai para
+  `pedidosAnfitriao/{uid}` antes do `criarSala()` (sempre) e antes do
+  `carregarSala()` quando `meta.hostUid` não é o uid (outra máquina). Uma recusa
+  `PERMISSION_DENIED` vira "o PIN não confere com o cadastrado no console".
+  **O pedido vive só durante a operação:** depois de criar ou assumir (deu certo ou
+  não), o telão grava `pedidosAnfitriao/{uid} = null`. Deixado no banco, ele dava ao uid
+  anônimo daquele navegador um PIN_OK permanente (assumir qualquer sala viva sem saber o
+  PIN) e fazia o telão antigo tomar a sala de volta só por voltar à vista.
+- **Criar:** `gerarSala()`, com até 8 sorteios quando o código "já existe".
+  **Retomar:** o código digitado (preenchido com a última sala online); o roteiro
+  vem de `meta.roteiro`.
+- **Uma aba por máquina (I3):** `navigator.locks.request('viracao:telao:{S}', { ifAvailable: true })`
+  segura a sala enquanto a sessão dura; outra aba do mesmo navegador é recusada.
+- **Depois de ligar** (tudo em `app.desligar`, desligado ao encerrar a sessão ou ao
+  seguir sem celulares):
+  - espelho = ouvinte em `salas/{S}` (o anfitrião lê a sala inteira), lido por `app.lerEspelho()`;
+  - pulso: `salas/{S}/pulso = marcadorDeHora()` a cada `tempos.pulsoSeg`, só com
+    a conexão de pé; recusado = outra máquina assumiu: o telão entra no **modo passivo**
+    (para o pulso, a barra fica desabilitada, nenhum comando sai, nem "Continuar sem
+    celulares" nem "Salvar estado", que sairiam de um espelho congelado; o aviso manda
+    recarregar e retomar com o PIN);
+  - selo pelo `aoMudarConexao`;
+  - `distribuirAtrasados()` quando o espelho mostra, depois da trava, membro sem
+    equipe aberta (uma vez por conjunto de uids).
+- **Ativos e inativos** (arquitetura, seção 10): ativo = membro com `presenca` nos
+  últimos 60 s. "N ativos / M membros" (`[data-contagem-ativos]`) fica discreto no lobby
+  e na barra (só números: nem uid nem crachá na tela projetada); o denominador do "n de m
+  votaram" e do "n de m decidiram" são os ativos. A presença envelhece sem aviso do banco:
+  o tique confere a contagem e redesenha quando ela muda. "Remover inativos (segure)" na
+  barra, sem tecla de atalho (apaga membros), segura 2 s e chama
+  `anfitriao.removerInativos(120000)`: 2 min, o dobro da janela de ativo, para quem só
+  trocou de rede não perder a equipe. O aviso diz quantos saíram.
+- **QR:** `../aluno/?sala=S`, com `&lp=1` na "Rede restrita" e `&emulador=1` no ensaio com o emulador.
+- **Ao voltar a ficar visível:** `canal.reconectar()`, e relê meta e estado. Sem rede de
+  verdade (selo em "reconectando"), só o `reconectar()`: a releitura fica para quando a
+  conexão voltar (enfileirada, ela ocupava a fila por 10 s e terminava num erro técnico
+  projetado). Online, confere `meta.hostUid` antes de reler: se outra máquina é a
+  anfitriã, entra no modo passivo, e **nunca** chama o `carregarSala()` (que gravaria o
+  hostUid de volta).
+- **"Continuar sem celulares":** `canal.desconectar()` (só de ida: a abertura passa
+  a pedir para recarregar), e o canal-local nasce com `uid = meta.hostUid` e o
+  espelho inteiro, no formato do banco (com a poda dos votos, seção 9). Apaga
+  `ultimaOnline`: depois de recarregar, a abertura não oferece religar a sala do banco,
+  que ficou no passo de antes da queda. "Salvar estado" online também sai do espelho.
+- **localStorage:** `viracao:telao:v{versaoApp}:ultimaOnline = { sala, roteiro, hashConfig, criadaEm }`.
+
+### Celular (`aluno/index.html`, `js/aluno.js`)
+
+Scripts, nesta ordem: `aluno-logica.js`, `canal-firebase.js`, `formatar.js`,
+`dom.js`, `graficos.js`, `conexao.js`, `aluno.js`. O celular não carrega motor nem
+anfitrião: quem decide é o telão.
+
+- **Entrada:** `?sala=` ou o código digitado (só o alfabeto da sala). Com a sala
+  guardada no aparelho, recarregar entra direto.
+- **Falha do SDK:** o `import()` da CDN que falha por rede (e não pelo tempo-limite de 4 s,
+  em que ele ainda pode chegar) fica guardado pelo navegador para aquela página, e repetir
+  o `import()` falha na hora. O celular então recarrega a página, com a sala na URL e a
+  marca `entrarAposRecarga` no sessionStorage (entra direto na sala), no máximo uma vez a
+  cada 15 s (`recarregouEm`, no sessionStorage). Navegador embutido
+  (`/Instagram|FBAN|FBAV/` no user-agent): o "Entrar" fica bloqueado, com a URL copiável.
+- **Entrar:** `entrar()`, lê `meta` (sem meta: "não há sala com o código") e ouve
+  `meta`, `conteudo`, `estado`, `pulso`, `membros`, `resultados` e `placar`.
+- **Membro:** `membros/{uid} = { entrouEm: marcadorDeHora() }` só quando não existe
+  e `meta.entradaAberta`. Nunca regrava: um `entrouEm` novo tiraria o voto da
+  decisão aberta. Membro que some (removido por inatividade) é registrado de novo,
+  no máximo a cada 5 s; com a entrada reaberta, quem esperava entra sozinho.
+- **Depois do membro confirmado:** presença (a cada 20 s, com a página visível;
+  `apagarAoDesconectar`, refeito a cada reconexão); `decisoes/{r}/{minhaEquipe}`
+  (religado quando a equipe ou a rodada muda); e as folhas do próprio voto,
+  `votosEnquete/{e}/{m}/{a}/{uid}` (as do momento aberto; no comparativo, antes e
+  depois). Ouvinte recusado religa com espera de 1, 2, 4… até 10 s.
+- **Tela:** `alunoLogica.telaDoAluno`, com `membros` (a contagem ao vivo usa o
+  filtro da apuração). Só do celular: `entrada`, `conectando`, `erro` e
+  `salaEncerrada` (a meta sumiu).
+- **Voto:**
+  - o pendente vai para o `localStorage` antes do `gravar()`;
+  - "registrado" só com a confirmação do servidor;
+  - 5 s: "Enviando…" e `reconectar()`; 20 s: "Guardado no aparelho: será reenviado";
+  - `PERMISSION_DENIED`: "A votação fechou antes do seu voto chegar";
+  - botões desabilitados enquanto envia;
+  - enquanto não confirma (e no guardado), a tela e a contagem usam o valor já
+    confirmado: o SDK aplica a escrita no cache antes da confirmação. O guardado
+    conta como respondido só para a navegação da enquete;
+  - ao carregar, reenvia os pendentes com `pendenteAindaVale`; os que não valem
+    são descartados, com aviso.
+- **Queda própria:** `.info/connected` falso por mais de 5 s com a página visível
+  = `reconectar()`, repetido a cada 10 s; presença sem confirmação em 5 s (sonda) =
+  `reconectar()`; `visibilitychange`, `pageshow` e `online` = `reconectar()` e
+  releitura. Pulso do telão com mais de 3 × `pulsoSeg`: faixa "Aguardando o telão",
+  que nunca reconecta; durante `bloco`, nem a faixa.
+- **Wake Lock** só nas telas `enquete`, `decisao` e `prorrogacao`.
+- **Faixa "atualize a página"** quando `meta.versaoApp` ≠ `VERSAO_APP`.
+- **localStorage** (prefixo `viracao:aluno:`, sem a versão, de propósito: o voto
+  guardado pela versão velha é reenviado pela nova): `sala`, `lp` (`?lp=1` é
+  lembrado; `?lp=0` esquece) e `pendentes:{S}:{uid}` = `{ [caminho]: pendente }`.
+- `Viracao.aluno` (só leitura, para o e2e): `versaoApp`, `uid()`, `sala()`,
+  `tela()`, `pendentes()`, `envios()`.
+
+### Ferramentas
+
+- `bin/servir.mjs`: `servir({ porta = 8080, host = '127.0.0.1', raiz }) → Promise<{ url, servidor, fechar() }>`
+  (porta 0 = livre); na linha de comando, `node bin/servir.mjs [porta] [--host h]`.
+  Sem cache, `/pasta` → 301 para `/pasta/` (como o GitHub Pages), nunca entrega
+  dotfile nem `node_modules`, e `/favicon.ico` responde 204.
+- `bin/versao.mjs`: `node bin/versao.mjs [N] [--conferir] [--raiz pasta]`. Troca
+  `?v=A"` por `?v=B"` nas três páginas e `const VERSAO_APP = 'A';` em `js/telao.js`
+  e `js/aluno.js`, por split/join. `--conferir` sai com 1 se algum `src`/`href`
+  com `?v=` diverge da `versaoApp`.
+- `e2e/sessao-online.e2e.mjs` (`npm run e2e:online`, fora do `check`): sobe o
+  `servir` e o emulador (via `bin/emulador.mjs`), semeia o PIN e joga a sessão com
+  o telão e 3 celulares de 360×740 (e um quarto, que entra e some, para os inativos). O
+  SDK sai do `node_modules/firebase` no endereço da CDN (sem internet). O que ele precisa
+  do conteúdo sai do `config.json`. O bloco "sem serviço" recebe um `conexao.json` com
+  `COLE_AQUI` servido pelo Playwright: o do repositório tem as chaves do projeto real, e
+  nenhum passo do e2e pode falar com ele (AGENTS.md, regra 6).

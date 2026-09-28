@@ -50,7 +50,8 @@ adversariais. A seção 15 lista o que os revisores mudaram.
 7. **Referência opcional no placar final:** `referencias` no config, por exemplo
    "a mesma pessoa com carteira assinada". Aparece como linha de comparação, não
    como equipe. O valor precisa de fonte e é validado junto com o Kleberson
-   (D-005).
+   (D-005). Com `persona`, a linha atravessa só as equipes dessa persona (no
+   config de 28/09, "Jonas com carteira assinada" só nas equipes do Jonas).
 8. **Playwright como `devDependency` do projeto**, usando o Chrome ou o Edge
    instalados (`channel`), sem baixar navegador.
 9. **O emulador do Firebase roda com um projeto `demo-seminario`**, sem login.
@@ -215,9 +216,9 @@ seminario-viracao/
 │   └── aluno.js               entrar, votar, reenviar pendentes
 ├── vendor/qrcode.js           qrcode-generator 2.0.4 (MIT), cabeçalho preservado
 ├── firebase/regras.json       regras versionadas (colar no console)
-├── bin/  simular-alunos.mjs · validar-config.mjs · versao.mjs
-├── test/*.test.mjs · test/fixtures/ · e2e/telao-offline.e2e.mjs
-├── docs/  decisoes.md · roteiro-do-apresentador.md · como-editar-config.md
+├── bin/  simular-alunos.mjs · validar-config.mjs · versao.mjs · emulador.mjs · servir.mjs
+├── test/*.test.mjs · test/fixtures/ · test/emulador/ · e2e/telao-offline.e2e.mjs · e2e/sessao-online.e2e.mjs
+├── docs/  decisoes.md · arquitetura.md · contratos.md · roteiro-do-apresentador.md · como-editar-config.md · rascunho-conteudo.md
 ├── README.md                  publicação passo a passo, ensaio, pendrive
 ├── AGENTS.md · CLAUDE.md (só ponteiro)
 ├── package.json               type:module; check · test · e2e · simular · validar
@@ -267,15 +268,19 @@ O simulador confere que o número de votos confirmados é igual ao de votos cont
 - **Avançar:** Espaço, → e PageDown do passador.
 - **Encerrar votação:** Enter. **+30 s. Pausar/retomar:** P.
 - **Pular para…, Decidir por esta equipe e Mover aluno** (pelo crachá do celular, por exemplo "Laranja · K7Q").
+- **Remover inativos** (seção 10), sem tecla de atalho.
 - **Abrir/fechar entrada. Rede restrita:** gera um QR com `?lp=1`, que força long-polling.
 - **Salvar estado (JSON). Tela cheia:** F.
+- **Linhas de informação:** passo e atraso, nome do passo, "estado salvo às 14:05 (r1)", "18 ativos / 21 membros" (só com celulares) e o selo de conexão. O salvamento automático do fim de rodada fica só aqui: um aviso na tela cobriria o sorteio projetado.
 
 **Proteções da barra:**
 - ← e PageUp não fazem nada, porque o passador de slides manda essas teclas no "voltar".
 - **Desfazer:** Ctrl+Z, com confirmação.
-- **Ações sem volta** ("Continuar sem celulares", "Encerrar", "Apagar a sala"): segurar o botão por 2 s.
+- **Ações sem volta** ("Continuar sem celulares", "Encerrar", "Apagar a sala", "Remover inativos"): segurar o botão por 2 s.
+- **Confirmações** (encerrar antes do tempo mínimo de conversa, desfazer, encerrar a enquete offline com afirmação sem contagem, a primeira contagem à mão por cima de votos de celular): abrem com o foco em "Cancelar". Confirmar pede Tab e Enter, ou um clique: a tecla repetida, ou o Enter impaciente, só cancela.
 - **Foco:** todo botão perde o foco depois do clique, para o Espaço não acionar o botão errado.
 - **Trava:** Avançar fica travado por 1,5 s depois de cada uso.
+- **Enquete offline no modo `todas`:** o Espaço passa para a próxima afirmação da contagem à mão (na última, avisa que o Enter encerra a enquete inteira).
 
 ---
 
@@ -284,7 +289,7 @@ O simulador confere que o número de votos confirmados é igual ao de votos cont
 ```
 privado/pinApresentador               PIN (≥ 10 caracteres) gravado à mão no console, uma vez. Ninguém lê.
 pedidosAnfitriao/{uid}             PIN digitado no telão (string de 8 a 32 caracteres); ninguém lê
-regrasVersao/{uid}                 só aceita "v1" → prova que as regras publicadas são as desta versão
+regrasVersao/{uid}                 só aceita "v3" → prova que as regras publicadas são as desta versão
 autoteste/{uid}                    .write false → se a escrita PASSAR, as regras estão abertas: o telão bloqueia
 
 salas/{SALA}                       SALA = 4 caracteres de A-H J-N P-Z 2-9 (sem 0/O/1/I)
@@ -298,6 +303,8 @@ salas/{SALA}                       SALA = 4 caracteres de A-H J-N P-Z 2-9 (sem 0
   votosEnquete/{enquete}/{momento}/{afirmacao}/{uid}: 1..5
   decisoes/{rodada}/{equipe}/{uid}: "b"
   sementes/{rodada}:  número; gravada 1 vez e NUNCA apagada (nem pelo desfazer)
+  prorrogacoes/{rodada}: true; gravada junto com a prorrogação, 1 vez, e NUNCA apagada:
+                      refazer a rodada não abre outra prorrogação (D-035)
   enquetes/{enquete}/{momento}: { histogramas, n, metodo: "celular"|"manual", transicao (matriz 5×5), apuradaEm }
   resultados/{rodada}/{equipe}: { decisao, origem: maioria|prorrogacao|moeda|piloto|apresentador,
                                   contagem, chances, carta, delta, depois }
@@ -313,7 +320,7 @@ salas/{SALA}                       SALA = 4 caracteres de A-H J-N P-Z 2-9 (sem 0
 | presenca | não | o próprio (valor = `now`) | lê |
 | votosEnquete | só o próprio | o próprio, com a etapa aberta, inteiro de 1 a 5 | lê tudo |
 | decisoes/{r}/{equipe} | **só a da própria equipe** | o próprio, com a etapa aberta, em opção existente, e só se entrou **antes** da abertura da etapa | lê tudo |
-| sementes | não | não | grava uma vez |
+| sementes, prorrogacoes | não | não | grava uma vez; nunca apaga |
 | salas/{SALA} inteira | não | não | lê tudo; **pode apagar a sala inteira** (e só apagar) |
 
 ### O PIN do apresentador substitui o código de retomada da síntese
@@ -324,6 +331,8 @@ O red team achou um furo na retomada da síntese: a comparação `null === null`
 - **Limpar salas antigas** pelo próprio telão.
 
 O PIN é digitado uma vez, no notebook, **antes de projetar**, num campo de senha. A regra exige que o PIN exista, o que fecha o `null === null`.
+
+**Telão que perdeu a sala fica passivo.** Quando outra máquina assume com o PIN, o telão antigo descobre pelo pulso recusado, ou ao voltar à vista, quando confere o `meta/hostUid`. A partir daí ele só acompanha: não manda pulso nem comando, e também não oferece "Continuar sem celulares" nem "Salvar estado", que sairiam de um espelho congelado. Sem isso, as duas máquinas tomariam a sala uma da outra a cada volta à vista (invariante I3). Para voltar a comandar por ele, é preciso recarregar e retomar com o PIN. O pedido em `pedidosAnfitriao/{uid}` é apagado logo depois de criar ou assumir: deixado lá, daria àquele navegador um PIN_OK permanente.
 
 ### Esboço das regras
 
@@ -336,7 +345,7 @@ Abreviações:
 No arquivo real as expressões ficam por extenso, porque as regras não têm variáveis.
 
 ```
-salas/$s          .read: HOST || PIN_OK      .write: (HOST || PIN_OK) && !newData.exists()     ← só apagar tudo
+salas/$s          .read: HOST      .write: HOST && !newData.exists()     ← só apagar tudo (o PIN serve para assumir, e aí vale o HOST)
   meta            .read: auth != null
                   .write: (!data.exists() && PIN_OK && newData.child('hostUid').val() === auth.uid) || HOST
     hostUid       .write: PIN_OK && newData.val() === auth.uid                                   ← retomada
@@ -358,13 +367,16 @@ salas/$s          .read: HOST || PIN_OK      .write: (HOST || PIN_OK) && !newDat
                   .validate: inteiro de 1 a 5 && a afirmação $a existe no conteudo
   decisoes/$r/$eq .read: membros/{auth.uid}/equipe === $eq || HOST
     $uid          .write: auth.uid === $uid && membros/$uid/equipe === $eq && E.rodada === $r
-                          && E.subfase === 'decidindo' && membros/$uid/entrouEm <= E.abertoEm && ABERTO
+                          && (E.subfase === 'decidindo' || (E.subfase === 'prorrogacao' && a equipe está em E.empatadas))
+                          && membros/$uid/entrouEm <= E.abertoEm && ABERTO
                   .validate: formato [a-z0-9_]{1,24} && a opção existe em conteudo/rodadas/$r/opcoes
+                             && (na prorrogação, só opção de E.empatadas/$eq)
   sementes/$r     .read: HOST   .write: HOST && !data.exists()   .validate: newData.isNumber()
+  prorrogacoes/$r .read: HOST   .write: HOST && !data.exists()   .validate: newData.val() === true
   resultados/$r, enquetes/$e/$m   .read: auth != null   .write: HOST && (!data.exists() || !newData.exists())
   placar          .read: auth != null   .write: HOST
 pedidosAnfitriao/$uid  .write: auth.uid === $uid   .validate: string de 8 a 32 caracteres
-regrasVersao/$uid      .write: auth.uid === $uid   .validate: newData.val() === 'v1'
+regrasVersao/$uid      .write: auth.uid === $uid   .validate: newData.val() === 'v3'
 autoteste/$uid         .write: false
 privado                .read: false   .write: false
 ```
@@ -376,7 +388,7 @@ privado                .read: false   .write: false
 
 **Autoteste ao abrir o telão:**
 - grava em `autoteste/{uid}` (**tem de falhar**);
-- grava `"v1"` em `regrasVersao/{uid}` (**tem de passar**).
+- grava `"v3"` (a versão atual das regras) em `regrasVersao/{uid}` (**tem de passar**).
 
 Se qualquer um dos dois der errado, o telão mostra "REGRAS ABERTAS ou DESATUALIZADAS: não use" e não cria a sala. O teste **nunca** escreve na sala real.
 
@@ -523,7 +535,7 @@ validação.
 **Como a equipe chega a uma decisão:**
 - Cada membro vota e pode mudar até o fechamento, vendo ao vivo a contagem da própria equipe, sem nomes.
 - Vale a opção mais votada.
-- **Empate:** prorrogação de 20 s só para aquela equipe ("empate: conversem"). Se continuar empatado, moeda com a semente gravada.
+- **Empate:** prorrogação de 20 s só para aquela equipe ("empate: conversem"). Se continuar empatado, moeda com a semente gravada. Há uma prorrogação só por rodada, mesmo depois do desfazer (D-035): a marca `prorrogacoes/{r}` (seção 6) manda todo empate seguinte direto para a moeda.
 - **Ninguém votou:** vale o `padrao`, com o rótulo "piloto automático: o app decidiu por vocês".
 - **O apresentador pode decidir por uma equipe** (quem está sem celular), com `origem: "apresentador"`.
 - **Não fecha sozinho quando todos tocaram.** Depois do tempo mínimo de conversa, o telão avisa "todas as equipes decidiram. Enter encerra".
@@ -598,6 +610,13 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 **Navegador embutido** (Instagram/Facebook): detectado **na tela de entrada**, que bloqueia o "Entrar" até o aluno abrir no navegador padrão. Isso evita o membro fantasma.
 
 **Membros ativos:** presença nos últimos 60 s. O "todos votaram" e o teto por equipe contam só os ativos. O telão mostra "18 ativos / 21 membros" e tem o botão "remover inativos".
+- A linha fica discreta no lobby e na barra, só com números: nem uid nem crachá na tela projetada.
+- A presença envelhece sem nenhum aviso do banco. O timer que redesenha o cronômetro também confere a contagem e redesenha quando ela muda; sem isso, a linha e o "n de m votaram" ficariam com o número velho.
+- "Remover inativos" apaga o registro de quem está sem presença há **mais de 2 min**, o dobro da janela de ativo: quem só trocou de rede ou deixou a tela apagar por um minuto não perde a equipe. Pede para segurar 2 s e não tem tecla de atalho. O celular removido que volta é registrado de novo sozinho (com a entrada aberta), mas sem voto na decisão já aberta.
+
+**Telão sem rede:** com o selo em "reconectando" por queda de verdade, os comandos do telão são recusados na hora, com aviso, e nunca enfileirados. Enfileirado, o comando ficava preso na escrita do SDK, que não termina sem rede, e travava a fila inteira; quando a rede voltava, os presos eram aplicados em rajada. Um comando que não termina em 10 s libera a fila, com um aviso de que ele ainda pode chegar. "Continuar sem celulares" e "Salvar estado" não passam pela fila.
+
+**CDN do Firebase inacessível:** o navegador guarda a falha do `import()` de um endereço para a página inteira, e repetir o `import()` falha na hora, mesmo com a CDN de volta. Por isso o "Tentar de novo" do telão recarrega a página (o PIN é digitado de novo). O celular, quando o `import()` falha por rede (e não pelo tempo-limite de 4 s, em que ele ainda pode chegar), recarrega sozinho, com a sala na URL, no máximo uma vez a cada 15 s.
 
 **Rede restrita:** a tecla no telão gera um QR com `?lp=1`, que força o long-polling, e o celular guarda essa escolha. O telão também sugere o modo quando a própria primeira conexão passa de 8 s.
 
@@ -614,7 +633,7 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 - **Rodada:** o apresentador clica na opção de cada equipe.
 
 **Seguro contra "travou e caiu a internet":**
-- "Salvar estado (JSON)" fica sempre na barra, e um download automático acontece ao fim de cada rodada (aceito em D-015).
+- "Salvar estado (JSON)" fica sempre na barra, e um download automático acontece ao fim de cada rodada (aceito em D-015). O automático não avisa na tela, só na barra ("estado salvo às …"), porque acontece ao abrir o sorteio.
 - O modo offline tem "Carregar estado", porque o pendrive por `file://` é outra origem e não enxerga o `localStorage` do site.
 - O telão mostra o hash do config em uso, para comparar com o do pendrive.
 
@@ -687,8 +706,9 @@ Todos com `node --test`, sem framework.
 | conferências por grep | nenhum `innerHTML`; `Date.now` e `Math.random` fora de `nucleo/`; toda classe do CSS escrita por algum JS; `?v=` igual a `versaoApp` |
 | `e2e/telao-offline.e2e.mjs` | Playwright (`devDependency`, com o Chrome ou o Edge instalados via `channel`): sessão inteira pelo teclado, por `file://`; nada abaixo de 28 px e nenhuma rolagem em 1024×768 e 1920×1080 |
 | `test/emulador/*.test.mjs` (`npm run emulador`) | Contra o emulador do Firebase (projeto `demo-seminario`, JDK 21): regras de verdade, `canal-firebase`, fechamento em duas fases e o simulador com 20 robôs mais `--atacar` |
+| `e2e/sessao-online.e2e.mjs` (`npm run e2e:online`) | Telão e 3 celulares contra o emulador, mais um quarto que entra e some (ativos e inativos). Nunca fala com o projeto real: o bloco "sem serviço" recebe um `conexao.json` falso |
 
-`npm run check` roda o validador, o ESLint, os greps e os testes sem rede, antes de cada commit. `npm run emulador` roda os testes contra as regras reais, localmente, sem gastar a cota de contas anônimas do projeto real. O `--atacar` contra o projeto real fica para a véspera.
+`npm run check` roda o validador, o ESLint, os greps e os testes sem rede, antes de cada commit. `npm run emulador` roda os testes contra as regras reais, localmente, sem gastar a cota de contas anônimas do projeto real. O `--atacar` contra o projeto real fica para a véspera. Autorizado em 28/09 (D-036): no dia 29/09, depois da publicação, um ensaio curto contra o projeto real, com 5 alunos simulados, numa sala de teste apagada no fim e fora da rede do campus.
 
 ---
 
@@ -715,7 +735,7 @@ Todos com `node --test`, sem framework.
 | R17 | apiKey pública usada por terceiros | B | M | Esquema fechado; nós pequenos validados; criar sala só com PIN; sala expira em 12 h |
 | R18 | A varredura de segredos do GitHub barra o upload da chave do Firebase | B | B | Testar num repositório de teste antes do README; a chave fica só em `conexao.json` |
 | R19 | Comportamento do Spark acima de 100 conexões não documentado | B | A | Pico previsto de 41; ensaio na véspera |
-| R20 | CDN gstatic bloqueada no campus | B | A | Offline; o celular mostra "sem acesso ao serviço" e tenta de novo |
+| R20 | CDN gstatic bloqueada no campus | B | A | Offline; o celular mostra "sem acesso ao serviço" e recarrega sozinho (no máximo a cada 15 s); o "Tentar de novo" do telão recarrega a página |
 | R21 | Projetor 4:3 ou daltonismo | M | M | Paleta Okabe-Ito com forma em SVG, nome e número; comparativo paginado; teste em 1024×768 |
 
 ---

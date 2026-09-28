@@ -67,6 +67,24 @@ test('aplica os valores padrão que o JSON pode omitir', () => {
   assert.deepEqual(r.config.referencias, {});
 });
 
+// Revisão da F2, achado 20: a referência "Jonas com carteira assinada" só vale
+// para as equipes do Jonas. Com `persona`, o telão desenha a linha só nelas.
+test('referência do placar aceita persona opcional, que precisa existir', () => {
+  // Arrange
+  const comPersona = lerConfigTeste();
+  comPersona.referencias[0].persona = 'motoboy';
+  const inexistente = lerConfigTeste();
+  inexistente.referencias[0].persona = 'ninguem';
+  // Act
+  const ok = validar(comPersona);
+  const ruim = validar(inexistente);
+  // Assert
+  assert.deepEqual(ok.erros, [], listar(ok.erros));
+  assert.equal(ok.config.referencias.clt.persona, 'motoboy');
+  assert.equal(validar(lerConfigTeste()).config.referencias.clt.persona, undefined);
+  assert.ok(achou(ruim.erros, 'referencias.clt.persona', /não existe/), listar(ruim.erros));
+});
+
 test('persona compartilhada por duas equipes é permitida (D-004)', () => {
   // Arrange: no config de teste, e1 e e6 são a mesma persona.
   const b = lerConfigTeste();
