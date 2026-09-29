@@ -25,14 +25,20 @@
 // 4. em cada tipo de tela, nenhuma rolagem, nenhum texto abaixo de 28 px no
 //    corpo do telão e nenhum controle de operador fora da barra (D-047), em
 //    1024×768 e em 1920×1080, com capturas em e2e/capturas/;
-// 5. a linha do tempo do seminário em todo bloco, com "você está aqui" e "a
-//    seguir" (D-042), e as opções da rodada sem setas de tendência (D-043);
+// 5. a linha do tempo do seminário em todo bloco, com o seminário inteiro até
+//    o fim, "você está aqui" e um "a seguir" que aponta para um item dela
+//    (D-042; rascunho, seção 7, item 15), e as opções da rodada sem setas de
+//    tendência (D-043);
 // 6. as telas que dependem de celular (QR, "14 de 18 votaram", "2 de 3
 //    decidiram", prorrogação, faixa de entrada) desenhadas sobre um canal local
 //    com alunos simulados, pelo mesmo ponto de encaixe que o modo online usa.
 // 7. as seis equipes abertas: a tela de personas com a casa de cada uma (também
 //    com a faixa de entrada) e as páginas do placar final em 1024×768; com a
-//    barra escondida, nem o aviso de operação nem o modal ficam na projeção.
+//    barra escondida, nem o aviso de operação nem o modal ficam na projeção;
+// 8. "piloto automático" em nenhuma tela projetada (D-041; item 14), a cadeia
+//    do "Escolha ou sorte?" com os totais sem sinal e as variações com + ou −
+//    (item 11), e a história de cada equipe com a linha curta em primeira
+//    pessoa de cada mês (D-045; item 12).
 // As funções passadas a page.evaluate/waitForFunction rodam no navegador, e não
 // no Node: os globais delas são os da página.
 /* global document, innerWidth, innerHeight, NodeFilter, getComputedStyle, SVGElement, requestAnimationFrame, DataTransfer, DragEvent */
@@ -103,7 +109,6 @@ const EQUIPES = lista(configNode.ordem.equipes);
 const OBRIGATORIA = EQUIPES.find((id) => configNode.equipes[id].obrigatoria);
 const FECHADA = [...EQUIPES].reverse().find((id) => !configNode.equipes[id].obrigatoria);
 const ATIVAS = EQUIPES.filter((id) => id !== FECHADA);
-const TRECHOS = PASSOS.filter((p) => p.tipo === 'bloco' || p.tipo === 'rodada');
 const opcoesDe = (r) => lista(configNode.rodadas[r].ordemOpcoes);
 const letraDe = (r, op) => LETRAS[opcoesDe(r).indexOf(op)];
 const numeroDe = (eq) => EQUIPES.indexOf(eq) + 1;
@@ -425,6 +430,7 @@ async function conferirTela(nome, { esperarMs = 0, criterios = true } = {}) {
       assert.deepEqual(m.fora, [], `${nome} em ${largura}×${altura}: elemento fora da tela`);
       assert.deepEqual(m.cortados, [], `${nome} em ${largura}×${altura}: texto cortado com reticências`);
       assert.deepEqual(await controlesNaProjecao(), [], `${nome} em ${largura}×${altura}: controle de operador fora da barra (D-047)`);
+      assert.ok(!/piloto autom/i.test(await page.textContent('#palco')), `${nome}: "piloto automático" na tela (D-041)`);
     }
   }
   await page.setViewportSize({ width: 1024, height: 768 });
@@ -476,15 +482,31 @@ async function decidirPelaBarra(numeroENome, letra) {
 // "12. Placar final", e não o "2. " dentro do "12. ": o número do passo no começo.
 const passoNoModal = (indice) => new RegExp(`^${indice + 1}\\. `);
 
-// D-042: a linha do tempo do seminário no bloco, com os blocos e os meses do
-// roteiro, "você está aqui" no passo atual e "a seguir" com o próximo passo.
-async function conferirLinhaDoTempo({ mapa }) {
+// D-042 e rascunho, seção 7, item 15: a linha do tempo do bloco mostra o
+// seminário inteiro, sem esconder passo. Se não couber, os passos depois do
+// último mês viram um item só ("debrief, termômetro, medição, fechamento").
+// "Você está aqui" no item do passo atual; o "a seguir" nomeia o item seguinte,
+// que está na linha, à vista e marcado.
+const maiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
   const e = await estado();
+  // Todo passo, menos a entrada na sala e a tela do fim.
+  const visiveis = passos.filter((p) => p.tipo !== 'lobby' && p.tipo !== 'fim').map((p) => p.indice);
+  const ultimaRodada = passos.findLast((p) => p.tipo === 'rodada').indice;
   const r = await page.evaluate(() => {
     const lt = document.querySelector('#palco .linha-tempo');
     if (!lt) return null;
     return {
-      itens: Array.from(lt.querySelectorAll('[data-trecho]'), (n) => ({ indice: Number(n.dataset.trecho), atual: n.getAttribute('aria-current') })),
+      itens: Array.from(lt.querySelectorAll('[data-trecho]'), (n) => {
+        const caixa = n.getBoundingClientRect();
+        return {
+          passos: n.dataset.passos.split(',').map(Number),
+          atual: n.getAttribute('aria-current'),
+          seguinte: n.dataset.seguinte === '1',
+          rotulo: n.getAttribute('aria-label') ?? n.querySelector('.trecho-titulo')?.firstChild?.textContent ?? '',
+          visivel: caixa.width > 0 && caixa.height > 0 && caixa.right <= innerWidth + 1 && caixa.bottom <= innerHeight + 1,
+        };
+      }),
       seguir: lt.querySelector('.linha-tempo-seguir')?.textContent ?? null,
       mapa: lt.classList.contains('linha-tempo-mapa'),
       texto: lt.textContent,
@@ -492,13 +514,33 @@ async function conferirLinhaDoTempo({ mapa }) {
     };
   });
   assert.ok(r && r.visivel, `bloco ${e.indice}: sem a linha do tempo`);
-  assert.deepEqual(r.itens.map((x) => x.indice), TRECHOS.map((p) => p.indice), 'a linha do tempo traz os blocos e os meses do roteiro, na ordem');
-  assert.deepEqual(r.itens.filter((x) => x.atual === 'step').map((x) => x.indice), [e.indice], '"você está aqui" no passo atual');
+  assert.deepEqual(r.itens.flatMap((x) => x.passos), visiveis, 'a linha do tempo traz o seminário inteiro, até o fim, na ordem, sem esconder passo');
+  const final = r.itens.at(-1);
+  if (final.passos.length > 1) {
+    // Agrupado: só o que vem depois do último mês, num item só.
+    assert.deepEqual(final.passos, visiveis.filter((i) => i > ultimaRodada), 'o item agrupado junta os passos depois do último mês');
+    const { itens } = V.roteiro.linhaDoTempo(configNode, passos, { maxItens: 1 });
+    assert.equal(final.rotulo, maiuscula(itens.at(-1).palavras.join(', ')), 'o item agrupado diz o que junta');
+    if (final.passos.map((i) => passos[i].tipo).join() === 'placarFinal,enquete,enquete,comparativo,bloco') {
+      assert.equal(final.rotulo, 'Debrief, termômetro, medição, fechamento');
+    }
+  }
+  for (const x of r.itens.filter((i) => i.passos.length === 1)) assert.equal(x.rotulo, descreverPasso(passos[x.passos[0]]), `o item do passo ${x.passos[0]}`);
+  const k = r.itens.findIndex((x) => x.atual === 'step');
+  assert.equal(r.itens.filter((x) => x.atual === 'step').length, 1, 'um item só com "você está aqui"');
+  assert.ok(r.itens[k].passos.includes(e.indice), '"você está aqui" no item do passo atual');
   assert.match(r.texto, /você está aqui/i);
-  const proximo = descreverPasso(PASSOS[e.indice + 1]);
-  if (proximo) assert.ok(r.seguir?.includes(`a seguir: ${proximo}`), `"a seguir: ${proximo}" em "${r.seguir}"`);
+  assert.ok(r.seguir.includes(`(${k + 1} de ${r.itens.length})`), `"${k + 1} de ${r.itens.length}" em "${r.seguir}"`);
+  const seguinte = r.itens[k + 1];
+  assert.deepEqual(r.itens.filter((x) => x.seguinte), seguinte ? [seguinte] : [], 'só o item do "a seguir" fica marcado na linha');
+  if (seguinte) {
+    assert.ok(r.seguir.includes(`a seguir: ${seguinte.rotulo}`), `"a seguir: ${seguinte.rotulo}" em "${r.seguir}"`);
+    assert.ok(seguinte.visivel, `o item do "a seguir" (${seguinte.rotulo}) está à vista`);
+  } else {
+    assert.match(r.seguir, /é o último trecho/, 'no último item, sem "a seguir" para fora da linha');
+  }
   assert.equal(r.mapa, mapa, mapa ? 'no "Mapa do seminário", a linha do tempo é o conteúdo principal' : 'nos outros blocos, a linha do tempo é discreta');
-  if (mapa) for (const p of TRECHOS) assert.ok(r.texto.includes(descreverPasso(p)), `o mapa traz "${descreverPasso(p)}"`);
+  if (mapa) for (const x of r.itens) assert.ok(r.texto.includes(x.rotulo), `o mapa traz "${x.rotulo}"`);
 }
 
 // ---------- Parte 1: sessão inteira sem celulares ----------
@@ -826,6 +868,7 @@ for (const r of RODADAS) {
   contasNaTela[r] = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
     contas: c.querySelector('.resultado-contas')?.textContent ?? null,
     divida: c.querySelector('.resultado-divida')?.textContent ?? null,
+    origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
   }])));
   contasNaTela[r].cabecalho = await page.textContent('#palco .tela-cabecalho');
   if (r !== RODADAS[0]) {
@@ -862,12 +905,28 @@ await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.d
 const escolhasNaTela = await page.evaluate(() => ({
   titulo: document.querySelector('#palco h1').textContent,
   contas: Object.fromEntries(Array.from(document.querySelectorAll('.historia-escolha'), (n) => [n.dataset.equipe, n.querySelector('.historia-conta').textContent])),
+  // O destaque é o passo inteiro ("= terminaram com R$ d") em negrito; nos
+  // outros, só o valor é negrito.
+  destaques: Array.from(document.querySelectorAll('.historia-escolha'), (n) => {
+    const final = n.querySelector('.passo-final');
+    const variacao = n.querySelector('.passo-variacao');
+    return {
+      texto: final?.textContent ?? null,
+      peso: final ? Number(getComputedStyle(final).fontWeight) : 0,
+      pesoVariacao: variacao ? Number(getComputedStyle(variacao).fontWeight) : 0,
+    };
+  }),
   legendas: document.querySelectorAll('#palco .legenda').length,
   texto: document.getElementById('palco').textContent,
 }));
 assert.equal(escolhasNaTela.titulo, 'Escolha ou sorte?');
 assert.equal(escolhasNaTela.legendas, 0, '"escolha ou sorte?" sem legenda');
 for (const termo of ['piloto automático', 'efeito das decisões']) assert.ok(!escolhasNaTela.texto.includes(termo), `o termo "${termo}" saiu da tela`);
+// O total do fim, depois do "=", em destaque em cada linha (item 11).
+for (const d of escolhasNaTela.destaques) {
+  assert.match(d.texto ?? '', /^= terminaram com /, 'o total do fim entra com "="');
+  assert.ok(d.peso >= 700 && d.pesoVariacao < 700, `o total do fim em destaque (${d.peso}), e as variações não (${d.pesoVariacao})`);
+}
 await conferirTela('placar-escolhas');
 const historiaNaTela = {};
 for (const eq of ATIVAS) {
@@ -877,7 +936,30 @@ for (const eq of ATIVAS) {
     return s?.dataset.pagina === 'historia' && s.dataset.equipe === x;
   }, eq);
   historiaNaTela[eq] = await page.evaluate(() => ({
-    meses: Array.from(document.querySelectorAll('.historia-mes'), (n) => ({ rodada: n.dataset.rodada, texto: n.textContent, contas: n.querySelector('.historia-contas')?.textContent ?? null })),
+    meses: Array.from(document.querySelectorAll('.historia-mes'), (n) => {
+      const nar = n.querySelector('.historia-narrativa');
+      const estilo = nar ? getComputedStyle(nar) : null;
+      // A altura da narrativa sem o limite de linhas, numa cópia invisível da
+      // mesma largura: o scrollHeight do line-clamp passa da altura por fração
+      // de pixel mesmo sem cortar nada, e acusava corte em quase todo mês.
+      const alturaCheia = () => {
+        const copia = nar.cloneNode(true);
+        Object.assign(copia.style, { display: 'block', webkitLineClamp: 'unset', position: 'absolute', visibility: 'hidden', width: `${nar.clientWidth}px` });
+        n.appendChild(copia);
+        const h = copia.getBoundingClientRect().height;
+        copia.remove();
+        return h;
+      };
+      return {
+        rodada: n.dataset.rodada, texto: n.textContent, contas: n.querySelector('.historia-contas')?.textContent ?? null,
+        narrativa: nar?.textContent ?? null,
+        // Quantas linhas a narrativa ocupa, e se o fim dela ficou de fora (as
+        // reticências do line-clamp, só no fim).
+        linhas: nar ? Math.round(nar.getBoundingClientRect().height / parseFloat(estilo.lineHeight)) : 0,
+        cortada: nar ? alturaCheia() > nar.getBoundingClientRect().height + 2 : false,
+        fonte: estilo ? parseFloat(estilo.fontSize) : 0,
+      };
+    }),
     final: document.querySelector('.historia-final')?.textContent ?? null,
   }));
   await conferirTela(`placar-historia-${eq}`);
@@ -947,6 +1029,7 @@ const { sementes, resultados, placar } = salvo.dados;
 const estadoNode = Object.fromEntries(ATIVAS.map((eq) => [eq, V.motor.estadoInicial(configNode, eq)]));
 const jogadas = Object.fromEntries(ATIVAS.map((eq) => [eq, []]));
 let viuJuros = false;
+const cortadasNaHistoria = [];
 let viuDivida = false;
 for (const [k, r] of RODADAS.entries()) {
   for (const eq of ATIVAS) {
@@ -956,6 +1039,9 @@ for (const [k, r] of RODADAS.entries()) {
     const res = V.motor.resolverRodada(configNode, { equipeId: eq, rodadaId: r, opcaoId: opcao, estado: estadoNode[eq], semente: sementes[r], historico });
     assert.equal(resultados[r][eq].decisao, opcao, `${r}/${eq}: decisão`);
     assert.equal(resultados[r][eq].origem, plano[r][eq] ? 'apresentador' : 'piloto', `${r}/${eq}: origem`);
+    // Offline, a decisão do apresentador não é dita; a do padrão, sim, sem
+    // "piloto automático" (D-041; rascunho, seção 7, item 14).
+    assert.equal(contasNaTela[r][eq]?.origem, plano[r][eq] ? null : 'ninguém votou', `${r}/${eq}: a origem projetada`);
     assert.equal(resultados[r][eq].carta, res.carta, `${r}/${eq}: a carta sai da semente gravada`);
     assert.deepEqual(resultados[r][eq].depois, res.depois, `${r}/${eq}: indicadores depois da rodada`);
     assert.deepEqual(resultados[r][eq].mes, res.mes, `${r}/${eq}: as contas do mês gravadas`);
@@ -995,8 +1081,11 @@ for (const eq of ATIVAS) {
   // Em reais inteiros que fecham a conta (revisão de 29/09): cada valor do
   // motor arredondado sozinho errava a soma por R$ 1 em ~15% das equipes.
   const c = V.historia.escolhaOuSorte({ piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, renda: d.realizado });
-  const conta = `se não mudassem nada: ${F.moeda(c.piloto)} → as escolhas: ${F.moeda(c.escolhas, { sinal: true })} → a sorte: ${F.moeda(c.sorte, { sinal: true })} → terminaram com ${F.moeda(c.total)}`;
+  // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),
+  // as variações sempre com + ou −, e o total do fim com "=".
+  const conta = `se não mudassem nada: ${F.moeda(c.piloto)} → as escolhas: ${F.variacao(c.escolhas)} → a sorte: ${F.variacao(c.sorte)} = terminaram com ${F.moeda(c.total)}`;
   assert.equal(escolhasNaTela.contas[eq], conta, `${eq}: página 2, escolha ou sorte`);
+  assert.match(escolhasNaTela.contas[eq], /^se não mudassem nada: −?R\$\s?[\d.]+ → as escolhas: [+−]R\$\s?[\d.]+ → a sorte: [+−]R\$\s?[\d.]+ = terminaram com −?R\$\s?[\d.]+$/, `${eq}: totais sem "+", variações com sinal`);
   const [lPiloto, lEscolhas, lSorte, lTotal] = reaisDoTexto(escolhasNaTela.contas[eq]);
   assert.equal(lPiloto + lEscolhas + lSorte, lTotal, `${eq}: página 2, as parcelas projetadas somam o "terminaram com"`);
   // Páginas da história: um item por mês, com a escolha, a carta e as contas.
@@ -1004,11 +1093,19 @@ for (const eq of ATIVAS) {
   assert.deepEqual(historiaNaTela[eq].meses.map((m) => m.rodada), historia.map((h) => h.rodadaId), `${eq}: um mês por rodada jogada`);
   for (const [i, h] of historia.entries()) {
     const lido = historiaNaTela[eq].meses[i];
-    for (const x of [h.opcao.rotulo, h.carta.titulo]) assert.ok(lido.texto.includes(x), `${eq}/${h.rodadaId}: a história traz "${x}"`);
+    // D-045 e item 12: a linha curta em primeira pessoa (opção e carta), em
+    // no máximo duas linhas e nunca abaixo de 28 px; o que não couber termina
+    // em reticências no fim.
+    assert.equal(lido.narrativa, V.historia.linhaDoMes(h), `${eq}/${h.rodadaId}: a narrativa do mês na história`);
+    assert.ok(lido.linhas >= 1 && lido.linhas <= 2, `${eq}/${h.rodadaId}: a narrativa em até duas linhas (${lido.linhas})`);
+    assert.ok(lido.fonte >= MIN_FONTE - 0.01, `${eq}/${h.rodadaId}: a narrativa em ${lido.fonte} px`);
+    if (lido.cortada) cortadasNaHistoria.push(`${eq}/${h.rodadaId}`);
     assert.equal(lido.contas, textoContas(h.mes), `${eq}/${h.rodadaId}: as contas do mês na história`);
   }
   assert.ok(historiaNaTela[eq].final?.includes(textoSaldo(d.realizado)), `${eq}: a história termina com "${textoSaldo(d.realizado)}"`);
 }
+
+if (cortadasNaHistoria.length > 0) console.log(`  história: narrativa com reticências em ${cortadasNaHistoria.join(', ')}`);
 
 // Apagar a sala (na barra, segurar 2 s): volta à abertura e limpa o navegador
 const chave = await page.evaluate(() => globalThis.Viracao.telao.chaveSessao(globalThis.Viracao.telao.sala()));
@@ -1212,7 +1309,7 @@ await page.waitForFunction(([k, s]) => !JSON.parse(localStorage.getItem(k)).sala
 
 // ---------- Parte 4: o placar final com as seis equipes ----------
 
-console.log('Parte 4: placar final com as seis equipes (sem celulares, todas no piloto automático)');
+console.log('Parte 4: placar final com as seis equipes (sem celulares, todas sem decisão: fica o padrão)');
 // Revisão de 29/09: a parte 1 joga com cinco equipes (a da Rose fica fechada),
 // e as páginas do placar com seis nunca tinham sido vistas em 1024×768. "Escolha
 // ou sorte?" com seis equipes passava da altura.
@@ -1256,6 +1353,7 @@ await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.d
   const contas = await page.$$eval('.historia-escolha .historia-conta', (ns) => ns.map((n) => n.textContent));
   assert.equal(contas.length, EQUIPES.length, 'página 2 com as seis equipes');
   for (const t of contas) {
+    assert.match(t, / → as escolhas: [+−]R\$.* → a sorte: [+−]R\$.* = terminaram com −?R\$/, `página 2: variações com sinal ("${t}")`);
     const [a1, a2, a3, a4] = reaisDoTexto(t);
     assert.equal(a1 + a2 + a3, a4, `página 2: as parcelas somam o total ("${t}")`);
   }
@@ -1265,6 +1363,37 @@ for (const eq of EQUIPES) {
   await avancar();
   await page.waitForFunction((x) => document.querySelector('.tela-placar-final')?.dataset.equipe === x, eq);
   if (eq === FECHADA) await conferirTela(`placar-historia-${eq}-6-equipes`);
+}
+
+// ---------- Parte 5: a linha do tempo do roteiro longo ----------
+
+// Rascunho, seção 7, item 15: o roteiro de 120 min tem mais passos, e dois
+// blocos depois do placar. O "Mapa do seminário" precisa caber em 1024×768 com
+// o seminário inteiro (o fim agrupado), e o bloco dentro do grupo final mostra
+// "você está aqui" no grupo.
+const ROTEIRO_LONGO = Object.keys(configNode.roteiros).find((nome) => nome !== ROTEIRO && configNode.roteiros[nome].length > PASSOS.length);
+if (ROTEIRO_LONGO) {
+  console.log(`Parte 5: linha do tempo do roteiro ${ROTEIRO_LONGO}`);
+  const passosLongo = V.roteiro.passos(configNode, ROTEIRO_LONGO);
+  const ultimaRodada = passosLongo.findLast((p) => p.tipo === 'rodada').indice;
+  const alvos = [
+    { passo: passosLongo.find((p) => p.tipo === 'bloco' && RE_MAPA.test(p.titulo || '')), mapa: true, nome: 'bloco-mapa' },
+    { passo: passosLongo.find((p) => p.tipo === 'bloco' && p.indice > ultimaRodada), mapa: false, nome: 'bloco-no-fim' },
+  ].filter((a) => a.passo);
+  await page.evaluate(async ([sala, roteiro]) => {
+    await globalThis.Viracao.telao.ligarSessao({ modo: 'offline', sala, nomeRoteiro: roteiro, criar: true });
+  }, ['L5TR', ROTEIRO_LONGO]);
+  await esperarTela('lobby');
+  for (const { passo, mapa, nome } of alvos) {
+    ultimoAvanco = 0;
+    await clicarBarra('pular');
+    await escolherNoModal(passoNoModal(passo.indice));
+    await esperarEstado((e) => e.indice === passo.indice, `${ROTEIRO_LONGO}: ${passo.titulo}`);
+    await esperarTela('bloco');
+    await page.evaluate(() => document.activeElement?.blur());
+    await conferirLinhaDoTempo({ mapa, passos: passosLongo });
+    await conferirTela(`${nome}-${ROTEIRO_LONGO}`);
+  }
 }
 
 // ---------- Fim ----------

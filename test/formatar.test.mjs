@@ -32,3 +32,19 @@ test('taxa: o texto exibido volta a regras.jurosDividaMes do config.json real e 
   assert.ok(Math.abs(Number(texto.replace('%', '').replace(',', '.')) / 100 - regras.jurosDividaMes) < 1e-12, `${texto} × ${regras.jurosDividaMes}`);
   assert.ok(regras.jurosFonte.includes(texto), `a fonte cita ${texto}`);
 });
+
+// Rascunho, seção 7, item 11 (D-041): na cadeia do "Escolha ou sorte?", a
+// variação e o total tinham o mesmo formato ("−R$ 4.150 → −R$ 395"), e a
+// turma lia tudo como uma sequência de saldos. A variação sempre leva + ou −,
+// inclusive a nula: sem sinal, ela voltaria a parecer um total.
+test('variacao: sempre com + ou −, inclusive o zero, e sem "−R$ 0"', () => {
+  // O Intl põe espaço não separável entre "R$" e o número: comparado por \s.
+  const norm = (s) => s.replace(/\s/g, ' ');
+  assert.equal(norm(F.variacao(395)), '+R$ 395');
+  assert.equal(norm(F.variacao(-1614)), `${F.MENOS}R$ 1.614`);
+  assert.equal(norm(F.variacao(0)), '+R$ 0');
+  assert.equal(norm(F.variacao(-0.4)), '+R$ 0');
+  assert.equal(F.variacao(Number.NaN), '—');
+  // O total continua sem o "+": é saldo, não variação.
+  assert.equal(norm(F.moeda(395)), 'R$ 395');
+});

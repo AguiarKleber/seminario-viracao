@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { carregarNucleo } from './carregar-nucleo.mjs';
 
-const { passos, subfasesDe, somaAlvos, atrasoSeg, proximoIndice, indiceValido } = (await carregarNucleo()).roteiro;
+const { passos, subfasesDe, somaAlvos, atrasoSeg, proximoIndice, indiceValido, linhaDoTempo } = (await carregarNucleo()).roteiro;
 
 const TODOS_OS_TIPOS = ['lobby', 'enquete', 'bloco', 'formarEquipes', 'personas', 'rodada', 'placarFinal', 'comparativo', 'fim'];
 
@@ -265,4 +265,97 @@ test('indiceValido aceita só inteiros dentro da lista', () => {
   // age / confere
   for (const i of [0, 2, 4]) assert.equal(indiceValido(lista, i), true, `índice ${i}`);
   for (const i of [-1, 5, 1.5, '1', NaN, null, undefined]) assert.equal(indiceValido(lista, i), false, `índice ${i}`);
+});
+
+// ---------- linhaDoTempo (D-042; rascunho, seção 7, item 15) ----------
+
+// O roteiro de 60 min, com os mesmos tipos de passo, na mesma ordem.
+function configComRoteiroLongo() {
+  const config = configNormalizado();
+  config.enquetes.termometro = { ...config.enquetes.entrada, id: 'termometro', titulo: 'Termômetro', pareada: false };
+  config.roteiros.longo = [
+    { tipo: 'lobby' },
+    { tipo: 'enquete', enquete: 'entrada', momento: 'antes', opcional: true },
+    { tipo: 'bloco', titulo: 'Gancho: o lançamento' },
+    { tipo: 'bloco', titulo: 'Mapa do seminário' },
+    { tipo: 'formarEquipes' },
+    { tipo: 'personas' },
+    { tipo: 'bloco', titulo: 'Debrief e teoria: a conta' },
+    { tipo: 'rodada', rodada: 'r1' },
+    { tipo: 'bloco', titulo: 'Contraponto: a Viração' },
+    { tipo: 'rodada', rodada: 'r1' },
+    { tipo: 'placarFinal' },
+    { tipo: 'enquete', enquete: 'termometro', momento: 'unico' },
+    { tipo: 'enquete', enquete: 'entrada', momento: 'depois' },
+    { tipo: 'comparativo', enquete: 'entrada' },
+    { tipo: 'bloco', titulo: 'Fim: quem é o patrão?' },
+    { tipo: 'fim' },
+  ];
+  return config;
+}
+
+test('linhaDoTempo: o seminário inteiro, até o último trecho, um item por passo (sem a entrada na sala e a tela do fim)', () => {
+  // prepara
+  const config = configComRoteiroLongo();
+  const lista = passos(config, 'longo');
+
+  // age
+  const { itens, agrupado } = linhaDoTempo(config, lista);
+
+  // confere
+  assert.equal(agrupado, false);
+  assert.deepEqual(itens.map((x) => x.indices), [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14]]);
+  assert.deepEqual(itens.map((x) => x.tipo).slice(-5), ['placarFinal', 'enquete', 'enquete', 'comparativo', 'bloco']);
+});
+
+test('linhaDoTempo: se não couber, os passos depois do último mês viram um item só, e nenhum some', () => {
+  // prepara
+  const config = configComRoteiroLongo();
+  const lista = passos(config, 'longo');
+
+  // age
+  const { itens, agrupado } = linhaDoTempo(config, lista, { maxItens: 12 });
+
+  // confere
+  assert.equal(agrupado, true);
+  assert.deepEqual(itens.at(-1), { tipo: 'final', indices: [10, 11, 12, 13, 14], palavras: ['debrief', 'termômetro', 'medição', 'fechamento'] });
+  assert.deepEqual(itens.slice(0, -1).map((x) => x.indices), [[1], [2], [3], [4], [5], [6], [7], [8], [9]]);
+});
+
+test('linhaDoTempo: cabendo no limite, nada é agrupado', () => {
+  // prepara
+  const config = configComRoteiroLongo();
+
+  // age
+  const { agrupado, itens } = linhaDoTempo(config, passos(config, 'longo'), { maxItens: 14 });
+
+  // confere
+  assert.equal(agrupado, false);
+  assert.equal(itens.length, 14);
+});
+
+test('linhaDoTempo: no grupo final, cada bloco entra pela primeira palavra do título, e o último é o fechamento', () => {
+  // prepara: o roteiro de 120 min tem dois blocos entre o placar e o termômetro.
+  const config = configComRoteiroLongo();
+  config.roteiros.longo.splice(11, 0, { tipo: 'bloco', titulo: 'Debrief e teoria: mapa do patrão' }, { tipo: 'bloco', titulo: 'Caminhos: convidado' });
+  const lista = passos(config, 'longo');
+
+  // age
+  const { itens } = linhaDoTempo(config, lista, { maxItens: 12 });
+
+  // confere
+  assert.deepEqual(itens.at(-1).palavras, ['debrief', 'caminhos', 'termômetro', 'medição', 'fechamento']);
+});
+
+test('linhaDoTempo: sem mês no roteiro, não há o que agrupar', () => {
+  // prepara
+  const config = configNormalizado();
+  config.roteiros.curto = [{ tipo: 'lobby' }, { tipo: 'bloco', titulo: 'A' }, { tipo: 'bloco', titulo: 'B' }, { tipo: 'fim' }];
+
+  // age
+  const { itens, agrupado } = linhaDoTempo(config, passos(config, 'curto'), { maxItens: 1 });
+
+  // confere
+  assert.equal(agrupado, false);
+  assert.deepEqual(itens.map((x) => x.indices), [[1], [2]]);
 });

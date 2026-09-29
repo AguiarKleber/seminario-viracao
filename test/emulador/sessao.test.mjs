@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { carregarNucleo } from '../carregar-nucleo.mjs';
 import { configDaSessao } from '../fixtures/sessao.mjs';
 import { novoCanalNoEmulador, administrador, PIN_EMULADOR } from '../../bin/emulador.mjs';
+import { relogioParado } from './relogio-parado.mjs';
 
 const V = await carregarNucleo();
 const PIN = PIN_EMULADOR;
@@ -22,7 +23,11 @@ after(async () => {
 
 // As duas famílias de canal com a mesma cara: um canal para o telão e um por aluno.
 function mundoLocal() {
-  const base = V.canalLocal.criar();
+  // A hora parada por volta do laço, como o "now" de uma escrita no servidor:
+  // com o Date.now puro, o marcadorDeHora() da presença e a trava "presença
+  // === agora" caíam às vezes em milissegundos diferentes, e o teste falhava
+  // com "presença precisa ser a hora do servidor" (relogio-parado.mjs).
+  const base = V.canalLocal.criar({ relogio: relogioParado() });
   return {
     nome: 'local',
     telao: async () => base.comoUsuario('telao'),

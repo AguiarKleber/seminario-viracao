@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '2';
+  const VERSAO_APP = '3';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -1261,7 +1261,9 @@
   function descreverDecisao(rodadaId, decisao, origem) {
     if (!decisao?.id) return '';
     const base = `${letraDe(rodadaId, decisao.id)} · ${decisao.rotulo || decisao.id}`;
-    const origens = { piloto: 'piloto automático: o app decidiu por vocês', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
+    // "piloto automático" saiu das telas (D-041; rascunho, seção 7, item 14):
+    // no ensaio, soava como a opção boa de quem não votou.
+    const origens = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
     return origens[origem] ? `${base} (${origens[origem]})` : base;
   }
 
@@ -1296,16 +1298,18 @@
       // automático", "efeito das decisões" e "sorte" como legenda saíram da tela,
       // porque confundiam no ensaio.
       // Os valores inteiros de historia.escolhaOuSorte fecham com o total: cada
-      // um arredondado sozinho errava a soma por R$ 1 (revisão de 29/09).
+      // um arredondado sozinho errava a soma por R$ 1 (revisão de 29/09). Como
+      // no telão, os totais vão sem sinal de variação e as variações sempre com
+      // + ou −, e o total do fim, com "=", em destaque (rascunho, seção 7, item 11).
       const c = N().historia.escolhaOuSorte(d.placar);
       const linhas = c ? [
         ['Se não mudassem nada', F().moeda(c.piloto)],
-        ['As escolhas', F().moeda(c.escolhas, { sinal: true })],
-        ['A sorte', F().moeda(c.sorte, { sinal: true })],
-        ['Terminaram com', F().moeda(c.total)],
+        ['As escolhas', F().variacao(c.escolhas)],
+        ['A sorte', F().variacao(c.sorte)],
+        ['= Terminaram com', F().moeda(c.total), 'placar-total'],
       ] : [];
       filhos.push(el('h2', { classe: 'subtitulo', texto: 'Escolha ou sorte?' }),
-        el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v]) => [el('dt', { texto: k }), el('dd', { texto: v })])));
+        el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])));
     }
     acrescentar(alvo, el('section', { classe: 'bloco' }, filhos));
     return 'situacao';

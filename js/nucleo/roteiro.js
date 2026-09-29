@@ -77,5 +77,54 @@
     return indice + 1 < lista.length ? indice + 1 : null;
   }
 
-  V.roteiro = { passos, subfasesDe, somaAlvos, atrasoSeg, proximoIndice, indiceValido };
+  // A palavra de cada passo no item que junta o fim do seminário. Com o roteiro
+  // de 60 min: "debrief, termômetro, medição, fechamento" (rascunho, seção 7,
+  // item 15). O placar final é o debrief do jogo; a enquete "depois" e o
+  // comparativo são a medição do antes e depois; o último bloco, o fechamento.
+  // Um bloco no meio (o roteiro de 120 min tem dois depois do placar) entra pela
+  // primeira palavra do título: "Caminhos: convidado…" vira "caminhos".
+  function palavraDoFinal(config, passo, ehUltimoBloco) {
+    switch (passo.tipo) {
+      case 'placarFinal': return 'debrief';
+      case 'comparativo': return 'medição';
+      case 'enquete': {
+        if (passo.momento === 'depois') return 'medição';
+        const titulo = config?.enquetes?.[passo.enquete]?.titulo || 'enquete';
+        return titulo.charAt(0).toLowerCase() + titulo.slice(1);
+      }
+      case 'bloco': {
+        if (ehUltimoBloco) return 'fechamento';
+        const palavra = String(passo.titulo || '').trim().split(/\s+/)[0].replace(/[:,.;!?]+$/, '');
+        return palavra ? palavra.toLowerCase() : 'apresentação';
+      }
+      case 'formarEquipes': return 'equipes';
+      default: return passo.tipo;
+    }
+  }
+
+  // Os itens da linha do tempo do seminário (D-042), do primeiro passo depois
+  // da entrada na sala até o último antes da tela do fim: um item por passo, e
+  // nenhum passo escondido. Antes (29/09), a linha tinha só os blocos e os meses,
+  // e o "a seguir" apontava para passos que não estavam nela (formação das
+  // equipes, placar, termômetro); depois do mês 3, só o "Fim" (item 15).
+  // Com mais de maxItens (o que cabe no "Mapa do seminário" em 1024×768), os
+  // passos depois do último mês viram um item só, { tipo: 'final', palavras },
+  // em vez de sumirem. O telão decide o maxItens; aqui não há DOM para medir.
+  function linhaDoTempo(config, lista, { maxItens = Infinity } = {}) {
+    const visiveis = lista.filter((p) => p.tipo !== 'lobby' && p.tipo !== 'fim');
+    const itens = visiveis.map((p) => ({ tipo: p.tipo, indices: [p.indice] }));
+    const ultimaRodada = visiveis.map((p) => p.tipo).lastIndexOf('rodada');
+    const cauda = ultimaRodada >= 0 ? visiveis.slice(ultimaRodada + 1) : [];
+    if (itens.length <= maxItens || cauda.length < 2) return { itens, agrupado: false };
+    const ultimoBloco = cauda.map((p) => p.tipo).lastIndexOf('bloco');
+    // O fechamento só é o último bloco se nada além da tela do fim vem depois.
+    const fecha = ultimoBloco === cauda.length - 1 ? ultimoBloco : -1;
+    const palavras = [...new Set(cauda.map((p, i) => palavraDoFinal(config, p, i === fecha)))];
+    return {
+      itens: [...itens.slice(0, ultimaRodada + 1), { tipo: 'final', indices: cauda.map((p) => p.indice), palavras }],
+      agrupado: true,
+    };
+  }
+
+  V.roteiro = { passos, subfasesDe, somaAlvos, atrasoSeg, proximoIndice, indiceValido, linhaDoTempo };
 })(globalThis);

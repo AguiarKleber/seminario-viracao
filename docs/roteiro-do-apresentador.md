@@ -18,7 +18,10 @@ seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 - o **placar final é em páginas**, passadas com o Espaço: o saldo contra o
   básico, "Escolha ou sorte?" e a história de cada equipe (D-041, D-045). As
   teclas C e V saíram;
-- todo bloco mostra a **linha do tempo** do seminário (D-042);
+- todo bloco mostra a **linha do tempo** do seminário inteiro, até o fim
+  (D-042);
+- o termo "piloto automático" saiu de todas as telas: a equipe sem voto aparece
+  como "ninguém votou" (D-041);
 - tudo o que só você usa (exportar, apagar, dicas de tecla, avisos) fica na
   **barra oculta** (D-047).
 
@@ -286,18 +289,22 @@ slides.
 - **Telão:** tela de espera discreta, com o título do trecho, a **linha do tempo
   do seminário** (D-042) e, depois que as equipes travam, o placar resumido. Se a
   entrada estiver aberta, aparece também a faixa com o QR pequeno.
-  - A linha do tempo tem os trechos da apresentação e os meses do jogo, na ordem
-    do roteiro, com o atual marcado (os meses aparecem como "mês 1", "mês 2",
-    "mês 3"), e embaixo uma linha como, no roteiro de 60 min, "Você está aqui (5
-    de 10) · a seguir: Mês 2: o app muda a regra". O "a seguir" é o próximo
-    passo, qualquer que seja (formação das equipes, placar, termômetro).
+  - A linha do tempo tem o **seminário inteiro**, na ordem do roteiro: todo
+    passo depois da entrada na sala (a enquete de entrada, os trechos, a
+    formação das equipes, as personas, os meses) até o último. O atual fica
+    marcado, os meses aparecem como "mês 1", "mês 2", "mês 3", e embaixo vem uma
+    linha como, no roteiro de 60 min, "Você está aqui (6 de 13) · a seguir: Mês
+    1: quanto trabalhar?". O "a seguir" é sempre o item seguinte da própria
+    linha, marcado nela com um contorno tracejado.
+  - Quando o seminário não cabe inteiro no mapa (mais de 16 passos, o que vale
+    para os dois roteiros de hoje), os passos depois do mês 3 viram um item só,
+    com o nome do que ele junta: "Debrief, termômetro, medição, fechamento" no
+    roteiro de 60 min ("Debrief, caminhos, termômetro, medição, fechamento" no
+    de 120). Nada some da linha. Num bloco que fica dentro desse item (o "Fim:
+    quem é o patrão?", por exemplo), a linha diz "é o último trecho".
   - No bloco **"Mapa do seminário"**, a linha do tempo é o próprio conteúdo:
     todos os trechos por extenso (em duas colunas quando passam de seis), sem o
     placar resumido. É o mapa que você apresenta.
-  - Os passos que não são trecho nem mês (enquetes, formação das equipes,
-    personas, placar final) não aparecem na linha, só no "a seguir". Depois do
-    mês 3, a linha não mostra mais nada até o Fim: é uma das perguntas em aberto
-    (rascunho, seção 7, pergunta 15).
 - **Celular:** antes das equipes, "Acompanhe a apresentação". Depois, a situação
   da persona: a família, a conta do último mês ("Entrou R$ X · o básico da
   família custa R$ Y" e, em destaque, "Faltou R$ Z" ou "Sobrou R$ Z"), a dívida
@@ -375,8 +382,8 @@ slides.
   - "Não tem resposta certa. Cada opção tem um preço, e ele pode aparecer só no
     mês que vem."
   - "Cada um vota no próprio celular e vê a contagem da equipe. Vale a opção mais
-    votada, e dá para mudar até eu encerrar. Se ninguém votar, o app decide por
-    vocês: é o piloto automático."
+    votada, e dá para mudar até eu encerrar. Se ninguém votar, fica o de
+    sempre."
 - **O que atravessa os meses** (para você saber, não para anunciar antes):
   - quem abre o **MEI** no mês 1 paga o DAS nos três meses, e só quem pagava o
     MEI recebe o auxílio do INSS depois de um acidente, um mês depois. Mesmo
@@ -408,7 +415,7 @@ slides.
 
 **Resultado** (D-044, D-046)
 - **Telão:** uma frase por equipe: a equipe, a letra da decisão, o título da
-  carta, a origem da decisão quando não foi a maioria ("piloto automático",
+  carta, a origem da decisão quando não foi a maioria ("ninguém votou",
   "empate na moeda", "na prorrogação" ou "pelo apresentador") e as **contas do
   mês**: "entrou R$ X · básico R$ Y · faltou R$ Z" (ou
   "sobrou"), com "juros R$ J" no meio quando a equipe já vinha devendo, e
@@ -479,9 +486,12 @@ uns 30 s por página.
 
 **Página 2: "Escolha ou sorte?"**
 - **Telão:** uma linha por equipe, na mesma ordem, contada como história, sem
-  legenda: "se não mudassem nada: R$ a → as escolhas: ±R$ b → a sorte: ±R$ c →
-  terminaram com R$ d". Os termos "piloto automático", "efeito das decisões" e
-  "sorte" como legenda saíram da tela, porque confundiam no ensaio.
+  legenda: "se não mudassem nada: R$ a → as escolhas: +R$ b → a sorte: −R$ c =
+  terminaram com R$ d". Os dois totais (o primeiro e o último) vão sem sinal de
+  variação; as duas variações vão sempre com + ou −, até quando são zero
+  ("+R$ 0"). O total do fim entra com "=" e em negrito. Os termos "piloto
+  automático", "efeito das decisões" e "sorte" como legenda saíram da tela,
+  porque confundiam no ensaio.
 - **Como ler:** "se não mudassem nada" é quanto a equipe terminaria, em média,
   se ninguém tivesse votado; "as escolhas" é quanto as decisões mudaram essa
   média; "a sorte" é o que as cartas fizeram além do esperado. As três somam o
@@ -499,13 +509,18 @@ uns 30 s por página.
     seção 7, pergunta 6.)
 
 **Páginas 3 em diante: a história de cada equipe**
-- **Telão:** uma página por equipe que jogou, na ordem das equipes: o título de
-  cada mês, "escolheram: …" (com "(piloto automático)" quando foi o caso),
-  "aconteceu: …" e as contas do mês, e no fim "No fim dos 3 meses: faltou R$ X".
-- **Celular:** a mesma história, com as narrativas da opção e da carta em
-  primeira pessoa, e "Escolha ou sorte?" da própria equipe.
-- **Faça:** em cada página, peça a alguém da equipe para ler no celular o que
-  aconteceu com a família. As narrativas estão lá, e não no telão.
+- **Telão:** uma página por equipe que jogou, na ordem das equipes. Cada mês
+  tem o título, uma linha curta em primeira pessoa (a primeira frase da
+  narrativa da opção escolhida e a primeira da carta, por exemplo "Fiquei online
+  da manhã até a madrugada, sete dias. Levaram o celular e o dinheiro do dia.")
+  e as contas do mês; no fim, "No fim dos 3 meses: faltou R$ X". A linha curta
+  ocupa no máximo duas linhas e, se não couber, termina em reticências, sem
+  baixar dos 28 px.
+- **Celular:** a mesma história, com as narrativas inteiras da opção e da carta,
+  e "Escolha ou sorte?" da própria equipe, no mesmo formato do telão (os totais
+  sem sinal, as variações com + ou −, "= Terminaram com" em destaque).
+- **Faça:** em cada página, leia a linha curta de cada mês, ou peça a alguém da
+  equipe para ler no celular a narrativa inteira.
 - **Diga:** "Três meses da vida do Jonas. O que vocês decidiriam diferente, e o
   que não dependia de vocês?"
 

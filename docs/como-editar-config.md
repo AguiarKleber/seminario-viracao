@@ -313,8 +313,7 @@ seu `id`, como no `config.json` atual.)
 - `titulo` e `texto`: a situação do mês. O telão mostra os dois na decisão; o
   celular mostra o título (o texto fica no telão, para as opções caberem na
   tela do celular).
-- `padrao`: a opção que vale quando ninguém da equipe vota ("piloto automático:
-  o app decidiu por vocês"). Não deve ser a de maior saldo: o validador avisa,
+- `padrao`: a opção que vale quando ninguém da equipe vota ("ninguém votou: ficou o de sempre"). Não deve ser a de maior saldo: o validador avisa,
   porque premiaria quem não votou.
 - `contexto` (opcional, D-043): `{ persona: texto }`, o que está acontecendo na
   casa de cada persona naquele mês ("o aluguel vence dia 10"). O celular mostra

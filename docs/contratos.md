@@ -236,6 +236,7 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
 | `subfasesDe(tipo) → [string]` | `enquete`: `votando, fechando, apurada`. `rodada`: `decidindo, fechando, prorrogacao, sorteio, resultado`. Os outros tipos: `ativo`. A lista é congelada; tipo desconhecido lança `Error` |
 | `somaAlvos(passos) → segundos` | passo sem `alvoSeg` (o `fim`) conta 0; o opcional conta |
 | `atrasoSeg(passos, indiceAtual, inicioSessaoMs, agoraMs) → número` | tempo decorrido menos a soma dos `alvoSeg` dos passos anteriores; positivo significa atraso. O tempo já gasto no passo atual entra como atraso; para o número fixo de quando o passo abriu, passe a hora de abertura como `agoraMs` |
+| `linhaDoTempo(config, passos, { maxItens }) → { itens: [{ tipo, indices, palavras? }], agrupado }` | os itens da linha do tempo do telão (D-042): um por passo, menos `lobby` e `fim`. Com mais de `maxItens` e pelo menos dois passos depois da última rodada, esses passos viram um item `{ tipo: 'final', indices, palavras }`: `placarFinal` = "debrief", enquete `depois` e `comparativo` = "medição", outra enquete = o título com inicial minúscula, o último bloco = "fechamento", outro bloco = a primeira palavra do título; sem repetir |
 | `proximoIndice(passos, indice) → índice \| null` / `indiceValido(passos, indice) → boolean` | `null` depois do último passo. Índice inválido em `proximoIndice` e `atrasoSeg` lança `RangeError`, em vez de parecer fim de roteiro |
 
 ---
@@ -515,6 +516,7 @@ celular e no `test/carregar-nucleo.mjs`.
 | Função | O que faz |
 |---|---|
 | `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); `narrativa`, `tom` e `mes` ausentes viram `null` |
+| `linhaDoMes(mes) → string \| null` | a linha curta de um mês da história no telão (D-045): a primeira frase da `opcao.narrativa` e a da `carta.narrativa`, separadas por espaço (o corte é sempre no fim de uma frase: ".", "!" ou "?" seguido de espaço); `null` sem nenhuma das duas |
 | `escolhaOuSorte(placar) → { piloto, escolhas, sorte, total } \| null` | "Escolha ou sorte?" em reais inteiros para a tela (telão e celular): `total = round(renda)`, `piloto = round(piloto)`, `escolhas = round(efeitoDecisoes)` e `sorte = total − piloto − escolhas`, para as três parcelas sempre somarem o total mostrado (arredondadas uma a uma, erravam por R$ 1). `null` sem `piloto`, `efeitoDecisoes` e `renda` finitos |
 
 `pendente = { tipo: "enquete", enquete, momento, afirmacao, valor, abertoEm } | { tipo: "decisao", rodada, equipe, opcao, abertoEm }`. Com `abertoEm`, só vale na mesma janela (`estado.abertoEm` igual): o voto guardado na janela desfeita pelo Ctrl+Z (D-037) não entra na reabertura. Vale se a mesma etapa continua em `votando` (com a afirmação `*` ou a mesma) ou em `decidindo`; na `prorrogacao`, só com a equipe e a opção em `empatadas`. Pausado ainda vale: o reenvio passa ao retomar.
@@ -638,17 +640,22 @@ Enter encerra; P pausa; F tela cheia; H mostra ou esconde a barra; Ctrl+Z desfaz
 (offline) e 1 a N abrem e fecham equipes; ↑ e ↓ trocam a afirmação da contagem (offline). As teclas C
 (critério do placar) e V ("sem vencedor") saíram com a tela decomposta (D-041).
 
-**Linha do tempo (D-042):** todo passo `bloco` mostra `nav.linha-tempo` com os passos `bloco` e
-`rodada` do roteiro, na ordem (`[data-trecho]` = índice do passo; o atual com
-`aria-current="step"`), e a linha `.linha-tempo-seguir`: "Você está aqui (k de n) · a seguir:
-{descrição do próximo passo, de qualquer tipo}". Nos outros blocos, discreta (uma trilha de
+**Linha do tempo (D-042; rascunho, seção 7, item 15):** todo passo `bloco` mostra
+`nav.linha-tempo` com os itens de `roteiro.linhaDoTempo(config, passos, { maxItens: 16 })`: um
+item por passo do roteiro, menos `lobby` e `fim`; com mais de 16, os passos depois da última
+rodada viram um item `final` só, com o nome do que ele junta ("Debrief, termômetro, medição,
+fechamento"). Cada item leva `[data-trecho]` = índice do primeiro passo e `[data-passos]` = os
+índices, separados por vírgula; o do passo atual, `aria-current="step"`; o seguinte,
+`[data-seguinte="1"]` e `.trecho-seguinte`. A linha `.linha-tempo-seguir` diz "Você está aqui
+(k de n) · a seguir: {nome do item seguinte}", ou "· é o último trecho" no último item: o "a
+seguir" nunca aponta para fora da linha. Nos outros blocos, discreta (uma trilha de
 marcas, com "mês N" dentro das rodadas); no bloco cujo título começa por "Mapa do seminário"
 (`ehMapa`: o passo não tem campo próprio, e o validador descarta chave nova no roteiro), ela é o
 conteúdo (`.linha-tempo-mapa`, todos os trechos por extenso, em duas colunas acima de seis), e o
 placar resumido não aparece.
 
 **Resultado da rodada (D-044, D-046):** uma frase por equipe: a equipe, a letra da decisão (e a
-origem, curta, quando não é a maioria: "piloto automático", "empate na moeda", "na prorrogação",
+origem, curta, quando não é a maioria: "ninguém votou", "empate na moeda", "na prorrogação",
 "pelo apresentador", este só online), o título da carta, as contas do mês
 (`.resultado-contas`: "entrou R$ X · básico R$ Y[ · juros R$ J] · faltou R$ Z" ou "sobrou R$ Z",
 de `resultados/{r}/{eq}.mes`; o faltou é o `saldoMes` do motor) e, com saldo negativo, "dívida R$ D"
@@ -665,14 +672,17 @@ Resultado sem `mes` (sala de antes do esquema v2) é refeito com `motor.aplicar`
    não fecharam as contas"; "As 6 equipes fecharam as contas" quando nenhuma); a referência com
    `persona` só nas linhas das equipes dela;
 2. `escolhas`, "Escolha ou sorte?": uma linha por equipe, na mesma ordem, sem legenda
-   (`.historia-conta`): "se não mudassem nada: R$ a → as escolhas: ±R$ b → a sorte: ±R$ c →
-   terminaram com R$ d", com a, b, c e d de `historia.escolhaOuSorte(placar[eq])` (o
+   (`.historia-conta`): "se não mudassem nada: R$ a → as escolhas: ±R$ b → a sorte: ±R$ c =
+   terminaram com R$ d", com os totais a e d em `formatar.moeda` (nunca "+") e as variações b e c
+   em `formatar.variacao` (sempre + ou −, "+R$ 0" no zero); o último passo (`.passo-final`) em
+   negrito; a, b, c e d de `historia.escolhaOuSorte(placar[eq])` (o
    `motor.decompor` gravado pelo anfitrião, em reais inteiros que fecham a conta); a conta corre na
    mesma linha da equipe, para seis equipes caberem em 1024×768;
 3. `historia`, uma página por equipe que jogou, na ordem do config: `historia.historiaDaEquipe`,
-   com um `.historia-mes` por rodada (o título da rodada, "escolheram: {rótulo da opção}" com
-   "(piloto automático)" quando foi o caso, "aconteceu: {título da carta}" e as contas do mês,
-   `.historia-contas`) e, no fim, `.historia-final` com o saldo dos meses ("faltou/sobrou R$ X").
+   com um `.historia-mes` por rodada (o título da rodada, a linha curta `.historia-narrativa` =
+   `historia.linhaDoMes(h)`, em até duas linhas com reticências no fim e sem baixar dos 28 px, e
+   as contas do mês, `.historia-contas`; sem narrativa no conteúdo, "escolheram: {rótulo} ·
+   aconteceu: {carta}") e, no fim, `.historia-final` com o saldo dos meses ("faltou/sobrou R$ X").
 A última página avança o roteiro. Sem nenhuma equipe no placar, uma página só ("Nenhuma rodada foi
 jogada nesta sessão."). O `regras.placarPadrao` não é mais lido pelo telão.
 
@@ -873,7 +883,9 @@ anfitrião: quem decide é o telão.
     mês.
   - **Placar final:** a história da equipe no lugar do "último mês" e "Escolha ou
     sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte ·
-    Terminaram com"), sem "piloto automático" nem "efeito das decisões" (D-041).
+    = Terminaram com", as variações sempre com + ou −, o total do fim em
+    `.placar-total`), sem "piloto automático" nem "efeito das decisões" (D-041).
+    A decisão sem voto aparece como "ninguém votou: ficou o de sempre".
   - **Fim:** a história da própria equipe, mês a mês (`.historia-mes`, com
     `data-rodada`): opção e narrativa, carta e narrativa, e a conta do mês. Carta
     grave aparece como as outras, sem destaque.

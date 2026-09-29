@@ -629,7 +629,8 @@ validação.
 - Cada membro vota e pode mudar até o fechamento, vendo ao vivo a contagem da própria equipe, sem nomes.
 - Vale a opção mais votada.
 - **Empate:** prorrogação de 20 s só para aquela equipe ("empate: conversem"). Se continuar empatado, moeda com a semente gravada. Há uma prorrogação só por rodada, mesmo depois do desfazer (D-035): a marca `prorrogacoes/{r}` (seção 6) manda todo empate seguinte direto para a moeda.
-- **Ninguém votou:** vale o `padrao`, com o rótulo "piloto automático: o app decidiu por vocês".
+- **Ninguém votou:** vale o `padrao`, com o rótulo "ninguém votou: ficou o de sempre" no celular e
+  "ninguém votou" no resultado do telão ("piloto automático" saiu das telas: D-041).
 - **O apresentador pode decidir por uma equipe** (quem está sem celular), com `origem: "apresentador"`.
 - **Não fecha sozinho quando todos tocaram.** Depois do tempo mínimo de conversa, o telão avisa "todas as equipes decidiram. Enter encerra".
 

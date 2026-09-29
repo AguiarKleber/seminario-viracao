@@ -247,6 +247,14 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
   font-weight: 700; line-height: 1.2; white-space: nowrap;
 }
 .linha-tempo-trilha > .trecho-rodada.trecho-passado { background: var(--superficie-2); }
+/* O fim do seminário agrupado (debrief, termômetro, medição, fechamento) vale
+   por vários passos: marca mais larga, para não parecer um passo só. */
+.linha-tempo-trilha > .trecho-final { flex-grow: 3; }
+/* O item do "a seguir" é apontado na própria linha (rascunho, seção 7, item
+   15): contorno tracejado na trilha, sublinhado no mapa. A cor não é o único
+   canal: o texto "a seguir: …" diz o nome dele. */
+.linha-tempo-trilha > .trecho-seguinte { outline: 3px dashed var(--foco); outline-offset: 2px; }
+.trecho-mapa.trecho-seguinte .trecho-titulo { color: var(--texto); text-decoration: underline dashed var(--foco); text-underline-offset: .2em; }
 .linha-tempo-seguir { color: var(--texto-2); }
 .linha-tempo-seguir b { color: var(--texto); }
 /* No "Mapa do seminário", a linha é o conteúdo: todos os trechos por extenso,
@@ -422,11 +430,20 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .historia-conta { display: contents; color: var(--texto-2); }
 .historia-conta b { color: var(--texto); }
 .passo-conta { white-space: nowrap; }
+/* O total do fim, depois do "=", em destaque: é o resultado da conta. */
+.passo-final { color: var(--texto); font-weight: 700; }
 /* A história de uma equipe: um mês por item. */
 .historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
 .historia-mes { display: flex; flex-direction: column; gap: .05em; padding-left: .6em; border-left: 4px solid var(--linha-forte); line-height: 1.2; }
 .historia-titulo { font-weight: 700; }
 .historia-fatos { color: var(--texto-2); }
+/* A linha curta do mês, em primeira pessoa (D-045): até duas linhas, e o que
+   não couber termina em reticências no fim, nunca no meio; a fonte fica no
+   corpo (28 px em 1024×768), sem encolher para caber. */
+.historia-narrativa {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  overflow: hidden; font-style: italic;
+}
 .historia-fatos b { color: var(--texto); }
 .historia-final { font-size: calc(var(--corpo) * 1.1); }
 

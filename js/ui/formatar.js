@@ -40,6 +40,16 @@
     return sinalDe(r, sinal) + corpo;
   }
 
+  // Variação em reais: sempre com + ou −, inclusive a nula ("+R$ 0"). Na cadeia
+  // do "Escolha ou sorte?" (D-041; rascunho, seção 7, item 11), variação e total
+  // tinham o mesmo formato, e "−R$ 4.150 → −R$ 395" parecia uma sequência de
+  // saldos. O total usa moeda(), que nunca leva "+".
+  function variacao(n) {
+    if (!Number.isFinite(n)) return '—';
+    const r = Math.round(n);
+    return r < 0 ? moeda(r) : `+${moeda(r + 0)}`;
+  }
+
   function inteiro(n, { sinal = false } = {}) {
     if (!Number.isFinite(n)) return '—';
     const r = Math.round(n);
@@ -115,5 +125,5 @@
     return n === 1 ? '1 pessoa' : `${inteiro(n)} pessoas`;
   }
 
-  V.formatar = { moeda, inteiro, decimal, taxa, porcento, indicador, dataHora, carimbo, relogio, atraso, pessoas, MENOS };
+  V.formatar = { moeda, variacao, inteiro, decimal, taxa, porcento, indicador, dataHora, carimbo, relogio, atraso, pessoas, MENOS };
 })(globalThis);
