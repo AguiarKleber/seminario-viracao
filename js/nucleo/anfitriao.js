@@ -422,12 +422,19 @@
           equipeId: eq, rodadaId: r, opcaoId: c.decisao, estado: estadoAntes(eq, r, resultados), semente: s,
           historico: historicoAntes(eq, r, resultados),
         });
-        // mes (as contas do mês, D-044) vai gravado: o celular não carrega o
-        // motor e mostra "entrou · básico · faltou" a partir daqui.
+        // mes (as contas do mês, D-044 e v2.1) e cartaCusto (o custo real da
+        // carta, D-052) vão gravados: o celular não carrega o motor e mostra
+        // "entrou · gastos · básico · faltou" e "20 dias parado · renda perdida"
+        // a partir daqui. As regras v3 aceitam qualquer filho em resultados/{r}.
         daRodada[eq] = {
           decisao: c.decisao, origem: c.origem, contagem: c.contagem,
           chances: res.chances, carta: res.carta, delta: res.delta, depois: res.depois, mes: res.mes,
+          cartaCusto: res.cartaCusto,
         };
+        // O que veio dos meses anteriores ("a fratura continua −R$ 2.233 ·
+        // auxílio do INSS +R$ 2.431"), só quando há: lista vazia o RTDB apaga,
+        // e o resultado lido não bateria com o gravado.
+        if (res.deAntes.length > 0) daRodada[eq].deAntes = res.deAntes;
       }
       const placar = calcularPlacar({ ...(resultados || {}), [r]: daRodada }, e);
       return gravarComEstado({ ...e, subfase: 'sorteio', empatadas: null, restanteMs: null }, {

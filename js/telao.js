@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '3';
+  const VERSAO_APP = '4';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -53,6 +53,9 @@
     ui: { pagina: 0, afirmacaoManual: 0, lp: false },
     desligar: [], desligarPasso: [], chavePasso: null,
     chaveDesenho: null, graficos: new Map(),
+    // Ajustes que precisam da tela já medida (o aperto do resultado da rodada),
+    // rodados logo depois dos gráficos, a cada desenho.
+    depoisDeMedir: [],
     ultimoAvanco: -Infinity, inicioPasso: null,
     selo: null, wake: null, barraTimer: 0, barraVisivel: false,
     // mouseNaBorda: o último movimento do mouse foi na faixa de baixo (sair dela
@@ -1326,8 +1329,10 @@
       const secao = D().el('section', { classe: ['tela', `tela-${tela.id}`] });
       D().limpar(app.el.palco).appendChild(secao);
       app.graficos.clear();
+      app.depoisDeMedir = [];
       tela.desenhar(secao, e);
       preencherGraficos();
+      for (const ajustar of app.depoisDeMedir.splice(0)) ajustar();
     }
     desenharFaixa();
     atualizarBarra();
@@ -2061,40 +2066,146 @@
     if (graves.size > 0) s.appendChild(el('p', { classe: 'legenda' }, [G().amostra('antes'), ' cartas graves (hachuradas)']));
   }
 
-  // O efeito da carta sobre a renda, com a mesma conta do motor: a diferença
-  // entre o mês com a carta e o mesmo mês sem carta nenhuma.
-  function efeitoDaCarta(e, eq, r) {
-    const antes = estadoAntes(eq, e.rodada);
-    const saida = N().motor.aplicar(app.config, {
-      equipeId: eq, rodadaId: e.rodada, opcaoId: r.decisao, cartaId: r.carta, estado: antes, historico: historicoAntes(eq, e.rodada),
+  // O mês de uma equipe refeito pelo motor, com o estado e o histórico de antes
+  // (a mesma conta do anfitrião). cartaId null refaz o mesmo mês sem carta.
+  function refazerMes(rodadaId, eq, r, cartaId = r.carta) {
+    return N().motor.aplicar(app.config, {
+      equipeId: eq, rodadaId, opcaoId: r.decisao, cartaId, estado: estadoAntes(eq, rodadaId), historico: historicoAntes(eq, rodadaId),
     });
-    return saida.linhas.filter((l) => l.origem === 'carta' && l.indicador === 'renda').reduce((t, l) => t + l.valor, 0);
+  }
+
+  // O efeito da carta sobre o saldo do mês: o mês com a carta menos o mesmo mês
+  // sem carta nenhuma. Somar só as linhas de origem "carta" deixava de fora o
+  // conserto e o remédio, que no esquema v2.1 saem com a origem "gasto".
+  function efeitoDaCarta(e, eq, r) {
+    return refazerMes(e.rodada, eq, r).mes.saldoMes - refazerMes(e.rodada, eq, r, null).mes.saldoMes;
   }
 
   // As contas do mês gravadas pelo anfitrião (resultados/{r}/{eq}.mes). Um
   // resultado sem elas (sala criada antes do esquema v2) é refeito com a mesma
   // conta do motor.
   function mesDoResultado(rodadaId, eq, r) {
-    if (r.mes) return r.mes;
-    return N().motor.aplicar(app.config, {
-      equipeId: eq, rodadaId, opcaoId: r.decisao, cartaId: r.carta, estado: estadoAntes(eq, rodadaId), historico: historicoAntes(eq, rodadaId),
-    }).mes;
+    return r.mes || refazerMes(rodadaId, eq, r).mes;
   }
 
-  // "entrou R$ X · básico R$ Y · faltou R$ Z" (D-044), com os juros da dívida
-  // quando houve (D-046): sem eles, a conta projetada não fechava. O faltou é o
-  // saldo do mês do motor (entrou − básico − juros). Cada pedaço é inteiro: a
-  // linha só quebra entre eles, e nunca separa o rótulo do valor.
-  function contasDoMes(mes, classe, tag = 'p') {
-    const { el } = D();
-    const pedacos = [['entrou', mes.entrou], ['básico', mes.basico]];
-    if (mes.juros > 0) pedacos.push(['juros', mes.juros]);
-    pedacos.push(mes.saldoMes < 0 ? ['faltou', -mes.saldoMes] : ['sobrou', mes.saldoMes]);
-    return el(tag, { classe: ['contas', classe] }, pedacos.flatMap(([rotulo, valor], i) => [
-      i > 0 ? ' · ' : null,
-      el('span', { classe: 'conta' }, [`${rotulo} `, el('b', { texto: F().moeda(valor) })]),
-    ]));
+  // O custo real da carta gravado pelo anfitrião (D-052). Resultado de sala
+  // anterior ao v2.1 não o tem, e é refeito com a mesma conta do motor.
+  function custoDoResultado(rodadaId, eq, r) {
+    return r.cartaCusto || refazerMes(rodadaId, eq, r).cartaCusto;
   }
+
+  // O que veio dos meses anteriores (motor, deAntes; D-052): "fratura: mais 25
+  // dias parado −R$ 2.233 · auxílio do INSS (45 dias) +R$ 2.431". Nenhuma tela
+  // mostrava essas linhas, e a conta lida não fechava: os 25 dias sumiam dentro
+  // do trabalho (revisão de 29/09, 2ª rodada, achado 10). Gravado pelo
+  // anfitrião só quando há; resultado de sala anterior (sem o campo) é refeito
+  // pelo motor, que devolve [] quando não há nada.
+  function deAntesDoResultado(rodadaId, eq, r) {
+    return Object.hasOwn(r, 'deAntes') ? lista(r.deAntes) : lista(refazerMes(rodadaId, eq, r).deAntes);
+  }
+
+  // Com sinal: o que veio de antes pode tirar (a fratura) ou pôr (o INSS).
+  const pedacosDeAntes = (itens) => itens.map((x) => rotuloEValor(x.rotulo, F().moeda(x.valor, { sinal: true }), ['de-antes'], { deAntes: x.rotulo }));
+
+  // Um rótulo e o valor dele. Só a última palavra do rótulo fica colada ao
+  // valor (nunca "R$" sozinho no começo da linha); o resto do rótulo quebra
+  // como texto. Com o pedaço inteiro sem quebra, "multa do aluguel R$ 130"
+  // pulava de linha e deixava meia linha vazia, e seis equipes de três linhas
+  // viravam quatro em 1024×768 (revisão de 29/09, 2ª rodada, achado 13).
+  function rotuloEValor(rotulo, valorTexto, classes = [], dados = undefined) {
+    const { el } = D();
+    const palavras = String(rotulo).split(' ');
+    const ultima = palavras.pop();
+    return el('span', { classe: ['conta-quebra', ...classes], dados }, [
+      palavras.length > 0 ? `${palavras.join(' ')} ` : null,
+      el('span', { classe: 'conta-fim' }, [`${ultima} `, el('b', { texto: valorTexto })]),
+    ]);
+  }
+
+  // O que a linha do mês nomeia (revisão de 29/09, 2ª rodada, achados 10 e 13),
+  // cabendo seis equipes em 1024×768 (três linhas cada):
+  // - o que veio de antes e mexeu no trabalho (a fratura que continua, o INSS,
+  //   o bloqueio) aparece sempre, com sinal;
+  // - os gastos saem por origem dentro das próprias contas, somando à vista:
+  //   "gastos R$ 1.650 + multa do aluguel R$ 130" (a primeira parcela, sem
+  //   nome, é a da carta, logo atrás dela na frase), ou só "multa do aluguel
+  //   R$ 130" quando ela é o único gasto. Antes, a frase dizia "gastos R$ 1.650"
+  //   no custo da carta e "gastos R$ 1.780" nas contas, e a diferença (a multa)
+  //   não tinha nome. Um pedaço à parte para cada gasto não cabia.
+  // Se as parcelas conhecidas não somam os gastos do mês (um gasto de opção,
+  // por exemplo), fica o jeito antigo: "gastos da carta" no custo e os gastos
+  // de antes nomeados como pedaços.
+  function nomesDoMes(custo, mes, deAntes) {
+    const trabalho = deAntes.filter((x) => !x.gasto);
+    const deAntesGastos = deAntes.filter((x) => x.gasto);
+    const partes = [];
+    if (custo?.gastos > 0) partes.push({ rotulo: null, valor: custo.gastos });
+    for (const x of deAntesGastos) partes.push({ rotulo: x.rotulo, valor: -x.valor });
+    const soma = partes.reduce((t, p) => t + p.valor, 0);
+    if (partes.length === 0 || Math.abs(soma - (mes?.gastos || 0)) > 0.5) {
+      return { antes: [...trabalho, ...deAntesGastos], gastos: null, cartaNosGastos: false };
+    }
+    const gastos = partes.map((p, i) => {
+      if (i > 0) return p;
+      if (!p.rotulo) return { rotulo: 'gastos', valor: p.valor };
+      return { rotulo: partes.length > 1 ? `gastos: ${p.rotulo}` : p.rotulo, valor: p.valor };
+    });
+    return { antes: trabalho, gastos, cartaNosGastos: true };
+  }
+
+  // Um pedaço da conta: o rótulo e o valor sempre juntos (a linha só quebra
+  // entre pedaços).
+  const pedacoConta = (rotulo, valor) => rotuloEValor(rotulo, F().moeda(valor));
+  const juntarPedacos = (pedacos) => pedacos.flatMap((p, i) => [i > 0 ? ' · ' : null, p]);
+
+  // "entrou R$ X · gastos R$ G · básico R$ Y · faltou R$ Z" (D-044), com os
+  // juros da dívida quando houve (D-046): sem eles, a conta projetada não
+  // fechava. Os gastos (conserto, remédio, multa) vão numa linha própria desde o
+  // esquema v2.1: dentro do "entrou", ele chegava a −R$ 2.541 (revisão de
+  // 29/09, item 2). O faltou é o saldo do mês do motor (entrou − gastos −
+  // básico − juros), e a conta lida na tela fecha. Resultado de antes do v2.1
+  // não tem gastos, e a linha sai como antes. "gastos" é a lista de parcelas de
+  // nomesDoMes (juntas por " + "); sem ela, "gastos R$ G".
+  function contasDoMes(mes, classe, tag = 'p', gastos = null) {
+    const pedacos = [pedacoConta('entrou', mes.entrou)];
+    if (mes.gastos > 0) {
+      const partes = gastos || [{ rotulo: 'gastos', valor: mes.gastos }];
+      pedacos.push(partes.flatMap((p, i) => [i > 0 ? ' + ' : null, pedacoConta(p.rotulo, p.valor)]));
+    }
+    pedacos.push(pedacoConta('básico', mes.basico));
+    if (mes.juros > 0) pedacos.push(pedacoConta('juros', mes.juros));
+    pedacos.push(mes.saldoMes < 0 ? pedacoConta('faltou', -mes.saldoMes) : pedacoConta('sobrou', mes.saldoMes));
+    return D().el(tag, { classe: ['contas', classe] }, juntarPedacos(pedacos));
+  }
+
+  // O custo real da carta (D-052): "20 dias parado · renda perdida R$ X ·
+  // gastos R$ Y", só com o que for maior que zero (carta sem custo não escreve
+  // nada). Os gastos da carta ficam de fora quando as contas logo ao lado já os
+  // dizem (cartaNosGastos, de nomesDoMes, ou quando são todos os gastos do
+  // mês): o mesmo valor duas vezes na frase empurrava seis equipes para fora
+  // de 1024×768. Senão, saem como "gastos da carta": ao lado de "gastos R$ X"
+  // nas contas, dois "gastos" de valores diferentes confundiam a turma
+  // (revisão de 29/09, 2ª rodada, achado 13).
+  function pedacosDoCusto(custo, mes, cartaNosGastos = false) {
+    if (!custo) return [];
+    const { el } = D();
+    const pedacos = [];
+    if (custo.diasParado > 0) {
+      pedacos.push(el('span', { classe: 'conta', dados: { custo: 'dias' } }, [el('b', { texto: F().inteiro(custo.diasParado) }), custo.diasParado === 1 ? ' dia parado' : ' dias parado']));
+    }
+    if (custo.rendaPerdida > 0) pedacos.push(pedacoConta('renda perdida', custo.rendaPerdida));
+    if (custo.gastos > 0 && !cartaNosGastos && custo.gastos !== mes?.gastos) pedacos.push(pedacoConta('gastos da carta', custo.gastos));
+    return pedacos;
+  }
+
+  function custoDaCarta(custo, mes, classe, cartaNosGastos = false) {
+    const pedacos = pedacosDoCusto(custo, mes, cartaNosGastos);
+    return pedacos.length > 0 ? D().el('span', { classe: ['custo-carta', classe] }, juntarPedacos(pedacos)) : null;
+  }
+
+  // O texto da opção do jeito do ofício da equipe (D-054): a letra do resultado
+  // leva o rótulo da persona na dica, e a história conta com as palavras dela.
+  const textoDaOpcao = (rodadaId, opcaoId, eq) => N().historia.textoDaOpcao(app.config, rodadaId, opcaoId, app.config.equipes[eq]?.persona);
 
   const textoSaldo = (renda) => (renda < 0 ? `faltou ${F().moeda(-renda)}` : `sobrou ${F().moeda(renda)}`);
   const taxaJuros = () => F().taxa(app.config.regras.jurosDividaMes || 0);
@@ -2133,8 +2244,8 @@
     s.appendChild(cabecalho(null, rodada.titulo, {
       extra: comDivida ? D().el('p', { classe: 'resultado-juros', texto: `a dívida paga juros de ${taxaJuros()} ao mês` }) : null,
     }));
-    // Cada equipe é uma frase só: equipe, letra da decisão, carta, as contas do
-    // mês e a dívida, quebrando entre os pedaços. Em duas linhas fixas (a carta
+    // Cada equipe é uma frase só: equipe, letra da decisão, carta, o custo real
+    // dela, as contas do mês e a dívida, quebrando entre os pedaços. Em duas linhas fixas (a carta
     // em cima, as contas embaixo), a origem e a dívida empurravam uma terceira
     // linha em metade das equipes; corrida, a frase aproveita o que sobra da
     // linha da carta.
@@ -2145,21 +2256,52 @@
       const divida = dividas.get(eq);
       // Offline, toda decisão é do apresentador: dizer isso em cada linha é ruído.
       const origem = r.origem === 'apresentador' && app.modo === 'offline' ? null : ORIGENS[r.origem];
+      const mes = mesDoResultado(e.rodada, eq, r);
+      // O custo real da carta vem logo depois do título dela (D-052): "o tempo
+      // parado custa quanto?" era a pergunta que a tela não respondia.
+      const custoGravado = custoDoResultado(e.rodada, eq, r);
+      const nomes = nomesDoMes(custoGravado, mes, deAntesDoResultado(e.rodada, eq, r));
+      const custo = custoDaCarta(custoGravado, mes, 'resultado-custo', nomes.cartaNosGastos);
+      // Carta com custo vai pelo nome curto (D-040), quando há: o custo diz o
+      // resto, e o título inteiro repetia a informação ("Queda leve: 5 dias
+      // parado · 5 dias parado") e empurrava a sexta equipe para fora de
+      // 1024×768. O título inteiro acabou de aparecer no sorteio, e fica na dica.
+      const nomeCarta = ((custo || nomes.antes.length > 0) && carta.curto) || carta.titulo || r.carta;
       grade.appendChild(el('article', {
         classe: ['cartao-resultado', grave ? 'grave' : null, destacadas.has(eq) ? 'destaque' : null, destacadas.has(eq) && !grave ? 'animada' : null],
         dados: { equipe: eq, carta: r.carta, origem: r.origem }, role: 'listitem',
       }, [
         el('p', { classe: 'resultado-frase' }, [
           rotuloEquipe(eq), ' ',
-          el('b', { classe: 'letra', title: rodada.opcoes[r.decisao]?.rotulo || r.decisao, texto: letraDe(rodada, r.decisao) }), ' ',
-          el('span', { classe: 'resultado-carta', texto: carta.titulo || r.carta }),
-          origem ? [' · ', el('span', { classe: 'resultado-decisao', texto: origem })] : null,
-          ' · ', contasDoMes(mesDoResultado(e.rodada, eq, r), 'resultado-contas', 'span'),
+          el('b', { classe: 'letra', title: textoDaOpcao(e.rodada, r.decisao, eq).rotulo || r.decisao, texto: letraDe(rodada, r.decisao) }), ' ',
+          el('span', { classe: 'resultado-carta', title: carta.titulo || null, texto: nomeCarta }),
+          custo ? [' · ', custo] : null,
+          // O separador vai dentro do mesmo span: no aperto, some junto.
+          nomes.antes.length > 0 ? el('span', { classe: 'resultado-antes' }, [' · ', el('span', { classe: ['custo-carta', 'resultado-de-antes'] }, juntarPedacos(pedacosDeAntes(nomes.antes)))]) : null,
+          origem ? el('span', { classe: 'resultado-origem' }, [' · ', el('span', { classe: 'resultado-decisao', texto: origem })]) : null,
+          ' · ', contasDoMes(mes, 'resultado-contas', 'span', nomes.gastos),
           divida > 0 ? [' · ', el('span', { classe: 'resultado-divida', texto: `dívida ${F().moeda(divida)}` })] : null,
         ]),
       ]));
     }
     s.appendChild(grade);
+    app.depoisDeMedir.push(() => apertarResultado(grade));
+  }
+
+  // O pior caso do resultado não cabe: seis equipes, todas com a carta cara, a
+  // origem, os gastos por origem, a dívida e o que veio de antes (a fratura do
+  // mês 2 que continua) dão quatro linhas cada, e a sexta passava de 1024×768
+  // (revisão de 29/09, 2ª rodada, achado 13). Não há fonte menor que 28 px
+  // nem rolagem no telão; então, só quando a lista transborda, a tela tira o
+  // que o celular de cada equipe também mostra, nesta ordem: a origem da
+  // decisão ("ninguém votou") e, se ainda não couber, o que veio de antes. O
+  // desenho refaz a conta a cada tamanho de tela (a chave inclui a janela).
+  function apertarResultado(grade) {
+    const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
+    for (const nivel of ['1', '2']) {
+      if (!transborda()) return;
+      grade.dataset.aperto = nivel;
+    }
   }
 
   // ---------- Tela: placar final (D-041) ----------
@@ -2285,7 +2427,11 @@
   // o telão mostrava só os rótulos ("escolheram: … · aconteceu: …"), e a
   // história ficava no celular. A linha tem no máximo duas linhas na tela e,
   // se não couber, termina em reticências (CSS), sem baixar dos 28 px. Sem
-  // narrativa no config, volta aos rótulos.
+  // narrativa no config, volta aos rótulos. O texto da opção é o do ofício da
+  // equipe (historiaDaEquipe já traz rotuloPor/narrativaPor, D-054).
+  // O custo real da carta (D-052) abre a linha das contas, na mesma frase: numa
+  // linha própria, três meses com narrativa de duas linhas, custo e contas
+  // passavam da altura de 1024×768.
   function paginaHistoria(s, eq, lado) {
     const { el } = D();
     const persona = personaDaEquipe(eq);
@@ -2294,13 +2440,21 @@
     s.appendChild(el('ol', { classe: 'historia-meses' }, historia.map((h) => {
       const r = app.dados.resultados?.[h.rodadaId]?.[eq] || {};
       const linha = N().historia.linhaDoMes(h);
+      const mes = h.mes || mesDoResultado(h.rodadaId, eq, r);
+      const custoGravado = h.cartaCusto || custoDoResultado(h.rodadaId, eq, r);
+      const nomes = nomesDoMes(custoGravado, mes, h.deAntes?.length ? h.deAntes : deAntesDoResultado(h.rodadaId, eq, r));
+      const custo = custoDaCarta(custoGravado, mes, 'historia-custo', nomes.cartaNosGastos);
       return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
         el('p', { classe: 'historia-titulo', texto: h.titulo || h.rodadaId }),
         linha ? el('p', { classe: 'historia-narrativa', texto: linha }) : el('p', { classe: 'historia-fatos' }, [
           'escolheram: ', el('b', { texto: h.opcao.rotulo || r.decisao || '' }),
           ' · aconteceu: ', el('b', { texto: h.carta.titulo || r.carta || '' }),
         ]),
-        contasDoMes(h.mes || mesDoResultado(h.rodadaId, eq, r), 'historia-contas'),
+        el('p', { classe: 'historia-dinheiro' }, [
+          custo, custo ? ' · ' : null,
+          nomes.antes.length > 0 ? [el('span', { classe: 'historia-de-antes' }, juntarPedacos(pedacosDeAntes(nomes.antes))), ' · '] : null,
+          contasDoMes(mes, 'historia-contas', 'span', nomes.gastos),
+        ]),
       ]);
     })));
     const renda = app.dados.placar?.[eq]?.renda ?? 0;

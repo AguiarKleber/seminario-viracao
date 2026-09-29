@@ -26,6 +26,20 @@ config de 28/09:
 Um config de 28/09 **não passa** no validador novo: falta a família, o básico e
 os juros. As seções abaixo trazem cada campo com exemplo.
 
+**Esquema v2.1 (revisão de 29/09, D-050 a D-057).** Tudo opcional: um config v2
+continua passando, com as mesmas contas. O que entrou:
+
+| Campo | Onde | Resumo |
+| --- | --- | --- |
+| `fixo: true` | efeito | Custo fixo do trabalho (parcela da moto, DAS, curso, parcela do empréstimo): sai antes do "entrou", e nenhum `multiplica` o atinge. Veja "Efeito" |
+| `categoria: "gasto"` | efeito | Dinheiro gasto por causa de um evento (conserto, remédio, multa, saldo do empréstimo): fica fora do "entrou", numa linha própria, "gastos" (D-052) |
+| `diasParado` | carta | Os dias parados que a carta custa, de 0 a 30. Só informativo: a tela mostra "20 dias parado" (D-052) |
+| `rotuloPor`, `narrativaPor` | opção | A mesma escolha dita do jeito de cada ofício, por persona (D-054) |
+| `pisoTrabalho` | regras | O trabalho variável do mês nunca fica abaixo de R$ 0 |
+
+A ordem do mês mudou junto: trabalho variável → custos fixos → gastos → outra
+renda → básico → juros (veja "Ordem fixa de aplicação").
+
 ---
 
 ## Antes de mexer
@@ -150,6 +164,7 @@ servidor, que recusa o voto atrasado.
 | `destacarCartas` | inteiro ≥ 0 | Quantas cartas, as de efeito mais forte, ganham destaque no resultado. Carta grave nunca anima |
 | `jurosDividaMes` | obrigatório; número entre 0 e 1, sem incluir os dois | Os juros **ao mês** sobre a dívida, como fração: `0.0743` é 7,43%. Escrever `7.43` é erro: seriam 743% ao mês. Ver "Ordem fixa de aplicação" |
 | `jurosFonte` | obrigatório; texto | De onde vem a taxa. Nunca aparece no telão; o validador a imprime nas conferências |
+| `pisoTrabalho` | opcional; `true` ou `false` | Com `true` (esquema v2.1), o trabalho variável do mês nunca fica abaixo de R$ 0: os dias parados (somas a preço cheio) não tiram mais renda do que havia depois do "exausto" ou do bloqueio. Custos fixos e gastos continuam saindo. Deixe ausente num config v2 |
 
 Os três primeiros só têm um valor porque só um foi decidido, e o motor não
 implementa outro.
@@ -331,7 +346,33 @@ seu `id`, como no `config.json` atual.)
   dilema, sem uma resposta certa.
   - `rotulo`: o texto do botão no celular e da opção no telão. Curto.
   - `narrativa` (opcional): em primeira pessoa. O celular mostra quando a opção
-    está escolhida na decisão, na situação da persona e na história da equipe.
+    é aberta na decisão (tocar abre a explicação sem votar, e só o botão
+    "Votar nesta" vota: D-055), na situação da persona e na história da equipe.
+    O telão mostra a primeira frase na história da equipe (placar final): ela
+    precisa ficar de pé sozinha.
+  - `rotuloPor` e `narrativaPor` (opcionais, esquema v2.1, D-054):
+    `{ persona: texto }`, a mesma escolha dita do jeito do ofício daquela
+    persona. A Daiane não some "da fila", some do feed. Do config atual (mês 2,
+    opção A, encurtado):
+
+    ```json
+    "a": {
+      "rotulo": "Aceitar tudo o que vier, para não sumir da fila",
+      "rotuloPor": { "vendedora": "Aceitar toda encomenda, até a sem margem" },
+      "narrativaPor": { "vendedora": "Aceitei até encomenda sem margem, para não sumir do feed. Trabalhei mais para ganhar quase o mesmo." },
+      "efeitos": [ … ]
+    }
+    ```
+
+    - Valem no botão do celular, na explicação da opção aberta, na dica da letra
+      no resultado do telão e na história da equipe (telão e celular). A letra
+      (A a D) e os efeitos são os mesmos para todas as personas: só o texto
+      muda.
+    - Persona sem entrada usa o `rotulo` e a `narrativa` da opção.
+    - A persona precisa existir. O rótulo vai até **60** caracteres e a
+      narrativa até **160** (contados por letra, com acento contando 1). Acima
+      disso é erro.
+    - `{}` vazio é aviso: não muda nada, tire a chave.
   - `tendencia` (opcional): **ignorada**. Continua aceita, para um config antigo
     não dar erro, mas nenhuma tela a mostra, nem no telão nem no celular: as setas
     davam a resposta antes da conversa (D-043). Pode tirar.
@@ -347,13 +388,14 @@ seu `id`, como no `config.json` atual.)
   "curto": "Fratura",
   "narrativa": "Me acidentei e quebrei o punho. São 45 dias parado: 20 neste mês e 25 no próximo.",
   "peso": 1,
+  "diasParado": 20,
   "rodadas": ["r2", "r3"],
   "tom": "grave",
   "ajustesDePeso": [ { "se": { "persona": ["motoboy", "bike"] }, "soma": 3 } ],
   "efeitos": [
-    { "se": { "persona": "motoboy" }, "soma": { "renda": -1467 }, "rotulo": "20 dias sem trabalhar" },
-    { "se": { "persona": "motoboy" }, "soma": { "renda": -1500 }, "rotulo": "conserto da moto", "fonte": "…" },
-    { "soma": { "renda": -150 }, "rotulo": "remédio e curativo", "fonte": "…" }
+    { "se": { "persona": "motoboy" }, "soma": { "renda": -1787 }, "rotulo": "20 dias sem trabalhar" },
+    { "se": { "persona": "motoboy" }, "soma": { "renda": -1500 }, "categoria": "gasto", "rotulo": "conserto da moto", "fonte": "…" },
+    { "soma": { "renda": -150 }, "categoria": "gasto", "rotulo": "remédio, tala e ônibus até o posto", "fonte": "…" }
   ],
   "fonte": "Cebrap/Amobitec (2025)…"
 }
@@ -377,6 +419,15 @@ seu `id`, como no `config.json` atual.)
   4%"). A carta grave usa o mesmo estilo das outras. Sem `curto`, a fatia leva
   só a porcentagem, como antes.
 - `peso`: inteiro, 0 ou mais. Peso 0 nunca sai.
+- `diasParado` (opcional, esquema v2.1, D-052): inteiro de 0 a 30, os dias sem
+  trabalhar **neste mês** (a fratura tem 45 dias no total: 20 aqui, e os outros
+  25 vão num efeito geral do mês seguinte). É **só informativo**: o dinheiro sai
+  pelos efeitos. O resultado do telão, o celular e a história da equipe mostram
+  "O que a carta custou: 20 dias parado · renda perdida R$ 1.787 · gastos
+  R$ 1.650". A renda perdida e os gastos são calculados pelo motor (o trabalho
+  sem a carta menos o trabalho com ela; a soma dos efeitos `categoria: "gasto"`
+  da carta), e não escritos no config. Mais de 30 é erro: um mês tem 30 dias.
+  Carta sem a chave, e sem renda perdida nem gasto, não escreve a linha.
 - `rodadas` (opcional): em que rodadas a carta pode sair. Sem a chave, em todas.
   Lista vazia é erro.
 - `somenteSe` (opcional): uma condição. A carta só entra no baralho da equipe
@@ -529,9 +580,34 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
 - **Um efeito tem `soma` ou `multiplica`, nunca os dois.** Para fazer as duas
   coisas, use dois efeitos: a ordem entre eles importa.
 - `se` (opcional): a condição para o efeito valer.
-- `rotulo` (opcional): descrição curta para quem lê o config. Hoje nenhuma tela
-  mostra.
+- `rotulo` (opcional): descrição curta. Quase sempre é só para quem lê o config;
+  a exceção são os efeitos gerais "de antes" (veja "Ordem fixa de aplicação"),
+  que a tela nomeia pelo rótulo.
 - `fonte` (opcional).
+- `fixo` (opcional, esquema v2.1): com `true`, é um **custo fixo do trabalho**,
+  que vence parado ou não: a parcela da moto, o DAS do MEI, a parcela do curso,
+  a mensalidade, a parcela do empréstimo. Sai logo depois do trabalho variável,
+  antes do "entrou", e nenhum `multiplica` o atinge (antes do v2.1, uma carta
+  que zerava a renda zerava também a parcela, e o acidentado ficava R$ 741
+  melhor). Pode estar no `todoMes`, nos `efeitosGerais`, na opção ou na carta.
+- `categoria` (opcional, esquema v2.1): o único valor é `"gasto"`, o dinheiro
+  gasto **por causa de um evento**: o conserto, o remédio, a fisioterapia, a
+  multa do aluguel, o saldo do empréstimo. Fica fora do "entrou" (dentro dele, o
+  "entrou" chegava a −R$ 2.541) e sai numa linha própria: "entrou R$ X · gastos
+  R$ G · básico R$ Y · faltou R$ Z". Os gastos da carta entram no custo dela
+  (D-052).
+- Regras de `fixo` e `categoria`, conferidas pelo validador (é **erro**):
+  - só com `soma`, nunca com `multiplica` (eles ficam fora de qualquer
+    `multiplica`);
+  - só na `renda`: um "gasto" de energia sairia da conta sem aparecer em lugar
+    nenhum. Para mexer na energia, use outro efeito;
+  - nunca os dois no mesmo efeito;
+  - `"fixo": false` é aceito e vale o mesmo que não ter a chave.
+
+```json
+{ "soma": { "renda": -480 }, "fixo": true, "rotulo": "parcela da moto", "fonte": "…" }
+{ "se": { "persona": "motoboy" }, "soma": { "renda": -1500 }, "categoria": "gasto", "rotulo": "conserto da moto", "fonte": "…" }
+```
 
 ### Condição
 
@@ -561,14 +637,17 @@ leem o que a equipe decidiu e tirou nas rodadas anteriores. Valem em efeitos
 (`se`), em `somenteSe` e em `ajustesDePeso`. Exemplos do config atual:
 
 ```json
-{ "se": { "decidiu": { "r1": "b" }, "persona": "vendedora" }, "soma": { "renda": -82 }, "rotulo": "DAS do MEI" }
-{ "se": { "sorteou": { "r2": "fratura" }, "persona": "motoboy" }, "soma": { "renda": -1833 }, "rotulo": "a fratura continua: mais 25 dias sem trabalhar" }
-{ "se": { "sorteou": { "r2": "fratura" }, "decidiu": { "r1": "b" }, "opcao": ["a", "b", "c"] }, "soma": { "renda": 2431 }, "rotulo": "auxílio do INSS, um mês depois" }
+{ "se": { "decidiu": { "r1": "b" }, "persona": "vendedora" }, "soma": { "renda": -82 }, "fixo": true, "rotulo": "DAS do MEI" }
+{ "se": { "sorteou": { "r2": "fratura" }, "persona": "motoboy" }, "soma": { "renda": -2233 }, "rotulo": "+25 dias da fratura" }
+{ "se": { "sorteou": { "r2": "fratura" }, "decidiu": { "r1": "b" }, "opcao": ["a", "b", "d"] }, "soma": { "renda": 2431 }, "rotulo": "INSS (45 dias)" }
 ```
 
 Os dois primeiros estão nos `efeitosGerais` do mês 2 e do mês 3: quem abriu o MEI
 no mês 1 paga o DAS nos meses seguintes, e a fratura do mês 2 continua no mês 3.
-O terceiro é o auxílio do INSS, que só chega para quem pagava o MEI.
+O terceiro é o auxílio do INSS, que só chega para quem pagava o MEI (com a
+opção C do mês 3, "não parar nenhum dia", outro efeito paga só 30 dias). O
+DAS é custo fixo (`fixo`); a fratura e o INSS aparecem nomeados na tela (veja
+"Ordem fixa de aplicação").
 
 - **Rodada que não foi jogada** (pulada no dia) vale **falso**: a condição não
   acontece, e está tudo bem.
@@ -590,34 +669,73 @@ O terceiro é o auxílio do INSS, que só chega para quem pagava o MEI.
 
 ### Ordem fixa de aplicação
 
-Primeiro, o **mês do trabalho**:
-1. `todoMes` da persona;
-2. `efeitosGerais` da rodada;
-3. a opção que a equipe decidiu;
-4. a carta sorteada.
+Esquema v2.1 (revisão de 29/09). O delta de cada indicador começa em 0, e o mês
+corre sempre nesta ordem:
 
-O delta de cada indicador começa em 0. Cada `soma` acrescenta ao delta, e cada
-`multiplica` multiplica o delta acumulado até ali. Isso é o que o trabalho deu no
-mês.
+1. **O trabalho variável.** Os efeitos sem `fixo` e sem `categoria`, nesta
+   ordem: o `todoMes` da persona → os `efeitosGerais` da rodada → a opção que a
+   equipe decidiu → a carta sorteada. Cada `soma` acrescenta ao delta, e cada
+   `multiplica` multiplica o delta acumulado até ali. É o **único** passo em que
+   o `multiplica` vale. Com `regras.pisoTrabalho`, se a renda do trabalho
+   terminar o passo abaixo de R$ 0, vira R$ 0 (veja abaixo).
+2. **Menos os custos fixos** (`fixo: true`), de qualquer origem: a parcela da
+   moto, o DAS, a parcela do curso ou do empréstimo.
+3. **Menos os gastos** (`categoria: "gasto"`), de qualquer origem: o conserto, o
+   remédio, a multa, o saldo do empréstimo.
 
-Depois, **as contas da casa**, só no saldo (`renda`), sempre nesta ordem (D-044,
-D-046):
-5. mais a `outraRenda` da persona;
-6. menos o básico (a soma dos itens do `basico`);
-7. menos os juros: `jurosDividaMes` × a dívida que **vinha do mês anterior** (o
+Depois, **as contas da casa**, só no saldo (`renda`) (D-044, D-046):
+
+4. mais a `outraRenda` da persona;
+5. menos o básico (a soma dos itens do `basico`);
+6. menos os juros: `jurosDividaMes` × a dívida que **vinha do mês anterior** (o
    saldo de antes da rodada, se negativo), arredondado ao real. Sem dívida, 0.
 
-No fim, o novo valor é o de antes mais o delta, preso entre `min` e `max`.
+No fim, o novo valor é o de antes mais o delta, preso entre `min` e `max`. Toda
+condição lê o estado **de antes** da rodada e o histórico da equipe.
+
+A tela mostra o mês assim:
+- **"entrou"** = trabalho variável (passo 1) − custos fixos (2) + outra renda (4);
+- **"gastos"** = o passo 3, numa linha própria, só quando há;
+- **"faltou"** (ou "sobrou") = entrou − gastos − básico − juros.
 
 É por isso que **uma carta que multiplica a renda corta o que se ganha, e não a
-conta da casa**: o `multiplica` roda no passo 4, e o básico só entra no 6. A
-tela mostra o mês assim: "entrou" = passos 1 a 5; "faltou" (ou "sobrou") =
-entrou − básico − juros.
+conta da casa nem a parcela da moto**: o `multiplica` roda no passo 1, a parcela
+sai no 2 e o básico no 5. Hoje só dois efeitos multiplicam a renda: o "exausto"
+(× 0,9, com energia abaixo de 3) e o bloqueio que toma o mês 3 inteiro (× 0).
 
-Exemplo com o Jonas num mês comum (config atual): o trabalho dá R$ 1.459 (R$ 2.200
-de entregas, menos a parcela e a manutenção da moto), a companheira traz R$ 1.499,
-e entrou R$ 2.958. O básico é R$ 4.166: faltou R$ 1.208. No fim do mês seguinte,
-essa dívida cobra round(1.208 × 0,0743) = R$ 90 de juros, depois do básico.
+**O piso do trabalho** (`regras.pisoTrabalho`). Os dias parados são somas a
+preço cheio (a fratura que continua, os dias da carta), e o "exausto" ou o
+bloqueio já podem ter cortado a renda antes deles: o trabalho chegava a −R$ 96,
+e a tela dizia "renda perdida R$ 268" de uma renda de R$ 179. Com o piso, não se
+perde mais renda do que havia. Os custos fixos e os gastos vêm depois, fora do
+piso: a parcela vence parado ou não. Por isso o "entrou" ainda pode ficar
+negativo num mês parado com parcela (a conferência (i) do validador mostra onde).
+
+**O custo da carta** (D-052), que as telas mostram como "O que a carta custou":
+os dias do `diasParado`, a **renda perdida** (o trabalho do passo 1 logo antes
+da carta, menos o trabalho no fim do passo 1, com o piso) e os **gastos da
+carta** (os efeitos `categoria: "gasto"` dela).
+
+**Os rótulos dos efeitos gerais "de antes" aparecem na tela.** Um efeito de
+`efeitosGerais` cuja condição lê `decidiu`, `sorteou` ou `indicador` (a fratura
+que continua, o INSS, o bloqueio, a multa do aluguel, o saldo do empréstimo), e
+que não é custo fixo, sai nomeado no resultado da rodada, na história e no
+celular: "+25 dias da fratura −R$ 2.233". Por isso esses rótulos são curtos
+(até ~20 letras): seis equipes precisam caber em 1024×768. O corte que vale para
+todos, o efeito da opção e a carta não saem assim: a rodada, a letra e o custo
+da carta já os dizem.
+
+Exemplo com o Jonas (config atual), calculado pelo motor:
+- **Num mês comum:** as entregas dão R$ 2.680, a parcela da moto (custo fixo)
+  tira R$ 480, e a companheira traz R$ 1.499: entrou R$ 3.699. O básico é
+  R$ 4.166: faltou R$ 467. No fim do mês seguinte, essa dívida cobra
+  round(467 × 0,0743) = R$ 35 de juros, depois do básico.
+- **No mês 2, com o breque (B) e a fratura:** R$ 2.680 − R$ 402 do corte da
+  plataforma − R$ 89 do dia de breque − R$ 1.787 dos 20 dias parados = R$ 402 de
+  trabalho; menos a parcela (R$ 480), mais a companheira: entrou R$ 1.421. Os
+  gastos (conserto da moto, R$ 1.500, e remédio, R$ 150) somam R$ 1.650: faltou
+  R$ 4.395. A carta aparece como "20 dias parado · renda perdida R$ 1.787 ·
+  gastos R$ 1.650".
 
 ### Exemplo (valores ilustrativos)
 
@@ -629,12 +747,13 @@ Delta da renda: 0 → +2.000 → × 1,5 = +3.000 → −500 = **+2.500**. Delta 
 **−3**. Se a carta fosse `multiplica 0.3` em vez da soma, a renda do mês seria
 3.000 × 0,3 = **+900**.
 
-**Cuidado:** o `multiplica` age sobre o delta inteiro do trabalho até ali, custos
-do trabalho incluídos. O básico, a outra renda e os juros ficam de fora (entram
-depois), mas a parcela e a manutenção da moto, que estão no `todoMes`, não: uma
-carta que multiplica a renda por 0 também zeraria a parcela. Quando o efeito é
-"perdi parte dos dias de trabalho", uma `soma` negativa por persona é mais fiel,
-e é o que o config atual usa (rascunho, seção 7, pergunta 4).
+**Cuidado:** o `multiplica` age sobre o delta inteiro do trabalho variável até
+ali. Um custo do trabalho escrito **sem** `fixo` entra nesse delta e é
+multiplicado junto: uma carta que multiplica a renda por 0 também o zeraria (era
+o que acontecia com a parcela da moto antes do v2.1). Custo que vence parado ou
+não leva `fixo: true`; gasto de um evento, `categoria: "gasto"`. Quando o efeito
+é "perdi parte dos dias de trabalho", uma `soma` negativa por persona é mais
+fiel, e é o que o config atual usa (rascunho, seção 7, item 4).
 
 ### Chance de cada carta
 
@@ -688,7 +807,8 @@ com espaço também deixa o efeito sem `soma`.
   mesma lista.
 - **Aviso** não impede, mas merece atenção: afirmação longa, bloco sem título,
   tempo mínimo maior que o da decisão, roteiro acima do teto, persona sem
-  equipe, rótulo `curto` com mais de 10 caracteres, BOM no começo do arquivo,
+  equipe, rótulo `curto` com mais de 10 caracteres, `rotuloPor` ou
+  `narrativaPor` vazio (`{}`), BOM no começo do arquivo,
   chave desconhecida fora da linguagem de efeitos e do `basico` (que é só
   descartada; na `familia`, por exemplo).
 
@@ -713,12 +833,20 @@ Erros comuns:
 | `opção "x" não existe na rodada "r1"` | O `decidiu` cita uma opção de outra rodada |
 | `a carta "x" não sai na rodada "r1"` | O `sorteou` cita uma rodada fora do `rodadas` da carta |
 | `a rodada "r3" não vem antes da rodada "r2" no roteiro "60min"` (ou `não está no roteiro`) | O `decidiu`/`sorteou` olha uma rodada que, naquele roteiro, não acontece antes de a condição ser lida |
+| `"fixo" e "categoria" no mesmo efeito` | Escolha: custo que vence parado ou não (`fixo`) ou gasto por causa de um evento (`categoria: "gasto"`) |
+| `custo fixo (…) com "multiplica"` ou `gasto (…) com "multiplica"` | Custo fixo e gasto ficam fora de qualquer `multiplica`: use `soma` |
+| `… só pode somar na renda (é dinheiro), e não em "energia"` | Um custo fixo ou gasto que também mexe na energia: separe a energia em outro efeito, sem `fixo`/`categoria` |
+| `N dias parado: um mês tem 30` | O `diasParado` da carta passou de 30. O que passa do mês vai num efeito geral do mês seguinte, com `sorteou` |
+| `texto com N caracteres (mais de 60)` (ou `160`) em `rotuloPor`/`narrativaPor` | O texto da persona ficou longo: 60 para o rótulo (botão do celular), 160 para a narrativa |
+| `precisa ser um objeto { persona: texto }` | `rotuloPor`/`narrativaPor` escrito como texto ou lista |
 
 ### As conferências de equilíbrio
 
 Com o config sem erro, o validador calcula o jogo inteiro por **enumeração
 exata**, e não por simulação: o número é o mesmo a cada execução, e mudar 1 no
-peso de uma carta aparece sem ruído. São seis seções:
+peso de uma carta aparece sem ruído. São oito seções, de (a) a (i), com (c) e
+(d) na mesma; (g), (h) e (i) chegaram com o esquema v2.1 (D-050, D-051 e a
+revisão de 29/09):
 
 **(a) Chances efetivas das cartas**, por persona, rodada e opção. Por exemplo:
 
@@ -737,7 +865,9 @@ caso de cada indicador naquele mês. Desde o esquema v2, também as contas da ca
 o básico de cada persona (item a item) e a outra renda, e, em cada opção,
 "entrou" (E e pior), os juros esperados, o saldo do mês (E e pior) e em quantos
 por cento dos casos faltou para o básico. O cabeçalho lembra a taxa de juros e a
-fonte dela.
+fonte dela. Desde o esquema v2.1, também os gastos (E e pior): o que um evento
+custou (conserto, remédio, multa), fora do "entrou"; e o "entrou" já vem sem os
+custos fixos (`fixo`).
 
 **(c) Opção dominante.** Mostra o saldo esperado no fim do jogo para cada opção
 de cada rodada (com `*` no padrão). Avisa se uma opção vence as outras em todos
@@ -757,6 +887,32 @@ escolha individual não tira ninguém da precariedade (D-009).
 **(f) Indicadores que caem até o mínimo.** Mostra em quantas partidas cada
 indicador cai até o mínimo. Avisa quando isso passa de 30% das partidas e nenhuma
 condição do config lê aquele indicador, ou seja, ele cai sem consequência.
+
+**(g) Quem fecha o básico no fim dos 3 meses (D-050).** Por persona: a chance de
+terminar com o saldo acumulado em R$ 0 ou mais, com as decisões ao acaso; o
+plano (as três decisões) com a maior chance de fechar; e o melhor caminho
+possível (decisões e cartas) com a renda final. Avisa quando nenhum caminho
+fecha ("quase ninguém", e não "ninguém"), quando uma persona fecha em mais de
+15% das partidas, e quando menos de 2 personas ficam entre 5% e 15% (a faixa do
+rascunho, seção 7, item 5).
+
+**(h) A melhor opção muda com a persona, e a letra do esforço muda com o mês
+(D-051).** Por mês: a melhor opção de cada persona (a de maior saldo final
+esperado, como em (c)), com aviso quando é a mesma para todas; e a letra (A a D)
+da opção de maior renda no próprio mês, na média das personas, com aviso quando
+é a mesma letra nos 3 meses. Atenção: a "renda do mês" leva todo dinheiro que
+não é custo fixo nem gasto, inclusive o empréstimo e o INSS (rascunho, seção 8).
+
+**(i) Conta do mês: trabalho e "entrou".** Em todos os estados alcançáveis ×
+opção × carta: com `regras.pisoTrabalho`, confere que o trabalho nunca fica
+negativo e que a renda perdida de uma carta nunca passa da renda que havia sem
+ela; se falhar, é defeito do motor, e o validador **sai com 1**. Sem o piso,
+trabalho negativo é aviso. E avisa o "entrou" negativo (custos fixos maiores
+que o trabalho num mês parado), com o pior caso e a chance por mês, ao acaso.
+
+Chances pequenas em (g) e (i) saem com dois algarismos ("0,014%"), e não
+arredondadas para "0%": na D-050, "ninguém" e "quase ninguém" são coisas
+diferentes.
 
 A última linha diz quantos avisos de equilíbrio saíram. Eles não bloqueiam a
 sala: servem para calibrar.

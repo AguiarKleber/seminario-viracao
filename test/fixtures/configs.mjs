@@ -13,6 +13,10 @@ export const CAMINHO_CONFIG_TESTE = join(PASTA_FIXTURES, 'config-teste.json');
 // (decidiu/sorteou). O config-teste.json fica com básico zero e sem dívida, para
 // os números de referência antigos continuarem valendo.
 export const CAMINHO_CONFIG_TESTE_V2 = join(PASTA_FIXTURES, 'config-teste-v2.json');
+// O esquema v2.1: custo fixo (fixo), gasto por causa de um evento (categoria
+// "gasto"), dias parados da carta e o texto da opção por persona (D-052, D-054).
+// É o v2 com esses campos acrescentados, para a diferença ficar só neles.
+export const CAMINHO_CONFIG_TESTE_V21 = join(PASTA_FIXTURES, 'config-teste-v21.json');
 
 // Lido do disco a cada chamada: os testes de mutação alteram o objeto.
 export function lerConfigTeste() {
@@ -21,6 +25,10 @@ export function lerConfigTeste() {
 
 export function lerConfigTesteV2() {
   return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V2, 'utf8'));
+}
+
+export function lerConfigTesteV21() {
+  return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V21, 'utf8'));
 }
 
 export function configMinimo() {

@@ -923,9 +923,12 @@ function lista(x) {
 // ---------- Conferência final ----------
 
 // O RTDB devolve as chaves em ordem alfabética; o motor, na ordem do config.
-const canonico = (x) => (x && typeof x === 'object' && !Array.isArray(x)
-  ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, canonico(x[k])]))
-  : x);
+// Dentro de lista também: o deAntes é uma lista de objetos ({ rotulo, valor,
+// gasto }), e sem isto a ordem das chaves do RTDB acusava divergência.
+const canonico = (x) => {
+  if (Array.isArray(x)) return x.map(canonico);
+  return x && typeof x === 'object' ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, canonico(x[k])])) : x;
+};
 const mesmoValor = (a, b) => JSON.stringify(canonico(a)) === JSON.stringify(canonico(b));
 
 // O placar e os resultados recalculados pelo motor, do zero, a partir do que
@@ -971,8 +974,19 @@ async function conferirApuracao({ canal, config, sala, opcoes, abertoEm, metrica
       const anteriores = passosRodada.slice(0, passosRodada.indexOf(p)).map((q) => q.rodada);
       const historico = M.historicoDe(resultados, eq, anteriores);
       const esperado = M.resolverRodada(config, { equipeId: eq, rodadaId: r, opcaoId: res.decisao, estado: estado[eq], semente: sementes?.[r], historico });
-      if (esperado.carta !== res.carta || !mesmoValor(esperado.depois, res.depois) || !mesmoValor(esperado.mes, res.mes)) {
-        metricas.violacoes.push(`${r}/${eq}: o motor com a semente gravada dá ${esperado.carta}, e está gravado ${res.carta}`);
+      // A mensagem diz qual campo divergiu: quando só o cartaCusto diferia, ela
+      // dizia "o motor dá X, e está gravado X", com a mesma carta, e enganava o
+      // diagnóstico (revisão de 29/09, 2ª rodada, achado 8). O deAntes só é
+      // gravado quando há (o RTDB apaga lista vazia): ausente vale [].
+      const divergentes = [
+        esperado.carta !== res.carta ? `carta (motor ${esperado.carta}, gravado ${res.carta})` : null,
+        !mesmoValor(esperado.depois, res.depois) ? 'depois' : null,
+        !mesmoValor(esperado.mes, res.mes) ? 'mes' : null,
+        !mesmoValor(esperado.cartaCusto, res.cartaCusto) ? 'cartaCusto' : null,
+        !mesmoValor(esperado.deAntes, lista(res.deAntes)) ? 'deAntes' : null,
+      ].filter(Boolean);
+      if (divergentes.length > 0) {
+        metricas.violacoes.push(`${r}/${eq}: o motor com a semente gravada difere do gravado em ${divergentes.join(', ')}`);
       }
       estado[eq] = esperado.depois;
       jogadas[eq].push({ rodadaId: r, opcaoId: res.decisao, cartaId: res.carta });

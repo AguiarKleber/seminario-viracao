@@ -27,14 +27,16 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 3. Login anônimo | Ativado |
 | 4. `conexao.json` | Preenchido com as chaves do projeto |
 | 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (PR #1) está no ar, e o telão publicado já criou sala |
-| Conteúdo | Redesenho de 29/09 (D-041 a D-048): `config.json` versão `2026-09-29-v2-rascunho`, no esquema v2 (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 6 e 7 |
+| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #3, versão 3 do site) está no ar, e o telão publicado já criou sala |
+| Conteúdo | Revisão de 29/09 (D-050 a D-057): `config.json` versão `2026-09-29-v2.1-rascunho`, no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seção 8 |
 
-**O redesenho de 29/09** (branch `claude/redesenho`) entra antes do teste de
-30/09, que já usa a versão nova (D-048). Ele **não muda as regras do Firebase**:
-elas continuam v3, e nada precisa ser publicado de novo no console. Depois de
-fundir o PR, recarregue o telão em toda máquina onde ele estiver aberto e repita
-o passo 8.
+**A revisão do conteúdo de 29/09** (branch `claude/conteudo-v21`, versão 4 do
+site) vem depois do redesenho (D-041 a D-048, já na `main`). Ela **não muda as
+regras do Firebase**: continuam v3, iguais às publicadas, e nada precisa ser
+publicado de novo no console. Depois de fundir o PR, recarregue o telão em toda
+máquina onde ele estiver aberto e repita o passo 8: o bloco 1 tem de mostrar a
+versão `2026-09-29-v2.1-rascunho`. Os celulares que ainda tiverem a versão 3
+em cache veem a faixa "Há uma versão nova do app: atualize a página".
 
 Em seguida vêm o teste no eduroam (30/09), as correções (01 a 05/10), o
 congelamento (06/10) e o seminário (07/10).

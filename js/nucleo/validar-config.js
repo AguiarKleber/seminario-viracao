@@ -31,6 +31,18 @@
   // opções. Com mais de 160 letras ele empurra as opções para fora da tela de
   // um celular pequeno, e a equipe decide sem vê-las.
   const MAX_CONTEXTO = 160;
+  // D-054: a mesma escolha dita do jeito de cada ofício. O rótulo vai no botão
+  // do celular e na letra do telão; a narrativa, na história da equipe. Os
+  // limites são os do botão (60) e os do contexto (160), contados por letra.
+  const MAX_ROTULO_POR = 60;
+  const MAX_NARRATIVA_POR = 160;
+  // Esquema v2.1: os dias parados de uma carta são informativos (a tela mostra
+  // "20 dias parado"), e um mês tem 30. Mais que isso era o que a revisão de
+  // 29/09 achou (item 1: 50 dias parados num mês) e não pode voltar pelo config.
+  const MAX_DIAS_PARADO = 30;
+  // O único valor de efeito.categoria: dinheiro gasto por causa de um evento
+  // (conserto, remédio, multa), fora do "entrou" e fora de qualquer multiplica.
+  const CATEGORIAS_EFEITO = new Set(['gasto']);
   // D-043: 4 opções por mês, cada uma um dilema. Uma só não é decisão, e mais de
   // 4 não cabe nos botões do celular nem na conversa de 120 s.
   const MIN_OPCOES = 2;
@@ -65,7 +77,7 @@
       'cartas', 'enquetes', 'referencias', 'roteiros'],
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
     regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
-      'jurosDividaMes', 'jurosFonte'],
+      'jurosDividaMes', 'jurosFonte', 'pisoTrabalho'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
     persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
@@ -75,13 +87,13 @@
     outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
-    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte'],
-    carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte'],
+    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte', 'rotuloPor', 'narrativaPor'],
+    carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte', 'diasParado'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
     passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada'],
-    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte'],
+    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria'],
     condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador', 'decidiu', 'sorteou'],
     limite: ['abaixoDe', 'acimaDe'],
     ajuste: ['se', 'soma', 'multiplica'],
@@ -403,7 +415,33 @@
     if (rotulo !== undefined) n.rotulo = rotulo;
     const fonte = texto(r, bruto, 'fonte', caminho, true);
     if (fonte !== undefined) n.fonte = fonte;
+    tipoDoEfeito(r, bruto, n, caminho, temFator);
     return n;
+  }
+
+  // Esquema v2.1: custo fixo do trabalho (fixo) e gasto por causa de um evento
+  // (categoria "gasto") ficam fora de qualquer multiplica e entram depois do
+  // trabalho variável (contratos seção 3). Por isso:
+  // - multiplica neles é erro: "fora de qualquer multiplica" não teria sentido;
+  // - só a renda: são dinheiro, e a tela os mostra em reais ("gastos R$ 400");
+  //   um "gasto" de energia sairia da conta do mês sem aparecer em lugar nenhum;
+  // - os dois juntos é erro: a linha iria para o "entrou" ou para os gastos?
+  // fixo: false é aceito e some na normalização (é o mesmo que não ter).
+  function tipoDoEfeito(r, bruto, n, caminho, temFator) {
+    const fixo = tem(bruto, 'fixo') ? booleano(r, bruto, 'fixo', caminho, false) : false;
+    const categoria = tem(bruto, 'categoria') ? escolha(r, bruto, 'categoria', caminho, CATEGORIAS_EFEITO, undefined) : undefined;
+    if (!fixo && categoria === undefined) return;
+    if (fixo && categoria !== undefined) {
+      r.erro(caminho, '"fixo" e "categoria" no mesmo efeito: é custo fixo do trabalho ou gasto por causa de um evento, não os dois');
+      return;
+    }
+    const oque = fixo ? 'custo fixo ("fixo": true)' : 'gasto ("categoria": "gasto")';
+    if (temFator) r.erro(caminho, `${oque} com "multiplica": ele fica fora de qualquer multiplica; use "soma"`);
+    for (const ind of Object.keys(n.soma || {})) {
+      if (ind !== 'renda') r.erro(junta(junta(caminho, 'soma'), ind), `${oque} só pode somar na renda (é dinheiro), e não em "${ind}": separe em outro efeito`);
+    }
+    if (fixo) n.fixo = true;
+    else n.categoria = categoria;
   }
 
   function efeitos(r, obj, chave, caminho, idx, obrigatorio, onde = null) {
@@ -463,6 +501,11 @@
       jurosDividaMes: numero(r, g, 'jurosDividaMes', 'regras'),
       jurosFonte: texto(r, g, 'jurosFonte', 'regras'),
     };
+    // Esquema v2.1 (revisão de 29/09, 2ª rodada): com pisoTrabalho, o trabalho
+    // variável do mês não fica abaixo de 0 (motor, efeitosDoMes). Opcional, e
+    // ausente num config v2: ali o "trabalho" ainda leva custos e perdas, e o
+    // piso mudaria as contas que o v2 promete manter.
+    if (tem(g, 'pisoTrabalho')) n.pisoTrabalho = booleano(r, g, 'pisoTrabalho', 'regras', false);
     // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
     // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
     if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
@@ -619,8 +662,40 @@
     const n = { id, rotulo: texto(r, b, 'rotulo', c) };
     copiarTextos(r, b, n, c, ['narrativa', 'tendencia', 'fonte']);
     n.efeitos = [];
-    r.depois(() => { n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId]); });
+    r.depois(() => {
+      n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId]);
+      textoPorPersona(r, b, n, c, idx, 'rotuloPor', MAX_ROTULO_POR);
+      textoPorPersona(r, b, n, c, idx, 'narrativaPor', MAX_NARRATIVA_POR);
+    });
     return n;
+  }
+
+  // D-054: { [persona]: texto }, persona existente, texto até o limite (por
+  // letra). Persona sem entrada usa o rotulo/narrativa da opção. Mapa vazio não
+  // muda nada (e o RTDB some com ele): é aviso, para a chave sair do arquivo.
+  function textoPorPersona(r, b, n, c, idx, chave, limite) {
+    if (!tem(b, chave)) return;
+    const cc = junta(c, chave);
+    const bruto = b[chave];
+    if (!ehObjeto(bruto)) {
+      r.erro(cc, 'precisa ser um objeto { persona: texto }');
+      return;
+    }
+    const mapa = {};
+    for (const personaId of Object.keys(bruto)) {
+      const cp = junta(cc, personaId);
+      if (!referencia(r, personaId, cp, (x) => Object.hasOwn(idx.personas, x), 'persona')) continue;
+      const frase = texto(r, bruto, personaId, cc);
+      if (frase === undefined) continue;
+      const letras = [...frase].length;
+      if (letras > limite) {
+        r.erro(cp, `texto com ${letras} caracteres (mais de ${limite})`);
+        continue;
+      }
+      mapa[personaId] = frase;
+    }
+    if (Object.keys(bruto).length === 0) r.aviso(cc, 'vazio: não muda nada; tire a chave');
+    if (Object.keys(mapa).length > 0) n[chave] = mapa;
   }
 
   function rodada(r, b, c, id, idx) {
@@ -683,6 +758,11 @@
     }
     copiarTextos(r, b, n, c, ['narrativa']);
     n.peso = numero(r, b, 'peso', c, { inteiro: true, naoNegativo: true });
+    const dias = numero(r, b, 'diasParado', c, { opcional: true, inteiro: true, naoNegativo: true });
+    if (dias !== undefined) {
+      if (dias > MAX_DIAS_PARADO) r.erro(junta(c, 'diasParado'), `${dias} dias parado: um mês tem ${MAX_DIAS_PARADO}`);
+      else n.diasParado = dias;
+    }
     if (tem(b, 'tom')) {
       if (b.tom === 'grave') n.tom = 'grave';
       else r.erro(junta(c, 'tom'), `valor ${JSON.stringify(b.tom)} inválido; o único tom é "grave"`);

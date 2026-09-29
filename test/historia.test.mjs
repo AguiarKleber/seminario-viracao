@@ -37,12 +37,16 @@ test('historiaDaEquipe: um item por mês jogado, na ordem das rodadas, com opç�
       opcao: { rotulo: 'Pegar R$ 1.500 emprestado', narrativa: 'Escolhi: Pegar R$ 1.500 emprestado.' },
       carta: { titulo: 'Acidente: 20 dias parado', narrativa: 'Aconteceu: Acidente: 20 dias parado.', tom: 'grave' },
       mes: mes1,
+      cartaCusto: null,
+      deAntes: [],
     },
     {
       rodadaId: 'r3', titulo: 'Mês 3: e agora?',
       opcao: { rotulo: 'Guardar reserva', narrativa: 'Escolhi: Guardar reserva.' },
       carta: { titulo: 'Semana de chuva', narrativa: null, tom: null },
       mes: null,
+      cartaCusto: null,
+      deAntes: [],
     },
   ]);
 });

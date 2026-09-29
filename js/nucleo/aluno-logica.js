@@ -63,6 +63,20 @@
     });
   }
 
+  // D-054: o rótulo e a narrativa da opção do jeito do ofício da persona. É a
+  // mesma regra de historia.textoDaOpcao, repetida aqui porque a lógica do
+  // celular não pode depender da ordem de carga do historia.js para montar a
+  // decisão (sem ele, a história do fim fica vazia, mas a decisão não pode).
+  function textoOpcao(conteudo, rodadaId, opcaoId, personaId) {
+    const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
+    return {
+      rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
+      narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+    };
+  }
+
+  const personaDe = (conteudo, equipeId) => em(conteudo, 'equipes', equipeId, 'persona');
+
   // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
   // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
   // itens, a mesma conta do motor (que o celular não carrega).
@@ -109,15 +123,20 @@
     };
     if (ultimo) {
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
-      const opcao = em(rodada, 'opcoes', ultimo.decisao) || {};
+      const opcao = textoOpcao(conteudo, rodadaId, ultimo.decisao, personaDe(conteudo, equipeId));
       const carta = em(conteudo, 'cartas', ultimo.carta) || {};
-      // As contas do mês (entrou, básico, juros, saldoMes…) entram no mesmo
-      // objeto: "entrou R$ X · o básico custa R$ Y · faltou R$ Z" (D-044).
+      // As contas do mês (entrou, gastos, básico, juros, saldoMes…) entram no
+      // mesmo objeto: "entrou R$ X · gastos R$ G · o básico custa R$ Y · faltou
+      // R$ Z" (D-044, esquema v2.1). cartaCusto é o custo real da carta (D-052).
       dados.mes = {
         ...(ultimo.mes || {}),
         rodada: rodadaId, titulo: rodada.titulo, origem: ultimo.origem,
         decisao: { id: ultimo.decisao, rotulo: opcao.rotulo },
         carta: { id: ultimo.carta, titulo: carta.titulo, tom: carta.tom ?? null },
+        cartaCusto: ultimo.cartaCusto ?? null,
+        // O que veio dos meses anteriores (a fratura que continua, o INSS, a
+        // multa do aluguel), gravado pelo anfitrião; vazio em sala antiga.
+        deAntes: lista(ultimo.deAntes),
       };
       if (opcao.narrativa) dados.narrativa.push(opcao.narrativa);
       if (carta.narrativa) dados.narrativa.push(carta.narrativa);
@@ -201,7 +220,7 @@
         contexto: em(rodada, 'contexto', em(conteudo, 'equipes', equipeId, 'persona')),
         // Sem a tendência (D-043): a seta dizia qual era a opção "certa", e a
         // decisão deixava de ser um dilema.
-        opcoes: visiveis.map((o) => ({ id: o, rotulo: em(rodada, 'opcoes', o, 'rotulo'), votos: contagem[o] || 0 })),
+        opcoes: visiveis.map((o) => ({ id: o, rotulo: textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)).rotulo, votos: contagem[o] || 0 })),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,
         motivo,
@@ -217,14 +236,21 @@
     // No sorteio o resultado já está gravado, mas o celular não revela antes do
     // telão: a sala vê as fatias girarem junto.
     if (sub === 'sorteio' || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
-    const opcao = em(rodada, 'opcoes', res.decisao) || {};
+    const opcao = textoOpcao(conteudo, estado.rodada, res.decisao, personaDe(conteudo, equipeId));
     const carta = em(conteudo, 'cartas', res.carta) || {};
     return tela('resultado', {
       equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada, origem: res.origem,
-      decisao: { id: res.decisao, rotulo: opcao.rotulo, narrativa: opcao.narrativa ?? null },
+      decisao: { id: res.decisao, rotulo: opcao.rotulo, narrativa: opcao.narrativa },
       carta: { id: res.carta, titulo: carta.titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
       delta: res.delta || {}, indicadores: listaIndicadores(conteudo, res.depois),
       mes: res.mes ?? null, divida: dividaDe(conteudo, res.depois),
+      // D-052: "20 dias parado · renda perdida R$ X · gastos R$ Y". null em sala
+      // anterior ao v2.1, que não gravava o custo.
+      cartaCusto: res.cartaCusto ?? null,
+      // "fratura: mais 25 dias parado −R$ 2.233 · auxílio do INSS +R$ 2.431":
+      // sem isto, os dois sumiam dentro do "Do trabalho" (revisão de 29/09,
+      // 2ª rodada, achado 10). Lista vazia quando não há (ou sala antiga).
+      deAntes: lista(res.deAntes),
     });
   }
 

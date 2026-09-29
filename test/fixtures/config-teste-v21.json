@@ -1,0 +1,1000 @@
+{
+  "versao": "teste-v21",
+  "titulo": "Config de teste v2.1",
+  "tempos": {
+    "enqueteSeg": 60,
+    "decisaoSeg": 120,
+    "decisaoMinSeg": 45,
+    "prorrogacaoSeg": 20
+  },
+  "regras": {
+    "desempate": "prorrogacao-depois-moeda",
+    "cartaPor": "equipe",
+    "mostrarChances": "no_sorteio",
+    "placarPadrao": "efeitoDecisoes",
+    "alvoPorEquipe": 3,
+    "minPareados": 5,
+    "destacarCartas": 2,
+    "jurosDividaMes": 0.08,
+    "jurosFonte": "taxa ilustrativa de teste",
+    "pisoTrabalho": true
+  },
+  "escala": {
+    "curtos": [
+      "Discordo muito",
+      "Discordo",
+      "Neutro",
+      "Concordo",
+      "Concordo muito"
+    ],
+    "longos": [
+      "Discordo totalmente",
+      "Discordo",
+      "Nem concordo nem discordo",
+      "Concordo",
+      "Concordo totalmente"
+    ]
+  },
+  "indicadores": [
+    {
+      "id": "renda",
+      "nome": "Saldo acumulado",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": -20000,
+      "max": 100000
+    },
+    {
+      "id": "energia",
+      "nome": "Energia",
+      "formato": "inteiro",
+      "inicial": 8,
+      "min": 0,
+      "max": 10
+    },
+    {
+      "id": "protecao",
+      "nome": "Proteção",
+      "formato": "inteiro",
+      "inicial": 0,
+      "min": 0,
+      "max": 10
+    }
+  ],
+  "personas": [
+    {
+      "id": "motoboy",
+      "nome": "Rafa",
+      "descricao": "Motoboy de teste",
+      "familia": {
+        "descricao": "Rafa, a companheira e um filho de 4 anos; só o Rafa trabalha fora.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "aluguel",
+            "valor": 900,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "comida",
+            "valor": 800,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "contas",
+            "valor": 300,
+            "fonte": "valor de teste"
+          }
+        ]
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 3200
+          },
+          "rotulo": "entregas do mês"
+        },
+        {
+          "soma": {
+            "renda": -120
+          },
+          "rotulo": "gasolina"
+        },
+        {
+          "soma": {
+            "renda": -480
+          },
+          "fixo": true,
+          "rotulo": "parcela da moto"
+        },
+        {
+          "soma": {
+            "energia": -1
+          }
+        }
+      ]
+    },
+    {
+      "id": "ciclista",
+      "nome": "Dani",
+      "descricao": "Ciclista de teste",
+      "inicial": {
+        "energia": 9
+      },
+      "familia": {
+        "descricao": "Dani e a mãe aposentada.",
+        "pessoas": 2
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "aluguel e comida",
+            "valor": 1400,
+            "fonte": "valor de teste"
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "aposentadoria da mãe",
+        "valor": 600,
+        "fonte": "valor de teste"
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 1900,
+            "energia": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "manicure",
+      "nome": "Cida",
+      "descricao": "Manicure de teste",
+      "inicial": {
+        "protecao": 1
+      },
+      "familia": {
+        "descricao": "Cida e a filha de 15 anos.",
+        "pessoas": 2
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "aluguel",
+            "valor": 800,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "comida e contas",
+            "valor": 800,
+            "fonte": "valor de teste"
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "pensão da filha",
+        "valor": 400,
+        "fonte": "valor de teste"
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 2000
+          }
+        }
+      ]
+    },
+    {
+      "id": "motorista",
+      "nome": "Jorge",
+      "descricao": "Motorista de teste",
+      "inicial": {
+        "energia": 7
+      },
+      "familia": {
+        "descricao": "Jorge, a esposa e dois filhos; a esposa cuida da casa.",
+        "pessoas": 4
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "aluguel",
+            "valor": 1200,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "comida",
+            "valor": 1200,
+            "fonte": "valor de teste"
+          }
+        ]
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 3800
+          },
+          "rotulo": "corridas do mês"
+        },
+        {
+          "soma": {
+            "renda": -900
+          },
+          "rotulo": "aluguel do carro",
+          "fixo": true
+        }
+      ]
+    },
+    {
+      "id": "costureira",
+      "nome": "Lia",
+      "descricao": "Costureira de teste",
+      "familia": {
+        "descricao": "Lia sustenta sozinha a casa com dois filhos que não trabalham.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "aluguel",
+            "valor": 700,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "comida",
+            "valor": 900,
+            "fonte": "valor de teste"
+          },
+          {
+            "rotulo": "contas",
+            "valor": 200,
+            "fonte": "valor de teste"
+          }
+        ]
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 1700
+          }
+        }
+      ]
+    }
+  ],
+  "equipes": [
+    {
+      "id": "e1",
+      "nome": "Laranja",
+      "cor": "#E69F00",
+      "forma": "circulo",
+      "persona": "motoboy",
+      "obrigatoria": true
+    },
+    {
+      "id": "e2",
+      "nome": "Celeste",
+      "cor": "#56B4E9",
+      "forma": "quadrado",
+      "persona": "ciclista"
+    },
+    {
+      "id": "e3",
+      "nome": "Verde",
+      "cor": "#009E73",
+      "forma": "triangulo",
+      "persona": "manicure"
+    },
+    {
+      "id": "e4",
+      "nome": "Amarela",
+      "cor": "#F0E442",
+      "forma": "losango",
+      "persona": "motorista"
+    },
+    {
+      "id": "e5",
+      "nome": "Azul",
+      "cor": "#0072B2",
+      "forma": "hexagono",
+      "persona": "costureira"
+    },
+    {
+      "id": "e6",
+      "nome": "Vermelha",
+      "cor": "#D55E00",
+      "forma": "estrela",
+      "persona": "motoboy"
+    }
+  ],
+  "rodadas": [
+    {
+      "id": "r1",
+      "titulo": "Mês 1: quanto trabalhar?",
+      "texto": "Quem fica mais tempo online recebe pedidos melhores.",
+      "padrao": "c",
+      "contexto": {
+        "costureira": "O aluguel vence dia 10 e a geladeira está vazia.",
+        "motoboy": "A revisão da moto está atrasada."
+      },
+      "opcoes": {
+        "a": {
+          "rotulo": "12 horas por dia",
+          "tendencia": "mais dinheiro; menos energia",
+          "efeitos": [
+            {
+              "multiplica": {
+                "renda": 1.4
+              }
+            },
+            {
+              "soma": {
+                "energia": -4
+              }
+            }
+          ]
+        },
+        "b": {
+          "rotulo": "8 horas e pagar o MEI",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -80,
+                "protecao": 3
+              },
+              "rotulo": "DAS do MEI"
+            }
+          ]
+        },
+        "c": {
+          "rotulo": "8 horas, sem pagar nada",
+          "efeitos": []
+        },
+        "d": {
+          "rotulo": "Pegar R$ 1.500 emprestado",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 1500
+              },
+              "rotulo": "empréstimo"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "r2",
+      "titulo": "Mês 2: o app muda a regra",
+      "texto": "A taxa subiu e o bônus mudou.",
+      "padrao": "c",
+      "efeitosGerais": [
+        {
+          "soma": {
+            "renda": -200
+          },
+          "rotulo": "taxa nova do app"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r1": "d"
+            }
+          },
+          "soma": {
+            "renda": -600
+          },
+          "rotulo": "parcela do empréstimo"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r1": "b"
+            }
+          },
+          "soma": {
+            "renda": -80
+          },
+          "rotulo": "DAS do MEI",
+          "fixo": true
+        }
+      ],
+      "opcoes": {
+        "a": {
+          "rotulo": "Aceitar tudo",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 400,
+                "energia": -2
+              }
+            }
+          ],
+          "narrativa": "Aceitei tudo o que apareceu, até o que não compensava.",
+          "rotuloPor": {
+            "manicure": "Aceitar todos os atendimentos",
+            "costureira": "Aceitar todas as encomendas"
+          },
+          "narrativaPor": {
+            "manicure": "Atendi até cliente longe e barata."
+          }
+        },
+        "b": {
+          "rotulo": "Recusar corridas ruins",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -300
+              }
+            },
+            {
+              "se": {
+                "indicador": {
+                  "energia": {
+                    "abaixoDe": 5
+                  }
+                }
+              },
+              "soma": {
+                "energia": 3
+              },
+              "rotulo": "descanso"
+            }
+          ]
+        },
+        "c": {
+          "rotulo": "Seguir como está",
+          "efeitos": []
+        },
+        "d": {
+          "rotulo": "Trocar de aplicativo",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -150
+              },
+              "rotulo": "cadastro no app novo"
+            }
+          ],
+          "rotuloPor": {
+            "costureira": "Vender numa feira nova"
+          }
+        }
+      }
+    },
+    {
+      "id": "r3",
+      "titulo": "Mês 3: e agora?",
+      "texto": "Reserva, dívida ou organização coletiva.",
+      "padrao": "b",
+      "contexto": {
+        "costureira": "O filho mais velho precisa de material escolar."
+      },
+      "efeitosGerais": [
+        {
+          "se": {
+            "decidiu": {
+              "r1": "d"
+            }
+          },
+          "soma": {
+            "renda": -600
+          },
+          "rotulo": "parcela do empréstimo"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "acidente"
+            },
+            "indicador": {
+              "protecao": {
+                "acimaDe": 2
+              }
+            }
+          },
+          "soma": {
+            "renda": 1200
+          },
+          "rotulo": "auxílio do INSS, um mês depois"
+        },
+        {
+          "se": {
+            "indicador": {
+              "renda": {
+                "abaixoDe": 0
+              }
+            }
+          },
+          "soma": {
+            "renda": -100
+          },
+          "categoria": "gasto",
+          "rotulo": "multa do aluguel atrasado"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Guardar reserva",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -500,
+                "protecao": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Pegar empréstimo",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 1000
+              }
+            },
+            {
+              "soma": {
+                "protecao": -1
+              }
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Entrar na associação",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -100,
+                "protecao": 3
+              }
+            },
+            {
+              "se": {
+                "persona": [
+                  "motoboy",
+                  "ciclista"
+                ]
+              },
+              "soma": {
+                "energia": 1
+              }
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Bico no fim de semana",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 500,
+                "energia": -3
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cartas": [
+    {
+      "id": "normal",
+      "titulo": "Mês sem surpresas",
+      "peso": 50,
+      "efeitos": [],
+      "diasParado": 0
+    },
+    {
+      "id": "acidente",
+      "titulo": "Acidente: 20 dias parado",
+      "peso": 6,
+      "rodadas": [
+        "r1",
+        "r2"
+      ],
+      "tom": "grave",
+      "ajustesDePeso": [
+        {
+          "se": {
+            "opcao": "a"
+          },
+          "soma": 14
+        },
+        {
+          "se": {
+            "indicador": {
+              "energia": {
+                "abaixoDe": 3
+              }
+            }
+          },
+          "multiplica": 2
+        }
+      ],
+      "efeitos": [
+        {
+          "multiplica": {
+            "renda": 0.3
+          }
+        },
+        {
+          "soma": {
+            "renda": -300
+          },
+          "categoria": "gasto",
+          "rotulo": "conserto"
+        },
+        {
+          "soma": {
+            "renda": -100
+          },
+          "categoria": "gasto",
+          "rotulo": "remédio"
+        }
+      ],
+      "diasParado": 20
+    },
+    {
+      "id": "chuva",
+      "titulo": "Semana de chuva",
+      "peso": 12,
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -300
+          }
+        }
+      ]
+    },
+    {
+      "id": "bonus",
+      "titulo": "Bônus de fim de semana",
+      "peso": 10,
+      "rodadas": [
+        "r1",
+        "r2"
+      ],
+      "ajustesDePeso": [
+        {
+          "se": {
+            "opcao": "a"
+          },
+          "soma": 5
+        }
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": 600
+          }
+        }
+      ]
+    },
+    {
+      "id": "bloqueio",
+      "titulo": "Conta bloqueada pelo app",
+      "peso": 5,
+      "rodadas": [
+        "r2"
+      ],
+      "tom": "grave",
+      "efeitos": [
+        {
+          "multiplica": {
+            "renda": 0.5
+          }
+        }
+      ],
+      "diasParado": 15
+    },
+    {
+      "id": "doenca",
+      "titulo": "Doente e sem parar",
+      "peso": 4,
+      "somenteSe": {
+        "indicador": {
+          "energia": {
+            "abaixoDe": 5
+          }
+        }
+      },
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -800,
+            "energia": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "multa",
+      "titulo": "Multa de trânsito",
+      "peso": 8,
+      "somenteSe": {
+        "persona": [
+          "motoboy",
+          "motorista"
+        ]
+      },
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -400
+          },
+          "categoria": "gasto",
+          "rotulo": "multa"
+        }
+      ]
+    },
+    {
+      "id": "cliente_fiel",
+      "titulo": "Cliente fiel",
+      "peso": 8,
+      "rodadas": [
+        "r2",
+        "r3"
+      ],
+      "somenteSe": {
+        "persona": "manicure"
+      },
+      "efeitos": [
+        {
+          "soma": {
+            "renda": 500
+          }
+        }
+      ]
+    },
+    {
+      "id": "recaida",
+      "titulo": "A lesão voltou",
+      "peso": 0,
+      "rodadas": [
+        "r3"
+      ],
+      "tom": "grave",
+      "ajustesDePeso": [
+        {
+          "se": {
+            "sorteou": {
+              "r2": "acidente"
+            }
+          },
+          "soma": 12
+        }
+      ],
+      "efeitos": [
+        {
+          "multiplica": {
+            "renda": 0.8
+          }
+        },
+        {
+          "soma": {
+            "renda": -500
+          },
+          "categoria": "gasto",
+          "rotulo": "fisioterapia"
+        }
+      ],
+      "diasParado": 5
+    }
+  ],
+  "enquetes": [
+    {
+      "id": "entrada",
+      "titulo": "Termômetro de entrada",
+      "pareada": true,
+      "revelar": "so_no_comparativo",
+      "modo": "uma_por_vez",
+      "afirmacoes": [
+        {
+          "id": "a1",
+          "texto": "Quem trabalha por aplicativo é empreendedor."
+        },
+        {
+          "id": "a2",
+          "texto": "Trabalhar por conta dá liberdade."
+        },
+        {
+          "id": "a3",
+          "texto": "O esforço individual explica quem ganha mais."
+        }
+      ]
+    },
+    {
+      "id": "termometro",
+      "titulo": "Termômetro",
+      "pareada": false,
+      "revelar": "ao_vivo",
+      "afirmacoes": [
+        {
+          "id": "t1",
+          "texto": "O aplicativo é o patrão."
+        },
+        {
+          "id": "t2",
+          "texto": "A sorte pesa mais que a decisão."
+        }
+      ]
+    }
+  ],
+  "referencias": [
+    {
+      "id": "clt",
+      "nome": "A mesma pessoa com carteira assinada",
+      "renda": 7500,
+      "fonte": "valor ilustrativo de teste"
+    }
+  ],
+  "roteiros": {
+    "60min": [
+      {
+        "tipo": "lobby",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "antes",
+        "alvoSeg": 120,
+        "opcional": true
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Abertura",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "formarEquipes",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "personas",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r1",
+        "alvoSeg": 240
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Trecho 2",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r2",
+        "alvoSeg": 240
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Trecho 3",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r3",
+        "alvoSeg": 240
+      },
+      {
+        "tipo": "placarFinal",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Debrief",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "termometro",
+        "momento": "unico",
+        "alvoSeg": 240
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "depois",
+        "alvoSeg": 90
+      },
+      {
+        "tipo": "comparativo",
+        "enquete": "entrada",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "fim"
+      }
+    ],
+    "120min": [
+      {
+        "tipo": "lobby",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "antes",
+        "alvoSeg": 150,
+        "opcional": true
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Abertura",
+        "alvoSeg": 900
+      },
+      {
+        "tipo": "formarEquipes",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "personas",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r1",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Trecho 2",
+        "alvoSeg": 1200
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r2",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Trecho 3",
+        "alvoSeg": 1200
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r3",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "placarFinal",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Debrief",
+        "alvoSeg": 900
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "termometro",
+        "momento": "unico",
+        "alvoSeg": 300
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "depois",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "comparativo",
+        "enquete": "entrada",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "fim"
+      }
+    ]
+  }
+}

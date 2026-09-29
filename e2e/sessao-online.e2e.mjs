@@ -22,7 +22,12 @@
 //    faltou" e a dívida (D-044, D-046), e a história da equipe no fim (D-045);
 // 10. "piloto automático" em nenhuma tela do celular nem no resultado do telão
 //    (D-041; rascunho, seção 7, item 14), e o "Escolha ou sorte?" do celular com
-//    os totais sem sinal e as variações com + ou − (item 11).
+//    os totais sem sinal e as variações com + ou − (item 11);
+// 11. o esquema v2.1 no celular: tocar numa opção abre a explicação sem votar, e
+//    o "Votar nesta" confirma e muda o voto (D-055); o texto da opção do jeito
+//    da persona da equipe (D-054); o custo real da carta (dias parado, renda
+//    perdida, gastos) e a linha "entrou · gastos · básico · juros · faltou"
+//    (D-052).
 // Capturas do celular em e2e/capturas/celular-*.png (as antigas são apagadas no
 // começo: uma captura nova muda a numeração das seguintes).
 //
@@ -81,31 +86,59 @@ async function servirSdk(contexto, { falhar = () => false } = {}) {
   });
 }
 
-// Com o config.json da raiz em reescrita para o esquema v2 (D-041 a D-048), o
-// e2e joga com a fixture v2 dos testes, servida pelo Playwright no lugar dele.
-// A fixture não tem narrativa nas opções; aqui cada opção ganha uma do tamanho
-// das do rascunho (cerca de 110 letras), para medir o pior caso da decisão em
-// 360×740: 4 opções, todas com narrativa (D-043). A enquete de entrada passa a
-// "todas", como no config.json: o roteiro do e2e responde as 3 afirmações de uma
-// vez, com "voltar" e "mudar", e a fixture abre uma por vez. E, como no
-// config.json, um bloco entre as personas e o primeiro mês: é nele que o celular
-// mostra a situação antes da primeira rodada.
-function fixtureV2ComNarrativas() {
-  const cfg = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-teste-v2.json'), 'utf8'));
+// Enquanto o config.json da raiz não passa no validador (ou com E2E_FIXTURE=1),
+// o e2e joga com a fixture v2.1 dos testes, servida pelo Playwright no lugar
+// dele, com ajustes que só valem aqui:
+// - cada opção ganha uma narrativa do tamanho das do rascunho (cerca de 110
+//   letras) e, para a persona da equipe 1, um rótulo e uma narrativa próprios
+//   (D-054), a narrativa com cerca de 150 letras: o pior caso da decisão em
+//   360×740 é uma opção aberta com a narrativa mais longa (D-055);
+// - a enquete de entrada passa a "todas", como no config.json: o roteiro do e2e
+//   responde as 3 afirmações de uma vez, com "voltar" e "mudar";
+// - como no config.json, um bloco entre as personas e o primeiro mês: é nele que
+//   o celular mostra a situação antes da primeira rodada;
+// - no mês 1, só a carta do acidente (20 dias parado, conserto e remédio): o
+//   custo real da carta (D-052) aparece sempre, e não só quando a sorte quer.
+function fixtureV21ParaE2e() {
+  const cfg = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-teste-v21.json'), 'utf8'));
   cfg.enquetes.find((e) => e.id === 'entrada').modo = 'todas';
   for (const passos of Object.values(cfg.roteiros)) {
     const i = passos.findIndex((p) => p.tipo === 'personas');
     if (passos[i + 1]?.tipo !== 'bloco') passos.splice(i + 1, 0, { tipo: 'bloco', titulo: 'Antes do primeiro mês', alvoSeg: 120 });
   }
-  // O básico do Rafa (equipe 1) passa de R$ 2.000 para R$ 4.500: com qualquer
-  // opção e qualquer carta o mês 1 não fecha (o melhor caso é R$ 4.240), e o e2e
-  // passa sempre pelo "faltou", pela dívida e pelos juros do mês 2.
-  cfg.personas.find((p) => p.id === 'motoboy').basico.itens.push({ rotulo: 'dívida antiga da família', valor: 2500, fonte: 'valor de teste do e2e' });
+  // O básico do Rafa (equipe 1) passa de R$ 2.000 para R$ 5.000: com qualquer
+  // opção e qualquer carta o mês 1 não fecha (sem o acidente, o melhor caso
+  // entraria com R$ 4.700), e o e2e passa sempre pelo "faltou", pela dívida e
+  // pelos juros do mês 2.
+  cfg.personas.find((p) => p.id === 'motoboy').basico.itens.push({ rotulo: 'dívida antiga da família', valor: 3000, fonte: 'valor de teste do e2e' });
+  const mes1 = cfg.rodadas[0].id;
+  const todas = cfg.rodadas.map((r) => r.id);
+  for (const carta of cfg.cartas) {
+    if (carta.id !== 'acidente') carta.rodadas = (carta.rodadas ?? todas).filter((r) => r !== mes1);
+  }
+  const personaE1 = cfg.equipes[0].persona;
   for (const r of cfg.rodadas) {
     const opcoes = Array.isArray(r.opcoes) ? r.opcoes : Object.values(r.opcoes);
     for (const o of opcoes) {
       o.narrativa ??= `Escolhi "${o.rotulo}" sabendo que o mês não fecha: cada real conta, e ninguém garante o pedido de amanhã.`;
+      o.rotuloPor = { ...o.rotuloPor, [personaE1]: `${o.rotulo}, na moto`.slice(0, 60) };
+      o.narrativaPor = {
+        ...o.narrativaPor,
+        [personaE1]: `Na moto, escolhi "${o.rotulo}" com a parcela vencendo, o filho pedindo lanche e o app mudando a regra sem avisar.`.slice(0, 160),
+      };
     }
+  }
+  return JSON.stringify(cfg, null, 2);
+}
+
+// O config real com o mês 1 só com as cartas de parada (diasParado > 0), que
+// o próprio config diz quais são.
+function soCartasDeParadaNoMes1(texto) {
+  const cfg = JSON.parse(texto);
+  const todas = cfg.rodadas.map((r) => r.id);
+  const mes1 = todas[0];
+  for (const carta of cfg.cartas) {
+    if (!(carta.diasParado > 0)) carta.rodadas = (carta.rodadas ?? todas).filter((r) => r !== mes1);
   }
   return JSON.stringify(cfg, null, 2);
 }
@@ -122,8 +155,17 @@ async function conteudoDoTeste() {
   // com certeza pelo "faltou", pela dívida e pelos juros (o config real depende da carta).
   const forcarFixture = process.env.E2E_FIXTURE === '1';
   if (!r.ok || forcarFixture) {
-    textoConfig = fixtureV2ComNarrativas();
-    origem = `test/fixtures/config-teste-v2.json (${forcarFixture ? 'E2E_FIXTURE=1' : 'o config.json da raiz ainda não passa no validador'})`;
+    textoConfig = fixtureV21ParaE2e();
+    origem = `test/fixtures/config-teste-v21.json (${forcarFixture ? 'E2E_FIXTURE=1' : 'o config.json da raiz ainda não passa no validador'})`;
+    r = V.validarConfig.validarTexto(textoConfig);
+  }
+  if (r.ok && origem === 'config.json') {
+    // Revisão de 29/09, 2ª rodada (achado 19): com o config real, o resultado
+    // no celular saía com a carta "Normal" ou "Semana boa", e a linha "O que a
+    // carta custou" (D-052) nunca era vista em 360×740. No mês 1, só as cartas
+    // com dias parados podem sair (as outras continuam nos meses seguintes).
+    textoConfig = soCartasDeParadaNoMes1(textoConfig);
+    origem = 'config.json (no mês 1, só as cartas com dias parados)';
     r = V.validarConfig.validarTexto(textoConfig);
   }
   assert.ok(r.ok, `o conteúdo do e2e precisa ser válido (${origem}): ${JSON.stringify(r.erros)}`);
@@ -143,7 +185,8 @@ async function conteudoDoTeste() {
     antes: { enquete: antes.enquete, ordem, total: ordem.length },
     rodada, todasOpcoes, opcoes: todasOpcoes.slice(0, 3), equipes, nomeE1: cfg.equipes[equipes[0]].nome,
     passos, opcoesDe: (r) => lista(cfg.rodadas[r].ordemOpcoes),
-    cfg, textoConfig, historiaDaEquipe: V.historia.historiaDaEquipe, usandoFixture: origem !== 'config.json',
+    cfg, textoConfig, historiaDaEquipe: V.historia.historiaDaEquipe, textoDaOpcao: V.historia.textoDaOpcao,
+    usandoFixture: !origem.startsWith('config.json'),
   };
 }
 
@@ -382,8 +425,9 @@ async function jogar({ site, navegador, vigiar }) {
   const inclui = (texto, trecho) => String(texto).toLocaleLowerCase('pt-BR').includes(String(trecho).toLocaleLowerCase('pt-BR'));
   // O dinheiro formatado pelo próprio celular (o mesmo Viracao.formatar da tela).
   const moedaNa = (c, v) => c.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x), v);
-  // "Entrou R$ X · o básico da família custa R$ Y · faltou R$ Z" (D-044), com os
-  // números do mês que o telão gravou em resultados/{r}/{eq}.mes.
+  // "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y · faltou R$ Z"
+  // (D-044, D-052), com os números do mês que o telão gravou em
+  // resultados/{r}/{eq}.mes. Os gastos e os juros só aparecem quando existem.
   async function conferirContaDoMes(c, mes, onde) {
     assert.ok(mes && Number.isFinite(mes.saldoMes), `${onde}: o telão gravou o mês no resultado`);
     const lido = await c.p.evaluate(() => {
@@ -391,14 +435,42 @@ async function jogar({ site, navegador, vigiar }) {
       return n ? { ...n.dataset, texto: n.textContent } : null;
     });
     assert.ok(lido, `${onde}: a conta do mês aparece`);
-    for (const k of ['entrou', 'basico', 'juros', 'saldoMes']) assert.equal(Number(lido[k]), mes[k], `${onde}: ${k} do mês`);
+    for (const k of ['entrou', 'gastos', 'basico', 'juros', 'saldoMes']) assert.equal(Number(lido[k]), mes[k] ?? 0, `${onde}: ${k} do mês`);
     const trechos = [
       `entrou ${await moedaNa(c, mes.entrou)}`,
       `o básico da família custa ${await moedaNa(c, mes.basico)}`,
       mes.saldoMes < 0 ? `faltou ${await moedaNa(c, -mes.saldoMes)}` : `sobrou ${await moedaNa(c, mes.saldoMes)}`,
     ];
+    if (mes.gastos > 0) trechos.push(`gastos ${await moedaNa(c, mes.gastos)}`);
     if (mes.juros > 0) trechos.push(`juros da dívida ${await moedaNa(c, mes.juros)}`);
+    // De onde veio o "entrou", quando ele não é só o trabalho: o custo fixo do
+    // trabalho (parcela da moto) e a outra renda da casa.
+    if (mes.custosFixos > 0 || mes.outraRenda > 0) trechos.push(`do trabalho e da decisão: ${await moedaNa(c, mes.trabalho)}`);
+    if (mes.custosFixos > 0) trechos.push(`custos fixos do trabalho: ${await moedaNa(c, -mes.custosFixos)}`);
     for (const x of trechos) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
+    // A conta fecha na tela: entrou − gastos − básico − juros = saldo do mês.
+    assert.equal(mes.entrou - (mes.gastos ?? 0) - mes.basico - mes.juros, mes.saldoMes, `${onde}: a conta do mês fecha`);
+  }
+  // "Custo da carta: 20 dias parado · renda perdida R$ X · gastos R$ Y" (D-052),
+  // com o cartaCusto gravado pelo telão. Carta sem custo nenhum, sem a linha.
+  const trechosDoCusto = async (c, custo) => [
+    custo.diasParado > 0 ? `${custo.diasParado} ${custo.diasParado === 1 ? 'dia parado' : 'dias parado'}` : null,
+    custo.rendaPerdida > 0 ? `renda perdida ${await moedaNa(c, custo.rendaPerdida)}` : null,
+    custo.gastos > 0 ? `gastos ${await moedaNa(c, custo.gastos)}` : null,
+  ].filter(Boolean);
+  const temCusto = (custo) => Boolean(custo) && (custo.diasParado > 0 || custo.rendaPerdida > 0 || custo.gastos > 0);
+  async function conferirCartaCusto(c, custo, onde) {
+    const lido = await c.p.evaluate(() => {
+      const n = document.querySelector('.carta-custo');
+      return n ? { ...n.dataset, texto: n.textContent } : null;
+    });
+    if (!temCusto(custo)) {
+      assert.equal(lido, null, `${onde}: carta sem custo, sem a linha do custo`);
+      return;
+    }
+    assert.ok(lido, `${onde}: o custo real da carta aparece`);
+    for (const k of ['diasParado', 'rendaPerdida', 'gastos']) assert.equal(Number(lido[k]), custo[k], `${onde}: ${k} da carta`);
+    for (const x of await trechosDoCusto(c, custo)) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
   }
   // "Dívida R$ D · juros de J% ao mês" (D-046), só quando o saldo está negativo.
   async function conferirDivida(c, renda, onde) {
@@ -432,6 +504,14 @@ async function jogar({ site, navegador, vigiar }) {
           const juros = `juros ${await moedaNa(c, h.mes.juros)}`;
           assert.ok(inclui(lida[i].texto, juros), `${onde}: o mês ${h.rodadaId} traz "${juros}"`);
         }
+        if (h.mes.gastos > 0) {
+          const gastos = `gastos ${await moedaNa(c, h.mes.gastos)}`;
+          assert.ok(inclui(lida[i].texto, gastos), `${onde}: o mês ${h.rodadaId} traz "${gastos}"`);
+        }
+      }
+      // D-052: o custo real da carta também na história.
+      if (temCusto(h.cartaCusto)) {
+        for (const x of await trechosDoCusto(c, h.cartaCusto)) assert.ok(inclui(lida[i].texto, x), `${onde}: o mês ${h.rodadaId} traz "${x}"`);
       }
     }
   }
@@ -606,7 +686,30 @@ async function jogar({ site, navegador, vigiar }) {
   const R = C.rodada;
   const [OA, OB, OC] = C.opcoes;
   const opcao = (op) => `.botao-opcao-aluno[data-opcao="${op}"]`;
+  const botaoVotar = (op) => `[data-votar="${op}"]`;
   const temNota = (c, re, timeout = 10000) => c.p.waitForFunction((fonte) => new RegExp(fonte).test(document.querySelector('.nota')?.textContent || ''), re.source, { timeout });
+  // D-055: tocar na opção só abre a explicação; o voto é o "Votar nesta". Tocar
+  // na opção já aberta a fecharia, por isso abrir() confere antes.
+  async function abrir(c, op) {
+    if (await c.p.getAttribute(opcao(op), 'aria-expanded') !== 'true') await c.p.click(opcao(op));
+    await c.p.waitForSelector(`[data-detalhe="${op}"]`);
+  }
+  async function votarNa(c, op) {
+    await abrir(c, op);
+    await c.p.click(botaoVotar(op));
+  }
+  const votada = (c, op) => c.p.waitForFunction((s) => document.querySelector(s)?.dataset.meuVoto === '1', opcao(op));
+  // O "Votar nesta" (ou o "Seu voto está nesta") da opção aberta, inteiro na
+  // tela: abaixo do topo fixo e acima do aviso "Mais opções abaixo", se houver.
+  const votarAVista = (c, op) => c.p.waitForFunction((o) => {
+    const alvo = document.querySelector(`[data-detalhe="${o}"] [data-votar], [data-detalhe="${o}"] .opcao-votada`);
+    if (!alvo) return false;
+    const r = alvo.getBoundingClientRect();
+    const topo = document.querySelector('.topo').getBoundingClientRect().bottom;
+    const aviso = document.querySelector('[data-aviso-rolagem]');
+    const limite = aviso && !aviso.hidden ? aviso.getBoundingClientRect().top : innerHeight;
+    return r.height > 0 && r.top >= topo - 1 && r.bottom <= limite + 1;
+  }, op, { timeout: 5000 });
   await avancarAte((e) => e.tipo === 'rodada' && e.subfase === 'decidindo' && e.rodada === R, `rodada ${R}`);
   for (const c of cel) await esperarTela(c, 'decisao');
   // D-043: o contexto da família no topo, só no celular da equipe daquela persona.
@@ -628,9 +731,17 @@ async function jogar({ site, navegador, vigiar }) {
   const lidasOpcoes = await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => ({ id: b.dataset.opcao, narrativa: b.querySelector('.opcao-narrativa')?.textContent ?? null })));
   assert.ok(C.todasOpcoes.length <= 4, 'no máximo 4 opções por mês');
   assert.deepEqual(lidasOpcoes.map((o) => o.id), C.todasOpcoes, 'todas as opções da rodada, na ordem');
-  // Antes do voto, nenhuma narrativa (revisão de 29/09: com as quatro, só a A
-  // cabia antes de rolar); a da opção escolhida aparece depois do voto, lá embaixo.
-  for (const o of lidasOpcoes) assert.equal(o.narrativa, null, `sem voto, sem a narrativa da opção ${o.id}`);
+  // Nenhuma opção aberta, nenhuma narrativa (revisão de 29/09: com as quatro,
+  // só a A cabia antes de rolar); a narrativa aparece ao tocar na opção (D-055).
+  for (const o of lidasOpcoes) assert.equal(o.narrativa, null, `sem tocar, sem a narrativa da opção ${o.id}`);
+  // D-054: o rótulo de cada opção do jeito da persona da equipe.
+  const personaE1 = C.cfg.equipes[E1].persona;
+  const textoE1 = (r, op) => C.textoDaOpcao(C.cfg, r, op, personaE1);
+  assert.deepEqual(await cel[0].p.$$eval('.botao-opcao-aluno .opcao-rotulo', (ns) => ns.map((n) => n.textContent)),
+    C.todasOpcoes.map((id) => textoE1(R, id).rotulo), 'os rótulos das opções com o texto da persona da equipe');
+  if (C.usandoFixture) {
+    assert.ok(C.todasOpcoes.every((id) => textoE1(R, id).rotulo !== rodadaR.opcoes[id].rotulo), 'a fixture do e2e tem rotuloPor para a persona da equipe 1');
+  }
   {
     const texto = await cel[0].p.textContent('#tela');
     for (const id of C.todasOpcoes) {
@@ -660,6 +771,17 @@ async function jogar({ site, navegador, vigiar }) {
     return { primeira: bs[0].getBoundingClientRect().bottom <= innerHeight, ultima: bs.at(-1).getBoundingClientRect().bottom <= innerHeight + 1 };
   });
   assert.ok(dobra.primeira, 'a primeira opção cabe inteira sem rolar');
+  // Revisão de 29/09, 2ª rodada (achado 19): a instrução de como se vota ficava
+  // abaixo da dobra; a dica curta vem antes das opções, na primeira tela.
+  // Fica no lugar do "Decisão da equipe", no cabeçalho: uma linha a mais antes
+  // das opções empurrava a letra D para fora da primeira tela.
+  const dica = await cel[0].p.evaluate(() => {
+    const n = document.querySelector('.cabecalho .kicker');
+    const opcoes = document.querySelector('.opcoes-aluno');
+    return n ? { baixo: n.getBoundingClientRect().bottom, antes: n.getBoundingClientRect().bottom <= opcoes.getBoundingClientRect().top + 1, texto: n.textContent } : null;
+  });
+  assert.ok(dica && dica.baixo <= 740 && dica.antes, `a dica do voto na primeira tela, antes das opções (${JSON.stringify(dica)})`);
+  assert.match(dica.texto, /Toque para ler; vote no botão/);
   // Revisão de 29/09: só a opção A aparecia antes de rolar. As letras de todas
   // as opções cabem na primeira tela (a narrativa longa fica só na escolhida, e
   // o texto da rodada, no telão).
@@ -688,15 +810,63 @@ async function jogar({ site, navegador, vigiar }) {
   await cel[0].p.click('.situacao-resumo summary');
   assert.match(await marcador(), /fechar/);
   await cel[0].p.click('.situacao-resumo summary');
+
+  // D-055: tocar numa opção abre a explicação dela, com a narrativa da persona,
+  // e NÃO vota. Só o "Votar nesta" vota.
+  const caminhoVotoAna = `salas/${sala}/decisoes/${R}/${E1}/${uids[0]}`;
+  const narrativasAbertas = () => cel[0].p.$$eval('[data-detalhe]', (ns) => ns.map((n) => [n.dataset.detalhe, n.querySelector('.opcao-narrativa')?.textContent ?? null]));
+  await cel[0].p.evaluate(() => globalThis.scrollTo(0, 0));
   await cel[0].p.click(opcao(OA));
-  await temNota(cel[0], /registrado/);
+  await cel[0].p.waitForSelector(`[data-detalhe="${OA}"]`);
+  assert.deepEqual(await narrativasAbertas(), [[OA, textoE1(R, OA).narrativa]], 'uma opção aberta, com a narrativa da persona');
+  assert.equal(await cel[0].p.getAttribute(opcao(OA), 'aria-expanded'), 'true');
+  assert.equal(await cel[0].p.textContent(`${opcao(OA)} .opcao-votos`), '0 votos', 'abrir não conta voto');
+  await cel[0].p.waitForTimeout(800);
+  assert.equal(await administrador('GET', caminhoVotoAna), null, 'tocar na opção não grava voto');
+  assert.deepEqual(await cel[0].p.evaluate(() => globalThis.Viracao.aluno.pendentes()), {}, 'tocar na opção não guarda voto no aparelho');
+  // Com uma opção aberta, o "Votar nesta" fica à vista (D-055); a medida da
+  // tela inteira vai para o log, para quem mexer no conteúdo saber a folga.
+  await votarAVista(cel[0], OA);
   {
-    const narrativas = await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => [b.dataset.opcao, b.querySelector('.opcao-narrativa')?.textContent ?? null]));
-    for (const [id, n] of narrativas) assert.equal(n, id === OA ? (rodadaR.opcoes[id].narrativa ?? null) : null, `depois do voto em ${OA}, a narrativa só nela (${id})`);
+    const cabe = await cel[0].p.evaluate(() => {
+      const aviso = document.querySelector('[data-aviso-rolagem]');
+      const limite = aviso && !aviso.hidden ? aviso.getBoundingClientRect().top : innerHeight;
+      return [...document.querySelectorAll('.botao-opcao-aluno')].every((b) => b.getBoundingClientRect().bottom <= limite + 1);
+    });
+    console.log(cabe ? 'Decisão com uma opção aberta: tudo cabe em 360×740.' : 'Decisão com uma opção aberta: passa da dobra em 360×740; o "Votar nesta" fica à vista.');
   }
+  await conferirCelular(cel[0], 'decisao-opcao-aberta');
+  // Tocar de novo fecha; tocar em outra troca a aberta.
+  await cel[0].p.click(opcao(OA));
+  await cel[0].p.waitForFunction((o) => !document.querySelector(`[data-detalhe="${o}"]`), OA);
+  await cel[0].p.click(opcao(OB));
+  await cel[0].p.waitForSelector(`[data-detalhe="${OB}"]`);
+  assert.deepEqual(await narrativasAbertas(), [[OB, textoE1(R, OB).narrativa]], 'só uma opção aberta por vez');
+  // "Votar nesta" vota; a votada fica marcada; dá para mudar até o fechamento.
+  await votarNa(cel[0], OA);
+  await temNota(cel[0], /registrado/);
+  await votada(cel[0], OA);
+  assert.equal(await esperarNoBanco(caminhoVotoAna, OA), OA, '"Votar nesta" grava o voto');
+  assert.equal(await cel[0].p.locator(`[data-detalhe="${OA}"] .opcao-votada`).count(), 1, 'a opção votada diz que o voto está nela');
+  await votarNa(cel[0], OB);
+  await votada(cel[0], OB);
+  assert.equal(await esperarNoBanco(caminhoVotoAna, OB), OB, 'mudar o voto com outro "Votar nesta"');
+  assert.equal(await cel[0].p.getAttribute(opcao(OA), 'data-meu-voto'), null, 'só a opção votada fica marcada');
+  await votarNa(cel[0], OA);
+  await votada(cel[0], OA);
+  assert.equal(await esperarNoBanco(caminhoVotoAna, OA), OA);
+  // A última opção, aberta a partir do topo da tela: ela rola para a vista, e
+  // o "Votar nesta" nunca some atrás do aviso fixo.
+  const ultimaOp = C.todasOpcoes.at(-1);
+  await cel[0].p.evaluate(() => globalThis.scrollTo(0, 0));
+  await cel[0].p.click(opcao(ultimaOp));
+  await cel[0].p.waitForSelector(`[data-detalhe="${ultimaOp}"]`);
+  await votarAVista(cel[0], ultimaOp);
+  await conferirCelular(cel[0], 'decisao-ultima-aberta');
+  console.log('D-055: tocar abre sem votar; "Votar nesta" vota e muda o voto; o botão fica à vista.');
   // A contagem ao vivo da própria equipe chega ao outro celular da equipe.
   await cel[2].p.waitForFunction((op) => document.querySelector(`[data-opcao="${op}"] .opcao-votos`)?.textContent === '1 voto', OA);
-  await cel[2].p.click(opcao(OB));
+  await votarNa(cel[2], OB);
   await temNota(cel[2], /registrado/);
   await conferirCelular(cel[0], 'decisao-contagem');
   await telao.waitForFunction((eq) => /2 de 2/.test(document.querySelector(`.equipe-status[data-equipe="${eq}"]`)?.textContent || ''), E1, { timeout: 15000 });
@@ -704,13 +874,15 @@ async function jogar({ site, navegador, vigiar }) {
   // Caio perde a rede e muda de opção: o voto fica guardado no aparelho.
   const caio = cel[2];
   await caio.ctx.setOffline(true);
-  await caio.p.click(opcao(OA));
+  await votarNa(caio, OA);
   await caio.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length === 1);
   const pendenteCaio = await caio.p.evaluate(() => Object.values(globalThis.Viracao.aluno.pendentes())[0]);
   // Com a janela (abertoEm) da etapa: o reenvio só vale nela (D-037).
   const janela = await telao.evaluate(() => globalThis.Viracao.telao.estado().abertoEm);
   assert.deepEqual({ ...pendenteCaio }, { tipo: 'decisao', rodada: R, equipe: E1, opcao: OA, abertoEm: janela });
-  assert.equal(await caio.p.isDisabled(opcao(OC)), true, 'botões desabilitados enquanto envia');
+  // Enquanto envia, dá para abrir outra opção e ler, mas não votar nela.
+  await abrir(caio, OC);
+  assert.equal(await caio.p.isDisabled(botaoVotar(OC)), true, '"Votar nesta" desabilitado enquanto envia');
   await temNota(caio, /Enviando…/, 9000);
   await conferirCelular(caio, 'decisao-enviando');
   assert.equal(await administrador('GET', `salas/${sala}/decisoes/${R}/${E1}/${uids[2]}`), OB, 'sem rede, o servidor ainda tem o voto antigo');
@@ -726,7 +898,7 @@ async function jogar({ site, navegador, vigiar }) {
   // reenviado pela página nova (a fila do SDK morreu com a página velha).
   const bia = cel[1];
   await bia.ctx.setOffline(true);
-  await bia.p.click(opcao(OC));
+  await votarNa(bia, OC);
   await bia.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length === 1);
   await bia.p.close();
   assert.equal(await administrador('GET', `salas/${sala}/decisoes/${R}/${E2}/${uids[1]}`), null);
@@ -737,7 +909,7 @@ async function jogar({ site, navegador, vigiar }) {
   assert.equal(await bia.p.evaluate(() => globalThis.Viracao.aluno.uid()), uids[1], 'recarregar mantém o mesmo aparelho (uid)');
   await bia.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length === 0, null, { timeout: 20000 });
   assert.equal(await administrador('GET', `salas/${sala}/decisoes/${R}/${E2}/${uids[1]}`), OC, 'o pendente foi reenviado depois de recarregar');
-  await marcada(bia, opcao(OC));
+  await votada(bia, OC);
   console.log('Recarga com voto pendente: reenviado pela página nova.');
 
   await telao.keyboard.press('Enter');
@@ -762,6 +934,21 @@ async function jogar({ site, navegador, vigiar }) {
   if (C.usandoFixture) assert.ok(resultados[E1].mes.saldoMes < 0 && resultados[E1].depois.renda < 0, 'com a fixture, o mês 1 da equipe 1 não fecha');
   await conferirContaDoMes(cel[0], resultados[E1].mes, 'resultado');
   await conferirDivida(cel[0], resultados[E1].depois.renda, 'resultado');
+  // D-052: o custo real da carta. Com a fixture, o mês 1 é sempre o acidente;
+  // com o config real, o mês 1 só tem cartas de parada.
+  if (C.usandoFixture) {
+    const custo = resultados[E1].cartaCusto;
+    assert.ok(custo?.diasParado === 20 && custo.gastos > 0 && custo.rendaPerdida > 0, `com a fixture, o acidente tem custo (${JSON.stringify(custo)})`);
+  } else {
+    assert.ok(resultados[E1].cartaCusto?.diasParado > 0, `com o config real, o mês 1 tira uma carta de parada (${JSON.stringify(resultados[E1].cartaCusto)})`);
+  }
+  await conferirCartaCusto(cel[0], resultados[E1].cartaCusto, 'resultado');
+  {
+    // D-054: a decisão no resultado com o texto da persona da equipe.
+    const texto = await cel[0].p.textContent('#tela');
+    const t = textoE1(R, resultados[E1].decisao);
+    for (const x of [t.rotulo, t.narrativa]) if (x) assert.ok(texto.includes(x), `resultado: a decisão com o texto da persona ("${x}")`);
+  }
   await conferirCelular(cel[0], 'resultado');
 
   // Recarregar o celular volta à mesma tela, com o mesmo uid.
@@ -777,6 +964,12 @@ async function jogar({ site, navegador, vigiar }) {
   assert.ok(await cel[0].p.locator('.mes').count() === 1, 'a situação traz o último mês');
   await conferirContaDoMes(cel[0], resultados[E1].mes, 'situação depois da rodada');
   await conferirDivida(cel[0], resultados[E1].depois.renda, 'situação depois da rodada');
+  await conferirCartaCusto(cel[0], resultados[E1].cartaCusto, 'situação depois da rodada');
+  {
+    const t = textoE1(R, resultados[E1].decisao);
+    const texto = await cel[0].p.textContent('.mes');
+    for (const x of [t.rotulo, t.narrativa]) if (x) assert.ok(texto.includes(x), `situação: o último mês com o texto da persona ("${x}")`);
+  }
   await conferirFamilia(cel[0], E1, 'situação depois da rodada');
   await conferirCelular(cel[0], 'situacao-depois-da-rodada');
 
@@ -936,9 +1129,9 @@ async function jogar({ site, navegador, vigiar }) {
   const R2 = (await estado()).rodada;
   const [P1, P2] = C.opcoesDe(R2);
   for (const c of cel) await esperarTela(c, 'decisao');
-  await cel[0].p.click(opcao(P1));
+  await votarNa(cel[0], P1);
   await temNota(cel[0], /registrado/);
-  await caio.p.click(opcao(P2));
+  await votarNa(caio, P2);
   await temNota(caio, /registrado/);
   await telao.keyboard.press('Enter');
   await telao.waitForFunction(() => document.getElementById('modal').open);
@@ -953,7 +1146,7 @@ async function jogar({ site, navegador, vigiar }) {
   // A outra equipe (a da Bia, que não votou) espera o desempate.
   await esperarTela(bia, 'aguardando');
   assert.equal(await bia.p.getAttribute('.bloco[data-motivo]', 'data-motivo'), 'desempateDeOutrasEquipes');
-  await cel[0].p.click(opcao(P2));
+  await votarNa(cel[0], P2);
   await temNota(cel[0], /registrado/);
   await telao.keyboard.press('Enter');
   await esperarEstado((e) => e.subfase === 'sorteio', 'sorteio da segunda rodada', 20000);
@@ -971,6 +1164,16 @@ async function jogar({ site, navegador, vigiar }) {
   await telao.waitForFunction((eq) => document.querySelector(`.cartao-resultado[data-equipe="${eq}"]`), E2);
   assert.equal(await telao.textContent(`.cartao-resultado[data-equipe="${E2}"] .resultado-decisao`), 'ninguém votou', 'resultado no telão: a origem da equipe sem voto');
   assert.ok(!/piloto autom/i.test(await telao.textContent('#palco')), 'resultado no telão sem "piloto automático"');
+  // O que veio dos meses anteriores (a multa do aluguel, por exemplo), gravado
+  // pelo telão e mostrado no celular da equipe (revisão de 29/09, 2ª rodada,
+  // achado 10).
+  {
+    await esperarTela(cel[0], 'resultado');
+    const deAntes = listaDe(res2[E1].deAntes);
+    const texto = await cel[0].p.evaluate(() => document.querySelector('.conta-de-antes')?.textContent ?? null);
+    if (deAntes.length === 0) assert.equal(texto, null, 'sem nada de antes, sem a linha');
+    else for (const x of deAntes) assert.ok(texto?.includes(x.rotulo), `o celular diz o que veio de antes ("${x.rotulo}" em "${texto}")`);
+  }
   const depoisDeR2 = C.passos[(await estado()).indice + 1];
   if (depoisDeR2?.tipo === 'bloco') {
     await avancar();

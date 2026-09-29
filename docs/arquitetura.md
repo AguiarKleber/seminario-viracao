@@ -143,6 +143,70 @@ função e tela está em [contratos.md](contratos.md).
     redesenho grava a mais (`resultados/{r}/{eq}.mes`) cabe na regra de
     `resultados`, que só o anfitrião escreve.
 
+### Revisão do conteúdo de 29/09 (D-050 a D-057, esquema v2.1)
+
+Depois da revisão do conteúdo v2 (rascunho, seção 7), o Kleberson aprovou as
+recomendações D-050 a D-057. Os itens valem sobre o resto do documento, como os
+de cima, e sobre os itens 11 a 18 onde houver conflito (o `mes` do item 14
+ganhou campos). O contrato exato está em [contratos.md](contratos.md); o site
+passou à versão 4 (`?v=4`, `VERSAO_APP`).
+
+19. **Esquema v2.1 do config**, todo opcional: um config v2 passa igual, com as
+    mesmas contas.
+    - `efeito.fixo: true`: custo fixo do trabalho (parcela, DAS, curso, parcela
+      do empréstimo), que vence parado ou não;
+    - `efeito.categoria: "gasto"`: dinheiro gasto por causa de um evento
+      (conserto, remédio, multa, saldo do empréstimo);
+    - os dois só com `soma` e só na `renda`, e nunca juntos (erro de validação);
+    - `carta.diasParado` (inteiro de 0 a 30), só informativo;
+    - `opcao.rotuloPor` e `opcao.narrativaPor` (`{ persona: texto }`, até 60 e
+      160 letras);
+    - `regras.pisoTrabalho`: o trabalho variável do mês nunca fica abaixo de 0.
+20. **A nova ordem do mês** (seção 7): trabalho variável (o único passo em que o
+    `multiplica` vale, com o piso no fim) → − custos fixos → − gastos → + outra
+    renda → − básico → − juros. Resolve as "Correções de conta" da decisoes.md:
+    uma carta que zerava a renda zerava também a parcela da moto, e o "entrou"
+    chegava a −R$ 2.541 com o conserto dentro. `mes` passa a ser `{ trabalho,
+    custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes,
+    dividaAntes }`, com `entrou = trabalho − custosFixos + outraRenda` e
+    `saldoMes = entrou − gastos − basico − juros`.
+21. **O custo real da carta na tela** (D-052). O motor devolve `cartaCusto =
+    { diasParado, rendaPerdida, gastos }` e `deAntes = [{ rotulo, valor,
+    gasto? }]`, as linhas dos efeitos gerais que leem `decidiu`, `sorteou` ou
+    `indicador` (a fratura que continua, o INSS, o bloqueio, a multa, o saldo do
+    empréstimo). O anfitrião grava os dois em `resultados/{r}/{eq}` (o
+    `deAntes` só quando não é vazio, porque o RTDB apaga lista vazia), e o
+    celular, que não carrega o motor, os lê de lá. O telão mostra na frase do
+    resultado e na história da equipe; o celular, no resultado, na situação e
+    na história. Resultado de sala anterior ao v2.1 (sem os campos) é refeito
+    pelo motor no telão e fica sem a linha no celular. Quando seis equipes não
+    cabem em 1024×768, o telão tira, nesta ordem, a origem da decisão e o
+    `deAntes` (o celular continua mostrando).
+22. **Quase ninguém fecha, e a energia baixa custa** (D-050, D-051). É
+    conteúdo, sem código novo no motor: energia baixa corta a renda e aumenta a
+    chance de acidente, e a proteção (MEI → INSS, associação → liminar) tem
+    efeito. O validador ganhou três conferências de equilíbrio: (g) quem fecha o
+    básico no fim dos 3 meses, (h) a melhor opção por persona e a letra do
+    esforço por mês, e (i) a conta do mês (trabalho nunca negativo com o piso,
+    que **sai com 1** se falhar, e "entrou" negativo como aviso).
+23. **Contextos coerentes e a mesma escolha do jeito de cada ofício** (D-053,
+    D-054). O texto da opção vem de `historia.textoDaOpcao` (telão e história) e
+    da mesma regra em `alunoLogica` (o celular não depende da ordem de carga do
+    `historia.js` para montar a decisão): `rotuloPor[persona]`, senão
+    `rotulo`. A letra e os efeitos são os mesmos para todas as personas.
+24. **Tocar para ler, "Votar nesta" para votar** (D-055). No celular, o toque
+    numa opção abre a narrativa dela (`aria-expanded`), sem gravar nada; só o
+    botão "Votar nesta" grava o voto. A dica de como se vota fica no cabeçalho
+    e depois das opções, para não empurrar a letra D para baixo da dobra em
+    360×740.
+25. **Conteúdo mantido** (D-056, D-057): a referência "Jonas com carteira
+    assinada" usa a mesma casa e os mesmos juros ("vamos validar"), e o breque
+    fica no mês 2. O empréstimo foi para o mês 2 (D), com a parcela e o saldo
+    devedor no mês 3.
+26. **Regras do Firebase: não mudaram** (continuam v3, iguais à `main`). O que
+    o v2.1 grava a mais (`cartaCusto`, `deAntes` e os campos novos do `mes`)
+    cabe na regra de `resultados`, que só o anfitrião escreve.
+
 ---
 
 ## 0. Resumo
@@ -484,26 +548,28 @@ Se qualquer um dos dois der errado, o telão mostra "REGRAS ABERTAS ou DESATUALI
 Nenhuma carta ou persona exige código próprio.
 
 - **Condição `se`:** as chaves possíveis são `opcao`, `persona`, `equipe` e `rodada` (um id ou uma lista), mais `indicador: { id: { abaixoDe | acimaDe: n } }` e, desde o redesenho de 29/09 (D-043), `decidiu: { rodada: opção | [opções] }` e `sorteou: { rodada: carta | [cartas] }`, que leem o histórico da equipe nas rodadas anteriores (rodada não jogada vale falso). Todas precisam valer ao mesmo tempo. **Qualquer outra chave é erro de validação.**
-- **Efeito:** `{ se?, soma?: {indicador: n}, multiplica?: {indicador: f}, rotulo? }`, com `soma` **ou** `multiplica`, nunca os dois.
-- **Ordem fixa do mês** (a partir de 29/09, D-044 e D-046). Primeiro, o **delta do trabalho**:
-  1. `persona.todoMes` (desde o esquema v2, só a renda e os custos do trabalho)
-  2. `rodada.efeitosGerais`
-  3. opção decidida
-  4. carta
+- **Efeito:** `{ se?, soma?: {indicador: n}, multiplica?: {indicador: f}, rotulo?, fixo?, categoria? }`, com `soma` **ou** `multiplica`, nunca os dois. Desde o esquema v2.1 (item 19 da seção A), `fixo: true` marca um custo fixo do trabalho e `categoria: "gasto"` um gasto por causa de um evento: os dois só com `soma`, só na `renda`, e nunca juntos.
+- **Ordem fixa do mês** (esquema v2.1, revisão de 29/09; substitui a ordem de 29/09 da D-044 e da D-046, que tinha 4 passos de trabalho e 3 da casa). O delta de cada indicador começa em 0:
+  1. **trabalho variável**: os efeitos sem `fixo` e sem `categoria`, na ordem `persona.todoMes` → `rodada.efeitosGerais` → opção decidida → carta. É o **único** passo em que o `multiplica` vale. Com `regras.pisoTrabalho`, a renda do trabalho que termina o passo abaixo de 0 vira 0 (uma linha `piso` devolve a diferença)
+  2. `−` custos fixos (`fixo: true`), de qualquer origem
+  3. `−` gastos (`categoria: "gasto"`), de qualquer origem
 
   Depois, **as contas da casa**, só no indicador `renda`:
 
-  5. `+ persona.outraRenda.valor`, quando houver
-  6. `− básico` (a soma de `persona.basico.itens`)
-  7. `− juros`, com `juros = round(dívida de antes do mês × regras.jurosDividaMes)`; a dívida de antes é o saldo negativo do estado **antes** da rodada (a que vinha do mês anterior), e sem ela os juros são 0
+  4. `+ persona.outraRenda.valor`, quando houver
+  5. `− básico` (a soma de `persona.basico.itens`)
+  6. `− juros`, com `juros = round(dívida de antes do mês × regras.jurosDividaMes)`; a dívida de antes é o saldo negativo do estado **antes** da rodada (a que vinha do mês anterior), e sem ela os juros são 0
 - **Semântica:**
-  - `soma` adiciona ao delta do mês, e `multiplica` multiplica o delta acumulado até ali. Como o `multiplica` só existe nos passos 1 a 4, **a carta que corta a renda corta o que se ganha, e nunca a conta da casa**;
+  - `soma` adiciona ao delta do mês, e `multiplica` multiplica o delta acumulado até ali. Como o `multiplica` só existe no passo 1, **a carta que corta a renda corta o que se ganha, e nunca a parcela da moto nem a conta da casa**. Num config v2, sem `fixo` nem `categoria`, tudo cai no passo 1, e as contas são as de antes;
   - toda condição lê o estado **antes** da rodada e o histórico da equipe;
-  - o motor devolve também `mes = { trabalho, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, com `trabalho` = o delta da renda dos passos 1 a 4, `entrou = trabalho + outraRenda` e `saldoMes = entrou − basico − juros`. É o "entrou · básico · faltou" das telas, e o anfitrião o grava em `resultados/{r}/{eq}.mes`;
+  - o motor devolve também `mes = { trabalho, custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, com `trabalho` = o delta da renda no fim do passo 1, `custosFixos` e `gastos` positivos quando tiram dinheiro, `entrou = trabalho − custosFixos + outraRenda` e `saldoMes = entrou − gastos − basico − juros`. É o "entrou · gastos · básico · faltou" das telas, e o anfitrião o grava em `resultados/{r}/{eq}.mes`;
+  - e também `cartaCusto = { diasParado, rendaPerdida, gastos }` (D-052): `rendaPerdida` é o trabalho logo antes da carta menos o trabalho no fim do passo 1 (a carta é o último grupo do passo, e nenhuma condição lê a carta do próprio mês), e `gastos` são os gastos da própria carta; e `deAntes`, as linhas de efeitos gerais que leem `decidiu`, `sorteou` ou `indicador` e não são custo fixo (item 21 da seção A);
   - no fim, o estado recebe o delta e é preso entre `min` e `max`.
 - **Esquema v2** (validador, D-043 a D-046): `persona.familia` e `persona.basico` obrigatórios, `persona.outraRenda` opcional; `regras.jurosDividaMes` (`0 < x < 1`) e `regras.jurosFonte` obrigatórios; `rodada.contexto` opcional (até 160 letras por persona); de 2 a 4 opções por rodada; `tendencia` aceita e ignorada pelas telas. Os detalhes estão em [contratos.md](contratos.md), seção do validador, e em [como-editar-config.md](como-editar-config.md).
+- **Esquema v2.1** (validador, revisão de 29/09, D-050 a D-057), todo opcional: `efeito.fixo`, `efeito.categoria: "gasto"`, `carta.diasParado` (0 a 30), `opcao.rotuloPor`/`opcao.narrativaPor` (`{ persona: texto }`, até 60 e 160 letras) e `regras.pisoTrabalho`. Um config v2 passa igual. Detalhes em [como-editar-config.md](como-editar-config.md).
 - **Carta:**
   - `peso` inteiro, maior ou igual a 0;
+  - `diasParado` (esquema v2.1), inteiro de 0 a 30, só informativo: a tela mostra "20 dias parado", e o dinheiro sai pelos efeitos;
   - `rodadas` e `somenteSe`, opcionais;
   - `ajustesDePeso: [{ se, soma | multiplica }]`, para a decisão mudar o tamanho das fatias;
   - `tom: "grave"`, que desliga a animação e o som;
@@ -610,7 +676,8 @@ validação.
 - aviso de **opção dominante** (vence em todos os indicadores);
 - aviso de `padrao` que é a opção de maior renda, porque premiaria quem não votou;
 - **fração da variância da renda explicada pelas decisões e pelas cartas**, com uma faixa-alvo (por exemplo, decisões entre 30% e 60%);
-- aviso de indicador que chega ao mínimo sem consequência.
+- aviso de indicador que chega ao mínimo sem consequência;
+- desde o esquema v2.1: (g) quem fecha o básico no fim dos 3 meses, com aviso quando nenhum caminho fecha (D-050); (h) a melhor opção de cada persona e a letra do esforço em cada mês (D-051); (i) a conta do mês: com `regras.pisoTrabalho`, o trabalho nunca negativo e a renda perdida nunca maior que a renda sem a carta (se falhar, é defeito do motor, e o validador **sai com 1**), mais o "entrou" negativo como aviso.
 
 ---
 
