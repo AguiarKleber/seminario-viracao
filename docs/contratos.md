@@ -97,12 +97,23 @@ exibição fica num array de strings.
 - `efeito.fixo = true`: custo fixo do trabalho (parcela, aluguel do veículo, DAS do MEI). Fica **fora de
   qualquer `multiplica`**, e a linha sai com `origem: "custoFixo"`. `fixo: false` é aceito e some na
   normalização; outro valor é erro;
-- `efeito.categoria = "gasto"` (o único valor aceito): dinheiro gasto por causa de um evento (conserto,
+- `efeito.categoria = "gasto"`: dinheiro gasto por causa de um evento (conserto,
   remédio, fisioterapia, multa). Fica **fora de qualquer `multiplica` e fora do "entrou"**, e a linha sai
   com `origem: "gasto"`;
+- `efeito.categoria = "protecao"` (D-059): dinheiro que chega **por causa de uma proteção** (o INSS pago
+  ao MEI, a ajuda ou o fundo da associação). A renda do próprio trabalho que uma proteção devolve (a
+  liminar que desbloqueia a conta) é trabalho, e não proteção: a proteção não a "pagou" (revisão da F5).
+  Como o gasto, fica fora de qualquer `multiplica`,
+  fora do "entrou" e fora do piso do trabalho; a linha sai com `origem: "protecao"`, e o mês a mostra à
+  parte (`mes.protecao`, seção 3). Valor negativo é **erro**: o que a proteção custa (DAS, mensalidade) é
+  custo fixo, noutro efeito. `categoria` aceita só `"gasto"` e `"protecao"`;
 - efeito com `fixo` ou `categoria`: só `soma` (com `multiplica` é erro), só na `renda` (outro indicador é
   erro: é dinheiro) e nunca os dois juntos (erro). O sinal é o da soma: negativo tira dinheiro; positivo
   (reembolso) abate;
+- `opcao.protege = true` (D-059, opcional): a opção é uma proteção (pagar o MEI, entrar na associação). O
+  placar refaz o pior caso trocando-a pelo padrão do mês (`piorCasoSemProtecao`, seção 3). `false` é
+  aceito e some na normalização (o hash de um config sem proteção não muda); outro valor é erro. Padrão
+  que protege é **aviso**: o "sem a proteção" não teria pelo que trocá-lo;
 - `regras.pisoTrabalho = true` (revisão de 29/09, 2ª rodada): o trabalho variável do mês não fica abaixo de 0
   (ver a ordem do mês, na seção 3). Opcional; `false` ou ausente mantém a conta do v2, em que o "trabalho"
   ainda leva custos e perdas e pode ficar negativo de propósito. Outro valor é erro. Ausente, não entra no
@@ -181,7 +192,15 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   mesmo formato de `resultados/{r}/{eq}`). É o que `decidiu`/`sorteou` leem. Omitido, vale `{}`: toda
   condição de histórico dá falso. **Quem chama o motor com um config que usa `decidiu`/`sorteou` precisa
   passar o histórico**, senão calcula outro número.
-- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"piso"|"custoFixo"|"gasto"|"outraRenda"|"basico"|"juros", rotulo, indicador, valor, deAntes? }], mes, cartaCusto, deAntes }`
+- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"piso"|"custoFixo"|"gasto"|"protecao"|"outraRenda"|"basico"|"juros", rotulo, indicador, valor, deAntes? }], mes, cartaCusto, deAntes, protecaoEvitou, protecaoItens }`
+  (o `aplicar` devolve os mesmos `mes`, `cartaCusto`, `deAntes`, `protecaoEvitou` e `protecaoItens`)
+  - `protecaoEvitou` (D-059) ≥ 0: quanto o saldo do mês seria menor sem os efeitos `protecao` daquele mês.
+    É igual a `mes.protecao`: os juros do mês são cobrados sobre a dívida de **antes**, e a proteção do mês
+    não os muda; o que ela evita de juros nos meses seguintes aparece nas contas deles e no
+    `piorCasoSemProtecao`. É a frase "sem o MEI, teria faltado R$ X a mais";
+  - `protecaoItens = [{ rotulo, valor }]`: os efeitos `protecao` do mês, na ordem dos grupos (o rótulo é o
+    do efeito, ou o do grupo). Lista vazia quando não há. Gravados pelo anfitrião **só quando há** (seção 7);
+  - a proteção **não** entra no `deAntes`, mesmo num efeito geral que lê o histórico: a tela a diz à parte;
   - com `regras.pisoTrabalho`, uma linha `piso` (rótulo "o trabalho do mês não fica abaixo de zero") devolve
     a diferença quando o trabalho variável ficaria negativo; as linhas continuam somando o delta;
   - `linha.deAntes = true` marca, na renda, os efeitos **gerais** (`rodada.efeitosGerais`) cuja condição lê
@@ -195,11 +214,12 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
     `custoFixo` e as de `gasto` (o rótulo é o do efeito, ou o do grupo de onde ele veio), depois
     `outraRenda`, `basico` (uma por item, com valor negativo) e `juros` (rótulo "juros da dívida"); estas três
     só entram com valor diferente de 0;
-  - `mes = { trabalho, custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, na
-    renda: `trabalho` é o trabalho **variável** (todoMes → gerais → opção → carta, sem os efeitos `fixo` e
-    `gasto`); `custosFixos` e `gastos` são positivos quando tiram dinheiro (a soma dos efeitos `fixo` e
-    `gasto`, com o sinal trocado); `entrou = trabalho − custosFixos + outraRenda`;
-    `saldoMes = entrou − gastos − basico − juros` (é o `delta.renda`); com `regras.pisoTrabalho`, `trabalho` ≥ 0,
+  - `mes = { trabalho, custosFixos, gastos, protecao, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, na
+    renda: `trabalho` é o trabalho **variável** (todoMes → gerais → opção → carta, sem os efeitos `fixo`,
+    `gasto` e `protecao`); `custosFixos` e `gastos` são positivos quando tiram dinheiro (a soma dos efeitos `fixo` e
+    `gasto`, com o sinal trocado); `protecao` ≥ 0 é a soma dos efeitos `protecao` (D-059), e fica **fora** do
+    "entrou" (a tela diz "a proteção pagou R$ X"); `entrou = trabalho − custosFixos + outraRenda`;
+    `saldoMes = entrou + protecao − gastos − basico − juros` (é o `delta.renda`); com `regras.pisoTrabalho`, `trabalho` ≥ 0,
     mas o `entrou` ainda pode ficar negativo (custos fixos maiores que o trabalho, num mês parado);
     `dividaAntes` ≥ 0 é a dívida de antes
     do mês. É gravado pelo anfitrião em `resultados/{r}/{eq}.mes`;
@@ -222,11 +242,15 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
     que o voto antigo de quem saiu da equipe não faça uma opção de fora vencer. `contagem` continua
     com todas as opções, e sem nenhum voto vale o `padrao` (piloto). Lista sem nenhuma opção da
     rodada é ignorada.
-- `Decomposicao = { realizado, esperadoComDecisoes, esperadoPiloto, efeitoDecisoes, sorte, piorCaso }`, sempre para o indicador `renda`:
+- `Decomposicao = { realizado, esperadoComDecisoes, esperadoPiloto, efeitoDecisoes, sorte, piorCaso, piorCasoSemProtecao }`, sempre para o indicador `renda`:
   - `esperadoPiloto`: o esperado se todas as rodadas jogadas tivessem ficado no `padrao`;
   - `efeitoDecisoes = esperadoComDecisoes - esperadoPiloto`;
   - `sorte = realizado - esperadoComDecisoes`;
-  - `piorCaso`: a menor renda possível com as decisões tomadas.
+  - `piorCaso`: a menor renda possível com as decisões tomadas;
+  - `piorCasoSemProtecao` (D-059): a menor renda possível com as **mesmas** decisões, exceto as opções com
+    `protege: true`, trocadas pelo `padrao` do mês; enumeração exata, como o `piorCaso`. Sem nenhuma opção que
+    protege nas decisões (ou com o padrão protegendo), é igual ao `piorCaso` e não refaz a enumeração. A
+    proteção é seguro: perde em valor esperado e ganha no pior caso, e só o pior caso mostra o que ela vale.
 
 **Semântica dos efeitos e ordem do mês** (arquitetura, seção 7; D-044, D-046 e o esquema v2.1):
 - o delta de cada indicador começa em 0;
@@ -238,6 +262,7 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   `multiplica` (o exausto, o bloqueio) chegavam a tirar mais renda do que havia;
 - (2) `− custos fixos`: os efeitos com `fixo`, de qualquer origem, na ordem dos grupos;
 - (3) `− gastos`: os efeitos com `categoria: "gasto"`, de qualquer origem, na ordem dos grupos;
+- (3b) `+ proteção` (D-059): os efeitos com `categoria: "protecao"`, de qualquer origem, na ordem dos grupos;
 - depois, na renda: (4) `+ outraRenda` → (5) `− básico` (a soma dos itens) → (6) `− juros`, com
   `juros = round(|saldo| × jurosDividaMes)` quando a renda do estado **antes** da rodada é negativa (a
   dívida que vinha do mês anterior), e 0 senão. A carta que corta a renda corta o que se ganha, e não
@@ -462,8 +487,8 @@ Rodada:
 - Conta só o voto de quem **ainda** é da equipe e tem `entrouEm <= abertoEm` (a regra já barra, e a apuração confere de novo).
 - Equipes ativas = `estado.equipesAbertas`, na ordem do config. Estado antes da rodada = `depois` da última rodada apurada, na ordem do roteiro.
 - Empate: o passo 5 grava o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg` (o `abertoEm` não muda), e, no mesmo `gravar()`, a marca `prorrogacoes/{r} = true`. Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada (D-035):** se outra equipe empatar no segundo fechamento, vai direto para a moeda. O mesmo vale depois do `desfazer()`: o passo 4 também lê `prorrogacoes/{r}` e, se a marca existe, todo empate vai direto para a moeda (`aposProrrogacao: true`, sem `candidatas`: a moeda fica entre as opções empatadas agora).
-- Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois, mes, cartaCusto, deAntes? }` (`cartaCusto` desde o esquema v2.1; `deAntes` só quando não é vazio; as regras v3 aceitam qualquer filho de `resultados/{r}`, sem mudança). O anfitrião passa ao
-  motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do roteiro que têm resultado). Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor`.
+- Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois, mes, cartaCusto, deAntes?, protecaoEvitou?, protecaoItens? }` (`cartaCusto` desde o esquema v2.1; `deAntes` e `protecaoItens` só quando não são vazios; `protecaoEvitou` só quando é maior que 0, D-059; as regras v3 aceitam qualquer filho de `resultados/{r}`, sem mudança). O anfitrião passa ao
+  motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do roteiro que têm resultado). Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, piorCasoSemProtecao, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor` (`piorCasoSemProtecao` desde a D-059; as regras v3 aceitam qualquer filho de `placar`, sem mudança).
 
 Enquete: apuração `{ histogramas, n, metodo: "celular", apuradaEm }`; no momento `depois`, mais `transicao: { [afirm]: enquete.transicao(antes, depois) }`, mesmo que o "antes" tenha sido pulado (fica com 0 par).
 
@@ -540,7 +565,7 @@ Entradas de `telaDoAluno`:
 | `decisao` | `decidindo` | `{ rodada, contexto, opcoes: [{ id, rotulo, votos }], meuVoto, podeVotar, motivo: null|"entrouDepois"|"pausado", forcada, prazo, pausado, restanteMs, situacao }` |
 | `prorrogacao` | `prorrogacao` com a própria equipe empatada | igual a `decisao`, só com as opções empatadas |
 | `sorteando` | `sorteio` (não revela a carta), ou `resultado` ainda sem o nó | `{ equipe, rodada }` |
-| `resultado` | `resultado` | `{ equipe, rodada, origem, decisao, carta, delta, indicadores, mes, divida, cartaCusto, deAntes }` |
+| `resultado` | `resultado` | `{ equipe, rodada, origem, decisao, carta, delta, indicadores, mes, divida, cartaCusto, deAntes, protecaoDoMes }` |
 | `comparativo` | `comparativo` | `{ enquete, afirmacoes: [{ id, texto, antes, depois }] }`, só os votos do próprio aparelho |
 | `fim` | `fim` | `{ equipe, placar, historia }` |
 
@@ -552,9 +577,12 @@ Campos do esquema v2 (D-043 a D-046):
 - `contexto` (decisão e prorrogação): o texto de `rodada.contexto[persona da equipe]`, ou `null`. As opções
   nunca trazem a `tendencia`;
 - `mes`: no `resultado`, é o `resultados/{r}/{eq}.mes` gravado (ou `null`); na `situacao`, é o objeto do
-  último mês de antes (`rodada, titulo, origem, decisao, carta, cartaCusto, deAntes`) **mais** os campos do `mes`
-  gravado (`trabalho, custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes, dividaAntes`; sala
-  de antes do v2.1 não traz `custosFixos` nem `gastos`); `null` antes do primeiro mês;
+  último mês de antes (`rodada, titulo, origem, decisao, carta, cartaCusto, deAntes, protecaoDoMes`) **mais** os campos do `mes`
+  gravado (`trabalho, custosFixos, gastos, protecao, outraRenda, entrou, basico, juros, saldoMes, dividaAntes`; sala
+  de antes do v2.1 não traz `custosFixos` nem `gastos`, e sala de antes da D-059 não traz `protecao`); `null` antes do primeiro mês;
+- `protecaoDoMes` (D-059): no `resultado`, e na `situacao` em `mes.protecaoDoMes`, é
+  `historia.protecaoDoResultado(resultado gravado)`: `{ pagou, evitou, itens, saldoMes }` quando a proteção
+  pagou algo no mês, ou `null`;
 - `cartaCusto` (esquema v2.1, D-052): no `resultado`, é o `resultados/{r}/{eq}.cartaCusto` gravado; na
   `situacao`, vai em `mes.cartaCusto`; `{ diasParado, rendaPerdida, gastos }`, ou `null` em sala de antes do
   v2.1;
@@ -573,7 +601,12 @@ celular e no `test/carregar-nucleo.mjs`.
 
 | Função | O que faz |
 |---|---|
-| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]` |
+| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes, protecaoDoMes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]`; `protecaoDoMes` é o de `protecaoDoResultado` (D-059) |
+| `protecaoDoResultado(res) → { pagou, evitou, itens: [{ rotulo, valor }], saldoMes } \| null` | D-059, a partir do resultado gravado: `pagou = mes.protecao`, `evitou = protecaoEvitou` (ausente vale o `pagou`), `itens = protecaoItens` (lista que volta do RTDB como objeto é lida igual). `null` quando a proteção não pagou nada no mês, ou em sala de antes da D-059 |
+| `fraseDaProtecao(protecao, moeda) → string \| null` | a frase do celular: "A proteção pagou R$ X: <rótulos>." e, com o saldo do mês, "Sem ela, teria faltado R$ Y a mais." (fechou no vermelho), "Sem ela, teria faltado R$ Y." (fechou por causa dela) ou "Sem ela, teria sobrado R$ Y a menos." (sobrou de todo jeito). A `moeda` vem da tela (`formatar.moeda`): o núcleo não formata dinheiro |
+| `piorCasoDoPlacar(placar, protegeu) → { comEscolhas, semProtecao, evitou, situacao } \| null` | D-059: `piorCaso` e `piorCasoSemProtecao` do placar em reais inteiros para a tela. `situacao`: `"semEscolha"` (`protegeu` não é `true`), `"evitou"` (o "sem" é pior que o "com": `semProtecao` e `evitou = comEscolhas − semProtecao`), `"naoMelhorou"` (o "sem" é igual ou melhor: `semProtecao` `null`, `evitou` 0; o MEI com a sessão acabando antes do mês 3, a associação) ou `"semDado"` (sala de antes da D-059). O "sem" nunca sai melhor que o "com" (revisão da F5). `null` sem `piorCaso` |
+| `temProtecao(conteudo) → boolean` | alguma opção do config tem `protege: true` |
+| `escolheuProtecao(conteudo, resultados, equipeId) → boolean` | a equipe decidiu, em algum mês com resultado, uma opção com `protege: true`. O telão e o celular usam a mesma |
 | `textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) → { rotulo, narrativa }` | D-054: `rotuloPor[persona]` e `narrativaPor[persona]`, e o `rotulo`/`narrativa` da opção quando a persona não tem entrada; opção inexistente dá os dois `null`. É o que o telão usa para falar do jeito de cada equipe |
 | `linhaDoMes(mes) → string \| null` | a linha curta de um mês da história no telão (D-045): a primeira frase da `opcao.narrativa` e a da `carta.narrativa`, separadas por espaço (o corte é sempre no fim de uma frase: ".", "!" ou "?" seguido de espaço); `null` sem nenhuma das duas |
 | `escolhaOuSorte(placar) → { piloto, escolhas, sorte, total } \| null` | "Escolha ou sorte?" em reais inteiros para a tela (telão e celular): `total = round(renda)`, `piloto = round(piloto)`, `escolhas = round(efeitoDecisoes)` e `sorte = total − piloto − escolhas`, para as três parcelas sempre somarem o total mostrado (arredondadas uma a uma, erravam por R$ 1). `null` sem `piloto`, `efeitoDecisoes` e `renda` finitos |
@@ -735,7 +768,10 @@ contas do mês e, com saldo negativo, "dívida R$ D" (`.resultado-divida`, o sal
   saem por origem (`nomesDoMes`, achado 13): a da carta sem nome, e cada gasto de antes com o rótulo,
   juntas por " + " ("gastos R$ 1.650 + multa R$ 130"); com uma origem só, de antes, só ela ("multa
   R$ 130"); se as parcelas não somam `mes.gastos` (um gasto de opção), "gastos R$ G", com os gastos de
-  antes nomeados como pedaços e os da carta no custo;
+  antes nomeados como pedaços e os da carta no custo. Com `mes.protecao > 0` (D-059), logo depois do
+  "entrou", "a proteção pagou R$ P" (`.conta-protecao`, `data-protecao` = P; espaço fixo entre "a" e
+  "proteção", para o "a" não ficar sozinho no fim da linha), e a conta passa a ser entrou + proteção −
+  gastos − básico − juros = `saldoMes`. A mesma linha vale na história (página 3);
 - **aperto** (`.grade-resultados[data-aperto]`): medido depois do desenho, só quando a lista
   transborda (seis equipes no pior caso: carta cara, origem, gastos por origem, dívida e o que veio de
   antes). Nível 1 esconde a origem (`.resultado-origem`); nível 2 também o que veio de antes
@@ -767,6 +803,19 @@ linhas de origem `carta` deixava de fora os gastos, que no v2.1 saem com a orige
    negrito; a, b, c e d de `historia.escolhaOuSorte(placar[eq])` (o
    `motor.decompor` gravado pelo anfitrião, em reais inteiros que fecham a conta); a conta corre na
    mesma linha da equipe, para seis equipes caberem em 1024×768;
+   - `pior` (D-059), **só quando o config tem alguma opção com `protege`**, logo depois de `escolhas`:
+   "O pior que podia acontecer", com a nota "A proteção não rende mais na média: ela evita o pior." e
+   uma linha por equipe, na mesma ordem (`.piores-casos .historia-escolha`, `data-pior`,
+   `data-pior-sem`, `data-evitou`, `data-situacao`), pelo `situacao` de
+   `historia.piorCasoDoPlacar(placar[eq], historia.escolheuProtecao(…))` (`piorCaso` e
+   `piorCasoSemProtecao` do anfitrião): "com as escolhas de vocês: R$ A · sem a proteção: R$ B · a
+   proteção evitou R$ X" (`evitou`), "com as escolhas de vocês: R$ A · a proteção não melhorou o pior
+   caso" (`naoMelhorou`), "com as escolhas de vocês: R$ A · não escolheram proteção" (`semEscolha`) ou
+   só o primeiro número (`semDado`). O celular mostra o mesmo no placar final e no Fim ("O pior que
+   podia acontecer", `.pior-caso`, com o `piorCaso` de `alunoLogica`, `null` em config sem proteção). É
+   uma página à parte porque não cabia: com seis equipes, a conta do "Escolha ou sorte?" já ocupa até
+   três linhas por equipe em 1024×768, e a página 1 é o gráfico. Config sem proteção fica com as
+   páginas de antes;
 3. `historia`, uma página por equipe que jogou, na ordem do config: `historia.historiaDaEquipe`,
    com um `.historia-mes` por rodada (o título da rodada, a linha curta `.historia-narrativa` =
    `historia.linhaDoMes(h)`, em até duas linhas com reticências no fim e sem baixar dos 28 px; sem
@@ -995,7 +1044,12 @@ anfitrião: quem decide é o telão.
     `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …". Os números saem de `mes` gravado; `data-entrou`,
     `data-gastos`, `data-basico`, `data-juros`, `data-saldo-mes` e `data-resultado`
     (`faltou`|`sobrou`) repetem os valores. Sala de antes do v2.1 (sem `gastos` nem
-    `custosFixos`) mostra a linha como antes.
+    `custosFixos`) mostra a linha como antes. **Proteção (D-059):** com
+    `mes.protecao > 0`, "· a proteção pagou R$ P" logo depois do "Entrou"
+    (`data-protecao` = P, 0 sem ela), e uma linha `.conta-protecao`
+    (`data-evitou`) com `historia.fraseDaProtecao(protecaoDoMes, formatar.moeda)`:
+    "A proteção pagou R$ 900: auxílio do INSS (MEI). Sem ela, teria faltado
+    R$ 900 a mais." Sem proteção no mês, nem o pedaço nem a linha.
   - **Custo da carta** (`.carta-custo`, D-052; no resultado, depois da narrativa
     da carta, e no "último mês" da situação): "O que a carta custou: 20 dias parado
     · renda perdida R$ X · gastos R$ Y", com o `cartaCusto` gravado; cada parte só
@@ -1013,8 +1067,10 @@ anfitrião: quem decide é o telão.
     A decisão sem voto aparece como "ninguém votou: ficou o de sempre".
   - **Fim:** a história da própria equipe, mês a mês (`.historia-mes`, com
     `data-rodada`): opção e narrativa (do jeito da persona, D-054), carta e
-    narrativa, o custo da carta e a conta do mês ("Entrou · gastos · básico · juros
-    · faltou"). Carta grave aparece como as outras, sem destaque.
+    narrativa, o custo da carta e a conta do mês ("Entrou · a proteção pagou ·
+    gastos · básico · juros · faltou", a proteção só quando pagou) e, no mês em que
+    a proteção pagou, a linha `.conta-protecao` (D-059). Carta grave aparece como
+    as outras, sem destaque.
 - **Wake Lock** só nas telas `enquete`, `decisao` e `prorrogacao`.
 - **Faixa "atualize a página"** quando `meta.versaoApp` ≠ `VERSAO_APP`.
 - **localStorage** (prefixo `viracao:aluno:`, sem a versão, de propósito: o voto

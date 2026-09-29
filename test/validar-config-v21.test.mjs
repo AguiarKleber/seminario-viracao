@@ -1,7 +1,8 @@
 // O validador no esquema v2.1: efeito.fixo, efeito.categoria ("gasto"),
 // carta.diasParado e o texto da opção por persona (rotuloPor/narrativaPor,
 // D-054). Validação por mutação: parte do config-teste-v21.json, que é válido,
-// e quebra uma coisa por vez. E as conferências novas do bin (D-050, D-051).
+// e quebra uma coisa por vez. E as conferências novas do bin (D-050, D-051,
+// D-058 e D-059).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -133,7 +134,7 @@ for (const [nome, mutar, caminho, mensagem, tipo] of MUTACOES) {
   });
 }
 
-// ------------------------------------------------------------ o bin (D-050, D-051)
+// ------------------------------------------------------------ o bin (D-050, D-051, D-058, D-059)
 
 function rodarBin(caminho) {
   return spawnSync(process.execPath, [join(RAIZ, 'bin', 'validar-config.mjs'), caminho], { encoding: 'utf8' });
@@ -180,9 +181,9 @@ test('bin (D-050): chance de fechar o básico, melhor plano e melhor caminho por
   const saida = rodarBin(CAMINHO_CONFIG_TESTE_V21);
 
   // Assert
-  assert.match(saida.stdout, /== \(g\) Quem fecha o básico no fim dos 3 meses \(D-050\) ==/);
+  assert.match(saida.stdout, /== \(g\) Quem fecha o básico no fim dos 3 meses \(D-050, D-058\) ==/);
   for (const nome of ['Rafa', 'Dani', 'Cida', 'Jorge', 'Lia']) {
-    assert.match(saida.stdout, new RegExp(`  ${nome} \\([a-z]+\\): fecha em [\\d,]+% ao acaso · (melhor plano [a-d]-[a-d]-[a-d] fecha em [\\d,]+%|nenhum plano fecha) · melhor caminho termina com −?R\\$ [\\d.]+ \\(r1 [a-d]/\\w+ → r2 [a-d]/\\w+ → r3 [a-d]/\\w+\\)`), nome);
+    assert.match(saida.stdout, new RegExp(`  ${nome} \\([a-z]+\\): fecha em [\\d,]+% ao acaso · (melhor plano [a-d]-[a-d]-[a-d] fecha em [\\d,]+%|nenhum plano fecha) · melhor caminho termina com −?R\\$ [\\d.]+ \\(r1 [a-d]/\\w+ → r2 [a-d]/\\w+ → r3 [a-d]/\\w+\\) · só o padrão fecha em [\\d,]+%`), nome);
   }
 });
 
@@ -203,11 +204,33 @@ test('bin (D-050): o caso feito à mão — quem fecha, com que chance, e o avis
     assert.match(saida.stdout, /Outra \(p2\): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R\$ 2\.979/);
     assert.match(saida.stdout, /AVISO: Outra \(p2\): nenhum caminho fecha o básico/);
     assert.doesNotMatch(saida.stdout, /AVISO: Pessoa \(p1\): nenhum caminho/);
-    assert.match(saida.stdout, /AVISO: só 1 persona\(s\) fecham o básico entre 5% e 15%/);
+    // D-058: 12,5% passa da meta (até 10%), e o padrão (b-b-b) também fecha.
+    assert.match(saida.stdout, /AVISO: Pessoa \(p1\): fecha o básico em 12,5% das partidas ao acaso, mais que "quase ninguém" \(D-058: até 10%\)/);
+    assert.match(saida.stdout, /AVISO: Pessoa \(p1\): só com o padrão \(b-b-b\) fecha o básico em 12,5% das partidas; a D-058 pede/);
+    assert.match(saida.stdout, /AVISO: só 0 persona\(s\) fecham o básico entre 5% e 10% das partidas ao acaso; a D-058 pede pelo menos 2/);
   });
 });
 
-test('bin (D-050): acima de 15% ao acaso é mais que "quase ninguém"', () => {
+test('bin (D-058): o caso feito à mão dentro da meta, e o padrão que nunca fecha', () => {
+  // Arrange: as duas personas com básico de 150; a opção "a" dá +50 no mês, o
+  // padrão "b" não dá nada. A carta "boa" (peso 9 contra 1, 90%) dá +100. Só
+  // o plano a-a-a fecha, e só com a boa nos 3 meses: 0,9³ = 72,9%. Ao acaso,
+  // 1 plano de 8: 72,9% ÷ 8 = 9,1125%, dentro dos 5% a 10%. Só o padrão: 0%.
+  comConfigTemporario((b) => {
+    for (const p of b.personas) p.basico = { itens: [{ rotulo: 'casa', valor: 150, fonte: 'teste' }] };
+    for (const r of b.rodadas) r.opcoes.a.efeitos = [{ soma: { renda: 50 } }];
+    b.cartas.find((c) => c.id === 'boa').peso = 9;
+  }, (saida) => {
+    // Assert
+    assert.equal(saida.status, 0, saida.stderr + saida.stdout);
+    assert.match(saida.stdout, /Pessoa \(p1\): fecha em 9,1% ao acaso · melhor plano a-a-a fecha em 72,9% · .* · só o padrão fecha em 0%/);
+    assert.doesNotMatch(saida.stdout, /só com o padrão/);
+    assert.doesNotMatch(saida.stdout, /fecham o básico entre 5% e 10%/, 'as duas personas estão na meta');
+    assert.doesNotMatch(saida.stdout, /mais que "quase ninguém"/);
+  });
+});
+
+test('bin (D-058): acima de 10% ao acaso é mais que "quase ninguém"', () => {
   // Arrange: sem básico, todo mundo fecha em 100%.
   comConfigTemporario(() => {}, (saida) => {
     // Assert
@@ -245,6 +268,95 @@ test('bin (D-051): sem aviso quando a melhor opção muda com a persona e a letr
     assert.match(saida.stdout, / {2}r2 maior esforço\/renda no mês: B/);
     assert.doesNotMatch(saida.stdout, /a melhor opção é a mesma/);
     assert.doesNotMatch(saida.stdout, /em todos os meses; a D-051/);
+  });
+});
+
+// Três personas: a D-059 fala da "maioria", e com duas o aviso nunca sairia.
+const comTerceira = (b) => {
+  b.personas.push({ ...structuredClone(b.personas[0]), id: 'p3', nome: 'Terceira' });
+  b.equipes.push({ id: 'e3', nome: 'Verde', cor: '#009E73', forma: 'triangulo', persona: 'p3' });
+};
+
+test('bin (D-059): avisa quando o esforço do mês é a melhor opção para 3 ou mais personas', () => {
+  // Arrange: "a" dá +300 no mês 1 para as três personas, sem custo depois.
+  comConfigTemporario((b) => {
+    comTerceira(b);
+    b.rodadas[0].opcoes.a.efeitos = [{ soma: { renda: 300 } }];
+  }, (saida) => {
+    // Assert
+    // Sem diferença de energia entre as opções, a mais cansativa é a de maior
+    // renda do mês (o desempate).
+    assert.match(saida.stdout, / {2}r1 mais cansativa: Pessoa \(p1\) a \(energia E 0\) é a melhor · Outra \(p2\) a \(energia E 0\) é a melhor · Terceira \(p3\) a \(energia E 0\) é a melhor/);
+    assert.match(saida.stdout, /AVISO: r1: a opção mais cansativa do mês é a de maior saldo esperado para 3 personas/);
+  });
+});
+
+test('bin (D-059): sem aviso quando o esforço do mês cobra depois e deixa de ser o melhor plano', () => {
+  // Arrange: "a" dá +300 no mês 1 e cobra 400 no mês 2 (o cansaço): é a de
+  // maior renda no mês 1, mas não a de maior saldo no fim.
+  comConfigTemporario((b) => {
+    comTerceira(b);
+    b.rodadas[0].opcoes.a.efeitos = [{ soma: { renda: 300 } }];
+    b.rodadas[1].efeitosGerais = [{ se: { decidiu: { r1: 'a' } }, soma: { renda: -400 }, rotulo: 'o cansaço cobra' }];
+  }, (saida) => {
+    // Assert
+    assert.match(saida.stdout, / {2}r1 mais cansativa: Pessoa \(p1\) a \(energia E 0\), a melhor é b/);
+    assert.doesNotMatch(saida.stdout, /AVISO: r1: a opção mais cansativa/);
+  });
+});
+
+// Revisão da F5, achado 7: o esforço era medido pela renda do mês, e o
+// empréstimo (o principal entra como renda) passava por "a opção de mais
+// esforço". Aqui, "a" é o empréstimo (+1.500 no mês, parcela de 1.600 no mês
+// seguinte, sem cansar) e "b" é a mais cansativa (energia −3, +200): "b" é a
+// melhor para as três, e o aviso tem de sair, mesmo com "a" sendo a de maior
+// renda no mês.
+test('bin (D-059): o esgotamento é medido pela energia, e não pela renda do mês (o empréstimo não é esforço)', () => {
+  // Arrange
+  comConfigTemporario((b) => {
+    comTerceira(b);
+    b.rodadas[0].opcoes.a.efeitos = [{ soma: { renda: 1500 } }];
+    b.rodadas[0].opcoes.b.efeitos = [{ soma: { renda: 200, energia: -3 } }];
+    b.rodadas[0].padrao = 'a';
+    b.rodadas[1].efeitosGerais = [{ se: { decidiu: { r1: 'a' } }, soma: { renda: -1600 }, fixo: true, rotulo: 'parcela do empréstimo' }];
+  }, (saida) => {
+    // Assert
+    assert.match(saida.stdout, / {2}r1 mais cansativa: Pessoa \(p1\) b \(energia E -3\) é a melhor/);
+    assert.match(saida.stdout, /AVISO: r1: a opção mais cansativa do mês é a de maior saldo esperado para 3 personas/);
+  });
+});
+
+test('bin (D-059): o pior caso com e sem a opção que protege, por persona', () => {
+  // Arrange: no mês 1, "a" paga o MEI (−100, custo fixo) e protege; o
+  // acidente (só no mês 1) custa 1.000, e para quem pagou o MEI o INSS devolve
+  // 800. Com o MEI o pior caso melhora; o esperado quase não muda.
+  comConfigTemporario((b) => {
+    b.rodadas[0].opcoes.a = { rotulo: 'Pagar o MEI', protege: true, efeitos: [{ soma: { renda: -100 }, fixo: true, rotulo: 'DAS' }] };
+    b.cartas.push({
+      id: 'acidente', titulo: 'Acidente', peso: 1, rodadas: ['r1'],
+      efeitos: [
+        { soma: { renda: -1000 }, categoria: 'gasto', rotulo: 'conserto' },
+        { se: { opcao: 'a' }, soma: { renda: 800 }, categoria: 'protecao', rotulo: 'INSS' },
+      ],
+    });
+  }, (saida) => {
+    // Assert
+    assert.equal(saida.status, 0, saida.stderr + saida.stdout);
+    assert.match(saida.stdout, /== \(h\) Proteção: o pior caso com e sem as opções que protegem \(D-059\) ==/);
+    for (const nome of ['Pessoa \\(p1\\)', 'Outra \\(p2\\)']) {
+      assert.match(saida.stdout, new RegExp(`  ${nome}, r1 a \\("Pagar o MEI"\\): plano padrão pior −R\\$ [\\d.]+ com, −R\\$ [\\d.]+ sem · esperado −?R\\$ [\\d.]+ com, −?R\\$ [\\d.]+ sem · média: pior \\+[\\d.,]+, esperado`));
+    }
+    assert.doesNotMatch(saida.stdout, /nenhuma opção que protege melhora o pior caso/);
+  });
+});
+
+test('bin (D-059): avisa quando a opção que protege não melhora o pior caso de ninguém', () => {
+  // Arrange: "a" protege só no nome: custa o DAS e nada paga de volta.
+  comConfigTemporario((b) => {
+    b.rodadas[0].opcoes.a = { rotulo: 'Pagar o MEI', protege: true, efeitos: [{ soma: { renda: -100 }, fixo: true, rotulo: 'DAS' }] };
+  }, (saida) => {
+    // Assert
+    assert.match(saida.stdout, /AVISO: nenhuma opção que protege melhora o pior caso de alguma persona/);
   });
 });
 

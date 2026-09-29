@@ -147,8 +147,10 @@ function descreverPasso(p) {
 }
 // Esquema v2.1: os gastos (conserto, remédio, multa) numa linha própria, fora
 // do "entrou"; entrou − gastos − básico − juros = o saldo do mês.
+// D-059: o que a proteção pagou vem logo depois do "entrou" (fora dele).
 function textoContas(mes, gastos = null) {
   const partes = [`entrou ${F.moeda(mes.entrou)}`];
+  if (mes.protecao > 0) partes.push(`a\u00a0proteção pagou ${F.moeda(mes.protecao)}`);
   if (mes.gastos > 0) partes.push((gastos || [{ rotulo: 'gastos', valor: mes.gastos }]).map((p) => `${p.rotulo} ${F.moeda(p.valor)}`).join(' + '));
   partes.push(`básico ${F.moeda(mes.basico)}`);
   if (mes.juros > 0) partes.push(`juros ${F.moeda(mes.juros)}`);
@@ -232,6 +234,42 @@ function conferirMesesDaHistoria(eq, historia, meses, resultados) {
     assert.equal(lido.contas, textoContas(h.mes, nomes.gastos), `${onde}: as contas do mês na história`);
   }
   return doOficio;
+}
+// D-059: o config tem alguma opção que protege? Com ela, o placar ganha a
+// página "O pior que podia acontecer" depois do "Escolha ou sorte?".
+const temProtecao = (cfg) => Object.values(cfg.rodadas).some((r) => Object.values(r.opcoes).some((o) => o.protege === true));
+const escolheuProtecao = (cfg, resultados, eq) => Object.entries(resultados).some(([r, doMes]) => cfg.rodadas[r]?.opcoes[doMes?.[eq]?.decisao]?.protege === true);
+// A página "O pior que podia acontecer", lida na tela.
+const lerPiorCaso = () => page.evaluate(() => ({
+  titulo: document.querySelector('#palco h1').textContent,
+  linhas: Object.fromEntries(Array.from(document.querySelectorAll('.piores-casos .historia-escolha'), (n) => [n.dataset.equipe, {
+    pior: n.dataset.pior ?? null, piorSem: n.dataset.piorSem ?? null, evitou: n.dataset.evitou ?? null, texto: n.querySelector('.historia-conta')?.textContent ?? null,
+  }])),
+}));
+// O que a página precisa dizer de cada equipe, a partir do placar gravado:
+// o pior caso com as escolhas e, só para quem escolheu uma proteção que
+// MELHOROU o pior caso, sem ela e quanto ela evitou. Quem escolheu uma
+// proteção que não melhorou (o MEI com a sessão acabando antes do mês 3, a
+// associação) vê um texto neutro, sem número: o "sem" nunca aparece melhor que
+// o "com" (revisão da F5, achado 1). Devolve quantas mostraram o "sem".
+function conferirPiorCaso(lido, cfg, placar, resultados, equipes) {
+  assert.equal(lido.titulo, 'O pior que podia acontecer');
+  assert.deepEqual(Object.keys(lido.linhas).sort(), [...equipes].sort(), 'uma linha por equipe que jogou');
+  let comSem = 0;
+  for (const eq of equipes) {
+    const pior = Math.round(placar[eq].piorCaso) + 0;
+    const sem = Math.round(placar[eq].piorCasoSemProtecao) + 0;
+    const protegeu = escolheuProtecao(cfg, resultados, eq);
+    const mostra = protegeu && sem < pior;
+    let depois = ' · não escolheram proteção';
+    if (mostra) depois = ` · sem a proteção: ${F.moeda(sem)} · a proteção evitou ${F.moeda(pior - sem)}`;
+    else if (protegeu) depois = ' · a proteção não melhorou o pior caso';
+    const texto = `com as escolhas de vocês: ${F.moeda(pior)}${depois}`;
+    assert.deepEqual(lido.linhas[eq], { pior: String(pior), piorSem: mostra ? String(sem) : null, evitou: mostra ? String(pior - sem) : null, texto }, `${eq}: o pior caso com e sem a proteção`);
+    if (lido.linhas[eq].piorSem !== null) assert.ok(Number(lido.linhas[eq].piorSem) < Number(lido.linhas[eq].pior), `${eq}: o "sem" nunca é melhor que o "com"`);
+    if (mostra) comSem += 1;
+  }
+  return comSem;
 }
 const reaisDoTexto = (t) => [...t.matchAll(/([−+]?)R\$\s?([\d.]+)/g)].map((m) => (m[1] === '−' ? -1 : 1) * Number(m[2].replace(/\./g, '')));
 const textoSaldo = (renda) => (renda < 0 ? `faltou ${F.moeda(-renda)}` : `sobrou ${F.moeda(renda)}`);
@@ -1017,6 +1055,14 @@ for (const d of escolhasNaTela.destaques) {
   assert.ok(d.peso >= 700 && d.pesoVariacao < 700, `o total do fim em destaque (${d.peso}), e as variações não (${d.pesoVariacao})`);
 }
 await conferirTela('placar-escolhas');
+// D-059: com proteção no config, a página do pior caso vem logo depois.
+let piorNaTela = null;
+if (temProtecao(configNode)) {
+  await avancar();
+  await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'pior');
+  piorNaTela = await lerPiorCaso();
+  await conferirTela('placar-pior');
+}
 // A história projetada de uma equipe (página 3 do placar final), lida na página.
 const lerHistoria = () => page.evaluate(() => ({
   meses: Array.from(document.querySelectorAll('.historia-mes'), (n) => {
@@ -1144,6 +1190,9 @@ for (const [k, r] of RODADAS.entries()) {
     assert.equal(contasNaTela[r][eq]?.contas, textoContas(res.mes, nomes.gastos), `${r}/${eq}: "entrou · gastos · básico · faltou" projetado`);
     assert.equal(contasNaTela[r][eq]?.custo, textoCusto(res.cartaCusto, res.mes, nomes.cartaNosGastos), `${r}/${eq}: o custo real da carta projetado`);
     assert.deepEqual(resultados[r][eq].deAntes ?? [], res.deAntes, `${r}/${eq}: o que veio de antes, gravado`);
+    // D-059: o que a proteção pagou, gravado só quando houve.
+    assert.equal(resultados[r][eq].protecaoEvitou ?? 0, res.protecaoEvitou, `${r}/${eq}: protecaoEvitou gravado`);
+    assert.deepEqual(resultados[r][eq].protecaoItens ?? [], res.protecaoItens, `${r}/${eq}: protecaoItens gravado`);
     assert.deepEqual(contasNaTela[r][eq]?.deAntes, textoDeAntes(nomes.antes), `${r}/${eq}: o que veio de antes, projetado`);
     const divida = res.depois.renda < 0 ? `dívida ${F.moeda(-res.depois.renda)}` : null;
     assert.equal(contasNaTela[r][eq]?.divida, divida, `${r}/${eq}: dívida projetada`);
@@ -1171,7 +1220,7 @@ assert.deepEqual(saldoNaTela.referencias, referenciasEsperadas, 'página 1: refe
 for (const eq of ATIVAS) {
   const d = V.motor.decompor(configNode, { equipeId: eq, rodadas: jogadas[eq] });
   const p = placar[eq];
-  for (const [campo, esperado] of [['renda', d.realizado], ['piloto', d.esperadoPiloto], ['efeitoDecisoes', d.efeitoDecisoes], ['sorte', d.sorte], ['piorCaso', d.piorCaso]]) {
+  for (const [campo, esperado] of [['renda', d.realizado], ['piloto', d.esperadoPiloto], ['efeitoDecisoes', d.efeitoDecisoes], ['sorte', d.sorte], ['piorCaso', d.piorCaso], ['piorCasoSemProtecao', d.piorCasoSemProtecao]]) {
     assert.ok(Math.abs(p[campo] - esperado) < 1e-6, `${eq}.${campo}: gravado ${p[campo]}, motor ${esperado}`);
   }
   assert.equal(saldoNaTela.valores[eq], textoSaldo(d.realizado), `${eq}: página 1, "faltou/sobrou" projetado`);
@@ -1191,6 +1240,7 @@ for (const eq of ATIVAS) {
   assert.ok(historiaNaTela[eq].final?.includes(textoSaldo(d.realizado)), `${eq}: a história termina com "${textoSaldo(d.realizado)}"`);
 }
 
+if (piorNaTela) conferirPiorCaso(piorNaTela, configNode, placar, resultados, ATIVAS);
 if (cortadasNaHistoria.length > 0) console.log(`  história: narrativa com reticências em ${cortadasNaHistoria.join(', ')}`);
 
 // Apagar a sala (na barra, segurar 2 s): volta à abertura e limpa o navegador
@@ -1471,15 +1521,27 @@ function resultadoCaro(r, k, eq, real) {
   return {
     decisao, origem: 'piloto', contagem: real.contagem,
     chances: V.motor.chances(configNode, pedido), carta, delta: a.delta, depois: a.depois, mes: a.mes, cartaCusto: a.cartaCusto,
+    ...camposOpcionais(a),
+  };
+}
+// Os campos que o anfitrião grava só quando há (o RTDB apaga lista vazia):
+// o que veio de antes e o que a proteção pagou (D-059).
+function camposOpcionais(a) {
+  return {
     ...(a.deAntes.length > 0 ? { deAntes: a.deAntes } : {}),
+    ...(a.protecaoEvitou > 0 ? { protecaoEvitou: a.protecaoEvitou } : {}),
+    ...(a.protecaoItens.length > 0 ? { protecaoItens: a.protecaoItens } : {}),
   };
 }
 // O placar do anfitrião (calcularPlacar), refeito sobre os resultados trocados.
-function placarDe(resultados) {
-  return Object.fromEntries(EQUIPES.map((eq) => {
-    const jogadas = RODADAS.map((r) => ({ rodadaId: r, opcaoId: resultados[r][eq].decisao, cartaId: resultados[r][eq].carta }));
-    const d = V.motor.decompor(configNode, { equipeId: eq, rodadas: jogadas });
-    return [eq, { ...resultados[RODADAS.at(-1)][eq].depois, piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, piorCaso: d.piorCaso, ativa: true }];
+function placarDe(resultados, cfg = configNode, equipes = EQUIPES, rodadas = RODADAS) {
+  return Object.fromEntries(equipes.map((eq) => {
+    const jogadas = rodadas.map((r) => ({ rodadaId: r, opcaoId: resultados[r][eq].decisao, cartaId: resultados[r][eq].carta }));
+    const d = V.motor.decompor(cfg, { equipeId: eq, rodadas: jogadas });
+    return [eq, {
+      ...resultados[rodadas.at(-1)][eq].depois, piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte,
+      piorCaso: d.piorCaso, piorCasoSemProtecao: d.piorCasoSemProtecao, ativa: true,
+    }];
   }));
 }
 let custosVistos4 = 0;
@@ -1545,6 +1607,12 @@ await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.d
   }
 }
 await conferirTela('placar-escolhas-6-equipes');
+if (temProtecao(configNode)) {
+  await avancar();
+  await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'pior');
+  conferirPiorCaso(await lerPiorCaso(), configNode, placarDe(resultados4), resultados4, EQUIPES);
+  await conferirTela('placar-pior-6-equipes');
+}
 // A história de cada uma das seis equipes, com três meses de carta cara: o caso
 // mais alto da página. O texto da opção é o do ofício da persona (D-054).
 let doOficio4 = 0;
@@ -1590,6 +1658,143 @@ if (ROTEIRO_LONGO) {
     await conferirLinhaDoTempo({ mapa, passos: passosLongo });
     await conferirTela(`${nome}-${ROTEIRO_LONGO}`);
   }
+}
+
+// ---------- Parte 6: a proteção (D-059), com a fixture v2.1 ----------
+
+// O config.json pode não ter nenhuma opção que protege (a calibragem da D-059
+// é de conteúdo, feita depois), e a sorte das partes 1 e 4 pode nunca pagar a
+// proteção. Aqui o telão carrega a fixture v2.1, que tem o MEI (r1 "b",
+// protege) e o INSS do MEI no mês 2 para quem pagou e tirou o acidente no mês
+// 1, com o mês 1 só com o acidente (como no e2e online). As equipes 1 e 6 (o
+// Rafa) pagam o MEI; as outras ficam no padrão. Os resultados são trocados
+// pelos do motor, como na parte 4. Prova, em 1024×768 e 1920×1080:
+// - o resultado do mês 2 diz "a proteção pagou R$ 900" nas contas das duas;
+// - a página "O pior que podia acontecer" com o pior caso com e sem a
+//   proteção, e "não escolheram proteção" nas outras;
+// - a história do Rafa com a proteção no mês 2.
+console.log('Parte 6: a proteção (D-059), com a fixture v2.1');
+{
+  const bruto6 = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-teste-v21.json'), 'utf8'));
+  const todas6 = bruto6.rodadas.map((r) => r.id);
+  for (const c of bruto6.cartas) if (c.id !== 'acidente') c.rodadas = (c.rodadas ?? todas6).filter((r) => r !== todas6[0]);
+  const texto6 = JSON.stringify(bruto6, null, 1);
+  const r6 = V.validarConfig.validarTexto(texto6);
+  assert.ok(r6.ok, `a fixture da parte 6 é válida: ${JSON.stringify(r6.erros.slice(0, 3))}`);
+  const cfg6 = r6.config;
+  assert.ok(temProtecao(cfg6), 'a fixture v2.1 tem uma opção que protege');
+  const passos6 = V.roteiro.passos(cfg6, ROTEIRO);
+  const rodadas6 = passos6.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
+  const equipes6 = lista(cfg6.ordem.equipes);
+  const protegem6 = new Set(equipes6.filter((eq) => cfg6.equipes[eq].persona === cfg6.equipes[equipes6[0]].persona));
+  // No mês 1, o MEI para o Rafa; no resto, o padrão. As cartas: o acidente no
+  // mês 1 (a única), e o mês sem surpresas depois.
+  const plano6 = Object.fromEntries(rodadas6.map((r, k) => [r, Object.fromEntries(equipes6.map((eq) => [eq, {
+    decisao: k === 0 && protegem6.has(eq) ? 'b' : cfg6.rodadas[r].padrao,
+    carta: k === 0 ? 'acidente' : 'normal',
+  }]))]));
+
+  await page.goto(URL_TELAO);
+  await esperarTela('abertura');
+  await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(texto6) });
+  await page.waitForFunction((h) => document.getElementById('hash-config')?.textContent === h, V.validarConfig.hash(cfg6));
+  const SALA6 = 'R6P9';
+  await page.evaluate(async ([sala, roteiro]) => {
+    const V2 = globalThis.Viracao;
+    const canal = V2.canalLocal.criar({ persistirEm: V2.telao.chaveSessao(sala) });
+    globalThis.__canal6 = canal;
+    await V2.telao.ligarSessao({ modo: 'offline', sala, nomeRoteiro: roteiro, criar: true, canal });
+  }, [SALA6, ROTEIRO]);
+  await esperarTela('lobby');
+  ultimoAvanco = 0;
+  await clicarBarra('pular');
+  await escolherNoModal(passoNoModal(passos6.findIndex((p) => p.tipo === 'formarEquipes')));
+  await page.evaluate(() => document.activeElement?.blur());
+  ultimoAvanco = Date.now();
+  await esperarEstado((e) => e.tipo === 'formarEquipes' && Object.keys(e.equipesAbertas || {}).length === equipes6.length, 'as seis equipes abertas (parte 6)');
+  await avancarPara((e) => e.tipo === 'personas', 'personas (parte 6)');
+  await clicarBarra('pular');
+  await escolherNoModal(passoNoModal(passos6.findIndex((p) => p.tipo === 'rodada')));
+  await page.evaluate(() => document.activeElement?.blur());
+  ultimoAvanco = Date.now();
+
+  const resultados6 = {};
+  let protecoesVistas = 0;
+  for (const [k, r] of rodadas6.entries()) {
+    await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r} (parte 6)`, { maximo: 12 });
+    await page.keyboard.press('Enter');
+    await confirmarModal();
+    await esperarEstado((e) => e.subfase === 'sorteio', `sorteio de ${r} (parte 6)`);
+    await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r} (parte 6)`);
+    await esperarTela('rodada-resultado');
+    const reais = await page.evaluate(([s, rr]) => globalThis.__canal6.ler(`salas/${s}/resultados/${rr}`), [SALA6, r]);
+    resultados6[r] = Object.fromEntries(equipes6.map((eq) => {
+      const { decisao, carta } = plano6[r][eq];
+      const historico = V.motor.historicoDe(resultados6, eq, rodadas6.slice(0, k));
+      const estadoAntes = k === 0 ? V.motor.estadoInicial(cfg6, eq) : resultados6[rodadas6[k - 1]][eq].depois;
+      const pedido = { equipeId: eq, rodadaId: r, opcaoId: decisao, estado: estadoAntes, historico };
+      const chances = V.motor.chances(cfg6, pedido);
+      assert.ok(chances.some((c) => c.carta === carta), `${r}/${eq}: a carta ${carta} pode sair`);
+      const a = V.motor.aplicar(cfg6, { ...pedido, cartaId: carta });
+      return [eq, {
+        decisao, origem: 'piloto', contagem: reais[eq].contagem, chances, carta,
+        delta: a.delta, depois: a.depois, mes: a.mes, cartaCusto: a.cartaCusto, ...camposOpcionais(a),
+      }];
+    }));
+    const escritas = { [`salas/${SALA6}/resultados/${r}`]: resultados6[r] };
+    if (k === rodadas6.length - 1) escritas[`salas/${SALA6}/placar`] = placarDe(resultados6, cfg6, equipes6, rodadas6);
+    await page.evaluate(async (m) => {
+      await globalThis.__canal6.gravar(Object.fromEntries(Object.keys(m).map((c) => [c, null])));
+      await globalThis.__canal6.gravar(m);
+    }, escritas);
+    // O resultado projetado: as contas de cada equipe, com "a proteção pagou"
+    // só em quem ela pagou.
+    const esperado = Object.fromEntries(equipes6.map((eq) => {
+      const x = resultados6[r][eq];
+      const nomes = nomesEsperados(x.cartaCusto, x.mes, x.deAntes);
+      return [eq, { contas: textoContas(x.mes, nomes.gastos), protecao: x.mes.protecao > 0 ? `a\u00a0proteção pagou ${F.moeda(x.mes.protecao)}` : null }];
+    }));
+    await page.waitForFunction((esp) => Object.entries(esp).every(([eq, x]) => (
+      document.querySelector(`.cartao-resultado[data-equipe="${eq}"] .resultado-contas`)?.textContent === x.contas
+    )), esperado);
+    const lido = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
+      contas: c.querySelector('.resultado-contas')?.textContent ?? null,
+      protecao: c.querySelector('.conta-protecao')?.textContent ?? null,
+    }])));
+    assert.deepEqual(lido, esperado, `${r} (parte 6): as contas do mês com o que a proteção pagou`);
+    const comProtecao = Object.values(lido).filter((x) => x.protecao).length;
+    protecoesVistas += comProtecao;
+    if (comProtecao > 0) await conferirTela(`rodada-resultado-protecao-${r}`, { esperarMs: 900 });
+  }
+  assert.equal(protecoesVistas, protegem6.size, 'o INSS do MEI apareceu no mês 2 de quem pagou o MEI, e só nele');
+  assert.ok(equipes6.filter((eq) => protegem6.has(eq)).every((eq) => resultados6[rodadas6[1]][eq].mes.protecao === 900), 'o INSS do MEI é de R$ 900 na fixture');
+
+  await avancarAte((e) => e.tipo === 'placarFinal', 'placar final (parte 6)', { maximo: 12 });
+  await esperarTela('placar-final');
+  await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'saldo');
+  await avancar();
+  await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'escolhas');
+  await avancar();
+  await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'pior');
+  const placar6 = placarDe(resultados6, cfg6, equipes6, rodadas6);
+  const comSem = conferirPiorCaso(await lerPiorCaso(), cfg6, placar6, resultados6, equipes6);
+  assert.equal(comSem, protegem6.size, 'o "sem a proteção" só nas equipes que pagaram o MEI');
+  for (const eq of protegem6) assert.ok(placar6[eq].piorCaso > placar6[eq].piorCasoSemProtecao, `${eq}: com o MEI, o pior caso é melhor`);
+  await conferirTela('placar-pior-protecao-6-equipes');
+  // A história da primeira equipe: o mês 2 com o que a proteção pagou.
+  const eq1 = equipes6[0];
+  await avancar();
+  await page.waitForFunction((x) => document.querySelector('.tela-placar-final')?.dataset.equipe === x, eq1);
+  const historia6 = await page.evaluate(() => Array.from(document.querySelectorAll('.historia-mes'), (n) => ({
+    rodada: n.dataset.rodada, contas: n.querySelector('.historia-contas')?.textContent ?? null, protecao: n.querySelector('.conta-protecao')?.textContent ?? null,
+  })));
+  assert.deepEqual(historia6.map((h) => h.protecao), rodadas6.map((r) => (resultados6[r][eq1].mes.protecao > 0 ? `a\u00a0proteção pagou ${F.moeda(resultados6[r][eq1].mes.protecao)}` : null)), `${eq1}: a proteção na história, só no mês em que pagou`);
+  for (const h of historia6) {
+    const x = resultados6[h.rodada][eq1];
+    assert.equal(h.contas, textoContas(x.mes, nomesEsperados(x.cartaCusto, x.mes, x.deAntes).gastos), `${eq1}/${h.rodada}: as contas da história`);
+  }
+  await conferirTela('placar-historia-protecao');
+  console.log(`  parte 6: "a proteção pagou" em ${protecoesVistas} resultado(s); pior caso com e sem a proteção em ${comSem} equipe(s)`);
 }
 
 // ---------- Fim ----------

@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '4';
+  const VERSAO_APP = '5';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -2166,8 +2166,17 @@
   // básico − juros), e a conta lida na tela fecha. Resultado de antes do v2.1
   // não tem gastos, e a linha sai como antes. "gastos" é a lista de parcelas de
   // nomesDoMes (juntas por " + "); sem ela, "gastos R$ G".
+  // D-059: o que a proteção pagou (o INSS do MEI, a ajuda da associação) vem
+  // logo depois do "entrou", como "a proteção pagou R$ X": ela fica fora do
+  // "entrou" no motor, e sem o pedaço a conta lida na tela não fecharia.
+  // Resultado de antes da D-059 não tem mes.protecao, e a linha sai como antes.
   function contasDoMes(mes, classe, tag = 'p', gastos = null) {
     const pedacos = [pedacoConta('entrou', mes.entrou)];
+    if (mes.protecao > 0) {
+      // Espaço fixo entre "a" e "proteção": solto, o "a" ficava sozinho no fim
+      // da linha, com o resto na linha de baixo.
+      pedacos.push(rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }));
+    }
     if (mes.gastos > 0) {
       const partes = gastos || [{ rotulo: 'gastos', valor: mes.gastos }];
       pedacos.push(partes.flatMap((p, i) => [i > 0 ? ' + ' : null, pedacoConta(p.rotulo, p.valor)]));
@@ -2330,11 +2339,19 @@
   // (piloto automático, efeito das decisões, sorte), que confundia a turma, e com
   // ela a tecla C (critério) e o interruptor "sem vencedor": não há mais
   // critério a trocar, e nenhuma página aponta vencedor.
+  // D-059: com alguma opção que protege no config, uma página a mais depois de
+  // "Escolha ou sorte?": o pior que podia acontecer com as escolhas de cada
+  // equipe, e sem a proteção. Não cabia numa das duas: com seis equipes, a
+  // conta do "Escolha ou sorte?" já ocupa três linhas por equipe em 1024×768,
+  // e a página 1 é o gráfico. Config sem proteção fica com as páginas de antes.
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
-    return [{ tipo: 'saldo' }, { tipo: 'escolhas' }, ...equipes.map((eq) => ({ tipo: 'historia', eq }))];
+    const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
+    return [{ tipo: 'saldo' }, { tipo: 'escolhas' }, ...pior, ...equipes.map((eq) => ({ tipo: 'historia', eq }))];
   }
+
+  const configTemProtecao = () => N().historia.temProtecao(app.config);
 
   function tituloSaldo(naoFecharam, total) {
     if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
@@ -2351,6 +2368,7 @@
     const lado = paginas.length > 1 ? el('p', { classe: 'pagina-placar', texto: `${i + 1} de ${paginas.length}` }) : null;
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
+    else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
     else if (pagina.tipo === 'historia') paginaHistoria(s, pagina.eq, lado);
     else {
       s.appendChild(cabecalho('Placar final', 'Nenhuma rodada foi jogada nesta sessão.'));
@@ -2416,6 +2434,57 @@
           passo('→ as escolhas: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
           passo('→ a sorte: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
           passo('= terminaram com ', F().moeda(c.total), ['passo-total', 'passo-final']),
+        ]) : null,
+      ]);
+    })));
+  }
+
+  // Página "o pior que podia acontecer" (D-059), uma linha por equipe, na
+  // ordem do "Escolha ou sorte?": o pior caso com as escolhas da equipe
+  // (placar.piorCaso, a menor renda possível com as mesmas decisões) e, se ela
+  // escolheu alguma opção que protege, o pior caso sem ela
+  // (placar.piorCasoSemProtecao, as mesmas decisões com o padrão no lugar da
+  // proteção). A proteção é seguro: perde na média e ganha no pior caso, e
+  // sem esta página o placar só mostrava a média (rascunho, seção 8, item 17).
+  // O que vem depois do primeiro número é o historia.piorCasoDoPlacar que
+  // decide (a mesma regra do celular):
+  // - "evitou": "sem a proteção: R$ B · a proteção evitou R$ X". A diferença
+  //   vem pronta: a sala não precisa subtrair −R$ 9.483 de −R$ 10.469 de
+  //   cabeça (revisão da F5, achado 10);
+  // - "naoMelhorou": texto neutro, sem número. Antes, o "sem" saía mesmo
+  //   quando era MELHOR que o "com" (o MEI com a sessão acabando antes do mês
+  //   3, a associação), embaixo da nota "ela evita o pior" (achado 1);
+  // - "semEscolha": "não escolheram proteção"; "semDado" (sala anterior à
+  //   D-059): só o primeiro número.
+  function paginaPiorCaso(s, lado) {
+    const { el } = D();
+    const placar = app.dados.placar;
+    const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
+    const nota = (texto) => el('span', { classe: ['passo-conta', 'pior-sem-escolha'], texto });
+    s.appendChild(cabecalho('Placar final', 'O pior que podia acontecer', { extra: lado }));
+    s.appendChild(el('p', { classe: 'pior-nota', texto: 'A proteção não rende mais na média: ela evita o pior.' }));
+    s.appendChild(el('ol', { classe: ['historias-escolha', 'piores-casos'] }, equipesPorSaldo().map((id) => {
+      const p = N().historia.piorCasoDoPlacar(placar[id], N().historia.escolheuProtecao(app.config, app.dados.resultados, id));
+      // dataset grava "null" como texto: só entra o que existe.
+      const dados = { equipe: id };
+      if (p) dados.pior = String(p.comEscolhas);
+      if (p?.situacao === 'evitou') {
+        dados.piorSem = String(p.semProtecao);
+        dados.evitou = String(p.evitou);
+      }
+      if (p) dados.situacao = p.situacao;
+      let depois = null;
+      if (p?.situacao === 'evitou') {
+        depois = [
+          passo('· sem a proteção: ', F().moeda(p.semProtecao), ['passo-total', 'pior-sem-protecao']), ' ',
+          passo('· a proteção evitou ', F().moeda(p.evitou), ['passo-total', 'passo-final', 'pior-evitou']),
+        ];
+      } else if (p?.situacao === 'naoMelhorou') depois = nota('· a proteção não melhorou o pior caso');
+      else if (p?.situacao === 'semEscolha') depois = nota('· não escolheram proteção');
+      return el('li', { classe: 'historia-escolha', dados }, [
+        rotuloEquipe(id),
+        p ? el('span', { classe: 'historia-conta' }, [
+          passo('com as escolhas de vocês: ', F().moeda(p.comEscolhas), 'passo-total'), depois ? ' ' : null, depois,
         ]) : null,
       ]);
     })));

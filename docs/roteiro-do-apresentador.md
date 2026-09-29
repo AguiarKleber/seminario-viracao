@@ -41,9 +41,33 @@ site).** O que muda para quem conduz:
   custar renda e a aumentar o risco de acidente (D-051). Veja "O que atravessa
   os meses", na seção 5.6.
 
+**Calibragem de 29/09 à noite (D-058 e D-059, conteúdo v2.2, versão 5 do
+site).** O que muda para quem conduz:
+- entram **cartas de pico** com fonte (D-058): "Uma data forte puxou a
+  procura" e "Bati a meta do desafio do app", e a "Uma semana boa" foi refeita
+  com os valores da pesquisa. Veja "Cartas de pico", na seção 5.6;
+- quando a proteção paga, o resultado diz **"a proteção pagou R$ X"** (D-059),
+  fora do "entrou". Hoje só o auxílio do INSS de quem abriu o MEI paga, e só no
+  mês 3, depois de uma fratura no mês 2;
+- o placar final ganha a página **"O pior que podia acontecer"** (D-059): o pior
+  caso com as escolhas da equipe e, para quem escolheu uma proteção, sem ela.
+  Veja a seção 5.7;
+- a frase para a proteção, no resultado e no placar: **"Proteção é seguro:
+  custa sempre e salva quando dá errado."**;
+- o esgotamento custa mais (D-059): as 12 horas e a madrugada multiplicam a
+  chance de adoecer e de cair (seção 5.6, "O que atravessa os meses").
+
+**A calibragem não cumpriu tudo.** A D-058 pede que de 5% a 10% das partidas de
+pelo menos duas personas fechem o básico; com os picos que têm fonte, o Jonas
+fecha em 0,01% e o Marcos em 0,1%, e as outras três em nenhum caminho. E o mês 2
+ainda premia o esgotamento para 4 das 5 personas. As duas questões estão no
+[rascunho-conteudo.md](rascunho-conteudo.md), seção 0.8, para decisão depois do
+teste. **Nada disso muda o teste de 30/09**, que mede rede, celulares, projetor e
+Alt+Tab.
+
 Os pontos marcados "vamos testar" (D-041, D-042, D-043) são para observar no
 teste (seção 13). As perguntas de conteúdo ainda em aberto estão no
-[rascunho-conteudo.md](rascunho-conteudo.md), seção 8.
+[rascunho-conteudo.md](rascunho-conteudo.md), seções 0.8 e 8.
 
 1. [O que levar](#1-o-que-levar)
 2. [Véspera](#2-véspera)
@@ -205,7 +229,7 @@ com ela escondida. À esquerda, ela mostra:
 - a **dica do passo**, o que antes ficava projetado: as teclas da formação das
   equipes e da contagem à mão, quanto falta do tempo mínimo de conversa, "Todas
   as equipes decidiram. Enter encerra.", a página do placar final e do
-  comparativo ("Espaço: próxima página (2 de 8)") e, no Fim, o que a exportação
+  comparativo ("Espaço: próxima página (2 de 9)") e, no Fim, o que a exportação
   leva;
 - o selo de conexão: **Conectado**, **Reconectando…**, **Sem celulares** ou
   **Outra máquina assumiu** (seção 9).
@@ -425,9 +449,14 @@ slides.
     nada (rascunho, seção 8, item 13);
   - quem termina um mês **no vermelho** (saldo acumulado negativo) paga a multa
     do aluguel no mês seguinte, além dos juros de 7,43% ao mês;
-  - **energia baixa custa** (D-051): abaixo de 3, a renda cai 10% ("exausto"), e
-    quanto mais baixa, maior a chance de acidente (até 4,3 vezes). A madrugada do
-    mês 3 também multiplica o risco por 4,3;
+  - **energia baixa custa** (D-051, D-059): abaixo de 3, a renda cai 10%
+    ("exausto"); abaixo de 4, a chance de adoecer fica 4,24 vezes maior, e abaixo
+    de 2, 4,5 vezes (o sono curto do estudo de Prather, 2015); e quanto mais
+    baixa, maior a chance de acidente (até 4,3 vezes);
+  - as **12 horas** do mês 1 tiram 5 de energia, e no próprio mês multiplicam a
+    chance de adoecer por 4,24 e a de cair por 1,9. A **madrugada** do mês 3
+    multiplica a queda e a fratura por 4,3 e a doença por 4,5 (menos para a
+    Rose, que atende até tarde, e não de madrugada);
   - a **associação** do mês 3 custa a mensalidade e um dia de assembleia.
 
 **Empate**
@@ -446,6 +475,30 @@ slides.
   mostra o resultado.
 - **Diga:** "A decisão de vocês mudou o tamanho das fatias. A sorte escolhe a
   fatia. Decide-se antes de saber, como na vida."
+
+**Cartas de pico** (D-058)
+- São as cartas de dinheiro a mais que existem de verdade, cada uma com fonte no
+  `config.json`:
+  - **"Uma semana boa"** (peso 12, qualquer mês): promoções, desafios pequenos
+    ou uma encomenda maior. Jonas e Kauã +R$ 155, Marcos +R$ 240, Daiane
+    +R$ 165, Rose +R$ 320; energia −1;
+  - **"Uma data forte puxou a procura"** (peso 16, Daiane 60): o fim de ano, e
+    para a Daiane também a Páscoa e o Dia das Mães. Jonas +R$ 429, Kauã +R$ 219,
+    Marcos +R$ 290, Daiane +R$ 525, Rose +R$ 420; energia −1 (Daiane −2). Sai
+    só nos meses 2 e 3, no máximo uma vez por partida, e some depois de uma
+    fratura ou de um bloqueio no mês 2;
+  - **"Bati a meta do desafio do app"** (peso 6): só para o Jonas (+R$ 600) e o
+    Marcos (+R$ 480); energia −1. Sai só nos meses 2 e 3, no máximo uma vez, e
+    é um pouco mais provável no mês 2 para quem trabalhou menos no mês 1: a
+    fonte diz que o app oferece o desafio a quem anda "meio fora das entregas".
+- **O que os picos fazem:** tornam o fechamento possível, e não provável. Só o
+  Jonas e o Marcos fecham em algum caminho, e o melhor deles junta semana boa,
+  data forte e meta nos três meses (Jonas +R$ 437, Marcos +R$ 684 no fim). Quem
+  fica só no padrão nunca fecha.
+- **Diga**, quando sair um pico: "Esse dinheiro existe, mas não dá para contar
+  com ele: ninguém sabe quando vem, e ele não se repete todo mês." Se alguém
+  perguntar da gorjeta: ela entrou na pesquisa e saiu do jogo, porque dá uns
+  R$ 5 a R$ 10 por mês por entregador.
 
 **Resultado** (D-044, D-046, D-052)
 - **Telão:** uma frase por equipe: a equipe, a letra da decisão, a carta, **o
@@ -484,9 +537,12 @@ slides.
     casa;
   - "gastos" é o que um evento custou (o conserto, o remédio, a multa, o saldo do
     empréstimo), fora do "entrou";
+  - "a proteção pagou" (D-059) é o dinheiro que chegou por causa de uma proteção
+    (hoje, o auxílio do INSS de quem pagava o MEI), também fora do "entrou". Só
+    aparece quando houve;
   - o básico é cobrado **no fim do mês, depois de tudo**: a carta corta o que se
     ganha, e nunca a conta da casa nem a parcela da moto;
-  - "faltou" = entrou − gastos − básico − juros. O que falta vira dívida no
+  - "faltou" = entrou + proteção − gastos − básico − juros. O que falta vira dívida no
     cheque especial, e o mês seguinte começa pagando juros sobre ela;
   - "renda perdida" é o que a carta tirou do trabalho daquele mês. Nunca passa
     da renda que havia: o trabalho não fica abaixo de zero;
@@ -505,6 +561,9 @@ slides.
     parado: R$ 1.787 que não entraram, mais R$ 1.650 de conserto e remédio. O
     app não paga nenhum desses dias. O INSS, só para quem já pagava o MEI, e só
     depois."
+  - Quando a conta de uma equipe disser "a proteção pagou R$ X" (D-059): "O MEI
+    custou o DAS todo mês. Neste mês, pagou R$ X. Proteção é seguro: custa
+    sempre e salva quando dá errado."
   - Sem tom de consolo nem de piada, e sem apontar "quem jogou mal": o objetivo é
     a turma sentir a dúvida de quem decide sem saber o que vem (D-044).
   - Leia a consequência de cada carta grave com o tom de quem conta um fato, sem
@@ -519,9 +578,10 @@ tira as mesmas cartas.
 
 O placar é uma sequência de páginas. **Espaço passa de uma para a outra**, e na
 última segue o roteiro. A dica da barra diz em que página você está ("Espaço:
-próxima página (2 de 8)"). Não há critério a trocar nem vencedor: as teclas C e V
-saíram. Com 6 equipes são 8 páginas, e o tempo-alvo do passo é de 4 min: conte
-uns 30 s por página.
+próxima página (2 de 9)"). Não há critério a trocar nem vencedor: as teclas C e V
+saíram. Com 6 equipes são 9 páginas (8 antes da D-059, que acrescentou "O pior
+que podia acontecer"), e o tempo-alvo do passo é de 4 min: conte uns 25 s por
+página.
 
 **Página 1: "Quanto sobrou, e quanto faltou para o básico"**
 - **Telão:** uma barra por equipe que jogou, do maior saldo para o menor, com
@@ -542,10 +602,12 @@ uns 30 s por página.
     marcada "vamos validar" (rascunho, seção 8, itens 2 e 19). O FGTS e o que a
     conta da carteira deixou de fora ficam para o slide (D-030).
   - No config atual, é quase certo que nenhuma equipe feche as contas (D-050,
-    "quase ninguém"): só o Jonas e o Marcos têm um caminho estreito, de boas
-    escolhas com sorte, e ao acaso fecham em 0,014% e 0,19% das partidas; Kauã,
-    Daiane e Rose não fecham em caminho nenhum (rascunho, seção 8, itens 1 e
-    16). Se acontecer: "Nenhuma família fechou. Não foi falta de esforço: o
+    "quase ninguém"): mesmo com as cartas de pico (D-058), só o Jonas e o
+    Marcos têm um caminho estreito, de boas escolhas com sorte, e ao acaso
+    fecham em 0,01% e 0,1% das partidas (no melhor plano, 0,4% e 2,8%); Kauã,
+    Daiane e Rose não fecham em caminho nenhum, e quem fica só no padrão nunca
+    fecha. A meta da D-058, de 5% a 10% em duas personas, não foi alcançada
+    (rascunho, seção 0.8, item 1). Se acontecer: "Nenhuma família fechou. Não foi falta de esforço: o
     básico custa mais do que o trabalho paga." Se uma equipe fechar: "Fechou,
     com boas escolhas e muita sorte. Foi a exceção: as outras famílias, na mesma
     situação, não fecharam."
@@ -571,12 +633,52 @@ uns 30 s por página.
     meses da própria equipe. A conquista coletiva não cabe nele" (D-029).
   - Se alguém notar que trabalhar até a exaustão "deu mais dinheiro": "O placar
     só conta o dinheiro. O corpo, o sono e a família não entram nele." Com a
-    D-051, a energia baixa já cobra renda e risco de acidente, mas o melhor plano
-    de quatro personas ainda é o do esgotamento, e termina com energia perto de
-    0. Mostrar a energia final e a proteção no placar é uma pergunta em aberto
-    (rascunho, seção 8, itens 6 e 17).
+    D-059, as 12 horas do mês 1 deixaram de ser a melhor opção do Jonas, do
+    Kauã e do Marcos (para eles, a melhor é trabalhar menos), mas no mês 2 os
+    dois apps, a opção mais cansativa, ainda são a melhor para 4 das 5 personas
+    (rascunho, seção 0.8, item 3). Mostrar a energia final no placar é uma
+    pergunta em aberto (rascunho, seção 8, item 6).
+  - A proteção nunca aparece como "a escolha que rendeu mais": ela perde na
+    média. O que ela vale está na página seguinte.
 
-**Páginas 3 em diante: a história de cada equipe**
+**Página 3, só quando o config tem uma opção que protege: "O pior que podia acontecer"** (D-059)
+- **Telão:** uma linha por equipe, na mesma ordem. A é o pior que podia ter
+  acontecido com as decisões da equipe; B, o pior com as mesmas decisões, mas o
+  padrão do mês no lugar da proteção.
+  - Pagou o MEI ou entrou na associação, e a proteção melhorou o pior caso:
+    "com as escolhas de vocês: −R$ A · sem a proteção: −R$ B · a proteção
+    evitou R$ X" (X = a diferença, já calculada).
+  - Escolheu a proteção, mas ela não melhorou o pior caso: "com as escolhas de
+    vocês: −R$ A · a proteção não melhorou o pior caso". Acontece com o MEI
+    quando a sessão acaba antes do mês 3 (o INSS só paga no mês seguinte à
+    fratura; até lá, só pesa o DAS) e com a associação, que não cobre acidente.
+    O "sem" nunca aparece melhor que o "com".
+  - Não escolheu proteção: "com as escolhas de vocês: −R$ A · não escolheram
+    proteção".
+- **No celular,** o placar final e o Fim mostram o mesmo, em "O pior que podia
+  acontecer".
+- **Como ler:** a proteção é um seguro. Na média ela custa (o DAS, a
+  mensalidade), e por isso nunca aparece como "a escolha que rendeu mais" no
+  "Escolha ou sorte?". O que ela vale é a distância entre A e B.
+- **Os números do config atual** (conferência h do validador): o MEI perde de
+  R$ 210 a R$ 267 na média, conforme a persona, e melhora o pior caso em R$ 333
+  (Daiane) a R$ 1.226 (Marcos), na média das combinações que o usam. A
+  associação perde nos dois: o pior caso de todas as personas passa pela
+  fratura, e ela não cobre acidente (rascunho, seção 0.8, item 2).
+- **Diga:**
+  - "Proteção é seguro: custa sempre e salva quando dá errado."
+  - "Quem pagou o MEI não ganhou mais. Ganhou um chão: se o pior viesse,
+    faltaria menos, a diferença entre as duas contas."
+  - Se uma equipe que pagou o MEI sem ter fratura reclamar do DAS: "Foi o preço
+    de saber que, se quebrasse a perna, algum dinheiro viria."
+  - Na linha "a proteção não melhorou o pior caso" da associação: "A associação
+    não paga acidente. O que ela traz é o advogado contra o bloqueio e a força
+    de negociar junto, que não cabe em três meses de placar" (D-029).
+- **No resultado de cada mês**, quando a proteção pagou algo, as contas da
+  equipe dizem "a proteção pagou R$ X", e o celular completa: "Sem ela, teria
+  faltado R$ X a mais."
+
+**Páginas seguintes: a história de cada equipe**
 - **Telão:** uma página por equipe que jogou, na ordem das equipes. Cada mês
   tem o título, uma linha curta em primeira pessoa (a primeira frase da
   narrativa da opção escolhida e a primeira da carta, por exemplo "Fiquei online
@@ -911,7 +1013,8 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
 15. **O redesenho no projetor (D-041, D-042, D-047, "vamos testar"):** do fundo
     da sala, dá para ler a linha do tempo, a frase do resultado (o custo da carta
     e "entrou · gastos · básico · faltou") e as páginas do placar? O placar em páginas ficou claro, ou alguma
-    página confundiu? Com a barra escondida, **nada** de operação aparece na tela
+    página confundiu? A página "O pior que podia acontecer" (D-059) cabe e se
+    lê do fundo, com as seis linhas? Com a barra escondida, **nada** de operação aparece na tela
     projetada (dica de tecla, aviso, exportar, apagar, "ativos / membros")?
 
 ### Resultado
@@ -946,6 +1049,11 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
 - **Algo do redesenho confundiu (itens 14 e 15):** anote o quê e em que tela. As
   decisões marcadas "vamos testar" (D-041, D-042, D-043) são revistas com o
   Kleberson antes da correção.
+- **Antes do teste e depois de cada correção:** `npm run check`, `npm run
+  emulador`, `npm run e2e`, `npm run e2e:online` e `npm run
+  e2e:online:fixture`, todos verdes. O último joga com a fixture de teste, e é
+  o único que passa sempre pela frase "a proteção pagou" no celular: com o
+  config.json, a proteção só paga no mês 3, e só se a carta quiser.
 - **Depois de cada correção (01 a 05/10):** se o `firebase/regras.json` mudou,
   publique as regras de novo (README, passo 6). A versão sobe junto (v4, v5…), e
   é ela que o bloco 3 passa a mostrar em `regras vN conferidas`. Em toda máquina

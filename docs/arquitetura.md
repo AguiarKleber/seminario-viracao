@@ -207,6 +207,84 @@ passou à versão 4 (`?v=4`, `VERSAO_APP`).
     o v2.1 grava a mais (`cartaCusto`, `deAntes` e os campos novos do `mes`)
     cabe na regra de `resultados`, que só o anfitrião escreve.
 
+### Calibragem de 29/09 à noite (D-058 e D-059, conteúdo v2.2)
+
+A calibragem da F4 não cumpriu a D-050 nem a D-051, e o Kleberson as detalhou na
+D-058 (picos reais tornam o fechamento possível) e na D-059 (a proteção vale
+pelo pior caso que ela evita). Os itens valem sobre o resto do documento, como
+os de cima. O contrato exato está em [contratos.md](contratos.md); os números e
+o que ainda depende de decisão, no [rascunho-conteudo.md](rascunho-conteudo.md),
+seção 0. O site passou à versão 5 (`?v=5`, `VERSAO_APP`).
+
+27. **Cartas de pico** (D-058). É conteúdo, sem código novo no motor: "Uma data
+    forte puxou a procura" e "Bati a meta do desafio do app" entraram, e "Uma
+    semana boa" foi refeita, cada valor com `fonte`. As duas novas saem só nos
+    meses 2 e 3 (`carta.rodadas`) e no máximo uma vez por partida (um
+    `ajustesDePeso` com `sorteou` zera o peso no mês 3 se ela saiu no mês 2).
+    - **Por que não no mês 1:** o motor só lembra que uma carta já saiu pelo
+      `sorteou`. Uma condição sobre o mês 1 quebra o `e2e:online`, que tira do
+      mês 1 as cartas sem dias parados, e o validador recusa uma condição que
+      nunca vale. Liberar o mês 1 é mudança no teste, fora desta calibragem.
+    - **Por que uma vez só:** sem a trava, quem fica só no padrão fechava em
+      0,0011% das partidas, e a D-058 pede que nunca.
+28. **`efeito.categoria: "protecao"`** (D-059): o dinheiro que chega por causa
+    de uma proteção (hoje, o auxílio do INSS de quem pagava o MEI).
+    - Entra na ordem do mês como passo 3b, depois dos gastos: fora de qualquer
+      `multiplica`, fora do "entrou" e fora do piso do trabalho. `mes` ganhou
+      `protecao`, e `saldoMes = entrou + protecao − gastos − basico − juros`.
+    - Só com valor positivo (negativo é **erro** de validação): o que a proteção
+      custa, o DAS e a mensalidade, continua como `fixo`.
+    - O motor devolve `protecaoEvitou` e `protecaoItens`, e o anfitrião os grava
+      em `resultados/{r}/{eq}` só quando há. O celular, que não carrega o motor,
+      monta a frase com `historia.fraseDaProtecao`: "A proteção pagou R$ X:
+      auxílio do INSS. Sem ela, teria faltado R$ X a mais."
+    - O INSS vai **em cada carta** do mês 3 que pode sair nesse ramo, e não nos
+      efeitos gerais, porque "A perícia do INSS negou" é carta do mesmo mês e
+      nenhuma condição lê a carta do próprio mês. Do jeito antigo, a tela diria
+      "a proteção pagou" a quem teve o auxílio negado.
+    - A liminar da associação devolve dias de **trabalho** do próprio
+      entregador e fica sem `categoria` (revisão da F5).
+29. **`opcao.protege: true` e o pior caso sem a proteção** (D-059).
+    - `motor.decompor` ganhou `piorCasoSemProtecao`: a menor renda possível com
+      as mesmas decisões, trocando as opções que protegem pelo padrão do mês. É
+      enumeração exata, como o `piorCaso`, e só é refeita quando a equipe
+      escolheu alguma proteção. O anfitrião grava os dois no `placar`.
+    - O placar final ganha a página "O pior que podia acontecer", só quando o
+      config tem alguma opção com `protege`, logo depois de "Escolha ou sorte?".
+      Com 6 equipes, são 9 páginas. O celular mostra o mesmo no placar final e
+      no Fim.
+    - O telão e o celular leem pela mesma regra, `historia.piorCasoDoPlacar`: o
+      "sem a proteção" só aparece quando é pior que o "com", já com "a proteção
+      evitou R$ X"; senão, "a proteção não melhorou o pior caso", sem número. É
+      o caso da associação, que não cobre acidente, e do MEI numa sessão que
+      acaba antes do mês 3.
+30. **O esgotamento custa mais** (D-059). Também é conteúdo, em `ajustesDePeso`
+    com `multiplica` e fonte: a doença com energia baixa (× 4,24 abaixo de 4 e
+    × 4,5 abaixo de 2, Prather, 2015), a doença e a queda no mês das 12 horas
+    (× 4,24 e × 1,9) e a doença de madrugada (× 4,5, menos para a Rose). As 12
+    horas passaram a tirar 5 de energia, e não 3.
+31. **Validador, conferências (g) e (h).** Continuam avisos, que não bloqueiam a
+    sala.
+    - (g) mede a meta da D-058: de 5% a 10% ao acaso em pelo menos 2 personas, e
+      "só o padrão" (o plano de quem nunca vota) fechando em 0%.
+    - (h) mede o esgotamento pela **energia** (a opção de maior perda de energia
+      esperada no mês contra a de maior saldo esperado no fim) e, para cada
+      opção com `protege`, o pior caso e o esperado com ela e sem ela.
+32. **O que a calibragem não cumpriu** (rascunho, seção 0.8, para decisão):
+    - a meta da D-058: ao acaso, Jonas 0,01% e Marcos 0,1%, as outras três
+      personas em caminho nenhum. Pico de trabalho com fonte é pequeno (R$ 155 a
+      R$ 600 no mês) e raro;
+    - o esgotamento no mês 2: os dois apps, a opção mais cansativa, ainda são a
+      melhor para 4 das 5 personas (no mês 1, só para 2; no mês 3, só para 1);
+    - a associação perde no esperado e também no pior caso.
+33. **Testes e regras.** `npm run e2e:online:fixture` roda o e2e online com a
+    fixture de teste, o único que passa sempre por "a proteção pagou" no
+    celular: com o `config.json`, a proteção só paga no mês 3, e só se a carta
+    quiser. As regras do Firebase **não mudaram** (continuam v3, iguais à
+    `main`): `protecaoEvitou`, `protecaoItens`, `mes.protecao` e
+    `piorCasoSemProtecao` cabem nas regras de `resultados` e `placar`, que só o
+    anfitrião escreve.
+
 ---
 
 ## 0. Resumo

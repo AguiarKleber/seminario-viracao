@@ -19,11 +19,16 @@ import { carregarNucleo, RAIZ } from '../test/carregar-nucleo.mjs';
 const FAIXA_DECISOES = [0.3, 0.6];
 const LIMIAR_DOMINANCIA_RENDA = 0.7;
 const LIMIAR_MINIMO = 0.3;
-// D-050: "quase ninguém", e não "ninguém", fecha as contas. A faixa é a do
-// rascunho do conteúdo (seção 7, item 5, opção a, aprovada na D-050): de 5% a
-// 15% de chance de fechar, em pelo menos 2 personas, com as decisões ao acaso.
-const FAIXA_FECHAR = [0.05, 0.15];
+// D-058 (detalha a D-050): de 5% a 10% das partidas de pelo menos duas
+// personas fecham o básico, com as decisões ao acaso. Antes da D-058 a faixa
+// era a sugestão do rascunho (5% a 15%).
+const FAIXA_FECHAR = [0.05, 0.10];
 const MIN_PERSONAS_NA_FAIXA = 2;
+// D-059: o esgotamento deixa de ser o melhor plano "para a maioria das
+// personas". Com 5 personas, a maioria é 3: se a opção de maior renda no mês é
+// também a de maior saldo esperado no fim para 3 ou mais, o placar ainda premia
+// o esgotamento naquele mês.
+const MIN_PERSONAS_ESGOTAMENTO = 3;
 const LETRAS = 'ABCDEFGH';
 
 const V = await carregarNucleo();
@@ -183,6 +188,12 @@ function analisar(cfg) {
   // A renda esperada do próprio mês, por perfil × rodada × opção: é o que a
   // conferência (h) usa para achar a opção "de maior esforço/renda" do mês.
   const rendaDoMes = new Map(perfis.map((pf) => [pf, {}]));
+  // O desgaste do próprio mês (a variação esperada da energia), para o
+  // esgotamento da D-059 em (h): medir o esforço pela renda contava o
+  // empréstimo do mês 2 (o principal entra como renda) como "a opção de mais
+  // esforço" e escondia que a mais cansativa, rodar em dois apps, era a melhor
+  // para 4 de 5 personas (revisão da F5, achado 7).
+  const energiaDoMes = new Map(perfis.map((pf) => [pf, {}]));
   for (const pf of perfis) {
     const persona = cfg.personas[pf.personaId];
     const itens = persona.basico.itens.map((i) => `${i.rotulo} ${reais(i.valor)}`).join(' + ');
@@ -214,6 +225,7 @@ function analisar(cfg) {
           }
         }
         (rendaDoMes.get(pf)[rodadaId] ||= {})[opcaoId] = soma.renda;
+        if (Object.hasOwn(soma, 'energia')) (energiaDoMes.get(pf)[rodadaId] ||= {})[opcaoId] = soma.energia;
         console.log(`  ${rodadaId} ${opcaoId}  ` + inds.map((i) => `${i} E ${sinal(soma[i])} pior ${sinal(pior[i])}`).join(' | '));
         console.log(`         entrou E ${reais(contas.entrou)} (pior ${reais(contas.piorEntrou)})`
           + ` · gastos E ${reais(contas.gastos)} (pior ${reais(contas.piorGastos)}) · básico ${reais(M.totalBasico(persona))}`
@@ -317,28 +329,34 @@ function analisar(cfg) {
   });
 
   conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar);
-  conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, avisar);
+  conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, energiaDoMes, avisar);
+  conferirProtecao(cfg, perfis, finaisPorPerfil, avisar);
   const falhas = conferirContaDoMes(cfg, perfis, antesPorPerfil, ctx, avisar);
   return { avisos: totalAvisos, falhas };
 }
 
-// (g) D-050: quem fecha o básico no fim dos 3 meses. "Fechar" é terminar com o
-// saldo acumulado (a renda) em 0 ou mais: o básico já foi cobrado mês a mês.
+// (g) D-050 e D-058: quem fecha o básico no fim dos 3 meses. "Fechar" é
+// terminar com o saldo acumulado (a renda) em 0 ou mais: o básico já foi
+// cobrado mês a mês. A D-058 pede também que quem fica só no padrão nunca feche.
 function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
-  console.log('\n== (g) Quem fecha o básico no fim dos 3 meses (D-050) ==');
+  const padrao = cfg.ordem.rodadas.map((r) => cfg.rodadas[r].padrao).join('-');
+  console.log('\n== (g) Quem fecha o básico no fim dos 3 meses (D-050, D-058) ==');
   console.log('Critério: fecha quem termina com o saldo acumulado ≥ R$ 0. "Ao acaso": todas as combinações de decisões');
   console.log('igualmente prováveis, cartas pelas chances. "Melhor plano": a combinação com a maior chance de fechar.');
   console.log('"Melhor caminho": a maior renda final possível (decisões e cartas), com chance acima de 0.');
-  console.log(`Faixa sugerida (rascunho, seção 7, item 5): de ${pct(FAIXA_FECHAR[0])} a ${pct(FAIXA_FECHAR[1])} ao acaso, em pelo menos ${MIN_PERSONAS_NA_FAIXA} personas.`);
+  console.log(`"Só o padrão": o plano ${padrao}, o de quem nunca vota.`);
+  console.log(`Meta da D-058: de ${pct(FAIXA_FECHAR[0])} a ${pct(FAIXA_FECHAR[1])} ao acaso, em pelo menos ${MIN_PERSONAS_NA_FAIXA} personas; só o padrão, nunca.`);
   let naFaixa = 0;
   for (const pf of perfis) {
     const finais = finaisPorPerfil.get(pf);
     let aoAcaso = 0;
     let melhorPlano = null;
     let melhorCaminho = null;
+    let soPadrao = 0;
     for (const { combo, dist } of finais) {
       const fecha = dist.reduce((s, x) => s + (x.estado.renda >= 0 ? x.p : 0), 0);
       aoAcaso += fecha / finais.length;
+      if (combo.join('-') === padrao) soPadrao = fecha;
       if (!melhorPlano || fecha > melhorPlano.fecha) melhorPlano = { combo, fecha };
       for (const x of dist) {
         if (x.p > 0 && (!melhorCaminho || x.estado.renda > melhorCaminho.renda)) melhorCaminho = { renda: x.estado.renda, caminho: x.caminho };
@@ -347,23 +365,27 @@ function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
     // Sem nenhum plano que feche, o "melhor" seria só o primeiro da lista.
     const plano = melhorPlano.fecha > 0 ? `melhor plano ${melhorPlano.combo.join('-')} fecha em ${pctFino(melhorPlano.fecha)}` : 'nenhum plano fecha';
     console.log(`  ${pf.nome}: fecha em ${pctFino(aoAcaso)} ao acaso · ${plano}`
-      + ` · melhor caminho termina com ${reais(melhorCaminho.renda)} (${melhorCaminho.caminho.join(' → ')})`);
+      + ` · melhor caminho termina com ${reais(melhorCaminho.renda)} (${melhorCaminho.caminho.join(' → ')})`
+      + ` · só o padrão fecha em ${pctFino(soPadrao)}`);
     if (melhorCaminho.renda < 0) {
       avisar(`${pf.nome}: nenhum caminho fecha o básico (o melhor termina com ${reais(melhorCaminho.renda)}); a D-050 pede "quase ninguém", e não "ninguém".`);
     } else if (aoAcaso > FAIXA_FECHAR[1]) {
-      avisar(`${pf.nome}: fecha o básico em ${pct(aoAcaso)} das partidas ao acaso, mais que "quase ninguém" (D-050; faixa até ${pct(FAIXA_FECHAR[1])}).`);
+      avisar(`${pf.nome}: fecha o básico em ${pct(aoAcaso)} das partidas ao acaso, mais que "quase ninguém" (D-058: até ${pct(FAIXA_FECHAR[1])}).`);
+    }
+    if (soPadrao > 0) {
+      avisar(`${pf.nome}: só com o padrão (${padrao}) fecha o básico em ${pctFino(soPadrao)} das partidas; a D-058 pede que quem fica só no padrão nunca feche.`);
     }
     if (aoAcaso >= FAIXA_FECHAR[0] && aoAcaso <= FAIXA_FECHAR[1]) naFaixa += 1;
   }
   if (naFaixa < Math.min(MIN_PERSONAS_NA_FAIXA, perfis.length)) {
-    avisar(`só ${naFaixa} persona(s) fecham o básico entre ${pct(FAIXA_FECHAR[0])} e ${pct(FAIXA_FECHAR[1])} das partidas ao acaso; a faixa sugerida pede pelo menos ${MIN_PERSONAS_NA_FAIXA} (D-050).`);
+    avisar(`só ${naFaixa} persona(s) fecham o básico entre ${pct(FAIXA_FECHAR[0])} e ${pct(FAIXA_FECHAR[1])} das partidas ao acaso; a D-058 pede pelo menos ${MIN_PERSONAS_NA_FAIXA}.`);
   }
 }
 
 // (h) D-051: a melhor opção não pode ser a mesma para todas as personas, e a
 // opção de maior esforço/renda não pode estar sempre na mesma letra (a turma
 // aprenderia "é sempre a A" no mês 2).
-function conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, avisar) {
+function conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, energiaDoMes, avisar) {
   const rodadas = cfg.ordem.rodadas;
   console.log('\n== (h) A melhor opção muda com a persona, e a letra do esforço muda com o mês (D-051) ==');
   console.log('Melhor opção: a de maior renda final esperada, escolhendo-a naquele mês e as outras ao acaso (a conta de (c)).');
@@ -387,6 +409,96 @@ function conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, avisar) {
   });
   if (letras.length > 1 && letras.every((l) => l === letras[0])) {
     avisar(`a opção de maior esforço/renda está na letra ${letras[0]} em todos os meses; a D-051 pede que as letras não sigam o mesmo padrão.`);
+  }
+  // D-059: o esgotamento não pode ser o melhor plano para a maioria. Aqui, por
+  // persona: a opção mais cansativa do mês (a de maior perda de energia
+  // esperada no próprio mês, a variação de (b)) é também a de maior saldo
+  // esperado no fim (a melhor opção, acima)? Empate na energia desempata pela
+  // renda do mês. A média das personas, usada nas letras, esconderia a
+  // persona para quem o esforço ainda compensa.
+  // Até a revisão da F5, o esforço aqui era "a opção de maior renda no mês", e
+  // o empréstimo do mês 2 (R$ 1.500 que entram como renda) passava por ele: a
+  // conferência dizia que o esforço não era o melhor no mês 2, quando a opção
+  // mais cansativa (dois apps) era a melhor para 4 de 5 (achado 7). Config
+  // sem o indicador de energia volta à renda.
+  const porEnergia = energiaDoMes && [...energiaDoMes.values()].some((m) => Object.keys(m).length > 0);
+  console.log(porEnergia
+    ? `Esgotamento (D-059): a opção mais cansativa do mês (maior perda de energia esperada; empate pela renda do mês), por persona, contra a melhor opção dela; aviso com ${MIN_PERSONAS_ESGOTAMENTO} ou mais personas no mesmo mês.`
+    : `Esgotamento (D-059): a opção de maior renda no mês, por persona, contra a melhor opção dela; aviso com ${MIN_PERSONAS_ESGOTAMENTO} ou mais personas no mesmo mês.`);
+  for (const rodadaId of rodadas) {
+    const ordem = cfg.rodadas[rodadaId].ordemOpcoes;
+    const premia = [];
+    const partes = perfis.map((pf) => {
+      const renda = rendaDoMes.get(pf)[rodadaId];
+      const energia = porEnergia ? energiaDoMes.get(pf)[rodadaId] : null;
+      // Mais cansativa: menor variação de energia; empate (1 centésimo) pela renda.
+      const maisCansativa = (o, atual) => {
+        if (!energia) return renda[o] > renda[atual];
+        if (energia[o] < energia[atual] - 1e-2) return true;
+        return Math.abs(energia[o] - energia[atual]) <= 1e-2 && renda[o] > renda[atual];
+      };
+      let esforco = ordem[0];
+      for (const o of ordem) if (maisCansativa(o, esforco)) esforco = o;
+      const melhor = melhorOpcao.get(pf)[rodadaId];
+      if (esforco === melhor) premia.push(pf.nome);
+      const quanto = energia ? ` (energia E ${sinal(energia[esforco])})` : '';
+      return `${pf.nome} ${esforco}${quanto}${esforco === melhor ? ' é a melhor' : `, a melhor é ${melhor}`}`;
+    });
+    console.log(`  ${rodadaId} mais cansativa: ${partes.join(' · ')}`);
+    if (premia.length >= MIN_PERSONAS_ESGOTAMENTO) {
+      avisar(`${rodadaId}: a opção mais cansativa do mês é a de maior saldo esperado para ${premia.length} personas (${premia.join(', ')}); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.`);
+    }
+  }
+}
+
+// (h, continuação) D-059: a proteção vale pelo pior caso que ela evita. Para
+// cada opção marcada com protege, por persona: o pior caso e o esperado do fim
+// com ela (no plano do padrão, só ela trocada) e sem ela (o plano do padrão), e
+// a média, sobre todas as combinações que a usam, do que muda no pior caso e no
+// esperado quando ela vira o padrão do mês. É a mesma troca do
+// piorCasoSemProtecao do placar. Aviso: nenhuma persona com o pior caso melhor.
+function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar) {
+  const rodadas = cfg.ordem.rodadas;
+  console.log('\n== (h) Proteção: o pior caso com e sem as opções que protegem (D-059) ==');
+  const protegem = rodadas.flatMap((r) => cfg.rodadas[r].ordemOpcoes.filter((o) => cfg.rodadas[r].opcoes[o].protege === true && o !== cfg.rodadas[r].padrao).map((o) => [r, o]));
+  if (protegem.length === 0) {
+    console.log('  Nenhuma opção com "protege": true (fora o padrão); nada a comparar.');
+    return;
+  }
+  console.log('Critério: renda final (cartas pelas chances). "Plano padrão": todas as rodadas no padrão, só a proteção trocada.');
+  console.log('"Média": sobre todas as combinações que usam a proteção, com ela e com o padrão no lugar dela.');
+  const padrao = rodadas.map((r) => cfg.rodadas[r].padrao);
+  let algumaMelhora = false;
+  for (const pf of perfis) {
+    // Chave em JSON, e não com um separador: um id de opção pode ter hífen.
+    const porCombo = new Map(finaisPorPerfil.get(pf).map(({ combo, dist }) => [JSON.stringify(combo), {
+      pior: dist.reduce((m, x) => Math.min(m, x.estado.renda), Infinity),
+      esperado: dist.reduce((t, x) => t + x.p * x.estado.renda, 0),
+    }]));
+    for (const [r, o] of protegem) {
+      const k = rodadas.indexOf(r);
+      const com = porCombo.get(JSON.stringify(padrao.map((p, i) => (i === k ? o : p))));
+      const sem = porCombo.get(JSON.stringify(padrao));
+      let n = 0;
+      let difPior = 0;
+      let difEsperado = 0;
+      for (const [chave, v] of porCombo) {
+        const combo = JSON.parse(chave);
+        if (combo[k] !== o) continue;
+        const semEla = porCombo.get(JSON.stringify(combo.map((x, i) => (i === k ? padrao[k] : x))));
+        n += 1;
+        difPior += v.pior - semEla.pior;
+        difEsperado += v.esperado - semEla.esperado;
+      }
+      difPior /= n;
+      difEsperado /= n;
+      if (difPior > 1e-9) algumaMelhora = true;
+      console.log(`  ${pf.nome}, ${r} ${o} ("${cfg.rodadas[r].opcoes[o].rotulo}"): plano padrão pior ${reais(com.pior)} com, ${reais(sem.pior)} sem`
+        + ` · esperado ${reais(com.esperado)} com, ${reais(sem.esperado)} sem · média: pior ${sinal(difPior)}, esperado ${sinal(difEsperado)}`);
+    }
+  }
+  if (!algumaMelhora) {
+    avisar('nenhuma opção que protege melhora o pior caso de alguma persona; a D-059 pede que a proteção valha pelo pior caso que evita.');
   }
 }
 

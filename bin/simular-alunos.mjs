@@ -984,6 +984,9 @@ async function conferirApuracao({ canal, config, sala, opcoes, abertoEm, metrica
         !mesmoValor(esperado.mes, res.mes) ? 'mes' : null,
         !mesmoValor(esperado.cartaCusto, res.cartaCusto) ? 'cartaCusto' : null,
         !mesmoValor(esperado.deAntes, lista(res.deAntes)) ? 'deAntes' : null,
+        // D-059: o que a proteção pagou, gravado só quando houve (ausente vale 0 e []).
+        (res.protecaoEvitou ?? 0) !== esperado.protecaoEvitou ? 'protecaoEvitou' : null,
+        !mesmoValor(esperado.protecaoItens, lista(res.protecaoItens)) ? 'protecaoItens' : null,
       ].filter(Boolean);
       if (divergentes.length > 0) {
         metricas.violacoes.push(`${r}/${eq}: o motor com a semente gravada difere do gravado em ${divergentes.join(', ')}`);
@@ -997,7 +1000,7 @@ async function conferirApuracao({ canal, config, sala, opcoes, abertoEm, metrica
   for (const eq of equipes) {
     const d = M.decompor(config, { equipeId: eq, rodadas: jogadas[eq] });
     const g = placar?.[eq];
-    const esperado = { ...estado[eq], piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, piorCaso: d.piorCaso };
+    const esperado = { ...estado[eq], piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, piorCaso: d.piorCaso, piorCasoSemProtecao: d.piorCasoSemProtecao };
     for (const [k, v] of Object.entries(esperado)) {
       if (Math.abs((g?.[k] ?? NaN) - v) > 1e-9) {
         placarOk = false;

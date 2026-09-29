@@ -39,6 +39,7 @@ test('historiaDaEquipe: um item por mês jogado, na ordem das rodadas, com opç�
       mes: mes1,
       cartaCusto: null,
       deAntes: [],
+      protecaoDoMes: null,
     },
     {
       rodadaId: 'r3', titulo: 'Mês 3: e agora?',
@@ -47,6 +48,7 @@ test('historiaDaEquipe: um item por mês jogado, na ordem das rodadas, com opç�
       mes: null,
       cartaCusto: null,
       deAntes: [],
+      protecaoDoMes: null,
     },
   ]);
 });

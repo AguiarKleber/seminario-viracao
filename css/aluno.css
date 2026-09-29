@@ -206,8 +206,11 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .indicadores dd { margin: 0; text-align: right; font-weight: 700; }
 /* "Escolha ou sorte?": o total do fim, depois do "=", em destaque, separado
    das variações por um traço (rascunho, seção 7, item 11). */
-.placar-historia .placar-total { padding-top: 6px; border-top: 1px solid var(--linha); color: var(--texto); font-weight: 700; }
-.placar-historia dd.placar-total { font-size: 1.15em; }
+/* O pior caso (D-059) usa o mesmo destaque no total: "A proteção evitou". */
+.placar-historia .placar-total,
+.pior-caso-lista .placar-total { padding-top: 6px; border-top: 1px solid var(--linha); color: var(--texto); font-weight: 700; }
+.placar-historia dd.placar-total,
+.pior-caso-lista dd.placar-total { font-size: 1.15em; }
 .delta { color: var(--texto-2); font-weight: 500; font-size: 15px; }
 
 .mes { display: flex; flex-direction: column; gap: 6px; }
@@ -251,6 +254,10 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 /* O que veio dos meses anteriores (a fratura que continua, o INSS, a multa):
    já está somado na conta, e a linha só diz de onde veio. */
 .conta-de-antes { font-size: 14px; color: var(--texto-2); }
+/* O que a proteção pagou e o que teria faltado sem ela (D-059): é o argumento
+   da decisão de proteger, e não uma nota de rodapé; fica no corpo do texto,
+   com um fio à esquerda, sem cor de alerta (a mesma forma para toda carta). */
+.conta-protecao { font-size: 16px; padding-left: 10px; border-left: 3px solid var(--linha-forte); }
 .conta-saldo { font-size: 22px; font-weight: 700; }
 .conta-mes[data-resultado="faltou"] { border: 2px solid var(--texto); border-left-width: 8px; }
 .conta-mes[data-resultado="faltou"] .conta-saldo { font-size: 26px; }

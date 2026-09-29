@@ -40,9 +40,11 @@
   // "20 dias parado"), e um mês tem 30. Mais que isso era o que a revisão de
   // 29/09 achou (item 1: 50 dias parados num mês) e não pode voltar pelo config.
   const MAX_DIAS_PARADO = 30;
-  // O único valor de efeito.categoria: dinheiro gasto por causa de um evento
-  // (conserto, remédio, multa), fora do "entrou" e fora de qualquer multiplica.
-  const CATEGORIAS_EFEITO = new Set(['gasto']);
+  // Os valores de efeito.categoria, os dois fora do "entrou" e fora de qualquer
+  // multiplica: "gasto", o dinheiro gasto por causa de um evento (conserto,
+  // remédio, multa), e "protecao" (D-059), o dinheiro que chega por causa de
+  // uma proteção (o INSS pago ao MEI, a ajuda da associação, a liminar).
+  const CATEGORIAS_EFEITO = new Set(['gasto', 'protecao']);
   // D-043: 4 opções por mês, cada uma um dilema. Uma só não é decisão, e mais de
   // 4 não cabe nos botões do celular nem na conversa de 120 s.
   const MIN_OPCOES = 2;
@@ -87,7 +89,7 @@
     outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
-    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte', 'rotuloPor', 'narrativaPor'],
+    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte', 'rotuloPor', 'narrativaPor', 'protege'],
     carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte', 'diasParado'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
@@ -435,10 +437,15 @@
       r.erro(caminho, '"fixo" e "categoria" no mesmo efeito: é custo fixo do trabalho ou gasto por causa de um evento, não os dois');
       return;
     }
-    const oque = fixo ? 'custo fixo ("fixo": true)' : 'gasto ("categoria": "gasto")';
+    const oque = fixo ? 'custo fixo ("fixo": true)' : `${categoria === 'protecao' ? 'proteção' : 'gasto'} ("categoria": "${categoria}")`;
     if (temFator) r.erro(caminho, `${oque} com "multiplica": ele fica fora de qualquer multiplica; use "soma"`);
     for (const ind of Object.keys(n.soma || {})) {
       if (ind !== 'renda') r.erro(junta(junta(caminho, 'soma'), ind), `${oque} só pode somar na renda (é dinheiro), e não em "${ind}": separe em outro efeito`);
+    }
+    // A proteção é o dinheiro que chega (a tela diz "a proteção pagou R$ X");
+    // o que ela custa (o DAS, a mensalidade) é custo fixo, noutro efeito.
+    if (categoria === 'protecao' && n.soma?.renda < 0) {
+      r.erro(junta(junta(caminho, 'soma'), 'renda'), `proteção com valor negativo (${n.soma.renda}): ela é o dinheiro que chega; o que ela custa vai como custo fixo ("fixo": true)`);
     }
     if (fixo) n.fixo = true;
     else n.categoria = categoria;
@@ -661,6 +668,10 @@
     conferirChaves(r, b, CHAVES.opcao, c, false);
     const n = { id, rotulo: texto(r, b, 'rotulo', c) };
     copiarTextos(r, b, n, c, ['narrativa', 'tendencia', 'fonte']);
+    // D-059: a opção que é uma proteção (pagar o MEI, entrar na associação).
+    // O placar refaz o pior caso trocando-a pelo padrão do mês. false some na
+    // normalização, como o fixo: o hash de um config sem proteção não muda.
+    if (tem(b, 'protege') && booleano(r, b, 'protege', c, false) === true) n.protege = true;
     n.efeitos = [];
     r.depois(() => {
       n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId]);
@@ -716,6 +727,12 @@
     if (tem(b, 'padrao')) {
       if (referencia(r, b.padrao, junta(c, 'padrao'), (x) => Object.hasOwn(mapa, x), 'opção padrão')) n.padrao = b.padrao;
     } else r.erro(junta(c, 'padrao'), 'campo obrigatório ausente');
+    // D-059: o "sem a proteção" do placar troca a opção que protege pelo
+    // padrão do mês. Com o padrão protegendo, não há troca, e o placar diria
+    // que a proteção não evitou nada.
+    if (n.padrao !== undefined && mapa[n.padrao]?.protege === true) {
+      r.aviso(junta(c, 'padrao'), `a opção padrão "${n.padrao}" protege: o pior caso "sem a proteção" do placar não tem pelo que trocá-la`);
+    }
     r.depois(() => { n.efeitosGerais = efeitos(r, b, 'efeitosGerais', c, idx, false, [id]); });
     return n;
   }
