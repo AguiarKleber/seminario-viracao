@@ -14,6 +14,7 @@
     "validar": "node bin/validar-config.mjs",
     "e2e": "node e2e/telao-offline.e2e.mjs",
     "e2e:online": "node e2e/sessao-online.e2e.mjs",
+    "e2e:online:fixture": "node e2e/sessao-online.e2e.mjs --fixture",
     "emulador": "node bin/emulador.mjs \"node --test test/emulador/*.test.mjs\"",
     "simular": "node bin/simular-alunos.mjs",
     "servir": "node bin/servir.mjs",

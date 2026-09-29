@@ -36,6 +36,8 @@ continua passando, com as mesmas contas. O que entrou:
 | `diasParado` | carta | Os dias parados que a carta custa, de 0 a 30. Só informativo: a tela mostra "20 dias parado" (D-052) |
 | `rotuloPor`, `narrativaPor` | opção | A mesma escolha dita do jeito de cada ofício, por persona (D-054) |
 | `pisoTrabalho` | regras | O trabalho variável do mês nunca fica abaixo de R$ 0 |
+| `categoria: "protecao"` | efeito | D-059: dinheiro que chega por causa de uma proteção (o INSS do MEI, a ajuda da associação; a liminar que devolve dias de trabalho é trabalho): fica fora do "entrou", e a tela diz "a proteção pagou R$ X" |
+| `protege: true` | opção | D-059: a opção é uma proteção (pagar o MEI, entrar na associação). O placar mostra o pior caso com ela e sem ela |
 
 A ordem do mês mudou junto: trabalho variável → custos fixos → gastos → outra
 renda → básico → juros (veja "Ordem fixa de aplicação").
@@ -363,6 +365,16 @@ seu `id`, como no `config.json` atual.)
       "efeitos": [ … ]
     }
     ```
+  - `protege` (opcional, D-059): `true` marca a opção como uma proteção (pagar o
+    MEI, entrar na associação). O placar final ganha a página "O pior que podia
+    acontecer", com o pior caso de cada equipe com as escolhas dela e, para quem
+    escolheu uma proteção, o pior caso com as mesmas escolhas e o padrão do mês
+    no lugar dela. A proteção é seguro: perde na média e ganha no pior caso, e é
+    isso que a página mostra. `false` vale o mesmo que não ter a chave; a opção
+    padrão com `protege` é aviso (o "sem a proteção" não teria pelo que
+    trocá-la). O dinheiro que a proteção paga vai em efeitos com
+    `"categoria": "protecao"` (veja "Efeito"), normalmente com uma condição que
+    lê a decisão (`decidiu` ou `opcao`).
 
     - Valem no botão do celular, na explicação da opção aberta, na dica da letra
       no resultado do telão e na história da equipe (telão e celular). A letra
@@ -401,12 +413,40 @@ seu `id`, como no `config.json` atual.)
 }
 ```
 
-- **Quantas:** o config atual tem 14 cartas; a D-043 pede de 12 a 14, várias
-  ligadas a um mês e às decisões. O validador não impõe o número.
+- **Quantas:** o config atual tem 17 cartas; a D-043 pedia de 12 a 14, e a
+  D-058 acrescentou as cartas de pico. Duas delas ("A perícia do INSS negou" e
+  "A lesão voltou") só existem depois de outra carta. O validador não impõe o
+  número.
 - **Realismo (D-044):** o efeito de uma carta de parada diz o custo real, com
   fonte: os dias sem renda, o conserto, o remédio. O que continua no mês seguinte
   (a fratura que dura 45 dias, a conta que segue bloqueada) vai num efeito geral
   da rodada seguinte, com `sorteou` (veja "Condição").
+- **Carta de pico (D-058):** dinheiro a mais que existe de verdade ("Uma semana
+  boa", "Uma data forte puxou a procura", "Bati a meta do desafio do app"). Cada
+  valor leva `fonte`, e a chance segue o calendário ou a regra da plataforma,
+  e não a vontade de fazer alguém fechar as contas. Para ela sair **no máximo
+  uma vez por partida**, limite as rodadas e zere o peso no mês seguinte se ela
+  já saiu:
+
+  ```json
+  { "id": "data_forte", "rodadas": ["r2", "r3"], "peso": 16,
+    "ajustesDePeso": [ { "se": { "rodada": "r3", "sorteou": { "r2": "data_forte" } }, "multiplica": 0 } ], … }
+  ```
+
+  O motor só lembra que uma carta saiu pelo `sorteou`. Por isso as duas cartas
+  novas não saem no mês 1: a mesma trava sobre o mês 1 quebra o `e2e:online`,
+  que tira do mês 1 as cartas sem dias parados, e o validador recusa uma
+  condição que nunca vale. Sem a trava, quem ficava só no padrão fechava em
+  0,0011% das partidas, e a D-058 pede que nunca. Depois de mexer num pico,
+  confira as metas da conferência (g) do validador.
+- **O dinheiro da proteção num mês que tem uma carta que o nega:** o auxílio do
+  INSS do MEI (`categoria: "protecao"`) vai **em cada carta** do mês 3 que pode
+  sair depois da fratura, menos em "A perícia do INSS negou", e não nos efeitos
+  gerais. Nenhuma condição lê a carta do próprio mês: num efeito geral, o INSS
+  entraria também para quem teve o auxílio negado, e a tela diria "a proteção
+  pagou". Carta nova no mês 3 que pode sair nesse ramo precisa dos mesmos dois
+  efeitos do INSS (copie de "O mês passado ainda pesa"; a "Um mês como os
+  outros" não sai no mês 3 depois da fratura, e por isso não os tem).
 - `titulo`: no sorteio e no resultado do telão, e na história da equipe.
   `narrativa` (opcional): no celular, no resultado, na situação e na história.
 - `curto` (opcional, D-040): o nome da carta escrito **dentro da fatia** do
@@ -590,12 +630,23 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
   antes do "entrou", e nenhum `multiplica` o atinge (antes do v2.1, uma carta
   que zerava a renda zerava também a parcela, e o acidentado ficava R$ 741
   melhor). Pode estar no `todoMes`, nos `efeitosGerais`, na opção ou na carta.
-- `categoria` (opcional, esquema v2.1): o único valor é `"gasto"`, o dinheiro
+- `categoria` (opcional, esquema v2.1): `"gasto"`, o dinheiro
   gasto **por causa de um evento**: o conserto, o remédio, a fisioterapia, a
   multa do aluguel, o saldo do empréstimo. Fica fora do "entrou" (dentro dele, o
   "entrou" chegava a −R$ 2.541) e sai numa linha própria: "entrou R$ X · gastos
   R$ G · básico R$ Y · faltou R$ Z". Os gastos da carta entram no custo dela
   (D-052).
+- `categoria: "protecao"` (opcional, D-059): o dinheiro que chega **por causa de
+  uma proteção**: o INSS pago ao MEI, a ajuda ou o fundo da associação. A
+  liminar que desbloqueia a conta devolve dias de **trabalho** do próprio
+  entregador: fica sem `categoria` (até a revisão da F5, como proteção, a tela
+  dizia "a proteção pagou R$ 804" e o trabalho saía do "entrou"). A proteção
+  fica fora do "entrou" (e do piso do trabalho); a tela diz
+  "entrou R$ X · a proteção pagou R$ P · …", e o celular, "A proteção pagou
+  R$ P: auxílio do INSS. Sem ela, teria faltado R$ P a mais." Só com valor
+  positivo (negativo é **erro**): o que a proteção custa (o DAS, a mensalidade)
+  vai como `fixo`, noutro efeito. Antes, o INSS entrava como renda do trabalho
+  e sumia dentro do "Do trabalho e da decisão".
 - Regras de `fixo` e `categoria`, conferidas pelo validador (é **erro**):
   - só com `soma`, nunca com `multiplica` (eles ficam fora de qualquer
     `multiplica`);
@@ -607,6 +658,7 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
 ```json
 { "soma": { "renda": -480 }, "fixo": true, "rotulo": "parcela da moto", "fonte": "…" }
 { "se": { "persona": "motoboy" }, "soma": { "renda": -1500 }, "categoria": "gasto", "rotulo": "conserto da moto", "fonte": "…" }
+{ "se": { "decidiu": { "r1": "b" }, "sorteou": { "r1": "fratura" } }, "soma": { "renda": 2431 }, "categoria": "protecao", "rotulo": "auxílio do INSS (45 dias)", "fonte": "…" }
 ```
 
 ### Condição
@@ -682,6 +734,8 @@ corre sempre nesta ordem:
    moto, o DAS, a parcela do curso ou do empréstimo.
 3. **Menos os gastos** (`categoria: "gasto"`), de qualquer origem: o conserto, o
    remédio, a multa, o saldo do empréstimo.
+3b. **Mais a proteção** (`categoria: "protecao"`, D-059), de qualquer origem: o
+   INSS do MEI, a ajuda da associação.
 
 Depois, **as contas da casa**, só no saldo (`renda`) (D-044, D-046):
 
@@ -696,7 +750,8 @@ condição lê o estado **de antes** da rodada e o histórico da equipe.
 A tela mostra o mês assim:
 - **"entrou"** = trabalho variável (passo 1) − custos fixos (2) + outra renda (4);
 - **"gastos"** = o passo 3, numa linha própria, só quando há;
-- **"faltou"** (ou "sobrou") = entrou − gastos − básico − juros.
+- **"a proteção pagou"** = o passo 3b, só quando há;
+- **"faltou"** (ou "sobrou") = entrou + proteção − gastos − básico − juros.
 
 É por isso que **uma carta que multiplica a renda corta o que se ganha, e não a
 conta da casa nem a parcela da moto**: o `multiplica` roda no passo 1, a parcela
@@ -888,13 +943,14 @@ escolha individual não tira ninguém da precariedade (D-009).
 indicador cai até o mínimo. Avisa quando isso passa de 30% das partidas e nenhuma
 condição do config lê aquele indicador, ou seja, ele cai sem consequência.
 
-**(g) Quem fecha o básico no fim dos 3 meses (D-050).** Por persona: a chance de
-terminar com o saldo acumulado em R$ 0 ou mais, com as decisões ao acaso; o
-plano (as três decisões) com a maior chance de fechar; e o melhor caminho
-possível (decisões e cartas) com a renda final. Avisa quando nenhum caminho
-fecha ("quase ninguém", e não "ninguém"), quando uma persona fecha em mais de
-15% das partidas, e quando menos de 2 personas ficam entre 5% e 15% (a faixa do
-rascunho, seção 7, item 5).
+**(g) Quem fecha o básico no fim dos 3 meses (D-050, D-058).** Por persona: a
+chance de terminar com o saldo acumulado em R$ 0 ou mais, com as decisões ao
+acaso; o plano (as três decisões) com a maior chance de fechar; o melhor caminho
+possível (decisões e cartas) com a renda final; e a chance de fechar ficando só
+no padrão. Avisa quando nenhum caminho fecha ("quase ninguém", e não
+"ninguém"), quando uma persona fecha em mais de 10% das partidas, quando menos
+de 2 personas ficam entre 5% e 10% (a meta da D-058; antes era a faixa de 5% a
+15% do rascunho) e quando alguém fecha só com o padrão (a D-058 pede que nunca).
 
 **(h) A melhor opção muda com a persona, e a letra do esforço muda com o mês
 (D-051).** Por mês: a melhor opção de cada persona (a de maior saldo final
@@ -902,6 +958,33 @@ esperado, como em (c)), com aviso quando é a mesma para todas; e a letra (A a D
 da opção de maior renda no próprio mês, na média das personas, com aviso quando
 é a mesma letra nos 3 meses. Atenção: a "renda do mês" leva todo dinheiro que
 não é custo fixo nem gasto, inclusive o empréstimo e o INSS (rascunho, seção 8).
+
+Ainda em (h), duas conferências da D-059:
+- **Esgotamento:** por persona e por mês, a opção mais cansativa (a de maior
+  perda de energia esperada no próprio mês; empate pela renda do mês) contra a
+  melhor opção dela (a de maior saldo esperado no fim). Avisa quando a mais
+  cansativa é também a melhor opção para 3 ou mais personas no mesmo mês: o
+  placar ainda premia o esgotamento para a maioria. Até a revisão da F5 o
+  esforço era a opção de maior renda do mês, e o empréstimo passava por ele.
+- **Proteção:** para cada opção com `protege: true` (fora o padrão), por
+  persona: o pior caso e o esperado do fim com ela e sem ela, no plano do padrão
+  (só ela trocada), e a média, sobre todas as combinações que a usam, do que
+  muda no pior caso e no esperado quando ela vira o padrão do mês. É a mesma
+  troca da página "O pior que podia acontecer". Avisa quando nenhuma opção que
+  protege melhora o pior caso de alguma persona.
+
+**O que (g) e (h) dizem do config de 29/09 à noite** (conteúdo v2.2; os números
+e as decisões pendentes estão no rascunho, seções 0.7 e 0.8):
+- (g): ao acaso, Jonas fecha em 0,01% e Marcos em 0,1% (no melhor plano, A-C-B,
+  0,4% e 2,8%); Daiane, Kauã e Rose não fecham em caminho nenhum; só o padrão
+  fecha em 0% nas 5. Avisos: os três "nenhum caminho fecha" e "só 0 persona(s)
+  entre 5% e 10%". **A meta da D-058 não foi alcançada.**
+- (h), esgotamento: no mês 1 as 12 horas são a melhor opção só para Daiane e
+  Rose; no mês 3, a madrugada, só para a Rose; **no mês 2, os dois apps são a
+  melhor opção para 4 das 5 personas**, e é o único aviso.
+- (h), proteção: o MEI melhora o pior caso das 5 personas (na média das
+  combinações, de R$ 333 a R$ 1.226) e perde de R$ 210 a R$ 267 no esperado; a
+  associação perde nos dois. Sem aviso, porque o MEI basta.
 
 **(i) Conta do mês: trabalho e "entrou".** Em todos os estados alcançáveis ×
 opção × carta: com `regras.pisoTrabalho`, confere que o trabalho nunca fica

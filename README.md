@@ -27,16 +27,19 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 3. Login anônimo | Ativado |
 | 4. `conexao.json` | Preenchido com as chaves do projeto |
 | 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #3, versão 3 do site) está no ar, e o telão publicado já criou sala |
-| Conteúdo | Revisão de 29/09 (D-050 a D-057): `config.json` versão `2026-09-29-v2.1-rascunho`, no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seção 8 |
+| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #4, versão 4 do site) está no ar, e o telão publicado já criou sala |
+| Conteúdo | Calibragem de 29/09 à noite (D-058 e D-059, branch `claude/calibragem`): `config.json` versão `2026-09-29-v2.2-rascunho`, com as cartas de pico, o dinheiro da proteção (`categoria: "protecao"`) e as opções que protegem (`protege`), sobre a revisão de 29/09 (D-050 a D-057), no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 0.8 e 8 |
 
-**A revisão do conteúdo de 29/09** (branch `claude/conteudo-v21`, versão 4 do
-site) vem depois do redesenho (D-041 a D-048, já na `main`). Ela **não muda as
-regras do Firebase**: continuam v3, iguais às publicadas, e nada precisa ser
-publicado de novo no console. Depois de fundir o PR, recarregue o telão em toda
-máquina onde ele estiver aberto e repita o passo 8: o bloco 1 tem de mostrar a
-versão `2026-09-29-v2.1-rascunho`. Os celulares que ainda tiverem a versão 3
-em cache veem a faixa "Há uma versão nova do app: atualize a página".
+**A calibragem de 29/09 à noite** (branch `claude/calibragem`, versão 5 do
+site) vem depois da revisão do conteúdo (D-050 a D-057, PR #4, já na `main`).
+Ela **não muda as regras do Firebase**: continuam v3, iguais às publicadas, e
+nada precisa ser publicado de novo no console. Depois de fundir o PR, recarregue
+o telão em toda máquina onde ele estiver aberto e repita o passo 8: o bloco 1 tem
+de mostrar a versão `2026-09-29-v2.2-rascunho`. Os celulares que ainda tiverem
+a versão 4 em cache veem a faixa "Há uma versão nova do app: atualize a página".
+A calibragem **não alcançou a meta da D-058** (de 5% a 10% das partidas de duas
+personas fechando o básico) nem tirou o esgotamento do topo no mês 2; as duas
+questões estão no [rascunho](docs/rascunho-conteudo.md), seção 0.8.
 
 Em seguida vêm o teste no eduroam (30/09), as correções (01 a 05/10), o
 congelamento (06/10) e o seminário (07/10).
@@ -363,7 +366,8 @@ Faça em casa, antes do teste no eduroam. Um dos celulares pode ficar no 4G.
 6. Recarregue o telão (F5) e clique em **Retomar sala**: ele volta ao mesmo passo
    sem pedir o PIN.
 7. **Pular para…** → Placar final. O Espaço passa as páginas (quanto faltou para
-   o básico, "Escolha ou sorte?" e a história de cada equipe) e, da última, segue
+   o básico, "Escolha ou sorte?", "O pior que podia acontecer" e a história de
+   cada equipe) e, da última, segue
    o roteiro. No Fim, na barra, clique em **Exportar totais** e segure **Apagar a
    sala**.
 
@@ -432,6 +436,7 @@ deixa o pendrive carregar o estado salvo pelo telão online.
 | `npm run emulador` | Testes contra o emulador: regras reais, `canal-firebase` e simulador (JDK 21) |
 | `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados |
 | `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador; nunca fala com o projeto real |
+| `npm run e2e:online:fixture` | O mesmo, com a fixture de teste no lugar do `config.json`: é o que passa sempre por "a proteção pagou" no celular (D-059). Rode junto com o anterior |
 | `npm run simular -- --memoria` | 20 alunos simulados, sem rede |
 | `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador |
 | `npm run versao` | Sobe o `?v=` e a versão do app juntos |

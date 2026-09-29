@@ -1,5 +1,5 @@
 {
-  "versao": "2026-09-29-v2.1-rascunho",
+  "versao": "2026-09-29-v2.2-rascunho",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -648,9 +648,10 @@
             },
             {
               "soma": {
-                "energia": -3
+                "energia": -5
               },
-              "rotulo": "semana sem folga"
+              "rotulo": "semana sem folga",
+              "fonte": "Estimativa: a energia é mecânica do jogo. Com −5, quem fez 12 horas começa o mês seguinte exausto (energia abaixo de 3), no degrau de 5 a 6 h de sono. Van Dongen et al., Sleep 26(2), 2003: 6 h por noite durante 14 dias dão o déficit de 2 noites sem dormir, e o déficit acumula. Era −3 (D-059)"
             }
           ]
         },
@@ -698,7 +699,8 @@
               },
               "rotulo": "rotina puxada"
             }
-          ]
+          ],
+          "protege": true
         },
         {
           "id": "c",
@@ -993,16 +995,6 @@
                 "renda": 137
               },
               "rotulo": "aceitei até as entregas ruins",
-              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
-            },
-            {
-              "se": {
-                "persona": "vendedora"
-              },
-              "soma": {
-                "renda": 60
-              },
-              "rotulo": "aceitei até as encomendas sem margem",
               "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
@@ -1577,42 +1569,6 @@
           },
           "rotulo": "+25 dias da fratura",
           "fonte": "INSS, Diretrizes de apoio à decisão médico-pericial em Ortopedia e Traumatologia (consulta pública, abr/2008), Parte 3, p. 130-134: fratura do rádio distal (S52.5), 45 dias para consolidar e 90 para a recuperação total"
-        },
-        {
-          "se": {
-            "sorteou": {
-              "r2": "fratura"
-            },
-            "decidiu": {
-              "r1": "b"
-            },
-            "opcao": [
-              "a",
-              "b",
-              "d"
-            ]
-          },
-          "soma": {
-            "renda": 2431
-          },
-          "rotulo": "INSS (45 dias)",
-          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte"
-        },
-        {
-          "se": {
-            "sorteou": {
-              "r2": "fratura"
-            },
-            "decidiu": {
-              "r1": "b"
-            },
-            "opcao": "c"
-          },
-          "soma": {
-            "renda": 1621
-          },
-          "rotulo": "INSS (30 dias)",
-          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte"
         },
         {
           "se": {
@@ -2543,24 +2499,63 @@
         }
       },
       "narrativa": "Nenhuma surpresa nova neste mês. O que veio do mês passado continua pesando, e a conta da casa chegou igual.",
-      "efeitos": []
+      "efeitos": [
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        }
+      ]
     },
     {
       "id": "semana_boa",
       "titulo": "Uma semana boa",
       "curto": "Semana boa",
       "peso": 12,
-      "narrativa": "Bati o desafio da semana, veio gorjeta, entrou uma encomenda grande. Não dá para contar com isso no mês que vem.",
-      "fonte": "Abílio (2021), p. 941 e 944: bonificações que nunca estão garantidas; 12 horas seguidas para ganhar um bônus",
+      "narrativa": "Peguei as promoções e os desafios pequenos da semana, ou entrou uma encomenda maior. Não dá para contar com isso no mês que vem.",
+      "fonte": "Entregadores: iFood, \"Entenda as mecânicas… de cada tipo de promoção\" (2026): R$ 30 por ficar ativo das 18h às 21h59, +R$ 3 ou +30% por rota; 4 noites x R$ 30 a 48 = R$ 120 a 190 (usado R$ 155). Marcos: blog da 99 (31/03/2022), desafios como \"5 corridas para ganhar R$ 120\" e o Multiplica99 (+25%); 2 a 4 no mês, usado R$ 240 (confiança baixa: os valores só aparecem no app). Daiane: 3 centos de doce a R$ 96,50–118 (Confeitaria Armelin, Porto Alegre, via Pricelisto), lucro de ~R$ 150 a 180 (usado R$ 165). Rose: noiva e madrinhas, 5 combos x R$ 80 − 20% do app = R$ 320 (NailNow, guia de preços 2026). Gorjeta não entra: R$ 43 milhões em 12 meses para 760 mil entregadores do iFood, ~R$ 5 a 10 por mês (IstoÉ Dinheiro, 16/12/2024). Abílio (2021), p. 941 e 944: bonificações nunca garantidas",
       "efeitos": [
         {
           "se": {
             "persona": "motoboy"
           },
           "soma": {
-            "renda": 268
+            "renda": 155
           },
-          "rotulo": "bônus, gorjeta ou encomenda extra",
+          "rotulo": "promoções, desafios ou encomenda extra",
           "fonte": "Estimativa: +10% da renda-base"
         },
         {
@@ -2568,9 +2563,9 @@
             "persona": "bike"
           },
           "soma": {
-            "renda": 137
+            "renda": 155
           },
-          "rotulo": "bônus, gorjeta ou encomenda extra",
+          "rotulo": "promoções, desafios ou encomenda extra",
           "fonte": "Estimativa: +10% da renda-base"
         },
         {
@@ -2578,9 +2573,9 @@
             "persona": "vendedora"
           },
           "soma": {
-            "renda": 150
+            "renda": 165
           },
-          "rotulo": "bônus, gorjeta ou encomenda extra",
+          "rotulo": "promoções, desafios ou encomenda extra",
           "fonte": "Estimativa: +10% da renda-base"
         },
         {
@@ -2588,9 +2583,9 @@
             "persona": "motorista"
           },
           "soma": {
-            "renda": 287
+            "renda": 240
           },
-          "rotulo": "bônus, gorjeta ou encomenda extra",
+          "rotulo": "promoções, desafios ou encomenda extra",
           "fonte": "Estimativa: +10% da renda-base"
         },
         {
@@ -2598,9 +2593,9 @@
             "persona": "manicure"
           },
           "soma": {
-            "renda": 210
+            "renda": 320
           },
-          "rotulo": "bônus, gorjeta ou encomenda extra",
+          "rotulo": "promoções, desafios ou encomenda extra",
           "fonte": "Estimativa: +10% da renda-base"
         },
         {
@@ -2608,6 +2603,44 @@
             "energia": -1
           },
           "rotulo": "corri atrás do bônus"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -2645,6 +2678,287 @@
             ]
           },
           "multiplica": 0
+        }
+      ]
+    },
+    {
+      "id": "data_forte",
+      "titulo": "Uma data forte puxou a procura",
+      "curto": "Data forte",
+      "peso": 16,
+      "rodadas": [
+        "r2",
+        "r3"
+      ],
+      "narrativa": "Veio uma data forte, como o fim de ano, e a procura subiu. Trabalhei no ritmo dela, e ela só vem uma vez.",
+      "fonte": "Jonas e Kauã: iFood, release de 30/10/2023, dezembro de 2022 com pedidos 16% acima da média dos meses anteriores. É a demanda da plataforma: o release não fala de ganho nem de quantos entregadores estavam ativos. Os 16% da renda são proxy (conta nossa, estimativa; confiança baixa na renda). Marcos: IBGE, IPCA, tabela 7060, \"transporte por aplicativo\" em Porto Alegre, +19,88% em dez/2024 e +17,75% em dez/2025, que é o preço pago pelo passageiro, e não a renda do motorista (proxy; confiança baixa na renda); quanto chega ao motorista é incerto (a retenção das plataformas subiu, 33Giga, 30/12/2025): usada metade, R$ 290 (estimativa). Daiane: Agência Sebrae MA (26/03/2024), Páscoa com \"até 35% a mais do que faturamos normalmente\"; Revista Oeste (31/03/2026): ovo de 250 g com R$ 38,10 de lucro. Rose: Folha Vitória (13/12/2024), EXPECTATIVA de faturamento dos salões de +20% a 70% no fim de ano, e não aumento medido (Grande Vitória; outra UF, confiança baixa). Frequência: 1 mês em 12 (dezembro), ou seja, 25% das janelas de 3 meses; Daiane, 3 datas por ano (Páscoa, Dia das Mães, Natal), 58% das janelas. Sai só nos meses 2 e 3 e no máximo uma vez por partida, com peso 16 (Daiane 60): ~20% das partidas (Rose 25%, Daiane 59%)",
+      "ajustesDePeso": [
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": 44
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "sorteou": {
+              "r2": "data_forte"
+            }
+          },
+          "multiplica": 0
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            }
+          },
+          "multiplica": 0
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "multiplica": 0
+        }
+      ],
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": 429
+          },
+          "rotulo": "data forte: 16% mais pedidos"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 219
+          },
+          "rotulo": "data forte: 16% mais pedidos"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": 525
+          },
+          "rotulo": "encomendas da data: 35% a mais"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 290
+          },
+          "rotulo": "data forte: a corrida ficou mais cara"
+        },
+        {
+          "se": {
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": 420
+          },
+          "rotulo": "agenda cheia: 20% a mais"
+        },
+        {
+          "se": {
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista",
+              "manicure"
+            ]
+          },
+          "soma": {
+            "energia": -1
+          },
+          "rotulo": "trabalhei no ritmo da data"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "energia": -2
+          },
+          "rotulo": "cozinhei no ritmo da data"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        }
+      ]
+    },
+    {
+      "id": "meta",
+      "titulo": "Bati a meta do desafio do app",
+      "curto": "Meta",
+      "peso": 6,
+      "rodadas": [
+        "r2",
+        "r3"
+      ],
+      "narrativa": "O app me ofereceu o desafio da semana e eu bati a meta: veio o bônus. O desafio não aparece sempre, e costuma vir para quem anda meio sumido do app.",
+      "fonte": "Jonas: Metrópoles (01/08/2025), casal de São Paulo, há 3 anos no iFood, \"a cinco corridas de destravar um bônus de R$ 600\"; o regulamento do \"Destravou, Ganhou\" diz \"em fase de testes… algumas regiões\", sem valor nem cidade (confiança média no valor, baixa em Porto Alegre). Marcos: blog da 99 (31/03/2022), \"5 corridas para ganhar R$ 120\" num dia; 4 desafios no mês = R$ 480 (confiança baixa). Chance: o mesmo Metrópoles diz que a meta é de 20 entregas numa semana e que \"normalmente, o app oferece essa possibilidade para quem está começando ou anda meio fora das entregas, pouco engajado\": não depende de jornada longa. Peso 6 nos meses 2 e 3, e +6 no mês 2 para quem trabalhou menos no mês 1 (estimativa; \"rara\" na pesquisa); no máximo uma vez por partida, e só nos meses 2 e 3 pela mesma razão técnica da \"data forte\". Revisão da F5: antes, só saía com as opções de mais esforço (pesos 8, 4, 4, 6 e 6), ao contrário da fonte, e podia sair nos três meses. Não sai para Kauã (sem dado de bicicleta), Daiane e Rose",
+      "somenteSe": {
+        "persona": [
+          "motoboy",
+          "motorista"
+        ]
+      },
+      "ajustesDePeso": [
+        {
+          "se": {
+            "rodada": "r2",
+            "decidiu": {
+              "r1": "d"
+            }
+          },
+          "soma": 6
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "sorteou": {
+              "r2": "meta"
+            }
+          },
+          "multiplica": 0
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            }
+          },
+          "multiplica": 0
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "multiplica": 0
+        }
+      ],
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": 600
+          },
+          "rotulo": "bônus da meta de entregas"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 480
+          },
+          "rotulo": "bônus dos desafios de corridas"
+        },
+        {
+          "soma": {
+            "energia": -1
+          },
+          "rotulo": "corri atrás da meta"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ]
     },
@@ -2702,6 +3016,44 @@
             "renda": -161
           },
           "rotulo": "clientes cancelaram: dois dias sem atender e ônibus perdido"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -2831,6 +3183,44 @@
           },
           "rotulo": "conserto da autoclave",
           "categoria": "gasto"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -2879,7 +3269,7 @@
       "peso": 6,
       "diasParado": 7,
       "narrativa": "Parei uma semana. Nem o MEI cobre: doença exige 12 meses de contribuição e mais de 15 dias parado.",
-      "fonte": "Lei 8.213/1991, art. 25, I (carência de 12 meses para doença comum) e art. 59 (mais de 15 dias)",
+      "fonte": "Lei 8.213/1991, art. 25, I (carência de 12 meses para doença comum) e art. 59 (mais de 15 dias). Chance (D-059): Prather et al., Sleep 38(9), 2015, resfriado depois de exposição ao rinovírus: 5 a 6 h de sono, OR 4,24; 5 h ou menos, OR 4,50; acima de 6 h, sem aumento. No jogo: energia abaixo de 4 (5 a 6 h) x 4,24; abaixo de 2 x 4,5; o mês das 12 horas x 4,24; de madrugada x 4,5 (menos a Rose, que atende até tarde, e não de madrugada), sem somar ao da energia. Era +8 e +16 sobre peso 6 (x 2,3 e x 3,7). O mapeamento da energia e das opções para horas de sono é nosso",
       "efeitos": [
         {
           "se": {
@@ -2988,6 +3378,44 @@
             "renda": 280
           },
           "rotulo": "trabalhei doente: só 3 dias parado"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -2999,7 +3427,7 @@
               }
             }
           },
-          "soma": 8
+          "multiplica": 4.24
         },
         {
           "se": {
@@ -3009,7 +3437,51 @@
               }
             }
           },
-          "soma": 8
+          "multiplica": 1.0613
+        },
+        {
+          "se": {
+            "rodada": "r1",
+            "opcao": "a"
+          },
+          "multiplica": 4.24
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "b",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista",
+              "vendedora"
+            ],
+            "indicador": {
+              "energia": {
+                "acimaDe": 3
+              }
+            }
+          },
+          "multiplica": 4.5
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "b",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista",
+              "vendedora"
+            ],
+            "indicador": {
+              "energia": {
+                "acimaDe": 1,
+                "abaixoDe": 4
+              }
+            }
+          },
+          "multiplica": 1.0613
         },
         {
           "se": {
@@ -3055,7 +3527,7 @@
         ]
       },
       "narrativa": "Um tombo no molhado, ou uma batida leve: cinco dias parado e o conserto. Menos de 7 dias, o seguro do app não paga; menos de 16, o INSS não paga.",
-      "fonte": "Cebrap/Amobitec (2025): 22% dos entregadores de moto e 15% dos motoristas sofreram acidente em 3 meses. Peças de CG 160 em concessionária (AutoPapo, 04/03/2026): retrovisor R$ 112,82, manete R$ 43,58, guidão R$ 437,11. Seguro do iFood só a partir de 7 dias; INSS só acima de 15 (Lei 8.213, art. 59). Bicicleta e funilaria: estimativa. Energia baixa dobra a chance: AAA Foundation (2016), 5 a 6 h de sono = 1,9 vez o risco de acidente",
+      "fonte": "Cebrap/Amobitec (2025): 22% dos entregadores de moto e 15% dos motoristas sofreram acidente em 3 meses. Peças de CG 160 em concessionária (AutoPapo, 04/03/2026): retrovisor R$ 112,82, manete R$ 43,58, guidão R$ 437,11. Seguro do iFood só a partir de 7 dias; INSS só acima de 15 (Lei 8.213, art. 59). Bicicleta e funilaria: estimativa. Energia baixa dobra a chance: AAA Foundation (2016), 5 a 6 h de sono = 1,9 vez o risco de acidente. 12 horas por dia (D-059): x 1,9, o risco de 5 a 6 h de sono (AAA Foundation, 2016); era +2 (UFBA, 49,1% contra 39,9%, não significativo no modelo ajustado)",
       "efeitos": [
         {
           "se": {
@@ -3119,15 +3591,58 @@
             "energia": -1
           },
           "rotulo": "dor e medo de voltar"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
         {
           "se": {
             "rodada": "r1",
-            "opcao": "a"
+            "opcao": "a",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista"
+            ]
           },
-          "soma": 2
+          "multiplica": 1.9
         },
         {
           "se": {
@@ -3342,6 +3857,44 @@
             "energia": -2
           },
           "rotulo": "dor e recuperação"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3606,6 +4159,44 @@
           },
           "rotulo": "o outro app segurou metade da renda",
           "fonte": "Estimativa: com a renda dividida entre dois apps (ou dois canais de venda), o bloqueio num deles tira metade. Não achei dado da divisão"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3713,6 +4304,44 @@
             "energia": -1
           },
           "rotulo": "medo de voltar para a rua"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3792,6 +4421,44 @@
             "renda": -175
           },
           "rotulo": "três clientes cancelaram em cima da hora"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3850,6 +4517,44 @@
             "renda": -150
           },
           "rotulo": "anúncio 12,15% e chocolate 24,77% mais caros"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3897,6 +4602,44 @@
             "renda": 75
           },
           "rotulo": "reajuste: R$ 0,50 a mais por entrega"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [
@@ -3943,31 +4686,8 @@
         }
       },
       "narrativa": "Paguei o MEI em dia, esperei a decisão e a perícia negou. O dinheiro que eu contava não veio.",
-      "fonte": "Previdenciarista (09/09/2026), leitura do BEPS de jul/2026: 53% das decisões de benefício por incapacidade foram negativas no 1º semestre de 2026. Confiança média",
-      "efeitos": [
-        {
-          "se": {
-            "opcao": [
-              "a",
-              "b",
-              "d"
-            ]
-          },
-          "soma": {
-            "renda": -2431
-          },
-          "rotulo": "o auxílio do INSS não veio"
-        },
-        {
-          "se": {
-            "opcao": "c"
-          },
-          "soma": {
-            "renda": -1621
-          },
-          "rotulo": "o auxílio do INSS não veio"
-        }
-      ],
+      "fonte": "Previdenciarista (09/09/2026), leitura do BEPS de jul/2026: 53% das decisões de benefício por incapacidade foram negativas no 1º semestre de 2026. Confiança média. Sem efeito em dinheiro desde o v2.2: o auxílio do INSS vem nas outras cartas do ramo (D-059), e esta é a que não o traz",
+      "efeitos": [],
       "ajustesDePeso": [
         {
           "se": {
@@ -4054,6 +4774,44 @@
             "energia": -2
           },
           "rotulo": "dor"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "d"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (45 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS pelo MEI (30 dias)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo mês (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
       "ajustesDePeso": [

@@ -146,15 +146,15 @@ function arredondar(d) {
 }
 
 const REFERENCIA = {
-  e1: { cartas: 'normal,chuva,normal', renda: 8950, energia: 0, protecao: 0, realizado: 8950, esperadoComDecisoes: 8466.66, esperadoPiloto: 7254.75, efeitoDecisoes: 1211.91, sorte: 483.34, piorCaso: 4790 },
-  e2: { cartas: 'normal,normal,normal', renda: 3520, energia: 4, protecao: 6, realizado: 3520, esperadoComDecisoes: 3617.15, esperadoPiloto: 4764.21, efeitoDecisoes: -1147.06, sorte: -97.15, piorCaso: 2470 },
-  e3: { cartas: 'normal,normal,cliente_fiel', renda: 5600, energia: 6, protecao: 3, realizado: 5600, esperadoComDecisoes: 4721.01, esperadoPiloto: 6036.39, efeitoDecisoes: -1315.38, sorte: 878.99, piorCaso: 2490 },
-  e4: { cartas: 'normal,multa,normal', renda: 9500, energia: 3, protecao: 0, realizado: 9500, esperadoComDecisoes: 9401.59, esperadoPiloto: 8116.08, efeitoDecisoes: 1285.51, sorte: 98.41, piorCaso: 5300 },
+  e1: { cartas: 'normal,chuva,normal', renda: 8950, energia: 0, protecao: 0, realizado: 8950, esperadoComDecisoes: 8466.66, esperadoPiloto: 7254.75, efeitoDecisoes: 1211.91, sorte: 483.34, piorCaso: 4790, piorCasoSemProtecao: 4790 },
+  e2: { cartas: 'normal,normal,normal', renda: 3520, energia: 4, protecao: 6, realizado: 3520, esperadoComDecisoes: 3617.15, esperadoPiloto: 4764.21, efeitoDecisoes: -1147.06, sorte: -97.15, piorCaso: 2470, piorCasoSemProtecao: 2470 },
+  e3: { cartas: 'normal,normal,cliente_fiel', renda: 5600, energia: 6, protecao: 3, realizado: 5600, esperadoComDecisoes: 4721.01, esperadoPiloto: 6036.39, efeitoDecisoes: -1315.38, sorte: 878.99, piorCaso: 2490, piorCasoSemProtecao: 2490 },
+  e4: { cartas: 'normal,multa,normal', renda: 9500, energia: 3, protecao: 0, realizado: 9500, esperadoComDecisoes: 9401.59, esperadoPiloto: 8116.08, efeitoDecisoes: 1285.51, sorte: 98.41, piorCaso: 5300, piorCasoSemProtecao: 5300 },
   // e5 conferido à mão: 1420 no mês 1; no mês 2, 1000 × 0,3 + 1500 de auxílio
   // (proteção 3 > 2 no estado de ANTES) = 1800; no mês 3, +1000. Total 4220.
-  e5: { cartas: 'normal,acidente,normal', renda: 4220, energia: 8, protecao: 5, realizado: 4220, esperadoComDecisoes: 3661.18, esperadoPiloto: 5049.96, efeitoDecisoes: -1388.78, sorte: 558.82, piorCaso: 2320 },
+  e5: { cartas: 'normal,acidente,normal', renda: 4220, energia: 8, protecao: 5, realizado: 4220, esperadoComDecisoes: 3661.18, esperadoPiloto: 5049.96, efeitoDecisoes: -1388.78, sorte: 558.82, piorCaso: 2320, piorCasoSemProtecao: 2320 },
   // Mesma persona e mesmas decisões da e1 (D-004): só a sorte difere.
-  e6: { cartas: 'normal,normal,normal', renda: 9250, energia: 0, protecao: 0, realizado: 9250, esperadoComDecisoes: 8466.66, esperadoPiloto: 7254.75, efeitoDecisoes: 1211.91, sorte: 783.34, piorCaso: 4790 },
+  e6: { cartas: 'normal,normal,normal', renda: 9250, energia: 0, protecao: 0, realizado: 9250, esperadoComDecisoes: 8466.66, esperadoPiloto: 7254.75, efeitoDecisoes: 1211.91, sorte: 783.34, piorCaso: 4790, piorCasoSemProtecao: 4790 },
 };
 
 test('decompor: enumeração exata num caso feito à mão', () => {
@@ -172,7 +172,7 @@ test('decompor: enumeração exata num caso feito à mão', () => {
   const d = M.decompor(config, { equipeId: 'e1', rodadas: [{ rodadaId: 'r1', opcaoId: 'a', cartaId: 'boa' }] });
 
   // Assert
-  assert.deepEqual(d, { realizado: 500, esperadoComDecisoes: 300, esperadoPiloto: 200, efeitoDecisoes: 100, sorte: 200, piorCaso: 100 });
+  assert.deepEqual(d, { realizado: 500, esperadoComDecisoes: 300, esperadoPiloto: 200, efeitoDecisoes: 100, sorte: 200, piorCaso: 100, piorCasoSemProtecao: 100 });
 });
 
 test('decompor: a chance do mês 2 depende do mês 1 (árvore, não produto)', () => {

@@ -16,6 +16,9 @@ export const CAMINHO_CONFIG_TESTE_V2 = join(PASTA_FIXTURES, 'config-teste-v2.jso
 // O esquema v2.1: custo fixo (fixo), gasto por causa de um evento (categoria
 // "gasto"), dias parados da carta e o texto da opção por persona (D-052, D-054).
 // É o v2 com esses campos acrescentados, para a diferença ficar só neles.
+// Desde a D-059, também a proteção: o MEI (r1 "b") com protege, o INSS do MEI
+// no mês 2 (para quem pagou e tirou o acidente no mês 1) e o auxílio do mês 3
+// como efeitos de categoria "protecao".
 export const CAMINHO_CONFIG_TESTE_V21 = join(PASTA_FIXTURES, 'config-teste-v21.json');
 
 // Lido do disco a cada chamada: os testes de mutação alteram o objeto.

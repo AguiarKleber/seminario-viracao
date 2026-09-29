@@ -349,3 +349,32 @@ Segunda rodada da revisão (29/09), também correções de conta:
   R$ 1.840, o teto da troca com pintura de para-choque em carro popular
   (Autocidade, 13/06/2026), e não R$ 2.000;
 - a faixa da fisioterapia passou a ser a lida na Doctoralia (R$ 120 a R$ 320).
+
+## 29/09/2026 (noite): como cumprir a D-050 e a D-051
+
+A calibragem da F4 não conseguiu cumprir as duas decisões. A causa estava nos
+próprios dados, não em falta de ajuste: com o básico real de Porto Alegre e as
+rendas reais, ninguém fecha as contas; e a proteção se comporta como seguro,
+que perde em valor esperado e ganha no pior caso. O Kleberson decidiu:
+
+**D-058. Picos reais tornam o fechamento possível** (detalha a D-050).
+- Entram cartas de pico que existem de verdade, cada uma com fonte: fim de ano,
+  datas comemorativas, gorjeta, corrida longa, bônus de meta da plataforma.
+- **Meta:** de 5% a 10% das partidas de pelo menos duas personas fecham o básico.
+- Quem fica só no padrão nunca fecha.
+- Nenhuma opção é dominante.
+
+**D-059. A proteção vale pelo pior caso que ela evita** (detalha a D-051).
+- A tela mostra o que a proteção pagou ou evitou, por exemplo "sem o MEI, a
+  fratura teria custado R$ X". Aparece no resultado, na história da equipe e no
+  placar, junto com o pior caso possível dado o que a equipe escolheu.
+- O esgotamento custa mais, com base na pesquisa (energia baixa: mais chance de
+  acidente e de adoecer, e renda menor), até deixar de ser o melhor plano para a
+  maioria das personas.
+
+**Provisório (29/09, noite): a associação deixa de ser marcada como proteção** (`protege`)
+até o Kleberson decidir o item 2 da seção 0.8 do rascunho. Com a calibragem
+atual, ela não melhora o pior caso. Marcada como proteção, a página "O pior que
+podia acontecer" diria "ela evita o pior" ao lado de "a proteção não melhorou o
+pior caso". Só o MEI aparece como proteção nessa página. Desfazer é pôr
+`"protege": true` de volta na opção r3/0.

@@ -339,6 +339,7 @@
         },
         "b": {
           "rotulo": "8 horas e pagar o MEI",
+          "protege": true,
           "efeitos": [
             {
               "soma": {
@@ -400,6 +401,21 @@
           },
           "rotulo": "DAS do MEI",
           "fixo": true
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r1": "b"
+            },
+            "sorteou": {
+              "r1": "acidente"
+            }
+          },
+          "soma": {
+            "renda": 900
+          },
+          "categoria": "protecao",
+          "rotulo": "auxílio do INSS (MEI)"
         }
       ],
       "opcoes": {
@@ -499,6 +515,7 @@
           "soma": {
             "renda": 1200
           },
+          "categoria": "protecao",
           "rotulo": "auxílio do INSS, um mês depois"
         },
         {

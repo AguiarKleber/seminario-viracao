@@ -352,6 +352,9 @@
         placar[eq] = {
           ...ultima,
           piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, piorCaso: d.piorCaso,
+          // D-059: o pior caso com as mesmas decisões, sem as opções que
+          // protegem. As regras v3 aceitam qualquer filho de placar.
+          piorCasoSemProtecao: d.piorCasoSemProtecao,
           ativa: tem(e.equipesAbertas, eq) && e.equipesAbertas[eq] === true,
         };
       }
@@ -435,6 +438,11 @@
         // auxílio do INSS +R$ 2.431"), só quando há: lista vazia o RTDB apaga,
         // e o resultado lido não bateria com o gravado.
         if (res.deAntes.length > 0) daRodada[eq].deAntes = res.deAntes;
+        // D-059: o que a proteção pagou no mês, nomeado ("auxílio do INSS"), e
+        // quanto ela evitou. Só quando houve: gravar 0 em toda equipe de todo
+        // mês seria ruído, e lista vazia o RTDB apaga.
+        if (res.protecaoEvitou > 0) daRodada[eq].protecaoEvitou = res.protecaoEvitou;
+        if (res.protecaoItens.length > 0) daRodada[eq].protecaoItens = res.protecaoItens;
       }
       const placar = calcularPlacar({ ...(resultados || {}), [r]: daRodada }, e);
       return gravarComEstado({ ...e, subfase: 'sorteio', empatadas: null, restanteMs: null }, {

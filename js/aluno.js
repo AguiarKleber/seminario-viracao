@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '4';
+  const VERSAO_APP = '5';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -498,8 +498,24 @@
     if (chave === app.chaveVotos) return;
     app.chaveVotos = chave;
     for (const f of app.desligarVotos.splice(0)) f();
+    // Os votos ainda não lidos do servidor. Sem isso, um celular recarregado
+    // no meio da sessão (que perde os votos guardados na memória) abria o
+    // comparativo mostrando "você antes: sem resposta" até a leitura chegar,
+    // uma fração de segundo depois: o aluno via a própria resposta sumir.
+    app.votosLendo = new Set(alvos.map(([enq, m, a]) => `${enq}|${m}|${a}`));
+    // Teto de 4 s para o "carregando…": no e2e, o ouvinte de um voto que não
+    // existe (quem não votou no "depois") às vezes não devolve o vazio num
+    // celular recarregado, e a tela ficava presa em "carregando…". Passado o
+    // teto, ausência vira "sem resposta", como era antes; voto que existe chega
+    // em milissegundos e aparece normalmente.
+    setTimeout(() => {
+      if (app.chaveVotos !== chave || app.votosLendo.size === 0) return;
+      app.votosLendo.clear();
+      desenhar();
+    }, 4000);
     for (const [enq, m, a] of alvos) {
       app.desligarVotos.push(ouvinteResistente(cam('votosEnquete', enq, m, a, app.uid), (v) => {
+        app.votosLendo.delete(`${enq}|${m}|${a}`);
         const porMomento = ((app.votosServidor[enq] ||= {})[m] ||= {});
         if (Number.isInteger(v)) porMomento[a] = v;
         else delete porMomento[a];
@@ -707,6 +723,10 @@
     const chave = JSON.stringify([
       app.fase, app.aviso, app.erro?.titulo, app.erro?.texto, app.embutido, tela, app.ui.foco, app.ui.nota, app.ui.aberta,
       resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' ? contagemEquipes() : null,
+      // Os votos ainda em leitura entram na chave: o "carregando…" do
+      // comparativo só vira "sem resposta" com um redesenho, e a chegada de um
+      // voto vazio não muda nenhum outro dado da tela (a tela ficava presa).
+      [...(app.votosLendo || [])].sort(),
     ]);
     desenharCracha();
     desenharFaixas();
@@ -1198,16 +1218,22 @@
   // (conserto, remédio, multa) ficam fora do "entrou" desde o esquema v2.1:
   // dentro dele, o "entrou" chegava a ficar negativo (decisões, "Correções de
   // conta").
-  function contaDoMes(mes, persona, deAntes = mes?.deAntes) {
+  // D-059: "a proteção pagou R$ X" entra logo depois do "Entrou" (ela fica fora
+  // dele no motor, e sem ela a conta da linha não fecharia), e a frase inteira
+  // da proteção vem numa linha própria (linhaProtecao).
+  function contaDoMes(mes, persona, deAntes = mes?.deAntes, protecaoDoMes = mes?.protecaoDoMes) {
     if (!mes || !Number.isFinite(mes.saldoMes)) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
     const faltou = mes.saldoMes < 0;
     // Sala de antes do v2.1 não grava gastos nem custos fixos: valem 0, e o
-    // "entrou" dela já os trazia dentro (a conta continua fechando).
+    // "entrou" dela já os trazia dentro (a conta continua fechando). Sala de
+    // antes da D-059 não grava a proteção: vale 0.
     const gastos = Number(mes.gastos) || 0;
     const custosFixos = Number(mes.custosFixos) || 0;
+    const protecao = Number(mes.protecao) || 0;
     const linha = ['Entrou ', moeda(mes.entrou)];
+    if (protecao > 0) linha.push(' · a proteção pagou ', moeda(protecao));
     if (gastos > 0) linha.push(' · gastos ', moeda(gastos));
     linha.push(' · o básico da família custa ', moeda(mes.basico));
     if (mes.juros > 0) linha.push(' · juros da dívida ', moeda(mes.juros));
@@ -1226,13 +1252,24 @@
     if (mes.outraRenda > 0) origem.push(`${persona?.outraRenda?.rotulo || 'outra renda da casa'}: ${F().moeda(mes.outraRenda)}`);
     return el('div', {
       classe: 'conta-mes',
-      dados: { entrou: mes.entrou, gastos, basico: mes.basico, juros: mes.juros || 0, saldoMes: mes.saldoMes, resultado: faltou ? 'faltou' : 'sobrou' },
+      dados: { entrou: mes.entrou, protecao, gastos, basico: mes.basico, juros: mes.juros || 0, saldoMes: mes.saldoMes, resultado: faltou ? 'faltou' : 'sobrou' },
     }, [
       el('p', { classe: 'conta-linha' }, linha),
       origem.length > 0 ? el('p', { classe: 'conta-origem', texto: origem.join(' · ') }) : null,
       linhaDeAntes(deAntes),
+      linhaProtecao(protecaoDoMes),
       el('p', { classe: 'conta-saldo' }, [faltou ? 'Faltou ' : 'Sobrou ', moeda(Math.abs(mes.saldoMes))]),
     ]);
+  }
+
+  // D-059: "A proteção pagou R$ 900: auxílio do INSS (MEI). Sem ela, teria
+  // faltado R$ 900 a mais." A proteção é seguro, e não rende na média: o que
+  // ela vale é o que evitou naquele mês. A frase vem de historia.js, a mesma
+  // que o núcleo testa. Sem proteção no mês (ou sala antiga), sem a linha.
+  function linhaProtecao(protecaoDoMes) {
+    const frase = N().historia?.fraseDaProtecao(protecaoDoMes, (v) => F().moeda(v));
+    if (!frase) return null;
+    return D().el('p', { classe: 'conta-protecao', dados: { evitou: String(protecaoDoMes.evitou) }, texto: frase });
   }
 
   // O que veio dos meses anteriores (motor, deAntes, gravado pelo anfitrião):
@@ -1294,6 +1331,7 @@
         const conta = m && Number.isFinite(m.saldoMes)
           ? el('p', { classe: 'historia-conta' }, [
             'Entrou ', moeda(m.entrou),
+            m.protecao > 0 ? [' · a proteção pagou ', moeda(m.protecao)] : null,
             m.gastos > 0 ? [' · gastos ', moeda(m.gastos)] : null,
             ' · básico ', moeda(m.basico),
             m.juros > 0 ? [' · juros ', moeda(m.juros)] : null,
@@ -1311,6 +1349,7 @@
           linhaCustoCarta(h.cartaCusto),
           linhaDeAntes(h.deAntes),
           conta,
+          linhaProtecao(h.protecaoDoMes),
         ]);
       })),
     ];
@@ -1386,6 +1425,7 @@
       filhos.push(el('h2', { classe: 'subtitulo', texto: 'Escolha ou sorte?' }),
         el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])));
     }
+    if (d.final) filhos.push(blocoPiorCaso(d.piorCaso));
     acrescentar(alvo, el('section', { classe: 'bloco' }, filhos));
     return 'situacao';
   }
@@ -1579,7 +1619,7 @@
       linhaCustoCarta(d.cartaCusto),
       el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
       d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
-      contaDoMes(d.mes, personaDaEquipe(d.equipe?.id), d.deAntes),
+      contaDoMes(d.mes, personaDaEquipe(d.equipe?.id), d.deAntes, d.protecaoDoMes),
       linhaDivida(d.divida),
       el('h2', { classe: 'subtitulo', texto: 'Como ficou' }),
       listaIndicadores(d.indicadores, d.delta),
@@ -1589,16 +1629,42 @@
 
   function telaComparativo(alvo, d) {
     const { el, acrescentar } = D();
-    const voto = (v) => (v ? rotuloVoto(v) : 'sem resposta');
+    // Enquanto a leitura do servidor não chegou, "carregando…", e nunca
+    // "sem resposta": ausência de voto só depois de o servidor confirmar.
+    const idEnquete = app.dados.estado?.enquete;
+    const lendo = (m, a) => Boolean(app.votosLendo?.has(`${idEnquete}|${m}|${a}`));
+    const voto = (v, m, a) => (v ? rotuloVoto(v) : lendo(m, a) ? 'carregando…' : 'sem resposta');
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       cabecalho(`Comparativo · ${d.enquete.titulo}`, 'Você antes e agora'),
       el('p', { classe: 'texto-2', texto: 'Só você vê esta tela. O telão mostra apenas os totais da turma.' }),
       el('ol', { classe: 'respostas' }, d.afirmacoes.map((a) => el('li', { classe: 'resposta', dados: { afirmacao: a.id } }, [
         el('p', { classe: 'resposta-texto', texto: a.texto }),
-        el('p', { classe: 'resposta-voto' }, ['Você antes: ', el('b', { texto: voto(a.antes) }), ', agora: ', el('b', { texto: voto(a.depois) })]),
+        el('p', { classe: 'resposta-voto' }, ['Você antes: ', el('b', { texto: voto(a.antes, 'antes', a.id) }), ', agora: ', el('b', { texto: voto(a.depois, 'depois', a.id) })]),
       ]))),
     ]));
     return 'comparativo';
+  }
+
+  // "O pior que podia acontecer" (D-059), o mesmo do telão: o pior caso com
+  // as escolhas da equipe e, se ela escolheu uma proteção que o melhorou, sem
+  // ela e quanto ela evitou. A regra do que aparece é a do núcleo
+  // (historia.piorCasoDoPlacar): o "sem" nunca sai melhor que o "com". Antes,
+  // o pior caso só existia no telão (revisão da F5, achado 10). Sem pior caso
+  // (config sem proteção, sala antiga), sem o bloco.
+  function blocoPiorCaso(p) {
+    if (!p) return null;
+    const { el } = D();
+    const linhas = [['Com as escolhas de vocês', F().moeda(p.comEscolhas)]];
+    let nota = null;
+    if (p.situacao === 'evitou') {
+      linhas.push(['Sem a proteção', F().moeda(p.semProtecao)], ['A proteção evitou', F().moeda(p.evitou), 'placar-total']);
+    } else if (p.situacao === 'naoMelhorou') nota = 'Nos meses jogados, a proteção não melhorou o pior caso.';
+    else if (p.situacao === 'semEscolha') nota = 'Vocês não escolheram proteção.';
+    return el('div', { classe: 'pior-caso', dados: { situacao: p.situacao } }, [
+      el('h2', { classe: 'subtitulo', texto: 'O pior que podia acontecer' }),
+      el('dl', { classe: 'indicadores pior-caso-lista' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])),
+      nota ? el('p', { classe: 'texto-2', texto: nota }) : null,
+    ]);
   }
 
   function telaFim(alvo, d) {
@@ -1609,6 +1675,7 @@
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
       d.placar && renda ? el('p', { classe: 'texto' }, [`${renda.nome} da sua equipe: `, el('b', { texto: F().indicador(renda, d.placar.renda) })]) : null,
       blocoHistoria(d.historia),
+      blocoPiorCaso(d.piorCaso),
       el('p', { classe: 'texto-2', texto: 'Pode fechar esta página. Os votos individuais são apagados com a sala.' }),
     ]));
     return 'fim';

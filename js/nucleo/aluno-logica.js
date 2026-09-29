@@ -137,6 +137,8 @@
         // O que veio dos meses anteriores (a fratura que continua, o INSS, a
         // multa do aluguel), gravado pelo anfitrião; vazio em sala antiga.
         deAntes: lista(ultimo.deAntes),
+        // O que a proteção pagou no mês (D-059), ou null.
+        protecaoDoMes: protecaoDe(ultimo),
       };
       if (opcao.narrativa) dados.narrativa.push(opcao.narrativa);
       if (carta.narrativa) dados.narrativa.push(carta.narrativa);
@@ -251,6 +253,9 @@
       // sem isto, os dois sumiam dentro do "Do trabalho" (revisão de 29/09,
       // 2ª rodada, achado 10). Lista vazia quando não há (ou sala antiga).
       deAntes: lista(res.deAntes),
+      // D-059: "A proteção pagou R$ 900: auxílio do INSS. Sem ela, teria
+      // faltado R$ 900 a mais." null quando ela não pagou nada.
+      protecaoDoMes: protecaoDe(res),
     });
   }
 
@@ -296,6 +301,7 @@
           ? tela('situacao', {
             ...dadosSituacao(conteudo, equipeValida, resultados), placar: em(placar, equipeValida), final: true,
             historia: historia(conteudo, equipeValida, resultados),
+            piorCaso: piorCasoDaEquipe(conteudo, placar, resultados, equipeValida),
           })
           : aguardando('apresentacao');
       case 'comparativo':
@@ -304,10 +310,29 @@
         return tela('fim', {
           equipe: equipeValida ? resumoEquipe(conteudo, equipeValida) : null, placar: equipeValida ? em(placar, equipeValida) : null,
           historia: equipeValida ? historia(conteudo, equipeValida, resultados) : [],
+          piorCaso: equipeValida ? piorCasoDaEquipe(conteudo, placar, resultados, equipeValida) : null,
         });
       default:
         return aguardando('telao');
     }
+  }
+
+  // O que a proteção pagou (D-059), com a mesma função da história: o celular
+  // e o telão contam a mesma coisa. Buscado na hora da chamada, como abaixo.
+  function protecaoDe(res) {
+    const H = raiz.Viracao.historia;
+    return H ? H.protecaoDoResultado(res) : null;
+  }
+
+  // O pior caso da equipe no placar (D-059), com e sem a proteção, pela mesma
+  // regra do telão (historia.piorCasoDoPlacar): o "sem" só quando é pior que o
+  // "com". Antes, só o telão mostrava o pior caso, e a D-059 o pede também na
+  // história da equipe (revisão da F5, achado 10). null quando o config não
+  // tem proteção (a página do telão também não existe) ou o placar não o tem.
+  function piorCasoDaEquipe(conteudo, placar, resultados, equipeId) {
+    const H = raiz.Viracao.historia;
+    if (!H || !H.temProtecao(conteudo)) return null;
+    return H.piorCasoDoPlacar(em(placar, equipeId), H.escolheuProtecao(conteudo, resultados, equipeId));
   }
 
   // A história da equipe (D-045) vem de historia.js, buscado na hora da chamada

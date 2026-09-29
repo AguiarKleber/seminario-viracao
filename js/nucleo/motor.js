@@ -138,14 +138,16 @@
   }
 
   // O tipo de um efeito na ordem do mês (esquema v2.1, contratos seção 3):
-  // "gasto" (conserto, remédio, multa), "custoFixo" (parcela, aluguel do
-  // veículo) ou "trabalho" (o resto, o único que multiplica atinge).
+  // "gasto" (conserto, remédio, multa), "protecao" (D-059: o dinheiro que chega
+  // por causa de uma proteção, como o INSS pago ao MEI ou a ajuda da
+  // associação), "custoFixo" (parcela, aluguel do veículo) ou "trabalho" (o
+  // resto, o único que multiplica atinge).
   function tipoDoEfeito(efeito) {
-    if (efeito.categoria === 'gasto') return 'gasto';
+    if (efeito.categoria === 'gasto' || efeito.categoria === 'protecao') return efeito.categoria;
     return efeito.fixo === true ? 'custoFixo' : 'trabalho';
   }
 
-  // Os efeitos do mês, em três passadas (esquema v2.1):
+  // Os efeitos do mês, em quatro passadas (esquema v2.1 e D-059):
   // 1. trabalho variável, na ordem todoMes → gerais → opção → carta: soma
   //    adiciona ao delta, e multiplica multiplica o delta daquele indicador. É
   //    a única passada em que multiplica vale, e por isso a carta que zera a
@@ -155,8 +157,13 @@
   // 2. − custos fixos (efeitos com fixo, de qualquer origem);
   // 3. − gastos (efeitos com categoria "gasto", de qualquer origem): ficam fora
   //    do "entrou", que antes chegava a −R$ 2.541 porque levava o conserto e o
-  //    remédio junto (revisão de 29/09, item 2).
-  // Custo fixo e gasto só têm soma (o validador recusa multiplica neles).
+  //    remédio junto (revisão de 29/09, item 2);
+  // 4. + proteção (efeitos com categoria "protecao", D-059): também fora do
+  //    "entrou" e de qualquer multiplica. Dentro do trabalho, o INSS do MEI
+  //    sumia no meio da renda (o celular dizia "Do trabalho e da decisão" de
+  //    quem ficou parado), e a tela não tinha como dizer "a proteção pagou
+  //    R$ X". Fica fora do piso: o piso é do trabalho, e ela não é trabalho.
+  // Custo fixo, gasto e proteção só têm soma (o validador recusa multiplica).
   // A carta é o último grupo da passada 1, então o trabalho "sem a carta" é o
   // delta logo antes dela: nenhuma condição lê a carta do próprio mês, e por
   // isso isto dá o mesmo que refazer o mês sem a carta, sem aplicar duas vezes
@@ -169,9 +176,12 @@
   // fechava (revisão de 29/09, 2ª rodada, achado 10). O corte que vale para
   // todos, o efeito da opção e a carta ficam de fora: a rodada, a letra e o
   // custo da carta já os dizem. O custo fixo também: já está em "custos fixos".
+  // A proteção também fica de fora: a tela a diz numa linha própria ("a
+  // proteção pagou R$ X"), e em "veio de antes" ela apareceria duas vezes.
   function deAntes(origem, efeito) {
     const se = efeito.se;
-    return origem === 'geral' && tipoDoEfeito(efeito) !== 'custoFixo'
+    const tipo = tipoDoEfeito(efeito);
+    return origem === 'geral' && tipo !== 'custoFixo' && tipo !== 'protecao'
       && !!se && (se.decidiu !== undefined || se.sorteou !== undefined || se.indicador !== undefined);
   }
 
@@ -222,8 +232,9 @@
     const trabalho = delta[ind];
     if (trabalhoSemCarta === null) trabalhoSemCarta = trabalho;
     if (piso) trabalhoSemCarta = Math.max(0, trabalhoSemCarta);
-    const somados = { custoFixo: 0, gasto: 0, gastoDaCarta: 0 };
-    for (const tipo of ['custoFixo', 'gasto']) {
+    const somados = { custoFixo: 0, gasto: 0, gastoDaCarta: 0, protecao: 0 };
+    const protecaoItens = [];
+    for (const tipo of ['custoFixo', 'gasto', 'protecao']) {
       for (const { origem, efeito, rotulo } of valem) {
         if (tipoDoEfeito(efeito) !== tipo) continue;
         for (const [i, valor] of Object.entries(efeito.soma || {})) {
@@ -232,21 +243,25 @@
           if (i !== ind) continue;
           somados[tipo] += valor;
           if (tipo === 'gasto' && origem === 'carta') somados.gastoDaCarta += valor;
+          if (tipo === 'protecao') protecaoItens.push({ rotulo, valor });
         }
       }
     }
     // Custos e gastos saem com o sinal da tela ("gastos R$ 400"): positivos
-    // quando tiram dinheiro. "+ 0" troca o -0 de −(0) por 0.
+    // quando tiram dinheiro. "+ 0" troca o -0 de −(0) por 0. A proteção sai
+    // como chega, positiva ("a proteção pagou R$ 900").
     return {
       trabalho, custosFixos: -somados.custoFixo + 0, gastos: -somados.gasto + 0,
       rendaPerdida: Math.max(0, trabalhoSemCarta - trabalho), gastosDaCarta: -somados.gastoDaCarta + 0,
+      protecao: somados.protecao, protecaoItens,
     };
   }
 
   // A parte determinística da rodada (arquitetura, seção 7; D-044, D-046 e o
   // esquema v2.1):
   // - o delta de cada indicador começa em 0;
-  // - (1) trabalho variável → (2) − custos fixos → (3) − gastos (efeitosDoMes);
+  // - (1) trabalho variável → (2) − custos fixos → (3) − gastos → (3b) +
+  //   proteção (efeitosDoMes);
   // - depois, na renda: (4) + outra renda da casa, (5) − básico da casa (a soma
   //   dos itens), (6) − juros sobre a dívida que vinha de ANTES do mês. É no fim
   //   porque a conta da casa chega igual, com ou sem acidente: a carta que corta
@@ -257,6 +272,12 @@
   // cartaCusto é o custo real da carta para a tela (D-052): os dias parados
   // (informativo, do config), a renda do trabalho que ela tirou e os gastos
   // que ela trouxe.
+  // protecaoEvitou (D-059) é quanto o saldo do mês seria menor sem os efeitos
+  // de proteção daquele mês, e é o mes.protecao: os juros do mês são cobrados
+  // sobre a dívida que vinha de ANTES, e a proteção deste mês não os muda. O
+  // que ela evita de juros nos meses seguintes aparece nas contas deles e no
+  // piorCasoSemProtecao do placar. protecaoItens nomeia o que pagou ("auxílio
+  // do INSS (45 dias)"), para a frase do celular.
   function aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico }) {
     const ctx = contexto(config, equipeId, rodadaId, opcaoId, estado, historico);
     const persona = exigir(config.personas, ctx.personaId, 'Persona');
@@ -293,12 +314,12 @@
     // uma origem.
     const antes = linhas.filter((l) => l.deAntes)
       .map((l) => (l.origem === 'gasto' ? { rotulo: l.rotulo, valor: l.valor, gasto: true } : { rotulo: l.rotulo, valor: l.valor }));
-    return { delta, depois, linhas, mes, cartaCusto, deAntes: antes };
+    return { delta, depois, linhas, mes, cartaCusto, deAntes: antes, protecaoEvitou: mes.protecao, protecaoItens: efeitos.protecaoItens };
   }
 
   // Outra renda, básico e juros entram no delta da renda e nas linhas. Linha de
   // valor 0 não entra: "juros R$ 0" em todo mês sem dívida seria só ruído.
-  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos }) {
+  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos, protecao }) {
     const ind = INDICADOR_PLACAR;
     const outra = persona.outraRenda && Number(persona.outraRenda.valor) > 0 ? persona.outraRenda.valor : 0;
     if (outra > 0) {
@@ -322,9 +343,13 @@
     }
     const basico = totalBasico(persona);
     // O "entrou" é o que o trabalho deixou (já sem os custos fixos) mais a outra
-    // renda da casa; os gastos do problema ficam numa linha própria.
+    // renda da casa; os gastos do problema e o que a proteção pagou (D-059)
+    // ficam cada um numa linha própria.
     const entrou = trabalho - custosFixos + outra;
-    return { trabalho, custosFixos, gastos, outraRenda: outra, entrou, basico, juros, saldoMes: entrou - gastos - basico - juros, dividaAntes };
+    return {
+      trabalho, custosFixos, gastos, protecao, outraRenda: outra, entrou, basico, juros,
+      saldoMes: entrou + protecao - gastos - basico - juros, dividaAntes,
+    };
   }
 
   // O furo de um mês comum (tela de personas do telão; revisão de 29/09): só o
@@ -354,8 +379,11 @@
     // estão abertas nem da ordem de apuração (contratos seção 2).
     const aleatorio = S.gerador(S.derivar(semente, 'carta:' + equipeId));
     const carta = S.sortearPonderado(baralho.map((c) => ({ id: c.carta, peso: c.peso })), aleatorio);
-    const { delta, depois, linhas, mes, cartaCusto, deAntes: antes } = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico });
-    return { carta, chances: baralho, delta, depois, linhas, mes, cartaCusto, deAntes: antes };
+    const a = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico });
+    return {
+      carta, chances: baralho, delta: a.delta, depois: a.depois, linhas: a.linhas, mes: a.mes, cartaCusto: a.cartaCusto,
+      deAntes: a.deAntes, protecaoEvitou: a.protecaoEvitou, protecaoItens: a.protecaoItens,
+    };
   }
 
   // Como a equipe chega à decisão (arquitetura, seção 8). A ordem dos testes é a
@@ -421,7 +449,25 @@
     return { esperado, pior };
   }
 
+  // O plano "sem a proteção" (D-059): as mesmas decisões, com cada opção
+  // marcada com protege trocada pelo padrão do mês. Devolve null quando a
+  // equipe não escolheu nenhuma: aí o pior caso sem proteção é o próprio
+  // piorCaso, e a enumeração não precisa ser refeita.
+  function planoSemProtecao(config, plano) {
+    let trocou = false;
+    const sem = plano.map((p) => {
+      const rodada = exigir(config.rodadas, p.rodadaId, 'Rodada');
+      if (obter(rodada.opcoes, p.opcaoId)?.protege !== true || p.opcaoId === rodada.padrao) return p;
+      trocou = true;
+      return { rodadaId: p.rodadaId, opcaoId: rodada.padrao };
+    });
+    return trocou ? sem : null;
+  }
+
   // O placar decomposto (D-009): realizado = piloto + efeitoDecisoes + sorte.
+  // piorCasoSemProtecao (D-059): a proteção funciona como seguro, que perde em
+  // valor esperado e ganha no pior caso. O esperado nunca mostraria o que ela
+  // vale; o pior caso com e sem ela mostra.
   function decompor(config, { equipeId, rodadas }) {
     const inicial = estadoInicial(config, equipeId);
     let estado = inicial;
@@ -438,6 +484,7 @@
     }));
     const comDecisoes = explorar(config, equipeId, planoDecidido, inicial, 0, {});
     const piloto = explorar(config, equipeId, planoPiloto, inicial, 0, {});
+    const semProtecao = planoSemProtecao(config, planoDecidido);
     return {
       realizado,
       esperadoComDecisoes: comDecisoes.esperado,
@@ -445,6 +492,7 @@
       efeitoDecisoes: comDecisoes.esperado - piloto.esperado,
       sorte: realizado - comDecisoes.esperado,
       piorCaso: comDecisoes.pior,
+      piorCasoSemProtecao: semProtecao ? explorar(config, equipeId, semProtecao, inicial, 0, {}).pior : comDecisoes.pior,
     };
   }
 
