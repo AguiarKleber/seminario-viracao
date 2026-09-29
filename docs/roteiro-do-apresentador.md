@@ -25,9 +25,25 @@ seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 - tudo o que só você usa (exportar, apagar, dicas de tecla, avisos) fica na
   **barra oculta** (D-047).
 
+**Revisão do conteúdo de 29/09 (D-050 a D-057, esquema v2.1, versão 4 do
+site).** O que muda para quem conduz:
+- o resultado diz **o custo real da carta**: "20 dias parado · renda perdida
+  R$ 1.787 · gastos R$ 1.650" (D-052). O conserto, o remédio e a multa saem numa
+  linha própria, "gastos", fora do "entrou";
+- o que vem do mês anterior aparece com nome: "+25 dias da fratura −R$ 2.233",
+  "INSS (45 dias) +R$ 2.431", a multa do aluguel, o saldo do empréstimo;
+- no celular, **tocar numa opção abre a explicação e não vota**; o voto só vale
+  no botão **"Votar nesta"** (D-055);
+- a mesma opção vem dita do jeito de cada ofício (D-054): a equipe da Daiane lê
+  "Aceitar toda encomenda", e a do Jonas, "Aceitar tudo o que vier". A letra é a
+  mesma;
+- o **empréstimo** passou para o mês 2 (opção D), e a energia baixa passou a
+  custar renda e a aumentar o risco de acidente (D-051). Veja "O que atravessa
+  os meses", na seção 5.6.
+
 Os pontos marcados "vamos testar" (D-041, D-042, D-043) são para observar no
 teste (seção 13). As perguntas de conteúdo ainda em aberto estão no
-[rascunho-conteudo.md](rascunho-conteudo.md), seções 6 e 7.
+[rascunho-conteudo.md](rascunho-conteudo.md), seção 8.
 
 1. [O que levar](#1-o-que-levar)
 2. [Véspera](#2-véspera)
@@ -370,8 +386,11 @@ slides.
 - **Celular**, de cima para baixo: o cronômetro; o **contexto da família** naquele
   mês ("Na casa de Jonas: a parcela da moto vence dia 5…"), diferente para cada
   persona; o básico e a dívida; as 4 opções, cada uma com a contagem ao vivo da
-  equipe. Só a opção escolhida mostra a narrativa do que ela significa. Se as
-  opções não couberem na tela, o botão "Mais opções abaixo ↓" leva até elas.
+  equipe, com o texto do jeito do ofício da persona (D-054). **Tocar numa opção
+  abre a explicação dela e não vota**; o voto só vale no botão **"Votar
+  nesta"**, logo abaixo da explicação (D-055). A opção com o voto do aluno diz
+  "✓ seu voto". Se as opções não couberem na tela, o botão "Mais opções abaixo
+  ↓" leva até elas.
 - **Faça:** Espaço abre a decisão. Leia a situação e as opções em voz alta. A
   dica da barra mostra quanto falta do **tempo mínimo de conversa** (45 s). Quando
   ela disser "Todas as equipes decidiram. Enter encerra.", ou quando o tempo
@@ -381,6 +400,8 @@ slides.
     de vocês este mês: está no celular."
   - "Não tem resposta certa. Cada opção tem um preço, e ele pode aparecer só no
     mês que vem."
+  - "Toquem numa opção para ler o que ela quer dizer. Tocar não vota: o voto só
+    vale no botão 'Votar nesta'."
   - "Cada um vota no próprio celular e vê a contagem da equipe. Vale a opção mais
     votada, e dá para mudar até eu encerrar. Se ninguém votar, fica o de
     sempre."
@@ -388,12 +409,25 @@ slides.
   - quem abre o **MEI** no mês 1 paga o DAS nos três meses, e só quem pagava o
     MEI recebe o auxílio do INSS depois de um acidente, um mês depois. Mesmo
     assim, a perícia pode negar (carta "A perícia do INSS negou o auxílio");
-  - a **fratura** do mês 2 continua no mês 3 (mais 25 dias parado), e a lesão pode
-    voltar (carta "A lesão voltou");
-  - a **conta bloqueada** no mês 2 continua bloqueada o mês 3 inteiro. Quem rodava
-    em dois apps no mês 2 segura metade da renda no outro app;
-  - o **empréstimo** do mês 3 cobra juros, e a dívida que sobra paga juros de
-    7,43% ao mês;
+  - a **fratura** do mês 2 continua no mês 3 (mais 25 dias parado). A lesão só
+    volta (carta "A lesão voltou", mais 10 dias) para quem escolhe, no mês 3,
+    "não parar nenhum dia, nem machucado", ou seja, volta antes da alta;
+  - a **conta bloqueada** no mês 2 continua bloqueada o mês 3 inteiro, e no mês
+    3 só sai a carta "Normal". Quem rodava em dois apps no mês 2 segura metade da
+    renda no outro app. A **associação** (mês 3, A) traz um advogado: com ela, a
+    liminar devolve a conta no 21º dia;
+  - o **empréstimo** do mês 2 (D) põe R$ 1.500 na conta na hora. No mês 3 vêm a
+    1ª parcela (R$ 183; R$ 213 no empréstimo da 99 do Marcos) e o saldo devedor
+    (R$ 1.413), que o placar conta como gasto: a dívida continua depois do jogo.
+    Entre o resultado do mês 2 e o do mês 3, quem pegou o empréstimo aparece no
+    azul, sem "dívida". **Não use o "Pular para…" por cima do mês 3 com alguma
+    equipe que pegou o empréstimo:** ela terminaria com os R$ 1.500 sem dever
+    nada (rascunho, seção 8, item 13);
+  - quem termina um mês **no vermelho** (saldo acumulado negativo) paga a multa
+    do aluguel no mês seguinte, além dos juros de 7,43% ao mês;
+  - **energia baixa custa** (D-051): abaixo de 3, a renda cai 10% ("exausto"), e
+    quanto mais baixa, maior a chance de acidente (até 4,3 vezes). A madrugada do
+    mês 3 também multiplica o risco por 4,3;
   - a **associação** do mês 3 custa a mensalidade e um dia de assembleia.
 
 **Empate**
@@ -413,30 +447,53 @@ slides.
 - **Diga:** "A decisão de vocês mudou o tamanho das fatias. A sorte escolhe a
   fatia. Decide-se antes de saber, como na vida."
 
-**Resultado** (D-044, D-046)
-- **Telão:** uma frase por equipe: a equipe, a letra da decisão, o título da
-  carta, a origem da decisão quando não foi a maioria ("ninguém votou",
-  "empate na moeda", "na prorrogação" ou "pelo apresentador") e as **contas do
-  mês**: "entrou R$ X · básico R$ Y · faltou R$ Z" (ou
-  "sobrou"), com "juros R$ J" no meio quando a equipe já vinha devendo, e
-  "dívida R$ D" no fim quando o saldo ficou negativo. Com alguma dívida na tela,
-  o cabeçalho diz uma vez só "a dívida paga juros de 7,43% ao mês". Só as cartas
-  de efeito mais forte ganham destaque (quantas, diz o `destacarCartas` do
-  config). Carta grave nunca anima.
-- **Celular:** a carta da equipe, com a narrativa em primeira pessoa, e a conta
-  do mês: "Entrou R$ X · o básico da família custa R$ Y" e, em destaque, "Faltou
-  R$ Z". Com outra renda na casa, uma linha separa o que veio do trabalho e o que
-  veio da outra renda. Embaixo, "Dívida R$ D · juros de 7,43% ao mês".
-- **Como ler a conta:** "entrou" é o que o trabalho deu no mês (já com a carta,
-  a decisão e os custos do trabalho), mais a outra renda da casa. O básico é
-  cobrado **no fim do mês, depois de tudo**: a carta corta o que se ganha, e
-  nunca a conta da casa. O que falta vira dívida no cheque especial, e o mês
-  seguinte começa pagando juros sobre ela.
-  - O telão mostra o título da carta, e não o custo dela em dias e em reais: o
-    detalhe está na narrativa, no celular da equipe. Mostrar o custo no telão é
-    uma pergunta em aberto (rascunho, seção 7, pergunta 7).
-  - Com acidente, o "entrou" pode ficar negativo: o conserto e o remédio saem do
-    que o trabalho deu (rascunho, seção 7, pergunta 2).
+**Resultado** (D-044, D-046, D-052)
+- **Telão:** uma frase por equipe: a equipe, a letra da decisão, a carta, **o
+  custo real dela**, o que veio do mês anterior, a origem da decisão quando não
+  foi a maioria ("ninguém votou", "empate na moeda", "na prorrogação" ou "pelo
+  apresentador") e as **contas do mês**. Por exemplo, o Jonas no mês 2, com o
+  breque (B), a fratura e nenhuma dívida de antes: "Fratura · 20 dias parado ·
+  renda perdida R$ 1.787 · entrou R$ 1.421 · gastos R$ 1.650 · básico
+  R$ 4.166 · faltou R$ 4.395 · dívida R$ 4.395".
+  - A carta com custo aparece pelo nome curto ("Fratura"); o título inteiro
+    acabou de sair no sorteio.
+  - "gastos" (conserto, remédio, multa) só aparece quando houve. Quando os gastos
+    têm mais de uma origem, a frase soma à vista: "gastos R$ 1.650 + multa
+    R$ 130".
+  - O que veio do mês anterior vem com nome e sinal: "+25 dias da fratura
+    −R$ 2.233", "INSS (45 dias) +R$ 2.431", "bloqueio: o mês todo".
+  - "juros R$ J" entra antes do "faltou" quando a equipe já vinha devendo, e
+    "dívida R$ D" no fim quando o saldo ficou negativo. Com alguma dívida na
+    tela, o cabeçalho diz uma vez só "a dívida paga juros de 7,43% ao mês".
+  - Só as cartas de efeito mais forte ganham destaque (quantas, diz o
+    `destacarCartas` do config). Carta grave nunca anima.
+  - No pior caso (seis equipes com carta cara, dívida e coisas do mês
+    anterior), a frase não cabe em 1024×768. O telão tira então, nesta ordem, a
+    origem da decisão e o que veio do mês anterior: o celular de cada equipe
+    continua mostrando os dois.
+- **Celular:** a carta da equipe, com a narrativa em primeira pessoa; "O que a
+  carta custou: 20 dias parado · renda perdida R$ 1.787 · gastos R$ 1.650"; e a
+  conta do mês: "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y" e,
+  em destaque, "Faltou R$ Z". Embaixo do "entrou", de onde ele veio ("Do
+  trabalho e da decisão · custos fixos do trabalho · salário da companheira") e,
+  quando há, "Veio dos meses anteriores (já na conta): …". No fim, "Dívida R$ D
+  · juros de 7,43% ao mês".
+- **Como ler a conta:**
+  - "entrou" é o que o trabalho deu no mês (já com a decisão e a carta), menos
+    os custos fixos do trabalho (a parcela da moto, o DAS), mais a outra renda da
+    casa;
+  - "gastos" é o que um evento custou (o conserto, o remédio, a multa, o saldo do
+    empréstimo), fora do "entrou";
+  - o básico é cobrado **no fim do mês, depois de tudo**: a carta corta o que se
+    ganha, e nunca a conta da casa nem a parcela da moto;
+  - "faltou" = entrou − gastos − básico − juros. O que falta vira dívida no
+    cheque especial, e o mês seguinte começa pagando juros sobre ela;
+  - "renda perdida" é o que a carta tirou do trabalho daquele mês. Nunca passa
+    da renda que havia: o trabalho não fica abaixo de zero;
+  - **em casos raros o "entrou" fica negativo** (Daiane e Rose, num mês 3 parado
+    depois de bloqueio e empréstimo): o trabalho foi a zero, e a parcela do curso,
+    a do empréstimo e o DAS continuam saindo. Se aparecer: "A parcela vence parado
+    ou não" (rascunho, seção 8, item 11).
 - **Faça:** comente as cartas destacadas e as equipes com a maior falta, e siga
   com Espaço para o próximo bloco.
 - **Diga**, ao mostrar quanto faltou para o básico:
@@ -444,8 +501,10 @@ slides.
     tudo o que precisa para viver. Não é luxo: é comida, aluguel, luz e ônibus."
   - "Essa falta não some. Vira dívida no cheque especial, a 7,43% ao mês, e o
     mês que vem já começa pagando juros."
-  - Depois de uma carta de parada: "Cada dia parado é um dia sem renda. O app não
-    paga nenhum. O INSS, só para quem já pagava o MEI, e só depois."
+  - Depois de uma carta de parada, leia o custo dela na tela: "Vinte dias
+    parado: R$ 1.787 que não entraram, mais R$ 1.650 de conserto e remédio. O
+    app não paga nenhum desses dias. O INSS, só para quem já pagava o MEI, e só
+    depois."
   - Sem tom de consolo nem de piada, e sem apontar "quem jogou mal": o objetivo é
     a turma sentir a dúvida de quem decide sem saber o que vem (D-044).
   - Leia a consequência de cada carta grave com o tom de quem conta um fato, sem
@@ -476,13 +535,20 @@ uns 30 s por página.
     família nos três meses."
   - "Comparem as duas equipes do Jonas: a mesma casa, decisões e sorte
     diferentes."
-  - Na linha de carteira assinada: "Com carteira, na mesma casa, também faltaria,
-    mas bem menos." O FGTS fica para o slide (D-030). O valor da linha ainda é uma
-    pergunta em aberto (rascunho, seção 6, pergunta 13).
-  - No config atual, é provável que nenhuma equipe feche as contas: nas contas do
-    rascunho, nenhum caminho termina com saldo positivo (seção 7, pergunta 5, em
-    aberto). Se acontecer: "Nenhuma família fechou. Não foi falta de esforço: o
-    básico custa mais do que o trabalho paga."
+  - Na linha de carteira assinada: "Com carteira, na mesma casa, também
+    faltaria." **Não diga "bem menos"**: com as correções de 29/09, o Jonas de
+    app termina, na mediana, perto da linha (−R$ 2.808 contra −R$ 2.957), e em
+    metade das partidas a barra dele fica à direita dela. A linha é da D-056,
+    marcada "vamos validar" (rascunho, seção 8, itens 2 e 19). O FGTS e o que a
+    conta da carteira deixou de fora ficam para o slide (D-030).
+  - No config atual, é quase certo que nenhuma equipe feche as contas (D-050,
+    "quase ninguém"): só o Jonas e o Marcos têm um caminho estreito, de boas
+    escolhas com sorte, e ao acaso fecham em 0,014% e 0,19% das partidas; Kauã,
+    Daiane e Rose não fecham em caminho nenhum (rascunho, seção 8, itens 1 e
+    16). Se acontecer: "Nenhuma família fechou. Não foi falta de esforço: o
+    básico custa mais do que o trabalho paga." Se uma equipe fechar: "Fechou,
+    com boas escolhas e muita sorte. Foi a exceção: as outras famílias, na mesma
+    situação, não fecharam."
 
 **Página 2: "Escolha ou sorte?"**
 - **Telão:** uma linha por equipe, na mesma ordem, contada como história, sem
@@ -504,21 +570,27 @@ uns 30 s por página.
   - Se uma equipe se organizou no mês 3 e perdeu saldo: "O placar só mede três
     meses da própria equipe. A conquista coletiva não cabe nele" (D-029).
   - Se alguém notar que trabalhar até a exaustão "deu mais dinheiro": "O placar
-    só conta o dinheiro. O corpo, o sono e a família não entram nele." (A
-    energia e a proteção fora do placar são uma pergunta em aberto: rascunho,
-    seção 7, pergunta 6.)
+    só conta o dinheiro. O corpo, o sono e a família não entram nele." Com a
+    D-051, a energia baixa já cobra renda e risco de acidente, mas o melhor plano
+    de quatro personas ainda é o do esgotamento, e termina com energia perto de
+    0. Mostrar a energia final e a proteção no placar é uma pergunta em aberto
+    (rascunho, seção 8, itens 6 e 17).
 
 **Páginas 3 em diante: a história de cada equipe**
 - **Telão:** uma página por equipe que jogou, na ordem das equipes. Cada mês
   tem o título, uma linha curta em primeira pessoa (a primeira frase da
   narrativa da opção escolhida e a primeira da carta, por exemplo "Fiquei online
   da manhã até a madrugada, sete dias. Levaram o celular e o dinheiro do dia.")
-  e as contas do mês; no fim, "No fim dos 3 meses: faltou R$ X". A linha curta
-  ocupa no máximo duas linhas e, se não couber, termina em reticências, sem
-  baixar dos 28 px.
+  e uma linha do dinheiro: o custo real da carta, o que veio do mês anterior e
+  as contas do mês ("20 dias parado · renda perdida R$ 1.787 · entrou … · gastos
+  … · faltou …"); no fim, "No fim dos 3 meses: faltou R$ X". A linha curta ocupa
+  no máximo duas linhas e, se não couber, termina em reticências, sem baixar dos
+  28 px. O texto da opção é o do ofício da persona da equipe (D-054).
 - **Celular:** a mesma história, com as narrativas inteiras da opção e da carta,
-  e "Escolha ou sorte?" da própria equipe, no mesmo formato do telão (os totais
-  sem sinal, as variações com + ou −, "= Terminaram com" em destaque).
+  "O que a carta custou", "Veio dos meses anteriores" e a conta de cada mês
+  (entrou · gastos · básico · juros · faltou), e "Escolha ou sorte?" da própria
+  equipe, no mesmo formato do telão (os totais sem sinal, as variações com + ou
+  −, "= Terminaram com" em destaque).
 - **Faça:** em cada página, leia a linha curta de cada mês, ou peça a alguém da
   equipe para ler no celular a narrativa inteira.
 - **Diga:** "Três meses da vida do Jonas. O que vocês decidiriam diferente, e o
@@ -570,10 +642,11 @@ uns 30 s por página.
 ## 6. Minuto a minuto: 60 min
 
 Os tempos são os tempos-alvo do `config.json` do redesenho (versão
-`2026-09-29-v2-rascunho`): cada rodada ganhou 1 minuto (a decisão passou a 120 s),
-o placar final também, e as personas, 30 s; o tempo saiu do Gancho, do Mapa, da
-Gestão por algoritmo, do Contraponto e do Termômetro. Os cortes
-ainda são uma pergunta em aberto (rascunho, seção 6, pergunta 15). A barra mostra
+`2026-09-29-v2-rascunho`; a v2.1 não mudou roteiros nem tempos): cada rodada
+ganhou 1 minuto (a decisão passou a 120 s), o placar final também, e as
+personas, 30 s; o tempo saiu do Gancho, do Mapa, da Gestão por algoritmo, do
+Contraponto e do Termômetro. Os cortes ainda são uma pergunta em aberto
+(rascunho, seção 8, item 10). A barra mostra
 o atraso ao vivo. Se atrasar, decida no dia o que encurtar: um bloco de slides
 pode ser mais curto sem mexer no jogo, e a enquete "antes" é o único passo
 marcado como opcional.
@@ -831,10 +904,13 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
 14. **O redesenho no celular (D-043, "vamos testar"):** na decisão, cada celular
     mostra o contexto da família e as 4 letras sem rolar? O "Mais opções abaixo ↓"
     aparece quando falta espaço? 120 s bastam para a equipe ler e conversar?
-    Anote o modelo e o tamanho de tela de quem precisou rolar.
+    Anote o modelo e o tamanho de tela de quem precisou rolar. **Tocar para ler
+    (D-055):** tocar numa opção abre a explicação sem votar? O "Votar nesta"
+    registra o voto, e a contagem da equipe muda? Alguém votou achando que o
+    toque já votava?
 15. **O redesenho no projetor (D-041, D-042, D-047, "vamos testar"):** do fundo
-    da sala, dá para ler a linha do tempo, a frase do resultado ("entrou · básico
-    · faltou") e as páginas do placar? O placar em páginas ficou claro, ou alguma
+    da sala, dá para ler a linha do tempo, a frase do resultado (o custo da carta
+    e "entrou · gastos · básico · faltou") e as páginas do placar? O placar em páginas ficou claro, ou alguma
     página confundiu? Com a barra escondida, **nada** de operação aparece na tela
     projetada (dica de tecla, aviso, exportar, apagar, "ativos / membros")?
 
@@ -855,7 +931,7 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
 | 11. Download automático | | | |
 | 12. Retomar sem PIN | | | |
 | 13. Continuar sem celulares | | | |
-| 14. Decisão no celular (contexto, 4 opções, 120 s) | | | |
+| 14. Decisão no celular (contexto, 4 opções, 120 s, tocar para ler e "Votar nesta") | | | |
 | 15. Linha do tempo, resultado, placar em páginas e barra oculta | | | |
 
 ### O que fazer com o resultado

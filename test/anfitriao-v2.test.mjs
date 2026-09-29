@@ -46,6 +46,10 @@ test('rodadas com consequência entre meses: o anfitrião passa o histórico e g
       assert.equal(gravado.carta, esperado.carta, `${r}/${eq}: carta`);
       assert.deepEqual(gravado.depois, esperado.depois, `${r}/${eq}: depois`);
       assert.deepEqual(gravado.mes, esperado.mes, `${r}/${eq}: mes`);
+      // O que veio dos meses anteriores vai gravado para o celular (que não
+      // carrega o motor); lista vazia não é gravada (o RTDB a apagaria).
+      assert.deepEqual(gravado.deAntes ?? [], esperado.deAntes, `${r}/${eq}: deAntes`);
+      if (esperado.deAntes.length === 0) assert.equal(Object.hasOwn(gravado, 'deAntes'), false, `${r}/${eq}: deAntes vazio fica de fora`);
       historico[r] = { decisao: plano[r][eq], carta: esperado.carta };
       jogadas.push({ rodadaId: r, opcaoId: plano[r][eq], cartaId: esperado.carta });
       estado = esperado.depois;
@@ -63,4 +67,5 @@ test('rodadas com consequência entre meses: o anfitrião passa o histórico e g
   });
   assert.ok(resultados.r2.e5.mes.trabalho < semEmprestimo.mes.trabalho, 'a parcela pesou no mês 2');
   assert.equal(resultados.r1.e5.mes.basico, 1800);
+  assert.deepEqual(resultados.r2.e5.deAntes, [{ rotulo: 'parcela do empréstimo', valor: -600 }], 'a parcela é consequência do mês 1');
 });

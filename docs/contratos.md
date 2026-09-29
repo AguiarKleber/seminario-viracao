@@ -31,7 +31,7 @@ exibição fica num array de strings.
   versao, titulo,
   tempos:  { enqueteSeg, decisaoSeg, decisaoMinSeg, prorrogacaoSeg, gracaSeg, pulsoSeg? },
   regras:  { desempate, cartaPor, mostrarChances, placarPadrao, alvoPorEquipe, minPareados, destacarCartas,
-             jurosDividaMes, jurosFonte },
+             jurosDividaMes, jurosFonte, pisoTrabalho? },
   escala:  { curtos: [5 strings], longos: [5 strings] },
   indicadores: { [id]: { id, nome, formato: "moeda"|"inteiro", inicial, min, max } },
   personas:    { [id]: { id, nome, descricao, familia: { descricao, pessoas },
@@ -39,9 +39,10 @@ exibição fica num array de strings.
                          inicial: { [ind]: n }, todoMes: [Efeito], fonte? } },
   equipes:     { [id]: { id, nome, cor, forma, persona, obrigatoria: boolean, lugar? } },
   rodadas:     { [id]: { id, titulo, texto, padrao, contexto?: { [persona]: texto }, efeitosGerais: [Efeito],
-                         opcoes: { [id]: { id, rotulo, narrativa?, tendencia?, efeitos: [Efeito] } },
+                         opcoes: { [id]: { id, rotulo, narrativa?, tendencia?, efeitos: [Efeito],
+                                           rotuloPor?: { [persona]: texto }, narrativaPor?: { [persona]: texto } } },
                          ordemOpcoes: [ids] } },
-  cartas:      { [id]: { id, titulo, curto?, narrativa?, peso, rodadas?: [ids], somenteSe?: Condicao,
+  cartas:      { [id]: { id, titulo, curto?, narrativa?, peso, diasParado?, rodadas?: [ids], somenteSe?: Condicao,
                          ajustesDePeso: [{ se: Condicao, soma?: n, multiplica?: n }],
                          efeitos: [Efeito], tom?: "grave", fonte? } },
   enquetes:    { [id]: { id, titulo, pareada: boolean, revelar: "ao_vivo"|"ao_encerrar"|"so_no_comparativo",
@@ -62,8 +63,8 @@ exibição fica num array de strings.
     em efeitos, `ajustesDePeso` e `somenteSe`;
   - todas as chaves presentes precisam valer ao mesmo tempo;
   - qualquer chave fora dessas é erro.
-- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte? }`, com
-  `soma` **ou** `multiplica`, nunca os dois.
+- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto" }`, com
+  `soma` **ou** `multiplica`, nunca os dois (`fixo` e `categoria`: esquema v2.1, abaixo).
 - `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
   - `momento` ∈ `antes | depois | unico`.
@@ -90,6 +91,29 @@ exibição fica num array de strings.
   (a rodada do efeito; as rodadas da carta; qualquer rodada no `todoMes` e na carta sem `rodadas`,
   estreitadas pela chave `rodada` da própria condição). Fora disso a condição nunca valeria, e é erro.
   Rodada citada que falta num roteiro também é erro.
+
+**Esquema v2.1** (D-050 a D-057 e as correções de conta de 29/09), conferido pelo validador. Tudo é
+**opcional**: um config v2 continua válido e dá as mesmas contas (`custosFixos` e `gastos` em 0).
+- `efeito.fixo = true`: custo fixo do trabalho (parcela, aluguel do veículo, DAS do MEI). Fica **fora de
+  qualquer `multiplica`**, e a linha sai com `origem: "custoFixo"`. `fixo: false` é aceito e some na
+  normalização; outro valor é erro;
+- `efeito.categoria = "gasto"` (o único valor aceito): dinheiro gasto por causa de um evento (conserto,
+  remédio, fisioterapia, multa). Fica **fora de qualquer `multiplica` e fora do "entrou"**, e a linha sai
+  com `origem: "gasto"`;
+- efeito com `fixo` ou `categoria`: só `soma` (com `multiplica` é erro), só na `renda` (outro indicador é
+  erro: é dinheiro) e nunca os dois juntos (erro). O sinal é o da soma: negativo tira dinheiro; positivo
+  (reembolso) abate;
+- `regras.pisoTrabalho = true` (revisão de 29/09, 2ª rodada): o trabalho variável do mês não fica abaixo de 0
+  (ver a ordem do mês, na seção 3). Opcional; `false` ou ausente mantém a conta do v2, em que o "trabalho"
+  ainda leva custos e perdas e pode ficar negativo de propósito. Outro valor é erro. Ausente, não entra no
+  normalizado (o hash de um config v2 não muda);
+- `carta.diasParado`: inteiro de 0 a 30 (fora disso é erro). É informativo, para a tela ("20 dias
+  parado"); o motor não o usa na conta;
+- `opcao.rotuloPor = { [persona]: texto ≤ 60 }` e `opcao.narrativaPor = { [persona]: texto ≤ 160 }`
+  (D-054; contados por letra): a mesma escolha dita do jeito de cada ofício. Persona inexistente, texto
+  vazio ou acima do limite é erro; mapa vazio é aviso. Sem entrada para a persona, vale
+  `rotulo`/`narrativa`. As chaves de efeito continuam fechadas (`fixa` em vez de `fixo` é erro); nas
+  opções e cartas, chave desconhecida continua aviso.
 
 **Valores padrão aplicados pela normalização** (o JSON pode omitir):
 - `obrigatoria: false`, `efeitosGerais: []`, `ajustesDePeso: []`, `todoMes: []`, `inicial: {}`;
@@ -146,10 +170,10 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
 | `condicaoVale(config, cond, ctx) → boolean` | `ctx = { equipeId, personaId, rodadaId, opcaoId, estado, historico? }` |
 | `chances(config, { equipeId, rodadaId, opcaoId, estado, historico? }) → [{ carta, peso, chance }]` | cartas elegíveis (`rodadas`, `somenteSe`), com `ajustesDePeso` aplicados na ordem do config; só entram as de peso ajustado > 0 (lista vazia = nenhuma carta possível); as chances somam 1 |
 | `resolverRodada(config, { equipeId, rodadaId, opcaoId, estado, semente, historico? }) → Resultado` | usa `sorte.gerador(sorte.derivar(semente, 'carta:'+equipeId))` |
-| `aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico? }) → { delta, depois, linhas, mes }` | a parte determinística, usada pela enumeração; `delta` é o de antes do clamp |
+| `aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico? }) → { delta, depois, linhas, mes, cartaCusto, deAntes }` | a parte determinística, usada pela enumeração; `delta` é o de antes do clamp; `cartaId` nulo aplica o mês sem carta (`cartaCusto` em 0) |
 | `historicoDe(resultados, equipeId, rodadas: [ids]) → Historico` | monta o histórico a partir de `resultados/{r}/{eq}`, só com as rodadas pedidas que têm resultado (quem chama passa as anteriores à atual, na ordem do roteiro) |
 | `totalBasico(persona) → n` | a soma dos itens do básico da casa |
-| `mesComum(config, equipeId) → mes` | o furo de um mês comum (tela de personas do telão): só o `todoMes` da persona (efeito com condição de rodada, opção ou histórico não entra; condição de indicador lê o estado inicial), mais a outra renda, menos o básico, sem dívida; mesmo formato de `Resultado.mes` |
+| `mesComum(config, equipeId) → mes` | o furo de um mês comum (tela de personas do telão): só o `todoMes` da persona (efeito com condição de rodada, opção ou histórico não entra; condição de indicador lê o estado inicial), na mesma ordem do mês (o custo fixo do `todoMes` entra, fora do `multiplica`), mais a outra renda, menos o básico, sem dívida; mesmo formato de `Resultado.mes` |
 | `consolidarDecisao(config, { rodadaId, votos, forcada, aposProrrogacao, semente, equipeId, candidatas? }) → Consolidacao` | ver abaixo |
 | `decompor(config, { equipeId, rodadas: [{ rodadaId, opcaoId, cartaId }] }) → Decomposicao` | enumeração exata dos caminhos de cartas, levando o histórico no caminho (a lista `rodadas`, na ordem do roteiro, é o histórico) |
 
@@ -157,13 +181,34 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   mesmo formato de `resultados/{r}/{eq}`). É o que `decidiu`/`sorteou` leem. Omitido, vale `{}`: toda
   condição de histórico dá falso. **Quem chama o motor com um config que usa `decidiu`/`sorteou` precisa
   passar o histórico**, senão calcula outro número.
-- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"outraRenda"|"basico"|"juros", rotulo, indicador, valor }], mes }`
-  - linhas de `outraRenda`, `basico` (uma por item, com valor negativo) e `juros` (rótulo "juros da dívida")
+- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"piso"|"custoFixo"|"gasto"|"outraRenda"|"basico"|"juros", rotulo, indicador, valor, deAntes? }], mes, cartaCusto, deAntes }`
+  - com `regras.pisoTrabalho`, uma linha `piso` (rótulo "o trabalho do mês não fica abaixo de zero") devolve
+    a diferença quando o trabalho variável ficaria negativo; as linhas continuam somando o delta;
+  - `linha.deAntes = true` marca, na renda, os efeitos **gerais** (`rodada.efeitosGerais`) cuja condição lê
+    `decidiu`, `sorteou` ou `indicador` (consequência de um mês anterior), fora os custos fixos;
+  - `deAntes = [{ rotulo, valor, gasto? }]`: essas linhas, na ordem do mês, com `gasto: true` nas de
+    categoria "gasto" (a multa, o saldo do empréstimo: estão nos gastos, e não no "entrou"). Lista vazia
+    quando não há. É o que a tela nomeia ("+25 dias da fratura −R$ 2.233 · INSS (45 dias) +R$ 2.431").
+    Gravado pelo anfitrião em `resultados/{r}/{eq}.deAntes` **só quando não é vazio** (o RTDB apaga lista
+    vazia); ausente vale `[]`;
+  - as linhas saem na ordem do mês: as do trabalho variável (com a origem do grupo), depois as de
+    `custoFixo` e as de `gasto` (o rótulo é o do efeito, ou o do grupo de onde ele veio), depois
+    `outraRenda`, `basico` (uma por item, com valor negativo) e `juros` (rótulo "juros da dívida"); estas três
     só entram com valor diferente de 0;
-  - `mes = { trabalho, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, na renda: `trabalho` é
-    o delta do trabalho (todoMes → gerais → opção → carta); `entrou = trabalho + outraRenda`;
-    `saldoMes = entrou − basico − juros`; `dividaAntes` ≥ 0 é a dívida de antes do mês. É gravado pelo
-    anfitrião em `resultados/{r}/{eq}.mes`.
+  - `mes = { trabalho, custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, na
+    renda: `trabalho` é o trabalho **variável** (todoMes → gerais → opção → carta, sem os efeitos `fixo` e
+    `gasto`); `custosFixos` e `gastos` são positivos quando tiram dinheiro (a soma dos efeitos `fixo` e
+    `gasto`, com o sinal trocado); `entrou = trabalho − custosFixos + outraRenda`;
+    `saldoMes = entrou − gastos − basico − juros` (é o `delta.renda`); com `regras.pisoTrabalho`, `trabalho` ≥ 0,
+    mas o `entrou` ainda pode ficar negativo (custos fixos maiores que o trabalho, num mês parado);
+    `dividaAntes` ≥ 0 é a dívida de antes
+    do mês. É gravado pelo anfitrião em `resultados/{r}/{eq}.mes`;
+  - `cartaCusto = { diasParado, rendaPerdida, gastos }` (D-052), gravado pelo anfitrião em
+    `resultados/{r}/{eq}.cartaCusto`: `diasParado` é o da carta (0 sem ele); `rendaPerdida` = trabalho
+    variável sem a carta − com a carta, nunca abaixo de 0 (carta que ajuda dá 0); com o piso, o trabalho sem
+    a carta também conta a partir de 0, e a renda perdida nunca passa da renda que havia; `gastos` = os efeitos
+    `gasto` da carta, positivos. Nenhuma condição lê a carta do próprio mês, então isto é o mesmo que refazer
+    o mês sem a carta. É o que a tela mostra como "20 dias parado · renda perdida R$ X · gastos R$ Y".
 - `Consolidacao = { decisao: id|null, origem: "maioria"|"prorrogacao"|"moeda"|"piloto"|"apresentador"|null, contagem: { [opcao]: n }, empate: [ids]|null }`
   - `votos = { [uid]: opcaoId }`: votos já filtrados para membros da equipe e para opções válidas.
   - `contagem` traz todas as opções da rodada, com 0 nas que não tiveram voto.
@@ -183,12 +228,17 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   - `sorte = realizado - esperadoComDecisoes`;
   - `piorCaso`: a menor renda possível com as decisões tomadas.
 
-**Semântica dos efeitos e ordem do mês** (arquitetura, seção 7; D-044 e D-046):
+**Semântica dos efeitos e ordem do mês** (arquitetura, seção 7; D-044, D-046 e o esquema v2.1):
 - o delta de cada indicador começa em 0;
-- ordem de aplicação: `persona.todoMes` → `rodada.efeitosGerais` → opção → carta. Isto é o **delta do
-  trabalho**: `soma` adiciona ao delta, e `multiplica` multiplica o delta daquele indicador, e por isso
-  só atinge o que veio do trabalho;
-- depois, na renda: `+ outraRenda` → `− básico` (a soma dos itens) → `− juros`, com
+- (1) **trabalho variável**: `persona.todoMes` → `rodada.efeitosGerais` → opção → carta, só com os efeitos
+  **sem** `fixo` e **sem** `categoria: "gasto"`. `soma` adiciona ao delta, e `multiplica` multiplica o delta
+  daquele indicador. É o único passo em que `multiplica` vale: a carta que zera a renda zera o que se
+  ganha, e não a parcela da moto nem o conserto. Com `regras.pisoTrabalho`, no fim deste passo o trabalho
+  variável negativo vira 0 (linha `piso`): os dias parados são somas a preço cheio, e depois de um
+  `multiplica` (o exausto, o bloqueio) chegavam a tirar mais renda do que havia;
+- (2) `− custos fixos`: os efeitos com `fixo`, de qualquer origem, na ordem dos grupos;
+- (3) `− gastos`: os efeitos com `categoria: "gasto"`, de qualquer origem, na ordem dos grupos;
+- depois, na renda: (4) `+ outraRenda` → (5) `− básico` (a soma dos itens) → (6) `− juros`, com
   `juros = round(|saldo| × jurosDividaMes)` quando a renda do estado **antes** da rodada é negativa (a
   dívida que vinha do mês anterior), e 0 senão. A carta que corta a renda corta o que se ganha, e não
   a conta da casa;
@@ -412,7 +462,7 @@ Rodada:
 - Conta só o voto de quem **ainda** é da equipe e tem `entrouEm <= abertoEm` (a regra já barra, e a apuração confere de novo).
 - Equipes ativas = `estado.equipesAbertas`, na ordem do config. Estado antes da rodada = `depois` da última rodada apurada, na ordem do roteiro.
 - Empate: o passo 5 grava o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg` (o `abertoEm` não muda), e, no mesmo `gravar()`, a marca `prorrogacoes/{r} = true`. Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada (D-035):** se outra equipe empatar no segundo fechamento, vai direto para a moeda. O mesmo vale depois do `desfazer()`: o passo 4 também lê `prorrogacoes/{r}` e, se a marca existe, todo empate vai direto para a moeda (`aposProrrogacao: true`, sem `candidatas`: a moeda fica entre as opções empatadas agora).
-- Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois, mes }`. O anfitrião passa ao
+- Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois, mes, cartaCusto, deAntes? }` (`cartaCusto` desde o esquema v2.1; `deAntes` só quando não é vazio; as regras v3 aceitam qualquer filho de `resultados/{r}`, sem mudança). O anfitrião passa ao
   motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do roteiro que têm resultado). Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor`.
 
 Enquete: apuração `{ histogramas, n, metodo: "celular", apuradaEm }`; no momento `depois`, mais `transicao: { [afirm]: enquete.transicao(antes, depois) }`, mesmo que o "antes" tenha sido pulado (fica com 0 par).
@@ -490,7 +540,7 @@ Entradas de `telaDoAluno`:
 | `decisao` | `decidindo` | `{ rodada, contexto, opcoes: [{ id, rotulo, votos }], meuVoto, podeVotar, motivo: null|"entrouDepois"|"pausado", forcada, prazo, pausado, restanteMs, situacao }` |
 | `prorrogacao` | `prorrogacao` com a própria equipe empatada | igual a `decisao`, só com as opções empatadas |
 | `sorteando` | `sorteio` (não revela a carta), ou `resultado` ainda sem o nó | `{ equipe, rodada }` |
-| `resultado` | `resultado` | `{ equipe, rodada, origem, decisao, carta, delta, indicadores, mes, divida }` |
+| `resultado` | `resultado` | `{ equipe, rodada, origem, decisao, carta, delta, indicadores, mes, divida, cartaCusto, deAntes }` |
 | `comparativo` | `comparativo` | `{ enquete, afirmacoes: [{ id, texto, antes, depois }] }`, só os votos do próprio aparelho |
 | `fim` | `fim` | `{ equipe, placar, historia }` |
 
@@ -502,8 +552,16 @@ Campos do esquema v2 (D-043 a D-046):
 - `contexto` (decisão e prorrogação): o texto de `rodada.contexto[persona da equipe]`, ou `null`. As opções
   nunca trazem a `tendencia`;
 - `mes`: no `resultado`, é o `resultados/{r}/{eq}.mes` gravado (ou `null`); na `situacao`, é o objeto do
-  último mês de antes (`rodada, titulo, origem, decisao, carta`) **mais** os campos do `mes` gravado
-  (`trabalho, outraRenda, entrou, basico, juros, saldoMes, dividaAntes`); `null` antes do primeiro mês;
+  último mês de antes (`rodada, titulo, origem, decisao, carta, cartaCusto, deAntes`) **mais** os campos do `mes`
+  gravado (`trabalho, custosFixos, gastos, outraRenda, entrou, basico, juros, saldoMes, dividaAntes`; sala
+  de antes do v2.1 não traz `custosFixos` nem `gastos`); `null` antes do primeiro mês;
+- `cartaCusto` (esquema v2.1, D-052): no `resultado`, é o `resultados/{r}/{eq}.cartaCusto` gravado; na
+  `situacao`, vai em `mes.cartaCusto`; `{ diasParado, rendaPerdida, gastos }`, ou `null` em sala de antes do
+  v2.1;
+- **texto da opção por persona** (D-054): nas telas `decisao` e `prorrogacao` (`opcoes[].rotulo`), no
+  `resultado` (`decisao.rotulo` e `decisao.narrativa`), na `situacao` (`mes.decisao.rotulo` e a narrativa
+  da opção em `narrativa`) e na `historia`, vale `rotuloPor`/`narrativaPor` da persona da equipe, e o
+  `rotulo`/`narrativa` da opção quando ela não tem entrada;
 - `divida = { valor, jurosMes }` (situação e resultado): `valor` é o saldo negativo da renda (0 sem dívida), e
   `jurosMes`, o `regras.jurosDividaMes` (D-046);
 - `historia` (fim e placar final): `historia.historiaDaEquipe(conteudo, equipe, resultados)`.
@@ -515,7 +573,8 @@ celular e no `test/carregar-nucleo.mjs`.
 
 | Função | O que faz |
 |---|---|
-| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); `narrativa`, `tom` e `mes` ausentes viram `null` |
+| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]` |
+| `textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) → { rotulo, narrativa }` | D-054: `rotuloPor[persona]` e `narrativaPor[persona]`, e o `rotulo`/`narrativa` da opção quando a persona não tem entrada; opção inexistente dá os dois `null`. É o que o telão usa para falar do jeito de cada equipe |
 | `linhaDoMes(mes) → string \| null` | a linha curta de um mês da história no telão (D-045): a primeira frase da `opcao.narrativa` e a da `carta.narrativa`, separadas por espaço (o corte é sempre no fim de uma frase: ".", "!" ou "?" seguido de espaço); `null` sem nenhuma das duas |
 | `escolhaOuSorte(placar) → { piloto, escolhas, sorte, total } \| null` | "Escolha ou sorte?" em reais inteiros para a tela (telão e celular): `total = round(renda)`, `piloto = round(piloto)`, `escolhas = round(efeitoDecisoes)` e `sorte = total − piloto − escolhas`, para as três parcelas sempre somarem o total mostrado (arredondadas uma a uma, erravam por R$ 1). `null` sem `piloto`, `efeitoDecisoes` e `renda` finitos |
 
@@ -654,15 +713,45 @@ marcas, com "mês N" dentro das rodadas); no bloco cujo título começa por "Map
 conteúdo (`.linha-tempo-mapa`, todos os trechos por extenso, em duas colunas acima de seis), e o
 placar resumido não aparece.
 
-**Resultado da rodada (D-044, D-046):** uma frase por equipe: a equipe, a letra da decisão (e a
-origem, curta, quando não é a maioria: "ninguém votou", "empate na moeda", "na prorrogação",
-"pelo apresentador", este só online), o título da carta, as contas do mês
-(`.resultado-contas`: "entrou R$ X · básico R$ Y[ · juros R$ J] · faltou R$ Z" ou "sobrou R$ Z",
-de `resultados/{r}/{eq}.mes`; o faltou é o `saldoMes` do motor) e, com saldo negativo, "dívida R$ D"
-(`.resultado-divida`, o saldo de depois do mês). Os juros ao mês (`regras.jurosDividaMes`) vão uma
-vez no cabeçalho ("a dívida paga juros de J% ao mês"), e não em cada equipe: repetidos, empurravam
-metade das equipes para uma terceira linha, e seis não cabiam em 1024×768 com a faixa de entrada.
-Resultado sem `mes` (sala de antes do esquema v2) é refeito com `motor.aplicar`, com o histórico.
+**Resultado da rodada (D-044, D-046, D-052; esquema v2.1):** uma frase por equipe: a equipe, a
+letra da decisão (a dica, `title`, é o rótulo da opção do jeito do ofício da persona,
+`historia.textoDaOpcao`, D-054), a carta, o custo real dela, a origem (curta, quando não é a maioria:
+"ninguém votou", "empate na moeda", "na prorrogação", "pelo apresentador", este só online), as
+contas do mês e, com saldo negativo, "dívida R$ D" (`.resultado-divida`, o saldo de depois do mês).
+- **custo da carta** (`.resultado-custo`, `span.custo-carta`, de `resultados/{r}/{eq}.cartaCusto`):
+  "N dias parado · renda perdida R$ X", só com o que for maior que zero; carta sem custo não escreve
+  nada. Os gastos da carta vão nas contas (abaixo); só quando as parcelas conhecidas não somam os
+  gastos do mês eles saem aqui, como "gastos da carta R$ Y";
+- **o que veio de antes** (`.resultado-antes` > `.resultado-de-antes`, cada item `.de-antes` com
+  `data-de-antes` = rótulo; de `resultados/{r}/{eq}.deAntes`, ou refeito pelo motor em sala antiga):
+  os itens sem `gasto`, "rótulo ±R$ V" com sinal ("+25 dias da fratura −R$ 2.233 · INSS (45 dias)
+  +R$ 2.431"); o rótulo é o do efeito no config, por isso curto. Revisão de 29/09, 2ª rodada, achado 10;
+- **nome da carta** (`.resultado-carta`): o `curto` (D-040) quando a carta tem custo e o config o
+  traz, e o título inteiro senão (fica na dica). O custo diz o resto, e o título repetia ("Queda
+  leve: 5 dias parado · 5 dias parado"); o título inteiro acabou de aparecer no sorteio;
+- **contas do mês** (`.resultado-contas`): "entrou R$ X[ · gastos R$ G] · básico R$ Y[ · juros R$ J]
+  · faltou R$ Z" ou "sobrou R$ Z", de `resultados/{r}/{eq}.mes`. Os gastos só com `mes.gastos > 0`;
+  entrou − gastos − básico − juros = o `saldoMes` do motor, e a conta lida na tela fecha. Os gastos
+  saem por origem (`nomesDoMes`, achado 13): a da carta sem nome, e cada gasto de antes com o rótulo,
+  juntas por " + " ("gastos R$ 1.650 + multa R$ 130"); com uma origem só, de antes, só ela ("multa
+  R$ 130"); se as parcelas não somam `mes.gastos` (um gasto de opção), "gastos R$ G", com os gastos de
+  antes nomeados como pedaços e os da carta no custo;
+- **aperto** (`.grade-resultados[data-aperto]`): medido depois do desenho, só quando a lista
+  transborda (seis equipes no pior caso: carta cara, origem, gastos por origem, dívida e o que veio de
+  antes). Nível 1 esconde a origem (`.resultado-origem`); nível 2 também o que veio de antes
+  (`.resultado-antes`). Os dois ficam no celular de cada equipe, e o texto continua no DOM.
+Cada rótulo quebra como texto, e só a última palavra fica colada ao valor (`.conta-quebra`,
+`.conta-fim`): com o pedaço inteiro sem quebra, a linha deixava meia linha vazia. O resultado usa
+parte da margem lateral do palco, e o cartão tem padding lateral de .3em.
+Os juros ao mês (`regras.jurosDividaMes`) vão uma vez no cabeçalho ("a dívida paga juros de J% ao
+mês", numa linha só, até 17em), e não em cada equipe. O título do mês dessa tela é menor que o das
+outras (1,3× o corpo): com o custo da carta, seis equipes de cartas caras dão três linhas cada, e o
+cabeçalho em duas linhas não deixava a sexta caber. O cartão tem entrelinha 1,08 e quase nenhum
+padding pelo mesmo motivo; a fonte continua nos 28 px (o e2e, parte 4, prova o pior caso).
+Resultado sem `mes` ou sem `cartaCusto` (sala de antes do esquema v2 ou do v2.1) é refeito com
+`motor.aplicar`, com o histórico. A animação das cartas mais extremas (`regras.destacarCartas`) usa
+o efeito da carta no saldo do mês (o mês com a carta menos o mesmo mês sem carta): somar só as
+linhas de origem `carta` deixava de fora os gastos, que no v2.1 saem com a origem `gasto`.
 
 **Placar final em páginas (D-041, D-045):** paginação local do passo `placarFinal`
 (`app.ui.pagina`, como no comparativo; a seção leva `data-pagina` e, na história, `data-equipe`):
@@ -680,9 +769,16 @@ Resultado sem `mes` (sala de antes do esquema v2) é refeito com `motor.aplicar`
    mesma linha da equipe, para seis equipes caberem em 1024×768;
 3. `historia`, uma página por equipe que jogou, na ordem do config: `historia.historiaDaEquipe`,
    com um `.historia-mes` por rodada (o título da rodada, a linha curta `.historia-narrativa` =
-   `historia.linhaDoMes(h)`, em até duas linhas com reticências no fim e sem baixar dos 28 px, e
-   as contas do mês, `.historia-contas`; sem narrativa no conteúdo, "escolheram: {rótulo} ·
-   aconteceu: {carta}") e, no fim, `.historia-final` com o saldo dos meses ("faltou/sobrou R$ X").
+   `historia.linhaDoMes(h)`, em até duas linhas com reticências no fim e sem baixar dos 28 px; sem
+   narrativa no conteúdo, `.historia-fatos` "escolheram: {rótulo} · aconteceu: {carta}") e a linha
+   do dinheiro (`.historia-dinheiro`): o custo real da carta (`.historia-custo`, com a mesma regra do
+   resultado da rodada, de `h.cartaCusto`), o que veio de antes (`.historia-de-antes`, de `h.deAntes`)
+   e as contas do mês (`.historia-contas`, com os gastos por origem, a regra do resultado), na mesma frase: numa linha própria, três meses de narrativa de duas linhas, custo e
+   contas passavam da altura de 1024×768. O texto da opção é o do ofício da persona da equipe
+   (`historiaDaEquipe` já traz `rotuloPor`/`narrativaPor`, D-054). No fim, `.historia-final` com o
+   saldo dos meses ("faltou/sobrou R$ X").
+   A tela de decisão (`decidindo`) continua com o rótulo comum da opção: é a mesma para todas as
+   equipes, e não mostra narrativa por persona.
 A última página avança o roteiro. Sem nenhuma equipe no placar, uma página só ("Nenhuma rodada foi
 jogada nesta sessão."). O `regras.placarPadrao` não é mais lido pelo telão.
 
@@ -852,7 +948,7 @@ anfitrião: quem decide é o telão.
   `reconectar()`; `visibilitychange`, `pageshow` e `online` = `reconectar()` e
   releitura. Pulso do telão com mais de 3 × `pulsoSeg`: faixa "Aguardando o telão",
   que nunca reconecta; durante `bloco`, nem a faixa.
-- **Redesenho de 29/09 (D-041, D-043 a D-046).** O que cada tela do jogo mostra,
+- **Redesenho de 29/09 (D-041, D-043 a D-046; esquema v2.1: D-052, D-054, D-055).** O que cada tela do jogo mostra,
   com as classes que o e2e confere:
   - **Persona:** a família em uma linha (`.familia`, "Em casa: …"), o básico da casa
     item a item com a fonte de cada valor, o total ("O básico da família custa R$ Y
@@ -860,23 +956,52 @@ anfitrião: quem decide é o telão.
   - **Decisão e prorrogação**, de cima para baixo: cabeçalho com o cronômetro
     (`tempos.decisaoSeg`, 120 s); o contexto da família (`.contexto-familia`, só
     quando `rodada.contexto[persona]` existe); o básico e a dívida (`.pressao`); até
-    4 opções, cada uma com rótulo e a contagem ao vivo da equipe, e só a opção
-    escolhida com a narrativa (`.opcao-narrativa`, lida de
-    `conteudo.rodadas[r].opcoes[o].narrativa`). O texto da rodada fica no telão:
-    com ele e as quatro narrativas, só a opção A cabia antes de rolar (revisão de
-    29/09). **A tendência nunca aparece.** A situação completa
-    (família, conta do último mês e indicadores) fica fechada, depois das opções.
-  - **Dobra:** a primeira opção cabe inteira em 360×740, e as letras de todas as
-    opções aparecem sem rolar (o e2e:online confere). Enquanto a última estiver
-    abaixo da tela, o botão fixo "Mais opções abaixo ↓" (`[data-aviso-rolagem]`)
-    fica visível e rola até ela. Conferido a cada desenho, rolagem e mudança de
-    tamanho.
+    4 opções (`.opcao-aluno`, com `data-opcao-bloco`), cada uma com a letra, o
+    rótulo da persona da equipe (D-054) e a contagem ao vivo da equipe. O texto da
+    rodada fica no telão: com ele, só a opção A cabia antes de rolar (revisão de
+    29/09). **A tendência nunca aparece.** No lugar do "Decisão da equipe", o
+    cabeçalho diz "Toque para ler; vote no botão" (achado 19 da 2ª rodada de 29/09:
+    a frase inteira, depois das opções, ficava abaixo da dobra em 360×740, e uma
+    linha a mais antes das opções empurrava a letra D para fora da primeira tela).
+    Depois das opções, a dica inteira ("Toque numa opção para ler a explicação; o
+    voto só vale no “Votar nesta”") e a situação completa (família, conta do
+    último mês e indicadores), fechada.
+  - **Tocar para ler, votar no botão (D-055):** tocar numa opção
+    (`.botao-opcao-aluno[data-opcao]`, com `aria-expanded`) abre a explicação
+    dela **sem votar**; tocar de novo fecha, e tocar noutra troca a aberta (uma por
+    vez, em `app.ui.aberta`, que zera a cada passo). A explicação
+    (`.opcao-detalhe[data-detalhe]`) traz a narrativa da persona
+    (`.opcao-narrativa`, por `historia.textoDaOpcao`: a `telaDoAluno` manda só id,
+    rótulo e votos) e o botão "Votar nesta" (`[data-votar]`, 48 px, desabilitado
+    sem `podeVotar` ou com um voto em voo). Na opção que já tem o voto do aparelho,
+    uma frase (`.opcao-votada`) no lugar do botão. A opção votada fica marcada
+    (`.meu-voto`, `data-meu-voto="1"`, fundo claro e o texto "✓ seu voto"). Dá para
+    abrir outra e mudar o voto até o fechamento.
+  - **Dobra:** sem nenhuma aberta, a primeira opção cabe inteira em 360×740, e as
+    letras de todas as opções aparecem sem rolar (o e2e:online confere). Enquanto a
+    última estiver abaixo da tela, o botão fixo "Mais opções abaixo ↓"
+    (`[data-aviso-rolagem]`) fica visível e rola até ela. Conferido a cada desenho,
+    rolagem e mudança de tamanho. Com uma opção aberta, a tela pode passar da
+    dobra: logo depois de abrir (e só aí: a contagem ao vivo redesenha a tela a cada
+    voto), a opção rola para a vista (`scroll-margin` desconta o topo fixo e o
+    aviso), e o aviso some enquanto cobriria o "Votar nesta".
   - **Conta do mês** (`.conta-mes`, no resultado e na situação dos blocos): "Entrou
-    R$ X · o básico da família custa R$ Y" (mais "· juros da dívida R$ J" quando
-    houver) e, em destaque, "Faltou R$ Z" ou "Sobrou R$ Z". Com outra renda na casa,
-    uma linha diz quanto veio do trabalho e quanto da outra renda. Os números saem
-    de `mes` gravado; `data-entrou`, `data-basico`, `data-juros`, `data-saldo-mes` e
-    `data-resultado` (`faltou`|`sobrou`) repetem os valores.
+    R$ X · gastos R$ G · o básico da família custa R$ Y · juros da dívida R$ J"
+    (gastos e juros só quando existem) e, em destaque, "Faltou R$ Z" ou "Sobrou
+    R$ Z" (D-052). Com custo fixo do trabalho ou outra renda na casa, uma linha diz
+    de onde veio o "entrou": "Do trabalho e da decisão: R$ T · custos fixos do
+    trabalho: −R$ F · {outra renda}: R$ O" (era "Do trabalho", e levava o
+    empréstimo e o INSS dentro; achado 10). Com `deAntes`, uma linha
+    `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …". Os números saem de `mes` gravado; `data-entrou`,
+    `data-gastos`, `data-basico`, `data-juros`, `data-saldo-mes` e `data-resultado`
+    (`faltou`|`sobrou`) repetem os valores. Sala de antes do v2.1 (sem `gastos` nem
+    `custosFixos`) mostra a linha como antes.
+  - **Custo da carta** (`.carta-custo`, D-052; no resultado, depois da narrativa
+    da carta, e no "último mês" da situação): "O que a carta custou: 20 dias parado
+    · renda perdida R$ X · gastos R$ Y", com o `cartaCusto` gravado; cada parte só
+    quando é maior que 0, e nenhuma linha se as três forem 0 ou sem `cartaCusto`.
+    `data-dias-parado`, `data-renda-perdida` e `data-gastos` repetem os valores.
+    Mesma forma para toda carta: a grave não ganha destaque.
   - **Dívida** (`.divida`): "Dívida R$ D · juros de J% ao mês", só com o saldo
     negativo.
   - **Antes do primeiro mês**, a situação mostra a família e o básico, sem conta do
@@ -887,8 +1012,9 @@ anfitrião: quem decide é o telão.
     `.placar-total`), sem "piloto automático" nem "efeito das decisões" (D-041).
     A decisão sem voto aparece como "ninguém votou: ficou o de sempre".
   - **Fim:** a história da própria equipe, mês a mês (`.historia-mes`, com
-    `data-rodada`): opção e narrativa, carta e narrativa, e a conta do mês. Carta
-    grave aparece como as outras, sem destaque.
+    `data-rodada`): opção e narrativa (do jeito da persona, D-054), carta e
+    narrativa, o custo da carta e a conta do mês ("Entrou · gastos · básico · juros
+    · faltou"). Carta grave aparece como as outras, sem destaque.
 - **Wake Lock** só nas telas `enquete`, `decisao` e `prorrogacao`.
 - **Faixa "atualize a página"** quando `meta.versaoApp` ≠ `VERSAO_APP`.
 - **localStorage** (prefixo `viracao:aluno:`, sem a versão, de propósito: o voto
@@ -913,11 +1039,19 @@ anfitrião: quem decide é o telão.
   SDK sai do `node_modules/firebase` no endereço da CDN (sem internet). O que ele precisa
   do conteúdo sai do `config.json`, servido pelo Playwright a todo telão do teste. Se o
   `config.json` não passa no validador (ou com `E2E_FIXTURE=1`), o conteúdo é o
-  `test/fixtures/config-teste-v2.json` com três ajustes só no e2e: a enquete de entrada
-  em "todas", um bloco entre as personas e o primeiro mês, e uma narrativa de cerca de
-  110 letras em cada opção (o pior caso da dobra). O básico do Rafa sobe para R$ 4.500,
-  para o mês 1 da equipe 1 nunca fechar (passa sempre pelo "faltou", pela dívida e pelos
-  juros). As capturas `e2e/capturas/celular-*.png` antigas são apagadas no começo. O
+  `test/fixtures/config-teste-v21.json` com ajustes só no e2e: a enquete de entrada
+  em "todas", um bloco entre as personas e o primeiro mês, uma narrativa de cerca de
+  110 letras em cada opção, e, para a persona da equipe 1, `rotuloPor` e `narrativaPor`
+  (esta com cerca de 150 letras: o pior caso de uma opção aberta) em todas as opções.
+  O básico do Rafa sobe para R$ 5.000, para o mês 1 da equipe 1 nunca fechar (passa
+  sempre pelo "faltou", pela dívida e pelos juros), e no mês 1 só o acidente pode sair
+  (20 dias parado, conserto e remédio), para o custo da carta aparecer sempre. O teste
+  confere tocar sem votar, "Votar nesta", mudar o voto, o "Votar nesta" à vista com uma
+  opção aberta (a primeira e a última), o texto por persona (decisão, resultado,
+  situação e história, contra `historia.textoDaOpcao`) e o custo da carta; com o
+  `config.json`, as mesmas conferências valem contra o que o config tiver (sem
+  `rotuloPor`, o rótulo padrão). As capturas `e2e/capturas/celular-*.png` antigas são
+  apagadas no começo. O
   bloco "sem serviço" recebe um `conexao.json` com
   `COLE_AQUI` servido pelo Playwright: o do repositório tem as chaves do projeto real, e
   nenhum passo do e2e pode falar com ele (AGENTS.md, regra 6).

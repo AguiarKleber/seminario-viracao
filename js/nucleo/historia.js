@@ -27,24 +27,41 @@
     return no ?? null;
   }
 
+  // D-054: a mesma escolha dita do jeito de cada ofício. rotuloPor/narrativaPor
+  // da persona, e o rotulo/narrativa da opção quando ela não tem entrada. O
+  // telão também usa isto (o resultado de cada equipe fala do jeito dela);
+  // opção que não existe dá os dois null.
+  function textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
+    const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
+    return {
+      rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
+      narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+    };
+  }
+
   // Na ordem das rodadas do config; rodada sem resultado da equipe (pulada no
-  // dia, ou equipe fechada naquele mês) não entra.
+  // dia, ou equipe fechada naquele mês) não entra. cartaCusto é o gravado pelo
+  // telão (D-052); resultado de sala anterior ao v2.1 não o tem, e fica null.
   function historiaDaEquipe(conteudo, equipeId, resultados) {
     const ordem = lista(em(conteudo, 'ordem', 'rodadas'));
     const rodadas = ordem.length > 0 ? ordem : Object.keys(em(conteudo, 'rodadas') || {});
+    const personaId = em(conteudo, 'equipes', equipeId, 'persona');
     const historia = [];
     for (const rodadaId of rodadas) {
       const res = em(resultados, rodadaId, equipeId);
       if (!res) continue;
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
-      const opcao = em(rodada, 'opcoes', res.decisao) || {};
       const carta = em(conteudo, 'cartas', res.carta) || {};
       historia.push({
         rodadaId,
         titulo: rodada.titulo ?? null,
-        opcao: { rotulo: opcao.rotulo ?? null, narrativa: opcao.narrativa ?? null },
+        opcao: textoDaOpcao(conteudo, rodadaId, res.decisao, personaId),
         carta: { titulo: carta.titulo ?? null, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
         mes: res.mes ?? null,
+        cartaCusto: res.cartaCusto ?? null,
+        // O que veio dos meses anteriores (motor, deAntes), gravado pelo
+        // anfitrião; lista vazia quando não há, ou em sala antiga.
+        deAntes: lista(res.deAntes),
       });
     }
     return historia;
@@ -86,5 +103,5 @@
     return frases.length > 0 ? frases.join(' ') : null;
   }
 
-  V.historia = { historiaDaEquipe, escolhaOuSorte, linhaDoMes };
+  V.historia = { historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao };
 })(globalThis);

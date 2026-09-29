@@ -287,3 +287,65 @@ mudar nada antes do teste.
   - o PIN do apresentador nunca passa pelo Claude;
   - o simulador nunca roda na rede do campus nem no dia da aula;
   - toda ação operacional é relatada logo depois.
+
+## 29/09/2026: perguntas da revisão do conteúdo v2 (seção 7 do rascunho)
+
+O Kleberson aprovou as 8 recomendações. O item 7 fica marcado como "vamos
+validar".
+
+**D-050. "Quase ninguém", e não "ninguém", fecha as contas.** Existe um caminho
+estreito, de boas escolhas com sorte, que fecha ou quase fecha o básico. O final
+não pode estar decidido antes de jogar, senão a dúvida morre.
+
+**D-051. O placar não pode premiar o esgotamento, e a proteção tem de valer.**
+- Energia baixa custa: aumenta a chance de adoecer ou se acidentar e reduz a renda
+  do mês seguinte.
+- A proteção (MEI/INSS, associação) passa a ter efeito real quando algo dá
+  errado.
+- A melhor opção não é a mesma para todas as personas.
+- As letras A a D não seguem o mesmo padrão em todos os meses.
+
+**D-052. O custo real das cartas aparece na tela:** dias parados, a renda perdida
+e os gastos (conserto, remédio). Vale para o resultado da rodada, o celular e a
+história da equipe.
+
+**D-053. Contextos coerentes.** Os contextos do celular não podem contradizer o
+jogo. Os de "conta que vence" viram efeito real (multa ou juros, com fonte) quando
+falta dinheiro.
+
+**D-054. A mesma escolha, dita do jeito de cada ofício.** O rótulo e a narrativa
+da opção podem variar por persona.
+
+**D-055. No celular, tocar numa opção abre a explicação sem votar,** e um botão
+"votar nesta" confirma. A equipe lê o dilema antes de escolher.
+
+**D-056. A referência "com carteira assinada" usa a mesma casa e os mesmos juros
+do Jonas de app** (−R$ 2.957 no rascunho v2). Marcado como "vamos validar".
+
+**D-057. Breque no mês 2 mantido.** O reajuste do mês 3 vale só para entregador;
+para Daiane, Marcos e Rose, parar só custa. A narrativa diz isso.
+
+**Correções de conta** (não são decisões de produto; ficam registradas por
+transparência):
+- a manutenção era descontada duas vezes (a renda da PNAD já é líquida);
+- um "multiplica" de carta atingia custos fixos do trabalho, como a parcela da
+  moto;
+- era possível passar mais de 30 dias parado no mesmo mês;
+- o empréstimo do mês 3 cobrava sem o dinheiro entrar;
+- o "entrou" ficava negativo, porque misturava gastos com o problema (viram uma
+  linha própria). **Ainda fica negativo em caminhos raros** (Daiane até
+  −R$ 406, 2,6% dos meses 3 ao acaso; Rose até −R$ 269, 1,2%): num mês parado,
+  a parcela do curso, a do empréstimo e o DAS continuam saindo como custo fixo.
+  Resolver isso é decisão de conteúdo (rascunho, seção 8);
+- os valores da fratura não tinham fonte.
+
+Segunda rodada da revisão (29/09), também correções de conta:
+- o trabalho do mês chegava a ficar negativo (−R$ 96), e a "renda perdida" da
+  carta passava da renda que havia: os dias parados são descontados a preço
+  cheio depois do "exausto" (× 0,9) ou do bloqueio (× 0). Agora o trabalho
+  variável tem piso em R$ 0 (`regras.pisoTrabalho`), e a validação falha se ele
+  voltar a ficar negativo;
+- o conserto do carro na fratura citava uma faixa que a fonte não traz: passou a
+  R$ 1.840, o teto da troca com pintura de para-choque em carro popular
+  (Autocidade, 13/06/2026), e não R$ 2.000;
+- a faixa da fisioterapia passou a ser a lida na Doctoralia (R$ 120 a R$ 320).

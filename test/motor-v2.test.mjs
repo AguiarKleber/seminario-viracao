@@ -36,7 +36,7 @@ test('ordem do mês: trabalho → outra renda → básico → juros, e o limite 
   const r = M.aplicar(config, { equipeId: 'e1', rodadaId: 'r1', opcaoId: 'a', cartaId: 'normal', estado: { renda: -500, energia: 8 } });
 
   // Assert
-  assert.deepEqual(r.mes, { trabalho: 2100, outraRenda: 300, entrou: 2400, basico: 900, juros: 50, saldoMes: 1450, dividaAntes: 500 });
+  assert.deepEqual(r.mes, { trabalho: 2100, custosFixos: 0, gastos: 0, outraRenda: 300, entrou: 2400, basico: 900, juros: 50, saldoMes: 1450, dividaAntes: 500 });
   assert.equal(r.delta.renda, 1450);
   assert.equal(r.depois.renda, 950);
   assert.deepEqual(r.linhas.map((l) => [l.origem, l.rotulo, l.valor]), [
@@ -278,7 +278,7 @@ test('mesComum: só o todoMes da persona, mais a outra renda, menos o básico, s
   const mes = M.mesComum(config, 'e1');
 
   // Assert: 2200 − 480 + 1499 − 4166 = −947.
-  assert.deepEqual(mes, { trabalho: 1720, outraRenda: 1499, entrou: 3219, basico: 4166, juros: 0, saldoMes: -947, dividaAntes: 0 });
+  assert.deepEqual(mes, { trabalho: 1720, custosFixos: 0, gastos: 0, outraRenda: 1499, entrou: 3219, basico: 4166, juros: 0, saldoMes: -947, dividaAntes: 0 });
 });
 
 test('mesComum: no config.json real, a conta à mão do rascunho (todoMes + outra renda − básico)', () => {

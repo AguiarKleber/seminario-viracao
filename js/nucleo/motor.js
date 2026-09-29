@@ -137,18 +137,126 @@
     return lista(persona && persona.basico && persona.basico.itens).reduce((s, item) => s + (Number(item && item.valor) || 0), 0);
   }
 
-  // A parte determinística da rodada (arquitetura, seção 7; D-044 e D-046):
+  // O tipo de um efeito na ordem do mês (esquema v2.1, contratos seção 3):
+  // "gasto" (conserto, remédio, multa), "custoFixo" (parcela, aluguel do
+  // veículo) ou "trabalho" (o resto, o único que multiplica atinge).
+  function tipoDoEfeito(efeito) {
+    if (efeito.categoria === 'gasto') return 'gasto';
+    return efeito.fixo === true ? 'custoFixo' : 'trabalho';
+  }
+
+  // Os efeitos do mês, em três passadas (esquema v2.1):
+  // 1. trabalho variável, na ordem todoMes → gerais → opção → carta: soma
+  //    adiciona ao delta, e multiplica multiplica o delta daquele indicador. É
+  //    a única passada em que multiplica vale, e por isso a carta que zera a
+  //    renda zera o que se ganha, e não a parcela da moto: antes do v2.1 ela
+  //    zerava também a parcela, e o acidentado ficava R$ 741 melhor (revisão de
+  //    29/09, item 4);
+  // 2. − custos fixos (efeitos com fixo, de qualquer origem);
+  // 3. − gastos (efeitos com categoria "gasto", de qualquer origem): ficam fora
+  //    do "entrou", que antes chegava a −R$ 2.541 porque levava o conserto e o
+  //    remédio junto (revisão de 29/09, item 2).
+  // Custo fixo e gasto só têm soma (o validador recusa multiplica neles).
+  // A carta é o último grupo da passada 1, então o trabalho "sem a carta" é o
+  // delta logo antes dela: nenhuma condição lê a carta do próprio mês, e por
+  // isso isto dá o mesmo que refazer o mês sem a carta, sem aplicar duas vezes
+  // (a enumeração do placar chama aplicar centenas de milhares de vezes).
+  // Um efeito geral "de antes" é consequência de um mês anterior: a condição
+  // lê o que a equipe decidiu ou tirou antes, ou o estado de antes do mês
+  // (a multa do aluguel lê o saldo). A tela nomeia essas linhas ("a fratura
+  // continua −R$ 2.233 · auxílio do INSS +R$ 2.431"): sem isso, os 25 dias da
+  // fratura e o INSS sumiam dentro do "trabalho", e a conta lida na tela não
+  // fechava (revisão de 29/09, 2ª rodada, achado 10). O corte que vale para
+  // todos, o efeito da opção e a carta ficam de fora: a rodada, a letra e o
+  // custo da carta já os dizem. O custo fixo também: já está em "custos fixos".
+  function deAntes(origem, efeito) {
+    const se = efeito.se;
+    return origem === 'geral' && tipoDoEfeito(efeito) !== 'custoFixo'
+      && !!se && (se.decidiu !== undefined || se.sorteou !== undefined || se.indicador !== undefined);
+  }
+
+  function efeitosDoMes(config, ctx, grupos, delta, linhas) {
+    const ind = INDICADOR_PLACAR;
+    const valem = [];
+    for (const [origem, efeitos, rotuloPadrao] of grupos) {
+      for (const efeito of lista(efeitos)) {
+        if (condicaoVale(config, efeito.se, ctx)) valem.push({ origem, efeito, rotulo: efeito.rotulo || rotuloPadrao });
+      }
+    }
+    // Só na renda: é ela que a tela nomeia, e o placar é decomposto nela.
+    const marcar = (linha, origem, efeito) => {
+      if (linha.indicador === ind && deAntes(origem, efeito)) linha.deAntes = true;
+      linhas.push(linha);
+    };
+    let trabalhoSemCarta = null;
+    for (const { origem, efeito, rotulo } of valem) {
+      if (tipoDoEfeito(efeito) !== 'trabalho') continue;
+      if (origem === 'carta' && trabalhoSemCarta === null) trabalhoSemCarta = delta[ind];
+      for (const [i, valor] of Object.entries(efeito.soma || {})) {
+        delta[i] += valor;
+        marcar({ origem, rotulo, indicador: i, valor }, origem, efeito);
+      }
+      for (const [i, fator] of Object.entries(efeito.multiplica || {})) {
+        const antes = delta[i];
+        // "+ 0" troca -0 por 0 (delta negativo × 0). O -0 passa despercebido na
+        // tela, mas quebra a comparação exata do placar recalculado pelo simulador.
+        delta[i] = antes * fator + 0;
+        marcar({ origem, rotulo, indicador: i, valor: delta[i] - antes }, origem, efeito);
+      }
+    }
+    // Piso do trabalho variável em 0 (revisão de 29/09, 2ª rodada, achados 2 e
+    // 9). Os dias parados são somas a preço cheio (a fratura que continua, os
+    // 3 dias da carta), e o "exausto" (× 0,9) ou o bloqueio (× 0) já tinham
+    // cortado a renda antes deles: o trabalho chegava a −R$ 96, e a tela dizia
+    // "renda perdida R$ 268" de uma renda de R$ 179. Não se perde mais renda do
+    // que havia. A linha "piso" devolve a diferença, e as linhas continuam
+    // somando o delta. Custos fixos e gastos vêm depois, fora do piso: a
+    // parcela vence parado ou não.
+    // Só com regras.pisoTrabalho (esquema v2.1): num config v2 o "trabalho"
+    // ainda leva custos e perdas, e pode ficar negativo de propósito.
+    const piso = config.regras && config.regras.pisoTrabalho === true;
+    if (piso && delta[ind] < 0) {
+      linhas.push({ origem: 'piso', rotulo: 'o trabalho do mês não fica abaixo de zero', indicador: ind, valor: -delta[ind] });
+      delta[ind] = 0;
+    }
+    const trabalho = delta[ind];
+    if (trabalhoSemCarta === null) trabalhoSemCarta = trabalho;
+    if (piso) trabalhoSemCarta = Math.max(0, trabalhoSemCarta);
+    const somados = { custoFixo: 0, gasto: 0, gastoDaCarta: 0 };
+    for (const tipo of ['custoFixo', 'gasto']) {
+      for (const { origem, efeito, rotulo } of valem) {
+        if (tipoDoEfeito(efeito) !== tipo) continue;
+        for (const [i, valor] of Object.entries(efeito.soma || {})) {
+          delta[i] += valor;
+          marcar({ origem: tipo, rotulo, indicador: i, valor }, origem, efeito);
+          if (i !== ind) continue;
+          somados[tipo] += valor;
+          if (tipo === 'gasto' && origem === 'carta') somados.gastoDaCarta += valor;
+        }
+      }
+    }
+    // Custos e gastos saem com o sinal da tela ("gastos R$ 400"): positivos
+    // quando tiram dinheiro. "+ 0" troca o -0 de −(0) por 0.
+    return {
+      trabalho, custosFixos: -somados.custoFixo + 0, gastos: -somados.gasto + 0,
+      rendaPerdida: Math.max(0, trabalhoSemCarta - trabalho), gastosDaCarta: -somados.gastoDaCarta + 0,
+    };
+  }
+
+  // A parte determinística da rodada (arquitetura, seção 7; D-044, D-046 e o
+  // esquema v2.1):
   // - o delta de cada indicador começa em 0;
-  // - ordem fixa: persona.todoMes → rodada.efeitosGerais → opção → carta. Isto é o
-  //   "delta do trabalho": soma adiciona ao delta; multiplica multiplica o delta
-  //   daquele indicador, e por isso só atinge o que veio do trabalho;
-  // - depois, na renda: + outra renda da casa, − básico da casa (a soma dos
-  //   itens), − juros sobre a dívida que vinha de ANTES do mês. É no fim porque a
-  //   conta da casa chega igual, com ou sem acidente: a carta que corta a renda
-  //   pela metade corta o que se ganha, e não o aluguel;
+  // - (1) trabalho variável → (2) − custos fixos → (3) − gastos (efeitosDoMes);
+  // - depois, na renda: (4) + outra renda da casa, (5) − básico da casa (a soma
+  //   dos itens), (6) − juros sobre a dívida que vinha de ANTES do mês. É no fim
+  //   porque a conta da casa chega igual, com ou sem acidente: a carta que corta
+  //   a renda pela metade corta o que se ganha, e não o aluguel;
   // - toda condição lê o estado de antes da rodada (e o histórico da equipe);
   // - no fim, depois = clamp(estado + delta, min, max).
   // O delta devolvido é o de antes do clamp; o efeito real está em "depois".
+  // cartaCusto é o custo real da carta para a tela (D-052): os dias parados
+  // (informativo, do config), a renda do trabalho que ela tirou e os gastos
+  // que ela trouxe.
   function aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico }) {
     const ctx = contexto(config, equipeId, rodadaId, opcaoId, estado, historico);
     const persona = exigir(config.personas, ctx.personaId, 'Persona');
@@ -165,38 +273,33 @@
       ['opcao', opcao.efeitos, opcao.rotulo],
       ['carta', carta ? carta.efeitos : [], carta ? carta.titulo : ''],
     ];
-    for (const [origem, efeitos, rotuloPadrao] of grupos) {
-      for (const efeito of lista(efeitos)) {
-        if (!condicaoVale(config, efeito.se, ctx)) continue;
-        const rotulo = efeito.rotulo || rotuloPadrao;
-        for (const [ind, valor] of Object.entries(efeito.soma || {})) {
-          delta[ind] += valor;
-          linhas.push({ origem, rotulo, indicador: ind, valor });
-        }
-        for (const [ind, fator] of Object.entries(efeito.multiplica || {})) {
-          const antes = delta[ind];
-          // "+ 0" troca -0 por 0 (delta negativo × 0). O -0 passa despercebido na
-          // tela, mas quebra a comparação exata do placar recalculado pelo simulador.
-          delta[ind] = antes * fator + 0;
-          linhas.push({ origem, rotulo, indicador: ind, valor: delta[ind] - antes });
-        }
-      }
-    }
-    const mes = contasDoMes(config, persona, estado, delta, linhas);
+    const efeitos = efeitosDoMes(config, ctx, grupos, delta, linhas);
+    const mes = contasDoMes(config, persona, estado, delta, linhas, efeitos);
+    const cartaCusto = {
+      diasParado: carta && Number.isInteger(carta.diasParado) ? carta.diasParado : 0,
+      rendaPerdida: efeitos.rendaPerdida,
+      gastos: efeitos.gastosDaCarta,
+    };
     const depois = {};
     for (const ind of indicadores) {
       const { inicial, min, max } = config.indicadores[ind];
       const base = Object.hasOwn(estado, ind) ? estado[ind] : inicial;
       depois[ind] = Math.min(max, Math.max(min, base + delta[ind]));
     }
-    return { delta, depois, linhas, mes };
+    // O que veio dos meses anteriores, nomeado para a tela (deAntes, acima). O
+    // anfitrião grava junto do resultado: o celular não carrega o motor. O
+    // gasto (a multa, o saldo do empréstimo) vai marcado: está nos "gastos" do
+    // mês, e não no "entrou", e a tela o nomeia quando os gastos têm mais de
+    // uma origem.
+    const antes = linhas.filter((l) => l.deAntes)
+      .map((l) => (l.origem === 'gasto' ? { rotulo: l.rotulo, valor: l.valor, gasto: true } : { rotulo: l.rotulo, valor: l.valor }));
+    return { delta, depois, linhas, mes, cartaCusto, deAntes: antes };
   }
 
   // Outra renda, básico e juros entram no delta da renda e nas linhas. Linha de
   // valor 0 não entra: "juros R$ 0" em todo mês sem dívida seria só ruído.
-  function contasDoMes(config, persona, estado, delta, linhas) {
+  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos }) {
     const ind = INDICADOR_PLACAR;
-    const trabalho = delta[ind];
     const outra = persona.outraRenda && Number(persona.outraRenda.valor) > 0 ? persona.outraRenda.valor : 0;
     if (outra > 0) {
       delta[ind] += outra;
@@ -218,8 +321,10 @@
       linhas.push({ origem: 'juros', rotulo: 'juros da dívida', indicador: ind, valor: -juros });
     }
     const basico = totalBasico(persona);
-    const entrou = trabalho + outra;
-    return { trabalho, outraRenda: outra, entrou, basico, juros, saldoMes: entrou - basico - juros, dividaAntes };
+    // O "entrou" é o que o trabalho deixou (já sem os custos fixos) mais a outra
+    // renda da casa; os gastos do problema ficam numa linha própria.
+    const entrou = trabalho - custosFixos + outra;
+    return { trabalho, custosFixos, gastos, outraRenda: outra, entrou, basico, juros, saldoMes: entrou - gastos - basico - juros, dividaAntes };
   }
 
   // O furo de um mês comum (tela de personas do telão; revisão de 29/09): só o
@@ -233,12 +338,10 @@
     const persona = exigir(config.personas, ctx.personaId, 'Persona');
     const delta = {};
     for (const ind of ids(config, 'indicadores')) delta[ind] = 0;
-    for (const efeito of lista(persona.todoMes)) {
-      if (!condicaoVale(config, efeito.se, ctx)) continue;
-      for (const [ind, valor] of Object.entries(efeito.soma || {})) delta[ind] += valor;
-      for (const [ind, fator] of Object.entries(efeito.multiplica || {})) delta[ind] = delta[ind] * fator + 0;
-    }
-    return contasDoMes(config, persona, estado, delta, []);
+    // A mesma ordem do mês de verdade: o custo fixo do todoMes (a parcela da
+    // moto) entra num mês comum, e o multiplica não o atinge.
+    const efeitos = efeitosDoMes(config, ctx, [['persona', persona.todoMes, persona.nome]], delta, []);
+    return contasDoMes(config, persona, estado, delta, [], efeitos);
   }
 
   function resolverRodada(config, { equipeId, rodadaId, opcaoId, estado, semente, historico }) {
@@ -251,8 +354,8 @@
     // estão abertas nem da ordem de apuração (contratos seção 2).
     const aleatorio = S.gerador(S.derivar(semente, 'carta:' + equipeId));
     const carta = S.sortearPonderado(baralho.map((c) => ({ id: c.carta, peso: c.peso })), aleatorio);
-    const { delta, depois, linhas, mes } = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico });
-    return { carta, chances: baralho, delta, depois, linhas, mes };
+    const { delta, depois, linhas, mes, cartaCusto, deAntes: antes } = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico });
+    return { carta, chances: baralho, delta, depois, linhas, mes, cartaCusto, deAntes: antes };
   }
 
   // Como a equipe chega à decisão (arquitetura, seção 8). A ordem dos testes é a

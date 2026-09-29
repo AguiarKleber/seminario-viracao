@@ -372,30 +372,53 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    duas linhas fixas, seis equipes com a faixa de entrada não cabiam em
    1024×768. */
 .grade-resultados {
-  display: flex; flex-direction: column; gap: calc(var(--espaco) * .45);
+  display: flex; flex-direction: column; gap: calc(var(--espaco) * .3);
   flex: 1 1 auto; min-height: 0; justify-content: safe center;
 }
+/* Padding e entrelinha mínimos: com o custo real da carta (D-052), seis equipes
+   de cartas caras dão três linhas cada, e com .12em e 1.12 a sexta passava da
+   borda de 1024×768 por ~25 px (e2e, parte 4). A fonte fica nos 28 px. */
+/* Revisão de 29/09, 2ª rodada (achado 13): o pior caso de seis equipes, todas
+   com origem, multa, gasto de carta e dívida, passava de 1024×768. O cartão
+   ganhou largura (padding lateral menor, e a tela do resultado usa parte da
+   margem lateral do palco): cada linha leva mais pedaços, e a frase fica em
+   três linhas. */
+.tela-rodada-resultado { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
 .cartao-resultado {
   display: flex; flex-direction: column;
-  padding: .12em .6em;
+  padding: .05em .3em;
   border: 2px solid var(--linha); border-radius: var(--raio);
   background: var(--superficie);
-  line-height: 1.12;
+  line-height: 1.08;
 }
 .resultado-frase .letra { height: 1.1em; min-width: 1.1em; vertical-align: -0.12em; }
 .resultado-carta { font-weight: 750; }
 .resultado-decisao { color: var(--texto-2); }
+/* O aperto do pior caso (telao.js, apertarResultado): sem a origem e, no nível
+   2, sem o que veio de antes. O celular de cada equipe mostra os dois. */
+.grade-resultados[data-aperto] .resultado-origem,
+.grade-resultados[data-aperto="2"] .resultado-antes { display: none; }
 .resultado-divida { font-weight: 700; white-space: nowrap; }
-.resultado-juros { color: var(--texto-2); max-width: 13em; text-align: right; line-height: 1.15; }
-/* As contas do mês (D-044), no resultado e na história: cada pedaço inteiro. */
-.contas { color: var(--texto-2); }
-.contas b { color: var(--texto); }
+/* O título do mês menor que o das outras telas, e a nota dos juros numa linha
+   só: com o custo real da carta (D-052), cada linha de altura vale uma equipe
+   de seis em 1024×768, e o cabeçalho em duas linhas (a nota quebrada) custava
+   25 px. O título continua acima do corpo (1,3×, 36 px em 1024×768). */
+.tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.3); }
+.resultado-juros { color: var(--texto-2); max-width: 17em; text-align: right; line-height: 1.15; }
+/* As contas do mês (D-044) e o custo real da carta (D-052), no resultado e na
+   história: cada pedaço inteiro, o rótulo discreto e o valor em destaque. */
+.contas, .custo-carta, .historia-dinheiro { color: var(--texto-2); }
+.contas b, .custo-carta b, .historia-de-antes b { color: var(--texto); }
 .conta { white-space: nowrap; }
+/* Rótulo que quebra, com a última palavra colada ao valor (telao.js, rotuloEValor). */
+.conta-fim { white-space: nowrap; }
 .cartao-resultado.destaque { border-color: var(--texto); border-width: 3px; }
 /* Carta grave: só o texto da consequência, em cor neutra, sem animação e sem
    destaque (seção 8, "tema sensível"). */
 .cartao-resultado.grave, .cartao-resultado.grave.destaque { border-color: var(--linha-forte); border-width: 2px; }
-@keyframes destacar { from { opacity: .15; transform: translateX(-1.5vw); } to { opacity: 1; transform: none; } }
+/* O deslocamento cabe na margem que sobra do palco (o resultado usa parte
+   dela): com −1,5vw, o cartão animado saía pela esquerda da tela. */
+@keyframes destacar { from { opacity: .15; transform: translateX(-1vw); } to { opacity: 1; transform: none; } }
 .cartao-resultado.animada { animation: destacar .7s ease-out both; }
 
 /* ---------- Comparativo ---------- */
