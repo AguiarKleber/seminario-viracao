@@ -23,6 +23,7 @@ const LIMIAR_MINIMO = 0.3;
 const V = await carregarNucleo();
 const M = V.motor;
 const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+const reais = (x) => (x < 0 ? '−R$ ' : 'R$ ') + numero.format(Math.abs(Math.round(x)));
 const pct = (x) => numero.format(x * 100) + '%';
 // Arredonda antes de decidir o sinal: senão 0,02 sai como "+0" e -0,02 como "-0".
 const sinal = (x) => {
@@ -67,19 +68,24 @@ function analisar(cfg) {
     console.log(`  AVISO: ${texto}`);
   };
 
-  // Uma distribuição é uma lista de { estado, p, bateu }: "bateu" marca, bit a
-  // bit, os indicadores que já caíram até o mínimo nesta partida (conferência f).
-  const chaveDe = (x) => inds.map((i) => x.estado[i]).join('|') + '#' + x.bateu;
+  // Uma distribuição é uma lista de { estado, historico, p, bateu }: "bateu"
+  // marca, bit a bit, os indicadores que já caíram até o mínimo nesta partida
+  // (conferência f); o histórico é o que decidiu/sorteou leem (D-043), e só as
+  // rodadas citadas por alguma condição entram na chave (as outras não mudam nada).
+  const citadas = rodadasCitadas(cfg);
+  const chaveDe = (x) => inds.map((i) => x.estado[i]).join('|') + '#' + x.bateu
+    + citadas.map((r) => (x.historico[r] ? `#${x.historico[r].decisao}:${x.historico[r].carta}` : '#-')).join('');
   const juntar = (lista) => {
     const mapa = new Map();
     for (const x of lista) {
       const k = chaveDe(x);
       const achado = mapa.get(k);
       if (achado) achado.p += x.p;
-      else mapa.set(k, { estado: x.estado, p: x.p, bateu: x.bateu });
+      else mapa.set(k, { estado: x.estado, historico: x.historico, p: x.p, bateu: x.bateu });
     }
     return [...mapa.values()];
   };
+  const ctx = (x, equipeId, rodadaId, opcaoId) => ({ equipeId, rodadaId, opcaoId, estado: x.estado, historico: x.historico });
   const uniforme = (rodadaId) => {
     const ids = cfg.rodadas[rodadaId].ordemOpcoes;
     return ids.map((id) => [id, 1 / ids.length]);
@@ -89,14 +95,15 @@ function analisar(cfg) {
     const saida = [];
     for (const x of dist) {
       for (const [opcaoId, pOpcao] of opcoes) {
-        for (const c of M.chances(cfg, { equipeId, rodadaId, opcaoId, estado: x.estado })) {
-          const depois = M.aplicar(cfg, { equipeId, rodadaId, opcaoId, cartaId: c.carta, estado: x.estado }).depois;
+        for (const c of M.chances(cfg, ctx(x, equipeId, rodadaId, opcaoId))) {
+          const depois = M.aplicar(cfg, { ...ctx(x, equipeId, rodadaId, opcaoId), cartaId: c.carta }).depois;
           let bateu = x.bateu;
           inds.forEach((ind, k) => {
             const { min } = cfg.indicadores[ind];
             if (x.estado[ind] > min && depois[ind] === min) bateu |= 1 << k;
           });
-          saida.push({ estado: depois, p: x.p * pOpcao * c.chance, bateu });
+          const historico = { ...x.historico, [rodadaId]: { decisao: opcaoId, carta: c.carta } };
+          saida.push({ estado: depois, historico, p: x.p * pOpcao * c.chance, bateu });
         }
       }
     }
@@ -104,7 +111,7 @@ function analisar(cfg) {
   };
   // Antes da rodada k, com as rodadas anteriores decididas ao acaso.
   const distribuicoesAntes = (equipeId) => {
-    const lista = [[{ estado: M.estadoInicial(cfg, equipeId), p: 1, bateu: 0 }]];
+    const lista = [[{ estado: M.estadoInicial(cfg, equipeId), historico: {}, p: 1, bateu: 0 }]];
     for (const rodadaId of rodadas) lista.push(avancar(lista[lista.length - 1], equipeId, rodadaId, uniforme(rodadaId)));
     return lista;
   };
@@ -126,7 +133,7 @@ function analisar(cfg) {
         const maximo = {};
         const vistas = antesPorPerfil.get(pf)[k];
         for (const x of vistas) {
-          const mapa = Object.fromEntries(M.chances(cfg, { equipeId: pf.equipeId, rodadaId, opcaoId, estado: x.estado }).map((c) => [c.carta, c.chance]));
+          const mapa = Object.fromEntries(M.chances(cfg, ctx(x, pf.equipeId, rodadaId, opcaoId)).map((c) => [c.carta, c.chance]));
           for (const carta of cfg.ordem.cartas) {
             const ch = mapa[carta] || 0;
             media[carta] = (media[carta] || 0) + x.p * ch;
@@ -143,26 +150,43 @@ function analisar(cfg) {
     });
   }
 
-  // (b) valor esperado e pior caso do mês
+  // (b) valor esperado e pior caso do mês, com as contas da casa (D-044, D-046)
   console.log('\n== (b) Efeito do mês: valor esperado (E) e pior caso, por persona × rodada × opção ==');
   console.log('Critério: variação do indicador naquele mês (depois do limite min/max), sobre os mesmos estados de (a).');
+  console.log('Contas da casa: "entrou" = trabalho + outra renda; "saldo do mês" = entrou − básico − juros.');
+  console.log(`Dívida: juros de ${pct(cfg.regras.jurosDividaMes)} ao mês sobre a dívida que vinha de antes do mês (fonte: ${cfg.regras.jurosFonte}).`);
   for (const pf of perfis) {
+    const persona = cfg.personas[pf.personaId];
+    const itens = persona.basico.itens.map((i) => `${i.rotulo} ${reais(i.valor)}`).join(' + ');
+    const outra = persona.outraRenda ? ` · outra renda da casa: ${persona.outraRenda.rotulo} ${reais(persona.outraRenda.valor)}` : '';
     console.log(`\n${pf.rotulo}`);
+    console.log(`  básico da casa ${reais(M.totalBasico(persona))}/mês (${itens})${outra}`);
     rodadas.forEach((rodadaId, k) => {
       for (const opcaoId of cfg.rodadas[rodadaId].ordemOpcoes) {
         const soma = Object.fromEntries(inds.map((i) => [i, 0]));
         const pior = Object.fromEntries(inds.map((i) => [i, Infinity]));
+        const contas = { entrou: 0, saldoMes: 0, juros: 0, piorEntrou: Infinity, piorSaldo: Infinity, faltou: 0 };
         for (const x of antesPorPerfil.get(pf)[k]) {
-          for (const c of M.chances(cfg, { equipeId: pf.equipeId, rodadaId, opcaoId, estado: x.estado })) {
-            const depois = M.aplicar(cfg, { equipeId: pf.equipeId, rodadaId, opcaoId, cartaId: c.carta, estado: x.estado }).depois;
+          for (const c of M.chances(cfg, ctx(x, pf.equipeId, rodadaId, opcaoId))) {
+            const { depois, mes } = M.aplicar(cfg, { ...ctx(x, pf.equipeId, rodadaId, opcaoId), cartaId: c.carta });
+            const p = x.p * c.chance;
             for (const i of inds) {
               const variacao = depois[i] - x.estado[i];
-              soma[i] += x.p * c.chance * variacao;
+              soma[i] += p * variacao;
               pior[i] = Math.min(pior[i], variacao);
             }
+            contas.entrou += p * mes.entrou;
+            contas.saldoMes += p * mes.saldoMes;
+            contas.juros += p * mes.juros;
+            contas.piorEntrou = Math.min(contas.piorEntrou, mes.entrou);
+            contas.piorSaldo = Math.min(contas.piorSaldo, mes.saldoMes);
+            if (mes.saldoMes < 0) contas.faltou += p;
           }
         }
         console.log(`  ${rodadaId} ${opcaoId}  ` + inds.map((i) => `${i} E ${sinal(soma[i])} pior ${sinal(pior[i])}`).join(' | '));
+        console.log(`         entrou E ${reais(contas.entrou)} (pior ${reais(contas.piorEntrou)}) · básico ${reais(M.totalBasico(persona))}`
+          + ` · juros E ${reais(contas.juros)} · saldo do mês E ${reais(contas.saldoMes)} (pior ${reais(contas.piorSaldo)})`
+          + ` · faltou para o básico em ${pct(contas.faltou)} dos casos`);
       }
     });
   }
@@ -210,7 +234,7 @@ function analisar(cfg) {
     const medias = [];
     const variancias = [];
     for (const combo of combinacoes) {
-      let dist = [{ estado: M.estadoInicial(cfg, pf.equipeId), p: 1, bateu: 0 }];
+      let dist = [{ estado: M.estadoInicial(cfg, pf.equipeId), historico: {}, p: 1, bateu: 0 }];
       rodadas.forEach((rodadaId, k) => { dist = avancar(dist, pf.equipeId, rodadaId, [[combo[k], 1]]); });
       const m = esperado(dist, 'renda');
       medias.push(m);
@@ -286,6 +310,17 @@ function todasCondicoes(cfg) {
     deEfeitos(c.efeitos);
   }
   return lista;
+}
+
+// As rodadas citadas por algum decidiu/sorteou: só elas mudam alguma chance ou
+// efeito, e por isso só elas entram na chave da distribuição.
+function rodadasCitadas(cfg) {
+  const citadas = new Set();
+  for (const c of todasCondicoes(cfg)) {
+    for (const r of Object.keys(c.decidiu || {})) citadas.add(r);
+    for (const r of Object.keys(c.sorteou || {})) citadas.add(r);
+  }
+  return [...citadas];
 }
 
 function indicadoresLidos(cfg) {

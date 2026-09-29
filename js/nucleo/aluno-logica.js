@@ -63,10 +63,27 @@
     });
   }
 
+  // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
+  // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
+  // itens, a mesma conta do motor (que o celular não carrega).
   function resumoPersona(conteudo, equipeId) {
     const id = em(conteudo, 'equipes', equipeId, 'persona');
     const p = em(conteudo, 'personas', id) || {};
-    return { id, nome: p.nome, descricao: p.descricao };
+    const itens = lista(em(p, 'basico', 'itens')).map((i) => ({ rotulo: i.rotulo, valor: i.valor, fonte: i.fonte ?? null }));
+    const outra = em(p, 'outraRenda');
+    return {
+      id, nome: p.nome, descricao: p.descricao,
+      familia: p.familia ? { descricao: p.familia.descricao, pessoas: p.familia.pessoas } : null,
+      basico: { total: itens.reduce((soma, i) => soma + (Number(i.valor) || 0), 0), itens },
+      outraRenda: outra ? { rotulo: outra.rotulo, valor: outra.valor, fonte: outra.fonte ?? null } : null,
+    };
+  }
+
+  // D-046: "dívida: R$ X · juros de Y% ao mês". A dívida é o saldo negativo, e os
+  // juros dela são cobrados no fim do próximo mês.
+  function dividaDe(conteudo, valores) {
+    const renda = em(valores, 'renda');
+    return { valor: typeof renda === 'number' && renda < 0 ? -renda : 0, jurosMes: em(conteudo, 'regras', 'jurosDividaMes') };
   }
 
   // A situação da persona nos blocos (D-006): indicadores e a narrativa do
@@ -87,13 +104,17 @@
       persona: resumoPersona(conteudo, equipeId),
       indicadores: listaIndicadores(conteudo, valores),
       mes: null,
+      divida: dividaDe(conteudo, valores),
       narrativa: [],
     };
     if (ultimo) {
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
       const opcao = em(rodada, 'opcoes', ultimo.decisao) || {};
       const carta = em(conteudo, 'cartas', ultimo.carta) || {};
+      // As contas do mês (entrou, básico, juros, saldoMes…) entram no mesmo
+      // objeto: "entrou R$ X · o básico custa R$ Y · faltou R$ Z" (D-044).
       dados.mes = {
+        ...(ultimo.mes || {}),
         rodada: rodadaId, titulo: rodada.titulo, origem: ultimo.origem,
         decisao: { id: ultimo.decisao, rotulo: opcao.rotulo },
         carta: { id: ultimo.carta, titulo: carta.titulo, tom: carta.tom ?? null },
@@ -176,6 +197,10 @@
       else if (pausado) motivo = 'pausado';
       return tela(sub === 'decidindo' ? 'decisao' : 'prorrogacao', {
         rodada: infoRodada,
+        // D-043: a situação da família durante a decisão ("o aluguel vence dia 10").
+        contexto: em(rodada, 'contexto', em(conteudo, 'equipes', equipeId, 'persona')),
+        // Sem a tendência (D-043): a seta dizia qual era a opção "certa", e a
+        // decisão deixava de ser um dilema.
         opcoes: visiveis.map((o) => ({ id: o, rotulo: em(rodada, 'opcoes', o, 'rotulo'), votos: contagem[o] || 0 })),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,
@@ -199,6 +224,7 @@
       decisao: { id: res.decisao, rotulo: opcao.rotulo, narrativa: opcao.narrativa ?? null },
       carta: { id: res.carta, titulo: carta.titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
       delta: res.delta || {}, indicadores: listaIndicadores(conteudo, res.depois),
+      mes: res.mes ?? null, divida: dividaDe(conteudo, res.depois),
     });
   }
 
@@ -241,15 +267,28 @@
         return equipeValida ? telaRodada(conteudo, estado, entrada, equipeValida) : aguardando('semEquipe');
       case 'placarFinal':
         return formadas
-          ? tela('situacao', { ...dadosSituacao(conteudo, equipeValida, resultados), placar: em(placar, equipeValida), final: true })
+          ? tela('situacao', {
+            ...dadosSituacao(conteudo, equipeValida, resultados), placar: em(placar, equipeValida), final: true,
+            historia: historia(conteudo, equipeValida, resultados),
+          })
           : aguardando('apresentacao');
       case 'comparativo':
         return telaComparativo(conteudo, estado, meusVotos);
       case 'fim':
-        return tela('fim', { equipe: equipeValida ? resumoEquipe(conteudo, equipeValida) : null, placar: equipeValida ? em(placar, equipeValida) : null });
+        return tela('fim', {
+          equipe: equipeValida ? resumoEquipe(conteudo, equipeValida) : null, placar: equipeValida ? em(placar, equipeValida) : null,
+          historia: equipeValida ? historia(conteudo, equipeValida, resultados) : [],
+        });
       default:
         return aguardando('telao');
     }
+  }
+
+  // A história da equipe (D-045) vem de historia.js, buscado na hora da chamada
+  // (e não na carga), como todo módulo do núcleo.
+  function historia(conteudo, equipeId, resultados) {
+    const H = raiz.Viracao.historia;
+    return H ? H.historiaDaEquipe(conteudo, equipeId, resultados) : [];
   }
 
   function dadosPersona(conteudo, equipeId) {

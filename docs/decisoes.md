@@ -214,3 +214,76 @@ enquanto o apresentador conta as mãos, como está hoje. Fica marcado como
   10 letras, escrito dentro da fatia.
 - Os rótulos são rascunhados pelo Claude e validados junto com o Kleberson.
 - Fica marcado como "vamos testar".
+
+## 29/09/2026: redesenho depois do primeiro ensaio do Kleberson no telão
+
+Com base nos prints do ensaio, o Kleberson aprovou as propostas abaixo e pediu
+que elas entrem **hoje**, para que o teste de 30/09 já use a versão nova.
+
+**D-041. Placar final em páginas** (substitui a tela decomposta, que confundia).
+Marcado como "vamos testar". As páginas:
+1. **"Quanto sobrou, e quanto faltou para o básico":** uma barra por equipe,
+   ordenada pelo saldo, com "faltou R$ X" ao lado. O título é calculado, por
+   exemplo "5 de 6 equipes não fecharam as contas".
+2. **"Escolha ou sorte?"**, contada como história, sem legenda: "se não mudassem
+   nada → as escolhas → a sorte → terminaram com". Os termos "piloto automático",
+   "efeito das decisões" e "sorte" saem da tela.
+3. **As histórias das equipes** (D-045).
+
+**D-042. Todo bloco mostra a linha do tempo do seminário**, com "você está aqui"
+e "a seguir". No "Mapa do seminário", essa linha é o próprio mapa. Os slides
+continuam existindo como material complementar. Marcado como "vamos testar".
+
+**D-043. Mais dúvida na decisão.**
+- **4 opções por mês**, cada uma um dilema, sem uma resposta certa.
+- **Sem setas de tendência** nas opções.
+- **De 12 a 14 cartas**, várias ligadas a um mês e às decisões.
+- **Contexto da família no celular durante a decisão**, por exemplo "o aluguel
+  vence dia 10".
+- **Decisão de 120 s.**
+- **Consequências que atravessam os meses:** empréstimo, MEI, associação, e a
+  demora do INSS.
+
+**D-044. Básico da família no jogo** (substitui a D-025).
+- **Cada persona tem uma família no formato de maior impacto**, com dependentes.
+  A Rose, por exemplo, sustenta a casa sozinha.
+- **O custo do básico da casa tem fonte**: cesta do DIEESE de Porto Alegre,
+  aluguel, contas e transporte.
+- **Esse custo é cobrado no fim do mês, depois de tudo.** Uma carta que multiplica
+  a renda corta o que se ganha, e não a conta.
+- **Outra renda da casa**, quando houver, aparece explícita e com fonte.
+- **Todo mês, a tela mostra:** "entrou R$ X · o básico custa R$ Y · faltou R$ Z".
+- **Realismo, sem suavizar nada:** tudo com fonte e com o impacto real em
+  dinheiro e em dias parados. Exemplos: o acidente (dias sem renda, conserto,
+  remédio, INSS com carência e fila), o bloqueio de conta (dias sem renda e o
+  recurso) e o cancelamento sem pagamento. O objetivo é replicar a angústia e a
+  incerteza de quem vive essa realidade.
+
+**D-045. A história de cada equipe no fim:** três linhas contando os três meses,
+a partir das narrativas da opção e da carta. Aparece no placar (D-041) e no
+celular de cada equipe.
+
+**D-046. Dívida visível.**
+- Juros mensais com fonte, cobrados no fim do mês sobre a dívida que vinha do mês
+  anterior.
+- A tela mostra "dívida: R$ X · juros de Y% ao mês".
+- Substitui os juros escritos como efeito no config.
+
+**D-047. Controle de operador fica fora da projeção.**
+- "Exportar totais", "Apagar a sala" e os textos de operação vão para a barra
+  oculta.
+- Todas as telas foram varridas atrás de outros controles do mesmo tipo.
+- A abertura (config, roteiro, PIN) é exceção: acontece antes de projetar.
+
+**D-048. Calendário do redesenho:** os ajustes entram em 29/09, e o teste de 30/09
+usa a versão nova. A decisão foi do Kleberson; o Claude tinha recomendado não
+mudar nada antes do teste.
+
+**D-049. Autonomia operacional do Claude neste projeto** (29/09).
+- O Kleberson deu autonomia total nas ações operacionais: fundir PR, publicar no
+  GitHub Pages, operar o Firebase, apagar salas de teste e rodar ensaios.
+- Decisão de **produto e conteúdo** continua sendo alinhada antes.
+- Três limites que o Claude mantém por conta própria:
+  - o PIN do apresentador nunca passa pelo Claude;
+  - o simulador nunca roda na rede do campus nem no dia da aula;
+  - toda ação operacional é relatada logo depois.

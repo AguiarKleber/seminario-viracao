@@ -16,8 +16,12 @@
 // 6. fechamento em duas fases, sorteio e resultado; o resultado gravado é o
 //    que os votos confirmados dizem;
 // 7. recarregar o celular volta à tela certa, com o mesmo uid;
-// 8. "Continuar sem celulares" segue do espelho local, no mesmo passo.
-// Capturas do celular em e2e/capturas/celular-*.png.
+// 8. "Continuar sem celulares" segue do espelho local, no mesmo passo;
+// 9. o redesenho de 29/09 no celular: o contexto da família na decisão, até 4
+//    opções com a narrativa e sem setas (D-043), "entrou · o básico custa ·
+//    faltou" e a dívida (D-044, D-046), e a história da equipe no fim (D-045).
+// Capturas do celular em e2e/capturas/celular-*.png (as antigas são apagadas no
+// começo: uma captura nova muda a numeração das seguintes).
 //
 // O SDK vem do próprio node_modules/firebase (os mesmos arquivos da CDN
 // gstatic 12.19.0), servido pelo Playwright no endereço da CDN: o teste não
@@ -27,7 +31,7 @@
 /* global document, innerWidth, innerHeight, getComputedStyle, MutationObserver */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { administrador, PIN_EMULADOR, RAIZ, rodarNoEmulador } from '../bin/emulador.mjs';
 import { servir } from '../bin/servir.mjs';
@@ -74,13 +78,53 @@ async function servirSdk(contexto, { falhar = () => false } = {}) {
   });
 }
 
-// O que o teste precisa do config.json, tirado dele (e não escrito aqui): o
+// Com o config.json da raiz em reescrita para o esquema v2 (D-041 a D-048), o
+// e2e joga com a fixture v2 dos testes, servida pelo Playwright no lugar dele.
+// A fixture não tem narrativa nas opções; aqui cada opção ganha uma do tamanho
+// das do rascunho (cerca de 110 letras), para medir o pior caso da decisão em
+// 360×740: 4 opções, todas com narrativa (D-043). A enquete de entrada passa a
+// "todas", como no config.json: o roteiro do e2e responde as 3 afirmações de uma
+// vez, com "voltar" e "mudar", e a fixture abre uma por vez. E, como no
+// config.json, um bloco entre as personas e o primeiro mês: é nele que o celular
+// mostra a situação antes da primeira rodada.
+function fixtureV2ComNarrativas() {
+  const cfg = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-teste-v2.json'), 'utf8'));
+  cfg.enquetes.find((e) => e.id === 'entrada').modo = 'todas';
+  for (const passos of Object.values(cfg.roteiros)) {
+    const i = passos.findIndex((p) => p.tipo === 'personas');
+    if (passos[i + 1]?.tipo !== 'bloco') passos.splice(i + 1, 0, { tipo: 'bloco', titulo: 'Antes do primeiro mês', alvoSeg: 120 });
+  }
+  // O básico do Rafa (equipe 1) passa de R$ 2.000 para R$ 4.500: com qualquer
+  // opção e qualquer carta o mês 1 não fecha (o melhor caso é R$ 4.240), e o e2e
+  // passa sempre pelo "faltou", pela dívida e pelos juros do mês 2.
+  cfg.personas.find((p) => p.id === 'motoboy').basico.itens.push({ rotulo: 'dívida antiga da família', valor: 2500, fonte: 'valor de teste do e2e' });
+  for (const r of cfg.rodadas) {
+    const opcoes = Array.isArray(r.opcoes) ? r.opcoes : Object.values(r.opcoes);
+    for (const o of opcoes) {
+      o.narrativa ??= `Escolhi "${o.rotulo}" sabendo que o mês não fecha: cada real conta, e ninguém garante o pedido de amanhã.`;
+    }
+  }
+  return JSON.stringify(cfg, null, 2);
+}
+
+// O que o teste precisa do conteúdo, tirado dele (e não escrito aqui): o
 // conteúdo ainda muda até o congelamento (docs/decisoes.md), e o teste não pode
 // quebrar porque uma equipe trocou de nome.
 async function conteudoDoTeste() {
   const V = await carregarNucleo();
-  const r = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
-  assert.ok(r.ok, 'o config.json precisa ser válido para o e2e');
+  let textoConfig = readFileSync(join(RAIZ, 'config.json'), 'utf8');
+  let origem = 'config.json';
+  let r = V.validarConfig.validarTexto(textoConfig);
+  // E2E_FIXTURE=1 força a fixture mesmo com o config.json válido: é ela que passa
+  // com certeza pelo "faltou", pela dívida e pelos juros (o config real depende da carta).
+  const forcarFixture = process.env.E2E_FIXTURE === '1';
+  if (!r.ok || forcarFixture) {
+    textoConfig = fixtureV2ComNarrativas();
+    origem = `test/fixtures/config-teste-v2.json (${forcarFixture ? 'E2E_FIXTURE=1' : 'o config.json da raiz ainda não passa no validador'})`;
+    r = V.validarConfig.validarTexto(textoConfig);
+  }
+  assert.ok(r.ok, `o conteúdo do e2e precisa ser válido (${origem}): ${JSON.stringify(r.erros)}`);
+  console.log(`Conteúdo do e2e: ${origem}.`);
   const cfg = r.config;
   const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
   // A abertura do telão começa no primeiro roteiro do config.
@@ -96,11 +140,13 @@ async function conteudoDoTeste() {
     antes: { enquete: antes.enquete, ordem, total: ordem.length },
     rodada, todasOpcoes, opcoes: todasOpcoes.slice(0, 3), equipes, nomeE1: cfg.equipes[equipes[0]].nome,
     passos, opcoesDe: (r) => lista(cfg.rodadas[r].ordemOpcoes),
+    cfg, textoConfig, historiaDaEquipe: V.historia.historiaDaEquipe, usandoFixture: origem !== 'config.json',
   };
 }
 
 async function sessao() {
   mkdirSync(CAPTURAS, { recursive: true });
+  for (const n of readdirSync(CAPTURAS)) if (/^celular-.*.png$/.test(n)) rmSync(join(CAPTURAS, n));
   const site = await servir({ porta: 0 });
   // O PIN só do emulador, o mesmo dos testes de test/emulador/ (no projeto real,
   // ele fica só no console do Firebase, AGENTS.md regra 7).
@@ -140,6 +186,11 @@ async function esperarNoBanco(caminho, esperado, esperaMs = 5000) {
 
 async function jogar({ site, navegador, vigiar }) {
   const C = await conteudoDoTeste();
+  // Todo telão lê o mesmo conteúdo (a fixture, enquanto o config.json da raiz
+  // não passa): retomar a sala exige o mesmo hash de config.
+  const servirConfig = (ctx) => ctx.route(`${site.url}config.json`, (rota) => rota.fulfill({
+    status: 200, contentType: 'application/json; charset=utf-8', body: C.textoConfig,
+  }));
   // ---------- Sem serviço: o offline continua sendo a saída ----------
   // Sem ?emulador=1, vale o conexao.json do site; aqui ele é o modelo com
   // "COLE_AQUI": o telão explica e só oferece o modo sem celulares. O modelo é
@@ -149,6 +200,7 @@ async function jogar({ site, navegador, vigiar }) {
   // fica bloqueada aqui, para nada deste contexto sair para o serviço.
   {
     const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
+    await servirConfig(ctx);
     await ctx.route(`${site.url}conexao.json`, (rota) => rota.fulfill({
       status: 200, contentType: 'application/json; charset=utf-8',
       body: JSON.stringify(Object.fromEntries(['apiKey', 'authDomain', 'databaseURL', 'projectId', 'appId'].map((k) => [k, 'COLE_AQUI']))),
@@ -172,6 +224,7 @@ async function jogar({ site, navegador, vigiar }) {
   // offline; o celular diz "sem acesso ao serviço" e tenta de novo sozinho.
   {
     const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
+    await servirConfig(ctx);
     await ctx.route(`${SDK_CDN}*`, () => { /* nunca responde */ });
     const p = await ctx.newPage();
     const inicio = Date.now();
@@ -194,6 +247,7 @@ async function jogar({ site, navegador, vigiar }) {
   {
     let falhar = true;
     const ctx = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
+    await servirConfig(ctx);
     await servirSdk(ctx, { falhar: () => falhar });
     const p = await ctx.newPage();
     await p.goto(`${site.url}telao/?emulador=1`);
@@ -217,6 +271,7 @@ async function jogar({ site, navegador, vigiar }) {
   // ---------- Telão ----------
   const ctxTelao = await navegador.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
   await servirSdk(ctxTelao);
+  await servirConfig(ctxTelao);
   // let: no fim, outra máquina assume a sala, e os ajudantes passam a falar com ela.
   let telao = await ctxTelao.newPage();
   // D-038: a barra do apresentador só aparece com o mouse na faixa de 48 px da
@@ -317,6 +372,66 @@ async function jogar({ site, navegador, vigiar }) {
     await c.p.screenshot({ path: join(CAPTURAS, `celular-${String(++capturas).padStart(2, '0')}-${nome}.png`), fullPage: true });
   }
 
+  // ---------- O redesenho de 29/09 no celular (D-043 a D-046) ----------
+  const personaDe = (eq) => C.cfg.personas[C.cfg.equipes[eq].persona];
+  const listaDe = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
+  const inclui = (texto, trecho) => String(texto).toLocaleLowerCase('pt-BR').includes(String(trecho).toLocaleLowerCase('pt-BR'));
+  // O dinheiro formatado pelo próprio celular (o mesmo Viracao.formatar da tela).
+  const moedaNa = (c, v) => c.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x), v);
+  // "Entrou R$ X · o básico da família custa R$ Y · faltou R$ Z" (D-044), com os
+  // números do mês que o telão gravou em resultados/{r}/{eq}.mes.
+  async function conferirContaDoMes(c, mes, onde) {
+    assert.ok(mes && Number.isFinite(mes.saldoMes), `${onde}: o telão gravou o mês no resultado`);
+    const lido = await c.p.evaluate(() => {
+      const n = document.querySelector('.conta-mes');
+      return n ? { ...n.dataset, texto: n.textContent } : null;
+    });
+    assert.ok(lido, `${onde}: a conta do mês aparece`);
+    for (const k of ['entrou', 'basico', 'juros', 'saldoMes']) assert.equal(Number(lido[k]), mes[k], `${onde}: ${k} do mês`);
+    const trechos = [
+      `entrou ${await moedaNa(c, mes.entrou)}`,
+      `o básico da família custa ${await moedaNa(c, mes.basico)}`,
+      mes.saldoMes < 0 ? `faltou ${await moedaNa(c, -mes.saldoMes)}` : `sobrou ${await moedaNa(c, mes.saldoMes)}`,
+    ];
+    if (mes.juros > 0) trechos.push(`juros da dívida ${await moedaNa(c, mes.juros)}`);
+    for (const x of trechos) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
+  }
+  // "Dívida R$ D · juros de J% ao mês" (D-046), só quando o saldo está negativo.
+  async function conferirDivida(c, renda, onde) {
+    const texto = await c.p.evaluate(() => document.querySelector('.divida')?.textContent ?? null);
+    if (renda >= 0) {
+      assert.equal(texto, null, `${onde}: sem dívida, sem a linha da dívida`);
+      return;
+    }
+    // Com as casas da fonte (7,43%), refeito aqui, e não pelo formatador da página.
+    const juros = `${(C.cfg.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+    for (const x of [`dívida ${await moedaNa(c, -renda)}`, `juros de ${juros} ao mês`]) assert.ok(inclui(texto, x), `${onde}: "${x}" em "${texto}"`);
+  }
+  async function conferirFamilia(c, eq, onde) {
+    const texto = await c.p.evaluate(() => document.querySelector('.familia')?.textContent ?? '');
+    assert.ok(texto.includes(personaDe(eq).familia.descricao), `${onde}: a família em uma linha`);
+  }
+  // A história da equipe, mês a mês (D-045): a mesma função pura do núcleo.
+  async function conferirHistoria(c, eq, resultadosDaSala, onde) {
+    const esperada = C.historiaDaEquipe(C.cfg, eq, resultadosDaSala);
+    assert.ok(esperada.length >= 2, `${onde}: a equipe jogou pelo menos dois meses`);
+    const lida = await c.p.$$eval('.historia-mes', (ns) => ns.map((n) => ({ rodada: n.dataset.rodada, texto: n.textContent })));
+    assert.deepEqual(lida.map((x) => x.rodada), esperada.map((x) => x.rodadaId), `${onde}: um item por mês jogado, na ordem`);
+    for (const [i, h] of esperada.entries()) {
+      for (const x of [h.titulo, h.opcao.rotulo, h.opcao.narrativa, h.carta.titulo, h.carta.narrativa]) {
+        if (x) assert.ok(lida[i].texto.includes(x), `${onde}: o mês ${h.rodadaId} traz "${x}"`);
+      }
+      if (h.mes) {
+        const saldo = h.mes.saldoMes < 0 ? `faltou ${await moedaNa(c, -h.mes.saldoMes)}` : `sobrou ${await moedaNa(c, h.mes.saldoMes)}`;
+        assert.ok(inclui(lida[i].texto, saldo), `${onde}: o mês ${h.rodadaId} traz "${saldo}"`);
+        if (h.mes.juros > 0) {
+          const juros = `juros ${await moedaNa(c, h.mes.juros)}`;
+          assert.ok(inclui(lida[i].texto, juros), `${onde}: o mês ${h.rodadaId} traz "${juros}"`);
+        }
+      }
+    }
+  }
+
   // Navegador embutido do Instagram: a própria tela de entrada barra.
   const insta = await novoCelular('instagram', UA_INSTAGRAM);
   await esperarTela(insta, 'entrada');
@@ -344,7 +459,9 @@ async function jogar({ site, navegador, vigiar }) {
   // e some; o registro de membro fica. 60 s depois do último sinal ele deixa de
   // ser ativo (e sai do denominador do "todos votaram"), e o "Remover inativos"
   // (segurar 2 s) apaga quem está sem sinal há mais de 2 min.
-  const ativosNoLobby = (texto, timeout = 20000) => telao.waitForFunction((t) => document.querySelector('.lobby [data-contagem-ativos]')?.textContent === t, texto, { timeout });
+  // D-047: a contagem de ativos é texto de operação e fica só na barra oculta,
+  // fora da tela projetada.
+  const ativosNaBarra = (texto, timeout = 20000) => telao.waitForFunction((t) => document.querySelector('#barra [data-contagem-ativos]')?.textContent === t, texto, { timeout });
   const avisoDiz = (re, timeout = 15000) => telao.waitForFunction((fonte) => new RegExp(fonte).test(document.getElementById('aviso')?.textContent || ''), re.source, { timeout });
   async function segurarNaBarra(acao) {
     await mouseNaBorda(300 + Math.random() * 40);
@@ -354,12 +471,13 @@ async function jogar({ site, navegador, vigiar }) {
     await telao.waitForTimeout(2400);
     await telao.mouse.up();
   }
-  await ativosNoLobby('3 ativos / 3 membros');
+  await ativosNaBarra('3 ativos / 3 membros');
+  assert.equal(await telao.locator('.lobby [data-contagem-ativos]').count(), 0, 'a contagem de ativos não fica no lobby projetado (D-047)');
   const dudu = await novoCelular('dudu');
   await dudu.p.click('[data-acao="entrar"]');
   await esperarTela(dudu, 'aguardando');
   const uidDudu = await dudu.p.evaluate(() => globalThis.Viracao.aluno.uid());
-  await ativosNoLobby('4 ativos / 4 membros');
+  await ativosNaBarra('4 ativos / 4 membros');
   assert.equal(await telao.textContent('#barra [data-contagem-ativos]'), '4 ativos / 4 membros');
   // O celular some (a aba fechada; o servidor apaga a presença dele pelo
   // onDisconnect). O último sinal é então regravado 50 s para trás, para o teste
@@ -368,8 +486,8 @@ async function jogar({ site, navegador, vigiar }) {
   await dudu.ctx.close();
   assert.equal(await esperarNoBanco(`salas/${sala}/presenca/${uidDudu}`, null, 20000), null, 'a presença sai quando o celular some');
   await administrador('PUT', `salas/${sala}/presenca/${uidDudu}`, Date.now() - 50000);
-  await ativosNoLobby('4 ativos / 4 membros', 5000);
-  await ativosNoLobby('3 ativos / 4 membros', 15000);
+  await ativosNaBarra('4 ativos / 4 membros', 5000);
+  await ativosNaBarra('3 ativos / 4 membros', 15000);
   assert.equal(await telao.textContent('#barra [data-contagem-ativos]'), '3 ativos / 4 membros');
   // Sem sinal há pouco mais de 1 min: ainda não sai (o limite é de 2 min, para
   // quem só trocou de rede ou apagou a tela não perder a equipe).
@@ -379,7 +497,7 @@ async function jogar({ site, navegador, vigiar }) {
   await administrador('PUT', `salas/${sala}/presenca/${uidDudu}`, Date.now() - 130000);
   await segurarNaBarra('removerInativos');
   await avisoDiz(/^1 membro inativo removido/);
-  await ativosNoLobby('3 ativos / 3 membros');
+  await ativosNaBarra('3 ativos / 3 membros');
   assert.equal(await administrador('GET', `salas/${sala}/membros/${uidDudu}`), null, '"Remover inativos" apagou o membro sem sinal há mais de 2 min');
   assert.deepEqual(Object.keys(await administrador('GET', `salas/${sala}/membros`)).sort(), [...uids].sort(), 'os três ativos continuam membros');
   assert.ok(!(await telao.textContent('body')).includes(uidDudu), 'nenhum uid na tela projetada');
@@ -464,10 +582,20 @@ async function jogar({ site, navegador, vigiar }) {
   await avancar(); // personas (as equipes travam)
   await esperarEstado((e) => e.tipo === 'personas' && e.equipesTravadas === true, 'personas');
   for (const c of cel) await esperarTela(c, 'persona');
+  await conferirFamilia(cel[0], E1, 'persona');
+  const basicoE1 = listaDe(personaDe(E1).basico.itens).reduce((soma, i) => soma + i.valor, 0);
+  {
+    const texto = await cel[0].p.textContent('#tela');
+    assert.ok(inclui(texto, `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'persona: o total do básico da casa');
+    for (const i of listaDe(personaDe(E1).basico.itens)) assert.ok(texto.includes(i.rotulo) && texto.includes(i.fonte), `persona: o item "${i.rotulo}" do básico, com a fonte`);
+  }
   await conferirCelular(cel[0], 'persona');
   await avancar(); // bloco: a situação da persona
   await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
   await esperarTela(cel[0], 'situacao');
+  await conferirFamilia(cel[0], E1, 'situação antes do primeiro mês');
+  assert.ok(inclui(await cel[0].p.textContent('#tela'), `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'situação: o básico antes do primeiro mês');
+  assert.equal(await cel[0].p.locator('.conta-mes').count(), 0, 'antes do primeiro mês não há conta do mês');
   await conferirCelular(cel[0], 'situacao-bloco');
 
   // ---------- Rodada: contagem ao vivo, queda de rede e recarga ----------
@@ -477,6 +605,79 @@ async function jogar({ site, navegador, vigiar }) {
   const temNota = (c, re, timeout = 10000) => c.p.waitForFunction((fonte) => new RegExp(fonte).test(document.querySelector('.nota')?.textContent || ''), re.source, { timeout });
   await avancarAte((e) => e.tipo === 'rodada' && e.subfase === 'decidindo' && e.rodada === R, `rodada ${R}`);
   for (const c of cel) await esperarTela(c, 'decisao');
+  // D-043: o contexto da família no topo, só no celular da equipe daquela persona.
+  const rodadaR = C.cfg.rodadas[R];
+  for (const [c, eq] of [[cel[0], E1], [cel[1], E2]]) {
+    const esperado = rodadaR.contexto?.[C.cfg.equipes[eq].persona] ?? null;
+    const lido = await c.p.evaluate(() => {
+      const n = document.querySelector('.contexto-familia');
+      const op = document.querySelector('.botao-opcao-aluno');
+      return n ? { texto: n.textContent, antesDasOpcoes: n.getBoundingClientRect().bottom <= op.getBoundingClientRect().top } : null;
+    });
+    if (esperado === null) assert.equal(lido, null, `${c.nome}: sem contexto para a persona, sem a caixa`);
+    else {
+      assert.ok(lido?.texto.includes(esperado), `${c.nome}: o contexto da família na decisão`);
+      assert.ok(lido.antesDasOpcoes, `${c.nome}: o contexto vem antes das opções`);
+    }
+  }
+  // Até 4 opções, cada uma com a narrativa, e nenhuma tendência nem seta.
+  const lidasOpcoes = await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => ({ id: b.dataset.opcao, narrativa: b.querySelector('.opcao-narrativa')?.textContent ?? null })));
+  assert.ok(C.todasOpcoes.length <= 4, 'no máximo 4 opções por mês');
+  assert.deepEqual(lidasOpcoes.map((o) => o.id), C.todasOpcoes, 'todas as opções da rodada, na ordem');
+  // Antes do voto, nenhuma narrativa (revisão de 29/09: com as quatro, só a A
+  // cabia antes de rolar); a da opção escolhida aparece depois do voto, lá embaixo.
+  for (const o of lidasOpcoes) assert.equal(o.narrativa, null, `sem voto, sem a narrativa da opção ${o.id}`);
+  {
+    const texto = await cel[0].p.textContent('#tela');
+    for (const id of C.todasOpcoes) {
+      const tendencia = rodadaR.opcoes[id].tendencia;
+      if (tendencia) assert.ok(!texto.includes(tendencia), `a tendência da opção ${id} não aparece (D-043)`);
+    }
+    assert.ok(!/[↑↓↗↘⬆⬇▲▼]/.test(await cel[0].p.textContent('.opcoes-aluno')), 'sem setas nas opções');
+  }
+  const restaSeg = await cel[0].p.evaluate(() => {
+    const [m, s] = document.querySelector('.cronometro-aluno').textContent.split(':').map(Number);
+    return m * 60 + s;
+  });
+  assert.ok(restaSeg <= C.cfg.tempos.decisaoSeg && restaSeg > C.cfg.tempos.decisaoSeg - 45, `o cronômetro parte de ${C.cfg.tempos.decisaoSeg} s (lido: ${restaSeg} s)`);
+  // Em 360×740, 4 opções com narrativa podem passar da dobra: a primeira fica
+  // inteira à vista, e, enquanto a última não aparece, o aviso "mais opções
+  // abaixo" fica na tela. Voto escondido atrás de rolagem, só com aviso.
+  await cel[0].p.evaluate(() => globalThis.scrollTo(0, 0));
+  const avisoCoerente = () => cel[0].p.waitForFunction(() => {
+    const bs = [...document.querySelectorAll('.botao-opcao-aluno')];
+    const aviso = document.querySelector('[data-aviso-rolagem]');
+    const ultimaVisivel = bs.at(-1).getBoundingClientRect().bottom <= innerHeight + 1;
+    return (Boolean(aviso) && !aviso.hidden) === !ultimaVisivel;
+  }, null, { timeout: 5000 });
+  await avisoCoerente();
+  const dobra = await cel[0].p.evaluate(() => {
+    const bs = [...document.querySelectorAll('.botao-opcao-aluno')];
+    return { primeira: bs[0].getBoundingClientRect().bottom <= innerHeight, ultima: bs.at(-1).getBoundingClientRect().bottom <= innerHeight + 1 };
+  });
+  assert.ok(dobra.primeira, 'a primeira opção cabe inteira sem rolar');
+  // Revisão de 29/09: só a opção A aparecia antes de rolar. As letras de todas
+  // as opções cabem na primeira tela (a narrativa longa fica só na escolhida, e
+  // o texto da rodada, no telão).
+  const letrasFora = await cel[0].p.evaluate(() => {
+    // O aviso fixo "Mais opções abaixo" cobre a base da tela quando aparece.
+    const aviso = document.querySelector('[data-aviso-rolagem]');
+    const limite = aviso && !aviso.hidden ? aviso.getBoundingClientRect().top : innerHeight;
+    return [...document.querySelectorAll('.botao-opcao-aluno .opcao-letra')].filter((l) => l.getBoundingClientRect().bottom > limite).map((l) => l.textContent);
+  });
+  assert.deepEqual(letrasFora, [], 'as letras de todas as opções cabem em 360×740 sem rolar');
+  if (dobra.ultima) console.log('Decisão: as opções cabem em 360×740 sem rolar.');
+  else {
+    await cel[0].p.screenshot({ path: join(CAPTURAS, `celular-${String(++capturas).padStart(2, '0')}-decisao-dobra.png`) });
+    await cel[0].p.click('[data-aviso-rolagem]');
+    await cel[0].p.waitForFunction(() => {
+      const bs = [...document.querySelectorAll('.botao-opcao-aluno')];
+      return bs.at(-1).getBoundingClientRect().bottom <= innerHeight + 1 && document.querySelector('[data-aviso-rolagem]').hidden;
+    }, null, { timeout: 5000 });
+    await cel[0].p.evaluate(() => globalThis.scrollTo(0, 0));
+    await avisoCoerente();
+    console.log('Decisão: as opções passam da dobra em 360×740, com o aviso "mais opções abaixo" até a última aparecer.');
+  }
   // Revisão da F2, achado 17: a caixa "Situação de …" tem um marcador de que abre.
   const marcador = () => cel[0].p.evaluate(() => getComputedStyle(document.querySelector('.situacao-resumo summary'), '::after').content);
   assert.match(await marcador(), /ver/);
@@ -485,6 +686,10 @@ async function jogar({ site, navegador, vigiar }) {
   await cel[0].p.click('.situacao-resumo summary');
   await cel[0].p.click(opcao(OA));
   await temNota(cel[0], /registrado/);
+  {
+    const narrativas = await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => [b.dataset.opcao, b.querySelector('.opcao-narrativa')?.textContent ?? null]));
+    for (const [id, n] of narrativas) assert.equal(n, id === OA ? (rodadaR.opcoes[id].narrativa ?? null) : null, `depois do voto em ${OA}, a narrativa só nela (${id})`);
+  }
   // A contagem ao vivo da própria equipe chega ao outro celular da equipe.
   await cel[2].p.waitForFunction((op) => document.querySelector(`[data-opcao="${op}"] .opcao-votos`)?.textContent === '1 voto', OA);
   await cel[2].p.click(opcao(OB));
@@ -550,6 +755,9 @@ async function jogar({ site, navegador, vigiar }) {
   for (const c of cel) await esperarTela(c, 'resultado');
   const cartaAna = await cel[0].p.getAttribute('.bloco[data-carta]', 'data-carta');
   assert.equal(cartaAna, resultados[E1].carta, 'o celular mostra a carta que o telão sorteou');
+  if (C.usandoFixture) assert.ok(resultados[E1].mes.saldoMes < 0 && resultados[E1].depois.renda < 0, 'com a fixture, o mês 1 da equipe 1 não fecha');
+  await conferirContaDoMes(cel[0], resultados[E1].mes, 'resultado');
+  await conferirDivida(cel[0], resultados[E1].depois.renda, 'resultado');
   await conferirCelular(cel[0], 'resultado');
 
   // Recarregar o celular volta à mesma tela, com o mesmo uid.
@@ -563,6 +771,9 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarEstado((e) => e.tipo === 'bloco', 'bloco depois da rodada');
   await esperarTela(cel[0], 'situacao');
   assert.ok(await cel[0].p.locator('.mes').count() === 1, 'a situação traz o último mês');
+  await conferirContaDoMes(cel[0], resultados[E1].mes, 'situação depois da rodada');
+  await conferirDivida(cel[0], resultados[E1].depois.renda, 'situação depois da rodada');
+  await conferirFamilia(cel[0], E1, 'situação depois da rodada');
   await conferirCelular(cel[0], 'situacao-depois-da-rodada');
 
   // ---------- Uma aba escritora por máquina (I3) ----------
@@ -649,6 +860,7 @@ async function jogar({ site, navegador, vigiar }) {
   // grava meta/hostUid e segue do passo em que a sala está.
   const ctxOutra = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
   await servirSdk(ctxOutra);
+  await servirConfig(ctxOutra);
   const outra = await ctxOutra.newPage();
   vigiar(outra, 'telão, outra máquina');
   await outra.goto(`${site.url}telao/?emulador=1`);
@@ -676,6 +888,7 @@ async function jogar({ site, navegador, vigiar }) {
   // as duas se revezavam): ela fica passiva.
   const ctxTerceira = await navegador.newContext({ viewport: { width: 1280, height: 800 } });
   await servirSdk(ctxTerceira);
+  await servirConfig(ctxTerceira);
   const terceira = await ctxTerceira.newPage();
   vigiar(terceira, 'telão, terceira máquina');
   await terceira.goto(`${site.url}telao/?emulador=1`);
@@ -746,6 +959,24 @@ async function jogar({ site, navegador, vigiar }) {
   assert.equal(res2[E2].origem, 'piloto', 'equipe sem voto: piloto automático');
   console.log('Prorrogação: só as empatadas no celular; a outra equipe espera.');
 
+  // ---------- Placar final no celular: a história da equipe (D-045) ----------
+  await pularPara((p) => p.tipo === 'placarFinal', 'placar final');
+  await esperarTela(cel[0], 'situacao');
+  const resultadosDaSala = await administrador('GET', `salas/${sala}/resultados`);
+  await conferirHistoria(cel[0], E1, resultadosDaSala, 'placar final');
+  assert.ok(!/piloto automático|efeito das decisões/i.test(await cel[0].p.textContent('#tela')), 'placar final sem "piloto automático" nem "efeito das decisões" (D-041)');
+  {
+    // "Escolha ou sorte?" (revisão de 29/09): as quatro linhas em reais inteiros,
+    // e as três parcelas somam o "Terminaram com" que a tela mostra.
+    const reais = (t) => (/^[−-]/.test(t.trim()) ? -1 : 1) * Number(t.replace(/\D/g, ''));
+    const lidos = (await cel[0].p.$$eval('.placar-historia dd', (ns) => ns.map((n) => n.textContent))).map(reais);
+    const placarE1 = await administrador('GET', `salas/${sala}/placar/${E1}`);
+    const c = await cel[0].p.evaluate((p) => globalThis.Viracao.historia.escolhaOuSorte(p), placarE1);
+    assert.deepEqual(lidos, [c.piloto, c.escolhas, c.sorte, c.total], 'escolha ou sorte: os valores de historia.escolhaOuSorte');
+    assert.equal(lidos[0] + lidos[1] + lidos[2], lidos[3], 'escolha ou sorte: as parcelas somam o total mostrado');
+  }
+  await conferirCelular(cel[0], 'placar-final');
+
   // ---------- Enquete "depois" e comparativo pessoal ----------
   await pularPara((p) => p.tipo === 'enquete' && p.momento === 'depois' && p.enquete === C.antes.enquete, 'enquete depois');
   for (const c of cel) await esperarTela(c, 'enquete');
@@ -764,6 +995,8 @@ async function jogar({ site, navegador, vigiar }) {
   // ---------- Fim, entrada fechada e sala apagada ----------
   await pularPara((p) => p.tipo === 'fim', 'fim');
   for (const c of cel) await esperarTela(c, 'fim');
+  await conferirHistoria(cel[0], E1, resultadosDaSala, 'fim');
+  await conferirHistoria(bia, E2, resultadosDaSala, 'fim (outra equipe)');
   await conferirCelular(cel[0], 'fim');
   await mouseNaBorda(360);
   await telao.waitForFunction(() => !document.getElementById('barra').hidden);

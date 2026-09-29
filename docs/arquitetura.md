@@ -60,6 +60,89 @@ adversariais. A seção 15 lista o que os revisores mudaram.
 10. **Dois roteiros no config, `60min` e `120min`.** O apresentador escolhe um ao
     criar a sala (D-019).
 
+### Redesenho de 29/09 (D-041 a D-048)
+
+Depois do primeiro ensaio no telão, o Kleberson aprovou o redesenho abaixo. Os
+itens valem sobre o resto do documento, como os de cima. O contrato exato de cada
+função e tela está em [contratos.md](contratos.md).
+
+11. **Placar final em páginas** (D-041, "vamos testar"). Substitui a barra
+    empilhada da seção 8, a tecla C (critério), o interruptor "sem vencedor" (V) e
+    a `cascata` dos gráficos. O passo `placarFinal` pagina com o Espaço, como o
+    comparativo:
+    1. "Quanto sobrou, e quanto faltou para o básico": uma barra por equipe, do
+       maior saldo para o menor, com "faltou R$ X" ao lado e o título calculado
+       ("5 de 6 equipes não fecharam as contas"); a referência com `persona` só
+       nas equipes dela;
+    2. "Escolha ou sorte?", contada como história, sem legenda: "se não mudassem
+       nada → as escolhas → a sorte → terminaram com". Os números vêm do mesmo
+       `motor.decompor` (piloto, efeito das decisões, sorte), arredondados de
+       modo que as três parcelas somem o total mostrado
+       (`historia.escolhaOuSorte`);
+    3. uma página por equipe, com a história dela (item 15).
+
+    A última página segue o roteiro. O `regras.placarPadrao` continua aceito pelo
+    validador, mas o telão não o lê mais.
+12. **Linha do tempo em todo bloco** (D-042, "vamos testar"). O passo `bloco`
+    mostra os passos `bloco` e `rodada` do roteiro, na ordem, com "você está aqui
+    (k de n) · a seguir: …" (o próximo passo, de qualquer tipo). No bloco cujo
+    título começa por "Mapa do seminário", a linha é o conteúdo da tela, e o
+    placar resumido não aparece. Não há campo novo no passo: o título é a marca.
+    Os slides continuam como material complementar.
+13. **Mais dúvida na decisão** (D-043, "vamos testar").
+    - De 2 a 4 opções por rodada (o config usa 4); menos ou mais é erro de
+      validação.
+    - A `tendencia` da opção continua aceita pelo validador, mas nenhuma tela a
+      mostra.
+    - `rodada.contexto = { persona: texto }` (até 160 letras), mostrado no celular
+      durante a decisão e a prorrogação, acima das opções. O telão não mostra.
+    - `tempos.decisaoSeg` = 120 no config.
+    - Condições `decidiu` e `sorteou` (histórico da equipe) para as consequências
+      que atravessam os meses: o DAS do MEI, a fratura e o bloqueio que continuam,
+      o auxílio do INSS que chega um mês depois (ou é negado). O motor recebe o
+      histórico (`motor.historicoDe`); rodada não jogada vale falso. O validador
+      confere que a rodada citada vem antes, em cada roteiro, de onde a condição
+      é lida, e passa a enumerar estado **mais** histórico.
+    - O config tem 14 cartas (a D-043 pede de 12 a 14).
+14. **Básico da família no jogo** (D-044; substitui a D-025).
+    - `persona.familia = { descricao, pessoas }` e `persona.basico = { itens:
+      [{ rotulo, valor, fonte }] }` (obrigatórios), e `persona.outraRenda`
+      (opcional). O `todoMes` fica só com o trabalho.
+    - O básico é cobrado **no fim do mês, depois de tudo** (ordem na seção 7): a
+      carta corta o que se ganha, e não a conta da casa.
+    - O motor devolve, a cada mês, `mes = { trabalho, outraRenda, entrou, basico,
+      juros, saldoMes, dividaAntes }`, e o anfitrião grava em
+      `resultados/{r}/{eq}.mes`. O telão mostra "entrou · básico · faltou" em
+      cada resultado; o celular, "Entrou R$ X · o básico da família custa R$ Y ·
+      Faltou R$ Z".
+    - A tela das personas no telão mostra a casa ("básico · outra renda · falta
+      R$ W por mês", pelo `motor.mesComum`), e o celular, a família e o básico
+      item a item com a fonte.
+    - A régua mínima de 28/09 (aluguel, comida e contas no `todoMes`) sai: o
+      básico tem fonte item a item (cesta do DIEESE de Porto Alegre, aluguel,
+      contas e transporte).
+15. **A história de cada equipe** (D-045). `js/nucleo/historia.js`, um arquivo
+    novo do núcleo, à parte porque o celular não carrega o motor, monta os meses
+    de cada equipe a partir de `resultados` (opção, carta, narrativas e contas do
+    mês). Aparece nas páginas do placar final e no celular (placar final e Fim).
+16. **Dívida visível** (D-046). `regras.jurosDividaMes` (fração ao mês, entre 0 e
+    1) e `regras.jurosFonte`, obrigatórios, substituem os juros escritos como
+    efeito. Os juros são cobrados no fim do mês sobre a dívida que vinha do mês
+    anterior. O telão diz a taxa uma vez, no cabeçalho do resultado; o celular
+    mostra "Dívida R$ X · juros de Y% ao mês".
+17. **Controle de operador fora da projeção** (D-047). "Exportar totais", "Apagar
+    a sala" (só no passo `fim`), o "N ativos / M membros" e a dica de cada passo
+    (teclas, tempo mínimo de conversa, página do placar) ficam na barra oculta
+    (D-038). Em sessão, os avisos de operação só aparecem com a barra aberta,
+    logo acima dela, e o aviso de erro abre a barra. Ficam na projeção só os
+    controles que também são informação para a turma (os cartões da formação das
+    equipes e, sem celulares, as letras da decisão). O e2e confere todas as
+    telas projetadas. A abertura é a exceção.
+18. **Calendário** (D-048). O redesenho entrou em 29/09, e o teste de 30/09 usa a
+    versão nova. As regras do Firebase **não mudaram** (continuam v3): o que o
+    redesenho grava a mais (`resultados/{r}/{eq}.mes`) cabe na regra de
+    `resultados`, que só o anfitrião escreve.
+
 ---
 
 ## 0. Resumo
@@ -400,17 +483,25 @@ Se qualquer um dos dois der errado, o telão mostra "REGRAS ABERTAS ou DESATUALI
 
 Nenhuma carta ou persona exige código próprio.
 
-- **Condição `se`:** as chaves possíveis são `opcao`, `persona`, `equipe` e `rodada` (um id ou uma lista), mais `indicador: { id: { abaixoDe | acimaDe: n } }`. Todas precisam valer ao mesmo tempo. **Qualquer outra chave é erro de validação.**
+- **Condição `se`:** as chaves possíveis são `opcao`, `persona`, `equipe` e `rodada` (um id ou uma lista), mais `indicador: { id: { abaixoDe | acimaDe: n } }` e, desde o redesenho de 29/09 (D-043), `decidiu: { rodada: opção | [opções] }` e `sorteou: { rodada: carta | [cartas] }`, que leem o histórico da equipe nas rodadas anteriores (rodada não jogada vale falso). Todas precisam valer ao mesmo tempo. **Qualquer outra chave é erro de validação.**
 - **Efeito:** `{ se?, soma?: {indicador: n}, multiplica?: {indicador: f}, rotulo? }`, com `soma` **ou** `multiplica`, nunca os dois.
-- **Ordem fixa de aplicação:**
-  1. `persona.todoMes`
+- **Ordem fixa do mês** (a partir de 29/09, D-044 e D-046). Primeiro, o **delta do trabalho**:
+  1. `persona.todoMes` (desde o esquema v2, só a renda e os custos do trabalho)
   2. `rodada.efeitosGerais`
   3. opção decidida
   4. carta
+
+  Depois, **as contas da casa**, só no indicador `renda`:
+
+  5. `+ persona.outraRenda.valor`, quando houver
+  6. `− básico` (a soma de `persona.basico.itens`)
+  7. `− juros`, com `juros = round(dívida de antes do mês × regras.jurosDividaMes)`; a dívida de antes é o saldo negativo do estado **antes** da rodada (a que vinha do mês anterior), e sem ela os juros são 0
 - **Semântica:**
-  - `soma` adiciona ao delta do mês, e `multiplica` multiplica esse delta;
-  - toda condição lê o estado **antes** da rodada;
+  - `soma` adiciona ao delta do mês, e `multiplica` multiplica o delta acumulado até ali. Como o `multiplica` só existe nos passos 1 a 4, **a carta que corta a renda corta o que se ganha, e nunca a conta da casa**;
+  - toda condição lê o estado **antes** da rodada e o histórico da equipe;
+  - o motor devolve também `mes = { trabalho, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, com `trabalho` = o delta da renda dos passos 1 a 4, `entrou = trabalho + outraRenda` e `saldoMes = entrou − basico − juros`. É o "entrou · básico · faltou" das telas, e o anfitrião o grava em `resultados/{r}/{eq}.mes`;
   - no fim, o estado recebe o delta e é preso entre `min` e `max`.
+- **Esquema v2** (validador, D-043 a D-046): `persona.familia` e `persona.basico` obrigatórios, `persona.outraRenda` opcional; `regras.jurosDividaMes` (`0 < x < 1`) e `regras.jurosFonte` obrigatórios; `rodada.contexto` opcional (até 160 letras por persona); de 2 a 4 opções por rodada; `tendencia` aceita e ignorada pelas telas. Os detalhes estão em [contratos.md](contratos.md), seção do validador, e em [como-editar-config.md](como-editar-config.md).
 - **Carta:**
   - `peso` inteiro, maior ou igual a 0;
   - `rodadas` e `somenteSe`, opcionais;
@@ -419,6 +510,8 @@ Nenhuma carta ou persona exige código próprio.
   - a chance efetiva é o peso ajustado dividido pela soma das cartas elegíveis, **para aquela equipe naquela rodada**.
 
 ### Exemplo encurtado
+
+**Atenção:** o exemplo abaixo é do esquema de 28/09 e não passa no validador do esquema v2: faltam `familia` e `basico` nas personas e `jurosDividaMes`/`jurosFonte` nas regras. O exemplo atual de cada campo está em [como-editar-config.md](como-editar-config.md).
 
 O real terá 6 equipes sobre 5 personas, 3 rodadas, cerca de 8 cartas e os roteiros de 60 e 120 min. **Todos os valores em R$ são ilustrativos:** os reais saem do rascunho de conteúdo com fonte, validado com o Kleberson (D-005).
 

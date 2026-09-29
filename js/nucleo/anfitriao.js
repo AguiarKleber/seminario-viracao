@@ -329,6 +329,17 @@
       return estado;
     }
 
+    // O histórico da equipe antes desta rodada (decidiu/sorteou, D-043): as
+    // rodadas anteriores na ordem do roteiro, só as que foram apuradas.
+    function historicoAntes(equipe, rodadaId, resultados) {
+      const anteriores = [];
+      for (const p of passosRodada) {
+        if (p.rodada === rodadaId) break;
+        anteriores.push(p.rodada);
+      }
+      return N().motor.historicoDe(resultados, equipe, anteriores);
+    }
+
     function calcularPlacar(resultados, e) {
       const M = N().motor;
       const placar = {};
@@ -407,10 +418,15 @@
       const daRodada = {};
       for (const eq of ativas) {
         const c = consolidacoes[eq];
-        const res = M.resolverRodada(config, { equipeId: eq, rodadaId: r, opcaoId: c.decisao, estado: estadoAntes(eq, r, resultados), semente: s });
+        const res = M.resolverRodada(config, {
+          equipeId: eq, rodadaId: r, opcaoId: c.decisao, estado: estadoAntes(eq, r, resultados), semente: s,
+          historico: historicoAntes(eq, r, resultados),
+        });
+        // mes (as contas do mês, D-044) vai gravado: o celular não carrega o
+        // motor e mostra "entrou · básico · faltou" a partir daqui.
         daRodada[eq] = {
           decisao: c.decisao, origem: c.origem, contagem: c.contagem,
-          chances: res.chances, carta: res.carta, delta: res.delta, depois: res.depois,
+          chances: res.chances, carta: res.carta, delta: res.delta, depois: res.depois, mes: res.mes,
         };
       }
       const placar = calcularPlacar({ ...(resultados || {}), [r]: daRodada }, e);

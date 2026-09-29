@@ -21,7 +21,10 @@ function simular(args) {
 }
 
 test('simulador: 20 robôs, ataques, quedas, recargas e telão derrubado, com 0 violações', { timeout: 240_000 }, async () => {
-  const { codigo, saida } = await simular(['--emulador', '--rapido', '--atacar', '--quedas', '--recargas', '--derrubar-telao']);
+  // A fixture v2 (básico, juros, 4 opções, decidiu/sorteou), e não o config.json:
+  // o teste prova o sistema, e o conteúdo da aula muda sem avisar os testes.
+  const { codigo, saida } = await simular(['--emulador', '--rapido', '--atacar', '--quedas', '--recargas', '--derrubar-telao',
+    '--config', 'test/fixtures/config-teste-v2.json']);
   assert.match(saida, /RESULTADO: 0 violações\./, saida);
   assert.match(saida, /ataques: (\d+) de \1 recusados \(100\.0%/, saida);
   assert.match(saida, /legítimas: 0 de \d+/, saida);

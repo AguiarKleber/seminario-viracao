@@ -217,11 +217,88 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
   color: var(--texto);
 }
 
+/* ---------- O dinheiro da casa (D-044, D-046) ---------- */
+
+.familia { font-size: 16px; color: var(--texto-2); }
+.familia-rotulo { font-weight: 700; color: var(--texto); }
+.basico-linha, .outra-renda, .divida { font-size: 16px; }
+.fonte { display: block; color: var(--texto-2); font-size: 14px; font-weight: 400; }
+.outra-renda .fonte { display: inline; }
+
+.basico { display: flex; flex-direction: column; gap: 8px; }
+.basico-itens {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.basico-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 12px; }
+.basico-item .fonte { grid-column: 1 / -1; }
+.basico-valor { text-align: right; }
+
+/* A conta do mês: a linha "entrou · o básico custa" e, embaixo, o que faltou
+   em destaque. Destaque por tamanho, peso e borda, nunca só por cor (D-016). */
+.conta-mes {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.conta-linha { font-size: 16px; }
+.conta-origem { font-size: 14px; color: var(--texto-2); }
+.conta-saldo { font-size: 22px; font-weight: 700; }
+.conta-mes[data-resultado="faltou"] { border: 2px solid var(--texto); border-left-width: 8px; }
+.conta-mes[data-resultado="faltou"] .conta-saldo { font-size: 26px; }
+.divida {
+  padding: 8px 14px;
+  border-left: 4px solid var(--linha-forte);
+  background: var(--superficie);
+  border-radius: 0 var(--raio) var(--raio) 0;
+}
+
+/* A história da equipe no fim (D-045): um cartão por mês, todos iguais. */
+.historia { display: flex; flex-direction: column; gap: 10px; }
+.historia-mes {
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.historia-conta { font-size: 15px; color: var(--texto-2); }
+.historia-conta b { color: var(--texto); }
+
 /* ---------- Decisão ---------- */
+
+/* O contexto da família no topo da decisão (D-043): a borda grossa separa do
+   dilema da rodada, que vem logo depois. */
+.contexto-familia {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 14px;
+  border: 2px solid var(--texto-2); border-left-width: 8px; border-radius: var(--raio);
+  background: var(--superficie-2);
+}
+.contexto-rotulo { font-size: 14px; font-weight: 700; color: var(--texto-2); }
+.contexto-texto { font-weight: 600; }
+.pressao { display: flex; flex-direction: column; gap: 4px; }
+.pressao .divida { padding: 4px 12px; }
 
 .opcoes-aluno { display: flex; flex-direction: column; gap: 8px; }
 .botao-opcao-aluno { align-items: center; gap: 12px; }
+.opcao-textos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.opcao-textos .opcao-rotulo { flex: none; }
+/* A narrativa herda a cor do botão: no voto marcado (fundo claro) ela fica
+   escura junto com o rótulo, sem perder contraste. */
+.opcao-narrativa { font-size: 15px; font-weight: 400; line-height: 1.3; }
 .opcao-votos { flex: none; font-size: 15px; font-weight: 700; opacity: .9; white-space: nowrap; }
+
+/* "Mais opções abaixo": fixo na base enquanto a última opção não aparece. */
+.aviso-rolagem {
+  position: fixed; z-index: 6;
+  left: var(--lateral-aluno); right: var(--lateral-aluno);
+  bottom: max(12px, env(safe-area-inset-bottom, 0));
+  min-height: 48px;
+  background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .6);
+}
+.situacao-corpo { display: flex; flex-direction: column; gap: 8px; padding: 0 14px 12px; }
+.situacao-corpo:empty { display: none; }
 
 .situacao-resumo {
   background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);

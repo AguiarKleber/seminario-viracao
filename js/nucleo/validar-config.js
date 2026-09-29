@@ -27,6 +27,14 @@
   // porcentagem); com mais de 12, não cabe nem na fatia da carta mais comum.
   const CURTO_AVISO = 10;
   const CURTO_MAX = 12;
+  // D-043: o contexto da família vai no celular durante a decisão, acima das
+  // opções. Com mais de 160 letras ele empurra as opções para fora da tela de
+  // um celular pequeno, e a equipe decide sem vê-las.
+  const MAX_CONTEXTO = 160;
+  // D-043: 4 opções por mês, cada uma um dilema. Uma só não é decisão, e mais de
+  // 4 não cabe nos botões do celular nem na conversa de 120 s.
+  const MIN_OPCOES = 2;
+  const MAX_OPCOES = 4;
   // Acima disto a conferência de "carta possível" desiste com ERRO, em vez de
   // travar o telão enumerando estados (sem a conferência, não há a garantia).
   const MAX_ESTADOS = 20000;
@@ -56,12 +64,17 @@
     raiz: ['versao', 'titulo', 'tempos', 'regras', 'escala', 'indicadores', 'personas', 'equipes', 'rodadas',
       'cartas', 'enquetes', 'referencias', 'roteiros'],
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
-    regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas'],
+    regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
+      'jurosDividaMes', 'jurosFonte'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
-    persona: ['id', 'nome', 'descricao', 'inicial', 'todoMes', 'fonte'],
+    persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
+    familia: ['descricao', 'pessoas'],
+    basico: ['itens'],
+    itemBasico: ['rotulo', 'valor', 'fonte'],
+    outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
-    rodada: ['id', 'titulo', 'texto', 'padrao', 'efeitosGerais', 'opcoes', 'fonte'],
+    rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
     opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte'],
     carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
@@ -69,7 +82,7 @@
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
     passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada'],
     efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte'],
-    condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador'],
+    condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador', 'decidiu', 'sorteou'],
     limite: ['abaixoDe', 'acimaDe'],
     ajuste: ['se', 'soma', 'multiplica'],
   };
@@ -255,7 +268,50 @@
     return valor.slice();
   }
 
-  function condicao(r, bruto, caminho, idx) {
+  // decidiu = { [rodada]: opção | [opções] } e sorteou = { [rodada]: carta | [cartas] }
+  // (D-043: as consequências que atravessam os meses). A opção precisa ser DAQUELA
+  // rodada: "d" existe em várias rodadas, e um decidiu { r1: "e" } com a opção
+  // "e" só no mês 2 nunca valeria.
+  function condicaoDeHistorico(r, bruto, caminho, idx, chave) {
+    if (!ehObjeto(bruto)) {
+      r.erro(caminho, `precisa ser um objeto { rodada: ${chave === 'decidiu' ? 'opção' : 'carta'} ou lista }`);
+      return undefined;
+    }
+    const rodadas = Object.keys(bruto);
+    if (rodadas.length === 0) {
+      // O RTDB some com o objeto vazio, e a condição voltaria da sala sem a chave.
+      r.erro(caminho, 'precisa de pelo menos uma rodada');
+      return undefined;
+    }
+    const oque = chave === 'decidiu' ? 'opção' : 'carta';
+    const n = {};
+    for (const rodadaId of rodadas) {
+      const c = junta(caminho, rodadaId);
+      if (!referencia(r, rodadaId, c, (id) => Object.hasOwn(idx.rodadas, id), 'rodada')) continue;
+      const opcoesDaRodada = idx.rodadas[rodadaId].opcoes || {};
+      const conferir = (id, ci) => {
+        if (!idValido(id, RE_ID)) r.erro(ci, `${oque} inválida: ${JSON.stringify(id)}`);
+        else if (chave === 'decidiu' && !Object.hasOwn(opcoesDaRodada, id)) r.erro(ci, `opção ${JSON.stringify(id)} não existe na rodada "${rodadaId}"`);
+        else if (chave === 'sorteou' && !Object.hasOwn(idx.cartas, id)) r.erro(ci, `carta ${JSON.stringify(id)} não existe`);
+      };
+      const valor = bruto[rodadaId];
+      if (typeof valor === 'string') {
+        conferir(valor, c);
+        n[rodadaId] = valor;
+      } else if (!Array.isArray(valor) || valor.length === 0) {
+        r.erro(c, `precisa ser um id de ${oque} ou uma lista não vazia de ids`);
+      } else {
+        valor.forEach((id, i) => conferir(id, `${c}[${i}]`));
+        n[rodadaId] = valor.slice();
+      }
+    }
+    return n;
+  }
+
+  // onde: as rodadas em que a condição pode ser avaliada (a rodada do efeito, as
+  // rodadas da carta), ou null para "qualquer rodada" (todoMes, carta sem
+  // rodadas). É o que decide se um decidiu/sorteou pode valer algum dia.
+  function condicao(r, bruto, caminho, idx, onde = null) {
     if (!ehObjeto(bruto)) {
       r.erro(caminho, 'condição precisa ser um objeto');
       return {};
@@ -266,6 +322,22 @@
     if (tem(bruto, 'persona')) n.persona = idsOuLista(r, bruto.persona, junta(caminho, 'persona'), (id) => Object.hasOwn(idx.personas, id), 'persona');
     if (tem(bruto, 'equipe')) n.equipe = idsOuLista(r, bruto.equipe, junta(caminho, 'equipe'), (id) => Object.hasOwn(idx.equipes, id), 'equipe');
     if (tem(bruto, 'rodada')) n.rodada = idsOuLista(r, bruto.rodada, junta(caminho, 'rodada'), (id) => Object.hasOwn(idx.rodadas, id), 'rodada');
+    // A chave "rodada" da própria condição estreita onde ela vale: um todoMes com
+    // { rodada: "r3", decidiu: { r2: … } } só é avaliado no mês 3.
+    let ondeVale = onde;
+    if (n.rodada !== undefined) {
+      const daCondicao = (Array.isArray(n.rodada) ? n.rodada : [n.rodada]).filter((id) => typeof id === 'string' && Object.hasOwn(idx.rodadas, id));
+      ondeVale = onde === null ? daCondicao : onde.filter((id) => daCondicao.includes(id));
+    }
+    for (const chave of ['decidiu', 'sorteou']) {
+      if (!tem(bruto, chave)) continue;
+      const valor = condicaoDeHistorico(r, bruto[chave], junta(caminho, chave), idx, chave);
+      if (valor === undefined) continue;
+      n[chave] = valor;
+      // A ordem no roteiro e as rodadas da carta só se conferem depois dos
+      // roteiros e de todas as cartas (conferirHistorico).
+      idx.historicos.push({ caminho: junta(caminho, chave), chave, valor, onde: ondeVale });
+    }
     if (tem(bruto, 'indicador')) {
       const ci = junta(caminho, 'indicador');
       if (!ehObjeto(bruto.indicador)) r.erro(ci, 'precisa ser um objeto { indicador: { abaixoDe | acimaDe } }');
@@ -311,7 +383,7 @@
     return n;
   }
 
-  function efeito(r, bruto, caminho, idx) {
+  function efeito(r, bruto, caminho, idx, onde) {
     if (!ehObjeto(bruto)) {
       r.erro(caminho, 'efeito precisa ser um objeto');
       return null;
@@ -324,7 +396,7 @@
     if (temSoma && temFator) r.erro(caminho, '"soma" e "multiplica" no mesmo efeito: separe em dois efeitos (a ordem importa)');
     else if (!temSoma && !temFator) r.erro(caminho, 'efeito sem "soma" nem "multiplica"');
     const n = {};
-    if (tem(bruto, 'se')) n.se = condicao(r, bruto.se, junta(caminho, 'se'), idx);
+    if (tem(bruto, 'se')) n.se = condicao(r, bruto.se, junta(caminho, 'se'), idx, onde);
     if (temSoma) n.soma = valoresPorIndicador(r, bruto.soma, junta(caminho, 'soma'), idx, false);
     if (temFator) n.multiplica = valoresPorIndicador(r, bruto.multiplica, junta(caminho, 'multiplica'), idx, true);
     const rotulo = texto(r, bruto, 'rotulo', caminho, true);
@@ -334,7 +406,7 @@
     return n;
   }
 
-  function efeitos(r, obj, chave, caminho, idx, obrigatorio) {
+  function efeitos(r, obj, chave, caminho, idx, obrigatorio, onde = null) {
     const c = junta(caminho, chave);
     if (!tem(obj, chave)) {
       if (obrigatorio) r.erro(c, 'campo obrigatório ausente (use [] para nenhum efeito)');
@@ -344,7 +416,7 @@
       r.erro(c, 'precisa ser uma lista de efeitos');
       return [];
     }
-    return obj[chave].map((e, i) => efeito(r, e, `${c}[${i}]`, idx)).filter(Boolean);
+    return obj[chave].map((e, i) => efeito(r, e, `${c}[${i}]`, idx, onde)).filter(Boolean);
   }
 
   // Texto opcional: ausente é ok, presente e vazio é erro.
@@ -388,7 +460,15 @@
       alvoPorEquipe: numero(r, g, 'alvoPorEquipe', 'regras', { inteiro: true, positivo: true }),
       minPareados: numero(r, g, 'minPareados', 'regras', { inteiro: true, positivo: true }),
       destacarCartas: numero(r, g, 'destacarCartas', 'regras', { inteiro: true, naoNegativo: true }),
+      jurosDividaMes: numero(r, g, 'jurosDividaMes', 'regras'),
+      jurosFonte: texto(r, g, 'jurosFonte', 'regras'),
     };
+    // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
+    // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
+    if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
+      r.erro('regras.jurosDividaMes', `${n.jurosDividaMes} inválido: precisa ser uma fração entre 0 e 1, sem incluir os dois (0,08 = 8% ao mês)`);
+      n.jurosDividaMes = undefined;
+    }
     return n;
   }
 
@@ -452,8 +532,66 @@
         }
       }
     }
+    familia(r, b, n, c);
+    basico(r, b, n, c);
+    if (tem(b, 'outraRenda')) {
+      const co = junta(c, 'outraRenda');
+      if (!ehObjeto(b.outraRenda)) r.erro(co, 'precisa ser um objeto { rotulo, valor, fonte }');
+      else n.outraRenda = valorComFonte(r, b.outraRenda, co, CHAVES.outraRenda);
+    }
     r.depois(() => { n.todoMes = efeitos(r, b, 'todoMes', c, idx, false); });
     return n;
+  }
+
+  // D-044: quem mora na casa e quem trabalha. É texto para a tela; uma chave a
+  // mais só é descartada, por isso é aviso, como nas outras entidades.
+  function familia(r, b, n, c) {
+    const f = objeto(r, b, 'familia', c);
+    if (!f) return;
+    const cf = junta(c, 'familia');
+    conferirChaves(r, f, CHAVES.familia, cf, false);
+    n.familia = { descricao: texto(r, f, 'descricao', cf), pessoas: numero(r, f, 'pessoas', cf, { inteiro: true, positivo: true }) };
+  }
+
+  // D-044: o custo do básico da casa, item por item, cada um com fonte. Entra na
+  // conta do mês (o motor soma os itens), então uma chave fora do conjunto é ERRO,
+  // como na linguagem de efeitos: "valor " com espaço deixaria o item sem valor.
+  function basico(r, b, n, c) {
+    const bas = objeto(r, b, 'basico', c);
+    if (!bas) return;
+    const cb = junta(c, 'basico');
+    conferirChaves(r, bas, CHAVES.basico, cb, true);
+    const ci = junta(cb, 'itens');
+    if (!tem(bas, 'itens')) {
+      r.erro(ci, 'campo obrigatório ausente');
+      return;
+    }
+    if (!Array.isArray(bas.itens)) {
+      r.erro(ci, 'precisa ser uma lista de { rotulo, valor, fonte }');
+      return;
+    }
+    if (bas.itens.length === 0) {
+      r.erro(ci, 'o básico precisa de pelo menos um item');
+      return;
+    }
+    const itens = [];
+    bas.itens.forEach((item, i) => {
+      const cit = `${ci}[${i}]`;
+      if (!ehObjeto(item)) r.erro(cit, 'precisa ser um objeto { rotulo, valor, fonte }');
+      else itens.push(valorComFonte(r, item, cit, CHAVES.itemBasico));
+    });
+    n.basico = { itens };
+  }
+
+  // { rotulo, valor (R$/mês, inteiro ≥ 0), fonte }: item do básico e outra renda.
+  // Inteiro porque a tela mostra reais sem centavos, e a soma tem de bater com ela.
+  function valorComFonte(r, b, c, chaves) {
+    conferirChaves(r, b, chaves, c, true);
+    return {
+      rotulo: texto(r, b, 'rotulo', c),
+      valor: numero(r, b, 'valor', c, { inteiro: true, naoNegativo: true }),
+      fonte: texto(r, b, 'fonte', c),
+    };
   }
 
   function equipe(r, b, c, id, idx) {
@@ -476,12 +614,12 @@
     return n;
   }
 
-  function opcao(r, b, c, id, idx) {
+  function opcao(r, b, c, id, idx, rodadaId) {
     conferirChaves(r, b, CHAVES.opcao, c, false);
     const n = { id, rotulo: texto(r, b, 'rotulo', c) };
     copiarTextos(r, b, n, c, ['narrativa', 'tendencia', 'fonte']);
     n.efeitos = [];
-    r.depois(() => { n.efeitos = efeitos(r, b, 'efeitos', c, idx, true); });
+    r.depois(() => { n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId]); });
     return n;
   }
 
@@ -489,20 +627,44 @@
     conferirChaves(r, b, CHAVES.rodada, c, false);
     const n = { id, titulo: texto(r, b, 'titulo', c), texto: texto(r, b, 'texto', c), padrao: undefined, efeitosGerais: [] };
     copiarTextos(r, b, n, c, ['fonte']);
-    const { mapa, ordem } = colecao(r, b, 'opcoes', c, (item, ci, oid) => opcao(r, item, ci, oid, idx));
+    const { mapa, ordem } = colecao(r, b, 'opcoes', c, (item, ci, oid) => opcao(r, item, ci, oid, idx, id));
     n.opcoes = mapa;
     n.ordemOpcoes = ordem;
     for (const oid of ordem) idx.opcoes.add(oid);
     if (tem(b, 'opcoes')) {
       if (ordem.length === 0) r.erro(junta(c, 'opcoes'), 'a rodada precisa de opções');
-      else if (ordem.length === 1) r.aviso(junta(c, 'opcoes'), 'uma opção só: não há o que decidir');
+      else if (ordem.length < MIN_OPCOES) r.erro(junta(c, 'opcoes'), `${ordem.length} opção: a rodada precisa de pelo menos ${MIN_OPCOES}, senão não há o que decidir`);
+      else if (ordem.length > MAX_OPCOES) r.erro(junta(c, 'opcoes'), `${ordem.length} opções: no máximo ${MAX_OPCOES} (D-043), senão não cabem no celular`);
     }
+    if (tem(b, 'contexto')) r.depois(() => { contextoDaRodada(r, b.contexto, junta(c, 'contexto'), n, idx); });
     // O padrão é o "piloto automático": vale quando ninguém da equipe vota.
     if (tem(b, 'padrao')) {
       if (referencia(r, b.padrao, junta(c, 'padrao'), (x) => Object.hasOwn(mapa, x), 'opção padrão')) n.padrao = b.padrao;
     } else r.erro(junta(c, 'padrao'), 'campo obrigatório ausente');
-    r.depois(() => { n.efeitosGerais = efeitos(r, b, 'efeitosGerais', c, idx, false); });
+    r.depois(() => { n.efeitosGerais = efeitos(r, b, 'efeitosGerais', c, idx, false, [id]); });
     return n;
+  }
+
+  // D-043: uma frase por persona, mostrada no celular da equipe durante a decisão.
+  function contextoDaRodada(r, bruto, c, n, idx) {
+    if (!ehObjeto(bruto)) {
+      r.erro(c, 'precisa ser um objeto { persona: texto }');
+      return;
+    }
+    const contexto = {};
+    for (const personaId of Object.keys(bruto)) {
+      const cp = junta(c, personaId);
+      if (!referencia(r, personaId, cp, (x) => Object.hasOwn(idx.personas, x), 'persona')) continue;
+      const frase = texto(r, bruto, personaId, c);
+      if (frase === undefined) continue;
+      const letras = [...frase].length;
+      if (letras > MAX_CONTEXTO) {
+        r.erro(cp, `contexto com ${letras} caracteres (mais de ${MAX_CONTEXTO}): empurra as opções para fora da tela do celular`);
+        continue;
+      }
+      contexto[personaId] = frase;
+    }
+    n.contexto = contexto;
   }
 
   function carta(r, b, c, id, idx) {
@@ -539,25 +701,27 @@
           if (typeof n.rodadas === 'string') n.rodadas = [n.rodadas];
         }
       }
-      if (tem(b, 'somenteSe')) n.somenteSe = condicao(r, b.somenteSe, junta(c, 'somenteSe'), idx);
+      // As rodadas da carta dizem onde as condições dela podem valer.
+      const onde = Array.isArray(n.rodadas) ? n.rodadas.filter((x) => typeof x === 'string' && Object.hasOwn(idx.rodadas, x)) : null;
+      if (tem(b, 'somenteSe')) n.somenteSe = condicao(r, b.somenteSe, junta(c, 'somenteSe'), idx, onde);
       if (tem(b, 'ajustesDePeso')) {
         const ca = junta(c, 'ajustesDePeso');
         if (!Array.isArray(b.ajustesDePeso)) r.erro(ca, 'precisa ser uma lista');
-        else n.ajustesDePeso = b.ajustesDePeso.map((a, i) => ajuste(r, a, `${ca}[${i}]`, idx)).filter(Boolean);
+        else n.ajustesDePeso = b.ajustesDePeso.map((a, i) => ajuste(r, a, `${ca}[${i}]`, idx, onde)).filter(Boolean);
       }
-      n.efeitos = efeitos(r, b, 'efeitos', c, idx, true);
+      n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, onde);
     });
     return n;
   }
 
-  function ajuste(r, b, c, idx) {
+  function ajuste(r, b, c, idx, onde) {
     if (!ehObjeto(b)) {
       r.erro(c, 'ajuste precisa ser um objeto { se, soma | multiplica }');
       return null;
     }
     conferirChaves(r, b, CHAVES.ajuste, c, true);
     const n = {};
-    if (tem(b, 'se')) n.se = condicao(r, b.se, junta(c, 'se'), idx);
+    if (tem(b, 'se')) n.se = condicao(r, b.se, junta(c, 'se'), idx, onde);
     else r.erro(junta(c, 'se'), 'campo obrigatório ausente (o ajuste precisa de uma condição)');
     const temSoma = tem(b, 'soma');
     const temFator = tem(b, 'multiplica');
@@ -715,6 +879,40 @@
 
   // ----------------------------------------------- conferências cruzadas
 
+  // decidiu/sorteou olham uma rodada ANTERIOR. Se a rodada citada não vem antes
+  // de nenhuma rodada em que a condição é avaliada, em algum roteiro, a
+  // consequência nunca acontece nesse roteiro: a parcela do empréstimo sumiria
+  // da aula sem aviso. Rodada pulada no dia é outra coisa (vale falso, e está
+  // tudo bem). E a carta do sorteou precisa poder sair naquela rodada.
+  function conferirHistorico(r, cfg, idx) {
+    const sequencias = Object.entries(cfg.roteiros).map(([nome, passos]) => [nome, passos.filter((p) => p.tipo === 'rodada').map((p) => p.rodada)]);
+    for (const { caminho, chave, valor, onde } of idx.historicos) {
+      const contextos = onde === null ? cfg.ordem.rodadas : onde;
+      for (const rodadaId of Object.keys(valor)) {
+        const c = junta(caminho, rodadaId);
+        if (chave === 'sorteou') {
+          const ids = typeof valor[rodadaId] === 'string' ? [valor[rodadaId]] : valor[rodadaId];
+          ids.forEach((cartaId, i) => {
+            const cartaCitada = Object.hasOwn(cfg.cartas, cartaId) ? cfg.cartas[cartaId] : null;
+            if (cartaCitada && Array.isArray(cartaCitada.rodadas) && !cartaCitada.rodadas.includes(rodadaId)) {
+              r.erro(typeof valor[rodadaId] === 'string' ? c : `${c}[${i}]`, `a carta "${cartaId}" não sai na rodada "${rodadaId}" (rodadas da carta: ${cartaCitada.rodadas.join(', ')}): a condição nunca vale`);
+            }
+          });
+        }
+        for (const [nome, seq] of sequencias) {
+          const avaliadas = contextos.filter((x) => seq.includes(x));
+          if (avaliadas.length === 0) continue;
+          const pos = seq.indexOf(rodadaId);
+          if (pos < 0) {
+            r.erro(c, `a rodada "${rodadaId}" não está no roteiro "${nome}": a condição nunca vale nele`);
+          } else if (!avaliadas.some((x) => seq.indexOf(x) > pos)) {
+            r.erro(c, `a rodada "${rodadaId}" não vem antes ${onde === null ? 'de nenhuma outra rodada' : `da rodada ${avaliadas.map((x) => `"${x}"`).join(', ')}`} no roteiro "${nome}": a condição nunca vale`);
+          }
+        }
+      }
+    }
+  }
+
   function conferirEquipes(r, cfg) {
     const { equipes, personas, ordem } = cfg;
     if (ordem.equipes.length > MAX_EQUIPES) {
@@ -766,7 +964,7 @@
   // roteiro, que é a ordem em que o anfitrião as aplica (e não a do config). O
   // estado de antes de cada rodada também vale depois dela, porque o
   // apresentador pode pular uma rodada no dia.
-  function conferirCartasPossiveis(r, cfg) {
+  function conferirCartasPossiveis(r, cfg, idx) {
     const M = raiz.Viracao.motor;
     if (!M) {
       r.aviso('cartas', 'motor não carregado: a conferência de carta possível foi pulada');
@@ -778,9 +976,12 @@
       sequencias.set(seq.join('|'), seq);
     }
     const jaAvisado = new Set();
+    // Só as rodadas citadas por algum decidiu/sorteou entram na chave do nó: as
+    // outras não mudam nenhuma chance, e contá-las multiplicaria os estados à toa.
+    const citadas = [...new Set(idx.historicos.flatMap((h) => Object.keys(h.valor)))];
     for (const equipeId of cfg.ordem.equipes) {
       for (const seq of sequencias.values()) {
-        if (!explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado)) return;
+        if (!explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado, citadas)) return;
       }
     }
   }
@@ -788,11 +989,16 @@
   // Devolve false quando passa de MAX_ESTADOS. Isso é erro, e não aviso: sem a
   // conferência não há a garantia, e uma carta impossível trava o encerrar da
   // rodada na aula.
-  function explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado) {
+  // Um nó é o estado mais o histórico da equipe (decidiu/sorteou leem o histórico).
+  function explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado, citadas) {
     const chaveEstado = (e) => cfg.ordem.indicadores.map((i) => e[i]).join('|');
+    const chaveNo = (no) => chaveEstado(no.estado) + citadas.map((x) => {
+      const h = no.historico[x];
+      return h ? `#${h.decisao}:${h.carta}` : '#-';
+    }).join('');
     const personaId = cfg.equipes[equipeId].persona;
-    const estados = [M.estadoInicial(cfg, equipeId)];
-    const vistos = new Set(estados.map(chaveEstado));
+    const nos = [{ estado: M.estadoInicial(cfg, equipeId), historico: {} }];
+    const vistos = new Set(nos.map(chaveNo));
     for (const [k, rodadaId] of seq.entries()) {
       const rodada = cfg.rodadas[rodadaId];
       // Depois da última rodada não há baralho a conferir: gerar esses estados
@@ -800,13 +1006,14 @@
       const ultima = k === seq.length - 1;
       const novos = [];
       for (const opcaoId of rodada.ordemOpcoes) {
-        for (const estado of estados) {
-          const baralho = M.chances(cfg, { equipeId, rodadaId, opcaoId, estado });
+        for (const no of nos) {
+          const { estado, historico } = no;
+          const baralho = M.chances(cfg, { equipeId, rodadaId, opcaoId, estado, historico });
           if (baralho.length === 0) {
             const chave = `${personaId}|${rodadaId}|${opcaoId}`;
             if (!jaAvisado.has(chave)) {
               jaAvisado.add(chave);
-              const quando = estado === estados[0] ? 'desde o início' : `no estado ${chaveEstado(estado)} (${cfg.ordem.indicadores.join('|')})`;
+              const quando = no === nos[0] ? 'desde o início' : `no estado ${chaveEstado(estado)} (${cfg.ordem.indicadores.join('|')})`;
               r.erro(`rodadas.${rodadaId}.opcoes.${opcaoId}`,
                 `nenhuma carta possível para a persona "${personaId}" (equipe ${equipeId}) nesta opção, ${quando}: a soma dos pesos dá 0`);
             }
@@ -814,18 +1021,21 @@
           }
           if (ultima) continue;
           for (const c of baralho) {
-            novos.push(M.aplicar(cfg, { equipeId, rodadaId, opcaoId, cartaId: c.carta, estado }).depois);
+            novos.push({
+              estado: M.aplicar(cfg, { equipeId, rodadaId, opcaoId, cartaId: c.carta, estado, historico }).depois,
+              historico: { ...historico, [rodadaId]: { decisao: opcaoId, carta: c.carta } },
+            });
           }
         }
       }
-      for (const e of novos) {
-        const chave = chaveEstado(e);
+      for (const no of novos) {
+        const chave = chaveNo(no);
         if (!vistos.has(chave)) {
           vistos.add(chave);
-          estados.push(e);
+          nos.push(no);
         }
       }
-      if (estados.length > MAX_ESTADOS) {
+      if (nos.length > MAX_ESTADOS) {
         r.erro('cartas', `mais de ${MAX_ESTADOS} estados alcançáveis depois da rodada "${rodadaId}" (equipe ${equipeId}): não dá para garantir carta possível; reduza as combinações de efeitos`);
         return false;
       }
@@ -844,7 +1054,9 @@
     conferirChaves(r, bruto, CHAVES.raiz, '', false);
     // idx: o que as referências cruzadas consultam. As opções de todas as rodadas
     // entram num conjunto só, porque carta e persona valem em qualquer rodada.
-    const idx = { indicadores: {}, personas: {}, equipes: {}, rodadas: {}, enquetes: {}, opcoes: new Set() };
+    // historicos: cada decidiu/sorteou encontrado, para conferir a ordem no
+    // roteiro depois que os roteiros existirem.
+    const idx = { indicadores: {}, personas: {}, equipes: {}, rodadas: {}, cartas: {}, enquetes: {}, opcoes: new Set(), historicos: [] };
     const cfg = {
       versao: texto(r, bruto, 'versao', ''),
       titulo: texto(r, bruto, 'titulo', ''),
@@ -872,10 +1084,11 @@
     for (const fn of r.pendentes) fn();
     cfg.roteiros = roteiros(r, bruto, idx);
     cfg.ordem = ordem;
+    conferirHistorico(r, cfg, idx);
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.
-    if (r.erros.length === 0) conferirCartasPossiveis(r, cfg);
+    if (r.erros.length === 0) conferirCartasPossiveis(r, cfg, idx);
     const ok = r.erros.length === 0;
     return { ok, erros: r.erros, avisos: r.avisos, config: ok ? cfg : null };
   }

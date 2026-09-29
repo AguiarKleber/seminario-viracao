@@ -9,7 +9,7 @@
     "placarPadrao": "efeitoDecisoes",
     "alvoPorEquipe": 3,
     "minPareados": 5,
-    "destacarCartas": 2
+    "destacarCartas": 2, "jurosDividaMes": 0.08, "jurosFonte": "taxa ilustrativa de teste"
   },
   "escala": {
     "curtos": ["Discordo muito", "Discordo", "Neutro", "Concordo", "Concordo muito"],
@@ -21,15 +21,15 @@
     { "id": "protecao", "nome": "Proteção", "formato": "inteiro", "inicial": 0, "min": 0, "max": 10 }
   ],
   "personas": [
-    { "id": "motoboy", "nome": "Rafa", "descricao": "Motoboy de teste",
+    { "id": "motoboy", "nome": "Rafa", "descricao": "Motoboy de teste", "familia": { "descricao": "Mora com a companheira e um filho.", "pessoas": 3 }, "basico": { "itens": [ { "rotulo": "básico de teste", "valor": 0, "fonte": "valor de teste" } ] },
       "todoMes": [ { "soma": { "renda": 2300 }, "rotulo": "entregas do mês" }, { "soma": { "energia": -1 } } ] },
-    { "id": "ciclista", "nome": "Dani", "descricao": "Ciclista de teste", "inicial": { "energia": 9 },
+    { "id": "ciclista", "nome": "Dani", "descricao": "Ciclista de teste", "familia": { "descricao": "Mora sozinha.", "pessoas": 1 }, "basico": { "itens": [ { "rotulo": "básico de teste", "valor": 0, "fonte": "valor de teste" } ] }, "inicial": { "energia": 9 },
       "todoMes": [ { "soma": { "renda": 1400, "energia": -2 } } ] },
-    { "id": "manicure", "nome": "Cida", "descricao": "Manicure de teste", "inicial": { "protecao": 1 },
+    { "id": "manicure", "nome": "Cida", "descricao": "Manicure de teste", "familia": { "descricao": "Mora com a filha.", "pessoas": 2 }, "basico": { "itens": [ { "rotulo": "básico de teste", "valor": 0, "fonte": "valor de teste" } ] }, "inicial": { "protecao": 1 },
       "todoMes": [ { "soma": { "renda": 1800 } } ] },
-    { "id": "motorista", "nome": "Jorge", "descricao": "Motorista de teste", "inicial": { "energia": 7 },
+    { "id": "motorista", "nome": "Jorge", "descricao": "Motorista de teste", "familia": { "descricao": "Mora com a esposa e dois filhos.", "pessoas": 4 }, "basico": { "itens": [ { "rotulo": "básico de teste", "valor": 0, "fonte": "valor de teste" } ] }, "inicial": { "energia": 7 },
       "todoMes": [ { "soma": { "renda": 2600 } } ] },
-    { "id": "costureira", "nome": "Lia", "descricao": "Costureira de teste",
+    { "id": "costureira", "nome": "Lia", "descricao": "Costureira de teste", "familia": { "descricao": "Mora com dois filhos.", "pessoas": 3 }, "basico": { "itens": [ { "rotulo": "básico de teste", "valor": 0, "fonte": "valor de teste" } ] },
       "todoMes": [ { "soma": { "renda": 1500 } } ] }
   ],
   "equipes": [

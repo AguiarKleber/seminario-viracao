@@ -18,7 +18,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo, cada um com a fonte |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (28/09)
+## Onde estamos (29/09)
 
 | Já feito | Situação |
 | --- | --- |
@@ -27,22 +27,17 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 3. Login anônimo | Ativado |
 | 4. `conexao.json` | Preenchido com as chaves do projeto |
 | 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| Conteúdo | Validado em 28/09 (D-024 a D-034): `config.json` versão `2026-09-28-validado` |
+| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (PR #1) está no ar, e o telão publicado já criou sala |
+| Conteúdo | Redesenho de 29/09 (D-041 a D-048): `config.json` versão `2026-09-29-v2-rascunho`, no esquema v2 (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 6 e 7 |
 
-| Falta (Kleberson), até 29/09 | Onde está o passo a passo |
-| --- | --- |
-| **6.** Colar o `firebase/regras.json` na aba **Regras** do Realtime Database e **Publicar** | [Passo 6](#6-publicar-as-regras) |
-| **7.** Fundir o PR na `main` e ligar o GitHub Pages (o repositório precisa estar público, D-002) | [Passo 7](#7-ligar-o-github-pages) |
-| **8.** Abrir `/telao/`, digitar o PIN e conferir `Serviço conectado · regras v3 conferidas.`, **sem** nenhum aviso `REGRAS ABERTAS ou DESATUALIZADAS` | [Passo 8](#8-abrir-o-telão-e-conferir-as-regras) |
+**O redesenho de 29/09** (branch `claude/redesenho`) entra antes do teste de
+30/09, que já usa a versão nova (D-048). Ele **não muda as regras do Firebase**:
+elas continuam v3, e nada precisa ser publicado de novo no console. Depois de
+fundir o PR, recarregue o telão em toda máquina onde ele estiver aberto e repita
+o passo 8.
 
-O 6 e o 7 podem ir em qualquer ordem; o 8 vem depois dos dois.
-
-**Depois disso, no dia 29/09:** o Claude roda o ensaio curto autorizado (D-036):
-5 alunos simulados contra o projeto real, rodando fora da rede do campus, numa
-sala de teste que você cria no telão e apaga no fim. O simulador não cria sala
-no projeto real, porque o PIN nunca sai do console. Em seguida vêm o teste no
-eduroam (30/09), as correções (01 a 05/10), o congelamento (06/10) e o seminário
-(07/10).
+Em seguida vêm o teste no eduroam (30/09), as correções (01 a 05/10), o
+congelamento (06/10) e o seminário (07/10).
 
 ## Como funciona
 
@@ -304,9 +299,10 @@ Actions mostra "pages build and deployment" em verde.
 4. Digite o PIN no campo **PIN do apresentador** e clique em **Criar sala com
    celulares**.
 5. Aparecem o QR, o código da sala e "0 conectados".
-6. Apague a sala de teste. Mexa o mouse para a barra aparecer embaixo, segure
-   **Encerrar jogo (segure)** por 2 s e, na tela Fim, segure **Apagar a sala
-   (segure 2 s)**. O telão volta à abertura.
+6. Apague a sala de teste. Aperte H (ou encoste o mouse na borda de baixo) para
+   a barra aparecer, segure **Encerrar jogo (segure)** por 2 s e, já no Fim,
+   segure **Apagar a sala (segure 2 s)**, também na barra (D-047). O telão volta
+   à abertura.
 
 **Confira:** em nenhum momento aparece `REGRAS ABERTAS ou DESATUALIZADAS: não
 use`. Se aparecer, o telão não cria a sala: refaça o passo 6 e recarregue. Outras
@@ -350,7 +346,8 @@ Faça em casa, antes do teste no eduroam. Um dos celulares pode ficar no 4G.
 4. Espaço até **Formação das equipes**. Com as teclas de número, deixe 3 equipes
    abertas. Nos celulares, toque em **Me coloque numa equipe**. Espaço trava as
    equipes.
-5. Espaço até a rodada 1. Vote nos celulares e veja a contagem da equipe mudar ao
+5. Espaço até a rodada 1. Nos celulares aparecem o contexto da família e as 4
+   opções; a decisão tem 120 s. Vote e veja a contagem da equipe mudar ao
    vivo. No meio, bloqueie a tela de um celular por 1 minuto e desbloqueie. Enter
    encerra. Antes do tempo mínimo de conversa, ele pede confirmação com o foco em
    **Cancelar**: para confirmar, Tab e Enter, ou clique. Confira o sorteio, o
@@ -363,8 +360,10 @@ Faça em casa, antes do teste no eduroam. Um dos celulares pode ficar no 4G.
      (seção 2) e repita na rodada 2.
 6. Recarregue o telão (F5) e clique em **Retomar sala**: ele volta ao mesmo passo
    sem pedir o PIN.
-7. **Pular para…** → Placar final. A tecla C troca o critério. Siga até o Fim,
-   clique em **Exportar totais** e segure **Apagar a sala**.
+7. **Pular para…** → Placar final. O Espaço passa as páginas (quanto faltou para
+   o básico, "Escolha ou sorte?" e a história de cada equipe) e, da última, segue
+   o roteiro. No Fim, na barra, clique em **Exportar totais** e segure **Apagar a
+   sala**.
 
 **Confira:** nada travou. O roteiro completo do dia está em
 [docs/roteiro-do-apresentador.md](docs/roteiro-do-apresentador.md), e o checklist

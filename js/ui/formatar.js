@@ -52,6 +52,15 @@
     return numero('decimal', { minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(n);
   }
 
+  // Taxa de juros ao mês (fração) → "7,43%": até duas casas, como a fonte
+  // escreve. Com o decimal() (uma casa), o telão dizia 7,4% e o contexto do
+  // celular, 7,43%, na mesma sessão (revisão de 29/09).
+  function taxa(fracao) {
+    if (!Number.isFinite(fracao)) return '—';
+    // O arredondamento a 4 casas tira o resíduo binário (0,0743 × 100 = 7,430000000000001).
+    return `${numero('taxa', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Math.round(fracao * 1e6) / 1e4)}%`;
+  }
+
   // Fração de 0 a 1 → "42%". null é "sem votos" (enquete.resumo), nunca "0%".
   function porcento(fracao) {
     if (fracao === null || fracao === undefined || !Number.isFinite(fracao)) return '—';
@@ -106,5 +115,5 @@
     return n === 1 ? '1 pessoa' : `${inteiro(n)} pessoas`;
   }
 
-  V.formatar = { moeda, inteiro, decimal, porcento, indicador, dataHora, carimbo, relogio, atraso, pessoas, MENOS };
+  V.formatar = { moeda, inteiro, decimal, taxa, porcento, indicador, dataHora, carimbo, relogio, atraso, pessoas, MENOS };
 })(globalThis);
