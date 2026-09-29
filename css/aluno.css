@@ -204,6 +204,10 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 }
 .indicadores dt { color: var(--texto-2); }
 .indicadores dd { margin: 0; text-align: right; font-weight: 700; }
+/* "Escolha ou sorte?": o total do fim, depois do "=", em destaque, separado
+   das variações por um traço (rascunho, seção 7, item 11). */
+.placar-historia .placar-total { padding-top: 6px; border-top: 1px solid var(--linha); color: var(--texto); font-weight: 700; }
+.placar-historia dd.placar-total { font-size: 1.15em; }
 .delta { color: var(--texto-2); font-weight: 500; font-size: 15px; }
 
 .mes { display: flex; flex-direction: column; gap: 6px; }

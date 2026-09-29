@@ -19,7 +19,10 @@
 // 8. "Continuar sem celulares" segue do espelho local, no mesmo passo;
 // 9. o redesenho de 29/09 no celular: o contexto da família na decisão, até 4
 //    opções com a narrativa e sem setas (D-043), "entrou · o básico custa ·
-//    faltou" e a dívida (D-044, D-046), e a história da equipe no fim (D-045).
+//    faltou" e a dívida (D-044, D-046), e a história da equipe no fim (D-045);
+// 10. "piloto automático" em nenhuma tela do celular nem no resultado do telão
+//    (D-041; rascunho, seção 7, item 14), e o "Escolha ou sorte?" do celular com
+//    os totais sem sinal e as variações com + ou − (item 11).
 // Capturas do celular em e2e/capturas/celular-*.png (as antigas são apagadas no
 // começo: uma captura nova muda a numeração das seguintes).
 //
@@ -368,6 +371,7 @@ async function jogar({ site, navegador, vigiar }) {
       return { rolagem: document.documentElement.scrollWidth - innerWidth, pequenos };
     });
     assert.ok(r.rolagem <= 0, `${nome}: rolagem lateral de ${r.rolagem} px`);
+    assert.ok(!/piloto autom/i.test(await c.p.textContent('body')), `${nome}: "piloto automático" no celular (D-041)`);
     assert.deepEqual(r.pequenos, [], `${nome}: alvos de toque abaixo de 48 px`);
     await c.p.screenshot({ path: join(CAPTURAS, `celular-${String(++capturas).padStart(2, '0')}-${nome}.png`), fullPage: true });
   }
@@ -956,15 +960,33 @@ async function jogar({ site, navegador, vigiar }) {
   const res2 = await administrador('GET', `salas/${sala}/resultados/${R2}`);
   assert.equal(res2[E1].decisao, P2);
   assert.equal(res2[E1].origem, 'prorrogacao');
-  assert.equal(res2[E2].origem, 'piloto', 'equipe sem voto: piloto automático');
+  assert.equal(res2[E2].origem, 'piloto', 'equipe sem voto: fica o padrão da rodada');
   console.log('Prorrogação: só as empatadas no celular; a outra equipe espera.');
+
+  // A equipe que não votou (D-041; rascunho, seção 7, item 14): "ninguém votou"
+  // no resultado do telão e "ninguém votou: ficou o de sempre" no celular, e
+  // nunca "piloto automático".
+  await avancar();
+  await esperarEstado((e) => e.subfase === 'resultado', 'resultado da segunda rodada');
+  await telao.waitForFunction((eq) => document.querySelector(`.cartao-resultado[data-equipe="${eq}"]`), E2);
+  assert.equal(await telao.textContent(`.cartao-resultado[data-equipe="${E2}"] .resultado-decisao`), 'ninguém votou', 'resultado no telão: a origem da equipe sem voto');
+  assert.ok(!/piloto autom/i.test(await telao.textContent('#palco')), 'resultado no telão sem "piloto automático"');
+  const depoisDeR2 = C.passos[(await estado()).indice + 1];
+  if (depoisDeR2?.tipo === 'bloco') {
+    await avancar();
+    await esperarEstado((e) => e.tipo === 'bloco', 'bloco depois da segunda rodada');
+    await esperarTela(bia, 'situacao');
+    await bia.p.waitForFunction(() => document.querySelector('.mes'));
+    assert.match(await bia.p.textContent('.mes'), /\(ninguém votou: ficou o de sempre\)/, 'celular da equipe sem voto: a origem da decisão');
+    await conferirCelular(bia, 'situacao-sem-voto');
+  }
 
   // ---------- Placar final no celular: a história da equipe (D-045) ----------
   await pularPara((p) => p.tipo === 'placarFinal', 'placar final');
   await esperarTela(cel[0], 'situacao');
   const resultadosDaSala = await administrador('GET', `salas/${sala}/resultados`);
   await conferirHistoria(cel[0], E1, resultadosDaSala, 'placar final');
-  assert.ok(!/piloto automático|efeito das decisões/i.test(await cel[0].p.textContent('#tela')), 'placar final sem "piloto automático" nem "efeito das decisões" (D-041)');
+  assert.ok(!/piloto autom|efeito das decisões/i.test(await cel[0].p.textContent('#tela')), 'placar final sem "piloto automático" nem "efeito das decisões" (D-041)');
   {
     // "Escolha ou sorte?" (revisão de 29/09): as quatro linhas em reais inteiros,
     // e as três parcelas somam o "Terminaram com" que a tela mostra.
@@ -974,6 +996,14 @@ async function jogar({ site, navegador, vigiar }) {
     const c = await cel[0].p.evaluate((p) => globalThis.Viracao.historia.escolhaOuSorte(p), placarE1);
     assert.deepEqual(lidos, [c.piloto, c.escolhas, c.sorte, c.total], 'escolha ou sorte: os valores de historia.escolhaOuSorte');
     assert.equal(lidos[0] + lidos[1] + lidos[2], lidos[3], 'escolha ou sorte: as parcelas somam o total mostrado');
+    // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),
+    // as variações sempre com + ou −, e o total do fim com "=" e em destaque.
+    const linhas = await cel[0].p.$$eval('.placar-historia dd', (ns) => ns.map((n) => ({ texto: n.textContent.trim(), total: n.classList.contains('placar-total') })));
+    const rotulos = await cel[0].p.$$eval('.placar-historia dt', (ns) => ns.map((n) => n.textContent.trim()));
+    assert.deepEqual(rotulos, ['Se não mudassem nada', 'As escolhas', 'A sorte', '= Terminaram com']);
+    for (const i of [0, 3]) assert.ok(!linhas[i].texto.startsWith('+'), `o total "${linhas[i].texto}" sem "+"`);
+    for (const i of [1, 2]) assert.match(linhas[i].texto, /^[+−]R\$/, `a variação "${linhas[i].texto}" com sinal`);
+    assert.ok(linhas[3].total && !linhas[0].total, 'o total do fim em destaque');
   }
   await conferirCelular(cel[0], 'placar-final');
 

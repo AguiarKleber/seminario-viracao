@@ -2,7 +2,9 @@
 // opção, a carta e as contas do mês. Função pura, usada pelo telão e pelo celular.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { carregarNucleo } from './carregar-nucleo.mjs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { carregarNucleo, RAIZ } from './carregar-nucleo.mjs';
 import { lerConfigTesteV2, normalizar } from './fixtures/configs.mjs';
 
 const V = await carregarNucleo();
@@ -92,4 +94,51 @@ test('escolhaOuSorte: as parcelas exibidas (inteiras) sempre somam o total exibi
 test('escolhaOuSorte: placar incompleto (sala antiga) não inventa número', () => {
   assert.equal(V.historia.escolhaOuSorte(null), null);
   assert.equal(V.historia.escolhaOuSorte({ renda: 10 }), null);
+});
+
+// Rascunho, seção 7, item 12 (D-045): a história no telão usava só os rótulos.
+// Agora cada mês ganha uma linha curta em primeira pessoa, da opção e da
+// carta. A narrativa inteira (duas ou três frases de cada) não cabe em 1024×768
+// com três meses por página, então vai a primeira frase de cada uma: o corte
+// sempre no fim de uma frase, nunca no meio.
+test('linhaDoMes: a primeira frase da narrativa da opção e a da carta', () => {
+  // Arrange: o "R$ 1.500" tem ponto e não termina a frase.
+  const mes = {
+    opcao: { rotulo: 'Pegar emprestado', narrativa: 'Peguei R$ 1.500 no crédito pessoal e rodei até de madrugada. A dívida continua.' },
+    carta: { titulo: 'Fratura', narrativa: 'Me acidentei e quebrei o punho. São 45 dias parado.' },
+  };
+
+  // Act / Assert
+  assert.equal(V.historia.linhaDoMes(mes), 'Peguei R$ 1.500 no crédito pessoal e rodei até de madrugada. Me acidentei e quebrei o punho.');
+});
+
+test('linhaDoMes: sem narrativa de um dos lados, só a do outro; sem nenhuma, null', () => {
+  assert.equal(V.historia.linhaDoMes({ opcao: { narrativa: 'Mantive a rotina' }, carta: { narrativa: null } }), 'Mantive a rotina');
+  assert.equal(V.historia.linhaDoMes({ opcao: { narrativa: null }, carta: { narrativa: 'Nada fora do comum. E mesmo assim o mês não fechou.' } }), 'Nada fora do comum.');
+  assert.equal(V.historia.linhaDoMes({ opcao: { narrativa: 'Parei! Perdi o dia.' }, carta: { narrativa: 'Choveu? Choveu.' } }), 'Parei! Choveu?');
+  assert.equal(V.historia.linhaDoMes({ opcao: {}, carta: {} }), null);
+  assert.equal(V.historia.linhaDoMes(null), null);
+});
+
+test('linhaDoMes: com as narrativas do config.json real, cada pedaço é uma frase inteira do começo da narrativa', () => {
+  // Arrange: todas as combinações de opção e carta do conteúdo em validação.
+  const r = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  const opcoes = Object.values(r.config.rodadas).flatMap((rod) => Object.values(rod.opcoes));
+  const cartas = Object.values(r.config.cartas);
+
+  for (const opcao of opcoes) {
+    for (const carta of cartas) {
+      // Act
+      const linha = V.historia.linhaDoMes({ opcao, carta });
+
+      // Assert: um começo da narrativa da opção e um da carta, cada um
+      // terminado em fim de frase.
+      const cortes = [...linha.matchAll(/[.!?] /g)].map((m) => m.index + 1);
+      const partido = cortes.some((k) => {
+        const [daOpcao, daCarta] = [linha.slice(0, k), linha.slice(k + 1)];
+        return opcao.narrativa.startsWith(daOpcao) && carta.narrativa.startsWith(daCarta) && /[.!?]$/.test(daCarta);
+      });
+      assert.ok(partido, `"${linha}"`);
+    }
+  }
 });

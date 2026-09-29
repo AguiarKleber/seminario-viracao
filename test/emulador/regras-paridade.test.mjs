@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { carregarNucleo, RAIZ } from '../carregar-nucleo.mjs';
 import { novoCanalNoEmulador, administrador, namespaceComRegras, PIN_EMULADOR } from '../../bin/emulador.mjs';
+import { relogioParado } from './relogio-parado.mjs';
 
 const V = await carregarNucleo();
 const PIN = PIN_EMULADOR;
@@ -47,22 +48,9 @@ after(async () => {
 // ---------- Os dois ambientes, com a mesma cara ----------
 
 function ambienteLocal() {
-  // A hora fica parada até a próxima volta do laço de eventos, como o "now" único
-  // de uma escrita no servidor. Com o Date.now puro, virar o milissegundo entre o
-  // marcadorDeHora() e a trava "entrouEm === agora" recusava a entrada de vez em
-  // quando (o teste falhou em 2 de 6 rodadas). É o mesmo relógio do
-  // bin/simular-alunos.mjs, que anda pelo menos 1 ms a cada volta.
-  let congelada = null;
-  let ultima = 0;
-  const relogio = () => {
-    if (congelada === null) {
-      congelada = Math.max(Date.now(), ultima + 1);
-      ultima = congelada;
-      setImmediate(() => { congelada = null; });
-    }
-    return congelada;
-  };
-  const base = V.canalLocal.criar({ relogio });
+  // A hora parada por volta do laço (relogio-parado.mjs): com o Date.now puro,
+  // a trava "entrouEm === agora" recusava a entrada de vez em quando.
+  const base = V.canalLocal.criar({ relogio: relogioParado() });
   // Como no projeto real, o PIN fica em privado/, que nenhuma conta escreve.
   base.importar({ privado: { pinApresentador: PIN } });
   return {

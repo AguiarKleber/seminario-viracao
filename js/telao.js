@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '2';
+  const VERSAO_APP = '3';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -1687,62 +1687,76 @@
 
   // ---------- Linha do tempo do seminário (D-042) ----------
 
-  // Entram os blocos da apresentação e os meses do jogo, na ordem do roteiro. O
-  // resto (enquetes, formação das equipes, placar) acontece entre eles, e
-  // encheria a linha de marcas que a turma não reconhece.
-  const trechosDoRoteiro = () => app.passos.filter((p) => p.tipo === 'bloco' || p.tipo === 'rodada');
+  // O "Mapa do seminário" põe os itens por extenso em duas colunas: até 8 por
+  // coluna cabem em 1024×768, com os títulos do config quebrando em duas linhas
+  // (o e2e confere). Passou disso, o fim do seminário vira um item só
+  // (roteiro.linhaDoTempo). O mesmo limite vale para a trilha dos outros blocos,
+  // para o "k de n" ser o mesmo em todos eles.
+  const MAX_ITENS_LINHA = 16;
 
   // O bloco do mapa não tem campo próprio no passo (o validador descarta chave
   // nova no roteiro, com aviso): é reconhecido pelo título, o do roteiro.
   const RE_MAPA = /^mapa do semin[aá]rio\b/i;
   const ehMapa = (passo) => passo?.tipo === 'bloco' && RE_MAPA.test(passo.titulo || '');
 
-  // "Você está aqui" é o passo atual; "a seguir" é o próximo passo do roteiro,
-  // seja ele qual for (o termômetro depois do debrief, por exemplo): é o que a
-  // turma vai ver em seguida.
+  const maiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const descreverItem = (item) => (item.tipo === 'final' ? maiuscula(item.palavras.join(', ')) : descreverPasso(app.passos[item.indices[0]]));
+
+  // O seminário inteiro, do primeiro passo depois da entrada na sala até o
+  // último (D-042; rascunho, seção 7, item 15). "Você está aqui" é o item do
+  // passo atual; "a seguir" é o item seguinte da própria linha, marcado nela.
+  // Antes, o "a seguir" era o próximo passo do roteiro, que muitas vezes nem
+  // estava na linha (formação das equipes, placar, termômetro, "Fim").
   function linhaDoTempo(e, { mapa }) {
     const { el } = D();
-    const trechos = trechosDoRoteiro();
-    const posicao = trechos.findIndex((p) => p.indice === e.indice);
-    const proximo = app.passos[e.indice + 1];
-    const momento = (p) => {
-      if (p.indice === e.indice) return 'atual';
-      return p.indice < e.indice ? 'passado' : 'futuro';
+    const { itens } = N().roteiro.linhaDoTempo(app.config, app.passos, { maxItens: MAX_ITENS_LINHA });
+    const posicao = itens.findIndex((x) => x.indices.includes(e.indice));
+    const seguinte = posicao >= 0 ? itens[posicao + 1] : itens.find((x) => x.indices[0] > e.indice);
+    const momento = (item) => {
+      if (item.indices.includes(e.indice)) return 'atual';
+      return item.indices[0] < e.indice ? 'passado' : 'futuro';
     };
-    const comum = (p) => ({
-      dados: { trecho: String(p.indice) },
-      'aria-current': p.indice === e.indice ? 'step' : null,
+    const comum = (item) => ({
+      classe: [`trecho-${item.tipo}`, `trecho-${momento(item)}`, item === seguinte ? 'trecho-seguinte' : null],
+      dados: { trecho: String(item.indices[0]), passos: item.indices.join(','), ...(item === seguinte ? { seguinte: '1' } : {}) },
+      'aria-current': momento(item) === 'atual' ? 'step' : null,
     });
     const seguir = el('p', { classe: 'linha-tempo-seguir' }, [
       el('b', { texto: 'Você está aqui' }),
-      posicao >= 0 ? ` (${posicao + 1} de ${trechos.length})` : null,
-      proximo ? [' · a seguir: ', el('b', { texto: descreverPasso(proximo) })] : ' · é o último trecho',
+      posicao >= 0 ? ` (${posicao + 1} de ${itens.length})` : null,
+      seguinte ? [' · a seguir: ', el('b', { texto: descreverItem(seguinte) })] : ' · é o último trecho',
     ]);
     if (mapa) {
-      // No "Mapa do seminário", a linha é o conteúdo: todos os trechos por
+      // No "Mapa do seminário", a linha é o conteúdo: todos os itens por
       // extenso, em duas colunas quando passam de seis (cabe em 1024×768).
-      const colunas = trechos.length > 6 ? 2 : 1;
+      const colunas = itens.length > 6 ? 2 : 1;
       return el('nav', { classe: 'linha-tempo linha-tempo-mapa', 'aria-label': 'Mapa do seminário' }, [
         el('ol', {
           classe: 'linha-tempo-lista',
-          estilo: { '--linhas': String(Math.ceil(trechos.length / colunas)), '--colunas': String(colunas) },
-        }, trechos.map((p) => el('li', { classe: ['trecho-mapa', `trecho-${p.tipo}`, `trecho-${momento(p)}`], ...comum(p) }, [
-          el('span', { classe: 'trecho-marca', 'aria-hidden': 'true' }),
-          el('span', { classe: 'trecho-titulo' }, [
-            descreverPasso(p),
-            p.indice === e.indice ? el('b', { classe: 'trecho-aqui', texto: ' · você está aqui' }) : null,
-          ]),
-        ]))),
+          estilo: { '--linhas': String(Math.ceil(itens.length / colunas)), '--colunas': String(colunas) },
+        }, itens.map((item) => {
+          const c = comum(item);
+          return el('li', { ...c, classe: ['trecho-mapa', ...c.classe] }, [
+            el('span', { classe: 'trecho-marca', 'aria-hidden': 'true' }),
+            el('span', { classe: 'trecho-titulo' }, [
+              descreverItem(item),
+              momento(item) === 'atual' ? el('b', { classe: 'trecho-aqui', texto: ' · você está aqui' }) : null,
+            ]),
+          ]);
+        })),
         seguir,
       ]);
     }
     // Nos outros blocos, discreta: uma trilha de marcas (o mês do jogo escrito
     // dentro da dele) e uma linha de texto.
     return el('nav', { classe: 'linha-tempo', 'aria-label': 'Linha do tempo do seminário' }, [
-      el('ol', { classe: 'linha-tempo-trilha' }, trechos.map((p) => el('li', {
-        classe: ['trecho', `trecho-${p.tipo}`, `trecho-${momento(p)}`], ...comum(p),
-        'aria-label': descreverPasso(p), title: descreverPasso(p),
-      }, p.tipo === 'rodada' ? [`mês ${posicaoRodada(p.rodada).n}`] : []))),
+      el('ol', { classe: 'linha-tempo-trilha' }, itens.map((item) => {
+        const c = comum(item);
+        const passo = app.passos[item.indices[0]];
+        return el('li', {
+          ...c, classe: ['trecho', ...c.classe], 'aria-label': descreverItem(item), title: descreverItem(item),
+        }, item.tipo === 'rodada' ? [`mês ${posicaoRodada(passo.rodada).n}`] : []);
+      })),
       seguir,
     ]);
   }
@@ -2088,9 +2102,11 @@
 
   // No resultado, a origem vai curta: a linha já leva a letra, a carta, a dívida
   // e as contas, e seis equipes precisam caber em 1024×768. O celular da equipe
-  // traz a frase inteira ("o app decidiu por vocês").
+  // traz a frase inteira ("ninguém votou: ficou o de sempre"). O termo "piloto
+  // automático" saiu de todas as telas (D-041; rascunho, seção 7, item 14): no
+  // ensaio, ele confundia, e soava como a opção boa de quem não votou.
   const ORIGENS = {
-    piloto: 'piloto automático',
+    piloto: 'ninguém votou',
     moeda: 'empate na moeda',
     prorrogacao: 'na prorrogação',
     apresentador: 'pelo apresentador',
@@ -2240,27 +2256,36 @@
   // da conta é inteiro: a linha quebra entre eles. Os valores vêm de
   // historia.escolhaOuSorte, já inteiros e fechando com o total: a conta é lida
   // em voz alta, e R$ 1 de diferença ficava à vista de quem somava.
+  // Os dois totais (sem mudar nada, e o do fim) vão sem sinal de variação; as
+  // duas variações, sempre com + ou − (rascunho, seção 7, item 11): no mesmo
+  // formato, "−R$ 4.150 → −R$ 395" parecia uma sequência de saldos. O total do
+  // fim entra com "=" e em destaque, e não com mais uma seta.
   function paginaEscolhas(s, lado) {
     const { el } = D();
     const placar = app.dados.placar;
-    const passo = (texto, valor) => el('span', { classe: 'passo-conta' }, [texto, el('b', { texto: valor })]);
+    const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
     s.appendChild(cabecalho('Placar final', 'Escolha ou sorte?', { extra: lado }));
     s.appendChild(el('ol', { classe: 'historias-escolha' }, equipesPorSaldo().map((id) => {
       const c = N().historia.escolhaOuSorte(placar[id]);
       return el('li', { classe: 'historia-escolha', dados: { equipe: id } }, [
         rotuloEquipe(id),
         c ? el('span', { classe: 'historia-conta' }, [
-          passo('se não mudassem nada: ', F().moeda(c.piloto)), ' ',
-          passo('→ as escolhas: ', F().moeda(c.escolhas, { sinal: true })), ' ',
-          passo('→ a sorte: ', F().moeda(c.sorte, { sinal: true })), ' ',
-          passo('→ terminaram com ', F().moeda(c.total)),
+          passo('se não mudassem nada: ', F().moeda(c.piloto), 'passo-total'), ' ',
+          passo('→ as escolhas: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
+          passo('→ a sorte: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
+          passo('= terminaram com ', F().moeda(c.total), ['passo-total', 'passo-final']),
         ]) : null,
       ]);
     })));
   }
 
-  // Página 3 (uma por equipe): os três meses, com a escolha, o que aconteceu e
-  // as contas, a partir da mesma função do celular (Viracao.historia).
+  // Página 3 (uma por equipe): os três meses, cada um com uma linha curta em
+  // primeira pessoa (a primeira frase da narrativa da opção e a da carta,
+  // historia.linhaDoMes) e as contas (D-045; rascunho, seção 7, item 12). Antes,
+  // o telão mostrava só os rótulos ("escolheram: … · aconteceu: …"), e a
+  // história ficava no celular. A linha tem no máximo duas linhas na tela e,
+  // se não couber, termina em reticências (CSS), sem baixar dos 28 px. Sem
+  // narrativa no config, volta aos rótulos.
   function paginaHistoria(s, eq, lado) {
     const { el } = D();
     const persona = personaDaEquipe(eq);
@@ -2268,11 +2293,11 @@
     s.appendChild(cabecalho('A história da equipe', [rotuloEquipe(eq), persona ? ` · ${persona.nome}` : null], { extra: lado }));
     s.appendChild(el('ol', { classe: 'historia-meses' }, historia.map((h) => {
       const r = app.dados.resultados?.[h.rodadaId]?.[eq] || {};
-      const escolha = h.opcao.rotulo || r.decisao || '';
+      const linha = N().historia.linhaDoMes(h);
       return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
         el('p', { classe: 'historia-titulo', texto: h.titulo || h.rodadaId }),
-        el('p', { classe: 'historia-fatos' }, [
-          'escolheram: ', el('b', { texto: escolha }), r.origem === 'piloto' ? ` (${ORIGENS.piloto})` : null,
+        linha ? el('p', { classe: 'historia-narrativa', texto: linha }) : el('p', { classe: 'historia-fatos' }, [
+          'escolheram: ', el('b', { texto: h.opcao.rotulo || r.decisao || '' }),
           ' · aconteceu: ', el('b', { texto: h.carta.titulo || r.carta || '' }),
         ]),
         contasDoMes(h.mes || mesDoResultado(h.rodadaId, eq, r), 'historia-contas'),

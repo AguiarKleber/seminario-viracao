@@ -68,5 +68,23 @@
     return { piloto: p + 0, escolhas: escolhas + 0, sorte: total - p - escolhas + 0, total: total + 0 };
   }
 
-  V.historia = { historiaDaEquipe, escolhaOuSorte };
+  // A primeira frase de um texto: até o primeiro ".", "!" ou "?" seguido de
+  // espaço (ou do fim). O ponto de "R$ 1.500" vem colado no número e não conta.
+  function primeiraFrase(texto) {
+    if (typeof texto !== 'string' || !texto.trim()) return null;
+    const limpo = texto.trim();
+    return /^.*?[.!?](?=\s|$)/s.exec(limpo)?.[0] ?? limpo;
+  }
+
+  // A linha curta de um mês na história do telão (D-045; rascunho, seção 7,
+  // item 12): a primeira frase da narrativa da opção e a da carta, em primeira
+  // pessoa. As narrativas inteiras (de 90 a 150 letras cada) davam quatro
+  // linhas por mês, e três meses não cabiam em 1024×768 com o corpo em 28 px.
+  // O corte é sempre no fim de uma frase; o celular mostra as duas inteiras.
+  function linhaDoMes(mes) {
+    const frases = [primeiraFrase(mes?.opcao?.narrativa), primeiraFrase(mes?.carta?.narrativa)].filter(Boolean);
+    return frases.length > 0 ? frases.join(' ') : null;
+  }
+
+  V.historia = { historiaDaEquipe, escolhaOuSorte, linhaDoMes };
 })(globalThis);
