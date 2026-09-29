@@ -12,7 +12,7 @@
 //   node bin/simular-alunos.mjs --sala K7Q2 --emulador     só alunos, numa sala aberta por um telão de verdade
 //   node bin/simular-alunos.mjs --sala K7Q2 --sim-tenho-certeza   contra o projeto REAL (conexao.json)
 //
-// Opções: --alunos N (20) · --rapido · --roteiro 60min|120min · --semente N
+// Opções: --alunos N (20) · --rapido · --roteiro 60min|120min · --semente N · --config caminho (config.json)
 // Perturbações: --rajada · --quedas · --recargas · --derrubar-telao · --atacar
 //
 // O relatório confere, passo a passo, que os votos confirmados pelo servidor são
@@ -21,7 +21,7 @@
 // Qualquer violação encerra com código diferente de zero.
 import { existsSync, readFileSync } from 'node:fs';
 import { randomInt } from 'node:crypto';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { carregarNucleo, RAIZ } from '../test/carregar-nucleo.mjs';
 import {
@@ -44,7 +44,7 @@ function lerOpcoes(argv) {
   const o = {
     memoria: false, emulador: false, sala: null, comAnfitriao: false, rapido: false, alunos: 20, roteiro: '60min',
     rajada: false, quedas: false, recargas: false, derrubarTelao: false, atacar: false, simTenhoCerteza: false,
-    semente: null, ajuda: false,
+    semente: null, ajuda: false, config: null,
   };
   const flags = {
     '--memoria': 'memoria', '--emulador': 'emulador', '--com-anfitriao': 'comAnfitriao', '--rapido': 'rapido',
@@ -58,6 +58,7 @@ function lerOpcoes(argv) {
     else if (a === '--alunos') o.alunos = Number(argv[++i]);
     else if (a === '--roteiro') o.roteiro = String(argv[++i]);
     else if (a === '--semente') o.semente = Number(argv[++i]);
+    else if (a === '--config') o.config = String(argv[++i] || '');
     else throw new Error(`Opção desconhecida: ${a}`);
   }
   if (!Number.isInteger(o.alunos) || o.alunos < 1 || o.alunos > 60) throw new Error('--alunos precisa ser inteiro de 1 a 60.');
@@ -73,7 +74,7 @@ function lerOpcoes(argv) {
 }
 
 const AJUDA = `Uso: node bin/simular-alunos.mjs (--memoria | --emulador [--sala CODIGO] | --sala CODIGO --sim-tenho-certeza)
-  [--com-anfitriao] [--rapido] [--alunos N] [--roteiro 60min] [--semente N]
+  [--com-anfitriao] [--rapido] [--alunos N] [--roteiro 60min] [--semente N] [--config caminho]
   [--rajada] [--quedas] [--recargas] [--derrubar-telao] [--atacar]`;
 
 // ---------- Aleatoriedade reproduzível ----------
@@ -98,14 +99,17 @@ function sorteador(semente) {
 
 // ---------- Config ----------
 
-// O config real. No --rapido, só os tempos encolhem (o conteúdo é o mesmo): a
-// rajada vota "no último segundo" e o ataque fora do prazo espera o prazo
-// passar, e com os 90 s reais o ensaio rápido levaria meia hora.
-function carregarConfig(rapido) {
-  const bruto = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8').replace(/^\uFEFF/, ''));
+// O config real, ou outro com --config (o teste do emulador usa a fixture v2,
+// para não depender do config.json que está sendo reescrito). No --rapido, só
+// os tempos encolhem (o conteúdo é o mesmo): a rajada vota "no último segundo" e
+// o ataque fora do prazo espera o prazo passar, e com os 90 s reais o ensaio
+// rápido levaria meia hora.
+function carregarConfig(rapido, caminho) {
+  const arquivo = caminho ? resolve(RAIZ, caminho) : join(RAIZ, 'config.json');
+  const bruto = JSON.parse(readFileSync(arquivo, 'utf8').replace(/^\uFEFF/, ''));
   if (rapido) bruto.tempos = { ...bruto.tempos, enqueteSeg: 5, decisaoSeg: 6, decisaoMinSeg: 1, prorrogacaoSeg: 4 };
   const r = V.validarConfig.validar(bruto);
-  if (!r.ok) throw new Error('config.json inválido:\n' + r.erros.map((e) => `${e.caminho}: ${e.mensagem}`).join('\n'));
+  if (!r.ok) throw new Error(`${arquivo} inválido:\n` + r.erros.map((e) => `${e.caminho}: ${e.mensagem}`).join('\n'));
   return r.config;
 }
 
@@ -962,8 +966,12 @@ async function conferirApuracao({ canal, config, sala, opcoes, abertoEm, metrica
         const max = Math.max(...Object.values(contagem));
         if (contagem[res.decisao] !== max || Object.values(contagem).filter((v) => v === max).length !== 1) metricas.violacoes.push(`${r}/${eq}: "maioria" que não é maioria`);
       }
-      const esperado = M.resolverRodada(config, { equipeId: eq, rodadaId: r, opcaoId: res.decisao, estado: estado[eq], semente: sementes?.[r] });
-      if (esperado.carta !== res.carta || !mesmoValor(esperado.depois, res.depois)) {
+      // O histórico da equipe (decidiu/sorteou, D-043): as rodadas anteriores
+      // do roteiro que têm resultado, como o anfitrião faz.
+      const anteriores = passosRodada.slice(0, passosRodada.indexOf(p)).map((q) => q.rodada);
+      const historico = M.historicoDe(resultados, eq, anteriores);
+      const esperado = M.resolverRodada(config, { equipeId: eq, rodadaId: r, opcaoId: res.decisao, estado: estado[eq], semente: sementes?.[r], historico });
+      if (esperado.carta !== res.carta || !mesmoValor(esperado.depois, res.depois) || !mesmoValor(esperado.mes, res.mes)) {
         metricas.violacoes.push(`${r}/${eq}: o motor com a semente gravada dá ${esperado.carta}, e está gravado ${res.carta}`);
       }
       estado[eq] = esperado.depois;
@@ -1120,7 +1128,7 @@ async function principal(argv) {
 
   const semente = Number.isInteger(opcoes.semente) ? opcoes.semente : randomInt(0, 2 ** 31);
   const rng = sorteador(semente);
-  const config = carregarConfig(opcoes.rapido);
+  const config = carregarConfig(opcoes.rapido, opcoes.config);
   const amb = opcoes.memoria ? ambienteMemoria() : opcoes.emulador ? await ambienteEmulador() : await ambienteReal();
   const sala = opcoes.sala || rng.um(['T', 'U', 'V', 'X']) + Array.from({ length: 3 }, () => rng.um([...'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'])).join('');
   if (opcoes.emulador && !opcoes.sala) await administrador('DELETE', `salas/${sala}`);

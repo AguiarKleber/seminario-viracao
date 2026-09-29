@@ -1,9 +1,9 @@
 {
-  "versao": "2026-09-28-validado",
+  "versao": "2026-09-29-v2-rascunho",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
-    "decisaoSeg": 90,
+    "decisaoSeg": 120,
     "decisaoMinSeg": 45,
     "prorrogacaoSeg": 20,
     "gracaSeg": 5
@@ -15,7 +15,9 @@
     "placarPadrao": "efeitoDecisoes",
     "alvoPorEquipe": 3,
     "minPareados": 5,
-    "destacarCartas": 2
+    "destacarCartas": 2,
+    "jurosDividaMes": 0.0743,
+    "jurosFonte": "Banco Central, SGS 25463: cheque especial, 7,43% ao mês em ago/2026 (136,41% ao ano; teto legal de 8% ao mês, Resolução CMN 4.765/2019). É a modalidade que rola a dívida de um mês para o outro sem pedir nada ao banco"
   },
   "escala": {
     "curtos": [
@@ -39,7 +41,7 @@
       "nome": "Saldo acumulado",
       "formato": "moeda",
       "inicial": 0,
-      "min": -10000,
+      "min": -30000,
       "max": 100000
     },
     {
@@ -63,7 +65,60 @@
     {
       "id": "motoboy",
       "nome": "Jonas",
-      "descricao": "Motoboy, 34 anos, entrega por aplicativo com moto financiada. Divide as contas com a companheira; têm uma filha de 6 anos.",
+      "descricao": "Motoboy, 34 anos, entrega por aplicativo com moto financiada. Mora no Sarandi, em Porto Alegre.",
+      "familia": {
+        "descricao": "Jonas, a companheira, caixa de supermercado com um salário mínimo, e a filha de 6 anos.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (cesta básica × 2,5)",
+            "valor": 2098,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 2,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)"
+          },
+          {
+            "rotulo": "aluguel (2 quartos)",
+            "valor": 1300,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Mercado formal (exige fiador ou análise de crédito)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 162,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 150 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 119,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 12 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 89,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+          },
+          {
+            "rotulo": "ônibus da companheira",
+            "valor": 233,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 44 passagens por mês (estimativa)"
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 75,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 90,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "salário da companheira",
+        "valor": 1499,
+        "fonte": "Decreto 12.797/2025: salário mínimo de R$ 1.621; menos 7,5% de INSS (Portaria MPS/MF 13/2026) = R$ 1.499,43"
+      },
       "inicial": {
         "energia": 7
       },
@@ -73,21 +128,21 @@
             "renda": 2200
           },
           "rotulo": "entregas do mês, já sem a gasolina",
-          "fonte": "IBGE, PNAD Contínua, Trabalho por meio de plataformas digitais 2025 (publ. set/2026): motociclistas plataformizados, R$ 2.221/mês, 44,9 h/semana"
-        },
-        {
-          "soma": {
-            "renda": -1760
-          },
-          "rotulo": "aluguel, comida e contas (a parte dele)",
-          "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (R$ 839,34) + FipeZAP ago/2026 + ANP e CEEE 2026"
+          "fonte": "IBGE, PNAD Contínua, Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 10: motociclistas de app, R$ 2.221/mês, 44,9 h/semana, valor já sem o combustível"
         },
         {
           "soma": {
             "renda": -480
           },
           "rotulo": "parcela da moto",
-          "fonte": "Tabela Fipe set/2026 (CG 160 Start, R$ 18.598), 80% financiado em 48x a 1,97% a.m. (BCB, jun/2026)"
+          "fonte": "Tabela Fipe set/2026 (CG 160 Start 2026, R$ 18.598), 80% financiado em 48x a 1,97% a.m. (BCB, SGS 25471, jun/2026) = R$ 482"
+        },
+        {
+          "soma": {
+            "renda": -261
+          },
+          "rotulo": "manutenção da moto",
+          "fonte": "Cebrap/Amobitec (2025), p. 75: manutenção da moto R$ 261/mês. Pesquisa financiada pelas plataformas"
         }
       ],
       "fonte": "Abílio (2021): trajetória dos motoboys; PNAD 2025"
@@ -95,7 +150,60 @@
     {
       "id": "bike",
       "nome": "Kauã",
-      "descricao": "Entregador de bicicleta, 20 anos. Mora com a mãe e o irmão e ajuda em casa. Quer fazer faculdade à noite.",
+      "descricao": "Entregador de bicicleta, 20 anos. Quer fazer faculdade à noite. Mora na Restinga.",
+      "familia": {
+        "descricao": "Kauã, a mãe, auxiliar de limpeza com um salário mínimo, e a irmã de 9 anos.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (cesta básica × 2,5)",
+            "valor": 2098,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 2,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)"
+          },
+          {
+            "rotulo": "aluguel (casa pequena)",
+            "valor": 1020,
+            "fonte": "QuintoAndar, lido em 29/09/2026: aluguel médio no Chapéu do Sol/Restinga R$ 1.020 (todos os tipos de imóvel)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 162,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 150 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 119,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 12 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 89,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+          },
+          {
+            "rotulo": "ônibus da mãe",
+            "valor": 233,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 44 passagens por mês (estimativa)"
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 75,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 90,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "salário da mãe",
+        "valor": 1499,
+        "fonte": "Decreto 12.797/2025: salário mínimo de R$ 1.621; menos 7,5% de INSS (Portaria MPS/MF 13/2026) = R$ 1.499,43"
+      },
       "inicial": {
         "energia": 8
       },
@@ -105,14 +213,7 @@
             "renda": 1370
           },
           "rotulo": "entregas do mês",
-          "fonte": "Aliança Bike (2019): R$ 936/mês, 9 a 12 h/dia; corrigido pelo IPCA jun/2019 a ago/2026 (x1,4639)"
-        },
-        {
-          "soma": {
-            "renda": -1310
-          },
-          "rotulo": "a parte dele em casa: comida, aluguel e contas",
-          "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (R$ 839,34) + FipeZAP ago/2026 + ANP e CEEE 2026"
+          "fonte": "Aliança Bike (2019, São Paulo): R$ 936/mês, 9 a 12 h/dia; corrigido pelo IPCA jun/2019-ago/2026 (x1,4639). Confiança média-baixa (D-028)"
         },
         {
           "soma": {
@@ -127,7 +228,55 @@
     {
       "id": "vendedora",
       "nome": "Daiane",
-      "descricao": "Vende doces e marmitas pelo Instagram, 29 anos. Mãe de um menino de 4 anos, mora na casa da mãe e divide as contas. Paga cursos de marketing digital.",
+      "descricao": "Vende doces e marmitas pelo Instagram, 29 anos. Paga um curso de marketing digital em 12 vezes.",
+      "familia": {
+        "descricao": "Daiane e o filho de 4 anos, de aluguel; o pai não paga pensão, e só ela tem renda.",
+        "pessoas": 2
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (cesta básica × 1,5)",
+            "valor": 1259,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 1,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)"
+          },
+          {
+            "rotulo": "aluguel (1 quarto)",
+            "valor": 1000,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 1 dormitório com condomínio e taxas, R$ 1.012-1.194 (Rubem Berta, Sarandi)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 130,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 120 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 79,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 8 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 71,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,6 botijão por mês (estimativa)"
+          },
+          {
+            "rotulo": "ônibus",
+            "valor": 106,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 20 passagens por mês (estimativa)"
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 50,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 60,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+          }
+        ]
+      },
       "inicial": {
         "energia": 6
       },
@@ -137,14 +286,14 @@
             "renda": 1500
           },
           "rotulo": "vendas do mês, já sem os ingredientes",
-          "fonte": "GEM Brasil 2018, citado em Carmo et al. (2021): metade dos negócios fatura até R$ 12 mil/ano; corrigido pelo IPCA dez/2018 a ago/2026"
+          "fonte": "GEM Brasil 2018, citado em Carmo et al. (2021): metade dos negócios fatura até R$ 12 mil/ano; IPCA dez/2018-ago/2026 (x1,4965). É faturamento tratado como renda. Confiança baixa (D-028)"
         },
         {
           "soma": {
-            "renda": -1470
+            "renda": -141
           },
-          "rotulo": "comida e contas (a parte dela e do filho)",
-          "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (R$ 839,34) + FipeZAP ago/2026 + ANP e CEEE 2026"
+          "rotulo": "parcela do curso de marketing",
+          "fonte": "CartaCapital (07/11/2024), sobre a pesquisa de Pinheiro-Machado: cursos de marketing digital de R$ 1.697 a R$ 6.997; o mais barato em 12x sem juros = R$ 141 (o parcelamento é hipótese)"
         }
       ],
       "fonte": "Pinheiro-Machado, Café da Manhã (04/11/2024); Carmo et al., Cad. EBAPE.BR (2021)"
@@ -152,7 +301,60 @@
     {
       "id": "motorista",
       "nome": "Marcos",
-      "descricao": "Motorista de aplicativo, 41 anos, carro próprio de 2014. Ex-metalúrgico. A esposa é diarista três dias por semana; têm dois filhos.",
+      "descricao": "Motorista de aplicativo, 41 anos, carro próprio de 2014. Ex-metalúrgico, demitido há três anos.",
+      "familia": {
+        "descricao": "Marcos, a esposa, auxiliar de cozinha com um salário mínimo, e os filhos de 10 e 7 anos.",
+        "pessoas": 4
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (cesta básica × 3)",
+            "valor": 2518,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 3 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)"
+          },
+          {
+            "rotulo": "aluguel (2 quartos)",
+            "valor": 1300,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Mercado formal (exige fiador ou análise de crédito)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 194,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 180 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 158,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 16 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 119,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 1 botijão por mês (estimativa)"
+          },
+          {
+            "rotulo": "ônibus da esposa",
+            "valor": 233,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 44 passagens por mês (estimativa)"
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 100,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 120,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "salário da esposa",
+        "valor": 1499,
+        "fonte": "Decreto 12.797/2025: salário mínimo de R$ 1.621; menos 7,5% de INSS (Portaria MPS/MF 13/2026) = R$ 1.499,43"
+      },
       "inicial": {
         "energia": 6
       },
@@ -162,21 +364,14 @@
             "renda": 2870
           },
           "rotulo": "corridas do mês, já sem o combustível",
-          "fonte": "IBGE, PNAD Contínua, Trabalho por meio de plataformas digitais 2025 (publ. set/2026): condutores de automóveis plataformizados, R$ 2.873/mês, 45,9 h/semana"
-        },
-        {
-          "soma": {
-            "renda": -2630
-          },
-          "rotulo": "aluguel, comida e contas (dois terços da casa)",
-          "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (R$ 839,34) + FipeZAP ago/2026 + ANP e CEEE 2026"
+          "fonte": "IBGE, PNAD Contínua, Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 9: condutores de automóvel de app, R$ 2.873/mês, 45,9 h/semana, valor já sem o combustível"
         },
         {
           "soma": {
             "renda": -400
           },
           "rotulo": "manutenção do carro",
-          "fonte": "Cebrap/Amobitec (2025): manutenção média R$ 615/mês entre os 65% que declararam (0,65 x 615)"
+          "fonte": "Cebrap/Amobitec (2025), p. 47: manutenção R$ 615/mês entre os 65% que declararam (0,65 x 615 = R$ 400). Pesquisa financiada pelas plataformas"
         }
       ],
       "fonte": "Abílio (2021): Uber e o trabalhador amador; PNAD 2025"
@@ -184,7 +379,55 @@
     {
       "id": "manicure",
       "nome": "Rose",
-      "descricao": "Manicure por aplicativo, 47 anos. Trabalhou dez anos sem registro num salão. Mora com a filha de 15 e o filho de 23, que divide as contas.",
+      "descricao": "Manicure por aplicativo, 47 anos. Trabalhou dez anos sem registro num salão. Atende de ônibus.",
+      "familia": {
+        "descricao": "Rose sustenta sozinha a casa: a filha de 15 estuda, e o filho de 23 procura emprego há cinco meses.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (cesta básica × 3)",
+            "valor": 2518,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 3 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)"
+          },
+          {
+            "rotulo": "aluguel (2 quartos)",
+            "valor": 1300,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Mercado formal (exige fiador ou análise de crédito)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 162,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 150 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 119,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 12 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 89,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+          },
+          {
+            "rotulo": "ônibus dos filhos",
+            "valor": 159,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)"
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 75,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 90,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+          }
+        ]
+      },
       "inicial": {
         "energia": 6
       },
@@ -194,14 +437,7 @@
             "renda": 2100
           },
           "rotulo": "atendimentos do mês, já sem comissão, material e ônibus",
-          "fonte": "Estimativa: salário médio de manicure com carteira, R$ 1.802 (CAGED ago/2025 a jul/2026), mais 15%, como no relato de Clara em Abílio (2021). Confiança baixa"
-        },
-        {
-          "soma": {
-            "renda": -1970
-          },
-          "rotulo": "aluguel, comida e contas (a parte dela e da filha)",
-          "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (R$ 839,34) + FipeZAP ago/2026 + ANP e CEEE 2026"
+          "fonte": "Estimativa: salário médio de manicure com carteira R$ 1.802 (CAGED ago/2025-jul/2026) + 15%, como no caso de Clara em Abílio (2021). Não há dado de renda de manicure por app. Confiança baixa (D-028)"
         }
       ],
       "fonte": "Abílio (2021): caso de Clara, manicure por aplicativo"
@@ -261,13 +497,20 @@
     {
       "id": "r1",
       "titulo": "Mês 1: quanto trabalhar?",
-      "texto": "Quem fica mais tempo online recebe mais pedidos. Ninguém paga o seu INSS, e a conta do mês não espera.",
+      "texto": "Quem fica mais tempo online recebe mais pedidos. Ninguém paga o seu INSS, e o básico da casa vence no fim do mês, com acidente ou sem.",
       "padrao": "c",
-      "opcoes": {
-        "a": {
-          "rotulo": "Trabalhar o máximo: 12 horas, 7 dias",
-          "narrativa": "Fiquei online da manhã até a noite, sete dias. Dormi pouco, comi na rua e não vi minha casa acordada.",
-          "tendencia": "mais dinheiro agora; muito menos energia; mais risco",
+      "contexto": {
+        "motoboy": "A parcela da moto vence dia 5. A filha precisa de tênis para a escola, e o salário da companheira já está todo no aluguel.",
+        "bike": "O cursinho noturno começa na segunda, na hora do pico do jantar. A mãe pediu ajuda com a conta de luz.",
+        "vendedora": "O aluguel vence dia 10 e o pai do menino não paga pensão. O menino está com tosse há uma semana.",
+        "motorista": "O pneu está careca e a revisão atrasou. A escola dos meninos pediu material e uniforme.",
+        "manicure": "Tudo sai do seu bolso. O filho de 23 procura emprego há cinco meses, e a filha de 15 pediu dinheiro para a excursão."
+      },
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "12 horas por dia, 7 dias por semana",
+          "narrativa": "Fiquei online da manhã até a madrugada, sete dias. Dormi pouco, comi na rua e não vi minha casa acordada.",
           "efeitos": [
             {
               "se": {
@@ -327,10 +570,10 @@
             }
           ]
         },
-        "b": {
+        {
+          "id": "b",
           "rotulo": "Jornada de sempre e abrir o MEI",
-          "narrativa": "Mantive a rotina e abri o MEI. É dinheiro que falta hoje, mas, se eu me acidentar, tenho o INSS.",
-          "tendencia": "um pouco menos agora; proteção se acontecer algo grave",
+          "narrativa": "Mantive a rotina, abri o MEI e pago o DAS todo mês. Se eu me acidentar e ficar mais de 15 dias parado, o INSS paga, um mês depois.",
           "efeitos": [
             {
               "se": {
@@ -345,7 +588,7 @@
                 "renda": -86
               },
               "rotulo": "DAS do MEI",
-              "fonte": "DAS-MEI 2026 serviços: R$ 81,05 de INSS + R$ 5 de ISS = R$ 86,05"
+              "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de serviços R$ 86,05 (R$ 81,05 de INSS + R$ 5 de ISS)"
             },
             {
               "se": {
@@ -355,13 +598,13 @@
                 "renda": -82
               },
               "rotulo": "DAS do MEI",
-              "fonte": "DAS-MEI 2026 comércio: R$ 81,05 de INSS + R$ 1 de ICMS = R$ 82,05"
+              "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de comércio e indústria R$ 82,05 (R$ 81,05 de INSS + R$ 1 de ICMS)"
             },
             {
               "soma": {
                 "protecao": 3
               },
-              "rotulo": "segurada do INSS"
+              "rotulo": "segurado do INSS"
             },
             {
               "soma": {
@@ -371,10 +614,10 @@
             }
           ]
         },
-        "c": {
+        {
+          "id": "c",
           "rotulo": "Jornada de sempre, sem pagar nada",
           "narrativa": "Mantive a rotina e não paguei nada. Sobrou um pouco mais, e continuo sem rede se algo der errado.",
-          "tendencia": "o de sempre; nenhuma proteção",
           "efeitos": [
             {
               "soma": {
@@ -383,14 +626,84 @@
               "rotulo": "rotina puxada"
             }
           ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Trabalhar menos para estudar ou cuidar da família",
+          "narrativa": "Tirei um dia por semana para estudar e ficar com os meus. Descansei, e o dinheiro desse dia fez falta no fim do mês.",
+          "efeitos": [
+            {
+              "se": {
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": -367
+              },
+              "rotulo": "um dia a menos por semana",
+              "fonte": "Estimativa: um dia a menos por semana = 1/6 da renda. Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade"
+            },
+            {
+              "se": {
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": -228
+              },
+              "rotulo": "um dia a menos por semana",
+              "fonte": "Estimativa: um dia a menos por semana = 1/6 da renda. Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade"
+            },
+            {
+              "se": {
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": -250
+              },
+              "rotulo": "um dia a menos por semana",
+              "fonte": "Estimativa: um dia a menos por semana = 1/6 da renda. Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade"
+            },
+            {
+              "se": {
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": -478
+              },
+              "rotulo": "um dia a menos por semana",
+              "fonte": "Estimativa: um dia a menos por semana = 1/6 da renda. Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade"
+            },
+            {
+              "se": {
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": -350
+              },
+              "rotulo": "um dia a menos por semana",
+              "fonte": "Estimativa: um dia a menos por semana = 1/6 da renda. Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade"
+            },
+            {
+              "soma": {
+                "energia": 1
+              },
+              "rotulo": "um dia de descanso por semana"
+            }
+          ]
         }
-      }
+      ]
     },
     {
       "id": "r2",
       "titulo": "Mês 2: o app muda a regra",
-      "texto": "Sem aviso, a plataforma mudou as regras: paga menos por pedido e esconde quem recusa demais. Ninguém explica o cálculo.",
+      "texto": "Sem aviso, a plataforma mudou o cálculo e passou a pagar menos. Quem recusa demais some da fila, e ninguém explica a conta.",
       "padrao": "a",
+      "contexto": {
+        "motoboy": "O mês passado fechou no vermelho, e o cheque especial cobra 7,43% ao mês. A filha faz aniversário no sábado.",
+        "bike": "Um colega foi bloqueado na semana passada e o app não respondeu. A mãe está com a pressão alta.",
+        "vendedora": "O anúncio no Instagram ficou 12% mais caro e o chocolate subiu 25% em um ano. A escola do menino pediu material.",
+        "motorista": "Na 99, quem finaliza menos de 70% das corridas fica 5 dias fora. O mais velho pediu chuteira para o time da escola.",
+        "manicure": "O app de manicure fica com 20% de cada atendimento. A geladeira está vazia, e o aluguel venceu ontem."
+      },
       "efeitosGerais": [
         {
           "se": {
@@ -400,17 +713,17 @@
             "renda": -330
           },
           "rotulo": "a plataforma mudou o cálculo e pagou menos",
-          "fonte": "Ilustrativo: corte de 15% num mês. Ordem de grandeza: PNAD 2022-2025 (plataformizados +1,0% contra +10,6% dos demais) e REMIR 2020 (58,9% relataram queda)"
+          "fonte": "Ilustrativo: corte de 15% num mês (D-030). Casos reais: iFood paga R$ 3,00 pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025); relatos do \"Mais Entregas\", R$ 3,50 onde eram R$ 7,50 (ago/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022-2025: plataformizados +1,0% contra +10,6% dos demais"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": -205
+            "renda": -206
           },
           "rotulo": "a plataforma mudou o cálculo e pagou menos",
-          "fonte": "Ilustrativo: corte de 15% num mês. Ordem de grandeza: PNAD 2022-2025 (plataformizados +1,0% contra +10,6% dos demais) e REMIR 2020 (58,9% relataram queda)"
+          "fonte": "Ilustrativo: corte de 15% num mês (D-030). Casos reais: iFood paga R$ 3,00 pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025); relatos do \"Mais Entregas\", R$ 3,50 onde eram R$ 7,50 (ago/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022-2025: plataformizados +1,0% contra +10,6% dos demais"
         },
         {
           "se": {
@@ -420,17 +733,17 @@
             "renda": -225
           },
           "rotulo": "a plataforma mudou o cálculo e pagou menos",
-          "fonte": "Ilustrativo: corte de 15% num mês. Ordem de grandeza: PNAD 2022-2025 (plataformizados +1,0% contra +10,6% dos demais) e REMIR 2020 (58,9% relataram queda)"
+          "fonte": "Ilustrativo: corte de 15% num mês (D-030). Casos reais: iFood paga R$ 3,00 pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025); relatos do \"Mais Entregas\", R$ 3,50 onde eram R$ 7,50 (ago/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022-2025: plataformizados +1,0% contra +10,6% dos demais"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": -430
+            "renda": -431
           },
           "rotulo": "a plataforma mudou o cálculo e pagou menos",
-          "fonte": "Ilustrativo: corte de 15% num mês. Ordem de grandeza: PNAD 2022-2025 (plataformizados +1,0% contra +10,6% dos demais) e REMIR 2020 (58,9% relataram queda)"
+          "fonte": "Ilustrativo: corte de 15% num mês (D-030). Casos reais: iFood paga R$ 3,00 pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025); relatos do \"Mais Entregas\", R$ 3,50 onde eram R$ 7,50 (ago/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022-2025: plataformizados +1,0% contra +10,6% dos demais"
         },
         {
           "se": {
@@ -440,14 +753,12 @@
             "renda": -315
           },
           "rotulo": "a plataforma mudou o cálculo e pagou menos",
-          "fonte": "Ilustrativo: corte de 15% num mês. Ordem de grandeza: PNAD 2022-2025 (plataformizados +1,0% contra +10,6% dos demais) e REMIR 2020 (58,9% relataram queda)"
+          "fonte": "Ilustrativo: corte de 15% num mês (D-030). Casos reais: iFood paga R$ 3,00 pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025); relatos do \"Mais Entregas\", R$ 3,50 onde eram R$ 7,50 (ago/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022-2025: plataformizados +1,0% contra +10,6% dos demais"
         },
         {
           "se": {
-            "indicador": {
-              "protecao": {
-                "acimaDe": 2
-              }
+            "decidiu": {
+              "r1": "b"
             },
             "persona": [
               "motoboy",
@@ -460,14 +771,12 @@
             "renda": -86
           },
           "rotulo": "DAS do MEI",
-          "fonte": "DAS-MEI 2026 serviços: 5% de R$ 1.621 + R$ 5 de ISS"
+          "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de serviços R$ 86,05 (R$ 81,05 de INSS + R$ 5 de ISS)"
         },
         {
           "se": {
-            "indicador": {
-              "protecao": {
-                "acimaDe": 2
-              }
+            "decidiu": {
+              "r1": "b"
             },
             "persona": "vendedora"
           },
@@ -475,28 +784,14 @@
             "renda": -82
           },
           "rotulo": "DAS do MEI",
-          "fonte": "DAS-MEI 2026 comércio: 5% de R$ 1.621 + R$ 1 de ICMS"
-        },
-        {
-          "se": {
-            "indicador": {
-              "renda": {
-                "abaixoDe": -500
-              }
-            }
-          },
-          "soma": {
-            "renda": -100
-          },
-          "rotulo": "juros do cheque especial",
-          "fonte": "BCB: cheque especial ~8% a.m. (mai/2026); rotativo do cartão 440,5% a.a. (dez/2025)"
+          "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de comércio e indústria R$ 82,05 (R$ 81,05 de INSS + R$ 1 de ICMS)"
         }
       ],
-      "opcoes": {
-        "a": {
-          "rotulo": "Aceitar tudo para não perder a nota",
-          "narrativa": "Aceitei até o que não compensava, para a plataforma não me esconder. Trabalhei mais para ganhar quase o mesmo.",
-          "tendencia": "recupera parte do corte; cansa; menos risco de bloqueio",
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Aceitar tudo o que vier, para não sumir da fila",
+          "narrativa": "Aceitei até o que não compensava, para o app não me esconder. Trabalhei mais para ganhar quase o mesmo.",
           "efeitos": [
             {
               "se": {
@@ -505,16 +800,18 @@
               "soma": {
                 "renda": 220
               },
-              "rotulo": "aceitei até as corridas ruins"
+              "rotulo": "aceitei até as corridas ruins",
+              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": 135
+                "renda": 137
               },
-              "rotulo": "aceitei até as corridas ruins"
+              "rotulo": "aceitei até as corridas ruins",
+              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
               "se": {
@@ -523,16 +820,18 @@
               "soma": {
                 "renda": 150
               },
-              "rotulo": "aceitei até as corridas ruins"
+              "rotulo": "aceitei até as corridas ruins",
+              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": 285
+                "renda": 287
               },
-              "rotulo": "aceitei até as corridas ruins"
+              "rotulo": "aceitei até as corridas ruins",
+              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
               "se": {
@@ -541,7 +840,8 @@
               "soma": {
                 "renda": 210
               },
-              "rotulo": "aceitei até as corridas ruins"
+              "rotulo": "aceitei até as corridas ruins",
+              "fonte": "Estimativa: +10% da renda-base. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas"
             },
             {
               "soma": {
@@ -551,10 +851,10 @@
             }
           ]
         },
-        "b": {
+        {
+          "id": "b",
           "rotulo": "Recusar o que não paga",
-          "narrativa": "Recusei o que não compensava. Descansei um pouco mais, e fiquei com medo de ser bloqueado sem aviso.",
-          "tendencia": "descansa; não recupera o corte; mais risco de bloqueio",
+          "narrativa": "Recusei o que não compensava. Descansei um pouco, e passei o mês com medo de ser bloqueado sem aviso.",
           "efeitos": [
             {
               "soma": {
@@ -564,10 +864,10 @@
             }
           ]
         },
-        "c": {
-          "rotulo": "Usar duas plataformas ao mesmo tempo",
-          "narrativa": "Passei a usar duas plataformas juntas, pulando de uma para a outra. Rendeu mais, e cada cancelamento vira punição.",
-          "tendencia": "mais dinheiro; mais estresse; mais risco de punição",
+        {
+          "id": "c",
+          "rotulo": "Rodar em dois apps ao mesmo tempo",
+          "narrativa": "Liguei dois apps e fiquei pulando de um para o outro. Rendeu mais, e o seguro de um não cobre a corrida do outro.",
           "efeitos": [
             {
               "se": {
@@ -576,18 +876,18 @@
               "soma": {
                 "renda": 440
               },
-              "rotulo": "duas plataformas ao mesmo tempo",
-              "fonte": "PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps"
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +20% da renda-base. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": 275
+                "renda": 274
               },
-              "rotulo": "duas plataformas ao mesmo tempo",
-              "fonte": "PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps"
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +20% da renda-base. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app"
             },
             {
               "se": {
@@ -596,18 +896,18 @@
               "soma": {
                 "renda": 300
               },
-              "rotulo": "duas plataformas ao mesmo tempo",
-              "fonte": "PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps"
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +20% da renda-base. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": 575
+                "renda": 574
               },
-              "rotulo": "duas plataformas ao mesmo tempo",
-              "fonte": "PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps"
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +20% da renda-base. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app"
             },
             {
               "se": {
@@ -616,8 +916,8 @@
               "soma": {
                 "renda": 420
               },
-              "rotulo": "duas plataformas ao mesmo tempo",
-              "fonte": "PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps"
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +20% da renda-base. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app"
             },
             {
               "soma": {
@@ -626,21 +926,90 @@
               "rotulo": "atenção dividida o dia todo"
             }
           ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Parar um dia no breque",
+          "narrativa": "Desliguei o app no dia do breque, junto com os outros. Perdi o dia. O reajuste, se vier, demora.",
+          "efeitos": [
+            {
+              "se": {
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": -73
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/30 da renda). Breque de 31/03/2025 em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (Outras Palavras; iFood)"
+            },
+            {
+              "se": {
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": -46
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/30 da renda). Breque de 31/03/2025 em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (Outras Palavras; iFood)"
+            },
+            {
+              "se": {
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": -50
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/30 da renda). Breque de 31/03/2025 em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (Outras Palavras; iFood)"
+            },
+            {
+              "se": {
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": -96
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/30 da renda). Breque de 31/03/2025 em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (Outras Palavras; iFood)"
+            },
+            {
+              "se": {
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": -70
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/30 da renda). Breque de 31/03/2025 em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (Outras Palavras; iFood)"
+            },
+            {
+              "soma": {
+                "energia": 1,
+                "protecao": 1
+              },
+              "rotulo": "não estou mais sozinho"
+            }
+          ]
         }
-      }
+      ]
     },
     {
       "id": "r3",
       "titulo": "Mês 3: e agora?",
-      "texto": "O mês não fecha. Dá para se endividar e rodar mais, apertar o cinto para ter uma reserva, ou se juntar a quem vive o mesmo.",
+      "texto": "O mês não fecha, e a dívida já cobra juros. Cada saída tem um preço, e nenhuma resolve sozinha.",
       "padrao": "b",
+      "contexto": {
+        "motoboy": "O dono da casa avisou: sem garantia no contrato, a lei permite despejo em 15 dias. A parcela da moto também venceu.",
+        "bike": "A luz atrasou, e a próxima conta vem com aviso de corte em 15 dias. A irmã de 9 anos precisa de óculos.",
+        "vendedora": "A distribuidora pediu 24% de aumento na luz para novembro. O menino precisa de consulta, e a fila do posto está longa.",
+        "motorista": "O cartão fechou no rotativo, que cobra 15% ao mês. Os filhos perguntam por que não tem mais carne.",
+        "manicure": "O filho conseguiu uma entrevista e precisa do dinheiro do ônibus. A luz atrasou, e vem aviso de corte."
+      },
       "efeitosGerais": [
         {
           "se": {
-            "indicador": {
-              "protecao": {
-                "acimaDe": 2
-              }
+            "decidiu": {
+              "r1": "b"
             },
             "persona": [
               "motoboy",
@@ -653,14 +1022,12 @@
             "renda": -86
           },
           "rotulo": "DAS do MEI",
-          "fonte": "DAS-MEI 2026 serviços: 5% de R$ 1.621 + R$ 5 de ISS"
+          "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de serviços R$ 86,05 (R$ 81,05 de INSS + R$ 5 de ISS)"
         },
         {
           "se": {
-            "indicador": {
-              "protecao": {
-                "acimaDe": 2
-              }
+            "decidiu": {
+              "r1": "b"
             },
             "persona": "vendedora"
           },
@@ -668,28 +1035,255 @@
             "renda": -82
           },
           "rotulo": "DAS do MEI",
-          "fonte": "DAS-MEI 2026 comércio: 5% de R$ 1.621 + R$ 1 de ICMS"
+          "fonte": "Receita Federal, Simples Nacional: DAS-MEI 2026 de comércio e indústria R$ 82,05 (R$ 81,05 de INSS + R$ 1 de ICMS)"
         },
         {
           "se": {
-            "indicador": {
-              "renda": {
-                "abaixoDe": -500
-              }
-            }
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "persona": "motoboy"
           },
           "soma": {
-            "renda": -100
+            "renda": -1833
           },
-          "rotulo": "juros do cheque especial",
-          "fonte": "BCB: cheque especial ~8% a.m. (mai/2026); rotativo do cartão 440,5% a.a. (dez/2025)"
+          "rotulo": "a fratura continua: mais 25 dias sem trabalhar",
+          "fonte": "Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS); o app não paga nenhum dia"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -1142
+          },
+          "rotulo": "a fratura continua: mais 25 dias sem trabalhar",
+          "fonte": "Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS); o app não paga nenhum dia"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -1250
+          },
+          "rotulo": "a fratura continua: mais 25 dias sem trabalhar",
+          "fonte": "Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS); o app não paga nenhum dia"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": -2392
+          },
+          "rotulo": "a fratura continua: mais 25 dias sem trabalhar",
+          "fonte": "Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS); o app não paga nenhum dia"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": -1750
+          },
+          "rotulo": "a fratura continua: mais 25 dias sem trabalhar",
+          "fonte": "Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS); o app não paga nenhum dia"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": [
+              "a",
+              "b",
+              "c"
+            ]
+          },
+          "soma": {
+            "renda": 2431
+          },
+          "rotulo": "auxílio do INSS, um mês depois (45 dias × R$ 54,03)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "fratura"
+            },
+            "decidiu": {
+              "r1": "b"
+            },
+            "opcao": "d"
+          },
+          "soma": {
+            "renda": 1621
+          },
+          "rotulo": "auxílio do INSS, só até voltar (30 dias × R$ 54,03)",
+          "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes); 1 salário mínimo = R$ 54,03/dia. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no mês seguinte"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": -2200
+          },
+          "rotulo": "a conta continua bloqueada: o mês inteiro",
+          "fonte": "CUT (23/07/2026): no RS, o Simtrapli-RS conseguiu liminar em ~36 dias; outro caso passou de 8 meses. TJDFT (16/01/2026): 16 semanas"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -1370
+          },
+          "rotulo": "a conta continua bloqueada: o mês inteiro",
+          "fonte": "CUT (23/07/2026): no RS, o Simtrapli-RS conseguiu liminar em ~36 dias; outro caso passou de 8 meses. TJDFT (16/01/2026): 16 semanas"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -1500
+          },
+          "rotulo": "a conta continua bloqueada: o mês inteiro",
+          "fonte": "CUT (23/07/2026): no RS, o Simtrapli-RS conseguiu liminar em ~36 dias; outro caso passou de 8 meses. TJDFT (16/01/2026): 16 semanas"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": -2870
+          },
+          "rotulo": "a conta continua bloqueada: o mês inteiro",
+          "fonte": "CUT (23/07/2026): no RS, o Simtrapli-RS conseguiu liminar em ~36 dias; outro caso passou de 8 meses. TJDFT (16/01/2026): 16 semanas"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": -2100
+          },
+          "rotulo": "a conta continua bloqueada: o mês inteiro",
+          "fonte": "CUT (23/07/2026): no RS, o Simtrapli-RS conseguiu liminar em ~36 dias; outro caso passou de 8 meses. TJDFT (16/01/2026): 16 semanas"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "decidiu": {
+              "r2": "c"
+            },
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": 1100
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "decidiu": {
+              "r2": "c"
+            },
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 685
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "decidiu": {
+              "r2": "c"
+            },
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": 750
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "decidiu": {
+              "r2": "c"
+            },
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 1435
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "sorteou": {
+              "r2": "bloqueio"
+            },
+            "decidiu": {
+              "r2": "c"
+            },
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": 1050
+          },
+          "rotulo": "o outro app segurou metade da renda"
         }
       ],
-      "opcoes": {
-        "a": {
-          "rotulo": "Pegar um empréstimo e trabalhar ainda mais",
-          "narrativa": "Peguei dinheiro no cheque especial para fechar o mês e trabalhei até de madrugada.",
-          "tendencia": "mais dinheiro agora; juros; energia no fim; mais risco",
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Pegar um empréstimo e rodar até de madrugada",
+          "narrativa": "Peguei R$ 1.500 no crédito pessoal para pôr as contas em dia e rodei até de madrugada. A dívida continua depois deste mês.",
           "efeitos": [
             {
               "se": {
@@ -698,16 +1292,18 @@
               "soma": {
                 "renda": 440
               },
-              "rotulo": "trabalhei até de madrugada"
+              "rotulo": "trabalhei até de madrugada",
+              "fonte": "Estimativa: +20% da renda-base (como o \"trabalhar mais\" do config de 28/09)"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": 275
+                "renda": 274
               },
-              "rotulo": "trabalhei até de madrugada"
+              "rotulo": "trabalhei até de madrugada",
+              "fonte": "Estimativa: +20% da renda-base (como o \"trabalhar mais\" do config de 28/09)"
             },
             {
               "se": {
@@ -716,16 +1312,18 @@
               "soma": {
                 "renda": 300
               },
-              "rotulo": "trabalhei até de madrugada"
+              "rotulo": "trabalhei até de madrugada",
+              "fonte": "Estimativa: +20% da renda-base (como o \"trabalhar mais\" do config de 28/09)"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": 575
+                "renda": 574
               },
-              "rotulo": "trabalhei até de madrugada"
+              "rotulo": "trabalhei até de madrugada",
+              "fonte": "Estimativa: +20% da renda-base (como o \"trabalhar mais\" do config de 28/09)"
             },
             {
               "se": {
@@ -734,14 +1332,135 @@
               "soma": {
                 "renda": 420
               },
-              "rotulo": "trabalhei até de madrugada"
+              "rotulo": "trabalhei até de madrugada",
+              "fonte": "Estimativa: +20% da renda-base (como o \"trabalhar mais\" do config de 28/09)"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": -440
+              },
+              "rotulo": "machucado, não deu para as horas extras"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": -274
+              },
+              "rotulo": "machucado, não deu para as horas extras"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": -300
+              },
+              "rotulo": "machucado, não deu para as horas extras"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": -574
+              },
+              "rotulo": "machucado, não deu para as horas extras"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": -420
+              },
+              "rotulo": "machucado, não deu para as horas extras"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": -440
+              },
+              "rotulo": "bloqueado, não teve hora extra"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": -274
+              },
+              "rotulo": "bloqueado, não teve hora extra"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": -300
+              },
+              "rotulo": "bloqueado, não teve hora extra"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": -574
+              },
+              "rotulo": "bloqueado, não teve hora extra"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": -420
+              },
+              "rotulo": "bloqueado, não teve hora extra"
             },
             {
               "soma": {
-                "renda": -120
+                "renda": -96
               },
-              "rotulo": "juros do empréstimo",
-              "fonte": "BCB: cheque especial ~8% a.m. sobre R$ 1.500"
+              "rotulo": "juros do empréstimo (6,39% ao mês)",
+              "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026; 6,39% de R$ 1.500 = R$ 96"
             },
             {
               "soma": {
@@ -751,131 +1470,195 @@
             }
           ]
         },
-        "b": {
-          "rotulo": "Apertar o cinto e montar uma reserva",
-          "narrativa": "Cortei a carne, o lazer e a internet de casa. Guardei o que deu, para o próximo susto.",
-          "tendencia": "guarda um pouco; vida mais apertada",
+        {
+          "id": "b",
+          "rotulo": "Apertar o cinto: cortar comida e remédio",
+          "narrativa": "Cortei a carne, a fruta e o remédio que não era urgente. Sobrou um pouco, e a casa passou a comer pior.",
           "efeitos": [
             {
               "se": {
                 "persona": "motoboy"
               },
               "soma": {
-                "renda": 105
+                "renda": 84
               },
-              "rotulo": "cortei gastos da casa",
-              "fonte": "Estimativa: corte de 6% da parte da pessoa nas contas"
+              "rotulo": "cortei carne, fruta e remédio",
+              "fonte": "Estimativa: ~4% da comida da casa (cesta x adultos); o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": 80
+                "renda": 84
               },
-              "rotulo": "cortei gastos da casa",
-              "fonte": "Estimativa: corte de 6% da parte da pessoa nas contas"
+              "rotulo": "cortei carne, fruta e remédio",
+              "fonte": "Estimativa: ~4% da comida da casa (cesta x adultos); o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar"
             },
             {
               "se": {
                 "persona": "vendedora"
               },
               "soma": {
-                "renda": 90
+                "renda": 50
               },
-              "rotulo": "cortei gastos da casa",
-              "fonte": "Estimativa: corte de 6% da parte da pessoa nas contas"
+              "rotulo": "cortei carne, fruta e remédio",
+              "fonte": "Estimativa: ~4% da comida da casa (cesta x adultos); o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": 160
+                "renda": 101
               },
-              "rotulo": "cortei gastos da casa",
-              "fonte": "Estimativa: corte de 6% da parte da pessoa nas contas"
+              "rotulo": "cortei carne, fruta e remédio",
+              "fonte": "Estimativa: ~4% da comida da casa (cesta x adultos); o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar"
             },
             {
               "se": {
                 "persona": "manicure"
               },
               "soma": {
-                "renda": 120
+                "renda": 101
               },
-              "rotulo": "cortei gastos da casa",
-              "fonte": "Estimativa: corte de 6% da parte da pessoa nas contas"
+              "rotulo": "cortei carne, fruta e remédio",
+              "fonte": "Estimativa: ~4% da comida da casa (cesta x adultos); o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar"
             },
             {
               "soma": {
                 "energia": -1
               },
-              "rotulo": "sem lazer, comendo pior"
-            },
-            {
-              "soma": {
-                "protecao": 1
-              },
-              "rotulo": "uma pequena reserva"
+              "rotulo": "comendo pior"
             }
           ]
         },
-        "c": {
-          "rotulo": "Parar no protesto e entrar na associação",
-          "narrativa": "Parei um dia para a mobilização e entrei na associação. Perdi um dia de ganho e ganhei gente do meu lado.",
-          "tendencia": "custa um dia agora; rede de apoio; mais risco de retaliação",
+        {
+          "id": "c",
+          "rotulo": "Entrar na associação dos trabalhadores",
+          "narrativa": "Entrei na associação: mensalidade e um dia na assembleia. Se o app me bloquear, agora tem advogado do meu lado.",
           "efeitos": [
             {
               "se": {
                 "persona": "motoboy"
               },
               "soma": {
-                "renda": -85
+                "renda": -73
               },
-              "rotulo": "um dia parado no protesto"
+              "rotulo": "um dia na assembleia",
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
             },
             {
               "se": {
                 "persona": "bike"
               },
               "soma": {
-                "renda": -55
+                "renda": -46
               },
-              "rotulo": "um dia parado no protesto"
+              "rotulo": "um dia na assembleia",
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
             },
             {
               "se": {
                 "persona": "vendedora"
               },
               "soma": {
-                "renda": -60
+                "renda": -50
               },
-              "rotulo": "um dia parado no protesto"
+              "rotulo": "um dia na assembleia",
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
             },
             {
               "se": {
                 "persona": "motorista"
               },
               "soma": {
-                "renda": -110
+                "renda": -96
               },
-              "rotulo": "um dia parado no protesto"
+              "rotulo": "um dia na assembleia",
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
             },
             {
               "se": {
                 "persona": "manicure"
               },
               "soma": {
-                "renda": -80
+                "renda": -70
               },
-              "rotulo": "um dia parado no protesto"
+              "rotulo": "um dia na assembleia",
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
             },
             {
               "soma": {
                 "renda": -30
               },
               "rotulo": "mensalidade da associação",
-              "fonte": "Estimativa, confiança baixa"
+              "fonte": "Mensalidade: estimativa sem fonte (D-034); não achei a do Sindimoto-RS nem a do Simtrapli-RS. Um dia na assembleia = 1/30 da renda"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": 660
+              },
+              "rotulo": "o sindicato conseguiu liminar: a conta voltou no 36º dia",
+              "fonte": "CUT (23/07/2026): Simtrapli-RS e advogado, liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026)"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": 411
+              },
+              "rotulo": "o sindicato conseguiu liminar: a conta voltou no 36º dia",
+              "fonte": "CUT (23/07/2026): Simtrapli-RS e advogado, liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026)"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": 450
+              },
+              "rotulo": "o sindicato conseguiu liminar: a conta voltou no 36º dia",
+              "fonte": "CUT (23/07/2026): Simtrapli-RS e advogado, liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026)"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": 861
+              },
+              "rotulo": "o sindicato conseguiu liminar: a conta voltou no 36º dia",
+              "fonte": "CUT (23/07/2026): Simtrapli-RS e advogado, liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026)"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": 630
+              },
+              "rotulo": "o sindicato conseguiu liminar: a conta voltou no 36º dia",
+              "fonte": "CUT (23/07/2026): Simtrapli-RS e advogado, liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026)"
             },
             {
               "soma": {
@@ -885,8 +1668,196 @@
               "rotulo": "não estou mais sozinho"
             }
           ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Não parar nenhum dia, nem machucado",
+          "narrativa": "Trabalhei nas folgas e fui trabalhar doente. Se estava machucado, voltei antes da alta.",
+          "efeitos": [
+            {
+              "se": {
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": 147
+              },
+              "rotulo": "trabalhei nas duas folgas",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": 91
+              },
+              "rotulo": "trabalhei nas duas folgas",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": 100
+              },
+              "rotulo": "trabalhei nas duas folgas",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": 191
+              },
+              "rotulo": "trabalhei nas duas folgas",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": 140
+              },
+              "rotulo": "trabalhei nas duas folgas",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": -147
+              },
+              "rotulo": "bloqueado, não teve folga para trabalhar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": -91
+              },
+              "rotulo": "bloqueado, não teve folga para trabalhar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": -100
+              },
+              "rotulo": "bloqueado, não teve folga para trabalhar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": -191
+              },
+              "rotulo": "bloqueado, não teve folga para trabalhar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "bloqueio"
+                },
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": -140
+              },
+              "rotulo": "bloqueado, não teve folga para trabalhar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "motoboy"
+              },
+              "soma": {
+                "renda": 1100
+              },
+              "rotulo": "voltei antes da alta: 15 dias a menos parado",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "bike"
+              },
+              "soma": {
+                "renda": 685
+              },
+              "rotulo": "voltei antes da alta: 15 dias a menos parado",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "vendedora"
+              },
+              "soma": {
+                "renda": 750
+              },
+              "rotulo": "voltei antes da alta: 15 dias a menos parado",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "motorista"
+              },
+              "soma": {
+                "renda": 1435
+              },
+              "rotulo": "voltei antes da alta: 15 dias a menos parado",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "se": {
+                "sorteou": {
+                  "r2": "fratura"
+                },
+                "persona": "manicure"
+              },
+              "soma": {
+                "renda": 1050
+              },
+              "rotulo": "voltei antes da alta: 15 dias a menos parado",
+              "fonte": "Estimativa: 2 folgas trabalhadas no mês (2/30 da renda). Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou antes de se recuperar"
+            },
+            {
+              "soma": {
+                "energia": -3
+              },
+              "rotulo": "sem folga e sem se recuperar"
+            }
+          ]
         }
-      }
+      ]
     }
   ],
   "cartas": [
@@ -894,8 +1865,8 @@
       "id": "normal",
       "titulo": "Um mês como os outros",
       "curto": "Normal",
-      "peso": 50,
-      "narrativa": "Nada fora do comum. Fechei o mês no mesmo aperto de sempre.",
+      "peso": 40,
+      "narrativa": "Nada fora do comum. E mesmo assim o mês não fechou.",
       "efeitos": []
     },
     {
@@ -928,16 +1899,16 @@
           "soma": {
             "renda": 220
           },
-          "rotulo": "bônus ou encomenda extra"
+          "rotulo": "bônus, gorjeta ou encomenda extra"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": 135
+            "renda": 137
           },
-          "rotulo": "bônus ou encomenda extra"
+          "rotulo": "bônus, gorjeta ou encomenda extra"
         },
         {
           "se": {
@@ -946,16 +1917,16 @@
           "soma": {
             "renda": 150
           },
-          "rotulo": "bônus ou encomenda extra"
+          "rotulo": "bônus, gorjeta ou encomenda extra"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": 285
+            "renda": 287
           },
-          "rotulo": "bônus ou encomenda extra"
+          "rotulo": "bônus, gorjeta ou encomenda extra"
         },
         {
           "se": {
@@ -964,7 +1935,7 @@
           "soma": {
             "renda": 210
           },
-          "rotulo": "bônus ou encomenda extra"
+          "rotulo": "bônus, gorjeta ou encomenda extra"
         },
         {
           "soma": {
@@ -973,32 +1944,74 @@
           "rotulo": "corri atrás do bônus"
         }
       ],
-      "fonte": "Abílio (2021): bonificações que nunca estão garantidas; 12 horas seguidas para ganhar um bônus"
+      "fonte": "Abílio (2021), p. 941 e 944: bonificações que nunca estão garantidas; 12 horas seguidas para ganhar um bônus"
     },
     {
-      "id": "equipamento",
+      "id": "temporal",
+      "titulo": "Temporal em Porto Alegre",
+      "curto": "Temporal",
+      "peso": 8,
+      "narrativa": "Alerta laranja, vento e granizo. O app lançou promoção de chuva em letras grandes; o \"cuidado na chuva\" veio em letra miúda.",
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": 150,
+            "energia": -1
+          },
+          "rotulo": "promoção de chuva: dois dias rodando no temporal"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 110,
+            "energia": -1
+          },
+          "rotulo": "promoção de chuva: dois dias pedalando no temporal"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 150
+          },
+          "rotulo": "tarifa dinâmica na chuva"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -100
+          },
+          "rotulo": "dois dias sem ninguém buscar encomenda"
+        },
+        {
+          "se": {
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": -161
+          },
+          "rotulo": "clientes cancelaram: dois dias sem atender e ônibus perdido"
+        }
+      ],
+      "fonte": "INMET, via O Tempo (27/09/2026): alerta laranja, vento de 100 km/h e granizo em Porto Alegre. Metrópoles (01/08/2025): promoção de chuva de R$ 3 a R$ 12 por entrega. Valores do mês: estimativa (2 dias x ~11 entregas x ~R$ 7)"
+    },
+    {
+      "id": "quebrou",
       "titulo": "O instrumento de trabalho quebrou",
       "curto": "Quebrou",
-      "peso": 10,
+      "peso": 8,
       "narrativa": "Quebrou o que eu uso para trabalhar. Sem ele, não ganho, e o conserto sai do meu bolso.",
       "ajustesDePeso": [
         {
           "se": {
-            "rodada": "r1",
-            "opcao": "a"
-          },
-          "soma": 3
-        },
-        {
-          "se": {
-            "rodada": "r2",
-            "opcao": "a"
-          },
-          "soma": 3
-        },
-        {
-          "se": {
-            "rodada": "r3",
             "opcao": "a"
           },
           "soma": 3
@@ -1010,55 +2023,55 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -500
+            "renda": -669
           },
-          "rotulo": "conserto da moto (relação e pneu)"
+          "rotulo": "conserto da moto e 2 dias sem ela"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": -200
+            "renda": -246
           },
-          "rotulo": "conserto da bicicleta"
+          "rotulo": "conserto da bicicleta e 1 dia parado"
         },
         {
           "se": {
             "persona": "vendedora"
           },
           "soma": {
-            "renda": -800
+            "renda": -550
           },
-          "rotulo": "celular novo (o antigo quebrou)"
+          "rotulo": "tela do celular e 3 dias sem responder clientes"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": -1200
+            "renda": -1517
           },
-          "rotulo": "conserto do carro (suspensão e freio)"
+          "rotulo": "suspensão e freio, e 3 dias na oficina"
         },
         {
           "se": {
             "persona": "manicure"
           },
           "soma": {
-            "renda": -300
+            "renda": -560
           },
-          "rotulo": "estufa de esterilização nova"
+          "rotulo": "a autoclave queimou: conserto e 3 dias sem atender"
         }
       ],
-      "fonte": "Cebrap/Amobitec (2025): manutenção média de moto R$ 261/mês e de carro R$ 615/mês; um conserto grande ~ 2 meses disso. Bike, estufa e celular: estimativa"
+      "fonte": "Cebrap/Amobitec (2025): manutenção de moto R$ 261/mês e de carro R$ 615/mês; conserto grande = 2 meses disso. Autoclave: exigida no RS (Portaria SES-RS 500/2010), nova de R$ 1.480 a R$ 3.990. Bicicleta, tela e conserto da autoclave: estimativa sem fonte"
     },
     {
       "id": "doenca",
       "titulo": "Adoeci: uma semana parado",
       "curto": "Doença",
       "peso": 6,
-      "narrativa": "Tive que parar uma semana. MEI novo não cobre doença: o INSS exige 12 meses de contribuição.",
+      "narrativa": "Parei uma semana. Nem o MEI cobre: doença exige 12 meses de contribuição e mais de 15 dias parado.",
       "ajustesDePeso": [
         {
           "se": {
@@ -1079,6 +2092,13 @@
             }
           },
           "soma": 8
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "b"
+          },
+          "soma": 4
         }
       ],
       "efeitos": [
@@ -1087,7 +2107,7 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -515
+            "renda": -513
           },
           "rotulo": "sete dias sem ganhar"
         },
@@ -1126,31 +2146,105 @@
             "renda": -490
           },
           "rotulo": "sete dias sem ganhar"
+        },
+        {
+          "soma": {
+            "renda": -60
+          },
+          "rotulo": "remédio (antibiótico não entra na Farmácia Popular)",
+          "fonte": "Estimativa sem fonte de preço; Farmácia Popular: 41 itens grátis desde 14/02/2025, sem antibiótico"
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": 293
+          },
+          "rotulo": "trabalhei doente: só 3 dias parado"
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 183
+          },
+          "rotulo": "trabalhei doente: só 3 dias parado"
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": 200
+          },
+          "rotulo": "trabalhei doente: só 3 dias parado"
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 383
+          },
+          "rotulo": "trabalhei doente: só 3 dias parado"
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": 280
+          },
+          "rotulo": "trabalhei doente: só 3 dias parado"
         }
       ],
-      "fonte": "Lei 8.213/1991, art. 25 e 26: carência de 12 meses para auxílio por doença comum"
+      "fonte": "Lei 8.213/1991, art. 25, I (carência de 12 meses para doença comum) e art. 59 (mais de 15 dias)"
     },
     {
-      "id": "acidente",
-      "titulo": "Acidente: 20 dias parado",
-      "curto": "Acidente",
-      "peso": 2,
-      "rodadas": [
-        "r2",
-        "r3"
-      ],
-      "tom": "grave",
-      "narrativa": "Sofri um acidente e fiquei 20 dias sem poder trabalhar. A plataforma não paga nenhum desses dias.",
+      "id": "queda",
+      "titulo": "Queda leve: 5 dias parado",
+      "curto": "Queda",
+      "peso": 6,
+      "narrativa": "Um tombo no molhado, ou uma batida leve: cinco dias parado e o conserto. Menos de 7 dias, o seguro do app não paga; menos de 16, o INSS não paga.",
+      "somenteSe": {
+        "persona": [
+          "motoboy",
+          "bike",
+          "motorista"
+        ]
+      },
       "ajustesDePeso": [
         {
           "se": {
-            "persona": [
-              "motoboy",
-              "bike",
-              "motorista"
-            ]
+            "opcao": "a"
           },
-          "soma": 3
+          "soma": 2
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c"
+          },
+          "soma": 2
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d"
+          },
+          "soma": 2
         },
         {
           "se": {
@@ -1160,24 +2254,14 @@
               }
             }
           },
-          "soma": 4
-        },
-        {
-          "se": {
-            "rodada": "r2",
-            "opcao": [
-              "a",
-              "c"
-            ]
-          },
           "soma": 3
         },
         {
           "se": {
-            "rodada": "r3",
-            "opcao": "a"
+            "rodada": "r1",
+            "opcao": "d"
           },
-          "soma": 4
+          "multiplica": 0.6
         }
       ],
       "efeitos": [
@@ -1186,7 +2270,117 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -1465
+            "renda": -961
+          },
+          "rotulo": "5 dias parado; retrovisor, manete e guidão"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -378
+          },
+          "rotulo": "5 dias parado e o conserto da bicicleta"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": -1278
+          },
+          "rotulo": "batida leve: 5 dias na funilaria"
+        },
+        {
+          "soma": {
+            "energia": -1
+          },
+          "rotulo": "dor e medo de voltar"
+        }
+      ],
+      "fonte": "Cebrap/Amobitec (2025): 22% dos entregadores de moto e 15% dos motoristas sofreram acidente em 3 meses. Peças de CG 160 em concessionária (AutoPapo, 04/03/2026): retrovisor R$ 112,82, guidão R$ 437,11. Seguro iFood só a partir de 7 dias; INSS só acima de 15 (Lei 8.213, art. 59). Bicicleta e funilaria: estimativa"
+    },
+    {
+      "id": "fratura",
+      "titulo": "Acidente: fratura, 45 dias parado",
+      "curto": "Fratura",
+      "peso": 1,
+      "rodadas": [
+        "r2",
+        "r3"
+      ],
+      "tom": "grave",
+      "narrativa": "Me acidentei e quebrei o punho. São 45 dias parado: 20 neste mês e 25 no próximo. O app não paga nenhum; o INSS, só para quem já pagava o MEI.",
+      "ajustesDePeso": [
+        {
+          "se": {
+            "persona": [
+              "motoboy",
+              "bike"
+            ]
+          },
+          "soma": 3
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": 2
+        },
+        {
+          "se": {
+            "indicador": {
+              "energia": {
+                "abaixoDe": 4
+              }
+            }
+          },
+          "soma": 3
+        },
+        {
+          "se": {
+            "opcao": "a",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista"
+            ]
+          },
+          "soma": 2
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista"
+            ]
+          },
+          "soma": 2
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d",
+            "persona": [
+              "motoboy",
+              "bike",
+              "motorista"
+            ]
+          },
+          "soma": 2
+        }
+      ],
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": -1467
           },
           "rotulo": "20 dias sem trabalhar"
         },
@@ -1195,7 +2389,7 @@
             "persona": "bike"
           },
           "soma": {
-            "renda": -915
+            "renda": -913
           },
           "rotulo": "20 dias sem trabalhar"
         },
@@ -1213,7 +2407,7 @@
             "persona": "motorista"
           },
           "soma": {
-            "renda": -1915
+            "renda": -1913
           },
           "rotulo": "20 dias sem trabalhar"
         },
@@ -1231,82 +2425,58 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -300
+            "renda": -1500
           },
-          "rotulo": "conserto do veículo",
-          "fonte": "Estimativa, confiança baixa"
+          "rotulo": "conserto da moto",
+          "fonte": "Estimativa entre o conserto leve (R$ 594) e o lado inteiro em concessionária (R$ 5.862,54), AutoPapo 04/03/2026"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": -150
+            "renda": -300
           },
-          "rotulo": "conserto do veículo",
-          "fonte": "Estimativa, confiança baixa"
+          "rotulo": "conserto da bicicleta",
+          "fonte": "Estimativa sem fonte"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": -800
+            "renda": -2000
           },
-          "rotulo": "conserto do veículo",
-          "fonte": "Estimativa, confiança baixa"
+          "rotulo": "conserto do carro",
+          "fonte": "Estimativa sem fonte"
         },
         {
           "soma": {
-            "renda": -200
+            "renda": -150
           },
-          "rotulo": "remédios e curativos",
-          "fonte": "Estimativa, confiança baixa"
+          "rotulo": "remédio e curativo",
+          "fonte": "Estimativa sem fonte de preço"
         },
         {
           "soma": {
             "energia": -2
           },
-          "rotulo": "recuperação"
-        },
-        {
-          "se": {
-            "indicador": {
-              "protecao": {
-                "acimaDe": 2
-              }
-            }
-          },
-          "soma": {
-            "renda": 1080
-          },
-          "rotulo": "auxílio do INSS (o MEI cobriu)",
-          "fonte": "Lei 8.213/1991: acidente de qualquer natureza dispensa carência; MEI recebe 1 salário mínimo; 20/30 de R$ 1.621"
-        },
-        {
-          "se": {
-            "rodada": "r3",
-            "opcao": "c"
-          },
-          "soma": {
-            "renda": 400
-          },
-          "rotulo": "vaquinha dos colegas da associação"
+          "rotulo": "dor e recuperação"
         }
       ],
-      "fonte": "Cebrap/Amobitec (2025): 22% dos entregadores de moto tiveram ocorrência de trânsito em 3 meses; afastamentos de até 3 meses sem previdência. PNAD 2025: só 19,4% dos motociclistas de app contribuem"
+      "fonte": "Cebrap/Amobitec (2025), p. 45 e 70-71: 22% dos entregadores de moto e 15% dos motoristas acidentados em 3 meses; afastamentos de até 3 meses; nenhum relatou uso da previdência. UFBA (2022): só 20% dos que pararam 15 dias ou mais receberam benefício. Fratura de punho: 6 a 8 semanas (OrthoInfo/AAOS). PNAD 2025: só 19,4% dos motociclistas de app contribuem"
     },
     {
       "id": "bloqueio",
       "titulo": "Conta bloqueada sem explicação",
       "curto": "Bloqueio",
-      "peso": 5,
+      "peso": 4,
       "rodadas": [
         "r2",
         "r3"
       ],
       "tom": "grave",
-      "narrativa": "A plataforma bloqueou minha conta por dez dias. Mandou uma mensagem genérica e nenhum jeito de me defender.",
+      "narrativa": "Bloquearam minha conta com uma mensagem genérica, sem prazo e sem jeito de me defender. Sem advogado, ninguém responde o recurso.",
       "ajustesDePeso": [
         {
           "se": {
@@ -1328,13 +2498,6 @@
             "opcao": "c"
           },
           "soma": 4
-        },
-        {
-          "se": {
-            "rodada": "r3",
-            "opcao": "c"
-          },
-          "soma": 3
         }
       ],
       "efeitos": [
@@ -1343,58 +2506,103 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -735
+            "renda": -1100
           },
-          "rotulo": "dez dias sem poder trabalhar"
+          "rotulo": "15 dias sem poder trabalhar"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": -455
+            "renda": -685
           },
-          "rotulo": "dez dias sem poder trabalhar"
+          "rotulo": "15 dias sem poder trabalhar"
         },
         {
           "se": {
             "persona": "vendedora"
           },
           "soma": {
-            "renda": -500
+            "renda": -750
           },
-          "rotulo": "dez dias sem poder trabalhar"
+          "rotulo": "perfil derrubado: 15 dias sem vender"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": -955
+            "renda": -1435
           },
-          "rotulo": "dez dias sem poder trabalhar"
+          "rotulo": "15 dias sem poder trabalhar"
         },
         {
           "se": {
             "persona": "manicure"
           },
           "soma": {
-            "renda": -700
+            "renda": -1050
           },
-          "rotulo": "dez dias sem poder trabalhar"
+          "rotulo": "15 dias sem poder trabalhar"
         },
         {
           "se": {
-            "rodada": "r3",
-            "opcao": "c"
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": "motoboy"
           },
           "soma": {
-            "renda": 300
+            "renda": 550
           },
-          "rotulo": "a associação contestou e a conta voltou antes"
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 343
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": 375
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": 718
+          },
+          "rotulo": "o outro app segurou metade da renda"
+        },
+        {
+          "se": {
+            "rodada": "r2",
+            "opcao": "c",
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": 525
+          },
+          "rotulo": "o outro app segurou metade da renda"
         }
       ],
-      "fonte": "Abílio (2021): bloqueio de Carlos e o \"bloqueio branco\" por recusar corridas; PNAD 2025: ameaça de punição ou bloqueio molda a jornada de 23,1% dos entregadores"
+      "fonte": "Abílio (2021), p. 941 e 950: bloqueios sumários e o \"bloqueio branco\" por recusar. 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. O Povo (01/12/2025), pesquisa GigU (fintech do setor): 15,5% relatam bloqueio sem explicação. Perfil de Instagram: onda de banimentos em 2026 (TecMundo; Correio da Manhã)"
     },
     {
       "id": "assalto",
@@ -1410,7 +2618,7 @@
           "manicure"
         ]
       },
-      "narrativa": "Levaram meu celular e o dinheiro do dia. Fiquei dois dias sem sair de casa.",
+      "narrativa": "Levaram o celular e o dinheiro do dia. Fiquei dois dias sem coragem de sair, e sem celular não tem app.",
       "ajustesDePeso": [
         {
           "se": {
@@ -1433,36 +2641,36 @@
             "persona": "motoboy"
           },
           "soma": {
-            "renda": -785
+            "renda": -1220
           },
-          "rotulo": "celular novo e o dinheiro do dia"
+          "rotulo": "celular novo, o dinheiro do dia e 2 dias sem sair"
         },
         {
           "se": {
             "persona": "bike"
           },
           "soma": {
-            "renda": -755
+            "renda": -1137
           },
-          "rotulo": "celular novo e o dinheiro do dia"
+          "rotulo": "celular novo, o dinheiro do dia e 2 dias sem sair"
         },
         {
           "se": {
             "persona": "motorista"
           },
           "soma": {
-            "renda": -810
+            "renda": -1287
           },
-          "rotulo": "celular novo e o dinheiro do dia"
+          "rotulo": "celular novo, o dinheiro do dia e 2 dias sem sair"
         },
         {
           "se": {
             "persona": "manicure"
           },
           "soma": {
-            "renda": -780
+            "renda": -1210
           },
-          "rotulo": "celular novo e o dinheiro do dia"
+          "rotulo": "celular novo, o dinheiro do dia e 2 dias sem sair"
         },
         {
           "soma": {
@@ -1471,35 +2679,294 @@
           "rotulo": "medo de voltar para a rua"
         }
       ],
-      "fonte": "Cebrap/Amobitec (2025): 7% dos entregadores e 6% dos motoristas assaltados em 3 meses. Valor do celular: estimativa"
+      "fonte": "Cebrap/Amobitec (2025), p. 45 e 70: 7% dos entregadores e 6% dos motoristas assaltados em 3 meses. Ação da Cidadania/UFRJ (2024): 93,4% sem seguro do celular. Celular de R$ 1.000: estimativa"
+    },
+    {
+      "id": "calote",
+      "titulo": "Trabalhei e não recebi",
+      "curto": "Não pagou",
+      "peso": 8,
+      "narrativa": "Fiz o serviço, ou fui até lá, e o dinheiro não veio. Reclamar no app leva dias e quase nunca dá em nada.",
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": -120
+          },
+          "rotulo": "pedidos cancelados depois da coleta"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -80
+          },
+          "rotulo": "pedidos cancelados depois da coleta"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -180
+          },
+          "rotulo": "comprovante de Pix falso: a encomenda foi embora"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": -150
+          },
+          "rotulo": "passageiros cancelaram comigo a caminho"
+        },
+        {
+          "se": {
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": -175
+          },
+          "rotulo": "três clientes cancelaram em cima da hora"
+        }
+      ],
+      "fonte": "NailNow (FAQ): cancelar é grátis até 1 h antes; depois, o suporte decide caso a caso. 99: taxa de cancelamento só entre 4 e 12 min. Pix falso: guias da Stone e do Mercado Pago. Valores: estimativa (Rose: 3 x (R$ 60 x 0,8 + R$ 10,60 de ônibus))"
+    },
+    {
+      "id": "taxa",
+      "titulo": "O app apertou a taxa",
+      "curto": "Taxa",
+      "peso": 6,
+      "rodadas": [
+        "r1",
+        "r3"
+      ],
+      "somenteSe": {
+        "persona": [
+          "motoboy",
+          "bike",
+          "vendedora"
+        ]
+      },
+      "narrativa": "Mais um corte, sem aviso: a segunda entrega da rota passou a pagar menos, ou o anúncio e o insumo subiram.",
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": -180
+          },
+          "rotulo": "pedido agrupado: R$ 3,00 na 2ª entrega, e não R$ 7,50"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -135
+          },
+          "rotulo": "pedido agrupado: R$ 3,00 na 2ª entrega, e não R$ 7,50"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -150
+          },
+          "rotulo": "anúncio 12,15% e chocolate 24,77% mais caros"
+        }
+      ],
+      "fonte": "iFood (jun/2025): a 2ª entrega agrupada paga R$ 3,00; 40 (Jonas) e 30 (Kauã) entregas agrupadas no mês: estimativa. Meta repassa PIS/Cofins e ISS desde 01/01/2026 (+12,15%). Chocolate +24,77% em 12 meses (IPCA, Poder360)"
     },
     {
       "id": "conquista",
       "titulo": "A mobilização arrancou um reajuste",
       "curto": "Reajuste",
-      "peso": 3,
+      "peso": 2,
       "rodadas": [
         "r3"
       ],
-      "narrativa": "Depois do protesto, a plataforma subiu o valor mínimo. É pouco, mas veio de quem parou.",
+      "somenteSe": {
+        "persona": [
+          "motoboy",
+          "bike"
+        ]
+      },
+      "narrativa": "Depois do breque, a plataforma subiu o valor mínimo por entrega. É pouco, e veio de quem parou.",
       "ajustesDePeso": [
+        {
+          "se": {
+            "decidiu": {
+              "r2": "d"
+            }
+          },
+          "soma": 8
+        },
         {
           "se": {
             "rodada": "r3",
             "opcao": "c"
           },
-          "soma": 9
+          "soma": 5
         }
       ],
       "efeitos": [
         {
+          "se": {
+            "persona": "motoboy"
+          },
           "soma": {
             "renda": 150
           },
-          "rotulo": "reajuste arrancado no protesto"
+          "rotulo": "reajuste: R$ 1 a mais por entrega"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": 75
+          },
+          "rotulo": "reajuste: R$ 0,50 a mais por entrega"
         }
       ],
-      "fonte": "Brasil de Fato (29/04/2025): após o breque, o iFood subiu R$ 1 por entrega de moto e R$ 0,50 de bike"
+      "fonte": "Breque de 31/03/2025; o iFood subiu o mínimo de R$ 6,50 para R$ 7,50 em 01/06/2025 (moto +R$ 1, bike +R$ 0,50; Brasil de Fato, 29/04/2025). ~150 entregas no mínimo por mês: estimativa"
+    },
+    {
+      "id": "inss_negou",
+      "titulo": "A perícia do INSS negou o auxílio",
+      "curto": "INSS negou",
+      "peso": 105,
+      "rodadas": [
+        "r3"
+      ],
+      "tom": "grave",
+      "somenteSe": {
+        "sorteou": {
+          "r2": "fratura"
+        },
+        "decidiu": {
+          "r1": "b"
+        }
+      },
+      "narrativa": "Paguei o MEI em dia, esperei a decisão e a perícia negou. O dinheiro que eu contava não veio.",
+      "efeitos": [
+        {
+          "se": {
+            "opcao": [
+              "a",
+              "b",
+              "c"
+            ]
+          },
+          "soma": {
+            "renda": -2431
+          },
+          "rotulo": "o auxílio do INSS não veio"
+        },
+        {
+          "se": {
+            "opcao": "d"
+          },
+          "soma": {
+            "renda": -1621
+          },
+          "rotulo": "o auxílio do INSS não veio"
+        }
+      ],
+      "fonte": "Previdenciarista (09/09/2026), leitura do BEPS de jul/2026: 53% das decisões de benefício por incapacidade foram negativas no 1º semestre de 2026. Confiança média"
+    },
+    {
+      "id": "recaida",
+      "titulo": "A lesão voltou",
+      "curto": "Recaída",
+      "peso": 8,
+      "rodadas": [
+        "r3"
+      ],
+      "tom": "grave",
+      "somenteSe": {
+        "sorteou": {
+          "r2": "fratura"
+        }
+      },
+      "narrativa": "O punho não aguentou. Mais dez dias parado, e a fila do SUS para fisioterapia não tem data.",
+      "ajustesDePeso": [
+        {
+          "se": {
+            "rodada": "r3",
+            "opcao": "d"
+          },
+          "soma": 20
+        }
+      ],
+      "efeitos": [
+        {
+          "se": {
+            "persona": "motoboy"
+          },
+          "soma": {
+            "renda": -733
+          },
+          "rotulo": "mais 10 dias sem trabalhar"
+        },
+        {
+          "se": {
+            "persona": "bike"
+          },
+          "soma": {
+            "renda": -457
+          },
+          "rotulo": "mais 10 dias sem trabalhar"
+        },
+        {
+          "se": {
+            "persona": "vendedora"
+          },
+          "soma": {
+            "renda": -500
+          },
+          "rotulo": "mais 10 dias sem trabalhar"
+        },
+        {
+          "se": {
+            "persona": "motorista"
+          },
+          "soma": {
+            "renda": -957
+          },
+          "rotulo": "mais 10 dias sem trabalhar"
+        },
+        {
+          "se": {
+            "persona": "manicure"
+          },
+          "soma": {
+            "renda": -700
+          },
+          "rotulo": "mais 10 dias sem trabalhar"
+        },
+        {
+          "soma": {
+            "renda": -600
+          },
+          "rotulo": "fisioterapia particular: 4 sessões",
+          "fonte": "Doctoralia/Cronoshare: R$ 150 a R$ 320 por sessão em Porto Alegre (4 x R$ 150). Fila de ortopedia do SUS no RS: 12.465 pessoas em jan/2026, sem tempo médio (Agora RS)"
+        },
+        {
+          "soma": {
+            "energia": -2
+          },
+          "rotulo": "dor"
+        }
+      ],
+      "fonte": "Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou a trabalhar antes de se recuperar. Metrópoles: \"Fiquei cinco meses parado depois de uma queda\""
     }
   ],
   "enquetes": [
@@ -1567,8 +3034,8 @@
     {
       "id": "clt",
       "nome": "Jonas com carteira assinada",
-      "renda": 840,
-      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026); IR isento (Lei 15.270/2025); 13º e férias proporcionais a 3 meses; menos o mesmo custo de vida do Jonas",
+      "renda": -2957,
+      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026): líquido R$ 2.110,48; IR isento (Lei 15.270/2025). Mesma casa do Jonas de app: + salário da companheira, − básico, parcela e manutenção da moto, juros de 7,43% sobre a dívida; + 13º e férias proporcionais a 3 meses (R$ 1.231,11)",
       "persona": "motoboy"
     }
   ],
@@ -1588,12 +3055,12 @@
       {
         "tipo": "bloco",
         "titulo": "Gancho: o lançamento",
-        "alvoSeg": 210
+        "alvoSeg": 180
       },
       {
         "tipo": "bloco",
         "titulo": "Mapa do seminário",
-        "alvoSeg": 240
+        "alvoSeg": 180
       },
       {
         "tipo": "formarEquipes",
@@ -1601,7 +3068,7 @@
       },
       {
         "tipo": "personas",
-        "alvoSeg": 120
+        "alvoSeg": 150
       },
       {
         "tipo": "bloco",
@@ -1611,22 +3078,22 @@
       {
         "tipo": "rodada",
         "rodada": "r1",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "bloco",
         "titulo": "Debrief e teoria: gestão por algoritmo",
-        "alvoSeg": 300
+        "alvoSeg": 240
       },
       {
         "tipo": "rodada",
         "rodada": "r2",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "bloco",
         "titulo": "Contraponto: a Viração e os dados sobre CLT",
-        "alvoSeg": 300
+        "alvoSeg": 240
       },
       {
         "tipo": "bloco",
@@ -1636,17 +3103,17 @@
       {
         "tipo": "rodada",
         "rodada": "r3",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "placarFinal",
-        "alvoSeg": 180
+        "alvoSeg": 240
       },
       {
         "tipo": "enquete",
         "enquete": "termometro_curto",
         "momento": "unico",
-        "alvoSeg": 360
+        "alvoSeg": 300
       },
       {
         "tipo": "enquete",
@@ -1696,7 +3163,7 @@
       },
       {
         "tipo": "personas",
-        "alvoSeg": 120
+        "alvoSeg": 150
       },
       {
         "tipo": "bloco",
@@ -1706,7 +3173,7 @@
       {
         "tipo": "rodada",
         "rodada": "r1",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "bloco",
@@ -1716,7 +3183,7 @@
       {
         "tipo": "rodada",
         "rodada": "r2",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "bloco",
@@ -1731,7 +3198,7 @@
       {
         "tipo": "bloco",
         "titulo": "Contraponto: entrevistas em Porto Alegre",
-        "alvoSeg": 600
+        "alvoSeg": 540
       },
       {
         "tipo": "bloco",
@@ -1741,21 +3208,21 @@
       {
         "tipo": "rodada",
         "rodada": "r3",
-        "alvoSeg": 240
+        "alvoSeg": 300
       },
       {
         "tipo": "placarFinal",
-        "alvoSeg": 180
+        "alvoSeg": 240
       },
       {
         "tipo": "bloco",
         "titulo": "Debrief e teoria: mapa do patrão em grupos",
-        "alvoSeg": 900
+        "alvoSeg": 840
       },
       {
         "tipo": "bloco",
         "titulo": "Caminhos: convidado com perguntas",
-        "alvoSeg": 1200
+        "alvoSeg": 1050
       },
       {
         "tipo": "enquete",

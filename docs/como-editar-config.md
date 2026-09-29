@@ -9,6 +9,23 @@ Os valores do jogo, com a fonte de cada um, estão em
 [rascunho-conteudo.md](rascunho-conteudo.md). As decisões de conteúdo estão em
 [decisoes.md](decisoes.md) (D-024 em diante).
 
+**Esquema v2 (redesenho de 29/09, D-041 a D-048).** O que mudou em relação ao
+config de 28/09:
+
+| Campo | Onde | Resumo |
+| --- | --- | --- |
+| `familia` | persona, obrigatório | Quem mora na casa e quantas pessoas são (D-044) |
+| `basico` | persona, obrigatório | O custo do básico da casa, item a item, cada um com fonte (D-044) |
+| `outraRenda` | persona, opcional | A renda de outra pessoa da casa, com fonte (D-044) |
+| `todoMes` | persona | Fica só com a renda e os custos **do trabalho**: o custo de vida saiu para o `basico` |
+| `jurosDividaMes`, `jurosFonte` | regras, obrigatórios | Os juros mensais da dívida, com fonte (D-046) |
+| `contexto` | rodada, opcional | Uma frase por persona, mostrada no celular durante a decisão (D-043) |
+| `opcoes` | rodada | De 2 a 4 (menos ou mais é erro). A `tendencia` não aparece mais em tela nenhuma (D-043) |
+| `decidiu`, `sorteou` | condição | As consequências que atravessam os meses (D-043) |
+
+Um config de 28/09 **não passa** no validador novo: falta a família, o básico e
+os juros. As seções abaixo trazem cada campo com exemplo.
+
 ---
 
 ## Antes de mexer
@@ -56,12 +73,12 @@ corrigidos. As conferências de equilíbrio, porém, só saem no `npm run valida
 | `versao` | Nome da versão do conteúdo | Abertura do telão |
 | `titulo` | Título do seminário | Telão e celular |
 | `tempos` | Duração das votações | Cronômetros |
-| `regras` | Regras do jogo e do placar | — |
+| `regras` | Regras do jogo, do placar e os juros da dívida | Resultado e celular (os juros) |
 | `escala` | Os 5 rótulos da escala de 1 a 5 | Botões do celular, legendas do telão |
 | `indicadores` | Saldo, energia, proteção | Placar, persona, resultado |
-| `personas` | As pessoas do jogo | Telão (personas) e celular |
+| `personas` | As pessoas do jogo, com a família, o básico e a outra renda da casa | Telão (personas, resultado, placar) e celular |
 | `equipes` | Nome, cor, forma e persona de cada equipe | Todas as telas do jogo |
-| `rodadas` | Os meses do jogo, com as opções | Decisão, resultado, celular |
+| `rodadas` | Os meses do jogo, com as opções e o contexto de cada família | Decisão, resultado, celular |
 | `cartas` | Os eventos sorteados | Sorteio, resultado, celular |
 | `enquetes` | As afirmações de 1 a 5 | Enquetes, termômetro, comparativo |
 | `referencias` | Linhas de comparação no placar final | Placar final |
@@ -95,7 +112,7 @@ aparecem na tela.
 ### `tempos`
 
 ```json
-"tempos": { "enqueteSeg": 60, "decisaoSeg": 90, "decisaoMinSeg": 45, "prorrogacaoSeg": 20, "gracaSeg": 5 }
+"tempos": { "enqueteSeg": 60, "decisaoSeg": 120, "decisaoMinSeg": 45, "prorrogacaoSeg": 20, "gracaSeg": 5 }
 ```
 
 Todos em segundos, inteiros e maiores que 0. **Nenhum tempo fecha nada sozinho**:
@@ -105,7 +122,7 @@ servidor, que recusa o voto atrasado.
 | Campo | O que é |
 | --- | --- |
 | `enqueteSeg` | Tempo de cada votação de enquete. Na enquete `uma_por_vez`, vale para cada afirmação; na `todas`, para todas juntas |
-| `decisaoSeg` | Tempo da decisão da rodada |
+| `decisaoSeg` | Tempo da decisão da rodada. 120 s desde o redesenho (D-043): são 4 opções e o contexto da família para ler |
 | `decisaoMinSeg` | Tempo mínimo de conversa. Antes dele, o Enter pede confirmação. Maior que `decisaoSeg` gera aviso |
 | `prorrogacaoSeg` | Tempo da prorrogação de empate |
 | `gracaSeg` | Opcional (padrão 5). Segundos depois do prazo em que o voto ainda é aceito |
@@ -116,7 +133,9 @@ servidor, que recusa o voto atrasado.
 ```json
 "regras": {
   "desempate": "prorrogacao-depois-moeda", "cartaPor": "equipe", "mostrarChances": "no_sorteio",
-  "placarPadrao": "efeitoDecisoes", "alvoPorEquipe": 3, "minPareados": 5, "destacarCartas": 2
+  "placarPadrao": "efeitoDecisoes", "alvoPorEquipe": 3, "minPareados": 5, "destacarCartas": 2,
+  "jurosDividaMes": 0.0743,
+  "jurosFonte": "Banco Central, SGS 25463: cheque especial, 7,43% ao mês em ago/2026 (…)"
 }
 ```
 
@@ -125,13 +144,20 @@ servidor, que recusa o voto atrasado.
 | `desempate` | só `"prorrogacao-depois-moeda"` | Empate: prorrogação e, se continuar, moeda (D-022) |
 | `cartaPor` | só `"equipe"` | Uma carta por equipe (D-013) |
 | `mostrarChances` | só `"no_sorteio"` | As chances aparecem só no sorteio (D-012) |
-| `placarPadrao` | `efeitoDecisoes`, `renda` (ou o id de outro indicador), `sorte`, `piorCaso` | O critério com que o placar final começa. A tecla C troca |
+| `placarPadrao` | `efeitoDecisoes`, `renda` (ou o id de outro indicador), `sorte`, `piorCaso` | Continua aceito, mas o telão **não lê mais**: o placar em páginas não tem critério a escolher (D-041) |
 | `alvoPorEquipe` | inteiro ≥ 1 | O "Me coloque numa equipe" completa cada equipe até este número, na ordem das equipes, antes de abrir a próxima |
 | `minPareados` | inteiro ≥ 1 | Com menos pessoas que responderam as duas vezes, o comparativo mostra "turmas diferentes" |
 | `destacarCartas` | inteiro ≥ 0 | Quantas cartas, as de efeito mais forte, ganham destaque no resultado. Carta grave nunca anima |
+| `jurosDividaMes` | obrigatório; número entre 0 e 1, sem incluir os dois | Os juros **ao mês** sobre a dívida, como fração: `0.0743` é 7,43%. Escrever `7.43` é erro: seriam 743% ao mês. Ver "Ordem fixa de aplicação" |
+| `jurosFonte` | obrigatório; texto | De onde vem a taxa. Nunca aparece no telão; o validador a imprime nas conferências |
 
 Os três primeiros só têm um valor porque só um foi decidido, e o motor não
 implementa outro.
+
+**Os juros da dívida (D-046)** substituem os juros que o config de 28/09 escrevia
+como efeito. A taxa aparece nas telas com até duas casas ("7,43% ao mês"): no
+cabeçalho do resultado, quando alguma equipe está devendo, e no celular, junto
+da dívida.
 
 ### `escala`
 
@@ -151,8 +177,9 @@ celular; os `longos`, nas legendas do telão.
 { "id": "renda", "nome": "Saldo acumulado", "formato": "moeda", "inicial": 0, "min": -10000, "max": 100000 }
 ```
 
-- O indicador `renda` é obrigatório: é nele que o placar é decomposto em piloto
-  automático, efeito das decisões e sorte.
+- O indicador `renda` é obrigatório: é o saldo que o básico, a outra renda e os
+  juros movem, o que a página 1 do placar final compara ("quanto faltou") e o
+  que a página 2 conta como "se não mudassem nada → as escolhas → a sorte".
 - `formato`: `moeda` (R$ sem centavos) ou `inteiro`.
 - `min` menor que `max`, e `inicial` entre os dois. Depois de cada mês, o valor é
   preso entre `min` e `max`.
@@ -164,19 +191,65 @@ celular; os `longos`, nas legendas do telão.
 {
   "id": "motoboy",
   "nome": "Jonas",
-  "descricao": "Motoboy, 34 anos, entrega por aplicativo com moto financiada. Divide as contas com a companheira.",
+  "descricao": "Motoboy, 34 anos, entrega por aplicativo com moto financiada. Mora no Sarandi, em Porto Alegre.",
+  "familia": {
+    "descricao": "Jonas, a companheira, caixa de supermercado com um salário mínimo, e a filha de 6 anos.",
+    "pessoas": 3
+  },
+  "basico": {
+    "itens": [
+      { "rotulo": "comida (cesta básica × 2,5)", "valor": 2098, "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026…" },
+      { "rotulo": "aluguel (2 quartos)", "valor": 1300, "fonte": "QuintoAndar, lido em 29/09/2026…" },
+      { "rotulo": "luz", "valor": 162, "fonte": "CEEE Equatorial, tarifa B1…" }
+    ]
+  },
+  "outraRenda": { "rotulo": "salário da companheira", "valor": 1499, "fonte": "Decreto 12.797/2025: salário mínimo de R$ 1.621, menos 7,5% de INSS…" },
   "inicial": { "energia": 7 },
   "todoMes": [
     { "soma": { "renda": 2200 }, "rotulo": "entregas do mês, já sem a gasolina", "fonte": "IBGE, PNAD Contínua…" },
-    { "soma": { "renda": -1760 }, "rotulo": "aluguel, comida e contas", "fonte": "DIEESE/Conab…" }
+    { "soma": { "renda": -480 }, "rotulo": "parcela da moto", "fonte": "Tabela Fipe…" }
   ]
 }
 ```
 
-- `descricao`: o telão mostra só a primeira frase; o celular mostra inteira.
+(Encurtado: o básico real do Jonas tem 8 itens, e cada fonte é mais longa.)
+
+- `descricao`: o telão mostra só o ofício, até a primeira vírgula ou ponto
+  ("Motoboy"); o celular mostra a descrição inteira.
+- `familia` (obrigatório, D-044): `{ descricao, pessoas }`.
+  - `descricao`: quem mora na casa e quem trabalha, em uma frase. O celular
+    mostra como "Em casa: …" na persona, na situação e no placar final.
+  - `pessoas`: inteiro, 1 ou mais. O telão mostra "3 pessoas em casa" na tela
+    das personas.
+  - Uma chave a mais aqui é só descartada, com aviso: é texto de tela.
+- `basico` (obrigatório, D-044): `{ itens: [{ rotulo, valor, fonte }] }`, o custo
+  do básico **da casa inteira** por mês.
+  - Pelo menos um item. `valor` é inteiro, 0 ou mais, em R$ por mês; `fonte` é
+    obrigatória em cada item (D-005).
+  - O total é a soma dos itens, calculada pelo código. **Nunca escreva o total no
+    config**: não há campo para ele.
+  - Uma chave fora de `rotulo`, `valor` e `fonte` é **erro**, e não aviso: o
+    básico entra na conta, e um `"valor "` com espaço deixaria o item sem valor.
+  - O telão mostra o total ("básico R$ 4.166") na tela das personas e em cada
+    resultado; o celular mostra o básico item a item, com a fonte de cada um.
+  - O básico é cobrado **no fim de todo mês, depois de tudo** (veja "Ordem fixa
+    de aplicação"). Por isso uma carta que corta a renda nunca corta a conta da
+    casa.
+- `outraRenda` (opcional, D-044): `{ rotulo, valor, fonte }`, a renda de outra
+  pessoa da casa ou um benefício, com as mesmas regras de um item do básico. O
+  telão mostra "salário da companheira R$ 1.499" ao lado do básico, e o celular
+  separa o que veio do trabalho e o que veio da outra renda. Sem outra renda
+  na casa (a Rose e a Daiane, no config atual), tire a chave: o telão escreve
+  "sem outra renda na casa".
 - `inicial` (opcional): troca, só para esta persona, o `inicial` do indicador.
 - `todoMes` (opcional): efeitos aplicados em toda rodada, antes de todos os
-  outros. É a renda e o custo de vida do mês.
+  outros. Desde o esquema v2, é **só o trabalho**: a renda-base e os custos de
+  trabalhar (parcela e manutenção da moto, combustível, taxa do app). O custo de
+  vida da casa (aluguel, comida, contas) vai para o `basico`: deixar os dois
+  seria cobrar a casa duas vezes.
+- **O furo de um mês comum**, que o telão mostra na tela das personas ("falta
+  R$ 1.208 por mês"), é calculado: o `todoMes` (sem os efeitos que dependem de
+  rodada, opção ou histórico), mais a outra renda, menos o básico.
 - Persona sem nenhuma equipe gera aviso: ela não joga.
 
 ### `equipes`
@@ -217,28 +290,52 @@ celular; os `longos`, nas legendas do telão.
 {
   "id": "r1",
   "titulo": "Mês 1: quanto trabalhar?",
-  "texto": "Quem fica mais tempo online recebe mais pedidos.",
+  "texto": "Quem fica mais tempo online recebe mais pedidos. Ninguém paga o seu INSS, e o básico da casa vence no fim do mês, com acidente ou sem.",
   "padrao": "c",
+  "contexto": {
+    "motoboy": "A parcela da moto vence dia 5. A filha precisa de tênis para a escola, e o salário da companheira já está todo no aluguel.",
+    "vendedora": "O aluguel vence dia 10 e o pai do menino não paga pensão. O menino está com tosse há uma semana."
+  },
   "efeitosGerais": [],
   "opcoes": {
-    "a": { "rotulo": "Trabalhar o máximo: 12 horas, 7 dias", "narrativa": "Fiquei online da manhã até a noite.", "efeitos": [] },
-    "b": { "rotulo": "Jornada de sempre e abrir o MEI", "narrativa": "Mantive a rotina e abri o MEI.", "efeitos": [] },
-    "c": { "rotulo": "Jornada de sempre, sem pagar nada", "narrativa": "Mantive a rotina e não paguei nada.", "efeitos": [] }
+    "a": { "rotulo": "12 horas por dia, 7 dias por semana", "narrativa": "Fiquei online da manhã até a madrugada, sete dias.", "efeitos": [] },
+    "b": { "rotulo": "Jornada de sempre e abrir o MEI", "narrativa": "Mantive a rotina, abri o MEI e pago o DAS todo mês.", "efeitos": [] },
+    "c": { "rotulo": "Jornada de sempre, sem pagar nada", "narrativa": "Mantive a rotina e não paguei nada.", "efeitos": [] },
+    "d": { "rotulo": "Trabalhar menos para estudar ou cuidar da família", "narrativa": "Tirei um dia por semana para estudar e ficar com os meus.", "efeitos": [] }
   }
 }
 ```
 
-- `titulo` e `texto`: a situação do mês, no telão e no celular.
+(Encurtado: no config real, as opções têm efeitos, e o contexto tem as 5
+personas. As rodadas e as opções também podem vir como lista, cada item com o
+seu `id`, como no `config.json` atual.)
+
+- `titulo` e `texto`: a situação do mês. O telão mostra os dois na decisão; o
+  celular mostra o título (o texto fica no telão, para as opções caberem na
+  tela do celular).
 - `padrao`: a opção que vale quando ninguém da equipe vota ("piloto automático:
   o app decidiu por vocês"). Não deve ser a de maior saldo: o validador avisa,
   porque premiaria quem não votou.
+- `contexto` (opcional, D-043): `{ persona: texto }`, o que está acontecendo na
+  casa de cada persona naquele mês ("o aluguel vence dia 10"). O celular mostra
+  a frase da persona da equipe durante a decisão e a prorrogação, acima das
+  opções, como "Na casa de Jonas: …". O telão não mostra.
+  - A persona precisa existir. Persona sem frase fica sem o quadro.
+  - Até **160 caracteres** (contados por letra, com acento contando 1). Acima
+    disso é erro: a frase empurraria as opções para fora da tela do celular.
 - `efeitosGerais` (opcional): efeitos para todas as equipes nesta rodada, logo
-  depois do `todoMes`. Por exemplo, o corte da plataforma no mês 2.
-- `opcoes`: um mapa por id. As letras A, B, C no telão seguem a ordem do arquivo.
+  depois do `todoMes`. Por exemplo, o corte da plataforma no mês 2, ou, com
+  `decidiu`/`sorteou`, o DAS do MEI e a fratura que continua (veja "Condição").
+- `opcoes`: **de 2 a 4** (D-043). Uma só, ou mais de 4, é erro: com mais, os
+  botões não cabem no celular nem a conversa em 120 s. As letras A, B, C, D no
+  telão seguem a ordem do arquivo. No config atual, todo mês tem 4, cada uma um
+  dilema, sem uma resposta certa.
   - `rotulo`: o texto do botão no celular e da opção no telão. Curto.
-  - `narrativa` (opcional): em primeira pessoa. O celular mostra na situação da
-    persona e no resultado.
-  - `tendencia` (opcional): aceito pelo validador, mas hoje nenhuma tela mostra.
+  - `narrativa` (opcional): em primeira pessoa. O celular mostra quando a opção
+    está escolhida na decisão, na situação da persona e na história da equipe.
+  - `tendencia` (opcional): **ignorada**. Continua aceita, para um config antigo
+    não dar erro, mas nenhuma tela a mostra, nem no telão nem no celular: as setas
+    davam a resposta antes da conversa (D-043). Pode tirar.
   - `efeitos`: obrigatório. Use `[]` para nenhum.
   - `fonte` (opcional).
 
@@ -246,20 +343,31 @@ celular; os `longos`, nas legendas do telão.
 
 ```json
 {
-  "id": "acidente",
-  "titulo": "Acidente: 20 dias parado",
-  "curto": "Acidente",
-  "narrativa": "Sofri um acidente e fiquei 20 dias sem poder trabalhar.",
-  "peso": 2,
+  "id": "fratura",
+  "titulo": "Acidente: fratura, 45 dias parado",
+  "curto": "Fratura",
+  "narrativa": "Me acidentei e quebrei o punho. São 45 dias parado: 20 neste mês e 25 no próximo.",
+  "peso": 1,
   "rodadas": ["r2", "r3"],
   "tom": "grave",
-  "ajustesDePeso": [ { "se": { "persona": ["motoboy", "bike", "motorista"] }, "soma": 3 } ],
-  "efeitos": [ { "se": { "persona": "motoboy" }, "soma": { "renda": -1465 }, "rotulo": "20 dias sem trabalhar" } ]
+  "ajustesDePeso": [ { "se": { "persona": ["motoboy", "bike"] }, "soma": 3 } ],
+  "efeitos": [
+    { "se": { "persona": "motoboy" }, "soma": { "renda": -1467 }, "rotulo": "20 dias sem trabalhar" },
+    { "se": { "persona": "motoboy" }, "soma": { "renda": -1500 }, "rotulo": "conserto da moto", "fonte": "…" },
+    { "soma": { "renda": -150 }, "rotulo": "remédio e curativo", "fonte": "…" }
+  ],
+  "fonte": "Cebrap/Amobitec (2025)…"
 }
 ```
 
-- `titulo`: no sorteio e no resultado do telão. `narrativa` (opcional): no
-  celular.
+- **Quantas:** o config atual tem 14 cartas; a D-043 pede de 12 a 14, várias
+  ligadas a um mês e às decisões. O validador não impõe o número.
+- **Realismo (D-044):** o efeito de uma carta de parada diz o custo real, com
+  fonte: os dias sem renda, o conserto, o remédio. O que continua no mês seguinte
+  (a fratura que dura 45 dias, a conta que segue bloqueada) vai num efeito geral
+  da rodada seguinte, com `sorteou` (veja "Condição").
+- `titulo`: no sorteio e no resultado do telão, e na história da equipe.
+  `narrativa` (opcional): no celular, no resultado, na situação e na história.
 - `curto` (opcional, D-040): o nome da carta escrito **dentro da fatia** do
   sorteio, junto da chance ("Normal 55%"). Texto de até 12 caracteres; acima de
   10 o validador avisa, porque quase nunca cabe. O telão só escreve o rótulo
@@ -273,7 +381,14 @@ celular; os `longos`, nas legendas do telão.
 - `rodadas` (opcional): em que rodadas a carta pode sair. Sem a chave, em todas.
   Lista vazia é erro.
 - `somenteSe` (opcional): uma condição. A carta só entra no baralho da equipe
-  quando ela vale.
+  quando ela vale. Com `sorteou`/`decidiu`, faz a carta que só existe depois de
+  outra, por exemplo a perícia do INSS que nega o auxílio, que só sai no mês 3
+  para quem abriu o MEI no mês 1 e tirou a fratura no mês 2:
+
+  ```json
+  { "id": "inss_negou", "rodadas": ["r3"], "tom": "grave",
+    "somenteSe": { "sorteou": { "r2": "fratura" }, "decidiu": { "r1": "b" } }, … }
+  ```
 - `ajustesDePeso` (opcional): é aqui que **a decisão muda o tamanho das fatias**.
   Cada ajuste tem uma condição `se` e uma `soma` (acrescenta ao peso) ou um
   `multiplica` (multiplica o peso, 0 ou mais). Os ajustes valem na ordem do
@@ -323,11 +438,17 @@ celular; os `longos`, nas legendas do telão.
 ### `referencias`
 
 ```json
-{ "id": "clt", "nome": "Jonas com carteira assinada", "renda": 840, "persona": "motoboy", "fonte": "CAGED…" }
+{ "id": "clt", "nome": "Jonas com carteira assinada", "renda": -2957, "persona": "motoboy", "fonte": "CAGED…" }
 ```
 
-Opcional. Cada referência vira uma linha de comparação no placar final, e não uma
-equipe. O valor precisa de fonte e de validação (D-005).
+Opcional. Cada referência vira uma linha de comparação na página 1 do placar
+final ("quanto faltou para o básico"), e não uma equipe. O valor precisa de fonte
+e de validação (D-005).
+- `renda`: o saldo dos três meses, na mesma conta das equipes: desde o esquema
+  v2, com a mesma casa (outra renda, básico e juros). É por isso que o "Jonas com
+  carteira assinada" do config atual é negativo: com carteira, na mesma casa,
+  também falta, mas menos. O código não recalcula esse número: ele vem pronto do
+  config, e muda à mão quando o básico ou os juros mudam.
 - `persona` (opcional): o id de uma persona. Com ela, a linha atravessa só as
   barras das equipes dessa persona: "Jonas com carteira assinada" não serve de
   régua para a Rose nem para o Kauã. Sem ela, a linha atravessa todas as
@@ -340,11 +461,11 @@ equipe. O valor precisa de fonte e de validação (D-005).
   "60min": [
     { "tipo": "lobby", "alvoSeg": 120 },
     { "tipo": "enquete", "enquete": "entrada", "momento": "antes", "alvoSeg": 90, "opcional": true },
-    { "tipo": "bloco", "titulo": "Gancho: o lançamento", "alvoSeg": 210 },
+    { "tipo": "bloco", "titulo": "Gancho: o lançamento", "alvoSeg": 180 },
     { "tipo": "formarEquipes", "alvoSeg": 120 },
-    { "tipo": "personas", "alvoSeg": 120 },
-    { "tipo": "rodada", "rodada": "r1", "alvoSeg": 240 },
-    { "tipo": "placarFinal", "alvoSeg": 180 },
+    { "tipo": "personas", "alvoSeg": 150 },
+    { "tipo": "rodada", "rodada": "r1", "alvoSeg": 300 },
+    { "tipo": "placarFinal", "alvoSeg": 240 },
     { "tipo": "enquete", "enquete": "entrada", "momento": "depois", "alvoSeg": 90 },
     { "tipo": "comparativo", "enquete": "entrada", "alvoSeg": 150 },
     { "tipo": "fim" }
@@ -360,17 +481,26 @@ validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 | --- | --- | --- |
 | `lobby` | — | Entrada na sala, com o QR |
 | `enquete` | `enquete`, `momento` (`antes`, `depois` ou `unico`) | Uma votação de enquete |
-| `bloco` | `titulo` | Um trecho da apresentação. O telão fica na espera, e o título aparece nele e no celular |
+| `bloco` | `titulo` | Um trecho da apresentação. O telão fica na espera, com o título e a linha do tempo do seminário; o título aparece também no celular |
 | `formarEquipes` | — | Formação das equipes. Ao sair dele, as equipes travam |
-| `personas` | — | As personas em jogo |
+| `personas` | — | As personas em jogo, com a casa de cada uma |
 | `rodada` | `rodada` | Um mês do jogo: decisão, sorteio e resultado |
-| `placarFinal` | — | O placar decomposto |
+| `placarFinal` | — | O placar em páginas: quanto faltou para o básico, "Escolha ou sorte?" e a história de cada equipe (D-041, D-045) |
 | `comparativo` | `enquete` | O antes e depois da enquete pareada |
-| `fim` | — | Exportar totais e apagar a sala |
+| `fim` | — | O fim da sessão. Exportar totais e apagar a sala ficam na barra do apresentador (D-047) |
 
 - `alvoSeg`: o tempo-alvo do passo, em segundos. Alimenta o atraso na barra do
   apresentador; nada fecha por tempo.
 - `opcional`: marca o passo como opcional no "Pular para…".
+
+**A linha do tempo (D-042)** sai do roteiro, sem campo próprio: ela lista os
+passos `bloco` e `rodada` na ordem do roteiro (as rodadas como "mês 1", "mês 2"…),
+com o título de cada um. Por isso o `titulo` do bloco é o nome que a turma lê na
+linha, e vale a pena mantê-lo curto. O bloco cujo título **começa por "Mapa do
+seminário"** é especial: nele, a linha do tempo vira o conteúdo da tela, com
+todos os trechos por extenso. Mudou esse título? O mapa passa a ser um bloco
+comum. Uma chave nova no passo, como `"mapa": true`, não funciona: o validador a
+descarta com aviso.
 
 **A ordem é conferida.** É erro:
 - `rodada` ou `personas` antes do `formarEquipes`;
@@ -419,22 +549,76 @@ Usada em `se`, em `somenteSe` e nos `ajustesDePeso`.
 | `equipe` | um id ou uma lista | a equipe é uma dessas |
 | `rodada` | um id ou uma lista | a rodada é uma dessas |
 | `indicador` | `{ id: { "abaixoDe": n } }` ou `{ id: { "acimaDe": n } }` | o indicador está abaixo ou acima de n, **sem incluir n**: `{ "protecao": { "acimaDe": 2 } }` quer dizer 3 ou mais |
+| `decidiu` | `{ rodada: opção }` ou `{ rodada: [opções] }` | a equipe decidiu uma dessas opções **naquela rodada anterior** (D-043) |
+| `sorteou` | `{ rodada: carta }` ou `{ rodada: [cartas] }` | a equipe tirou uma dessas cartas **naquela rodada anterior** (D-043) |
 
 - Todas as chaves presentes precisam valer **ao mesmo tempo**.
 - Uma lista vale se **qualquer** item dela valer. Lista vazia é erro.
 - A condição lê o estado **de antes** da rodada, e nunca o que o mês está
   mudando.
 
+**`decidiu` e `sorteou`: as consequências que atravessam os meses (D-043).** Elas
+leem o que a equipe decidiu e tirou nas rodadas anteriores. Valem em efeitos
+(`se`), em `somenteSe` e em `ajustesDePeso`. Exemplos do config atual:
+
+```json
+{ "se": { "decidiu": { "r1": "b" }, "persona": "vendedora" }, "soma": { "renda": -82 }, "rotulo": "DAS do MEI" }
+{ "se": { "sorteou": { "r2": "fratura" }, "persona": "motoboy" }, "soma": { "renda": -1833 }, "rotulo": "a fratura continua: mais 25 dias sem trabalhar" }
+{ "se": { "sorteou": { "r2": "fratura" }, "decidiu": { "r1": "b" }, "opcao": ["a", "b", "c"] }, "soma": { "renda": 2431 }, "rotulo": "auxílio do INSS, um mês depois" }
+```
+
+Os dois primeiros estão nos `efeitosGerais` do mês 2 e do mês 3: quem abriu o MEI
+no mês 1 paga o DAS nos meses seguintes, e a fratura do mês 2 continua no mês 3.
+O terceiro é o auxílio do INSS, que só chega para quem pagava o MEI.
+
+- **Rodada que não foi jogada** (pulada no dia) vale **falso**: a condição não
+  acontece, e está tudo bem.
+- O validador confere, e é **erro**:
+  - a rodada citada não existe; a opção do `decidiu` não é **daquela** rodada
+    (`"d"` existe em várias, e um `decidiu: { "r1": "e" }` com a `"e"` só no mês 2
+    nunca valeria); a carta do `sorteou` não existe, ou não pode sair naquela
+    rodada (pelo `rodadas` da carta);
+  - em algum roteiro, a rodada citada não vem **antes** de nenhuma rodada em que
+    a condição é avaliada (a rodada do efeito, as rodadas da carta, ou qualquer
+    rodada no `todoMes` e na carta sem `rodadas`, estreitadas pela chave `rodada`
+    da própria condição), ou falta no roteiro. Nesses casos a consequência nunca
+    aconteceria na aula, sem aviso nenhum;
+  - `{}` sem rodada nenhuma.
+- Cuidado com o tamanho: cada rodada citada multiplica os caminhos que o
+  validador confere. Passar de 20.000 é erro (veja "O validador").
+- A linguagem **não tem negação** ("não tirou a fratura"). Para excluir um caso,
+  combine as chaves positivas.
+
 ### Ordem fixa de aplicação
 
+Primeiro, o **mês do trabalho**:
 1. `todoMes` da persona;
 2. `efeitosGerais` da rodada;
 3. a opção que a equipe decidiu;
 4. a carta sorteada.
 
 O delta de cada indicador começa em 0. Cada `soma` acrescenta ao delta, e cada
-`multiplica` multiplica o delta acumulado até ali. No fim, o novo valor é o de
-antes mais o delta, preso entre `min` e `max`.
+`multiplica` multiplica o delta acumulado até ali. Isso é o que o trabalho deu no
+mês.
+
+Depois, **as contas da casa**, só no saldo (`renda`), sempre nesta ordem (D-044,
+D-046):
+5. mais a `outraRenda` da persona;
+6. menos o básico (a soma dos itens do `basico`);
+7. menos os juros: `jurosDividaMes` × a dívida que **vinha do mês anterior** (o
+   saldo de antes da rodada, se negativo), arredondado ao real. Sem dívida, 0.
+
+No fim, o novo valor é o de antes mais o delta, preso entre `min` e `max`.
+
+É por isso que **uma carta que multiplica a renda corta o que se ganha, e não a
+conta da casa**: o `multiplica` roda no passo 4, e o básico só entra no 6. A
+tela mostra o mês assim: "entrou" = passos 1 a 5; "faltou" (ou "sobrou") =
+entrou − básico − juros.
+
+Exemplo com o Jonas num mês comum (config atual): o trabalho dá R$ 1.459 (R$ 2.200
+de entregas, menos a parcela e a manutenção da moto), a companheira traz R$ 1.499,
+e entrou R$ 2.958. O básico é R$ 4.166: faltou R$ 1.208. No fim do mês seguinte,
+essa dívida cobra round(1.208 × 0,0743) = R$ 90 de juros, depois do básico.
 
 ### Exemplo (valores ilustrativos)
 
@@ -446,10 +630,12 @@ Delta da renda: 0 → +2.000 → × 1,5 = +3.000 → −500 = **+2.500**. Delta 
 **−3**. Se a carta fosse `multiplica 0.3` em vez da soma, a renda do mês seria
 3.000 × 0,3 = **+900**.
 
-**Cuidado:** o `multiplica` age sobre o delta inteiro do mês até ali, custos
-incluídos. Se o `todoMes` soma a renda e desconta o aluguel, multiplicar por 0,3
-também encolhe o aluguel. Quando o efeito é "perdi parte dos dias de trabalho",
-uma `soma` negativa por persona é mais fiel.
+**Cuidado:** o `multiplica` age sobre o delta inteiro do trabalho até ali, custos
+do trabalho incluídos. O básico, a outra renda e os juros ficam de fora (entram
+depois), mas a parcela e a manutenção da moto, que estão no `todoMes`, não: uma
+carta que multiplica a renda por 0 também zeraria a parcela. Quando o efeito é
+"perdi parte dos dias de trabalho", uma `soma` negativa por persona é mais fiel,
+e é o que o config atual usa (rascunho, seção 7, pergunta 4).
 
 ### Chance de cada carta
 
@@ -486,7 +672,7 @@ colocados de propósito numa cópia:
 
 ```
 Erros (5):
-  - rodadas.r1.padrao: opção padrão "d" não existe
+  - rodadas.r1.padrao: opção padrão "e" não existe
   - cartas.equipamento.peso: precisa ser um número inteiro
   - cartas.semana_boa.efeitos[0].soma : chave desconhecida "soma " (a linguagem de efeitos é fechada)
   - cartas.semana_boa.efeitos[0]: efeito sem "soma" nem "multiplica"
@@ -503,8 +689,9 @@ com espaço também deixa o efeito sem `soma`.
   mesma lista.
 - **Aviso** não impede, mas merece atenção: afirmação longa, bloco sem título,
   tempo mínimo maior que o da decisão, roteiro acima do teto, persona sem
-  equipe, rótulo `curto` com mais de 10 caracteres, BOM no começo do arquivo, chave desconhecida fora da linguagem de
-  efeitos (que é só descartada).
+  equipe, rótulo `curto` com mais de 10 caracteres, BOM no começo do arquivo,
+  chave desconhecida fora da linguagem de efeitos e do `basico` (que é só
+  descartada; na `familia`, por exemplo).
 
 Erros comuns:
 
@@ -519,6 +706,14 @@ Erros comuns:
 | `nenhuma carta possível …` | Os pesos daquela combinação somam 0 |
 | `lista vazia: a carta nunca sairia` | `"rodadas": []`: tire a chave para valer em todas |
 | `rótulo curto com N caracteres (mais de 12)` | O `curto` da carta está longo: é o nome na fatia, não o título. Uma palavra basta |
+| `personas.X.familia: campo obrigatório ausente` (ou `basico`), `regras.jurosDividaMes: campo obrigatório ausente` | Config do esquema de 28/09: faltam os campos do esquema v2 (veja o começo desta página) |
+| `o básico precisa de pelo menos um item` | `"itens": []` no `basico` |
+| `jurosDividaMes … precisa ser uma fração entre 0 e 1` | A taxa foi escrita em porcentagem (`7.43`) e não em fração (`0.0743`) |
+| `N opção: a rodada precisa de pelo menos 2` ou `N opções: no máximo 4 (D-043)` | Uma rodada com 1 opção, ou com 5 ou mais |
+| `contexto com N caracteres (mais de 160)` | A frase da família ficou longa: encurte, porque empurra as opções para fora do celular |
+| `opção "x" não existe na rodada "r1"` | O `decidiu` cita uma opção de outra rodada |
+| `a carta "x" não sai na rodada "r1"` | O `sorteou` cita uma rodada fora do `rodadas` da carta |
+| `a rodada "r3" não vem antes da rodada "r2" no roteiro "60min"` (ou `não está no roteiro`) | O `decidiu`/`sorteou` olha uma rodada que, naquele roteiro, não acontece antes de a condição ser lida |
 
 ### As conferências de equilíbrio
 
@@ -536,10 +731,14 @@ Jonas (motoboy) · equipes e1, e2
 Quer dizer: com a opção `b` na rodada `r2`, a carta `normal` sai em média 49,6%
 das vezes. Entre parênteses, a menor e a maior chance quando ela muda com o
 estado (por exemplo, com a energia). A média supõe as rodadas anteriores
-decididas ao acaso. É a tabela a aprovar antes da aula.
+decididas ao acaso, e leva o histórico (`decidiu`/`sorteou`) de cada caminho. É a tabela a aprovar antes da aula.
 
 **(b) Efeito do mês**, por persona, rodada e opção: o valor esperado (E) e o pior
-caso de cada indicador naquele mês.
+caso de cada indicador naquele mês. Desde o esquema v2, também as contas da casa:
+o básico de cada persona (item a item) e a outra renda, e, em cada opção,
+"entrou" (E e pior), os juros esperados, o saldo do mês (E e pior) e em quantos
+por cento dos casos faltou para o básico. O cabeçalho lembra a taxa de juros e a
+fonte dela.
 
 **(c) Opção dominante.** Mostra o saldo esperado no fim do jogo para cada opção
 de cada rodada (com `*` no padrão). Avisa se uma opção vence as outras em todos

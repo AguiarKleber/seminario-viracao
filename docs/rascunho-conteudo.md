@@ -1,803 +1,855 @@
-# Rascunho do conteúdo do jogo e das enquetes
+# Rascunho do conteúdo do jogo (esquema v2)
 
-> **RASCUNHO — a validar.** Nada daqui entra no seminário sem a validação do
-> Kleberson (D-005). Cada número tem a fonte ao lado; onde não achei dado, está
-> escrito "estimativa" e o grau de confiança é baixo.
+> **RASCUNHO v2 — a validar.** Nada daqui entra no seminário sem a validação do
+> Kleberson (D-005). Cada número tem a fonte ao lado. Onde não há dado, está
+> escrito **"estimativa sem fonte"**, e a confiança é baixa (como na D-034).
 
-- **Data:** 28/09/2026.
-- **Arquivo do conteúdo:** [`config.json`](../config.json), com `versao`
-  `2026-09-28-rascunho`. Os textos de `fonte` do config resumem esta tabela e
-  nunca aparecem no telão.
-- **Como conferir as contas:** `npm run validar` roda as conferências de
-  equilíbrio sobre o config. As tabelas da seção 4 foram calculadas por
-  enumeração exata, com a mesma semântica de efeitos de `docs/contratos.md`
-  (seção 3), e batem com a saída do validador.
-- **Fontes locais** (na pasta Downloads, fora do repositório): a trilha do
-  seminário, o artigo de Ludmila Abílio (Contemporânea, 2021), o artigo de Carmo
-  et al. (Cad. EBAPE.BR, 2021) e a transcrição do Café da Manhã com Rosana
-  Pinheiro-Machado (04/11/2024).
+- **Data:** 29/09/2026.
+- **Arquivo do conteúdo:** [`config.json`](../config.json), `versao`
+  `2026-09-29-v2-rascunho`, hash `45f91525`. Os textos de `fonte` do config
+  resumem as tabelas da seção 2 e nunca aparecem no telão.
+- **Esquema:** v2, das decisões D-041 a D-048 (contratos, seção 1). O motor cobra
+  o básico da casa no fim do mês, depois de tudo, e os juros sobre a dívida que
+  vinha do mês anterior.
+- **Como conferir:** `npm run validar`. Todas as contas da seção 5 são de
+  enumeração exata (todas as cartas, com as chances de cada estado), feita com o
+  mesmo motor do telão.
+- **O que substitui:** o rascunho de 28/09.
+  - Continuam valendo: D-024 (horas extras do mês 1), D-026 e D-027 (Jonas em
+    duas equipes e a ordem das equipes), D-028 (as rendas de menor confiança),
+    D-029 (a associação perde em saldo no mês 3), D-030 (o corte de 15% e o nome
+    "Saldo acumulado"), D-031 e D-032 (as afirmações e o termômetro curto), D-033
+    e D-040 (os rótulos curtos).
+  - A D-025 foi substituída pela D-044.
 
 ---
 
-## 1. Resumo das escolhas
+## 1. Resumo
 
-1. **Cenário: Porto Alegre, setembro de 2026.** Todos os preços são locais e
-   atuais quando existe dado local. Renda e jornada vêm da PNAD Contínua 2025
-   (IBGE, publicada em setembro de 2026), que é nacional.
-2. **Cinco personas**, tiradas do artigo da Abílio e das outras fontes:
-   - **Jonas**, motoboy de aplicativo com moto financiada (a trajetória dos
-     motoboys, em Abílio);
-   - **Kauã**, entregador de bicicleta de 20 anos (o caso de Carlos, em Abílio,
-     e a pesquisa da Aliança Bike);
-   - **Daiane**, que vende doces e marmitas pelo Instagram (a pesquisa de
-     Pinheiro-Machado e o artigo do Cad. EBAPE.BR);
-   - **Marcos**, motorista de aplicativo e ex-metalúrgico (a trajetória de
-     Mário e a figura do motorista "amador", em Abílio);
-   - **Rose**, manicure por aplicativo (o caso de Clara, em Abílio).
-   Os nomes são inventados e diferentes dos nomes dos entrevistados do artigo,
-   para ninguém confundir persona com pessoa real.
-3. **Duas equipes no Jonas (motoboy)**, Laranja e Azul-céu, ambas obrigatórias.
-   Motivos: é a ocupação que a Abílio mais acompanha; é a que tem mais risco
-   físico, então a diferença que a sorte faz entre duas equipes iguais aparece
-   com mais força; e é o caso da "conta do entregador", do bloco Debrief e
-   teoria da trilha. A alternativa é o Kauã (bike), que a Abílio chama de
-   "grande símbolo da uberização" (pergunta 2).
-4. **O indicador `renda` virou "Saldo acumulado"**: a persona recebe a renda do
-   mês e paga o custo de vida do mês. O saldo é o que sobra, ou falta, no fim de
-   cada mês, somado ao longo dos 3 meses.
-5. **Custo de vida pela régua do mínimo:** aluguel, comida (a cesta básica do
-   DIEESE para Porto Alegre, por adulto-equivalente) e contas da casa. Não entram
-   saúde, roupa, escola, transporte da família, lazer nem previdência. A régua do
-   DIEESE (salário mínimo necessário) põe todas as personas entre R$ 980 e
-   R$ 2.230 negativos por mês (pergunta 1).
-6. **Só `soma` nos efeitos de dinheiro.** Um `multiplica` sobre a renda
-   multiplicaria também o custo de vida, porque o `todoMes` entra primeiro no
-   delta: "renda × 0,3" num mês de saldo negativo diminuiria o prejuízo. Por isso
-   cada valor é escrito por persona, com `se: { persona }`.
-7. **Duas regras que valem sozinhas nos meses 2 e 3** (`efeitosGerais`): quem
-   abriu o MEI continua pagando o DAS, e quem está com saldo abaixo de −R$ 500
-   paga juros do cheque especial.
-8. **Resultado da calibragem** (seção 4):
-   - no piloto automático, as 5 personas terminam os 3 meses no vermelho
-     (valor esperado, de −R$ 56 a −R$ 1.656);
-   - o melhor caminho de cada uma vai de −R$ 315 a +R$ 862 em 3 meses, e só
-     com a energia em 0;
-   - o MEI custa de R$ 70 a R$ 150 no valor esperado e melhora o pior caso em
-     R$ 550 a R$ 1.900;
-   - nenhuma opção vence em todos os indicadores, e o padrão de cada rodada nunca
-     é a opção de maior saldo esperado;
-   - **a sorte pesa mais do que a faixa sugerida pela arquitetura**: as cartas
-     explicam de 71% a 92% da variância do saldo (perguntas 6 e 7).
+1. **Cada persona responde pelo básico da casa inteira** (D-044). Todo mês,
+   entra o que o trabalho rendeu mais a outra renda da casa, e sai o básico:
+   comida (cesta básica do DIEESE de Porto Alegre para o tamanho da família),
+   aluguel, luz, água, gás, ônibus, celular e remédios.
+2. **As famílias:**
+   - **Rose e Daiane sustentam a casa sozinhas.** A Rose tem a filha de 15 e o
+     filho de 23, que está sem emprego. A Daiane tem o filho de 4, e o pai não
+     paga pensão.
+   - **Jonas, Kauã e Marcos têm uma segunda renda na casa, de um salário
+     mínimo:** a companheira, a mãe e a esposa, respectivamente.
+3. **Ninguém fecha as contas.** Em todos os caminhos possíveis, nas 5 personas,
+   o saldo termina negativo depois de 3 meses. No piloto automático, o valor
+   esperado vai de −R$ 3.850 (Kauã) a −R$ 8.446 (Rose).
+   - Só o Marcos fecha algum mês com alguma frequência: 6,3% das partidas, com
+     as decisões ao acaso. O Kauã fecha em 0,1%.
+   - Cada mês comum já começa com o básico descoberto, de −R$ 773 (Marcos) a
+     −R$ 2.412 (Rose).
+4. **A dívida cobra juros de 7,43% ao mês**, a taxa do cheque especial em
+   agosto de 2026 (Banco Central). É a modalidade que rola a dívida de um mês
+   para o outro sem pedir nada ao banco (seção 2.5).
+5. **Três meses com 4 dilemas cada**, sem resposta certa (D-043). O campo
+   `tendencia` saiu de todas as opções.
+   - **Mês 1: quanto trabalhar?** 12 horas; MEI; o de sempre (padrão); ou
+     trabalhar menos para estudar ou cuidar da família.
+   - **Mês 2: o app muda a regra.** Aceitar tudo (padrão); recusar o que não
+     paga; dois apps; ou parar um dia no breque.
+   - **Mês 3: e agora?** Empréstimo e madrugada; apertar o cinto (padrão);
+     entrar na associação; ou não parar nem machucado.
+6. **14 cartas**, com o dinheiro e os dias parados de verdade: queda leve,
+   fratura de 45 dias, bloqueio, assalto, doença, conserto, calote, taxa, temporal
+   e reajuste. Há também boas semanas, e duas cartas que só existem depois de uma
+   fratura: "INSS negou" e "recaída".
+7. **Consequências que atravessam os meses** (com `decidiu` e `sorteou`):
+   - **MEI:** quem abre no mês 1 paga o DAS nos três meses. Se tirar a fratura no
+     mês 2, recebe o INSS no mês 3, e metade das vezes a perícia nega.
+   - **Fratura no mês 2:** continua no mês 3, com mais 25 dias parado. Quem
+     "volta antes da alta" recupera 15 desses dias, e a chance de recaída
+     triplica.
+   - **Bloqueio no mês 2:** dura o mês 3 inteiro. Encurta com a associação
+     (liminar no 36º dia) e cai pela metade para quem rodava em dois apps.
+   - **Breque no mês 2:** aumenta a chance do reajuste no mês 3, que só vale para
+     entregador.
+8. **Calibragem** (`npm run validar`): 0 erros; nenhuma opção dominante; nenhum
+   padrão é a opção de maior saldo esperado.
+   - Os 5 avisos são todos de variância: as decisões explicam de 5,6% a 17% do
+     saldo final.
+   - Esses avisos estavam aceitos pela D-024. Aqui eles pesam ainda mais, porque
+     o básico descoberto é igual em todas as decisões e as cartas graves
+     atravessam o mês.
+
+### Correções ao rascunho de 28/09 que a pesquisa trouxe
+
+1. **Estufa da Rose:** no RS, a estufa é **proibida** para manicure, inclusive a
+   domicílio. A Portaria SES-RS 500/2010 exige autoclave. A carta "Quebrou" passou
+   a ser a autoclave.
+2. **INSS do acidente:** o valor diário (R$ 54,03) estava certo, mas o momento
+   em que o dinheiro chega, não. A decisão leva 34 dias em média, então o
+   dinheiro cai no mês seguinte. E ele só existe acima de 15 dias parado.
+3. **Contribuição ao INSS:** entre os plataformizados, é 34,0% (não 35,9%). Entre
+   motociclistas, 19,4%; entre motoristas, 25,5%.
+4. **"Vaquinha +400" da associação:** não achei fonte. Saiu. A mensalidade
+   (R$ 30) continua como estimativa sem fonte.
+5. **DPVAT:** não existe mais. A LC 211/2024 barrou o SPVAT, e um acidente de
+   2024 a 2026 não tem indenização obrigatória.
+6. **Gás:** o valor de Porto Alegre é R$ 119,00 (a média do RS era R$ 117,89).
+7. **Água:** passou a ter a tarifa do DMAE.
 
 ---
 
 ## 2. Cada número, com fonte
 
-Confiança: **alta** = dado oficial usado como está; **média** = dado oficial com
-uma conta ou uma hipótese simples; **baixa** = estimativa minha ou dado antigo,
-de outra cidade, ou de fonte com conflito de interesse.
+**Confiança:**
+- **alta:** dado oficial, usado como está;
+- **média:** dado oficial com uma conta, ou imprensa séria;
+- **baixa:** estimativa, dado antigo ou de outra cidade, ou fonte com conflito de
+  interesse (marcado).
 
 ### 2.1 Referências gerais
 
-| # | Valor | Onde entra | Fonte | Como foi derivado | Confiança |
+| # | Valor | Fonte | Derivação | Confiança |
+|---|---|---|---|---|
+| 1 | Salário mínimo 2026: **R$ 1.621**; líquido de INSS (7,5%) **R$ 1.499,43** | Presidência, Decreto 12.797/2025. https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm | 1.621 × 0,925. No config: R$ 1.499 | Alta |
+| 2 | DAS-MEI 2026: **R$ 86,05** (serviços) e **R$ 82,05** (comércio e indústria) | Receita Federal, Simples Nacional. https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=c3b2044c-ff97-432a-b33c-ecf2a3df6dc3 ; https://blog.nubank.com.br/valor-das-mei/ | 5% de 1.621 = 81,05; + R$ 5 de ISS ou + R$ 1 de ICMS. No config: 86 e 82 | Alta |
+| 3 | INSS por incapacidade: **só acima de 15 dias** (art. 59); o autônomo recebe **desde o 1º dia** se pedir em 30 dias (art. 60); acidente dispensa carência (art. 26 II); só vale o DAS pago em dia antes (art. 27 II); doença comum exige 12 contribuições (art. 25 I) | Lei 8.213/1991. https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm | 1 salário mínimo ÷ 30 = **R$ 54,03 por dia** | Alta |
+| 4 | Decisão do INSS: **34 dias** em média (ago/2026; eram 59 em fev/2026) | Agência Brasil, 03/09/2026. https://agenciabrasil.ebc.com.br/geral/noticia/2026-09/fila-de-espera-por-atendimento-do-INSS-e-zerada-em-agosto | O dinheiro de um acidente chega no mês seguinte. O RS não tem número divulgado | Alta |
+| 5 | **53%** das decisões de benefício por incapacidade foram negativas no 1º semestre de 2026 | Previdenciarista, 09/09/2026, leitura do BEPS de jul/2026. https://previdenciarista.com/blog/inss-nega-51-dos-pedidos-no-1o-semestre-de-2026/ | No jogo: ~50% (carta "INSS negou") | Média |
+| 6 | Cesta básica de Porto Alegre, ago/2026: **R$ 839,34** por adulto | DIEESE/Conab, 10/09/2026. https://www.dieese.org.br/analisecestabasica/2026/202608cestabasica.pdf | É o último mês publicado; a de setembro sai perto de 08/10 | Alta |
+| 7 | Criança conta **meia cesta**; a regra do DIEESE é 2 adultos e 2 crianças = 3 cestas | DIEESE, metodologia. https://www.dieese.org.br/metodologia/metodologiaCestaBasica/12.html | Para 2, 3 e 5 pessoas, extrapolei. **Quem tem 12 anos ou mais conta inteira** (escolha nossa: a filha de 15 da Rose) | Alta (a regra); média (a extrapolação) |
+| 8 | IPCA, número-índice: jun/2019 = 5.214,27; dez/2018 = 5.100,61; ago/2026 = 7.633,23 | IBGE, SIDRA, tabela 1737. https://sidra.ibge.gov.br/tabela/1737 | Fatores de correção de 1,4639 e de 1,4965 | Alta |
+
+### 2.2 Básico da casa, item por item (Porto Alegre)
+
+| # | Item | Valor usado | Fonte | Derivação | Confiança |
 |---|---|---|---|---|---|
-| 1 | Salário mínimo de 2026: **R$ 1.621,00** | DAS, INSS, auxílio | Presidência da República, Decreto 12.797/2025. https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm | Direto | Alta |
-| 2 | DAS-MEI 2026: **R$ 86,05** (serviços) e **R$ 82,05** (comércio) | Mês 1, opção b; meses 2 e 3 | LC 123/2006, art. 18-A (5% do mínimo de INSS + R$ 5 de ISS ou R$ 1 de ICMS). Conferido em https://blog.nubank.com.br/valor-das-mei/ | 5% × 1.621 = 81,05; + 5 ou + 1. No config: R$ 86 e R$ 82 | Alta |
-| 3 | Todas as 5 ocupações cabem no MEI | Mês 1, opção b | Resolução CGSN 140/2018, Anexo XI (ocupações "motoboy", "bikeboy (ciclista mensageiro)", "motorista de aplicativo", "manicure e pedicure" independentes; comércio). https://www8.receita.fazenda.gov.br/simplesnacional/arquivos/manual/anexo_xi.pdf | Conferi "bikeboy" numa fonte secundária (qipu.com.br); as outras não reconferi no anexo | Média |
-| 4 | Auxílio por acidente: **acidente de qualquer natureza dispensa carência**; MEI recebe 1 salário mínimo; o benefício conta desde o início da incapacidade, se passar de 15 dias | Carta "Acidente" | Lei 8.213/1991, arts. 26, II, e 60. https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm ; gov.br, perguntas frequentes do MEI sobre previdência | 20 dias / 30 × R$ 1.621 = R$ 1.080,67 → **R$ 1.080** | Alta (a regra); média (o INSS atrasa: no jogo o valor chega no mesmo mês) |
-| 5 | Doença comum exige **12 contribuições** | Carta "Adoeci" | Lei 8.213/1991, art. 25, I | MEI aberto no jogo não cobre doença | Alta |
-| 6 | IPCA, número-índice: jun/2019 = 5.214,27; dez/2018 = 5.100,61; ago/2026 = 7.633,23 | Correção de valores antigos | IBGE, SIDRA, tabela 1737. https://sidra.ibge.gov.br/tabela/1737 | Fatores: 1,4639 (jun/2019→ago/2026) e 1,4965 (dez/2018→ago/2026) | Alta |
+| 9 | Comida | cesta × adultos-equivalentes: 1,5 = **R$ 1.259**; 2,5 = **R$ 2.098**; 3 = **R$ 2.518** | itens 6 e 7 | 839,34 × fator, arredondado | Alta |
+| 10 | Aluguel de 2 quartos | **R$ 1.300** (Jonas, Marcos, Rose) | QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123–1.411, Sarandi R$ 1.192–1.525. https://www.quintoandar.com.br/alugar/imovel/rubem-berta-porto-alegre-rs-brasil | Meio da faixa. É mercado formal (exige fiador ou análise de crédito). FipeZAP ago/2026: Porto Alegre +11,04% em 12 meses. https://downloads.fipe.org.br/indices/fipezap/fipezap-202608-residencial-locacao.pdf | Média-baixa |
+| 11 | Aluguel de casa pequena | **R$ 1.020** (Kauã) | QuintoAndar, 29/09/2026: média do Chapéu do Sol/Restinga, todos os tipos de imóvel | Direto | Média-baixa |
+| 12 | Aluguel de 1 quarto | **R$ 1.000** (Daiane) | QuintoAndar, 29/09/2026: 1 dormitório com taxas, R$ 1.012–1.194 (Rubem Berta, Sarandi) | Abaixo da faixa (periferia) | Média-baixa |
+| 13 | Luz | 120 kWh = **R$ 130**; 150 = **R$ 162**; 180 = **R$ 194** | CEEE Equatorial, tarifa B1: R$ 0,822/kWh sem tributos (ANEEL 3.547/2025). https://ceee.equatorialenergia.com.br/valor-de-tarifas-e-servicos/ ; com ICMS e PIS/Cofins ≈ R$ 1,08/kWh (https://calculadoraenergia.com.br/tarifa/ceee-equatorial) | kWh × 1,08. O consumo é estimativa (a média do Sul é 208 kWh, EPE 2025) | Média-baixa |
+| 14 | Água e esgoto | 8 m³ = **R$ 79**; 12 = **R$ 119**; 16 = **R$ 158** | DMAE: R$ 5,50/m³ (Decreto 23.639/2026). https://prefeitura.poa.br/dmae/entenda-conta | 5,50 × m³ × 1,8 (esgoto ≈ 80% da água, deduzido da tarifa social). 4 m³ por pessoa: estimativa | Média-baixa |
+| 15 | Gás de cozinha | 0,6 botijão = **R$ 71**; 0,75 = **R$ 89**; 1 = **R$ 119** | ANP, levantamento de 20 a 26/09/2026, botijão de 13 kg em Porto Alegre, R$ 119,00 (15 revendas). https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorrencia/precos/levantamento-de-precos-de-combustiveis-ultimas-semanas-pesquisadas | Botijões por mês: estimativa | Alta (o preço) |
+| 16 | Ônibus | 20 passagens = **R$ 106**; 30 = **R$ 159**; 44 (quem vai trabalhar de ônibus) = **R$ 233** | Prefeitura de Porto Alegre: R$ 5,30 desde 19/02/2026. https://prefeitura.poa.br/smmu/noticias/onibus-e-taxi-passam-operar-com-novas-tarifas-partir-desta-quinta | Passagens por mês: estimativa. A Rose atende de ônibus, mas esse ônibus já sai da renda dela | Alta (a tarifa) |
+| 17 | Celular e internet | **R$ 50** (2 pessoas), **R$ 75** (3), **R$ 100** (4) | Pré-pago R$ 20–30 por 30 dias (https://www.minhaconexao.com.br/planos/planos-de-celular/plano-pre-pago); internet fixa ≈ R$ 92 (Anatel, via Telesíntese, 03/07/2026) | Estimativa | Baixa |
+| 18 | Remédios | **R$ 60 / 90 / 120** | IBGE, POF 2017-2018: famílias com até 2 salários mínimos gastam 4,2% com remédio. Farmácia Popular: 41 itens grátis desde 14/02/2025, **sem** analgésico, anti-inflamatório e antibiótico. https://agenciagov.ebc.com.br/noticias/202502/ministerio-da-saude-anuncia-100-de-gratuidade-no-farmacia-popular-e-abre-credenciamento-a-todos-os-municipios-do-pais | Estimativa | Baixa-média |
 
-### 2.2 Custo de vida em Porto Alegre
+**Ficaram de fora:** higiene e limpeza (não achei fonte), roupa, escola, lazer
+e previdência. O básico é o mínimo, não o necessário.
 
-| # | Valor | Onde entra | Fonte | Como foi derivado | Confiança |
+A régua do DIEESE com a cesta de Porto Alegre, o "salário mínimo necessário",
+daria **R$ 7.051,30** para a família de 4 (3 × 839,34 ÷ 0,3571). O básico do
+Marcos é R$ 4.742. Esse número vai para um slide.
+
+### 2.3 Renda e custos do trabalho (o `todoMes`)
+
+| # | Persona | Valor | Fonte | Derivação | Confiança |
 |---|---|---|---|---|---|
-| 7 | Cesta básica de Porto Alegre, ago/2026: **R$ 839,34** por adulto | Custo de vida de todas as personas | DIEESE/Conab, Pesquisa Nacional da Cesta Básica, via Jornal do Comércio (09/2026). https://www.jornaldocomercio.com/economia/2026/09/1262893-cesta-basica-em-porto-alegre-tem-queda-de-031-em-agosto.html | Direto. A cesta é a ração mensal de um adulto | Alta |
-| 8 | Criança = **0,5 adulto** | Custo de vida | Convenção do DIEESE para o salário mínimo necessário (2 adultos + 2 crianças = 3 adultos). https://www.dieese.org.br/analisecestabasica/salarioMinimo.html | Direto | Alta |
-| 9 | Aluguel de uma casa pequena na periferia: **R$ 1.000** | Custo de vida | FipeZAP, locação residencial, ago/2026: média de Porto Alegre R$ 46,46/m²; Nonoai, o bairro mais barato da lista de destaques, R$ 29,9/m². https://downloads.fipe.org.br/indices/fipezap/fipezap-202608-residencial-locacao-publico.pdf | 35 m² × R$ 29,9 = R$ 1.046 → R$ 1.000 (o FipeZAP mede anúncios de apartamento; casa na periferia tende a sair mais barata) | Média-baixa |
-| 10 | Luz: **~R$ 160** por mês | Contas da casa | CEEE Equatorial, tarifa residencial B1 de 2026: R$ 0,822/kWh sem tributos. https://ceee.equatorialenergia.com.br/valor-de-tarifas-e-servicos/ | 150 kWh × 0,822 = R$ 123; + ~30% de tributos e bandeira (estimativa). Há reajuste previsto de 24,24% para 22/11/2026, depois do seminário | Média-baixa |
-| 11 | Gás: **R$ 117,89** o botijão de 13 kg | Contas da casa | ANP, levantamento semanal de 20 a 26/09/2026, média do RS. https://clickpetroleoegas.com.br/botijao-gas-13-kg-preco-medio-estado-anp-roraima-rio-btl96 | 1 botijão por mês por casa (estimativa) | Média |
-| 12 | Água e esgoto: **~R$ 80** | Contas da casa | Estimativa (não conferi a tarifa do DMAE) | — | Baixa |
-| 13 | Celular com dados: **~R$ 60** | Contas da casa | Estimativa (plano pré-pago; é ferramenta de trabalho) | — | Baixa |
-| 14 | **Contas da casa: R$ 420** | Custo de vida | Soma de 10 a 13 | 160 + 118 + 80 + 60 = 418 → 420 | Média-baixa |
-| 15 | Régua alternativa: **R$ 2.350,43** por adulto-equivalente | Pergunta 1 | Metodologia do salário mínimo necessário do DIEESE (ago/2026: R$ 7.565,86 = 3 × cesta de São Paulo ÷ 0,3571). https://www.dieese.org.br/analisecestabasica/salarioMinimo.html | 839,34 ÷ 0,3571. Conferi a fórmula: 3 × 900,59 ÷ 0,3571 = 7.565,8 | Alta (o método) |
+| 19 | Jonas, entregas | **+R$ 2.200** | IBGE, PNAD Contínua, *Trabalho por meio de plataformas digitais 2025* (publ. set/2026), p. 10: motociclistas de app, R$ 2.221/mês, 44,9 h/semana. https://biblioteca.ibge.gov.br/visualizacao/livros/liv102309_informativo.pdf | Arredondado; é o valor "retirado", já sem a gasolina | Alta (média nacional) |
+| 20 | Jonas, parcela da moto | **−R$ 480** | Tabela Fipe set/2026, CG 160 Start 2026, R$ 18.598 (https://www.tabelafipebrasil.com/motos/HONDA/CG-160-START/2026); BCB, SGS 25471, 1,97% a.m. (jun/2026) | 80% financiado em 48x = R$ 482 | Média |
+| 21 | Jonas, manutenção da moto | **−R$ 261** | Cebrap/Amobitec (2025), p. 75. https://cebrap.org.br/wp-content/uploads/2025/10/Amobitec_CEBRAP_2025.pdf | Direto. **Pesquisa financiada pelas plataformas** | Média |
+| 22 | Kauã, entregas | **+R$ 1.370** | Aliança Bike (2019, São Paulo): R$ 936/mês. https://aliancabike.org.br/pesquisa-de-perfil-dos-entregadores-ciclistas-de-aplicativo/ | 936 × 1,4639 (D-028) | Média-baixa |
+| 23 | Daiane, vendas | **+R$ 1.500** | GEM Brasil 2018, em Carmo et al., Cad. EBAPE.BR, 2021, p. 19. https://doi.org/10.1590/1679-395120200043 | R$ 1.000 × 1,4965. É faturamento tratado como renda (D-028) | Baixa |
+| 24 | Daiane, curso de marketing | **−R$ 141** | CartaCapital, 07/11/2024, sobre a pesquisa de Pinheiro-Machado: cursos de R$ 1.697 a R$ 6.997 | O mais barato em 12x sem juros. O parcelamento é hipótese | Baixa |
+| 25 | Marcos, corridas | **+R$ 2.870** | PNAD 2025, p. 9: motoristas de app, R$ 2.873/mês, 45,9 h/semana | Arredondado; já sem o combustível | Alta (média nacional) |
+| 26 | Marcos, manutenção do carro | **−R$ 400** | Cebrap/Amobitec (2025), p. 47: R$ 615/mês entre os 65% que declararam | 0,65 × 615. **Financiada pelas plataformas** | Média-baixa |
+| 27 | Rose, atendimentos | **+R$ 2.100** | CAGED ago/2025–jul/2026, via salario.com.br: manicure com carteira, R$ 1.802 (https://www.salario.com.br/profissao/manicure-cbo-516120/); Abílio (2021), p. 951–952 | 1.802 × 1,15, já sem comissão, material e ônibus. Não há dado de manicure por app (D-028) | Baixa |
 
-### 2.3 Renda e custo de cada persona (por mês)
+### 2.4 Outra renda da casa e benefícios
 
-A conta do custo é sempre: **parte do aluguel + parte das contas + cesta × adultos-equivalentes que a pessoa sustenta**.
+| # | Valor | Fonte | Onde entra | Confiança |
+|---|---|---|---|---|
+| 28 | Salário mínimo líquido: **R$ 1.499** | item 1 | A companheira do Jonas (caixa de supermercado), a mãe do Kauã (auxiliar de limpeza) e a esposa do Marcos (auxiliar de cozinha) | Alta (o valor); a ocupação é escolha nossa |
+| 29 | Bolsa Família: entra quem tem até **R$ 218 por pessoa** | MDS, set/2026. https://www.gov.br/mds/pt-br/noticias/bolsa-familia-tera-valor-minimo-de-r-691-a-partir-de-outubro | **Nenhuma família entra.** A renda por pessoa vai de R$ 680 (Daiane) a R$ 992 (Marcos). Os valores mudam em 19/10/2026 (o mínimo vai de R$ 600 para R$ 691) | Alta |
+| 30 | Tarifa Social de luz (80 kWh grátis) e Gás do Povo (4 botijões por ano para 2 ou 3 pessoas): até **meio salário mínimo por pessoa** (R$ 810,50), com CadÚnico | Senado, 09/10/2025 (https://www12.senado.leg.br/noticias/materias/2025/10/09/sancionada-conta-de-luz-gratuita-para-familias-de-baixa-renda); Câmara, 02/02/2026 (https://www.camara.leg.br/noticias/1241845-camara-aprova-mp-que-cria-o-programa-gas-do-povo-com-botijao-gratuito-para-familias-de-baixa-renda/) | **Daiane (R$ 750 por pessoa) e Rose (R$ 700) teriam direito.** No config, **não entram** (pergunta 3) | Alta-média |
 
-| # | Persona | Valor | Fonte | Como foi derivado | Confiança |
-|---|---|---|---|---|---|
-| 16 | Jonas, renda | **R$ 2.200** | IBGE, PNAD Contínua, *Trabalho por meio de plataformas digitais 2025* (publ. set/2026), p. 10: motociclistas plataformizados, R$ 2.221/mês, 44,9 h/semana, R$ 11,4/h. https://biblioteca.ibge.gov.br/visualizacao/livros/liv102309_informativo.pdf . O IBGE explica que é o valor "retirado", já sem o combustível (Tribuna do Sertão, 07/09/2026) | Arredondado | Alta (média nacional) |
-| 17 | Jonas, custo | **R$ 1.760** | 7, 8, 9, 14 | Divide aluguel e contas com a companheira (½ × 1.420 = 710) e paga metade da comida da casa, com uma filha (1,25 × 839,34 = 1.049) → 1.759 | Média |
-| 18 | Jonas, parcela da moto | **R$ 480** | Tabela Fipe, set/2026: CG 160 Start 2026, R$ 18.598 (https://www.tabelafipebrasil.com/motos/HONDA/CG-160-START/2026); BCB, SGS 25471: aquisição de veículos, 1,97% a.m. (jun/2026) | 80% financiado (R$ 14.878) em 48 vezes a 1,97% a.m. = R$ 482 | Média |
-| 19 | Kauã, renda | **R$ 1.370** | Aliança Bike, *Pesquisa de perfil dos entregadores ciclistas de aplicativo* (São Paulo, 2019): R$ 936/mês, 9 a 12 h/dia, 60% sete dias por semana. https://aliancabike.org.br/pesquisa-de-perfil-dos-entregadores-ciclistas-de-aplicativo/ (citada por Abílio) | 936 × 1,4639 (IPCA) = R$ 1.370 | Média-baixa (São Paulo, 2019, antes da pandemia) |
-| 20 | Kauã, custo | **R$ 1.310** | 7, 9, 14 | Mora com a mãe e o irmão: ⅓ de aluguel e contas (473) + a própria comida (839) → 1.313 | Média |
-| 21 | Daiane, renda | **R$ 1.500** | GEM Brasil 2018, citado em Carmo et al., Cad. EBAPE.BR, v. 19, n. 1, 2021, p. 19: metade dos negócios fatura até R$ 12 mil por ano, "cerca de um salário mínimo por mês". https://doi.org/10.1590/1679-395120200043 | R$ 1.000/mês × 1,4965 (IPCA) = R$ 1.496. **É faturamento, e o config trata como renda líquida**: a conta favorece a Daiane | Baixa |
-| 22 | Daiane, custo | **R$ 1.470** | 7, 14 | Mora na casa da mãe, sem aluguel: ½ das contas (210) + a comida dela e do filho (1,5 × 839,34 = 1.259) → 1.469 | Média |
-| 23 | Marcos, renda | **R$ 2.870** | PNAD 2025, p. 9: condutores de automóveis plataformizados, R$ 2.873/mês, 45,9 h/semana, R$ 14,4/h | Arredondado | Alta (média nacional) |
-| 24 | Marcos, custo | **R$ 2.630** | 7, 8, 9, 14 | Casa com a esposa e dois filhos (1.420 + 3 × 839,34 = 3.938); ele paga ⅔, a esposa ⅓ → 2.625 | Média |
-| 25 | Marcos, manutenção do carro | **R$ 400** | Cebrap/Amobitec, *Painel de acompanhamento dos motoristas e entregadores parceiros, 2ª onda* (2025), p. 47–48: manutenção de R$ 615/mês entre os 65% que declararam. https://static.congressoemfoco.com.br/attachment/2025/11/12/784c6a_Amobitec_CEBRAP_2025.pdf | 0,65 × 615 = R$ 400. **Atenção:** a pesquisa é financiada pela associação das plataformas | Média-baixa |
-| 26 | Rose, renda | **R$ 2.100** | CAGED (ago/2025 a jul/2026), via salario.com.br: salário médio de manicure com carteira, R$ 1.802,49, 43 h/semana. https://www.salario.com.br/profissao/manicure-cbo-516120/ ; Abílio (2021), p. 951–952: Clara ganhava mais sem registro do que com o piso | 1.802 × 1,15 ≈ R$ 2.070 → R$ 2.100, já sem comissão do app, material e ônibus. **Não achei dado de renda de manicure por aplicativo** | Baixa |
-| 27 | Rose, custo | **R$ 1.970** | 7, 9, 14 | Divide aluguel e contas com o filho adulto (710) + a comida dela e da filha de 15 (1,5 × 839,34 = 1.259) → 1.969 | Média |
+### 2.5 Juros da dívida (`regras.jurosDividaMes`)
 
-**Saldo de um mês comum, sem carta:** Jonas −R$ 40; Kauã +R$ 60; Daiane +R$ 30;
-Marcos −R$ 160; Rose +R$ 130.
+| Modalidade (Banco Central, SGS, ago/2026) | Ao mês | Série | Por que sim ou não |
+|---|---|---|---|
+| **Cheque especial (escolhida)** | **7,43%** | 25463 | É a que rola sozinha de um mês para o outro, sem pedir nada ao banco, e é o que o motor faz: cobra juros sobre o saldo negativo que vinha de antes. Tem teto legal de 8% ao mês (Resolução CMN 4.765/2019) |
+| Cartão, rotativo | 15,18% | 25477 | Mais usada por quem tem pouca renda, mas só pode ficar um mês no rotativo; depois vira parcelamento (a regra de 2017 não foi reconferida). Aparece no contexto do Marcos no mês 3 |
+| Crédito pessoal não consignado | 6,39% | 25464 | É o empréstimo da opção a do mês 3: 6,39% de R$ 1.500 = **R$ 96** |
+| Agiota | ~30% | Terra, 06/05/2025 (Porto Alegre): "podem ultrapassar os 30% ao mês" | Reportagem; não entra no motor (pergunta 4) |
 
-### 2.4 Decisões
+As séries saem de `https://api.bcb.gov.br/dados/serie/bcdata.sgs.{série}/dados/ultimos/3?formato=json`.
 
-| # | Valor | Onde entra | Fonte | Como foi derivado | Confiança |
-|---|---|---|---|---|---|
-| 28 | Horas extras do "trabalhar o máximo": Jonas **+R$ 740**, Kauã **+R$ 150**, Daiane **+R$ 500**, Marcos **+R$ 930**, Rose **+R$ 700**; energia −3 | Mês 1, opção a | Ganho-hora da PNAD 2025 (moto R$ 11,4; carro R$ 14,4); para Daiane e Rose, a renda-base ÷ 193,5 h (45 h × 4,3 semanas) | +20 h/semana × 4,3 × 75% do ganho-hora médio. Kauã: só +10 h, porque já trabalha ~70 h. **O fator de 75%** (as horas a mais são as de menos pedido) **é hipótese minha** | Baixa |
-| 29 | Corte do mês 2: **15% da renda-base** (Jonas −330, Kauã −205, Daiane −225, Marcos −430, Rose −315) | Mês 2, efeito geral | Ordem de grandeza: PNAD 2025, p. 7 (2022–2025: rendimento dos plataformizados +1,0%, dos demais +10,6%); REMIR (Abílio et al., 2020): 58,9% dos entregadores relataram queda de remuneração e 49,3% corte de bônus. https://pesquisa.ie.unicamp.br/wp-content/uploads/sites/62/2020/06/74-Texto-do-artigo-568-2-10-20200608.pdf | Um corte concentrado num mês, para caber no jogo | Baixa (ilustrativo) |
-| 30 | "Aceitar tudo": **+10%** da renda-base, energia −2; "duas plataformas": **+20%**, energia −3; "recusar": 0, energia +1 | Mês 2 | PNAD 2025, p. 12: 37,5% usam dois ou mais apps; p. 13: 78,3% dos entregadores dizem que o app define totalmente o valor; p. 14: 23,1% têm a jornada moldada por ameaça de punição ou bloqueio | Percentuais ilustrativos | Baixa |
-| 31 | "Empréstimo e trabalhar mais": **+20%** da renda-base, **−R$ 120** de juros, energia −3 | Mês 3, opção a | BCB: cheque especial ~8% a.m. (mai/2026); rotativo do cartão 440,5% a.a. (dez/2025, Agência Brasil). https://agenciabrasil.ebc.com.br/economia/noticia/2025-12/juros-do-credito-pessoal-e-cartao-rotativo-avancam-para-familias | 8% × R$ 1.500 = R$ 120 | Média-baixa (o 8% veio de resumo de busca; conferir no SGS do BCB) |
-| 32 | "Apertar o cinto": **+6%** da parte da pessoa no custo (Jonas +105, Kauã +80, Daiane +90, Marcos +160, Rose +120), energia −1, proteção +1 | Mês 3, opção b | Estimativa | — | Baixa |
-| 33 | "Protesto e associação": **um dia sem ganho** (renda ÷ 26) **+ R$ 30** de mensalidade, energia +1, proteção +2 | Mês 3, opção c | Estimativa (a mensalidade) | Jonas −115, Kauã −85, Daiane −90, Marcos −140, Rose −110 | Baixa |
-| 34 | Juros quando o saldo passa de −R$ 500: **−R$ 100** por mês | Meses 2 e 3, efeito geral | Mesma fonte de 31 | ~8% a 10% sobre uma dívida de R$ 1.000 a R$ 1.250 | Média-baixa |
+### 2.6 Decisões
 
-### 2.5 Cartas
+| # | Valor | Onde | Fonte | Confiança |
+|---|---|---|---|---|
+| 31 | 12 horas, 7 dias: Jonas **+520**, Kauã **+105**, Daiane **+350**, Marcos **+650**, Rose **+490**; energia −3 | Mês 1, a | D-024 (pacote B): +20 h/semana a ~53% do ganho-hora da PNAD. UFBA (563 entregadores, Salvador): o acidente em 1 ano sobe de 44,1% para 49,1% com mais de 10 h/dia e para 50% com 7 dias por semana (Correio, 12/05/2025) | Baixa (o fator); média (o risco) |
+| 32 | MEI: **−86** (−82 Daiane) nos 3 meses; proteção +3 | Mês 1, b; meses 2 e 3 | itens 2 e 3 | Alta |
+| 33 | Trabalhar menos: **−5 dias** (1/6 do mês: Jonas −367, Kauã −228, Daiane −250, Marcos −478, Rose −350); energia +1; queda ×0,6 | Mês 1, d | Abílio (2021), p. 950: Carlos, 12 h por dia, sem tempo para a faculdade | Estimativa |
+| 34 | Corte do mês 2: **−15% da renda-base** (Jonas −330, Kauã −206, Daiane −225, Marcos −431, Rose −315) | Mês 2, efeito geral | D-030. Casos reais: iFood paga **R$ 3,00** pela 2ª entrega agrupada, e não R$ 7,50 (jun/2025, https://institucional.ifood.com.br/entregadores/ifood-amplia-ganhos-dos-entregadores-com-reajuste-da-tarifa-minima-e-km-rodado/); "Mais Entregas": "R$ 3,50 por cada uma, que antes você faturava R$ 7,50" (55content, 28/08/2026); Meta +12,15% no anúncio (jan/2026); PNAD 2022–2025: plataformizados +1,0% contra +10,6% dos demais | Baixa (ilustrativo) |
+| 35 | Aceitar tudo: **+10%**, energia −2, bloqueio ×0,4. Dois apps: **+20%**, energia −3 | Mês 2, a e c | iFood (31/08/2026): o "Mais Entregas" exige 90% do tempo disponível e no máximo 2 recusas. PNAD 2025: 37,5% usam 2 ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app | Baixa (os percentuais) |
+| 36 | Recusar: renda 0, energia +1, bloqueio +10 | Mês 2, b | 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. https://motoristas.99app.com/tr-restricoes-70/ ; Metrópoles (01/08/2025): 7 recusas = 15 min fora. https://www.metropoles.com/materias-especiais/entregador-gamificacao-ifood | Alta (as regras) |
+| 37 | Breque: **−1 dia** (Jonas −73, Kauã −46, Daiane −50, Marcos −96, Rose −70); energia +1, proteção +1; reajuste do mês 3 mais provável | Mês 2, d | Breque de 31/03/2025, em mais de 100 cidades; o iFood subiu o mínimo de R$ 6,50 para **R$ 7,50** em 01/06/2025, dois meses depois. Em set/2026, o iFood não puniu o score de quem desligou (TechTudo) | Média |
+| 38 | Empréstimo e madrugada: **+20%**, **−R$ 96** de juros, energia −3, assalto +3 | Mês 3, a | item 2.5 | Média (os juros); baixa (o +20%) |
+| 39 | Apertar o cinto: **~4% da comida da casa** (Jonas e Kauã +84, Daiane +50, Marcos e Rose +101); energia −1; doença +4 | Mês 3, b | Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar. https://agenciabrasil.ebc.com.br/direitos-humanos/noticia/2025-04/tres-em-dez-entregadores-de-comida-enfrentam-inseguranca-alimentar | Estimativa |
+| 40 | Associação: **−1 dia** e **−R$ 30** de mensalidade; energia +1, proteção +2. Com bloqueio no mês 2, liminar no 36º dia: **+9 dias** | Mês 3, c | CUT, 23/07/2026: Simtrapli-RS e advogado conseguiram liminar em ~36 dias (bloqueio em 11/06, liminar em 17/07/2026). https://www.cut.org.br/noticias/motoristas-por-aplicativo-obtem-vitorias-contra-uber-na-justica-do-rs-9943 . Mensalidade: estimativa sem fonte (D-034) | Média (o prazo); baixa (a mensalidade) |
+| 41 | Não parar nem machucado: **+2 folgas**; energia −3; queda e fratura +2; doença com só 3 dias parado; com fratura no mês 2, **+15 dias** e recaída +20 | Mês 3, d | Cebrap/Amobitec (2025), p. 71: parte dos acidentados voltou a trabalhar antes de se recuperar | Estimativa |
+
+### 2.7 Cartas
+
+Os dias parados são a fração do mês (5/30, 7/30, 15/30…), como no config de
+28/09. Um dia vale: Jonas R$ 73, Kauã R$ 46, Daiane R$ 50, Marcos R$ 96 e Rose
+R$ 70.
 
 | # | Carta | Valores | Fonte | Confiança |
 |---|---|---|---|---|
-| 35 | Acidente: 20 dias parado (grave, meses 2 e 3) | Perde 20/30 da renda (Jonas −1.465, Kauã −915, Daiane −1.000, Marcos −1.915, Rose −1.400); conserto do veículo (moto −300, bike −150, carro −800); remédios −200; energia −2; +1.080 de auxílio se tiver MEI; +400 de vaquinha se entrou na associação no mês 3 | Cebrap/Amobitec (2025), p. 70–71: 22% dos entregadores de moto e 15% dos motoristas tiveram ocorrência de trânsito em 3 meses; afastamentos de até 3 meses, sem previdência. PNAD 2025, p. 9–10: só 19,4% dos motociclistas e 25,5% dos motoristas de app contribuem. Abílio (2021): o irmão de Carlos atropelado | Média (a chance, dramatizada); baixa (conserto e remédios) |
-| 36 | Conta bloqueada sem explicação (grave, meses 2 e 3) | Perde 10/30 da renda; +300 se a associação contestou | Abílio (2021), p. 941 ("bloqueio branco" por recusar corridas) e p. 950 (Carlos bloqueado após reclamação de cliente); PNAD 2025, p. 12 e 14. **Não achei a proporção de trabalhadores bloqueados** | Baixa (a chance) |
-| 37 | Fui assaltado (grave) | Celular R$ 700 + o dinheiro do dia (renda ÷ 26); energia −1 | Cebrap/Amobitec (2025): 7% dos entregadores e 6% dos motoristas assaltados em 3 meses | Média (a chance); baixa (o valor do celular) |
-| 38 | Adoeci: uma semana parado | Perde 7/30 da renda; o MEI novo não cobre | Lei 8.213/1991, art. 25, I | Mecânica (a chance sobe com a energia baixa) |
-| 39 | O instrumento de trabalho quebrou | Moto −500, bike −200, celular da Daiane −800, carro −1.200, estufa da Rose −300 | Cebrap/Amobitec (2025): manutenção média de moto R$ 261/mês e de carro R$ 615/mês; um conserto grande ≈ dois meses disso. Bike, celular e estufa: estimativa | Baixa |
-| 40 | Uma semana boa | +10% da renda-base; energia −1 | Abílio (2021), p. 941 e 944: bonificações que "nunca estão realmente garantidas"; 12 horas seguidas para ganhar uma bonificação | Ilustrativo |
-| 41 | A mobilização arrancou um reajuste (mês 3) | +R$ 150 | Brasil de Fato, 29/04/2025: depois do breque, o iFood subiu R$ 1 por entrega de moto e R$ 0,50 de bike. https://www.brasildefato.com.br/2025/04/29/ifood-anuncia-aumento-entregadores-acham-valor-patetico-e-exigem-negociacao-ate-1o-de-maio/ | Baixa (o valor) |
-| 42 | Um mês como os outros | Nada | — | — |
+| 42 | Uma semana boa | +10% da renda-base; energia −1 | Abílio (2021), p. 941 e 944: bonificações que "nunca estão realmente garantidas" | Ilustrativo |
+| 43 | Temporal | Jonas +150 e Kauã +110 (promoção de chuva); Marcos +150 (dinâmica); Daiane −100 (2 dias sem vender); Rose −161 (2 dias sem atender, mais ônibus) | INMET, via O Tempo (27/09/2026): alerta laranja, vento de 100 km/h e granizo. Metrópoles (01/08/2025): promoção de R$ 3 a R$ 12 por entrega | Média (o fato); estimativa (os valores: 2 dias × ~11 entregas × ~R$ 7) |
+| 44 | Quebrou | Jonas −669 (2 meses de manutenção + 2 dias); Kauã −246; Daiane −550 (tela + 3 dias); Marcos −1.517 (2 × R$ 615 + 3 dias); Rose −560 (autoclave: conserto + 3 dias) | Cebrap/Amobitec (2025). Autoclave exigida pela Portaria SES-RS 500/2010 (CEVS-RS: https://www.cevs.rs.gov.br/upload/arquivos/201706/27140015-1358859248-apresentacao-portaria-eis-portaria-500.pdf), nova de R$ 1.480 a R$ 3.990 (https://www.casadodermato.com.br/autoclave-vitale-5-litros-cristofoli) | Média (moto e carro); estimativa (bicicleta, tela, conserto da autoclave) |
+| 45 | Doença: 7 dias | −7 dias − R$ 60 de remédio; no mês 3, com "não parar", só 3 dias | Lei 8.213, arts. 25 I e 59; Farmácia Popular sem antibiótico | Alta (a regra); estimativa (o remédio) |
+| 46 | Queda leve: 5 dias (moto, bike, carro) | Jonas −961 (5 dias + retrovisor, manete e guidão = R$ 594); Kauã −378; Marcos −1.278 (5 dias + funilaria de R$ 800) | Cebrap/Amobitec (2025): 22% dos entregadores de moto e 15% dos motoristas acidentados em 3 meses. Peças de CG 160 em concessionária (AutoPapo, 04/03/2026: https://autopapo.com.br/motos/valor-pecas-de-motos-populares/). Seguro do iFood só a partir de 7 dias; INSS só acima de 15. **Ninguém paga nada** | Média; estimativa (bicicleta e funilaria) |
+| 47 | **Fratura: 45 dias** (grave, meses 2 e 3) | 20 dias no mês (Jonas −1.467, Kauã −913, Daiane −1.000, Marcos −1.913, Rose −1.400) + conserto (moto −1.500, bike −300, carro −2.000) + remédio −150. **Mais 25 dias no mês seguinte** (Jonas −1.833) | Fratura de punho: 6 a 8 semanas para consolidar (OrthoInfo/AAOS: https://www.orthoinfo.org/diseases--conditions/fraturas-distais-do-radio-fratura-do-punho-distal-radius-fractures/). Cebrap: afastamentos de até 3 meses, "nenhum relatou uso da previdência". UFBA: só 20% dos que pararam 15 dias ou mais receberam benefício | Média (dias); estimativa (consertos, entre R$ 594 e R$ 5.862,54, que é o lado inteiro da moto na concessionária) |
+| 48 | Auxílio do INSS da fratura (efeito do mês 3) | **+R$ 2.431** (45 × 54,03); com "voltei antes da alta", **+R$ 1.621** (30 dias) | itens 3 e 4 | Alta |
+| 49 | **INSS negou** (grave, só depois de fratura com MEI) | −2.431 (ou −1.621) | item 5; peso 105, que dá ~50% nesse ramo | Média |
+| 50 | **Recaída** (grave, só depois de fratura) | −10 dias − R$ 600 (4 sessões de fisioterapia a R$ 150) | Doctoralia/Cronoshare: R$ 150 a R$ 320 por sessão em Porto Alegre. SUS no RS: 12.465 na fila de ortopedia em jan/2026, sem tempo médio divulgado (Agora RS, 28/05/2026) | Baixa |
+| 51 | **Bloqueio** (grave, meses 2 e 3) | −15 dias. Se foi no mês 2: **o mês 3 inteiro** (Jonas −2.200), a menos que haja associação (+9 dias) ou dois apps (metade de volta) | Abílio (2021), p. 941 e 950; CUT, 23/07/2026 (item 40); TJDFT, 16/01/2026: 16 semanas; O Povo, 01/12/2025: 15,5% relatam bloqueio sem explicação (pesquisa GigU, **fintech do setor**). Instagram: onda de banimentos em 2026 (TecMundo; Correio da Manhã, 05/2026) | Média (os prazos); baixa (a chance) |
+| 52 | **Assalto** (grave; menos Daiane) | −R$ 1.000 (celular) − 3 dias (o dia roubado e 2 sem sair) | Cebrap/Amobitec (2025), p. 45 e 70: 7% dos entregadores e 6% dos motoristas assaltados em 3 meses. Ação da Cidadania: 93,4% sem seguro do celular | Média (a chance); estimativa (o celular) |
+| 53 | Trabalhei e não recebi | Jonas −120 e Kauã −80 (pedidos cancelados depois da coleta); Daiane −180 (Pix falso); Marcos −150 (cancelaram a caminho); Rose −175 (3 × (R$ 60 × 0,8 + R$ 10,60)) | NailNow (FAQ): cancelar é grátis até 1 h antes; 99: taxa só entre 4 e 12 min; Pix falso: guias da Stone e do Mercado Pago | Baixa (os valores) |
+| 54 | O app apertou a taxa (meses 1 e 3; Jonas, Kauã, Daiane) | Jonas −180 (40 entregas agrupadas × R$ 4,50); Kauã −135 (30 × 4,50); Daiane −150 (anúncio +12,15% e chocolate +24,77%) | iFood (item 34); chocolate +24,77% em 12 meses (Poder360: https://www.poder360.com.br/poder-economia/chocolate-sobe-248-em-1-ano-e-pressiona-pascoa-de-2026/) | Alta (as regras); estimativa (as quantidades) |
+| 55 | A mobilização arrancou um reajuste (mês 3; Jonas e Kauã) | Jonas +R$ 150 (R$ 1 × 150 entregas); Kauã +R$ 75 (R$ 0,50) | Brasil de Fato, 29/04/2025. https://www.brasildefato.com.br/2025/04/29/ifood-anuncia-aumento-entregadores-acham-valor-patetico-e-exigem-negociacao-ate-1o-de-maio/ | Baixa (as 150 entregas) |
 
-### 2.6 Referência "com carteira assinada" (Jonas)
+### 2.8 Referência "Jonas com carteira assinada"
 
-| # | Valor | Fonte | Confiança |
-|---|---|---|---|
-| 43 | Salário-base médio de motoboy: **R$ 1.763,45** (43 h/semana, sem adicionais) | CAGED, ago/2025 a jul/2026, via https://www.salario.com.br/profissao/motoboy/ | Média (média nacional; não achei a convenção do Sindimoto-RS) |
-| 44 | Periculosidade de **30%** para motociclista | Lei 12.997/2014. https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2014/lei/l12997.htm | Alta |
-| 45 | INSS 2026: 9% com parcela a deduzir de R$ 24,32 na faixa de R$ 1.621,01 a R$ 2.902,84 | Portaria Interministerial MPS/MF 13/2026, via https://www.contabilizei.com.br/contabilidade-online/tabela-inss/ | Alta |
-| 46 | Imposto de renda: **isento** até R$ 5 mil | Lei 15.270/2025, em vigor desde 01/01/2026. https://www12.senado.leg.br/noticias/materias/2025/11/27/sancionada-isencao-do-imposto-de-renda-para-quem-ganha-ate-r-5-mil-por-mes | Alta |
+- **Salário-base médio de motoboy:** R$ 1.763,45 (CAGED ago/2025–jul/2026,
+  https://www.salario.com.br/profissao/motoboy/). Confiança média: é média
+  nacional, e não achei a convenção do Sindimoto-RS.
+- **Mais 30% de periculosidade** (Lei 12.997/2014): bruto de R$ 2.292,49.
+- **Menos INSS de R$ 182,00** (Portaria MPS/MF 13/2026). O IR é isento (Lei
+  15.270/2025). Líquido: **R$ 2.110,48 por mês**.
+- **A mesma casa do Jonas de app:** + R$ 1.499 da companheira − R$ 4.166 do
+  básico − R$ 480 da parcela − R$ 261 da manutenção = **−R$ 1.297,52 por mês**.
+- **Com os mesmos juros de 7,43%:** −R$ 1.297,52 → −R$ 2.691,04 → **−R$ 4.188,56**.
+- **Mais 13º e férias proporcionais a 3 meses:** R$ 527,62 + R$ 703,49.
+- **Total: −R$ 2.957 no config** (era +R$ 840, com o custo de vida de 28/09).
+- **Ficam de fora, a favor da carteira:** o FGTS (8% sobre salário, 13º e
+  férias = R$ 657), o aluguel de moto que muitas convenções pagam, e o INSS
+  desde o primeiro dia (a empresa paga os 15 primeiros).
+- **Comparação:** o Jonas de app termina com −R$ 5.029 no piloto automático e
+  −R$ 4.204 no melhor caminho, com a energia no fim.
 
-**A conta:**
+### 2.9 Para os slides (não entram no config)
 
-- Bruto: 1.763,45 × 1,30 = **R$ 2.292,49**. INSS: 2.292,49 × 9% − 24,32 = **R$ 182,00**. Líquido: **R$ 2.110,49** por mês.
-- 3 meses de salário líquido: R$ 6.331,45.
-- 13º proporcional (3/12 do bruto, com a mesma alíquota efetiva de 7,94%): R$ 527,62.
-- Férias proporcionais com um terço (3/12 × bruto × 4/3, mesma alíquota): R$ 703,49.
-- Total recebido ou adquirido em 3 meses: **R$ 7.562,56**.
-- Menos o mesmo custo de vida do Jonas no app (R$ 1.760 + R$ 480 da moto, × 3 = R$ 6.720): **saldo de R$ 842,56 → R$ 840** no config.
-- Ficam de fora, e a favor da carteira: FGTS (8% × R$ 8.214,75 = R$ 657), o aluguel de moto que muitas convenções pagam, e a cobertura do INSS desde o primeiro dia, inclusive para doença depois da carência.
-
-Comparação: o Jonas de app termina com **−R$ 806** no piloto automático e
-**+R$ 248** no melhor caminho, com a energia em 0.
-
-### 2.7 Números para os slides (não entram no config)
-
-- PNAD 2025: 2,0 milhões de plataformizados; 34,0% contribuem para a
-  previdência, contra 63,0% dos demais; 72,1% informais; 44,7 h por semana
-  contra 39,3 h; R$ 16,2 por hora contra R$ 18,4.
-- PNAD 2025: motivo principal para trabalhar por app: flexibilidade (26,8%),
-  não conseguiu outro trabalho (24,6%), renda maior (20,8%).
-- DIEESE, ago/2026: salário mínimo necessário de **R$ 7.565,86**, 4,7 vezes o
-  mínimo.
-- Fairwork Brasil 2025 (UFRGS, UFRJ, UnB, UFPR): das 10 plataformas avaliadas,
-  8 tiraram zero em trabalho decente.
-  https://ufpr.br/trabalho-em-plataformas-digitais-no-brasil-segue-marcado-por-exploracao-e-precariedade-aponta-pesquisa/
-- Aliança Bike (2019): 71% dos entregadores ciclistas se declaram negros; 59%
-  começaram por causa do desemprego.
-- Pinheiro-Machado (Café da Manhã, 2024): cerca de 1% dos pequenos perfis saiu
-  dessa faixa em quatro meses de acompanhamento.
+- **DIEESE:** salário mínimo necessário de R$ 7.565,86 (4,67 salários mínimos);
+  com a cesta de Porto Alegre, R$ 7.051,30.
+- **PNAD 2025:** 84,4% homens; 44,7 h por semana; 72,1% informais; "não consegue
+  outro trabalho" é o motivo de 24,6%.
+- **DetranRS:** 122 motociclistas morreram no 1º trimestre de 2026 (+8%); pelo
+  menos 40% dos habilitados trabalhavam com a moto.
+- **Notificações de acidente de trabalho (SINAN):** 8.630 em 2023, 10.034 em
+  2024 e 11.662 em 2025. A subnotificação é grande.
+- **Enchente de 2024:** o iFood pagou R$ 1.500 (3 × R$ 500) a quem estava
+  inscrito em assistência social, depois de mediação do MPT
+  (https://www.prt4.mpt.mp.br/procuradorias/prt-porto-alegre/12358). A Mottu
+  cobrou R$ 245 por semana pelas motos perdidas.
+- **Seguro do iFood:** automático, diária de no mínimo R$ 50, de 7 a 30 dias,
+  teto de **R$ 3.000**, só na rota do iFood
+  (https://institucional.ifood.com.br/entregadores/seguro-contra-acidentes-pessoais-ifood/).
+  Mesmo assim, "só uma pequena parte" dos entregadores do Cebrap recebeu algo
+  (pergunta 11).
 
 ---
 
-## 3. Personas, opções e cartas
+## 3. Famílias, básico e outra renda
 
-### 3.1 Personas e equipes
+| Equipe | Persona | Em casa (`familia`) | Básico da casa | Outra renda | Do trabalho | Falta num mês comum |
+|---|---|---|---|---|---|---|
+| e1 Laranja, e2 Azul-céu | **Jonas**, motoboy, 34, moto financiada, Sarandi | Jonas, a companheira (caixa de supermercado, um salário mínimo) e a filha de 6 anos. 3 pessoas | **R$ 4.166** | R$ 1.499 | 2.200 − 480 − 261 = **R$ 1.459** | **−R$ 1.208** |
+| e3 Verde-azulado | **Daiane**, vende doces e marmitas pelo Instagram, 29 | Daiane e o filho de 4 anos, de aluguel; o pai não paga pensão. 2 pessoas | **R$ 2.755** | — | 1.500 − 141 = **R$ 1.359** | **−R$ 1.396** |
+| e4 Azul | **Marcos**, motorista, 41, carro de 2014, ex-metalúrgico | Marcos, a esposa (auxiliar de cozinha, um salário mínimo) e os filhos de 10 e 7 anos. 4 pessoas | **R$ 4.742** | R$ 1.499 | 2.870 − 400 = **R$ 2.470** | **−R$ 773** |
+| e5 Vermelhão | **Kauã**, bike, 20, quer fazer faculdade, Restinga | Kauã, a mãe (auxiliar de limpeza, um salário mínimo) e a irmã de 9 anos. 3 pessoas | **R$ 3.886** | R$ 1.499 | **R$ 1.370** | **−R$ 1.017** |
+| e6 Roxo-rosado | **Rose**, manicure por app, 47, atende de ônibus | Rose sustenta sozinha a casa: a filha de 15 estuda, e o filho de 23 procura emprego há cinco meses. 3 pessoas | **R$ 4.512** | — | **R$ 2.100** | **−R$ 2.412** |
 
-| Equipe | Cor e forma | Persona | Descrição (como vai no config) | Energia inicial | Obrigatória |
+**O básico, item por item** (valores do config, em R$):
+
+| Item | Jonas | Kauã | Daiane | Marcos | Rose |
 |---|---|---|---|---|---|
-| e1 Laranja | #E69F00, círculo | Jonas | Motoboy, 34 anos, entrega por aplicativo com moto financiada. Divide as contas com a companheira; têm uma filha de 6 anos. | 7 | sim |
-| e2 Azul-céu | #56B4E9, triângulo | Jonas | (a mesma) | 7 | sim |
-| e3 Verde-azulado | #009E73, quadrado | Kauã | Entregador de bicicleta, 20 anos. Mora com a mãe e o irmão e ajuda em casa. Quer fazer faculdade à noite. | 8 (e −1 por mês: pedalar 11 horas cansa) | não |
-| e4 Azul | #0072B2, losango | Daiane | Vende doces e marmitas pelo Instagram, 29 anos. Mãe de um menino de 4 anos, mora na casa da mãe e divide as contas. Paga cursos de marketing digital. | 6 | não |
-| e5 Vermelhão | #D55E00, estrela | Marcos | Motorista de aplicativo, 41 anos, carro próprio de 2014. Ex-metalúrgico. A esposa é diarista três dias por semana; têm dois filhos. | 6 | não |
-| e6 Roxo-rosado | #CC79A7, cruz | Rose | Manicure por aplicativo, 47 anos. Trabalhou dez anos sem registro num salão. Mora com a filha de 15 e o filho de 23, que divide as contas. | 6 | não |
+| Comida (cesta × adultos) | 2.098 (× 2,5) | 2.098 (× 2,5) | 1.259 (× 1,5) | 2.518 (× 3) | 2.518 (× 3) |
+| Aluguel | 1.300 | 1.020 | 1.000 | 1.300 | 1.300 |
+| Luz | 162 | 162 | 130 | 194 | 162 |
+| Água e esgoto | 119 | 119 | 79 | 158 | 119 |
+| Gás | 89 | 89 | 71 | 119 | 89 |
+| Ônibus | 233 (companheira) | 233 (mãe) | 106 | 233 (esposa) | 159 (filhos) |
+| Celular e internet | 75 | 75 | 50 | 100 | 75 |
+| Remédios | 90 | 90 | 60 | 120 | 90 |
+| **Total** | **4.166** | **3.886** | **2.755** | **4.742** | **4.512** |
 
-A ordem das equipes decide quem entra primeiro quando o apresentador abre menos
-de 6: com 3 equipes, jogam as duas do Jonas e o Kauã (pergunta 3). A energia
-inicial é mecânica de jogo, sem fonte.
+- **Energia inicial**, que é mecânica de jogo, sem fonte: Jonas 7, Kauã 8
+  (−1 por mês, porque pedalar 11 horas cansa), Daiane, Marcos e Rose 6.
+- **O indicador "Saldo acumulado"** passou a ter mínimo de −R$ 30.000. Era
+  −R$ 10.000, e o pior caso agora chega a −R$ 15.672 (Marcos).
 
-### 3.2 Rodadas
+---
 
-**Mês 1: quanto trabalhar?** Quem fica mais tempo online recebe mais pedidos.
-Ninguém paga o seu INSS, e a conta do mês não espera. Padrão: **c**.
+## 4. Opções, contextos e cartas
 
-| | Opção | Narrativa (primeira pessoa) | Tendência |
+O contexto de cada persona aparece no celular durante a decisão e tem até 160
+caracteres. As opções ficam sem `tendencia` (D-043). O `*` marca o padrão, ou
+seja, o piloto automático.
+
+### 4.1 Mês 1: quanto trabalhar?
+
+*"Quem fica mais tempo online recebe mais pedidos. Ninguém paga o seu INSS, e o
+básico da casa vence no fim do mês, com acidente ou sem."*
+
+**Contexto de cada casa:**
+- **Jonas:** A parcela da moto vence dia 5. A filha precisa de tênis para a
+  escola, e o salário da companheira já está todo no aluguel.
+- **Kauã:** O cursinho noturno começa na segunda, na hora do pico do jantar. A
+  mãe pediu ajuda com a conta de luz.
+- **Daiane:** O aluguel vence dia 10 e o pai do menino não paga pensão. O menino
+  está com tosse há uma semana.
+- **Marcos:** O pneu está careca e a revisão atrasou. A escola dos meninos pediu
+  material e uniforme.
+- **Rose:** Tudo sai do seu bolso. O filho de 23 procura emprego há cinco meses,
+  e a filha de 15 pediu dinheiro para a excursão.
+
+| | Opção | Narrativa (celular e história da equipe) | O que faz |
 |---|---|---|---|
-| a | Trabalhar o máximo: 12 horas, 7 dias | Fiquei online da manhã até a noite, sete dias. Dormi pouco, comi na rua e não vi minha casa acordada. | mais dinheiro agora; muito menos energia; mais risco |
-| b | Jornada de sempre e abrir o MEI | Mantive a rotina e abri o MEI. É dinheiro que falta hoje, mas, se eu me acidentar, tenho o INSS. | um pouco menos agora; proteção se acontecer algo grave |
-| c | Jornada de sempre, sem pagar nada | Mantive a rotina e não paguei nada. Sobrou um pouco mais, e continuo sem rede se algo der errado. | o de sempre; nenhuma proteção |
+| a | 12 horas por dia, 7 dias por semana | Fiquei online da manhã até a madrugada, sete dias. Dormi pouco, comi na rua e não vi minha casa acordada. | +horas (item 31); energia −3; mais semana boa, quebra, queda e assalto |
+| b | Jornada de sempre e abrir o MEI | Mantive a rotina, abri o MEI e pago o DAS todo mês. Se eu me acidentar e ficar mais de 15 dias parado, o INSS paga, um mês depois. | −DAS agora e nos meses 2 e 3; proteção +3; INSS se houver fratura no mês 2 |
+| c* | Jornada de sempre, sem pagar nada | Mantive a rotina e não paguei nada. Sobrou um pouco mais, e continuo sem rede se algo der errado. | energia −1 |
+| d | Trabalhar menos para estudar ou cuidar da família | Tirei um dia por semana para estudar e ficar com os meus. Descansei, e o dinheiro desse dia fez falta no fim do mês. | −5 dias; energia +1; queda ×0,6 |
 
-**Mês 2: o app muda a regra.** Sem aviso, a plataforma mudou as regras: paga
-menos por pedido e esconde quem recusa demais. Ninguém explica o cálculo.
-Efeito geral: corte de 15% (item 29), DAS de quem abriu o MEI e juros de quem
-está no vermelho. Padrão: **a**.
+**Por que o padrão é "c":** 66% dos plataformizados não contribuem (PNAD).
 
-| | Opção | Narrativa | Tendência |
+### 4.2 Mês 2: o app muda a regra
+
+*"Sem aviso, a plataforma mudou o cálculo e passou a pagar menos. Quem recusa
+demais some da fila, e ninguém explica a conta."* Efeito geral: corte de 15%
+(item 34) e o DAS de quem abriu o MEI.
+
+**Contexto de cada casa:**
+- **Jonas:** O mês passado fechou no vermelho, e o cheque especial cobra 7,43% ao
+  mês. A filha faz aniversário no sábado.
+- **Kauã:** Um colega foi bloqueado na semana passada e o app não respondeu. A
+  mãe está com a pressão alta.
+- **Daiane:** O anúncio no Instagram ficou 12% mais caro e o chocolate subiu 25%
+  em um ano. A escola do menino pediu material.
+- **Marcos:** Na 99, quem finaliza menos de 70% das corridas fica 5 dias fora. O
+  mais velho pediu chuteira para o time da escola.
+- **Rose:** O app de manicure fica com 20% de cada atendimento. A geladeira está
+  vazia, e o aluguel venceu ontem.
+
+| | Opção | Narrativa | O que faz |
 |---|---|---|---|
-| a | Aceitar tudo para não perder a nota | Aceitei até o que não compensava, para a plataforma não me esconder. Trabalhei mais para ganhar quase o mesmo. | recupera parte do corte; cansa; menos risco de bloqueio |
-| b | Recusar o que não paga | Recusei o que não compensava. Descansei um pouco mais, e fiquei com medo de ser bloqueado sem aviso. | descansa; não recupera o corte; mais risco de bloqueio |
-| c | Usar duas plataformas ao mesmo tempo | Passei a usar duas plataformas juntas, pulando de uma para a outra. Rendeu mais, e cada cancelamento vira punição. | mais dinheiro; mais estresse; mais risco de punição |
+| a* | Aceitar tudo o que vier, para não sumir da fila | Aceitei até o que não compensava, para o app não me esconder. Trabalhei mais para ganhar quase o mesmo. | +10%; energia −2; bloqueio ×0,4; mais quebra, queda e fratura |
+| b | Recusar o que não paga | Recusei o que não compensava. Descansei um pouco, e passei o mês com medo de ser bloqueado sem aviso. | energia +1; **bloqueio +10** (vai de 1,6% para 13%) |
+| c | Rodar em dois apps ao mesmo tempo | Liguei dois apps e fiquei pulando de um para o outro. Rendeu mais, e o seguro de um não cobre a corrida do outro. | +20%; energia −3; bloqueio +4, mas o outro app segura metade; mais queda e fratura |
+| d | Parar um dia no breque | Desliguei o app no dia do breque, junto com os outros. Perdi o dia. O reajuste, se vier, demora. | −1 dia; energia +1, proteção +1; **reajuste do mês 3 +8** (Jonas e Kauã) |
 
-**Mês 3: e agora?** O mês não fecha. Dá para se endividar e rodar mais, apertar
-o cinto para ter uma reserva, ou se juntar a quem vive o mesmo. Efeito geral: DAS
-e juros. Padrão: **b**.
+**Por que o padrão é "a":** é o que o algoritmo empurra.
 
-| | Opção | Narrativa | Tendência |
+### 4.3 Mês 3: e agora?
+
+*"O mês não fecha, e a dívida já cobra juros. Cada saída tem um preço, e nenhuma
+resolve sozinha."*
+
+**Efeito geral:**
+- o DAS de quem abriu o MEI;
+- quem tirou fratura no mês 2: a fratura continua, e o INSS chega;
+- quem tirou bloqueio no mês 2: o bloqueio continua (seção 4.5).
+
+**Contexto de cada casa:**
+- **Jonas:** O dono da casa avisou: sem garantia no contrato, a lei permite
+  despejo em 15 dias. A parcela da moto também venceu. (Lei 8.245/1991, art. 59,
+  https://www.planalto.gov.br/ccivil_03/leis/l8245.htm)
+- **Kauã:** A luz atrasou, e a próxima conta vem com aviso de corte em 15 dias. A
+  irmã de 9 anos precisa de óculos. (ANEEL, REN 1.000/2021)
+- **Daiane:** A distribuidora pediu 24% de aumento na luz para novembro. O menino
+  precisa de consulta, e a fila do posto está longa. (Sul21, 08/2026: +24,24%, em
+  consulta pública)
+- **Marcos:** O cartão fechou no rotativo, que cobra 15% ao mês. Os filhos
+  perguntam por que não tem mais carne. (BCB, 15,18%)
+- **Rose:** O filho conseguiu uma entrevista e precisa do dinheiro do ônibus. A
+  luz atrasou, e vem aviso de corte.
+
+| | Opção | Narrativa | O que faz |
 |---|---|---|---|
-| a | Pegar um empréstimo e trabalhar ainda mais | Peguei dinheiro no cheque especial para fechar o mês e trabalhei até de madrugada. | mais dinheiro agora; juros; energia no fim; mais risco |
-| b | Apertar o cinto e montar uma reserva | Cortei a carne, o lazer e a internet de casa. Guardei o que deu, para o próximo susto. | guarda um pouco; vida mais apertada |
-| c | Parar no protesto e entrar na associação | Parei um dia para a mobilização e entrei na associação. Perdi um dia de ganho e ganhei gente do meu lado. | custa um dia agora; rede de apoio; mais risco de retaliação |
+| a | Pegar um empréstimo e rodar até de madrugada | Peguei R$ 1.500 no crédito pessoal para pôr as contas em dia e rodei até de madrugada. A dívida continua depois deste mês. | +20% (zero se machucado ou bloqueado); −R$ 96 de juros; energia −3; assalto +3 |
+| b* | Apertar o cinto: cortar comida e remédio | Cortei a carne, a fruta e o remédio que não era urgente. Sobrou um pouco, e a casa passou a comer pior. | +~4% da comida; energia −1; doença +4 |
+| c | Entrar na associação dos trabalhadores | Entrei na associação: mensalidade e um dia na assembleia. Se o app me bloquear, agora tem advogado do meu lado. | −1 dia − R$ 30; energia +1, proteção +2; bloqueio do mês 2: liminar (+9 dias); reajuste +5 |
+| d | Não parar nenhum dia, nem machucado | Trabalhei nas folgas e fui trabalhar doente. Se estava machucado, voltei antes da alta. | +2 folgas; energia −3; queda e fratura +2; doença só 3 dias; fratura do mês 2: +15 dias, e a recaída vai de ~7% para ~22% |
 
-Por que esses padrões: o piloto automático é o que acontece quando ninguém
-decide, e nunca é a opção de maior saldo esperado. No mês 1 é seguir sem
-contribuir, como fazem 66% dos plataformizados (PNAD); no mês 2, aceitar tudo,
-que é o que o algoritmo empurra; no mês 3, apertar o cinto, a saída individual
-de sempre.
+**Por que o padrão é "b":** é a saída individual de sempre. A associação
+continua com o menor saldo do mês 3 (D-029).
 
-### 3.3 Cartas
+### 4.4 Cartas
 
-| Carta | Peso-base | Quando | Narrativa | O que muda a fatia |
+| Carta (curto) | Peso | Quando | Narrativa | O que muda a fatia |
 |---|---|---|---|---|
-| Um mês como os outros | 50 | sempre | Nada fora do comum. Fechei o mês no mesmo aperto de sempre. | — |
-| Uma semana boa | 12 | sempre | Bati o desafio da semana, veio gorjeta, entrou uma encomenda grande. Não dá para contar com isso no mês que vem. | +6 com "trabalhar o máximo" (mês 1); +3 com "duas plataformas" (mês 2) |
-| O instrumento de trabalho quebrou | 10 | sempre | Quebrou o que eu uso para trabalhar. Sem ele, não ganho, e o conserto sai do meu bolso. | +3 com a opção a de cada mês (mais uso, mais desgaste) |
-| Adoeci: uma semana parado | 6 | sempre | Tive que parar uma semana. MEI novo não cobre doença: o INSS exige 12 meses de contribuição. | +8 com energia abaixo de 4; mais +8 abaixo de 2 |
-| **Acidente: 20 dias parado** (grave) | 2 | meses 2 e 3 | Sofri um acidente e fiquei 20 dias sem poder trabalhar. A plataforma não paga nenhum desses dias. | +3 para quem trabalha na rua (Jonas, Kauã, Marcos); +4 com energia abaixo de 4; +3 com "aceitar tudo" ou "duas plataformas"; +4 com "empréstimo e trabalhar mais" |
-| **Conta bloqueada sem explicação** (grave) | 5 | meses 2 e 3 | A plataforma bloqueou minha conta por dez dias. Mandou uma mensagem genérica e nenhum jeito de me defender. | ×0,4 com "aceitar tudo"; +10 com "recusar" (o bloqueio branco); +4 com "duas plataformas"; +3 com "protesto" (retaliação) |
-| **Fui assaltado** (grave) | 2 | sempre, menos Daiane | Levaram meu celular e o dinheiro do dia. Fiquei dois dias sem sair de casa. | +2 com "trabalhar o máximo"; +3 com "empréstimo e trabalhar mais" (madrugada) |
-| A mobilização arrancou um reajuste | 3 | mês 3 | Depois do protesto, a plataforma subiu o valor mínimo. É pouco, mas veio de quem parou. | +9 com "protesto e associação" |
+| Um mês como os outros (Normal) | 40 | sempre | Nada fora do comum. E mesmo assim o mês não fechou. | — |
+| Uma semana boa (Semana boa) | 12 | sempre | Bati o desafio da semana, veio gorjeta, entrou uma encomenda grande. Não dá para contar com isso no mês que vem. | +6 com 12 h (mês 1); +3 com dois apps |
+| Temporal em Porto Alegre (Temporal) | 8 | sempre | Alerta laranja, vento e granizo. O app lançou promoção de chuva em letras grandes; o "cuidado na chuva" veio em letra miúda. | — (ganha quem entrega; perde quem espera cliente) |
+| O instrumento de trabalho quebrou (Quebrou) | 8 | sempre | Quebrou o que eu uso para trabalhar. Sem ele, não ganho, e o conserto sai do meu bolso. | +3 com a opção "a" de qualquer mês |
+| Adoeci: uma semana parado (Doença) | 6 | sempre | Parei uma semana. Nem o MEI cobre: doença exige 12 meses de contribuição e mais de 15 dias parado. | +8 com energia < 4; +8 com energia < 2; +4 com "apertar o cinto" |
+| Queda leve: 5 dias parado (Queda) | 6 | sempre; Jonas, Kauã, Marcos | Um tombo no molhado, ou uma batida leve: cinco dias parado e o conserto. Menos de 7 dias, o seguro do app não paga; menos de 16, o INSS não paga. | +2 com "a"; +2 com dois apps; +2 com "não parar"; +3 com energia < 4; ×0,6 com "trabalhar menos" |
+| **Acidente: fratura, 45 dias parado (Fratura)**, grave | 1 | meses 2 e 3 | Me acidentei e quebrei o punho. São 45 dias parado: 20 neste mês e 25 no próximo. O app não paga nenhum; o INSS, só para quem já pagava o MEI. | +3 moto e bike; +2 carro; +3 com energia < 4; +2 com "a", dois apps e "não parar" (só quem está na rua) |
+| **Conta bloqueada sem explicação (Bloqueio)**, grave | 4 | meses 2 e 3 | Bloquearam minha conta com uma mensagem genérica, sem prazo e sem jeito de me defender. Sem advogado, ninguém responde o recurso. | ×0,4 com "aceitar tudo"; +10 com "recusar"; +4 com dois apps |
+| **Fui assaltado (Assalto)**, grave | 2 | sempre; menos Daiane | Levaram o celular e o dinheiro do dia. Fiquei dois dias sem coragem de sair, e sem celular não tem app. | +2 com 12 h; +3 com madrugada |
+| Trabalhei e não recebi (Não pagou) | 8 | sempre | Fiz o serviço, ou fui até lá, e o dinheiro não veio. Reclamar no app leva dias e quase nunca dá em nada. | — |
+| O app apertou a taxa (Taxa) | 6 | meses 1 e 3; Jonas, Kauã, Daiane | Mais um corte, sem aviso: a segunda entrega da rota passou a pagar menos, ou o anúncio e o insumo subiram. | — |
+| A mobilização arrancou um reajuste (Reajuste) | 2 | mês 3; Jonas e Kauã | Depois do breque, a plataforma subiu o valor mínimo por entrega. É pouco, e veio de quem parou. | +8 se parou no breque (mês 2); +5 com a associação |
+| **A perícia do INSS negou o auxílio (INSS negou)**, grave | 105 | mês 3; só depois de fratura no mês 2 com MEI | Paguei o MEI em dia, esperei a decisão e a perícia negou. O dinheiro que eu contava não veio. | — (dá ~50% nesse ramo) |
+| **A lesão voltou (Recaída)**, grave | 8 | mês 3; só depois de fratura no mês 2 | O punho não aguentou. Mais dez dias parado, e a fila do SUS para fisioterapia não tem data. | +20 com "não parar nem machucado" |
 
-**Chances do Jonas no caminho do piloto automático** (o validador imprime as das
-outras personas; Kauã e Marcos são iguais no começo, Daiane e Rose têm menos
-acidente e a Daiane não tem assalto):
+**Chances do Jonas no caminho do piloto automático**, com carta "normal" nos
+meses anteriores:
 
-| Rodada e opção | Normal | Semana boa | Quebrou | Doença | Acidente | Bloqueio | Assalto | Reajuste |
+| Mês e opção | Normal | Semana boa | Temporal | Quebrou | Doença | Queda | Fratura | Bloqueio | Assalto | Não pagou | Taxa | Reajuste |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 a | 36,7% | 16,5% | 7,3% | 10,1% | 5,5% | 7,3% | — | — | 3,7% | 7,3% | 5,5% | — |
+| 1 b ou c | 41,7% | 12,5% | 8,3% | 8,3% | 6,3% | 6,3% | — | — | 2,1% | 8,3% | 6,3% | — |
+| 1 d | 42,7% | 12,8% | 8,5% | 8,5% | 6,4% | 3,8% | — | — | 2,1% | 8,5% | 6,4% | — |
+| 2 a | 39,0% | 11,7% | 7,8% | 10,7% | 5,8% | 7,8% | 5,8% | 1,6% | 1,9% | 7,8% | — | — |
+| 2 b | 37,0% | 11,1% | 7,4% | 7,4% | 5,6% | 5,6% | 3,7% | **13,0%** | 1,9% | 7,4% | — | — |
+| 2 c | 36,7% | 13,8% | 7,3% | 7,3% | 5,5% | 7,3% | 5,5% | 7,3% | 1,8% | 7,3% | — | — |
+| 2 d | 40,8% | 12,2% | 8,2% | 8,2% | 6,1% | 6,1% | 4,1% | 4,1% | 2,0% | 8,2% | — | — |
+| 3 a | 34,5% | 10,3% | 6,9% | 9,5% | 5,2% | 6,9% | 5,2% | 3,4% | 4,3% | 6,9% | 5,2% | 1,7% |
+| 3 b | 36,4% | 10,9% | 7,3% | 7,3% | 9,1% | 5,5% | 3,6% | 3,6% | 1,8% | 7,3% | 5,5% | 1,8% |
+| 3 c | 36,0% | 10,8% | 7,2% | 7,2% | 5,4% | 5,4% | 3,6% | 3,6% | 1,8% | 7,2% | 5,4% | 6,3% |
+
+- **Com energia baixa**, a doença chega a ~20% num mês.
+- **Quem parou no breque** vê o reajuste chegar a 8,5% no mês 3, e a 12,6% se
+  também entrar na associação.
+- **Chance de acidente com afastamento:** somando queda e fratura, o Jonas fica
+  entre 6% e 14% por mês no piloto. A pesquisa do Cebrap dá 22% em 3 meses, e a
+  da UFBA, 44% em um ano. Está dramatizado para caber em 3 rodadas, como pede a
+  D-030.
+
+### 4.5 O que atravessa os meses (D-043), com os números do Jonas
+
+| Caminho | Mês 2 | Mês 3 | Meses 2 e 3 |
+|---|---|---|---|
+| Fratura no mês 2, **sem MEI** | −1.467 − 1.500 − 150 = **−3.117** | −1.833 (mais 25 dias) | **−4.950** |
+| Fratura no mês 2, **com MEI e o INSS aprovado** | −3.117 − 86 | −1.833 + 2.431 − 86 | **−2.691** (fora os R$ 86 do mês 1) |
+| Fratura no mês 2, **com MEI e o INSS negado** (~50%) | −3.117 − 86 | −1.833 − 86 | **−5.122** |
+| Fratura no mês 2, sem MEI, e "voltei antes da alta" | −3.117 | −1.833 + 1.100 | **−3.850**, com ~22% de recaída (mais −1.333) |
+| Bloqueio no mês 2, sozinho | −1.100 | −2.200 (o mês inteiro) | **−3.300** |
+| Bloqueio no mês 2 e associação no mês 3 | −1.100 | −2.200 + 660 − 103 | **−2.743** |
+| Bloqueio no mês 2 com dois apps | −1.100 + 550 | −2.200 + 1.100 | **−1.650** |
+
+---
+
+## 5. Contas
+
+### 5.1 Quanto falta para o básico: um mês comum no piloto automático
+
+Carta "normal" nos três meses e as opções c, a e b. É a conta mínima: qualquer
+carta ruim piora.
+
+| Persona | Mês | Do trabalho | Outra renda | Entrou | Básico | Juros | **Faltou** | Saldo acumulado |
 |---|---|---|---|---|---|---|---|---|
-| Mês 1, a | 54,9% | 19,8% | 14,3% | 6,6% | — | — | 4,4% | — |
-| Mês 1, b ou c | 62,5% | 15,0% | 12,5% | 7,5% | — | — | 2,5% | — |
-| Mês 2, a | 53,8% | 12,9% | 14,0% | 6,5% | 8,6% | 2,2% | 2,2% | — |
-| Mês 2, b | 50,0% | 12,0% | 10,0% | 6,0% | 5,0% | 15,0% | 2,0% | — |
-| Mês 2, c | 50,0% | 15,0% | 10,0% | 6,0% | 8,0% | 9,0% | 2,0% | — |
-| Mês 3, a | 48,5% | 11,7% | 12,6% | 5,8% | 8,7% | 4,9% | 4,9% | 2,9% |
-| Mês 3, b | 53,8% | 12,9% | 10,8% | 6,5% | 5,4% | 5,4% | 2,2% | 3,2% |
-| Mês 3, c | 47,6% | 11,4% | 9,5% | 5,7% | 4,8% | 7,6% | 1,9% | 11,4% |
+| Jonas | 1 | 1.459 | 1.499 | 2.958 | 4.166 | 0 | **−1.208** | −1.208 |
+| | 2 | 1.349 | 1.499 | 2.848 | 4.166 | 90 | **−1.408** | −2.616 |
+| | 3 | 1.543 | 1.499 | 3.042 | 4.166 | 194 | **−1.318** | −3.934 |
+| Kauã | 1 | 1.370 | 1.499 | 2.869 | 3.886 | 0 | **−1.017** | −1.017 |
+| | 2 | 1.301 | 1.499 | 2.800 | 3.886 | 76 | **−1.162** | −2.179 |
+| | 3 | 1.454 | 1.499 | 2.953 | 3.886 | 162 | **−1.095** | −3.274 |
+| Daiane | 1 | 1.359 | — | 1.359 | 2.755 | 0 | **−1.396** | −1.396 |
+| | 2 | 1.284 | — | 1.284 | 2.755 | 104 | **−1.575** | −2.971 |
+| | 3 | 1.409 | — | 1.409 | 2.755 | 221 | **−1.567** | −4.538 |
+| Marcos | 1 | 2.470 | 1.499 | 3.969 | 4.742 | 0 | **−773** | −773 |
+| | 2 | 2.326 | 1.499 | 3.825 | 4.742 | 57 | **−974** | −1.747 |
+| | 3 | 2.571 | 1.499 | 4.070 | 4.742 | 130 | **−802** | −2.549 |
+| Rose | 1 | 2.100 | — | 2.100 | 4.512 | 0 | **−2.412** | −2.412 |
+| | 2 | 1.995 | — | 1.995 | 4.512 | 179 | **−2.696** | −5.108 |
+| | 3 | 2.201 | — | 2.201 | 4.512 | 380 | **−2.691** | −7.799 |
 
-Com energia baixa, a doença chega a 20% e o acidente a 11% num mês.
+**Uma conta à mão (Jonas, mês 1, opção c):**
+- **Sem carta:** 2.200 − 480 − 261 + 1.499 − 4.166 = **−R$ 1.208**.
+- **Cartas** (pesos somam 96): (12 × 220 + 8 × 150 − 8 × 669 − 6 × 573 −
+  6 × 961 − 2 × 1.220 − 8 × 120 − 6 × 180) ÷ 96 = −15.196 ÷ 96 = **−R$ 158**.
+- **Mês:** **−R$ 1.366**. É o que o validador imprime em (b): "r1 c renda E
+  −1.366,3".
 
-### 3.4 Enquetes
+### 5.2 Uma decisão por vez (as outras no piloto automático)
 
-**Entrada** (pareada, revelada só no comparativo, todas de uma vez no telão):
+Saldo esperado no fim dos 3 meses; entre parênteses, o pior caso. O `*` marca o
+padrão, e o negrito, a melhor opção do mês em cada critério. Valores em R$.
 
-1. Quem trabalha por aplicativo é empreendedor.
-2. Com esforço, dá para viver bem trabalhando por aplicativo.
-3. A renda de quem trabalha por aplicativo depende mais de sorte do que de esforço.
+| Persona | Mês | a | b | c | d |
+|---|---|---|---|---|---|
+| Jonas | 1 | **−4.560** (−13.041) | −5.215 (**−12.119**) | −5.029* (−13.640) | −5.376 (−14.065) |
+| | 2 | −5.029* (−13.640) | −5.436 (−13.877) | **−4.856** (**−13.404**) | −5.217 (−13.955) |
+| | 3 | **−4.877** (−13.820) | −5.029* (−13.640) | −5.177 (−13.827) | −4.935 (**−12.477**) |
+| Kauã | 1 | **−3.784** (−8.433) | −4.039 (**−8.332**) | −3.850* (−8.555) | −4.061 (−8.818) |
+| | 2 | −3.850* (−8.555) | −4.112 (−8.702) | **−3.726** (**−8.408**) | −3.975 (−8.751) |
+| | 3 | −3.813 (−8.735) | −3.850* (−8.555) | −3.987 (−8.715) | **−3.804** (**−8.139**) |
+| Daiane | 1 | **−4.721** (**−8.404**) | −5.266 (−8.893) | −5.019* (−8.808) | −5.260 (−9.096) |
+| | 2 | −5.019* (−8.808) | −5.391 (−8.969) | **−4.884** (**−8.647**) | −5.230 (−9.023) |
+| | 3 | **−4.875** (−8.954) | −5.019* (−8.808) | −5.132 (−8.938) | −4.928 (**−8.678**) |
+| Marcos | 1 | **−3.642** (−14.370) | −4.347 (**−13.053**) | −4.150* (−15.120) | −4.545 (−15.672) |
+| | 2 | −4.150* (−15.120) | −4.597 (−15.428) | **−3.846** (**−14.811**) | −4.349 (−15.531) |
+| | 3 | **−3.914** (−15.317) | −4.150* (−15.120) | −4.358 (−15.347) | −4.017 (**−13.595**) |
+| Rose | 1 | **−8.043** (**−13.595**) | −8.708 (−14.251) | −8.446* (−14.160) | −8.785 (−14.564) |
+| | 2 | −8.446* (−14.160) | −8.968 (−14.386) | **−8.265** (**−13.935**) | −8.748 (−14.461) |
+| | 3 | **−8.259** (−14.357) | −8.446* (−14.160) | −8.624 (−14.361) | −8.348 (**−14.074**) |
 
-As duas primeiras tendem a cair depois do seminário, e a terceira tende a subir.
-A direção invertida da terceira reduz o efeito de quem concorda com tudo, e ela
-mede exatamente o que o jogo mostra.
+**O que a tabela mostra:**
+- **Nenhuma opção ganha tudo.** A de maior saldo esperado paga com energia,
+  com risco ou com o pior caso.
+  - No mês 1, "12 horas" tem o maior saldo, e o MEI tem o melhor pior caso para
+    quem está na rua.
+  - No mês 3, "não parar nem machucado" tem o melhor pior caso.
+- **O MEI custa em média de R$ 186 a R$ 262 e melhora o pior caso** do Jonas em
+  R$ 1.521 e do Marcos em R$ 2.067. Na Daiane e na Rose, que não estão na rua, o
+  pior caso fica R$ 85 a R$ 91 pior (é só o DAS).
+- **"Trabalhar menos" é sempre a opção mais cara do mês 1.** Custa de R$ 211
+  (Kauã) a R$ 395 (Marcos) no valor esperado, contra o piloto.
+- **O breque (mês 2, d) e a associação (mês 3, c) custam dinheiro.** A
+  associação continua com o menor saldo do mês 3 (D-029). O breque só volta como
+  reajuste para Jonas e Kauã, e mesmo assim não se paga em 3 meses.
 
-**Termômetro** (ao vivo, uma por vez). A trilha diz "três afirmações com voto
-de 1 a 5", mas não traz o texto; estas são minhas:
+### 5.3 Caminhos inteiros e o saldo típico no fim
 
-1. O aplicativo é o patrão.
-2. Carteira assinada é coisa do passado.
-3. Quem não prospera por conta própria é porque não se esforçou o suficiente.
+| Persona | Piloto (c-a-b): esperado | Mediana | Melhor caminho esperado | Pior caminho esperado | Decisões ao acaso: 10% piores / 10% melhores | Melhor resultado possível | Fecha algum mês? |
+|---|---|---|---|---|---|---|---|
+| Jonas | −5.029 | −4.603 | a-c-a: −4.204 | d-b-c: −5.907 | −7.490 / −3.633 | −2.128 | nunca |
+| Kauã | −3.850 | −3.606 | a-c-d: −3.601 | d-b-c: −4.454 | −5.286 / −3.235 | −2.469 | 0,1% |
+| Daiane | −5.019 | −4.946 | a-c-a: −4.457 | d-b-c: −5.733 | −6.027 / −4.349 | −3.335 | nunca |
+| Marcos | −4.150 | −3.757 | a-c-a: −3.121 | d-b-c: −5.219 | −7.187 / −2.185 | −200 | 6,3% |
+| Rose | −8.446 | −8.349 | a-c-a: −7.691 | d-b-c: −9.468 | −9.894 / −7.536 | −6.106 | nunca |
 
-A 2 vem da fala de Pinheiro-Machado sobre a carteira vista como "sinônimo de ser
-pobre"; a 3, da autorresponsabilização que ela e Carmo et al. descrevem. Todas
-têm menos de 110 caracteres.
+- **Nenhuma equipe termina com saldo positivo,** em nenhum caminho de nenhuma
+  persona. O melhor resultado possível do Marcos (−R$ 200) exige 12 horas, dois
+  apps, madrugada e três boas cartas seguidas.
+- **O melhor caminho é sempre o do esgotamento** (12 horas, dois apps, madrugada
+  ou "não parar"), e ele termina com a energia em 0. É o risco R12 ("quem se
+  esforça ganha"), já aceito na D-024. Mesmo esse caminho fica a mais de
+  R$ 3.000 do básico.
+- **A diferença entre as personas é maior que a diferença entre as decisões.**
+  A Rose no melhor caminho (−7.691) termina bem abaixo do pior caminho de
+  qualquer outra persona (−5.907, o Jonas). Quem mora na casa pesa mais do que o
+  que se decide.
 
-### 3.5 Roteiros
+### 5.4 O que o validador disse
 
-Os títulos dos blocos são os da trilha (Gancho, Mapa do seminário, Debrief e
-teoria, Contraponto, Caminhos, Fim), com o subtítulo tirado da descrição de cada
-etapa. Cada mês vem logo depois do trecho que ele ilustra (D-006).
+- **O que rodei:** `node bin/validar-config.mjs`, sobre a versão
+  `2026-09-29-v2-rascunho` (hash `45f91525`).
+- **Formato:** 0 erros. Os contextos têm de 87 a 122 caracteres; o limite é 160.
+- **(c) Opção dominante:** nenhuma. Nenhuma opção vence as outras com mais de
+  70% de probabilidade.
+- **(d) Piloto automático:** o padrão nunca é a opção de maior saldo esperado.
+  - A folga menor está no Kauã, mês 3: "apertar o cinto" dá −R$ 4.011, contra
+    −R$ 3.988 de "empréstimo e madrugada" (R$ 23 de diferença).
+  - Uma edição pequena pode trazer o aviso de volta.
+- **(e) Variância, 5 avisos:** as decisões explicam Jonas 6,9%, Kauã 6,2%,
+  Daiane 17%, Marcos 5,6% e Rose 15,8%. A faixa sugerida é de 30% a 60%.
+  - Pela D-024, esses avisos são esperados.
+  - Quase toda a variância vem das cartas graves (a fratura e o bloqueio, que
+    atravessam o mês). O básico descoberto é o mesmo em todas as decisões.
+- **(f) Mínimo sem consequência:** nenhum. A energia chega a 0 em 32,1% das
+  partidas, e isso tem consequência, porque doença, queda e fratura ficam mais
+  prováveis.
+- **Testes:** `npm test` dá 355 de 355, inclusive "o config.json da raiz passa
+  no validador". O simulador (`--memoria --rapido`) fecha com 0 violações nos
+  dois roteiros.
+
+### 5.5 Roteiros
+
+A decisão passou de 90 para 120 s (D-043), então cada rodada sobe de 240 para
+300 s. O placar em páginas (D-041) sobe de 180 para 240 s, e as personas, agora
+com família e básico, de 120 para 150 s.
 
 | 60 min | seg | 120 min | seg |
 |---|---|---|---|
 | lobby | 120 | lobby | 150 |
 | enquete de entrada, antes (opcional) | 90 | enquete de entrada, antes (opcional) | 90 |
-| Gancho: o lançamento | 210 | Gancho: o lançamento | 270 |
-| Mapa do seminário | 240 | Mapa do seminário | 270 |
+| Gancho: o lançamento | **180** (era 210) | Gancho: o lançamento | 270 |
+| Mapa do seminário | **180** (era 240) | Mapa do seminário | 270 |
 | formar equipes | 120 | formar equipes | 120 |
-| personas | 120 | personas | 120 |
+| personas | **150** | personas | **150** |
 | Debrief e teoria: a conta do entregador | 240 | Debrief e teoria: a conta do entregador | 300 |
-| **Mês 1** | 240 | **Mês 1** | 240 |
-| Debrief e teoria: gestão por algoritmo | 300 | Debrief e teoria: gestão por algoritmo | 360 |
-| **Mês 2** | 240 | **Mês 2** | 240 |
-| Contraponto: a Viração e os dados sobre CLT | 300 | Debrief e teoria: quiz anúncio ou conteúdo | 480 |
+| **Mês 1** | **300** | **Mês 1** | **300** |
+| Debrief e teoria: gestão por algoritmo | **240** (era 300) | Debrief e teoria: gestão por algoritmo | 360 |
+| **Mês 2** | **300** | **Mês 2** | **300** |
+| Contraponto: a Viração e os dados sobre CLT | **240** (era 300) | Debrief e teoria: quiz anúncio ou conteúdo | 480 |
 | Caminhos: regulação, proteção, organização e educação | 240 | Contraponto: a Viração e os dados sobre CLT | 300 |
-| **Mês 3** | 240 | Contraponto: entrevistas em Porto Alegre | 600 |
-| placar final | 180 | Caminhos: regulação, proteção, organização e educação | 240 |
-| Termômetro | 360 | **Mês 3** | 240 |
-| enquete de entrada, depois (Medição) | 90 | placar final | 180 |
-| comparativo | 150 | Debrief e teoria: mapa do patrão em grupos | 900 |
-| Fim: quem é o patrão? | 120 | Caminhos: convidado com perguntas | 1200 |
+| **Mês 3** | **300** | Contraponto: entrevistas em Porto Alegre | **540** (era 600) |
+| placar final | **240** | Caminhos: regulação, proteção, organização e educação | 240 |
+| Termômetro (curto) | **300** (era 360) | **Mês 3** | **300** |
+| enquete de entrada, depois | 90 | placar final | **240** |
+| comparativo | 150 | Debrief e teoria: mapa do patrão em grupos | **840** (era 900) |
+| Fim: quem é o patrão? | 120 | Caminhos: convidado com perguntas | **1.050** (era 1.200) |
 | fim | — | Termômetro | 540 |
-| | | enquete de entrada, depois (Medição) | 90 |
+| | | enquete de entrada, depois | 90 |
 | | | comparativo | 150 |
 | | | Fim: quem é o patrão? | 120 |
 | | | fim | — |
 | **Total** | **3.600** | **Total** | **7.200** |
 
-O roteiro de 120 min traz os quatro extras do "pacote de 2 horas" da trilha:
-mapa do patrão, quiz, entrevistas e convidado.
-
 ---
 
-## 4. Contas de valor esperado
+## 6. Perguntas para o Kleberson validar
 
-**Método.** Para cada persona, enumerei todos os caminhos de cartas (até
-8 × 8 × 8 por combinação de decisões) com as chances de cada carta naquele
-estado, e apliquei os efeitos na ordem do contrato: persona, efeito geral,
-opção, carta, com as condições lendo o estado de antes do mês. "Valor esperado"
-é a média ponderada pelas chances. O validador (`npm run validar`) chega aos
-mesmos números.
-
-**Uma conta à mão (Jonas, mês 1, estado inicial).**
-
-- Sem carta: 2.200 − 1.760 − 480 = **−R$ 40**.
-- Opção c: cartas = 15% × 220 (semana boa) + 12,5% × (−500) (quebrou) + 7,5% ×
-  (−515) (doença) + 2,5% × (−785) (assalto) = 33,0 − 62,5 − 38,6 − 19,6 =
-  **−R$ 87,7**. Mês: −40 − 87,7 = **−R$ 127,7**.
-- Opção a: −40 + 740 = 700; cartas = 19,8% × 220 + 14,3% × (−500) + 6,6% ×
-  (−515) + 4,4% × (−785) = 43,5 − 71,4 − 34,0 − 34,5 = −96,4. Mês: **+R$ 603,6**,
-  com a energia de 7 para 4.
-- Opção b: −40 − 86 − 87,7 = **−R$ 213,7**, com a proteção em 3.
-- **Acidente no mês 2, com e sem MEI:** −1.465 − 300 − 200 = −R$ 1.965 sem MEI;
-  com MEI, +1.080 de auxílio: −R$ 885. O MEI custa R$ 258 nos 3 meses (3 × 86) e
-  devolve R$ 1.080 se a carta sair.
-
-### 4.1 Uma decisão por vez (as outras rodadas no piloto automático)
-
-Saldo esperado ao fim dos 3 meses; entre parênteses, a energia e a proteção esperadas no fim. `*` = padrão da rodada.
-
-**Mês 1: quanto trabalhar?**
-
-| Persona | a: Trabalhar o máximo: 12 horas, 7 dias | b: Jornada de sempre e abrir o MEI | c*: Jornada de sempre, sem pagar nada |
-|---|---|---|---|
-| Jonas | −R$ 101 (0,5; 1,0) | −R$ 904 (2,2; 4,0) | −R$ 806 (2,2; 1,0) |
-| Kauã | −R$ 110 (0,0; 1,0) | −R$ 299 (0,5; 4,0) | −R$ 228 (0,5; 1,0) |
-| Daiane | R$ 11 (0,0; 1,0) | −R$ 577 (1,4; 4,0) | −R$ 453 (1,4; 1,0) |
-| Marcos | −R$ 826 (0,0; 1,0) | −R$ 1.762 (1,3; 4,0) | −R$ 1.656 (1,3; 1,0) |
-| Rose | R$ 546 (0,0; 1,0) | −R$ 201 (1,3; 4,0) | −R$ 56 (1,3; 1,0) |
-
-**Mês 2: o app muda a regra**
-
-| Persona | a*: Aceitar tudo para não perder a nota | b: Recusar o que não paga | c: Usar duas plataformas ao mesmo tempo |
-|---|---|---|---|
-| Jonas | −R$ 806 (2,2; 1,0) | −R$ 1.002 (5,3; 1,0) | −R$ 642 (1,3; 1,0) |
-| Kauã | −R$ 228 (0,5; 1,0) | −R$ 317 (3,3; 1,0) | −R$ 99 (0,0; 1,0) |
-| Daiane | −R$ 453 (1,4; 1,0) | −R$ 547 (4,5; 1,0) | −R$ 292 (0,5; 1,0) |
-| Marcos | −R$ 1.656 (1,3; 1,0) | −R$ 1.822 (4,3; 1,0) | −R$ 1.360 (0,5; 1,0) |
-| Rose | −R$ 56 (1,3; 1,0) | −R$ 220 (4,4; 1,0) | R$ 129 (0,5; 1,0) |
-
-**Mês 3: e agora?**
-
-| Persona | a: Pegar um empréstimo e trabalhar ainda mais | b*: Apertar o cinto e montar uma reserva | c: Parar no protesto e entrar na associação |
-|---|---|---|---|
-| Jonas | −R$ 677 (0,5; 0,0) | −R$ 806 (2,2; 1,0) | −R$ 961 (4,3; 2,0) |
-| Kauã | −R$ 205 (0,0; 0,0) | −R$ 228 (0,5; 1,0) | −R$ 323 (2,2; 2,0) |
-| Daiane | −R$ 416 (0,0; 0,0) | −R$ 453 (1,4; 1,0) | −R$ 569 (3,4; 2,0) |
-| Marcos | −R$ 1.472 (0,0; 0,0) | −R$ 1.656 (1,3; 1,0) | −R$ 1.869 (3,2; 2,0) |
-| Rose | R$ 57 (0,0; 0,0) | −R$ 56 (1,3; 1,0) | −R$ 229 (3,3; 2,0) |
-
-### 4.2 Caminhos inteiros
-
-| Persona | Piloto automático (cab) | Melhor saldo esperado | Pior saldo esperado | Com MEI (bab) | Pior caso sem MEI | Pior caso com MEI | P(saldo < 0) no piloto | Variância explicada pelas decisões |
-|---|---|---|---|---|---|---|---|---|
-| Jonas | −R$ 806 | aca: R$ 248 (energia 0,0) | bbc: −R$ 1.347 (energia 7,4) | −R$ 904 | −R$ 5.040 | −R$ 3.138 | 83% | 23% |
-| Kauã | −R$ 228 | aca: R$ 50 (energia 0,0) | bbc: −R$ 585 (energia 5,4) | −R$ 299 | −R$ 3.295 | −R$ 2.533 | 57% | 8% |
-| Daiane | −R$ 453 | aca: R$ 214 (energia 0,0) | bbc: −R$ 881 (energia 6,5) | −R$ 577 | −R$ 3.295 | −R$ 2.741 | 63% | 19% |
-| Marcos | −R$ 1.656 | aca: −R$ 315 (energia 0,0) | bbc: −R$ 2.221 (energia 6,4) | −R$ 1.762 | −R$ 7.695 | −R$ 5.793 | 97% | 14% |
-| Rose | −R$ 56 | aca: R$ 862 (energia 0,0) | bbc: −R$ 640 (energia 6,5) | −R$ 201 | −R$ 3.775 | −R$ 2.393 | 42% | 29% |
-
-**O que as tabelas mostram:**
-
-1. **Nenhuma boa decisão cobre com folga o custo de vida.** O melhor caminho de
-   cada persona (sempre a-c-a: trabalhar o máximo, duas plataformas, empréstimo)
-   termina entre −R$ 315 e +R$ 862 em 3 meses, **com a energia em 0**.
-2. **Nenhuma opção vence em todos os indicadores.** Em cada rodada, quem ganha
-   em saldo perde em energia ou em proteção (mas veja o item 5).
-3. **A proteção custa no curto prazo e salva na carta grave.** O MEI tira de R$ 70
-   a R$ 150 do saldo esperado e melhora o pior caso em R$ 550 (Daiane) a
-   R$ 1.900 (Jonas e Marcos).
-4. **A decisão muda as fatias:** o acidente vai de 5% para 8% a 11%, e o
-   bloqueio vai de 2% ("aceitar tudo") para 15% ("recusar").
-5. **Onde a calibragem ficou fora do sugerido** (avisos do validador, que não
-   bloqueiam a sala):
-   - as cartas explicam de 71% a 92% da variância do saldo; a arquitetura
-     sugere que as decisões expliquem de 30% a 60%;
-   - para Jonas e Rose, "trabalhar o máximo" vence as outras opções do mês 1 em
-     saldo em cerca de 75% a 80% das partidas.
-
-   Testei três ajustes: carta "normal" mais pesada, penalidade de cansaço e
-   menos horas extras. O que melhora um aviso piora o outro: com a carta normal
-   em 90, as decisões sobem para 12% a 36%, e "trabalhar o máximo" passa a
-   vencer em até 86% das partidas. A escolha é de produto (perguntas 6 e 7).
-6. **Kauã quase não decide**: as decisões explicam só 8% do saldo dele, porque
-   um assalto ou um acidente levam meio mês do que ele ganha. É fiel ao dado (a
-   bike é a base da pirâmide, em Abílio) e pode virar conversa no debrief.
-7. **A organização coletiva sai com o menor saldo do mês 3** para todas as
-   personas: custa um dia agora, e o ganho (o reajuste, a rede de apoio) é
-   incerto e vale para todos, inclusive para quem não parou (pergunta 8).
-
----
-
-## 5. Perguntas para o Kleberson validar
-
-1. **Qual régua de custo de vida?**
-   - *Por que importa:* define se as personas fecham o mês perto de zero ou
-     sempre muito no vermelho.
+1. **Três das cinco casas têm uma segunda renda de um salário mínimo** (Jonas,
+   Kauã e Marcos).
+   - *Por que importa:* sem ela, o mês comum dessas casas faltaria de R$ 2.272 a
+     R$ 2.707, e não de R$ 773 a R$ 1.208.
    - *Opções:*
-     - (a) a do mínimo, que está no config: aluguel, comida e contas;
-     - (b) a do DIEESE, o salário mínimo necessário (R$ 2.350 por
-       adulto-equivalente). Com ela, por mês: Jonas −R$ 1.218, Kauã −R$ 980,
-       Daiane −R$ 2.026, Marcos −R$ 2.231, Rose −R$ 1.426. Nenhuma decisão chega
-       perto de zero;
-     - (c) a do mínimo no jogo, e a do DIEESE num slide do debrief.
-   - *Recomendo:* (c).
-2. **Qual persona tem duas equipes?**
-   - *Por que importa:* é a comparação que mostra a sorte ao vivo (D-004).
+     - (a) manter: é o retrato mais comum (Cebrap: renda familiar de até 3
+       salários mínimos para 48% dos entregadores). Rose e Daiane ficam como as
+       que sustentam a casa sozinhas;
+     - (b) todas sustentam a casa sozinhas;
+     - (c) a segunda renda pelo piso regional do RS (R$ 1.739 líquidos), e não
+       pelo mínimo nacional.
+2. **A Rose termina muito abaixo das outras** (−R$ 8.446 esperado; falta
+   R$ 2.412 num mês comum).
+   - *Por que importa:* a equipe dela vai estar sempre no fundo do placar, e
+     pode achar que a decisão não serve para nada.
    - *Opções:*
-     - (a) Jonas, motoboy (proposto);
-     - (b) Kauã, bike, o "grande símbolo" para a Abílio; mas nele as decisões
-       quase não pesam, e a comparação vira só sorte;
-     - (c) Marcos, motorista, o maior grupo da PNAD (58,9% dos plataformizados).
-3. **Com menos de 6 equipes, quem fica?**
-   - *Por que importa:* o preenchimento segue a ordem do config.
+     - (a) manter: é a mensagem (quem mora na casa pesa mais do que a decisão), e
+       ela vira o centro do debrief;
+     - (b) o filho de 23 faz bicos (outra renda estimada, sem fonte);
+     - (c) incluir os benefícios da pergunta 3.
+3. **Daiane e Rose teriam direito à Tarifa Social de luz e ao Gás do Povo**
+   (renda de até meio salário mínimo por pessoa, com CadÚnico).
+   - *Por que importa:* baixaria o básico de cada uma em ~R$ 126 (80 kWh de
+     graça e 4 botijões por ano). Com a tarifa social do DMAE, que eu não
+     conferi, seriam R$ 165 (Daiane) e R$ 205 (Rose).
    - *Opções:*
-     - (a) Jonas, Jonas, Kauã, Daiane, Marcos, Rose (proposto);
-     - (b) pôr Daiane em terceiro, porque ela conversa com o Gancho (lançamento
-       encenado) e com Pinheiro-Machado;
-     - (c) marcar mais uma equipe como obrigatória.
-4. **A renda da Rose e a da Daiane servem?**
-   - *Por que importa:* são as de menor confiança. Não achei renda de manicure
-     por app, e a da Daiane é faturamento tratado como renda.
+     - (a) não incluir e citar no debrief que quem tem direito nem sempre está no
+       CadÚnico (é o que está no config);
+     - (b) incluir no básico;
+     - (c) virar carta: "consegui o CadÚnico".
+4. **Qual taxa de juros para a dívida?**
+   - *Por que importa:* a dívida da Rose chega a R$ 5.000 no mês 3; a diferença
+     entre as taxas vira centenas de reais.
    - *Opções:*
-     - (a) manter e dizer em sala que é estimativa;
-     - (b) você passa um valor de referência de Porto Alegre;
-     - (c) trocar a Rose por uma diarista por aplicativo (serviços gerais, 16%
-       dos plataformizados), também sem dado de renda.
-5. **O Kauã usa um dado de 2019 de São Paulo corrigido pelo IPCA (R$ 1.370).**
-   - *Por que importa:* é abaixo do salário mínimo. O caso do Carlos, em Abílio,
-     sugere mais (R$ 100 por dia útil em 2020).
+     - (a) cheque especial, 7,43% ao mês (no config);
+     - (b) rotativo do cartão, 15,18%;
+     - (c) crédito pessoal, 6,39%;
+     - (d) cheque especial no jogo, e o agiota (30% ao mês) num slide.
+   - *Recomendo:* (a), porque é a modalidade que rola sozinha.
+5. **Ninguém fecha as contas, em nenhum caminho.**
+   - *Por que importa:* a D-043 pede dúvida. Sem esperança nenhuma, a equipe
+     pode parar de pensar e escolher ao acaso.
    - *Opções:*
-     - (a) manter, com a ressalva no slide;
-     - (b) usar o caso do Carlos (R$ 100 por dia útil e R$ 150 no fim de
-       semana, em 2020): corrigido pelo IPCA, dá de R$ 4.300 a R$ 4.900 por mês,
-       com 12 h por dia e 6 a 7 dias. É um caso só, e o Kauã passaria a ser a
-       persona de maior renda.
-6. **Quanto a sorte pode pesar?**
-   - *Por que importa:* hoje as cartas explicam de 71% a 92% da variância; a
-     faixa da arquitetura (decisões entre 30% e 60%) equivale a cartas entre 40%
-     e 70%. Sorte demais faz a decisão parecer inútil.
+     - (a) manter: a dúvida fica em quanto falta e em quem aguenta o pior caso;
+     - (b) semana boa maior (+20% em vez de +10%);
+     - (c) básico sem internet e remédios (a régua mínima de 28/09), que baixa
+       de R$ 110 a R$ 220 por mês.
+6. **O mês 1 ganhou "trabalhar menos para estudar ou cuidar da família"**, no
+   lugar de "alugar um instrumento" (e-bike ou moto), que a pesquisa sugeria.
+   - *Por que importa:* aluguel de instrumento só serve a Kauã e Jonas, e a
+     opção nova vale para todos. Mas ela sempre perde em saldo, e o ganho dela
+     (descanso, estudo) fica fora do jogo.
+   - *Opções:* (a) manter; (b) trocar por "alugar um instrumento", com efeito só
+     para Jonas e Kauã.
+7. **O breque é novo (mês 2, d)** e aumenta a chance de reajuste no mês 3.
+   - *Por que importa:* o reajuste que tem fonte (iFood, de R$ 6,50 para
+     R$ 7,50) é só de entregador. Para Daiane, Marcos e Rose, parar é só custo.
    - *Opções:*
-     - (a) manter: é a mensagem do seminário;
-     - (b) carta "normal" com peso 90: as decisões sobem para 12% a 36%, com
-       menos cartas marcantes em sala (cerca de 1 em 3 meses, em vez de 1 em 2);
-     - (c) reduzir as perdas das cartas graves.
-7. **"Trabalhar o máximo" sai na frente em dinheiro em 75% a 80% das partidas
-   (Jonas e Rose).**
-   - *Por que importa:* risco de a turma ler "quem se esforça ganha" (risco R12
-     da arquitetura), embora a energia termine em 0.
-   - *Opções:*
-     - (a) manter e mostrar a energia no placar (a tecla C troca o critério);
-     - (b) menos horas extras (fator de 50% em vez de 75%): o aviso some, as
-       decisões passam a explicar de 7% a 20% do saldo, e o melhor caminho fica
-       perto de zero (Marcos −R$ 657, Rose +R$ 625);
-     - (c) penalidade de cansaço nos meses 2 e 3 (−10% da renda com energia
-       abaixo de 4) e fator de 60%: o aviso some, as decisões explicam de 4% a
-       12%, e o melhor caminho fica negativo para todos, menos a Rose.
-8. **A organização coletiva perde em saldo no mês 3. Proposital?**
-   - *Por que importa:* pode soar como "organizar-se não compensa", o contrário
-     do bloco Caminhos.
-   - *Opções:*
-     - (a) manter e discutir no debrief: o jogo só tem 3 meses e só mede a sua
-       equipe, e a conquista vale para todos;
-     - (b) reajuste maior, R$ 400 em vez de R$ 150;
-     - (c) a conquista valer para todas as equipes quando alguma parar. Isso
-       exige mudança no motor, porque hoje uma carta só atinge quem a tirou.
-9. **O corte do mês 2 de 15% está bom?**
-   - *Por que importa:* é o número mais ilustrativo do jogo.
-   - *Opções:* 10%, 15% ou 20%.
-10. **As chances das cartas graves estão dramatizadas.**
-    - *Por que importa:* o acidente de 20 dias sai em 5% a 11% dos meses, e a
-      pesquisa Cebrap/Amobitec dá 22% de ocorrências em 3 meses, a maioria
-      leves.
+     - (a) manter e levar ao debate ("vale parar se o ganho não vem para mim?");
+     - (b) reajuste para todos, como no config de 28/09 (sem fonte para eles);
+     - (c) outra opção d para o mês 2.
+8. **INSS negado em ~50% das vezes.**
+   - *Por que importa:* é o que faz o MEI parecer uma aposta. A fonte (53%) é
+     sobre todo benefício por incapacidade, e não só sobre acidente.
+   - *Opções:* (a) 50%; (b) 25%; (c) sem a carta, sempre aprovado.
+9. **O bloqueio do mês 2 dura o mês 3 inteiro** (o Jonas perde R$ 3.300 nos dois
+   meses).
+   - *Por que importa:* é a resposta a "ser banido custa quanto?". A chance vai
+     de 1,6% ("aceitar tudo") a 13% ("recusar").
+   - *Opções:* (a) manter; (b) só metade do mês 3 (−15 dias).
+10. **A fratura atravessa o mês, e "voltar antes da alta" é uma opção.**
+    - *Por que importa:* para quem tirou fratura, "não parar" recupera R$ 1.100,
+      com ~22% de recaída (−R$ 1.333). É o dilema real, e é pesado.
+    - *Opções:* (a) manter; (b) recaída mais provável.
+11. **O seguro do iFood não entrou.**
+    - *Por que importa:* ele existe (diária mínima de R$ 50, até R$ 3.000), mas
+      "só uma pequena parte" dos entregadores recebeu algo (Cebrap, financiado
+      pelas plataformas). Sem ele, o Jonas acidentado sem MEI recebe zero.
     - *Opções:*
-      - (a) manter e avisar em sala que foi exagerado para caber em 3 rodadas;
-      - (b) baixar para 3% a 6%.
-11. **A referência com carteira assinada está boa?**
-    - *Por que importa:* é a comparação mais forte do placar (R$ 840 contra
-      −R$ 806 do Jonas de app).
-    - *Opções:*
-      - (a) manter o salário médio nacional do CAGED;
-      - (b) você consegue a convenção do Sindimoto-RS (piso de Porto Alegre e
-        aluguel de moto), e eu refaço a conta;
-      - (c) incluir o FGTS (R$ 657).
-12. **"Saldo acumulado" no lugar de "Renda acumulada"?**
-    - *Por que importa:* o número é renda menos custo de vida; chamar de renda
-      confunde.
-    - *Opções:* (a) "Saldo acumulado"; (b) "Sobrou no fim do mês"; (c) manter
-      "Renda acumulada".
-13. **As 6 afirmações servem?**
-    - *Por que importa:* são o antes e depois do seminário.
-    - *Opções:*
-      - (a) aprovar como estão;
-      - (b) trocar a 3 da entrada ("sorte do que esforço"), se parecer que
-        induz a resposta;
-      - (c) você manda as que o grupo já tinha pensado.
-14. **O roteiro de 60 min aperta o Termômetro para 6 min** (a trilha dava 12).
-    - *Por que importa:* o jogo espalhado custa uns 22 min, e não 15.
+      - (a) manter fora e citar no slide;
+      - (b) carta do mês 3 "o seguro do app pagou", para Jonas e Kauã, com ~20%
+        de chance depois de uma fratura. Seria a 15ª carta, acima do limite de
+        12 a 14 da D-043.
+12. **As estimativas sem fonte novas servem?**
+    - *Por que importa:* são as de confiança baixa.
+    - *Quais são:*
+      - conserto na fratura (moto R$ 1.500, carro R$ 2.000, bike R$ 300);
+      - remédio (R$ 60 e R$ 150) e celular (R$ 1.000);
+      - tela (R$ 400) e conserto da autoclave (R$ 350);
+      - calote, número de entregas agrupadas e valores do temporal;
+      - curso em 12x e fisioterapia com 4 sessões;
+      - "apertar o cinto" de 4% e a mensalidade de R$ 30 (D-034).
+    - *Opções:* (a) aprovar; (b) você passa valores de Porto Alegre.
+13. **A referência com carteira assinada virou −R$ 2.957** (era +R$ 840).
+    - *Por que importa:* a linha fica negativa, mas ainda ~R$ 2.000 acima do
+      Jonas de app no piloto. A leitura muda de "com carteira sobra" para "com
+      carteira falta menos".
     - *Opções:*
       - (a) manter;
-      - (b) Termômetro com 2 afirmações (o corte que a trilha prevê);
-      - (c) cortar o Contraponto para 3 min.
-15. **Raça e gênero nas personas.**
-    - *Por que importa:* os dados existem (71% dos ciclistas se declaram negros;
-      a base do empreendedorismo digital é de mulheres negras), mas pôr isso na
-      descrição de uma persona pode soar como estereótipo.
-    - *Opções:*
-      - (a) deixar fora das personas e levar o dado para o slide;
-      - (b) pôr na descrição.
-16. **As estimativas sem fonte servem?**
-    - *Por que importa:* são as de confiança baixa.
-    - *Quais são:* água (R$ 80), celular (R$ 60 por mês; R$ 700 para comprar),
-      consertos (moto, bike, carro, estufa, celular), remédios (R$ 200),
-      mensalidade da associação (R$ 30), o fator de 75% das horas extras e o
-      "apertar o cinto" de 6%.
-    - *Opções:* (a) aprovar; (b) você passa valores de Porto Alegre.
+      - (b) tirar o 13º e as férias proporcionais, que não chegam em 3 meses:
+        −R$ 4.189;
+      - (c) somar o FGTS: −R$ 2.300.
+14. **O indicador Proteção só aparece na tela.** Quem decide o INSS é a decisão
+    do MEI no mês 1, porque a lei exige o DAS pago antes do acidente.
+    - *Por que importa:* a associação e o breque somam proteção, mas não dão
+      INSS.
+    - *Opções:* (a) manter como placar da rede de apoio; (b) tirar o indicador
+      das telas (mudança de código, fora deste rascunho).
+15. **Os roteiros ficaram com rodadas de 300 s**, com cortes em Gancho, Mapa,
+    Gestão por algoritmo, Contraponto e Termômetro (60 min), e em Entrevistas,
+    Mapa do patrão e Convidado (120 min).
+    - *Por que importa:* a soma continua em 3.600 e 7.200 s, mas cada corte sai
+      de um trecho da apresentação.
+    - *Opções:* (a) aprovar; (b) você diz de onde tirar.
+16. **Quem tem 12 anos ou mais come como adulto** (a filha de 15 da Rose).
+    - *Por que importa:* a regra do DIEESE não fala de adolescente, e essa
+      escolha põe R$ 420 a mais no básico da Rose.
+    - *Opções:* (a) manter; (b) meia cesta até 17 anos.
 
 ---
 
-## 6. O que o validador disse (calibragem de 28/09)
+## 7. Perguntas da revisão (29/09)
 
-> **Tudo desta seção é sugestão para validar com o Kleberson.** Nenhum valor,
-> texto ou peso do `config.json` foi mudado.
+A revisão do redesenho levantou os pontos abaixo. Todos **precisam de decisão**:
+mexem no conteúdo validável (valores, textos, famílias) ou numa regra do jogo, e
+nada disso foi alterado. As correções de tela que não dependiam de decisão já
+entraram: a conta do "Escolha ou sorte?" que fecha, a taxa com 7,43%, a casa das
+personas no telão, os avisos junto da barra, o placar com 6 equipes e as opções
+no celular.
 
-- **O que rodei:** `node bin/validar-config.mjs config.json`, sobre a versão
-  `2026-09-28-rascunho` (hash `185c595d`).
-- **Formato:** 0 erros. Nada foi corrigido no `config.json`.
-- **Equilíbrio:** 7 avisos, que não bloqueiam a sala.
-- **Como medi as sugestões:** com o mesmo algoritmo do validador (enumeração
-  exata), num script fora do repositório, sobre cópias do config. No config atual,
-  o script dá os mesmos números do validador. O pacote C (seção 6.6) também foi
-  conferido no validador oficial: hash `b5453314`, 0 erros e 3 avisos. Para
-  reproduzir, basta aplicar os valores a uma cópia e rodar
-  `node bin/validar-config.mjs copia.json`.
+1. **Mais de 30 dias parado no mesmo mês** (precisa de decisão).
+   - *O que acontece:* no mês 3, o efeito geral "a conta continua bloqueada: o
+     mês inteiro" (ou "a fratura continua", 25 dias) soma com uma nova carta de
+     parada (fratura, doença, queda, quebrou, assalto). Caminho real: r1 b/normal,
+     r2 a/bloqueio, r3 a/fratura dá 50 dias parados num mês, e a história da
+     equipe escreve isso.
+   - *Por que importa:* a chance por equipe fica entre 2,5% e 3,8%; com 6
+     equipes, de 15% a 20% de aparecer numa sessão. A linguagem de condição não
+     tem negação, então o config sozinho não barra.
+   - *Opções:* (a) teto de dias (ou de perda de renda do trabalho) por mês, regra
+     nova no motor; (b) negação na condição (`naoSorteou`/`naoDecidiu`), usada
+     nas cartas de parada do mês 3 e conferida pelo validador; (c) aceitar e
+     reescrever os rótulos sem falar em dias.
 
-### 6.1 Os 7 avisos
+2. **"Entrou" negativo, e "Do trabalho" com conserto e remédio dentro** (precisa de decisão).
+   - *O que acontece:* `mes.trabalho` é o delta inteiro (todoMes, gerais, opção,
+     carta), e o custo do acidente vira renda que "não entrou". Pior caso: "entrou
+     −R$ 2.541 · básico R$ 4.166 · faltou R$ 6.707"; cerca de 10% dos meses-ramo
+     têm entrou < 0.
+   - *Por que importa:* contradiz a frase da D-044 ("entrou R$ X · o básico
+     custa R$ Y · faltou R$ Z").
+   - *Opções:* (a) separar os gastos no motor (marca no efeito ou origem
+     "gastos") e mostrar "entrou · gastos do mês · básico · faltou"; (b) só na
+     tela: "o trabalho deu prejuízo de R$ X" quando entrou < 0.
 
-| # | Conferência | O que o validador disse |
-|---|---|---|
-| 1 | (c) opção dominante | Jonas, mês 1: "trabalhar o máximo" vence em saldo com probabilidade de 80,1% contra b e de 75,3% contra c |
-| 2 | (c) opção dominante | Rose, mês 1: "trabalhar o máximo" vence em saldo com 82% contra b e 75% contra c |
-| 3 a 7 | (e) variância | As decisões explicam só isto da variância do saldo final: Jonas 23,2%, Kauã 7,9%, Daiane 18,7%, Marcos 14,1% e Rose 29,1%. A faixa sugerida é de 30% a 60% |
+3. **O empréstimo do mês 3 só custa** (precisa de decisão).
+   - *O que acontece:* "Peguei R$ 1.500 no crédito pessoal para pôr as contas em
+     dia" cobra −R$ 96 de juros e nunca soma os R$ 1.500, e os 7,43% do cheque
+     especial continuam sobre a dívida inteira. Quem tirou fratura ou bloqueio no
+     mês 2 perde as horas extras, mas a narrativa ainda diz "rodei até de
+     madrugada". E, no último mês, não sobra mês seguinte para a parcela (D-043).
+   - *Opções:* (a) tirar "para pôr as contas em dia", deixar claro que o dinheiro
+     foi para as horas extras e usar uma narrativa neutra ("tentei rodar até de
+     madrugada"); (b) modelar a troca: +1.500 na renda e a parcela nos meses
+     seguintes via `decidiu`, com o empréstimo oferecido no mês 1 ou 2; (c) abater
+     os juros do cheque especial no mês do empréstimo (regra nova no motor).
 
-O que **não** deu aviso:
-- **(c)** Daiane e Marcos ficam logo abaixo do limite de 70% no mês 1: o
-  "trabalhar o máximo" vence em saldo com 69,6% e 68,5% contra a opção mais
-  próxima;
-- **(d)** o padrão nunca é a opção de maior saldo esperado, então o piloto
-  automático não premia quem não votou;
-- **(f)** a energia chega a 0 em 40,6% das partidas, mas tem consequência,
-  porque doença e acidente ficam mais prováveis. O saldo e a proteção nunca
-  batem no mínimo.
+4. **`multiplica` na renda também atinge parcela e manutenção** (precisa de decisão).
+   - *O que acontece:* hoje é latente (nenhum efeito do config usa `multiplica`
+     em renda), mas uma carta "zera a renda" zeraria também a parcela da moto
+     (−480) e a manutenção (−261): o acidentado ficaria R$ 741 melhor.
+   - *Opções:* (a) custos fixos do trabalho num grupo aplicado depois do
+     `multiplica`, como o básico; (b) o validador avisa quando houver `multiplica`
+     em renda numa persona com custo fixo no `todoMes`.
 
-### 6.2 Tabela de chances, resumida
+5. **Ninguém fecha as contas em nenhum caminho** (precisa de decisão; retoma a pergunta 5 da seção 6).
+   - *O que acontece:* na árvore inteira, com as 64 combinações de decisão, a
+     chance de terminar com saldo ≥ 0 é 0% nas 5 personas. Melhor caso: Marcos
+     −R$ 200, Jonas −R$ 2.128, Kauã −R$ 2.469, Daiane −R$ 3.335, Rose −R$ 6.106.
+     O título da página 1 do placar é sempre o mesmo, e a Rose termina, no melhor
+     caminho, abaixo do pior caminho das outras.
+   - *Por que importa:* o objetivo era dúvida; do jeito que está, é certeza.
+   - *Opções:* (a) calibrar para 5% a 15% de chance de fechar em pelo menos 2
+     personas (aluguel informal com fonte, piso regional na outra renda, Tarifa
+     Social para quem tem direito); (b) registrar numa decisão que "ninguém
+     fecha" é a mensagem.
 
-Resumo da seção (a) do validador. A coluna "chance média" traz a menor e a maior
-entre todas as combinações de persona, mês e opção. A última coluna traz o
-extremo quando a chance muda com o estado (a energia). A tabela completa, por
-persona, sai em `npm run validar`. A do Jonas no piloto automático está na
-seção 3.3.
+6. **"Escolha ou sorte?" premia o esgotamento, e a Proteção não faz nada** (precisa de decisão; ligada à pergunta 14 da seção 6).
+   - *O que acontece:* a ordem das opções pelo saldo esperado é a mesma nas 5
+     personas (mês 1 a > c > b > d; mês 2 c > a > d > b; mês 3 a > d > b > c), e o
+     plano a-c-a é o melhor em 4 de 5. O placar mede só a renda: 12 h + dois apps
+     + madrugada aparece com "as escolhas: +R$", e estudar, o breque e a
+     associação aparecem sempre com valor negativo. A energia a 0 não aparece, e
+     nenhuma condição do config lê a Proteção.
+   - *Opções:* (a) mostrar a energia final e a proteção nas páginas 2 e 3
+     ("terminou com energia 0: dormindo 5 h"); (b) dar consequência em dinheiro
+     ou em dias à energia 0 e à proteção (a associação encurta o bloqueio e o
+     calote; energia 0 força dias parados); (c) tirar a Proteção dos indicadores.
+     Em qualquer caso, refazer a checagem de dominância por persona.
 
-| Carta | Meses | Chance média | Extremos por estado |
-|---|---|---|---|
-| Um mês como os outros | 1, 2 e 3 | 43,2% a 64,1% | 40% a 64,1% |
-| Uma semana boa | 1, 2 e 3 | 10,4% a 20,7% | 9,6% a 20,7% |
-| O instrumento quebrou | 1, 2 e 3 | 8,6% a 14,9% | 8% a 14,9% |
-| Adoeci | 1, 2 e 3 | 6,5% a 13,9% | 5,7% a 20,4% |
-| Fui assaltado | 1, 2 e 3 | 1,7% a 4,5% | 1,6% a 5% |
-| Acidente (grave) | 2 e 3 | 3,2% a 10,3% | 2% a 11,4% |
-| Conta bloqueada (grave) | 2 e 3 | 2,1% a 15,2% | 1,9% a 15,8% |
-| Reajuste | 3 | 2,6% a 10,9% | 2,4% a 12% |
+7. **O custo real do acidente e do bloqueio não aparece em nenhuma tela** (precisa de decisão).
+   - *O que acontece:* a fratura soma −R$ 1.467 (20 dias sem trabalhar), −R$ 1.500
+     (conserto) e −R$ 150 (remédio), cada um com rótulo em `aplicar().linhas`, mas
+     o telão mostra só o título da carta e "entrou R$ X".
+   - *Por que importa:* é o ponto que você chamou de crucial ("o tempo parado
+     custa quanto?").
+   - *Opções:* (a) no celular, as linhas da carta com rótulo e valor ("20 dias
+     sem trabalhar −R$ 1.467 · conserto da moto −R$ 1.500"), e no telão pelo
+     menos nas cartas graves; (b) também as linhas dos efeitos gerais com
+     `sorteou` na continuação do mês 3; (c) só no celular.
 
-### 6.3 Saldo esperado no fim do jogo, por opção
+8. **Os valores mais pesados da fratura não têm fonte** (precisa de decisão; completa a pergunta 12 da seção 6).
+   - *O que acontece:* conserto da moto R$ 1.500, do carro R$ 2.000, da bicicleta
+     R$ 300 e remédio R$ 150 estão sem fonte. "O outro app segurou metade da
+     renda" (mês 3) também está sem fonte, e a metade, sem justificativa.
+   - *Opções:* (a) fonte de preço de peças e funilaria (como a carta Queda cita a
+     AutoPapo); (b) marcar "estimativa sem fonte" e baixar a confiança na seção 2.
 
-É a conferência (c) do validador: a opção escolhida vale naquele mês, e os
-outros meses são decididos ao acaso. Por isso os números diferem dos da seção
-4.1, que põe os outros meses no piloto automático. `*` marca o padrão. Valores
-em R$.
+9. **A renda da PNAD já é líquida dos gastos: a manutenção pode estar contada duas vezes** (precisa de decisão).
+   - *O que acontece:* o IBGE diz que o rendimento dos plataformizados "considera
+     as deduções de gastos relacionados à atividade, como combustível". O config
+     desconta de novo a manutenção da moto (−R$ 261) e do carro (−R$ 400): R$ 783
+     e R$ 1.200 em 3 meses.
+   - *Opções:* (a) conferir a nota metodológica (p. 9-10) e, se a manutenção já
+     entra, tirar a linha; (b) trocá-la por um choque na carta "Quebrou"; (c)
+     manter, dizendo por que não é dupla.
 
-| Persona | Mês 1 a | Mês 1 b | Mês 1 c* | Mês 2 a* | Mês 2 b | Mês 2 c | Mês 3 a | Mês 3 b* | Mês 3 c |
-|---|---|---|---|---|---|---|---|---|---|
-| Jonas | **−83** | −939 | −824 | −607 | −815 | −424 | −468 | −611 | −767 |
-| Kauã | −123 | −334 | −242 | −234 | −359 | −106 | −178 | −209 | −312 |
-| Daiane | 7 | −600 | −460 | −363 | −487 | −203 | −278 | −325 | −449 |
-| Marcos | −789 | −1.736 | −1.627 | −1.422 | −1.620 | −1.110 | −1.184 | −1.373 | −1.595 |
-| Rose | **540** | −235 | −73 | 80 | −116 | 270 | 219 | 97 | −83 |
+10. **Os contextos do celular não mudam nada, e alguns contradizem o jogo** (precisa de decisão).
+    - *O que acontece:* Marcos, mês 3: "rotativo, que cobra 15% ao mês", mas a
+      dívida dele paga 7,43%. Jonas, mês 3: "sem garantia no contrato, a lei
+      permite despejo em 15 dias", mas a fonte do aluguel diz "mercado formal
+      (exige fiador ou análise de crédito)". Tênis, excursão, chuteira, óculos,
+      material escolar, despejo e corte de luz nunca são cobrados.
+    - *Opções:* (a) alinhar os juros e o fiador, e ligar pelo menos um contexto
+      por mês a uma opção ou a um efeito pequeno com fonte; (b) texto de pressão
+      sem valor implícito.
 
-### 6.4 Por que os dois tipos de aviso brigam entre si
+11. **A cadeia de setas do "Escolha ou sorte?" mistura variações e totais** (precisa de decisão; a D-041 pede a conta como história).
+    - *O que acontece:* "se não mudassem nada: −R$ 4.150 → as escolhas: −R$ 395 →
+      a sorte: +R$ 1.614 → terminaram com −R$ 2.931" parece uma sequência de
+      saldos, mas o do meio é uma variação, e o primeiro, um valor esperado.
+    - *Opções:* (a) manter; (b) colunas alinhadas (sem mudar nada · escolhas ·
+      sorte · terminou), com as variações marcadas de outro jeito; (c) trocar "se
+      não mudassem nada" por "num mês típico, sem mudar nada".
 
-1. **De onde vem o peso das decisões.** No mês 1, "trabalhar o máximo" abre uma
-   distância grande das outras duas opções: no Jonas, −R$ 83 contra −R$ 824 e
-   −R$ 939. Essa distância é a maior parte da variância que as decisões
-   explicam. Encolher a distância tira o aviso de dominância, mas também derruba
-   o peso das decisões: com o fator de 50% da pergunta 7, elas passam a explicar
-   de 7% a 20%.
-2. **De onde vem o peso da sorte.** Quase todo vem da carta do acidente. Medi
-   zerando só o efeito dela no saldo, com os pesos iguais, para as chances das
-   outras cartas não mudarem. A parte das decisões sobe assim:
+12. **A história da equipe no telão não usa as narrativas** (precisa de decisão; a D-045 fala nelas).
+    - *Opções:* (a) incluir pelo menos a narrativa da carta grave, cabendo em
+      1024×768; (b) registrar que o telão fica só com os rótulos (as narrativas
+      estão no celular).
 
-   | Persona | Hoje | Sem o efeito do acidente no saldo |
-   |---|---|---|
-   | Jonas | 23% | 48% |
-   | Kauã | 8% | 29% |
-   | Daiane | 19% | 30% |
-   | Marcos | 14% | 34% |
-   | Rose | 29% | 50% |
+13. **Textos das opções que não servem para Daiane e Rose** (precisa de decisão).
+    - *O que acontece:* mês 2 a, "aceitei até as corridas ruins"; mês 2 d, "parar
+      um dia no breque"; a narrativa da c ("o seguro de um não cobre a corrida do
+      outro"); e o texto do mês 1 ("quem fica mais tempo online recebe mais
+      pedidos") valem também para quem vende pelo Instagram e para a manicure.
+    - *Opções:* (a) rótulos por persona ("aceitei até as encomendas que não
+      compensavam", "aceitei os atendimentos longe e baratos"); (b) textos
+      neutros.
 
-   Fazendo o mesmo com cada uma das outras cartas, a parte das decisões muda no
-   máximo 4,5 pontos (a doença, na Rose), com uma exceção: sem o celular da
-   Daiane (R$ 800, carta "O instrumento quebrou"), a parte dela vai de 19% para
-   31%.
-3. **Tirar sorte sozinho piora a dominância.** Com menos ruído, a vantagem do
-   "trabalhar o máximo" aparece mais. Tanto a carta normal com peso 90 quanto o
-   acidente mais raro levam o aviso de dominância de 2 para 4 personas.
-4. **A saída sem briga:** em cada mês, duas opções perto uma da outra em saldo
-   e uma bem abaixo, com a diferença paga em energia, proteção ou risco. Assim
-   as decisões pesam, porque a opção de baixo puxa a variância, e nenhuma opção
-   vence sozinha. O mês 2 já está quase assim: "aceitar tudo" e "duas
-   plataformas" ficam perto, e "recusar" é a que pode ficar abaixo.
+14. **"piloto automático" ainda aparece no placar final e no resultado do mês** (precisa de decisão; a D-041 tirou o termo do placar).
+    - *Opções:* (a) no placar, "ninguém votou: ficou o de sempre", e o resultado
+      do mês continua como está; (b) trocar nos dois; (c) tirar.
 
-### 6.5 Sugestões, uma por uma (cada uma a validar com o Kleberson)
-
-**S1. Acidente mais raro** (é a opção b da pergunta 10).
-- **O que muda na carta `acidente`:**
-  - peso de 2 para 1;
-  - ajuste de quem trabalha na rua: de +3 para +1;
-  - ajuste de energia abaixo de 4: de +4 para +2;
-  - ajuste de "aceitar tudo" e "duas plataformas": de +3 para +2;
-  - ajuste de "empréstimo e trabalhar mais": de +4 para +2.
-- **Chance por mês:** passa de 2% a 11,4% para 1% a 6,1%. Fica mais perto da
-  pesquisa Cebrap/Amobitec do item 35, que dá 22% de ocorrências em 3 meses, a
-  maioria leves.
-- **Efeito, sozinha:**
-  - as decisões passam a explicar de 14% a 37% (Jonas 32% e Rose 37% entram na
-    faixa);
-  - a dominância do mês 1 passa a aparecer em 4 personas: Jonas 85%, Rose 86%,
-    Daiane 79% e Marcos 77%;
-  - o piloto automático da Rose vai de −R$ 56 para +R$ 20;
-  - o MEI passa a custar de R$ 168 a R$ 202 no valor esperado (hoje, de R$ 72 a
-    R$ 145). O pior caso que ele evita não muda: continua melhorando de R$ 554 a
-    R$ 1.902.
-- **Só funciona junto com a S2.**
-
-**S2. Menos horas extras no mês 1** (é uma versão mais leve da opção b da
-pergunta 7).
-- **O que muda na opção a do mês 1:** o fator vai de 75% para 53%, ou seja, os
-  valores de hoje × 0,7:
-  - Jonas: de 740 para 520;
-  - Kauã: de 150 para 105;
-  - Daiane: de 500 para 350;
-  - Marcos: de 930 para 650;
-  - Rose: de 700 para 490.
-- **Por que 53%:** com 60% (× 0,8), os dois avisos de dominância continuam.
-  Com 56% (× 0,75), eles já somem, mas a folga fica em décimos: 69,7% na Rose
-  com a S2 sozinha, e 69,7% no Jonas no pacote C. Com 53%, a maior chance que
-  sobra no pacote C é 69,0% (Jonas, mês 1). A folga é pequena em qualquer corte
-  (seção 6.4), e uma edição posterior pode trazer o aviso de volta.
-- **Base:** o fator de 75% já é hipótese minha (item 28, confiança baixa).
-- **Efeito, sozinha:**
-  - 5 avisos continuam, e as decisões explicam de 7% a 21%;
-  - o melhor caminho encolhe: Jonas de R$ 248 para R$ 27, Rose de R$ 862 para
-    R$ 650 e Marcos de −R$ 315 para −R$ 622.
-
-**S3. "Recusar o que não paga" também custa renda** (mês 2, opção b).
-- **O que muda:** a opção passa de 0 para −20% da renda-base, com o rótulo
-  "recusei o que não pagava: a plataforma passou a me oferecer menos pedidos":
-  - Jonas: −440;
-  - Kauã: −275;
-  - Daiane: −300;
-  - Marcos: −575;
-  - Rose: −420.
-- **Base:** o "bloqueio branco" descrito por Abílio (2021, p. 941): quem recusa
-  passa a receber menos pedidos. Hoje o jogo só representa a chance de 15% de
-  um bloqueio total de 10 dias.
-- **Efeito, sozinha:**
-  - as decisões passam a explicar de 22% a 41% (Jonas 33% e Rose 41% entram na
-    faixa);
-  - os 2 avisos de dominância continuam (Jonas 77% e 73%; Rose 79% e 72%);
-  - com −15% em vez de −20%, as decisões ficam entre 17% e 38%.
-- **Risco:** "recusar" vira a pior opção do mês 2, com folga. Isso pode soar
-  como "resistir não compensa". É a tese do bloco "Gestão por algoritmo", mas é
-  o mesmo tipo de dúvida da pergunta 8.
-- **Se entrar:** considerar baixar o ajuste do bloqueio para "recusar" de +10
-  para +5, para a punição não contar duas vezes. Medido no pacote C: muda a
-  parte das decisões em no máximo 1 ponto.
-
-**S4. Celular da Daiane mais barato** (opcional, só se quiser a Daiane dentro da
-faixa).
-- **O que muda:** na carta "O instrumento quebrou", o celular da Daiane vai de
-  −800 para −400: conserto da tela, em vez de celular novo.
-- **Base:** hoje é estimativa sem fonte (item 39).
-- **Efeito, junto com o pacote C:**
-  - a parte das decisões da Daiane vai de 26% para 41%;
-  - o piloto automático dela vai de −R$ 397 para −R$ 210.
-
-**O Marcos fica abaixo da faixa em qualquer pacote (24% no C).** As perdas dele
-são grandes perto do que as decisões movem: R$ 1.200 no conserto do carro e
-R$ 2.915 no acidente. Pôr o Marcos na faixa exigiria encolher valores do carro
-que são estimativa, e sem fonte melhor não recomendo.
-
-### 6.6 Pacotes medidos
-
-| Pacote | O que muda | Avisos | As decisões explicam | Piloto automático (saldo esperado) | Melhor caminho (energia no fim) |
-|---|---|---|---|---|---|
-| **A. Manter** | nada | 7 | 8% a 29% | −R$ 1.656 a −R$ 56; todas as personas no vermelho | −R$ 315 a +R$ 862 (energia 0) |
-| **B. Só tirar a vitória fácil** | S2 | 5, todos de variância | 7% a 21% | igual ao A | −R$ 622 a +R$ 650 (energia 0) |
-| **C. A decisão pesa, sem vitória fácil** | S1 + S2 + S3 | 3: Kauã 29%, Daiane 26% e Marcos 24% | 24% a 42% | −R$ 1.421 a +R$ 20; a Rose sai do vermelho por R$ 20 | −R$ 345 a +R$ 761 (energia 0) |
-| **C + S4** | S1 + S2 + S3 + S4 | 2: Kauã e Marcos | 24% a 42% | −R$ 1.421 a +R$ 20 | −R$ 345 a +R$ 761 (energia 0) |
-
-**O pacote C, persona por persona** (A → C):
-
-| Persona | As decisões explicam | Piloto automático | P(saldo < 0) no piloto | Melhor caminho (a-c-a) |
-|---|---|---|---|---|
-| Jonas | 23,2% → 36,7% | −R$ 806 → −R$ 658 | 83% → 82% | R$ 248 → R$ 201 |
-| Kauã | 7,9% → 29,1% | −R$ 228 → −R$ 120 | 57% → 53% | R$ 50 → R$ 119 |
-| Daiane | 18,7% → 26,2% | −R$ 453 → −R$ 397 | 63% → 61% | R$ 214 → R$ 145 |
-| Marcos | 14,1% → 24,2% | −R$ 1.656 → −R$ 1.421 | 97% → 97% | −R$ 315 → −R$ 345 |
-| Rose | 29,1% → 42,2% | −R$ 56 → +R$ 20 | 42% → 39% | R$ 862 → R$ 761 |
-
-**O que o pacote C mantém:**
-- o melhor caminho de cada persona continua sendo a-c-a, e termina com a energia
-  em 0;
-- nenhum padrão vira a opção de maior saldo;
-- nenhuma opção vence em saldo com mais de 70% contra as outras duas, mas com
-  folga pequena: a maior chance que sobra é 69,0% (Jonas, mês 1);
-- o pior caso não muda, porque o acidente continua possível.
-
-**O que o pacote C troca:**
-- o acidente sai em 1% a 6,1% dos meses, em vez de 2% a 11,4%;
-- o MEI fica mais caro no valor esperado (veja a S1);
-- "recusar" passa a custar renda;
-- a Rose fecha o piloto automático em +R$ 20, e com isso "todas no vermelho no
-  piloto" deixa de valer para ela.
-
-### 6.7 O que cada resposta em aberto faz com os avisos
-
-Medido com a mesma conta, uma resposta por vez sobre o config atual.
-
-| Pergunta e opção | Avisos | Efeito |
-|---|---|---|
-| 6 (b): carta normal com peso 90 | 7 | As decisões explicam de 13% a 37%, e a dominância passa para 4 personas, até 86%. O piloto da Rose vira +R$ 82 |
-| 7 (b): fator de 50% nas horas extras | 5 | As decisões explicam de 7% a 20%. Melhor caminho: Marcos −R$ 657, Rose +R$ 625 |
-| 7 (c): cansaço (−10% com energia abaixo de 4) e fator de 60% | 5 | As decisões explicam de 4% a 12%. O piloto piora para todos (Marcos −R$ 1.941, Rose −R$ 266) |
-| 8 (b): reajuste de R$ 400 | 7 | Quase nada muda: quem para ganha uns R$ 27 a mais no valor esperado, e a organização continua com o menor saldo do mês 3. As decisões caem até 1 ponto |
-| 9: corte de 10% no mês 2 | 7 | A variância não muda. O piloto da Rose vira +R$ 50 |
-| 9: corte de 20% no mês 2 | 7 | A variância não muda. O melhor caminho do Kauã fica em −R$ 21 |
-| 10 (b): acidente de 3% a 6% | 7 | É a S1 sozinha (veja acima) |
-
-### 6.8 A decisão que fica para o Kleberson
-
-- **Se a faixa de 30% a 60% continua sendo a meta:** sugiro o pacote C. Ele
-  também aproxima a chance do acidente da pesquisa (pergunta 10).
-- **Se a meta é só tirar o risco de "quem se esforça ganha"** (R12): basta o
-  pacote B.
-- **Se a mensagem "a sorte pesa mais que a decisão" é o objetivo** (D-009): o
-  pacote A se sustenta. Nesse caso, vale decidir também se a faixa do validador
-  (`FAIXA_DECISOES` em `bin/validar-config.mjs`) continua em 30% a 60%, para os
-  avisos não virarem ruído a cada edição.
+15. **A linha do tempo esconde os passos depois do mês 3** (precisa de decisão).
+    - *O que acontece:* a linha tem só blocos e meses, mas o "a seguir" aponta
+      para passos que não estão nela (formação das equipes, placar final,
+      termômetro, enquete); no último trecho aparece "a seguir: Fim".
+    - *Opções:* (a) incluir o placar final e o termômetro, pelo menos como um
+      segmento "jogo: resultado"; (b) o "a seguir" nomeia só trechos da linha.

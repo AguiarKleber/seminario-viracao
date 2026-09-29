@@ -2,27 +2,44 @@
 // baixar navegador): `npm run e2e`. Fica fora do `npm run check` (arquitetura,
 // seção 13) porque depende de um navegador na máquina.
 //
+// O conteúdo vem do config.json da raiz; outro arquivo entra por
+// `VIRACAO_CONFIG=caminho npm run e2e` ou `npm run e2e -- --config caminho`
+// (a fixture v2 dos testes, enquanto o config.json está em reescrita). Tudo o
+// que o teste precisa do conteúdo (passos, equipes, opções, afirmações) sai do
+// próprio config: o conteúdo muda até o congelamento, e o teste não pode quebrar
+// porque uma rodada ganhou uma opção. Sem um bloco "Mapa do seminário" no
+// roteiro de 60 min, o teste acrescenta um, para conferir a linha do tempo como
+// conteúdo principal (D-042).
+//
 // O que prova:
-// 1. o telão abre pelo arquivo (pendrive), carrega o config.json pelo seletor de
+// 1. o telão abre pelo arquivo (pendrive), carrega o config pelo seletor de
 //    arquivo e joga a sessão INTEIRA do roteiro 60min sem celulares, só com o
 //    teclado e cliques da barra: contagens manuais nas enquetes e decisões pelo
 //    apresentador;
-// 2. o placar projetado bate com o motor recalculado aqui no Node, a partir das
-//    sementes gravadas (a carta de cada equipe e as três parcelas do placar);
+// 2. o que foi projetado bate com o motor recalculado aqui no Node, a partir das
+//    sementes gravadas: a carta de cada equipe, as contas de cada mês ("entrou ·
+//    básico · faltou", a dívida) e as três páginas do placar final (D-041,
+//    D-044 a D-046);
 // 3. desfazer e encerrar de novo tira as mesmas cartas; recarregar a página
 //    oferece "Retomar a sessão"; "Carregar estado" retoma de um JSON salvo;
-// 4. em cada tipo de tela, nenhuma rolagem e nenhum texto abaixo de 28 px no
-//    corpo do telão, em 1024×768 e em 1920×1080, com capturas em e2e/capturas/;
-// 5. as telas que dependem de celular (QR, "14 de 18 votaram", "2 de 3
+// 4. em cada tipo de tela, nenhuma rolagem, nenhum texto abaixo de 28 px no
+//    corpo do telão e nenhum controle de operador fora da barra (D-047), em
+//    1024×768 e em 1920×1080, com capturas em e2e/capturas/;
+// 5. a linha do tempo do seminário em todo bloco, com "você está aqui" e "a
+//    seguir" (D-042), e as opções da rodada sem setas de tendência (D-043);
+// 6. as telas que dependem de celular (QR, "14 de 18 votaram", "2 de 3
 //    decidiram", prorrogação, faixa de entrada) desenhadas sobre um canal local
 //    com alunos simulados, pelo mesmo ponto de encaixe que o modo online usa.
+// 7. as seis equipes abertas: a tela de personas com a casa de cada uma (também
+//    com a faixa de entrada) e as páginas do placar final em 1024×768; com a
+//    barra escondida, nem o aviso de operação nem o modal ficam na projeção.
 // As funções passadas a page.evaluate/waitForFunction rodam no navegador, e não
 // no Node: os globais delas são os da página.
 /* global document, innerWidth, innerHeight, NodeFilter, getComputedStyle, SVGElement, requestAnimationFrame, DataTransfer, DragEvent */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { carregarNucleo, RAIZ } from '../test/carregar-nucleo.mjs';
 
@@ -32,15 +49,104 @@ const F = globalThis.Viracao.formatar;
 
 const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const URL_TELAO = pathToFileURL(join(RAIZ, 'telao', 'index.html')).href;
-const CAMINHO_CONFIG = join(RAIZ, 'config.json');
 const TAMANHOS = [[1024, 768], [1920, 1080]];
 const MIN_FONTE = 28;
+const ROTEIRO = '60min';
+const LETRAS = 'ABCD';
+// O mesmo critério do telão para achar o bloco do mapa (js/telao.js, ehMapa).
+const RE_MAPA = /^mapa do semin[aá]rio\b/i;
+
+// ---------- Conteúdo ----------
+
+function caminhoDoConfig() {
+  const i = process.argv.indexOf('--config');
+  const arg = i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
+  return resolve(RAIZ, process.env.VIRACAO_CONFIG || arg || 'config.json');
+}
+
+const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
+const CAMINHO_CONFIG = caminhoDoConfig();
+const TEXTO_ORIGINAL = readFileSync(CAMINHO_CONFIG, 'utf8');
+// Sem o BOM do começo (o validador aceita, com aviso; o JSON.parse, não).
+const brutoConfig = JSON.parse(TEXTO_ORIGINAL.charCodeAt(0) === 0xfeff ? TEXTO_ORIGINAL.slice(1) : TEXTO_ORIGINAL);
+let injetouMapa = false;
+{
+  const passos = brutoConfig.roteiros?.[ROTEIRO] || [];
+  if (!passos.some((p) => p.tipo === 'bloco' && RE_MAPA.test(p.titulo || ''))) {
+    passos.splice(passos.findIndex((p) => p.tipo === 'bloco') + 1, 0, { tipo: 'bloco', titulo: 'Mapa do seminário', alvoSeg: 120 });
+    injetouMapa = true;
+  }
+}
+// Sem injeção, o arquivo vai como está (BOM e acentos inclusive).
+const TEXTO_CONFIG = injetouMapa ? JSON.stringify(brutoConfig, null, 1) : TEXTO_ORIGINAL;
+const ARQUIVO_CONFIG = { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(TEXTO_CONFIG) };
 
 const configNode = (() => {
-  const r = V.validarConfig.validarTexto(readFileSync(CAMINHO_CONFIG, 'utf8'));
-  assert.ok(r.ok, 'o config.json real precisa ser válido para o e2e');
+  const r = V.validarConfig.validarTexto(TEXTO_CONFIG);
+  assert.ok(r.ok, `o config do e2e precisa ser válido (${CAMINHO_CONFIG}): ${JSON.stringify(r.erros.slice(0, 5))}`);
   return r.config;
 })();
+console.log(`Config: ${CAMINHO_CONFIG}${injetouMapa ? ' (com um bloco "Mapa do seminário" acrescentado ao roteiro 60min)' : ''}`);
+
+const PASSOS = V.roteiro.passos(configNode, ROTEIRO);
+const achar = (teste) => PASSOS.findIndex(teste);
+const I_ANTES = achar((p) => p.tipo === 'enquete' && p.momento === 'antes');
+const I_FORMAR = achar((p) => p.tipo === 'formarEquipes');
+const I_R1 = achar((p) => p.tipo === 'rodada');
+const RODADAS = PASSOS.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
+const PASSO_TERMOMETRO = PASSOS.find((p) => p.tipo === 'enquete' && p.momento === 'unico');
+assert.ok(I_ANTES >= 0 && I_FORMAR > I_ANTES && I_R1 > I_FORMAR && RODADAS.length === 3 && PASSO_TERMOMETRO, `o roteiro ${ROTEIRO} tem enquete antes, formação, 3 rodadas e termômetro`);
+const ENQ_ANTES = configNode.enquetes[PASSOS[I_ANTES].enquete];
+const AFIRM_ANTES = lista(ENQ_ANTES.ordemAfirmacoes);
+const ENQ_TERMOMETRO = configNode.enquetes[PASSO_TERMOMETRO.enquete];
+const EQUIPES = lista(configNode.ordem.equipes);
+const OBRIGATORIA = EQUIPES.find((id) => configNode.equipes[id].obrigatoria);
+const FECHADA = [...EQUIPES].reverse().find((id) => !configNode.equipes[id].obrigatoria);
+const ATIVAS = EQUIPES.filter((id) => id !== FECHADA);
+const TRECHOS = PASSOS.filter((p) => p.tipo === 'bloco' || p.tipo === 'rodada');
+const opcoesDe = (r) => lista(configNode.rodadas[r].ordemOpcoes);
+const letraDe = (r, op) => LETRAS[opcoesDe(r).indexOf(op)];
+const numeroDe = (eq) => EQUIPES.indexOf(eq) + 1;
+const nomes = Object.fromEntries(EQUIPES.map((eq) => [eq, `${numeroDe(eq)} ${configNode.equipes[eq].nome}`]));
+
+// A decisão de cada equipe em cada rodada: todas as opções aparecem, e a última
+// equipe ativa fica no piloto automático na primeira e na terceira rodadas.
+const plano = Object.fromEntries(RODADAS.map((r, k) => [r, Object.fromEntries(ATIVAS.flatMap((eq, i) => (
+  k !== 1 && i === ATIVAS.length - 1 ? [] : [[eq, opcoesDe(r)[(i + k) % opcoesDe(r).length]]]
+)))]));
+
+// Contagens à mão, determinísticas por afirmação e momento.
+const contagemDe = (k) => [0, 1, 2, 3, 4].map((i) => 1 + ((k * 7 + i * 3) % 5));
+const contagens = {
+  antes: Object.fromEntries(AFIRM_ANTES.map((a, k) => [a, contagemDe(k)])),
+  unico: Object.fromEntries(lista(ENQ_TERMOMETRO.ordemAfirmacoes).map((a, k) => [a, contagemDe(k + 3)])),
+  depois: Object.fromEntries(AFIRM_ANTES.map((a, k) => [a, contagemDe(k + 6)])),
+};
+
+// O que o telão escreve, recalculado aqui (a mesma regra da tela, js/telao.js).
+// Refeito aqui, e não pelo F da página: "7,43%" com as casas que a fonte usa
+// (revisão de 29/09; o decimal() de uma casa dava 7,4%).
+const pctJuros = `${(configNode.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+function descreverPasso(p) {
+  if (!p) return null;
+  if (p.tipo === 'bloco') return p.titulo || 'Apresentação';
+  if (p.tipo === 'rodada') return configNode.rodadas[p.rodada].titulo;
+  if (p.tipo === 'enquete') return [configNode.enquetes[p.enquete].titulo, { antes: 'antes', depois: 'depois' }[p.momento]].filter(Boolean).join(' · ');
+  return { lobby: 'Entrada na sala', formarEquipes: 'Formação das equipes', personas: 'As personas', placarFinal: 'Placar final', comparativo: `Comparativo · ${configNode.enquetes[p.enquete]?.titulo || ''}`, fim: 'Fim' }[p.tipo];
+}
+function textoContas(mes) {
+  const partes = [`entrou ${F.moeda(mes.entrou)}`, `básico ${F.moeda(mes.basico)}`];
+  if (mes.juros > 0) partes.push(`juros ${F.moeda(mes.juros)}`);
+  partes.push(mes.saldoMes < 0 ? `faltou ${F.moeda(-mes.saldoMes)}` : `sobrou ${F.moeda(mes.saldoMes)}`);
+  return partes.join(' · ');
+}
+// Os valores em reais de um texto da tela, na ordem ("−R$ 4.150" → −4150).
+const reaisDoTexto = (t) => [...t.matchAll(/([−+]?)R\$\s?([\d.]+)/g)].map((m) => (m[1] === '−' ? -1 : 1) * Number(m[2].replace(/\./g, '')));
+const textoSaldo = (renda) => (renda < 0 ? `faltou ${F.moeda(-renda)}` : `sobrou ${F.moeda(renda)}`);
+function tituloSaldo(naoFecharam, total) {
+  if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
+  return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
+}
 
 // ---------- Navegador ----------
 
@@ -110,15 +216,16 @@ async function avancarPara(teste, descricao) {
   return esperarEstado(teste, descricao);
 }
 
-// Avança passo a passo (blocos da apresentação no meio) até o estado pedido.
-async function avancarAte(teste, descricao, maximo = 6) {
+// Avança passo a passo até o estado pedido. aoPassar(e) roda em cada passo do
+// caminho (os blocos da apresentação no meio, por exemplo), antes de avançar.
+async function avancarAte(teste, descricao, { maximo = 8, aoPassar } = {}) {
   for (let i = 0; i < maximo; i += 1) {
     const e = await estado();
     if (teste(e)) return e;
-    const indice = e.indice;
-    const sub = e.subfase;
+    if (aoPassar) await aoPassar(e);
+    const { indice, subfase } = e;
     await avancar();
-    await esperarEstado((x) => x.indice !== indice || x.subfase !== sub, `sair do passo ${indice}`);
+    await esperarEstado((x) => x.indice !== indice || x.subfase !== subfase, `sair do passo ${indice}`);
   }
   return esperarEstado(teste, descricao);
 }
@@ -186,9 +293,20 @@ async function clicarBarra(acao) {
   await page.click(`#barra [data-acao="${acao}"]`);
 }
 
-async function escolherNoModal(textoInicial) {
+// Segura um botão da barra (os que apagam pedem 2 s). Com o mouse pressionado
+// sobre ele, o botão fica com o foco, e a barra não some no meio (D-038).
+async function segurarNaBarra(acao, ms = 2300) {
+  await mostrarBarra();
+  const caixa = await page.locator(`#barra [data-acao="${acao}"]`).boundingBox();
+  await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(ms);
+  await page.mouse.up();
+}
+
+async function escolherNoModal(texto) {
   await page.waitForFunction(() => document.getElementById('modal').open);
-  const botao = page.locator('#modal button').filter({ hasText: textoInicial }).first();
+  const botao = page.locator('#modal button').filter({ hasText: texto }).first();
   await botao.click();
 }
 
@@ -202,7 +320,7 @@ async function confirmarModal() {
 }
 
 async function carregarConfig() {
-  await page.setInputFiles('#arquivo-config', CAMINHO_CONFIG);
+  await page.setInputFiles('#arquivo-config', ARQUIVO_CONFIG);
   await page.waitForSelector('#hash-config');
 }
 
@@ -231,11 +349,16 @@ async function medir() {
         if (px < minimo - 0.01) pequenos.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''} ${px.toFixed(1)}px "${t.textContent.trim().slice(0, 40)}"`);
       }
     }
+    // Fora da tela, e também fora do próprio palco: com a faixa de entrada
+    // embaixo, uma lista que transbordava o palco passava por cima da faixa sem
+    // rolar a página (o resultado de 6 equipes, no redesenho de 29/09).
     const fora = [];
+    const palco = document.getElementById('palco').getBoundingClientRect();
+    const baixo = Math.min(innerHeight, palco.bottom);
     for (const el of document.querySelectorAll('#palco *')) {
       const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0 && (r.right > innerWidth + 1 || r.bottom > innerHeight + 1 || r.left < -1 || r.top < -1)) {
-        fora.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''} (${Math.round(r.right)}, ${Math.round(r.bottom)})`);
+      if (r.width > 0 && r.height > 0 && (r.right > innerWidth + 1 || r.bottom > baixo + 1 || r.left < -1 || r.top < -1)) {
+        fora.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''} (${Math.round(r.right)}, ${Math.round(r.bottom)} > ${Math.round(baixo)})`);
       }
     }
     // Texto cortado com reticências (revisão da F2, achado 18: "Ka…" no lugar
@@ -248,17 +371,50 @@ async function medir() {
   }, MIN_FONTE);
 }
 
+// D-047: nada que só o apresentador usa fica na projeção. Seletores e textos
+// conferidos no #palco e na faixa de entrada (a abertura, antes de projetar,
+// fica de fora):
+// - qualquer [data-acao], input, select, textarea ou botão de segurar;
+// - .dica-operador, [data-contagem-ativos], [data-barra-dica], .fim-acoes;
+// - todo <button>, menos .cartao-equipe (formação das equipes) e .botao-letra
+//   (a decisão registrada de cada equipe no offline): os dois são o que a turma
+//   precisa ver (quais equipes jogam; o que cada equipe anunciou);
+// - os textos de operação: Enter, Espaço, Shift, Ctrl, "tecla(s)", "segure",
+//   "Exportar", "Apagar a sala", "A exportação", "C troca", "ativos /".
+const SELETORES_OPERADOR = ['[data-acao]', 'input', 'select', 'textarea', '.botao-segurar', '.dica-operador', '[data-contagem-ativos]', '[data-barra-dica]', '.fim-acoes'];
+const RE_TEXTO_OPERADOR = /\bEnter\b|\bEspaço\b|\bShift\b|\bCtrl\b|\bteclas?\b|\bsegure\b|Exportar|Apagar a sala|A exportação|C troca|ativos \//i;
+async function controlesNaProjecao() {
+  return page.evaluate(([seletores, fonte]) => {
+    const achados = [];
+    const raizes = ['palco', 'faixa'].map((id) => document.getElementById(id)).filter((x) => x && !x.hidden);
+    for (const r of raizes) {
+      for (const sel of seletores) for (const n of r.querySelectorAll(sel)) achados.push(`${sel} "${n.textContent.trim().slice(0, 40)}"`);
+      for (const b of r.querySelectorAll('button')) if (!b.matches('.cartao-equipe, .botao-letra')) achados.push(`button "${b.textContent.trim().slice(0, 40)}"`);
+      const m = new RegExp(fonte, 'i').exec(r.textContent);
+      if (m) achados.push(`texto de operador "${m[0]}"`);
+    }
+    // Revisão de 29/09: o aviso flutuante (#aviso) e o modal ficavam fora da
+    // varredura. Com a barra escondida, nenhum dos dois pode estar à vista: o
+    // aviso de operação ("Enter encerra…", "Totais exportados…") mora junto da
+    // barra, e o modal só existe enquanto o apresentador o usa.
+    const barraEscondida = document.getElementById('barra').hidden;
+    const aviso = document.getElementById('aviso');
+    if (barraEscondida && !aviso.hidden && aviso.getClientRects().length > 0) achados.push(`aviso à vista com a barra escondida: "${aviso.textContent.slice(0, 50)}"`);
+    if (document.getElementById('modal').open) achados.push('modal aberto na projeção');
+    return achados;
+  }, [SELETORES_OPERADOR, RE_TEXTO_OPERADOR.source]);
+}
+
 const verificadas = [];
-// Em cada tamanho: redesenha, esconde a barra e o aviso, mede, captura.
+// Em cada tamanho: redesenha, esconde a barra, mede, captura.
 async function conferirTela(nome, { esperarMs = 0, criterios = true } = {}) {
   for (const [largura, altura] of TAMANHOS) {
     await page.setViewportSize({ width: largura, height: altura });
     await page.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a, [largura, altura]);
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     if (esperarMs) await page.waitForTimeout(esperarMs);
-    await page.evaluate(() => {
-      document.getElementById('aviso').hidden = true;
-    });
+    // O aviso não é mais escondido à mão aqui: com a barra escondida, ele
+    // precisa sumir sozinho (D-047), e controlesNaProjecao confere.
     if (!(await page.evaluate(() => document.getElementById('barra').hidden))) await page.keyboard.press('h');
     await page.waitForFunction(() => document.getElementById('barra').hidden || !document.body.classList.contains('em-sessao'));
     const m = await medir();
@@ -268,6 +424,7 @@ async function conferirTela(nome, { esperarMs = 0, criterios = true } = {}) {
       assert.deepEqual(m.pequenos, [], `${nome} em ${largura}×${altura}: texto abaixo de ${MIN_FONTE} px`);
       assert.deepEqual(m.fora, [], `${nome} em ${largura}×${altura}: elemento fora da tela`);
       assert.deepEqual(m.cortados, [], `${nome} em ${largura}×${altura}: texto cortado com reticências`);
+      assert.deepEqual(await controlesNaProjecao(), [], `${nome} em ${largura}×${altura}: controle de operador fora da barra (D-047)`);
     }
   }
   await page.setViewportSize({ width: 1024, height: 768 });
@@ -291,6 +448,19 @@ async function esperarManual(afirmacao, hist) {
   await esperarEstado((e) => JSON.stringify(e.manual?.[afirmacao]) === JSON.stringify(hist), `contagem manual de ${afirmacao} = ${hist}`);
 }
 
+// Offline, a próxima afirmação: no modo "todas", ↓ (ou Espaço) só troca a
+// afirmação em foco; no "uma_por_vez", o Espaço abre a seguinte.
+async function proximaAfirmacao(enq, k, tecla = 'ArrowDown') {
+  const ordem = lista(enq.ordemAfirmacoes);
+  if (enq.modo === 'uma_por_vez') {
+    await avancarPara((e) => e.afirmacao === ordem[k], `afirmação ${ordem[k]}`);
+    return;
+  }
+  if (tecla === 'Space') await avancar();
+  else await page.keyboard.press(tecla);
+  await page.waitForFunction(([i, n]) => document.querySelector('.kicker')?.textContent.includes(`afirmação ${i} de ${n}`), [k + 1, ordem.length]);
+}
+
 async function lerDownload(download) {
   const caminho = await download.path();
   return JSON.parse(readFileSync(caminho, 'utf8'));
@@ -303,9 +473,37 @@ async function decidirPelaBarra(numeroENome, letra) {
   await page.waitForFunction(() => !document.getElementById('modal').open);
 }
 
+// "12. Placar final", e não o "2. " dentro do "12. ": o número do passo no começo.
+const passoNoModal = (indice) => new RegExp(`^${indice + 1}\\. `);
+
+// D-042: a linha do tempo do seminário no bloco, com os blocos e os meses do
+// roteiro, "você está aqui" no passo atual e "a seguir" com o próximo passo.
+async function conferirLinhaDoTempo({ mapa }) {
+  const e = await estado();
+  const r = await page.evaluate(() => {
+    const lt = document.querySelector('#palco .linha-tempo');
+    if (!lt) return null;
+    return {
+      itens: Array.from(lt.querySelectorAll('[data-trecho]'), (n) => ({ indice: Number(n.dataset.trecho), atual: n.getAttribute('aria-current') })),
+      seguir: lt.querySelector('.linha-tempo-seguir')?.textContent ?? null,
+      mapa: lt.classList.contains('linha-tempo-mapa'),
+      texto: lt.textContent,
+      visivel: lt.getBoundingClientRect().height > 0,
+    };
+  });
+  assert.ok(r && r.visivel, `bloco ${e.indice}: sem a linha do tempo`);
+  assert.deepEqual(r.itens.map((x) => x.indice), TRECHOS.map((p) => p.indice), 'a linha do tempo traz os blocos e os meses do roteiro, na ordem');
+  assert.deepEqual(r.itens.filter((x) => x.atual === 'step').map((x) => x.indice), [e.indice], '"você está aqui" no passo atual');
+  assert.match(r.texto, /você está aqui/i);
+  const proximo = descreverPasso(PASSOS[e.indice + 1]);
+  if (proximo) assert.ok(r.seguir?.includes(`a seguir: ${proximo}`), `"a seguir: ${proximo}" em "${r.seguir}"`);
+  assert.equal(r.mapa, mapa, mapa ? 'no "Mapa do seminário", a linha do tempo é o conteúdo principal' : 'nos outros blocos, a linha do tempo é discreta');
+  if (mapa) for (const p of TRECHOS) assert.ok(r.texto.includes(descreverPasso(p)), `o mapa traz "${descreverPasso(p)}"`);
+}
+
 // ---------- Parte 1: sessão inteira sem celulares ----------
 
-console.log('Parte 1: sessão inteira do roteiro 60min, sem celulares');
+console.log(`Parte 1: sessão inteira do roteiro ${ROTEIRO}, sem celulares`);
 await page.goto(URL_TELAO);
 await esperarTela('abertura');
 // O botão offline está lá desde a primeira pintura, mesmo antes do config.
@@ -316,10 +514,11 @@ await page.setInputFiles('#arquivo-config', join(RAIZ, 'test', 'fixtures', 'conf
 await page.waitForSelector('#erros-config');
 assert.match(await page.textContent('#erros-config'), /JSON inválido/);
 assert.equal(await page.isDisabled('[data-acao="comecar-offline"]'), true, 'config quebrado não cria sala');
-const brutoComErros = JSON.parse(readFileSync(CAMINHO_CONFIG, 'utf8'));
-brutoComErros.cartas[0].peso = -1;
-brutoComErros.equipes[1].persona = 'ninguem';
-brutoComErros.cartas[1].efeitos = [{ 'soma ': { renda: 1 } }]; // a chave com espaço
+const brutoComErros = structuredClone(brutoConfig);
+const primeiroDe = (colecao, k = 0) => (Array.isArray(colecao) ? colecao[k] : colecao[Object.keys(colecao)[k]]);
+primeiroDe(brutoComErros.cartas, 0).peso = -1;
+primeiroDe(brutoComErros.equipes, 1).persona = 'ninguem';
+primeiroDe(brutoComErros.cartas, 1).efeitos = [{ 'soma ': { renda: 1 } }]; // a chave com espaço
 const esperadosNoValidador = V.validarConfig.validar(brutoComErros).erros.length;
 await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(brutoComErros)) });
 await page.waitForFunction((n) => document.querySelectorAll('#erros-config li').length === n, esperadosNoValidador);
@@ -331,16 +530,16 @@ await page.evaluate((texto) => {
   const dt = new DataTransfer();
   dt.items.add(new File([texto], 'config.json', { type: 'application/json' }));
   document.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
-}, readFileSync(CAMINHO_CONFIG, 'utf8'));
+}, TEXTO_CONFIG);
 await page.waitForSelector('#hash-config');
-// E o seletor de arquivo, de novo, com o config real.
+// E o seletor de arquivo, de novo, com o config do teste.
 await carregarConfig();
 const hashNaTela = await page.textContent('#hash-config');
 assert.equal(hashNaTela, V.validarConfig.hash(configNode), 'o telão mostra o hash do config carregado');
 // Por file:// o botão do modo com celulares nem aparece.
 assert.equal(await page.locator('[data-acao="criar-online"]').count(), 0);
 await conferirTela('abertura', { criterios: false });
-await page.check('input[name="roteiro"][value="60min"]');
+await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
 await page.click('[data-acao="comecar-offline"]');
 await esperarTela('lobby');
 await conferirTela('lobby-offline');
@@ -408,6 +607,10 @@ await conferirTela('lobby-offline');
   // Os atalhos continuam valendo com a barra escondida: o Espaço logo abaixo
   // abre a enquete sem a barra ter aparecido.
 }
+// D-047: os controles que saíram da tela do fim estão na barra; o placar final
+// não tem mais critério (tecla C) nem o interruptor "sem vencedor".
+for (const acao of ['exportar', 'apagar']) assert.equal(await page.locator(`#barra [data-acao="${acao}"]`).count(), 1, `a barra tem o "${acao}"`);
+assert.equal(await page.locator('#barra [data-acao="semVencedor"]').count(), 0, 'a barra não tem mais o "Sem vencedor"');
 
 // Revisão da F2, achado 26: offline também há uma aba escritora só. Outra aba do
 // mesmo navegador oferece "Retomar", mas a trava recusa; antes, as duas gravavam
@@ -416,7 +619,7 @@ await conferirTela('lobby-offline');
   const aba2 = await contexto.newPage();
   aba2.on('pageerror', (e) => errosDaPagina.push(`aba 2 pageerror: ${e.message}`));
   await aba2.goto(URL_TELAO);
-  await aba2.setInputFiles('#arquivo-config', CAMINHO_CONFIG);
+  await aba2.setInputFiles('#arquivo-config', ARQUIVO_CONFIG);
   await aba2.waitForSelector('#bloco-retomar');
   await aba2.click('[data-acao="retomar"]');
   await aba2.waitForFunction(() => /aberta em outra aba/.test(document.getElementById('aviso')?.textContent || ''));
@@ -430,23 +633,20 @@ await page.keyboard.press('PageUp');
 await page.waitForTimeout(200);
 assert.equal((await estado()).indice, 0);
 
-// Enquete "antes" (modo "todas", revelada só no comparativo)
-await avancarPara((e) => e.tipo === 'enquete' && e.momento === 'antes', 'enquete antes');
-const contagens = {
-  antes: { a1: [3, 5, 2, 4, 1], a2: [1, 2, 3, 6, 3], a3: [4, 4, 3, 2, 2] },
-  unico: { t1: [1, 1, 3, 6, 4], t2: [5, 4, 3, 2, 1], t3: [6, 5, 2, 1, 1] },
-  depois: { a1: [5, 5, 2, 2, 1], a2: [4, 4, 3, 3, 1], a3: [1, 2, 3, 5, 4] },
-};
-for (const [i, a] of ['a1', 'a2', 'a3'].entries()) {
-  if (i > 0) await page.keyboard.press('ArrowDown');
+// Enquete "antes" (revelada só no comparativo)
+await avancarAte((e) => e.indice === I_ANTES, 'enquete antes');
+for (const [k, a] of AFIRM_ANTES.entries()) {
+  if (k > 0) await proximaAfirmacao(ENQ_ANTES, k);
   await contarManual(contagens.antes[a]);
   await esperarManual(a, contagens.antes[a]);
-  if (i === 0) {
+  if (k === 0) {
     await conferirTela('enquete-votando-contadores');
     // Revisão da F2, achado 11: Enter com afirmações sem contagem pede
     // confirmação, com o foco no "Cancelar"; um segundo Enter cancela.
+    const zeradas = AFIRM_ANTES.slice(1).map((_, i) => i + 2);
+    const re = zeradas.length === 1 ? `afirmação ${zeradas[0]} está sem contagem` : `afirmações ${zeradas.join(', ')} estão sem contagem`;
     await page.keyboard.press('Enter');
-    await page.waitForFunction(() => document.getElementById('modal').open && /afirmações 2, 3 estão sem contagem/.test(document.getElementById('modal').textContent));
+    await page.waitForFunction((fonte) => document.getElementById('modal').open && new RegExp(fonte).test(document.getElementById('modal').textContent), re);
     await page.keyboard.press('Enter');
     await page.waitForFunction(() => !document.getElementById('modal').open);
     assert.equal((await estado()).subfase, 'votando', 'o Enter com afirmações zeradas não encerra sem confirmação');
@@ -459,41 +659,66 @@ await esperarEstado((e) => e.subfase === 'apurada', 'enquete antes apurada');
 await esperarTela('enquete-apurada');
 await conferirTela('enquete-apurada-escondida');
 
-// Blocos, formação das equipes e personas
-await avancarPara((e) => e.tipo === 'bloco' && e.indice === 2, 'bloco 1');
-await conferirTela('bloco');
-await avancarPara((e) => e.indice === 3, 'bloco 2');
-await avancarPara((e) => e.tipo === 'formarEquipes', 'formar equipes');
-await esperarEstado((e) => Object.keys(e.equipesAbertas || {}).length === 6, 'todas as equipes abertas');
-await page.keyboard.press('Digit6'); // fecha a equipe 6
-await esperarEstado((e) => !e.equipesAbertas.e6 && Object.keys(e.equipesAbertas).length === 5, 'equipe 6 fechada');
-// A obrigatória não fecha.
-await page.keyboard.press('Digit1');
-await page.waitForTimeout(300);
-assert.equal((await estado()).equipesAbertas.e1, true, 'a equipe obrigatória continua aberta');
+// Blocos (com a linha do tempo), formação das equipes e personas
+const blocosVistos = new Set();
+async function conferirBloco(e, sufixo = '') {
+  if (e.tipo !== 'bloco') return;
+  const mapa = RE_MAPA.test(PASSOS[e.indice].titulo || '');
+  const tipo = mapa ? 'bloco-mapa' : (e.equipesTravadas ? 'bloco-com-placar' : 'bloco');
+  if (blocosVistos.has(tipo + sufixo)) return;
+  blocosVistos.add(tipo + sufixo);
+  await esperarTela('bloco');
+  await conferirLinhaDoTempo({ mapa });
+  await conferirTela(tipo + sufixo);
+}
+await avancarAte((e) => e.tipo === 'formarEquipes', 'formar equipes', { aoPassar: (e) => conferirBloco(e) });
+assert.ok(blocosVistos.has('bloco-mapa'), 'o "Mapa do seminário" passou pela tela');
+await esperarEstado((e) => Object.keys(e.equipesAbertas || {}).length === EQUIPES.length, 'todas as equipes abertas');
+await page.keyboard.press(`Digit${numeroDe(FECHADA)}`); // fecha a última equipe não obrigatória
+await esperarEstado((e) => !e.equipesAbertas[FECHADA] && Object.keys(e.equipesAbertas).length === ATIVAS.length, `equipe ${FECHADA} fechada`);
+if (OBRIGATORIA) {
+  await page.keyboard.press(`Digit${numeroDe(OBRIGATORIA)}`);
+  await page.waitForTimeout(300);
+  assert.equal((await estado()).equipesAbertas[OBRIGATORIA], true, 'a equipe obrigatória continua aberta');
+}
 await conferirTela('formar-equipes');
 await avancarPara((e) => e.tipo === 'personas' && e.equipesTravadas === true, 'personas');
 await conferirTela('personas');
-await avancarPara((e) => e.tipo === 'bloco' && e.indice === 6, 'bloco com placar');
-await conferirTela('bloco-com-placar');
+// Revisão de 29/09 (D-044 no telão): cada persona com as pessoas em casa, o
+// básico, a outra renda (ou "sem outra renda na casa") e o furo de um mês
+// comum, a conta do motor.mesComum.
+async function conferirCasaDasPersonas(abertas) {
+  const lidas = await page.$$eval('.persona-linha', (ns) => ns.map((n) => ({
+    persona: n.dataset.persona, quem: n.querySelector('.persona-quem')?.textContent ?? '', casa: n.querySelector('.persona-casa')?.textContent ?? '',
+  })));
+  const esperadas = lista(configNode.ordem.personas).filter((pid) => abertas.some((eq) => configNode.equipes[eq].persona === pid));
+  assert.deepEqual(lidas.map((l) => l.persona), esperadas, 'uma linha por persona com equipe aberta');
+  for (const l of lidas) {
+    const p = configNode.personas[l.persona];
+    const mes = V.motor.mesComum(configNode, abertas.find((eq) => configNode.equipes[eq].persona === l.persona));
+    assert.ok(l.quem.includes(`${p.familia.pessoas} pessoas em casa`), `${l.persona}: as pessoas em casa ("${l.quem}")`);
+    const trechos = [
+      `básico ${F.moeda(mes.basico)}`,
+      p.outraRenda ? `${p.outraRenda.rotulo} ${F.moeda(p.outraRenda.valor)}` : 'sem outra renda na casa',
+      mes.saldoMes < 0 ? `falta ${F.moeda(-mes.saldoMes)} por mês` : `sobra ${F.moeda(mes.saldoMes)} por mês`,
+    ];
+    for (const t of trechos) assert.ok(l.casa.includes(t), `${l.persona}: "${t}" em "${l.casa}"`);
+  }
+}
+await conferirCasaDasPersonas(ATIVAS);
 
 // As três rodadas, decididas pelo apresentador pela barra
-const plano = {
-  r1: { e1: 'a', e2: 'b', e3: 'c', e4: 'a' }, // e5 fica no piloto automático
-  r2: { e1: 'b', e2: 'c', e3: 'a', e4: 'b', e5: 'c' },
-  r3: { e1: 'c', e2: 'a', e3: 'b', e4: 'c' },
-};
-const nomes = Object.fromEntries(Object.values(configNode.equipes).map((eq, i) => [eq.id, `${i + 1} ${eq.nome}`]));
-const letraDe = (r, op) => 'ABC'[configNode.rodadas[r].ordemOpcoes.indexOf(op)];
 let cartasR1 = null;
-let downloadsAntesR = downloads.length;
+const downloadsAntesR = downloads.length;
+const contasNaTela = {};
 
-for (const r of ['r1', 'r2', 'r3']) {
-  await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r}`);
-  if (r === 'r1') {
+for (const r of RODADAS) {
+  await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r}`, { aoPassar: (e) => conferirBloco(e) });
+  if (r === RODADAS[0]) {
     // D-037: o Espaço abriu a rodada antes da hora. Ctrl+Z (com confirmação, foco
-    // no "Cancelar") desfaz a abertura: sem voto, a tela volta ao bloco.
+    // no "Cancelar") desfaz a abertura: sem voto, a tela volta ao passo anterior.
     const aberta = await estado();
+    const anterior = PASSOS[aberta.indice - 1];
     await page.keyboard.press('Control+z');
     await page.waitForFunction(() => document.getElementById('modal').open && /Desfazer a abertura desta votação/.test(document.getElementById('modal').textContent));
     await page.keyboard.press('Enter'); // o foco está no "Cancelar"
@@ -502,13 +727,21 @@ for (const r of ['r1', 'r2', 'r3']) {
     await page.keyboard.press('Control+z');
     await confirmarModal();
     const voltou = await esperarEstado((e) => e.indice === aberta.indice - 1, 'volta ao passo de antes da rodada');
-    assert.deepEqual([voltou.tipo, voltou.subfase, voltou.rodada], ['bloco', 'ativo', undefined]);
-    await esperarTela('bloco');
-    await avancarPara((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', 'rodada r1 de novo');
+    assert.deepEqual([voltou.tipo, voltou.subfase, voltou.rodada], [anterior.tipo, 'ativo', undefined]);
+    await avancarPara((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r} de novo`);
+    // D-043: até 4 opções, todas na tela, e nenhuma tendência nem seta.
+    const opcoesNaTela = await page.$$eval('#palco .opcoes li', (ns) => ns.map((n) => n.dataset.opcao));
+    assert.deepEqual(opcoesNaTela, opcoesDe(r), 'todas as opções da rodada, na ordem');
+    const textoPalco = await page.textContent('#palco');
+    for (const op of opcoesDe(r)) {
+      const tendencia = configNode.rodadas[r].opcoes[op].tendencia;
+      if (tendencia) assert.ok(!textoPalco.includes(tendencia), `a tendência da opção ${op} não aparece (D-043)`);
+    }
+    assert.ok(!/[↑↓↗↘⬆⬇▲▼]/.test(await page.textContent('#palco .opcoes')), 'sem setas nas opções');
   }
   for (const [eq, op] of Object.entries(plano[r])) await decidirPelaBarra(nomes[eq], letraDe(r, op));
   await esperarEstado((e) => Object.keys(e.forcadas || {}).length === Object.keys(plano[r]).length, `decisões de ${r} gravadas`);
-  if (r === 'r1') {
+  if (r === RODADAS[0]) {
     // Revisão da D-037, achado 1: offline, toda decisão é do apresentador, e o
     // Ctrl+Z apagava as decisões já registradas. A confirmação as cita, e o
     // anfitrião recusa sem mexer no estado.
@@ -521,12 +754,12 @@ for (const r of ['r1', 'r2', 'r3']) {
     assert.deepEqual([depois.geracao, depois.forcadas], [decidida.geracao, decidida.forcadas], 'as decisões do apresentador continuam lá');
     await conferirTela('rodada-decidindo');
     // A barra do apresentador, para revisão visual (fica fora dos critérios do
-    // corpo do telão: é do apresentador, e some sozinha).
+    // corpo do telão: é do apresentador, e some sozinha). A dica do passo (o
+    // tempo mínimo de conversa, "Enter encerra") está nela, e não na projeção.
     await mostrarBarra();
     await page.screenshot({ path: join(CAPTURAS, 'barra-do-apresentador-1024x768.png') });
-    assert.match(await page.textContent('[data-barra-passo]'), /^passo 8 de 19 · /);
-  }
-  if (r === 'r1') {
+    assert.match(await page.textContent('[data-barra-passo]'), new RegExp(`^passo ${I_R1 + 1} de ${PASSOS.length} · `));
+    assert.match(await page.textContent('#barra [data-barra-dica]'), /Tempo mínimo de conversa|Enter encerra/);
     // Revisão da F2, achado 15: Enter duplo não corta a conversa. O modal abre
     // com o foco no "Cancelar", e o segundo Enter cancela.
     await page.keyboard.press('Enter');
@@ -540,7 +773,7 @@ for (const r of ['r1', 'r2', 'r3']) {
   await confirmarModal();
   await esperarEstado((e) => e.subfase === 'sorteio', `sorteio de ${r}`);
   await esperarTela('rodada-sorteio');
-  if (r === 'r1') {
+  if (r === RODADAS[0]) {
     // Achado 8: o contorno da fatia sorteada só aparece quando os ponteiros param.
     const contorno = () => page.evaluate(() => getComputedStyle(document.querySelector('.fatia-sorteada')).stroke);
     assert.match(await contorno(), /rgba\(0, 0, 0, 0\)|transparent|none/, 'a fatia sorteada não aparece contornada antes da parada');
@@ -554,26 +787,26 @@ for (const r of ['r1', 'r2', 'r3']) {
     assert.ok(downloads.length > baixadosAntes, 'o JSON automático foi baixado');
     const aviso = await page.evaluate(() => ({ visivel: !document.getElementById('aviso').hidden, texto: document.getElementById('aviso').textContent }));
     assert.ok(!(aviso.visivel && /automaticamente/.test(aviso.texto)), `o salvamento automático não avisa na tela: "${aviso.texto}"`);
-    assert.match(await page.textContent('[data-barra-salvo]'), /^estado salvo às \d{2}:\d{2} \(r1\)$/);
+    assert.match(await page.textContent('[data-barra-salvo]'), new RegExp(`^estado salvo às \\d{2}:\\d{2} \\(${r}\\)$`));
     await conferirTela('rodada-sorteio', { esperarMs: 3200 });
     const curtosVistos = await conferirRotulosFatias();
-    assert.ok(curtosVistos.size > 0, 'pelo menos um rótulo curto aparece dentro de uma fatia');
-    const aprovados = new Set(Object.values(configNode.cartas).map((c) => c.curto));
+    const aprovados = new Set(Object.values(configNode.cartas).map((c) => c.curto).filter(Boolean));
+    if (aprovados.size > 0) assert.ok(curtosVistos.size > 0, 'pelo menos um rótulo curto aparece dentro de uma fatia');
     assert.ok([...curtosVistos].every((c) => aprovados.has(c)), `os rótulos vêm do "curto" do config (${[...curtosVistos].join(', ')})`);
   }
   await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r}`);
   await esperarTela('rodada-resultado');
-  if (r === 'r1') {
+  if (r === RODADAS[0]) {
     await conferirTela('rodada-resultado', { esperarMs: 900 });
     cartasR1 = await page.evaluate(() => Array.from(document.querySelectorAll('.cartao-resultado'), (c) => `${c.dataset.equipe}:${c.dataset.carta}`));
     // Desfazer (Ctrl+Z, com confirmação) e encerrar de novo: mesmas cartas.
     await page.keyboard.press('Control+z');
     await confirmarModal();
-    await esperarEstado((e) => e.subfase === 'decidindo' && Object.keys(e.forcadas || {}).length === 4, 'r1 reaberta com as decisões');
+    await esperarEstado((e) => e.subfase === 'decidindo' && Object.keys(e.forcadas || {}).length === Object.keys(plano[r]).length, `${r} reaberta com as decisões`);
     await page.keyboard.press('Enter');
     await confirmarModal();
-    await esperarEstado((e) => e.subfase === 'sorteio', 'sorteio de r1 de novo');
-    await avancarPara((e) => e.subfase === 'resultado', 'resultado de r1 de novo');
+    await esperarEstado((e) => e.subfase === 'sorteio', `sorteio de ${r} de novo`);
+    await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r} de novo`);
     await esperarTela('rodada-resultado');
     const cartasDeNovo = await page.evaluate(() => Array.from(document.querySelectorAll('.cartao-resultado'), (c) => `${c.dataset.equipe}:${c.dataset.carta}`));
     assert.deepEqual(cartasDeNovo, cartasR1, 'desfazer e encerrar de novo tira as mesmas cartas (semente gravada)');
@@ -588,84 +821,75 @@ for (const r of ['r1', 'r2', 'r3']) {
     await esperarTela('rodada-resultado');
     ultimoAvanco = 0;
   }
+  // D-044 e D-046: por equipe, "entrou · básico · faltou" (ou "sobrou") e a
+  // dívida. Conferidos contra os resultados gravados no fim.
+  contasNaTela[r] = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
+    contas: c.querySelector('.resultado-contas')?.textContent ?? null,
+    divida: c.querySelector('.resultado-divida')?.textContent ?? null,
+  }])));
+  contasNaTela[r].cabecalho = await page.textContent('#palco .tela-cabecalho');
+  if (r !== RODADAS[0]) {
+    const temDivida = Object.values(contasNaTela[r]).some((x) => x?.divida);
+    if (temDivida) await conferirTela(`rodada-resultado-divida-${r}`, { esperarMs: 900 });
+  }
   await page.waitForTimeout(300);
 }
 // D-015: um download automático do estado ao fim de cada rodada (4 apurações:
-// r1, r1 refeita, r2 e r3).
+// a primeira, ela refeita, a segunda e a terceira).
 await page.waitForTimeout(500);
-const automaticos = downloads.slice(downloadsAntesR).filter((d) => /viracao-estado-.*-r[123]-/.test(d.suggestedFilename()));
+const automaticos = downloads.slice(downloadsAntesR).filter((d) => new RegExp(`viracao-estado-.*-(${RODADAS.join('|')})-`).test(d.suggestedFilename()));
 assert.equal(automaticos.length, 4, `um JSON automático por apuração de rodada (vieram ${automaticos.length})`);
 
-// Placar final: C troca o critério, e o interruptor "sem vencedor"
-await avancarAte((e) => e.tipo === 'placarFinal', 'placar final');
+// Placar final em páginas (D-041): o saldo contra o básico, "escolha ou sorte?"
+// e a história de cada equipe (D-045). O Espaço pagina dentro do passo; na
+// última página, avança o roteiro.
+await avancarAte((e) => e.tipo === 'placarFinal', 'placar final', { aoPassar: (e) => conferirBloco(e) });
 await esperarTela('placar-final');
-await conferirTela('placar-final');
-
-// Revisão da F2, achado 7: na cascata, nenhum rótulo cruza outro e nenhum
-// segmento cobre outro (antes, o efeito das decisões sumia sob a sorte).
-async function conferirCascata() {
-  const r = await page.evaluate(() => {
-    const svg = document.querySelector('.grafico-placar svg');
-    const caixas = (sel) => Array.from(svg.querySelectorAll(sel), (n) => n.getBoundingClientRect());
-    const cruza = (a, b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-    const pares = (lista) => {
-      const ruins = [];
-      for (let i = 0; i < lista.length; i += 1) for (let j = i + 1; j < lista.length; j += 1) if (cruza(lista[i], lista[j]) > 1) ruins.push([i, j]);
-      return ruins;
-    };
-    const textos = caixas('text');
-    const segmentos = caixas('rect[data-segmento]');
-    return { textos: textos.length, segmentos: segmentos.length, textosCruzados: pares(textos), segmentosCruzados: pares(segmentos) };
-  });
-  assert.deepEqual(r.textosCruzados, [], 'rótulos do placar se cruzam');
-  assert.deepEqual(r.segmentosCruzados, [], 'segmentos do placar se cobrem');
-  assert.equal(r.textos, 3 * 5, 'três números por equipe (piloto, decisões e sorte)');
-  return r;
-}
-await conferirCascata();
-await page.setViewportSize({ width: 1920, height: 1080 });
-await page.waitForFunction(() => innerWidth === 1920);
-await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-await conferirCascata();
-await page.setViewportSize({ width: 1024, height: 768 });
-await page.waitForFunction(() => innerWidth === 1024);
-await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-// Achado 20: a referência com persona só atravessa as linhas dessa persona.
-const referencia = await page.evaluate(() => {
-  const svg = globalThis.Viracao.graficos.cascata({
-    largura: 600, altura: 300, fonte: 28, dominio: [-1000, 1000],
-    linhas: [0, 1, 2].map(() => ({ fim: 100, segmentos: [{ de: 0, ate: 100, estilo: 'piloto', rotulo: 'R$ 100' }] })),
-    referencias: [{ id: 'clt', valor: 500, linhas: [1] }, { id: 'todas', valor: -500 }],
-  });
-  return Array.from(svg.querySelectorAll('line.referencia'), (l) => `${l.dataset.referencia}:${l.dataset.linha}`);
+const paginaAtual = () => page.evaluate(() => {
+  const s = document.querySelector('.tela-placar-final');
+  return s ? { pagina: s.dataset.pagina, equipe: s.dataset.equipe ?? null } : null;
 });
-assert.deepEqual(referencia, ['clt:1', 'todas:0', 'todas:1', 'todas:2'], 'a referência da persona só na linha dela; sem persona, em todas');
-const placarNaTela = {};
-for (const criterio of ['efeitoDecisoes', 'renda', 'sorte', 'piorCaso', 'energia', 'protecao']) {
-  const atual = await page.getAttribute('.criterio', 'data-criterio');
-  assert.equal(atual, criterio, 'a tecla C percorre os critérios na ordem');
-  placarNaTela[criterio] = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.valor-criterio'), (v) => [v.dataset.equipe, v.textContent])));
-  if (criterio === 'renda') await conferirTela('placar-final-saldo');
-  if (criterio === 'energia') await conferirTela('placar-final-energia');
-  await page.keyboard.press('c');
-  await page.waitForTimeout(150);
+assert.deepEqual(await paginaAtual(), { pagina: 'saldo', equipe: null });
+const saldoNaTela = await page.evaluate(() => ({
+  titulo: document.querySelector('#palco h1').textContent,
+  ordem: Array.from(document.querySelectorAll('.valor-saldo'), (n) => n.dataset.equipe),
+  valores: Object.fromEntries(Array.from(document.querySelectorAll('.valor-saldo'), (n) => [n.dataset.equipe, n.textContent])),
+  referencias: Array.from(document.querySelectorAll('.grafico-placar line.referencia'), (l) => `${l.dataset.referencia}:${l.dataset.linha}`),
+}));
+await conferirTela('placar-saldo');
+await avancar();
+await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'escolhas');
+const escolhasNaTela = await page.evaluate(() => ({
+  titulo: document.querySelector('#palco h1').textContent,
+  contas: Object.fromEntries(Array.from(document.querySelectorAll('.historia-escolha'), (n) => [n.dataset.equipe, n.querySelector('.historia-conta').textContent])),
+  legendas: document.querySelectorAll('#palco .legenda').length,
+  texto: document.getElementById('palco').textContent,
+}));
+assert.equal(escolhasNaTela.titulo, 'Escolha ou sorte?');
+assert.equal(escolhasNaTela.legendas, 0, '"escolha ou sorte?" sem legenda');
+for (const termo of ['piloto automático', 'efeito das decisões']) assert.ok(!escolhasNaTela.texto.includes(termo), `o termo "${termo}" saiu da tela`);
+await conferirTela('placar-escolhas');
+const historiaNaTela = {};
+for (const eq of ATIVAS) {
+  await avancar();
+  await page.waitForFunction((x) => {
+    const s = document.querySelector('.tela-placar-final');
+    return s?.dataset.pagina === 'historia' && s.dataset.equipe === x;
+  }, eq);
+  historiaNaTela[eq] = await page.evaluate(() => ({
+    meses: Array.from(document.querySelectorAll('.historia-mes'), (n) => ({ rodada: n.dataset.rodada, texto: n.textContent, contas: n.querySelector('.historia-contas')?.textContent ?? null })),
+    final: document.querySelector('.historia-final')?.textContent ?? null,
+  }));
+  await conferirTela(`placar-historia-${eq}`);
 }
-await clicarBarra('semVencedor');
-await page.waitForFunction(() => document.querySelector('.criterio')?.textContent.includes('Sem vencedor'));
-await conferirTela('placar-final-sem-vencedor');
-await page.keyboard.press('v');
-await page.waitForFunction(() => !document.querySelector('.criterio')?.textContent.includes('Sem vencedor'));
+// A última página avança o roteiro.
+await avancarPara((e) => e.tipo !== 'placarFinal', 'sair do placar final');
 
 // Termômetro (uma afirmação por vez, ao vivo) e a enquete "depois"
-// Qual termômetro e quais afirmações saem do roteiro do config, e não de um id
-// escrito aqui: com a D-032, o roteiro de 60 min passou a usar o
-// "termometro_curto" (t1 e t3), e o teste parou no termômetro de 3 afirmações.
-const passoTermometro = configNode.roteiros['60min'].find((p) => p.tipo === 'enquete' && p.momento === 'unico');
-const afirmacoesTermometro = configNode.enquetes[passoTermometro.enquete].ordemAfirmacoes;
-assert.ok(afirmacoesTermometro.every((t) => contagens.unico[t]), `há contagem de teste para cada afirmação do termômetro (${afirmacoesTermometro.join(', ')})`);
-await avancarPara((e) => e.tipo === 'enquete' && e.enquete === passoTermometro.enquete, 'termômetro');
+const afirmacoesTermometro = lista(ENQ_TERMOMETRO.ordemAfirmacoes);
+await avancarAte((e) => e.tipo === 'enquete' && e.enquete === PASSO_TERMOMETRO.enquete && e.momento === 'unico', 'termômetro', { aoPassar: (e) => conferirBloco(e) });
 for (const [i, t] of afirmacoesTermometro.entries()) {
-  if (i > 0) await avancarPara((e) => e.afirmacao === t, `termômetro ${t}`);
+  if (i > 0) await proximaAfirmacao(ENQ_TERMOMETRO, i);
   await contarManual(contagens.unico[t]);
   await esperarManual(t, contagens.unico[t]);
   if (i === 0) await conferirTela('termometro-ao-vivo');
@@ -675,94 +899,123 @@ await esperarEstado((e) => e.subfase === 'apurada', 'termômetro apurado');
 await esperarTela('enquete-apurada');
 await conferirTela('termometro-apurado');
 
-await avancarPara((e) => e.tipo === 'enquete' && e.momento === 'depois', 'enquete depois');
+await avancarAte((e) => e.tipo === 'enquete' && e.momento === 'depois', 'enquete depois', { aoPassar: (e) => conferirBloco(e) });
 // Achado 11: no modo "todas", o Espaço vai para a próxima afirmação (como no
 // termômetro); na última, ele avisa que o Enter encerra a enquete inteira.
-for (const [i, a] of ['a1', 'a2', 'a3'].entries()) {
-  if (i > 0) {
-    await avancar();
-    await page.waitForFunction((k) => document.querySelector('.kicker')?.textContent.includes(`afirmação ${k} de 3`), i + 1);
-  }
+for (const [k, a] of AFIRM_ANTES.entries()) {
+  if (k > 0) await proximaAfirmacao(ENQ_ANTES, k, 'Space');
   await contarManual(contagens.depois[a]);
   await esperarManual(a, contagens.depois[a]);
 }
-await avancar();
-await page.waitForFunction(() => /última afirmação: Enter encerra a enquete inteira/.test(document.getElementById('aviso')?.textContent || ''));
-assert.equal((await estado()).subfase, 'votando', 'o Espaço na última afirmação não encerra nem avança');
+if (ENQ_ANTES.modo !== 'uma_por_vez') {
+  await avancar();
+  await page.waitForFunction(() => /última afirmação: Enter encerra a enquete inteira/.test(document.getElementById('aviso')?.textContent || ''));
+  assert.equal((await estado()).subfase, 'votando', 'o Espaço na última afirmação não encerra nem avança');
+}
 await page.keyboard.press('Enter');
 await esperarEstado((e) => e.subfase === 'apurada', 'depois apurado');
 
 // Comparativo: mão levantada dos dois lados → sem pareamento, lado a lado
-await avancarPara((e) => e.tipo === 'comparativo', 'comparativo');
+await avancarAte((e) => e.tipo === 'comparativo', 'comparativo', { aoPassar: (e) => conferirBloco(e) });
 await esperarTela('comparativo');
 assert.equal(await page.getAttribute('.tela-comparativo', 'data-caso'), 'sem_pareamento');
 await conferirTela('comparativo-lado-a-lado');
-for (const n of [2, 3]) {
+for (let n = 2; n <= AFIRM_ANTES.length; n += 1) {
   await avancar();
-  await page.waitForFunction((k) => document.querySelector('.kicker')?.textContent.includes(`afirmação ${k} de 3`), n);
+  await page.waitForFunction(([k, total]) => document.querySelector('.kicker')?.textContent.includes(`afirmação ${k} de ${total}`), [n, AFIRM_ANTES.length]);
 }
-await avancarPara((e) => e.tipo === 'bloco', 'bloco final');
-await avancarPara((e) => e.tipo === 'fim', 'fim');
+await avancarAte((e) => e.tipo === 'fim', 'fim', { aoPassar: (e) => conferirBloco(e, '-final') });
 await esperarTela('fim');
 await conferirTela('fim');
 
-// Exportar totais: só agregados, sem nenhum uid
+// Exportar totais (na barra, D-047): só agregados, sem nenhum uid
 let esperaDownload = page.waitForEvent('download');
-await page.click('[data-acao="exportar"]');
+await clicarBarra('exportar');
 const totais = await lerDownload(await esperaDownload);
-assert.equal(totais.roteiro, '60min');
+assert.equal(totais.roteiro, ROTEIRO);
 assert.ok(!JSON.stringify(totais).includes('apresentador-local'), 'a exportação não leva uid');
-assert.deepEqual(totais.enquetes.entrada.antes.histogramas.a1, contagens.antes.a1);
-assert.equal(totais.enquetes.entrada.antes.metodo, 'manual');
+assert.deepEqual(totais.enquetes[ENQ_ANTES.id].antes.histogramas[AFIRM_ANTES[0]], contagens.antes[AFIRM_ANTES[0]]);
+assert.equal(totais.enquetes[ENQ_ANTES.id].antes.metodo, 'manual');
 
-// Salvar estado (barra) e conferir o placar contra o motor, no Node
+// Salvar estado (barra) e conferir o que foi projetado contra o motor, no Node
 esperaDownload = page.waitForEvent('download');
 await clicarBarra('salvar');
 const salvo = await lerDownload(await esperaDownload);
 assert.equal(salvo.formato, 'viracao-estado');
 for (const k of ['votosEnquete', 'decisoes', 'presenca', 'membros']) assert.ok(!(k in salvo.dados), `o estado salvo não leva ${k}`);
 const { sementes, resultados, placar } = salvo.dados;
-const ativas = ['e1', 'e2', 'e3', 'e4', 'e5'];
-const estadoNode = Object.fromEntries(ativas.map((eq) => [eq, V.motor.estadoInicial(configNode, eq)]));
-const jogadas = Object.fromEntries(ativas.map((eq) => [eq, []]));
-for (const r of ['r1', 'r2', 'r3']) {
-  for (const eq of ativas) {
+const estadoNode = Object.fromEntries(ATIVAS.map((eq) => [eq, V.motor.estadoInicial(configNode, eq)]));
+const jogadas = Object.fromEntries(ATIVAS.map((eq) => [eq, []]));
+let viuJuros = false;
+let viuDivida = false;
+for (const [k, r] of RODADAS.entries()) {
+  for (const eq of ATIVAS) {
     const opcao = plano[r][eq] ?? configNode.rodadas[r].padrao;
-    const res = V.motor.resolverRodada(configNode, { equipeId: eq, rodadaId: r, opcaoId: opcao, estado: estadoNode[eq], semente: sementes[r] });
+    // O histórico (decidiu/sorteou, D-043): as rodadas anteriores desta equipe.
+    const historico = V.motor.historicoDe(resultados, eq, RODADAS.slice(0, k));
+    const res = V.motor.resolverRodada(configNode, { equipeId: eq, rodadaId: r, opcaoId: opcao, estado: estadoNode[eq], semente: sementes[r], historico });
     assert.equal(resultados[r][eq].decisao, opcao, `${r}/${eq}: decisão`);
     assert.equal(resultados[r][eq].origem, plano[r][eq] ? 'apresentador' : 'piloto', `${r}/${eq}: origem`);
     assert.equal(resultados[r][eq].carta, res.carta, `${r}/${eq}: a carta sai da semente gravada`);
     assert.deepEqual(resultados[r][eq].depois, res.depois, `${r}/${eq}: indicadores depois da rodada`);
+    assert.deepEqual(resultados[r][eq].mes, res.mes, `${r}/${eq}: as contas do mês gravadas`);
+    // O que foi projetado no resultado da rodada.
+    assert.equal(contasNaTela[r][eq]?.contas, textoContas(res.mes), `${r}/${eq}: "entrou · básico · faltou" projetado`);
+    const divida = res.depois.renda < 0 ? `dívida ${F.moeda(-res.depois.renda)}` : null;
+    assert.equal(contasNaTela[r][eq]?.divida, divida, `${r}/${eq}: dívida projetada`);
+    if (res.mes.juros > 0) viuJuros = true;
+    if (divida) {
+      viuDivida = true;
+      assert.ok(contasNaTela[r].cabecalho.includes(`juros de ${pctJuros} ao mês`), `${r}: com dívida na tela, os juros ao mês no cabeçalho ("${contasNaTela[r].cabecalho}")`);
+    }
     estadoNode[eq] = res.depois;
     jogadas[eq].push({ rodadaId: r, opcaoId: opcao, cartaId: res.carta });
   }
 }
-assert.equal(placar.e6.ativa, false, 'a equipe fechada não joga');
-for (const eq of ativas) {
+if (CAMINHO_CONFIG.endsWith('config-teste-v2.json')) assert.ok(viuJuros && viuDivida, 'a fixture v2 exercita a dívida e os juros');
+assert.equal(placar[FECHADA].ativa, false, 'a equipe fechada não joga');
+// Página 1: saldo dos 3 meses, ordenado, com "faltou/sobrou" e o título calculado.
+const ordemEsperada = ATIVAS.slice().sort((a, b) => placar[b].renda - placar[a].renda || numeroDe(a) - numeroDe(b));
+assert.deepEqual(saldoNaTela.ordem, ordemEsperada, 'página 1: equipes ordenadas pelo saldo');
+assert.equal(saldoNaTela.titulo, tituloSaldo(ATIVAS.filter((eq) => placar[eq].renda < 0).length, ATIVAS.length), 'página 1: título calculado');
+// A referência com persona atravessa só as linhas das equipes dessa persona.
+const referenciasEsperadas = lista(configNode.ordem.referencias).flatMap((id) => {
+  const ref = configNode.referencias[id];
+  return ordemEsperada.flatMap((eq, i) => (!ref.persona || configNode.equipes[eq].persona === ref.persona ? [`${id}:${i}`] : []));
+});
+assert.deepEqual(saldoNaTela.referencias, referenciasEsperadas, 'página 1: referência só nas equipes da persona dela');
+for (const eq of ATIVAS) {
   const d = V.motor.decompor(configNode, { equipeId: eq, rodadas: jogadas[eq] });
   const p = placar[eq];
   for (const [campo, esperado] of [['renda', d.realizado], ['piloto', d.esperadoPiloto], ['efeitoDecisoes', d.efeitoDecisoes], ['sorte', d.sorte], ['piorCaso', d.piorCaso]]) {
     assert.ok(Math.abs(p[campo] - esperado) < 1e-6, `${eq}.${campo}: gravado ${p[campo]}, motor ${esperado}`);
   }
-  // O que foi projetado é o que o motor calcula.
-  assert.equal(placarNaTela.renda[eq], F.moeda(d.realizado), `${eq}: saldo projetado`);
-  assert.equal(placarNaTela.efeitoDecisoes[eq], F.moeda(d.efeitoDecisoes, { sinal: true }), `${eq}: efeito das decisões projetado`);
-  assert.equal(placarNaTela.sorte[eq], F.moeda(d.sorte, { sinal: true }), `${eq}: sorte projetada`);
-  assert.equal(placarNaTela.piorCaso[eq], F.moeda(d.piorCaso), `${eq}: pior caso projetado`);
-  assert.equal(placarNaTela.energia[eq], F.inteiro(estadoNode[eq].energia), `${eq}: energia projetada`);
+  assert.equal(saldoNaTela.valores[eq], textoSaldo(d.realizado), `${eq}: página 1, "faltou/sobrou" projetado`);
+  // Página 2: a conta contada como história.
+  // Em reais inteiros que fecham a conta (revisão de 29/09): cada valor do
+  // motor arredondado sozinho errava a soma por R$ 1 em ~15% das equipes.
+  const c = V.historia.escolhaOuSorte({ piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, renda: d.realizado });
+  const conta = `se não mudassem nada: ${F.moeda(c.piloto)} → as escolhas: ${F.moeda(c.escolhas, { sinal: true })} → a sorte: ${F.moeda(c.sorte, { sinal: true })} → terminaram com ${F.moeda(c.total)}`;
+  assert.equal(escolhasNaTela.contas[eq], conta, `${eq}: página 2, escolha ou sorte`);
+  const [lPiloto, lEscolhas, lSorte, lTotal] = reaisDoTexto(escolhasNaTela.contas[eq]);
+  assert.equal(lPiloto + lEscolhas + lSorte, lTotal, `${eq}: página 2, as parcelas projetadas somam o "terminaram com"`);
+  // Páginas da história: um item por mês, com a escolha, a carta e as contas.
+  const historia = V.historia.historiaDaEquipe(configNode, eq, resultados);
+  assert.deepEqual(historiaNaTela[eq].meses.map((m) => m.rodada), historia.map((h) => h.rodadaId), `${eq}: um mês por rodada jogada`);
+  for (const [i, h] of historia.entries()) {
+    const lido = historiaNaTela[eq].meses[i];
+    for (const x of [h.opcao.rotulo, h.carta.titulo]) assert.ok(lido.texto.includes(x), `${eq}/${h.rodadaId}: a história traz "${x}"`);
+    assert.equal(lido.contas, textoContas(h.mes), `${eq}/${h.rodadaId}: as contas do mês na história`);
+  }
+  assert.ok(historiaNaTela[eq].final?.includes(textoSaldo(d.realizado)), `${eq}: a história termina com "${textoSaldo(d.realizado)}"`);
 }
 
-// Apagar a sala (segurar 2 s): volta à abertura e limpa o navegador
+// Apagar a sala (na barra, segurar 2 s): volta à abertura e limpa o navegador
 const chave = await page.evaluate(() => globalThis.Viracao.telao.chaveSessao(globalThis.Viracao.telao.sala()));
-const apagar = page.locator('[data-acao="apagar"]');
-await apagar.click(); // clique curto não apaga
+await clicarBarra('apagar'); // clique curto não apaga
 await page.waitForTimeout(300);
 assert.equal(await telaAtual(), 'fim', 'um clique curto não apaga a sala');
-const caixa = await apagar.boundingBox();
-await page.mouse.move(caixa.x + caixa.width / 2, caixa.y + caixa.height / 2);
-await page.mouse.down();
-await page.waitForTimeout(2300);
-await page.mouse.up();
+await segurarNaBarra('apagar');
 await esperarTela('abertura');
 assert.equal(await page.evaluate((k) => localStorage.getItem(k), chave), null, 'a sala sai do localStorage');
 
@@ -772,11 +1025,7 @@ await (await downloads.filter((d) => /-manual-/.test(d.suggestedFilename())).at(
 await page.setInputFiles('#arquivo-estado', caminhoSalvo);
 await esperarTela('fim');
 assert.equal((await estado()).tipo, 'fim');
-const caixa2 = await page.locator('[data-acao="apagar"]').boundingBox();
-await page.mouse.move(caixa2.x + caixa2.width / 2, caixa2.y + caixa2.height / 2);
-await page.mouse.down();
-await page.waitForTimeout(2300);
-await page.mouse.up();
+await segurarNaBarra('apagar');
 await esperarTela('abertura');
 
 // ---------- Parte 2: as telas com celulares, sobre alunos simulados ----------
@@ -785,7 +1034,7 @@ console.log('Parte 2: telas com celulares (alunos simulados num canal local)');
 // O mesmo ponto de encaixe que o modo online vai usar (ligarSessao com um
 // canal pronto). O canal local imita as regras do banco, e cada "aluno" é uma
 // visão autenticada como outro uid.
-await page.evaluate(async () => {
+await page.evaluate(async (roteiro) => {
   const V2 = globalThis.Viracao;
   // Relógio parado: a regra exige presença e entrada com a hora exata do
   // servidor, e com Date.now o milissegundo pode virar entre o marcador e a
@@ -793,7 +1042,7 @@ await page.evaluate(async () => {
   const agoraFixo = Date.now();
   const canal = V2.canalLocal.criar({ relogio: () => agoraFixo });
   globalThis.__canalTeste = canal;
-  await V2.telao.ligarSessao({ modo: 'online', canal, sala: 'K7Q2', nomeRoteiro: '60min', criar: true });
+  await V2.telao.ligarSessao({ modo: 'online', canal, sala: 'K7Q2', nomeRoteiro: roteiro, criar: true });
   const base = 'salas/K7Q2';
   globalThis.__alunos = [];
   for (let i = 0; i < 14; i += 1) {
@@ -803,58 +1052,80 @@ await page.evaluate(async () => {
     await c.gravar({ [`${base}/presenca/${uid}`]: c.marcadorDeHora() });
     globalThis.__alunos.push({ uid, c });
   }
-});
+}, ROTEIRO);
 await esperarTela('lobby');
 await page.waitForFunction(() => document.querySelector('.lobby-conectados b')?.textContent === '14');
-// Controle de inativos (arquitetura, seção 10): "N ativos / M membros", discreto
-// no lobby e na barra do apresentador. O sumiço e o "Remover inativos" são
-// provados contra o emulador, no e2e:online (aqui o relógio do canal é fixo).
-assert.equal(await page.textContent('.lobby [data-contagem-ativos]'), '14 ativos / 14 membros');
+// Controle de inativos (arquitetura, seção 10): "N ativos / M membros" é do
+// apresentador e fica só na barra (D-047); o lobby projeta os conectados. O
+// sumiço e o "Remover inativos" são provados contra o emulador, no e2e:online
+// (aqui o relógio do canal é fixo).
+assert.equal(await page.locator('#palco [data-contagem-ativos]').count(), 0, 'o "ativos / membros" não fica na projeção');
 assert.equal(await page.textContent('#barra [data-contagem-ativos]'), '14 ativos / 14 membros');
 assert.equal(await page.locator('#barra [data-acao="removerInativos"]').count(), 1, 'a barra tem o "Remover inativos"');
 assert.match(await page.textContent('.lobby-url'), /\/aluno\/\?sala=K7Q2$/, 'a URL do QR termina em /aluno/?sala=XXXX');
 assert.ok(await page.evaluate(() => document.querySelector('.lobby-qr svg path')?.getAttribute('d').length > 1000), 'o QR foi desenhado');
 await conferirTela('lobby-com-celulares');
 
+// Os celulares votam só nas afirmações abertas (a regra recusa as outras).
+async function votarAntes(sala, alunos, quantos, valor) {
+  await page.evaluate(async ([s, nomeAlunos, n, ordem, v0]) => {
+    const e = globalThis.Viracao.telao.estado();
+    const abertas = e.afirmacao === '*' ? ordem : [e.afirmacao];
+    for (const [i, { uid, c }] of globalThis[nomeAlunos].entries()) {
+      if (i >= n) break;
+      for (const a of abertas) await c.gravar({ [`salas/${s}/votosEnquete/${e.enquete}/${e.momento}/${a}/${uid}`]: v0 === null ? 1 + (i % 5) : v0 + i });
+    }
+  }, [sala, alunos, quantos, AFIRM_ANTES, valor]);
+}
+
 await avancarPara((e) => e.tipo === 'enquete' && e.momento === 'antes', 'enquete antes (celulares)');
-await page.evaluate(async () => {
-  const e = globalThis.Viracao.telao.estado();
-  for (const [i, { uid, c }] of globalThis.__alunos.entries()) {
-    if (i >= 11) break; // 3 não votam
-    for (const a of ['a1', 'a2', 'a3']) await c.gravar({ [`salas/K7Q2/votosEnquete/${e.enquete}/${e.momento}/${a}/${uid}`]: 1 + (i % 5) });
-  }
-});
+await votarAntes('K7Q2', '__alunos', 11, null); // 3 não votam
 await page.waitForFunction(() => /11\s*de 14 votaram/.test(document.querySelector('.enquete-status')?.textContent || ''));
 assert.equal(await page.locator('#faixa').isVisible(), true, 'a faixa de entrada aparece com a entrada aberta');
 await conferirTela('enquete-votando-celulares');
 await page.keyboard.press('Enter');
 await esperarEstado((e) => e.subfase === 'apurada', 'antes apurado (celulares)');
+// Os blocos até a formação, com a faixa de entrada embaixo (a linha do tempo e o
+// mapa precisam caber junto com ela).
+await avancarAte((e) => e.tipo !== 'bloco' && e.indice > I_ANTES, 'depois dos blocos (celulares)', { aoPassar: (e) => conferirBloco(e, '-celulares') });
 
 // "Pular para…" pela barra, direto à formação das equipes
-await clicarBarra('pular');
-await escolherNoModal('5. Formação das equipes');
+if ((await estado()).tipo !== 'formarEquipes') {
+  await clicarBarra('pular');
+  await escolherNoModal(passoNoModal(I_FORMAR));
+}
 await esperarEstado((e) => e.tipo === 'formarEquipes', 'formar equipes (celulares)');
-await page.evaluate(async () => {
-  const eqs = ['e1', 'e1', 'e1', 'e2', 'e2', 'e3', 'e3', 'e3', 'e4', 'e4', 'e5', 'e5', 'e6'];
+await page.evaluate(async (eqs) => {
   for (const [i, { uid, c }] of globalThis.__alunos.entries()) {
     if (i < eqs.length) await c.gravar({ [`salas/K7Q2/membros/${uid}/equipe`]: eqs[i] });
   }
-});
+}, [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5].map((k) => EQUIPES[k % EQUIPES.length]));
 await page.waitForFunction(() => /1 pessoa sem equipe/.test(document.querySelector('.formar-status')?.textContent || ''));
 await conferirTela('formar-equipes-celulares');
-await avancarPara((e) => e.tipo === 'personas', 'personas (celulares)');
+{
+  // As seis equipes com gente, e a faixa de entrada embaixo: o caso mais
+  // apertado da tela de personas (as cinco personas com a casa).
+  const e = await avancarPara((x) => x.tipo === 'personas', 'personas (celulares)');
+  const abertas = EQUIPES.filter((eq) => e.equipesAbertas?.[eq]);
+  assert.equal(abertas.length, EQUIPES.length, 'as seis equipes abertas');
+  assert.equal(await page.locator('#faixa').isVisible(), true, 'com a faixa de entrada');
+  await conferirTela('personas-celulares');
+  await conferirCasaDasPersonas(abertas);
+}
 await clicarBarra('pular');
-await escolherNoModal('8. ');
-await esperarEstado((e) => e.tipo === 'rodada' && e.subfase === 'decidindo', 'rodada r1 (celulares)');
+await escolherNoModal(passoNoModal(I_R1));
+await esperarEstado((e) => e.tipo === 'rodada' && e.subfase === 'decidindo', 'primeira rodada (celulares)');
 // e1: 2 × 1 (maioria), e2: 1 × 1 (empate → prorrogação), e3: 3 votos, e4 sem voto
-await page.evaluate(async () => {
-  const votos = { 'aluno-00': 'a', 'aluno-01': 'a', 'aluno-02': 'b', 'aluno-03': 'a', 'aluno-04': 'b', 'aluno-05': 'c', 'aluno-06': 'c', 'aluno-07': 'c' };
-  const membros = await globalThis.__canalTeste.comoUsuario('aluno-00').ler('salas/K7Q2/membros');
-  for (const { uid, c } of globalThis.__alunos) {
-    if (votos[uid]) await c.gravar({ [`salas/K7Q2/decisoes/r1/${membros[uid].equipe}/${uid}`]: votos[uid] });
-  }
-});
-await page.waitForFunction(() => /3 de 3/.test(document.querySelector('.equipe-status[data-equipe="e1"]')?.textContent || ''));
+{
+  const [O1, O2, O3] = opcoesDe(RODADAS[0]);
+  await page.evaluate(async ([r, votos]) => {
+    const membros = await globalThis.__canalTeste.comoUsuario('aluno-00').ler('salas/K7Q2/membros');
+    for (const { uid, c } of globalThis.__alunos) {
+      if (votos[uid]) await c.gravar({ [`salas/K7Q2/decisoes/${r}/${membros[uid].equipe}/${uid}`]: votos[uid] });
+    }
+  }, [RODADAS[0], { 'aluno-00': O1, 'aluno-01': O1, 'aluno-02': O2, 'aluno-03': O1, 'aluno-04': O2, 'aluno-05': O3, 'aluno-06': O3, 'aluno-07': O3 }]);
+}
+await page.waitForFunction((eq) => /3 de 3/.test(document.querySelector(`.equipe-status[data-equipe="${eq}"]`)?.textContent || ''), EQUIPES[0]);
 {
   const antes = await estado();
   await page.keyboard.press('Control+z');
@@ -866,7 +1137,7 @@ await page.waitForFunction(() => /3 de 3/.test(document.querySelector('.equipe-s
 await conferirTela('rodada-decidindo-celulares');
 await page.keyboard.press('Enter');
 await confirmarModal();
-await esperarEstado((e) => e.subfase === 'prorrogacao' && e.empatadas?.e2, 'prorrogação da e2');
+await esperarEstado((e) => e.subfase === 'prorrogacao' && e.empatadas?.[EQUIPES[1]], 'prorrogação da segunda equipe');
 await esperarTela('rodada-prorrogacao');
 await conferirTela('rodada-prorrogacao');
 // Com "reduzir movimento" no sistema, o sorteio aparece parado, já no fim.
@@ -877,12 +1148,11 @@ await esperarTela('rodada-sorteio');
 assert.equal(await page.locator('.ponteiro-animado, .revelar-apos').count(), 0, 'sem animação com prefers-reduced-motion');
 assert.ok(await page.locator('.ponteiro').count() > 0, 'os ponteiros aparecem já parados');
 await page.emulateMedia({ reducedMotion: 'no-preference' });
-const origemE2 = await page.evaluate(() => globalThis.__canalTeste.ler('salas/K7Q2/resultados/r1/e2/origem'));
+const origemE2 = await page.evaluate(([r, eq]) => globalThis.__canalTeste.ler(`salas/K7Q2/resultados/${r}/${eq}/origem`), [RODADAS[0], EQUIPES[1]]);
 assert.equal(origemE2, 'moeda', 'empate que continua na prorrogação vai para a moeda');
 await avancarPara((e) => e.subfase === 'resultado', 'resultado (celulares)');
 await esperarTela('rodada-resultado');
 await conferirTela('rodada-resultado-celulares');
-await page.evaluate(() => globalThis.Viracao.telao.estado());
 
 // ---------- Parte 3: seguir sem celulares no meio de uma enquete ----------
 
@@ -892,11 +1162,11 @@ console.log('Parte 3: "Continuar sem celulares" no meio de uma enquete com votos
 // substitui esses votos), e a árvore guardada no navegador perde a presença e
 // os votos que o offline não usa mais.
 const SALA3 = 'M3Q2';
-await page.evaluate(async (sala) => {
+await page.evaluate(async ([sala, roteiro]) => {
   const V2 = globalThis.Viracao;
   const agoraFixo = Date.now();
   const canal = V2.canalLocal.criar({ relogio: () => agoraFixo });
-  await V2.telao.ligarSessao({ modo: 'online', canal, sala, nomeRoteiro: '60min', criar: true });
+  await V2.telao.ligarSessao({ modo: 'online', canal, sala, nomeRoteiro: roteiro, criar: true });
   globalThis.__alunos3 = [];
   for (let i = 0; i < 4; i += 1) {
     const uid = `p3-${i}`;
@@ -905,32 +1175,25 @@ await page.evaluate(async (sala) => {
     await c.gravar({ [`salas/${sala}/presenca/${uid}`]: c.marcadorDeHora() });
     globalThis.__alunos3.push({ uid, c });
   }
-}, SALA3);
+}, [SALA3, ROTEIRO]);
 await esperarTela('lobby');
 await avancarPara((e) => e.tipo === 'enquete' && e.momento === 'antes', 'enquete antes (parte 3)');
-await page.evaluate(async (sala) => {
-  const e = globalThis.Viracao.telao.estado();
-  for (const [i, { uid, c }] of globalThis.__alunos3.entries()) {
-    if (i === 3) break; // um não vota
-    for (const a of ['a1', 'a2', 'a3']) await c.gravar({ [`salas/${sala}/votosEnquete/${e.enquete}/${e.momento}/${a}/${uid}`]: 2 + i });
-  }
-}, SALA3);
+await votarAntes(SALA3, '__alunos3', 3, 2); // um não vota
 await page.waitForFunction(() => /3\s*de 4 votaram/.test(document.querySelector('.enquete-status')?.textContent || ''));
-await mostrarBarra();
-const semCelulares = page.locator('#barra [data-acao="semCelulares"]');
-await semCelulares.hover();
-await page.mouse.down();
-await page.waitForTimeout(2400);
-await page.mouse.up();
+await segurarNaBarra('semCelulares', 2400);
 await page.waitForFunction(() => globalThis.Viracao.telao.modo() === 'offline');
 await page.waitForFunction(() => document.querySelector('.aviso-celulares')?.dataset.votosCelular === '3');
+// O que fazer com esses votos é conversa do apresentador: fica na barra (D-047).
+await mostrarBarra();
+assert.match(await page.textContent('#barra [data-barra-dica]'), /Enter apura esses votos; a contagem à mão os substitui/);
+await page.mouse.move(520, 300);
 // O prefixo do localStorage leva a versão do app: lida da página, e não
 // escrita aqui, para o teste não reprovar quando o bin/versao.mjs subir a versão.
 const chave3 = `viracao:telao:v${await page.evaluate(() => globalThis.Viracao.telao.versaoApp)}:sala:${SALA3}`;
 const guardada3 = () => page.evaluate((k) => JSON.parse(localStorage.getItem(k)), chave3);
 let arvore3 = (await guardada3()).salas[SALA3];
 assert.equal(arvore3.presenca, undefined, 'a presença não vai para a árvore guardada no navegador');
-assert.equal(Object.keys(arvore3.votosEnquete.entrada.antes.a1).length, 3, 'os votos da enquete aberta ficam: o encerrar ainda os apura');
+assert.equal(Object.keys(arvore3.votosEnquete[ENQ_ANTES.id].antes[AFIRM_ANTES[0]]).length, 3, 'os votos da enquete aberta ficam: o encerrar ainda os apura');
 // A primeira contagem à mão pede confirmação, com o foco no "Cancelar".
 await page.keyboard.press('Digit3');
 await page.waitForFunction(() => document.getElementById('modal').open && /3 aparelhos votaram pelo celular/.test(document.getElementById('modal').textContent));
@@ -941,11 +1204,68 @@ assert.equal((await estado()).manual, undefined, 'cancelar não cria contagem à
 await page.keyboard.press('Enter');
 await esperarEstado((e) => e.subfase === 'apurada', 'antes apurado com os votos de celular');
 arvore3 = (await guardada3()).salas[SALA3];
-assert.equal(arvore3.enquetes.entrada.antes.metodo, 'celular');
-assert.equal(arvore3.enquetes.entrada.antes.n.a1, 3);
+assert.equal(arvore3.enquetes[ENQ_ANTES.id].antes.metodo, 'celular');
+assert.equal(arvore3.enquetes[ENQ_ANTES.id].antes.n[AFIRM_ANTES[0]], 3);
 // Saindo do passo, os votos individuais saem da árvore local.
 await avancarPara((e) => e.tipo === 'bloco', 'bloco depois da enquete (parte 3)');
-await page.waitForFunction((k) => !JSON.parse(localStorage.getItem(k)).salas.M3Q2.votosEnquete, chave3);
+await page.waitForFunction(([k, s]) => !JSON.parse(localStorage.getItem(k)).salas[s].votosEnquete, [chave3, SALA3]);
+
+// ---------- Parte 4: o placar final com as seis equipes ----------
+
+console.log('Parte 4: placar final com as seis equipes (sem celulares, todas no piloto automático)');
+// Revisão de 29/09: a parte 1 joga com cinco equipes (a da Rose fica fechada),
+// e as páginas do placar com seis nunca tinham sido vistas em 1024×768. "Escolha
+// ou sorte?" com seis equipes passava da altura.
+const SALA4 = 'P6Q4';
+await page.evaluate(async ([sala, roteiro]) => {
+  await globalThis.Viracao.telao.ligarSessao({ modo: 'offline', sala, nomeRoteiro: roteiro, criar: true });
+}, [SALA4, ROTEIRO]);
+await esperarTela('lobby');
+ultimoAvanco = 0;
+await clicarBarra('pular');
+await escolherNoModal(passoNoModal(I_FORMAR));
+// Depois do "Pular para…": o foco sai do botão da barra (ali o Espaço
+// apertaria o botão), e o próximo Espaço espera a trava de 1,5 s do telão,
+// que o pulo também arma.
+const soltarFoco = async () => {
+  await page.evaluate(() => document.activeElement?.blur());
+  ultimoAvanco = Date.now();
+};
+await soltarFoco();
+await esperarEstado((e) => e.tipo === 'formarEquipes' && Object.keys(e.equipesAbertas || {}).length === EQUIPES.length, 'as seis equipes abertas (parte 4)');
+await avancarPara((e) => e.tipo === 'personas', 'personas (parte 4)');
+await conferirCasaDasPersonas(EQUIPES);
+await clicarBarra('pular');
+await escolherNoModal(passoNoModal(I_R1));
+await soltarFoco();
+for (const r of RODADAS) {
+  await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `rodada ${r} (parte 4)`, { maximo: 12 });
+  await page.keyboard.press('Enter');
+  await confirmarModal();
+  await esperarEstado((e) => e.subfase === 'sorteio', `sorteio de ${r} (parte 4)`);
+  await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r} (parte 4)`);
+}
+await avancarAte((e) => e.tipo === 'placarFinal', 'placar final (parte 4)', { maximo: 12 });
+await esperarTela('placar-final');
+await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'saldo');
+assert.equal(await page.locator('.valor-saldo').count(), EQUIPES.length, 'página 1 com as seis equipes');
+await conferirTela('placar-saldo-6-equipes');
+await avancar();
+await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'escolhas');
+{
+  const contas = await page.$$eval('.historia-escolha .historia-conta', (ns) => ns.map((n) => n.textContent));
+  assert.equal(contas.length, EQUIPES.length, 'página 2 com as seis equipes');
+  for (const t of contas) {
+    const [a1, a2, a3, a4] = reaisDoTexto(t);
+    assert.equal(a1 + a2 + a3, a4, `página 2: as parcelas somam o total ("${t}")`);
+  }
+}
+await conferirTela('placar-escolhas-6-equipes');
+for (const eq of EQUIPES) {
+  await avancar();
+  await page.waitForFunction((x) => document.querySelector('.tela-placar-final')?.dataset.equipe === x, eq);
+  if (eq === FECHADA) await conferirTela(`placar-historia-${eq}-6-equipes`);
+}
 
 // ---------- Fim ----------
 
@@ -978,4 +1298,4 @@ assert.deepEqual(srcs.slice(-5).map((m) => m[1]), ['js/ui/formatar.js', 'js/ui/d
 
 assert.deepEqual(errosDaPagina, [], 'nenhum erro no console da página');
 await navegador.close();
-console.log(`ok: sessão inteira, placar = motor, ${verificadas.length} telas conferidas em ${TAMANHOS.map((t) => t.join('×')).join(' e ')}; capturas em e2e/capturas/`);
+console.log(`ok: sessão inteira, telão = motor, ${verificadas.length} telas conferidas em ${TAMANHOS.map((t) => t.join('×')).join(' e ')}; capturas em e2e/capturas/`);

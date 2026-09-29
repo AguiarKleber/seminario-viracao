@@ -82,7 +82,6 @@ code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-siz
 .botao[disabled], .botao.botao-inativo { opacity: .45; cursor: not-allowed; }
 .botao-primario { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
 .botao-marcado, .botao[aria-pressed="true"] { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
-.botao-perigo { border-color: var(--texto-2); }
 .botao-dica {
   font: inherit; font-size: .75em; font-weight: 500;
   padding: .05em .4em; border: 1px solid currentColor; border-radius: 4px; opacity: .8;

@@ -8,10 +8,19 @@ import { dirname, join } from 'node:path';
 
 export const PASTA_FIXTURES = dirname(fileURLToPath(import.meta.url));
 export const CAMINHO_CONFIG_TESTE = join(PASTA_FIXTURES, 'config-teste.json');
+// O esquema v2 (D-041 a D-048) exercitado de verdade: básico da casa, outra renda,
+// juros da dívida, contexto no celular, 4 opções e consequências entre os meses
+// (decidiu/sorteou). O config-teste.json fica com básico zero e sem dívida, para
+// os números de referência antigos continuarem valendo.
+export const CAMINHO_CONFIG_TESTE_V2 = join(PASTA_FIXTURES, 'config-teste-v2.json');
 
 // Lido do disco a cada chamada: os testes de mutação alteram o objeto.
 export function lerConfigTeste() {
   return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE, 'utf8'));
+}
+
+export function lerConfigTesteV2() {
+  return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V2, 'utf8'));
 }
 
 export function configMinimo() {
@@ -22,13 +31,19 @@ export function configMinimo() {
     regras: {
       desempate: 'prorrogacao-depois-moeda', cartaPor: 'equipe', mostrarChances: 'no_sorteio',
       placarPadrao: 'efeitoDecisoes', alvoPorEquipe: 3, minPareados: 5, destacarCartas: 2,
+      jurosDividaMes: 0.1, jurosFonte: 'teste',
     },
     escala: { curtos: ['1', '2', '3', '4', '5'], longos: ['um', 'dois', 'três', 'quatro', 'cinco'] },
     indicadores: [
       { id: 'renda', nome: 'Renda', formato: 'moeda', inicial: 0, min: -10000, max: 100000 },
       { id: 'energia', nome: 'Energia', formato: 'inteiro', inicial: 8, min: 0, max: 10 },
     ],
-    personas: [{ id: 'p1', nome: 'Pessoa', descricao: 'Persona de teste', todoMes: [] }],
+    // Básico zero: cada teste do motor liga o básico só quando é a regra em teste.
+    personas: [{
+      id: 'p1', nome: 'Pessoa', descricao: 'Persona de teste', todoMes: [],
+      familia: { descricao: 'Mora sozinha.', pessoas: 1 },
+      basico: { itens: [{ rotulo: 'nada', valor: 0, fonte: 'teste' }] },
+    }],
     equipes: [{ id: 'e1', nome: 'Laranja', cor: '#E69F00', forma: 'circulo', persona: 'p1' }],
     rodadas: [{
       id: 'r1', titulo: 'Mês 1', texto: 'Texto', padrao: 'b',

@@ -233,7 +233,8 @@ const MUTACOES = [
   ['enquete não pareada com momento "antes"', (b) => { b.roteiros['60min'][12].momento = 'antes'; },
     'roteiros.60min[12]', /não é pareada/, 'aviso'],
   ['tempos-alvo acima do teto do roteiro', (b) => { b.roteiros['60min'][2].alvoSeg = 3000; }, 'roteiros.60min', /passa de 60 min/, 'aviso'],
-  ['rodada com uma opção só', (b) => { b.rodadas[0].opcoes = { c: b.rodadas[0].opcoes.c }; }, 'rodadas.r1.opcoes', /uma opção só/, 'aviso'],
+  // D-043: de 2 a 4 opções por mês. Uma só deixou de ser aviso: não há dilema.
+  ['rodada com uma opção só', (b) => { b.rodadas[0].opcoes = { c: b.rodadas[0].opcoes.c }; }, 'rodadas.r1.opcoes', /pelo menos 2/, 'erro'],
 ];
 
 for (const [nome, mutar, caminho, mensagem, tipo] of MUTACOES) {
@@ -309,7 +310,8 @@ test('carta possível é conferida na ordem das rodadas de cada roteiro, e não 
 });
 
 test('estados demais para conferir a carta possível é erro, e não aviso: a sala não pode nascer sem a garantia', () => {
-  // Arrange: 150 caminhos distintos por rodada (10 opções × 15 cartas), 3 rodadas
+  // Arrange: 160 caminhos distintos por rodada (4 opções, o máximo da D-043, × 40
+  // cartas), 3 rodadas: depois da r2 já passam de 20.000 estados.
   const b = configMinimo();
   Object.assign(b.indicadores[0], { min: -1e12, max: 1e12 });
   b.rodadas = [];
@@ -317,9 +319,9 @@ test('estados demais para conferir a carta possível é erro, e não aviso: a sa
   for (const [k, id] of ['r1', 'r2', 'r3'].entries()) {
     const escala = 1000 ** k;
     const opcoes = {};
-    for (let i = 0; i < 10; i++) opcoes[`o${i}`] = { rotulo: `O${i}`, efeitos: [{ soma: { renda: i * escala } }] };
+    for (let i = 0; i < 4; i++) opcoes[`o${i}`] = { rotulo: `O${i}`, efeitos: [{ soma: { renda: i * escala } }] };
     b.rodadas.push({ id, titulo: id, texto: 'Texto', padrao: 'o0', opcoes });
-    for (let j = 0; j < 15; j++) b.cartas.push({ id: `c${k}_${j}`, titulo: 'C', peso: 1, rodadas: [id], efeitos: [{ soma: { renda: j * 10 * escala } }] });
+    for (let j = 0; j < 40; j++) b.cartas.push({ id: `c${k}_${j}`, titulo: 'C', peso: 1, rodadas: [id], efeitos: [{ soma: { renda: j * 10 * escala } }] });
   }
   b.roteiros['60min'] = [{ tipo: 'lobby' }, ...['r1', 'r2', 'r3'].map((rodada) => ({ tipo: 'rodada', rodada })), { tipo: 'fim' }];
 

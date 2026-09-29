@@ -8,6 +8,24 @@ Como publicar o site está no [README](../README.md). Como mudar o conteúdo est
 seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 06/10.
 
+**Redesenho de 29/09 (D-041 a D-048).** O teste de 30/09 já usa a versão nova
+(D-048). O que mudou para quem conduz:
+- a família de cada persona e o **básico da casa** entram no jogo, e todo mês a
+  tela mostra "entrou · básico · faltou", mais a dívida e os juros (D-044,
+  D-046);
+- cada mês tem **4 opções**, todas com um preço, sem setas, e a decisão dura
+  **120 s** (D-043);
+- o **placar final é em páginas**, passadas com o Espaço: o saldo contra o
+  básico, "Escolha ou sorte?" e a história de cada equipe (D-041, D-045). As
+  teclas C e V saíram;
+- todo bloco mostra a **linha do tempo** do seminário (D-042);
+- tudo o que só você usa (exportar, apagar, dicas de tecla, avisos) fica na
+  **barra oculta** (D-047).
+
+Os pontos marcados "vamos testar" (D-041, D-042, D-043) são para observar no
+teste (seção 13). As perguntas de conteúdo ainda em aberto estão no
+[rascunho-conteudo.md](rascunho-conteudo.md), seções 6 e 7.
+
 1. [O que levar](#1-o-que-levar)
 2. [Véspera](#2-véspera)
 3. [No dia: montagem](#3-no-dia-montagem)
@@ -31,7 +49,9 @@ seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 - O pendrive com a pasta do ZIP (README, passo 11).
 - O PIN do apresentador, de memória ou num papel que fica com você. Nunca na tela.
 - Papel e caneta, para anotar o código da sala.
-- Os slides, prontos para abrir numa janela própria.
+- Os slides, prontos para abrir numa janela própria. Eles são o material
+  complementar: o telão mostra a linha do tempo, e o conteúdo de cada trecho
+  está nos slides (D-042).
 - O plano B em papel da trilha: cartões coloridos ou mão levantada.
 
 ## 2. Véspera
@@ -132,12 +152,10 @@ ativa, o Espaço e as setas vão para os slides.
 
 | Tecla | O que faz | Quando |
 | --- | --- | --- |
-| Espaço, → ou PageDown | Avança. Duas vezes seguidas em menos de 1,5 s contam como uma. Na enquete sem celulares com as afirmações juntas, passa para a próxima afirmação | Quase sempre. **Nunca fecha votação** |
+| Espaço, → ou PageDown | Avança. Duas vezes seguidas em menos de 1,5 s contam como uma. No placar final e no comparativo, passa para a próxima página, e da última segue o roteiro. Na enquete sem celulares com as afirmações juntas, passa para a próxima afirmação | Quase sempre. **Nunca fecha votação** |
 | Enter | Encerra a votação, a decisão ou a prorrogação | Com votação aberta. Pede confirmação antes do tempo mínimo de conversa e, sem celulares, quando alguma afirmação ficou sem contagem |
 | P | Pausa ou retoma. Pausado, **ninguém consegue votar** | Com votação aberta |
 | Ctrl+Z | Desfaz, com confirmação. Com a votação recém-aberta por um Espaço a mais, desfaz a abertura e volta à tela de antes, **se nenhum voto chegou** e, na rodada, se você não decidiu por nenhuma equipe (senão avisa "Já chegaram N votos" e a votação segue aberta). Uma rodada que já foi apurada e reaberta pelo Ctrl+Z não volta mais para trás. Se a rede falhar no meio, a tela mostra "Desfazendo a abertura…": dê Ctrl+Z de novo (o Enter pergunta antes de apurar) | Depois de encerrar uma rodada ou uma enquete; com enquete ou decisão aberta (não na prorrogação) |
-| C | Troca o critério do placar | Placar final |
-| V | Liga ou desliga o "Sem vencedor" | Placar final |
 | F | Tela cheia da página (alternativa ao F11) | Qualquer hora |
 | H | Mostra ou esconde a barra. Mostrada pela tecla, ela também some sozinha em 3 s (fica enquanto você navega nela com Tab) | Qualquer hora |
 | 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes |
@@ -147,6 +165,10 @@ ativa, o Espaço e as setas vão para os slides.
 | F11 | Tela cheia da janela do navegador | Montagem |
 | Alt+Tab | Alterna entre o telão e os slides | Nos blocos |
 | Esc | Fecha a janela de confirmação ou de escolha | Com uma dessas janelas aberta |
+
+As teclas C (critério do placar) e V ("sem vencedor") saíram junto com o placar
+decomposto (D-041): o placar novo não tem critério a trocar nem vencedor a
+esconder.
 
 **A barra do apresentador** fica escondida. Ela aparece com H ou com o mouse
 encostado na borda de baixo da tela, e some 3 s depois do último movimento do
@@ -159,9 +181,22 @@ com ela escondida. À esquerda, ela mostra:
 - "estado salvo às 14:05 (r1)", depois do primeiro salvamento. O salvamento
   automático do fim de rodada aparece **só aqui**, sem aviso na tela projetada;
 - com celulares, "18 ativos / 21 membros". Membro é quem já entrou na sala;
-  ativo é o celular com sinal no último minuto;
+  ativo é o celular com sinal no último minuto. Esse número fica **só aqui**: o
+  lobby projeta apenas os conectados;
+- a **dica do passo**, o que antes ficava projetado: as teclas da formação das
+  equipes e da contagem à mão, quanto falta do tempo mínimo de conversa, "Todas
+  as equipes decidiram. Enter encerra.", a página do placar final e do
+  comparativo ("Espaço: próxima página (2 de 8)") e, no Fim, o que a exportação
+  leva;
 - o selo de conexão: **Conectado**, **Reconectando…**, **Sem celulares** ou
   **Outra máquina assumiu** (seção 9).
+
+**Os avisos também ficam com a barra** (D-047). Durante a sessão, um aviso
+("Totais exportados…", "Laranja sempre joga…") só aparece com a barra aberta,
+logo acima dela, e dura 15 s: se ele surgiu com a barra escondida, aperte H para
+lê-lo. Um aviso de **erro** (comando recusado, sem conexão) abre a barra sozinho,
+para não passar calado. Na abertura, antes de projetar, os avisos continuam no
+topo da tela.
 
 | Botão | O que faz |
 | --- | --- |
@@ -177,10 +212,18 @@ com ela escondida. À esquerda, ela mostra:
 | Entrada aberta / fechada | Abre ou fecha a entrada de novos celulares (só com celulares) |
 | Rede restrita | Troca o QR por um que força a conexão mais lenta e mais compatível (`?lp=1`) (só com celulares) |
 | Salvar estado | Baixa o JSON com o estado da sala, sem nenhum voto individual |
-| Sem vencedor (V) | O mesmo que a tecla |
 | Tela cheia (F) | O mesmo que a tecla |
 | Encerrar jogo (segure) | Vai direto para o Fim. Segure 2 s |
 | Continuar sem celulares (segure) | Segue sem celulares a partir do passo atual. Segure 2 s. **Não tem volta** (só com celulares) |
+| Exportar totais | Baixa o JSON só com os totais (seção 12). Era um botão da tela do Fim |
+| Apagar a sala (segure 2 s) | Apaga a sala e os votos (D-015). Só funciona no passo Fim: no meio da aula, um engano apagaria o jogo inteiro |
+
+**Fora da projeção (D-047).** Nenhum controle que só você usa aparece na tela que
+a turma vê: exportar, apagar, "N ativos / M membros", as dicas de tecla e os
+avisos ficam na barra. Na projeção ficam só os controles que também são
+informação para a turma: os cartões da formação das equipes (quais jogam) e, sem
+celulares, as letras da decisão de cada equipe (o que ela anunciou). A abertura
+(config, roteiro, PIN) é a exceção, porque acontece antes de projetar.
 
 **Proteções:**
 - o Espaço nunca fecha votação;
@@ -207,10 +250,10 @@ slides.
 
 ### 5.1 Lobby
 
-- **Telão:** QR grande, o endereço, o código da sala, "N conectados" e, em letra
-  menor, "N ativos / M membros". Conectado é o mesmo que ativo: celular com
-  sinal no último minuto. Membro é quem já entrou, inclusive quem fechou a aba.
-  Só números: nem crachá nem nome aparecem na tela projetada.
+- **Telão:** QR grande, o endereço, o código da sala e "N conectados": celular
+  com sinal no último minuto. O "N ativos / M membros" (membro é quem já entrou,
+  inclusive quem fechou a aba) fica só na barra (D-047). Só números: nem crachá
+  nem nome aparecem na tela projetada.
 - **Celular:** "Você está na sala". Ainda sem equipe e sem persona.
 - **Faça:** espere o número de conectados chegar perto do tamanho da turma.
   Espaço abre a enquete de entrada.
@@ -240,15 +283,33 @@ slides.
 
 ### 5.3 Bloco (trecho da apresentação)
 
-- **Telão:** tela de espera discreta, com o título do trecho e, depois que as
-  equipes travam, o placar resumido. Se a entrada estiver aberta, aparece também
-  a faixa com o QR pequeno.
+- **Telão:** tela de espera discreta, com o título do trecho, a **linha do tempo
+  do seminário** (D-042) e, depois que as equipes travam, o placar resumido. Se a
+  entrada estiver aberta, aparece também a faixa com o QR pequeno.
+  - A linha do tempo tem os trechos da apresentação e os meses do jogo, na ordem
+    do roteiro, com o atual marcado (os meses aparecem como "mês 1", "mês 2",
+    "mês 3"), e embaixo uma linha como, no roteiro de 60 min, "Você está aqui (5
+    de 10) · a seguir: Mês 2: o app muda a regra". O "a seguir" é o próximo
+    passo, qualquer que seja (formação das equipes, placar, termômetro).
+  - No bloco **"Mapa do seminário"**, a linha do tempo é o próprio conteúdo:
+    todos os trechos por extenso (em duas colunas quando passam de seis), sem o
+    placar resumido. É o mapa que você apresenta.
+  - Os passos que não são trecho nem mês (enquetes, formação das equipes,
+    personas, placar final) não aparecem na linha, só no "a seguir". Depois do
+    mês 3, a linha não mostra mais nada até o Fim: é uma das perguntas em aberto
+    (rascunho, seção 7, pergunta 15).
 - **Celular:** antes das equipes, "Acompanhe a apresentação". Depois, a situação
-  da persona: os indicadores e o que aconteceu no último mês, em primeira pessoa.
+  da persona: a família, a conta do último mês ("Entrou R$ X · o básico da
+  família custa R$ Y" e, em destaque, "Faltou R$ Z" ou "Sobrou R$ Z"), a dívida
+  com os juros ao mês, a decisão, a carta e o que aconteceu, em primeira pessoa.
+  Antes do primeiro mês, a família e o básico.
 - **Faça:** Espaço entra no bloco; Alt+Tab para os slides; apresente; Alt+Tab de
   volta; Espaço vai ao próximo passo. Entre dois blocos seguidos, volte ao telão e
-  aperte Espaço, para o celular e a barra acompanharem o título do trecho.
-- **Diga:** o conteúdo dos slides.
+  aperte Espaço, para o celular, a barra e a linha do tempo acompanharem o título
+  do trecho. Se quiser mostrar onde a turma está antes de ir aos slides, deixe o
+  telão alguns segundos na linha do tempo.
+- **Diga:** o conteúdo dos slides. No Mapa, percorra a linha do tempo: "Vamos
+  intercalar a apresentação com três meses de jogo."
 
 ### 5.4 Formação das equipes
 
@@ -257,7 +318,8 @@ slides.
 - **Celular:** **Me coloque numa equipe**, ou a escolha de uma equipe.
 - **Faça:** todas as equipes começam abertas. Deixe de 3 a 6, fechando as que
   sobram com as teclas 1 a 6, a partir da última (6, 5, 4…): é a ordem em que as
-  equipes somem quando a turma é menor (D-027). No conteúdo de 28/09, as equipes
+  equipes somem quando a turma é menor (D-027). As teclas também estão na dica
+  da barra. No conteúdo atual, as equipes
   são 1 e 2 Jonas (as duas "sempre joga"), 3 Daiane, 4 Marcos, 5 Kauã e 6 Rose:
   com 3 equipes, jogam as duas do Jonas e a da Daiane. Conte cerca de 3 pessoas por
   equipe: é o número que o "Me coloque" completa antes de passar para a próxima
@@ -269,28 +331,63 @@ slides.
 
 ### 5.5 Personas
 
-- **Telão:** as personas em jogo, com as equipes de cada uma e os indicadores
-  iniciais.
-- **Celular:** a persona da equipe em detalhe.
-- **Faça:** apresente cada persona e siga com Espaço.
-- **Diga:** "Cada equipe vai viver três meses de uma dessas pessoas. A equipe
-  decide junto; o resto é o que a vida traz. Duas equipes têm a mesma persona:
-  fiquem de olho em como cada uma termina (D-004)." Diga que as rendas da Rose, da
-  Daiane e do Kauã são estimativas (D-028).
+- **Telão:** uma linha por persona em jogo (D-044): as equipes dela, o nome, o
+  ofício e "N pessoas em casa" e, embaixo, a casa: "básico R$ Y · salário da
+  companheira R$ Z" (ou "sem outra renda na casa") e "falta R$ W por mês". Esse
+  "falta" é o de um mês comum, sem carta e sem decisão: o trabalho, a outra renda
+  e o básico. No config atual, todas as casas começam faltando, de R$ 773
+  (Marcos) a R$ 2.412 (Rose) por mês.
+- **Celular:** a persona da equipe em detalhe: a descrição inteira, a família
+  ("Em casa: …"), o básico da casa item a item com a fonte de cada valor, o total
+  ("O básico da família custa R$ Y por mês") e a outra renda, quando houver.
+- **Faça:** apresente cada persona e siga com Espaço. Peça a cada equipe para
+  ler no celular quem mora na casa dela.
+- **Diga:**
+  - "Cada equipe vai viver três meses de uma dessas famílias. A equipe decide
+    junto; o resto é o que a vida traz. Duas equipes têm a mesma persona: fiquem
+    de olho em como cada uma termina (D-004)."
+  - "O básico é o que a casa precisa para comer, morar e pagar as contas em Porto
+    Alegre, e cada valor tem fonte: a cesta básica do DIEESE, o aluguel, a luz, a
+    água, o gás, o transporte. Ele é cobrado no fim de todo mês, aconteça o que
+    acontecer."
+  - "A Rose e a Daiane sustentam a casa sozinhas. Nas outras casas, alguém ganha
+    um salário mínimo, e mesmo assim falta."
+  - Diga que as rendas da Rose, da Daiane e do Kauã são estimativas (D-028).
 
 ### 5.6 Rodada: decisão, sorteio e resultado
 
-**Decisão**
-- **Telão:** a situação do mês, as opções A, B e C, o cronômetro e, por equipe,
-  "2 de 3 decidiram", sem revelar a escolha.
-- **Celular:** a situação, as opções e a contagem ao vivo da própria equipe.
+**Decisão** (D-043)
+- **Telão:** a situação do mês, as **4 opções** (A a D), o cronômetro de **120 s**
+  e, por equipe, "2 de 3 decidiram", sem revelar a escolha. Nenhuma opção tem
+  seta de tendência: cada uma é um dilema, e nenhuma é a resposta certa.
+- **Celular**, de cima para baixo: o cronômetro; o **contexto da família** naquele
+  mês ("Na casa de Jonas: a parcela da moto vence dia 5…"), diferente para cada
+  persona; o básico e a dívida; as 4 opções, cada uma com a contagem ao vivo da
+  equipe. Só a opção escolhida mostra a narrativa do que ela significa. Se as
+  opções não couberem na tela, o botão "Mais opções abaixo ↓" leva até elas.
 - **Faça:** Espaço abre a decisão. Leia a situação e as opções em voz alta. A
-  linha de baixo mostra quanto falta do **tempo mínimo de conversa**. Quando ela
-  disser "Todas as equipes decidiram. Enter encerra.", ou quando o tempo acabar,
-  aperte Enter. Equipe sem celular: **Decidir por esta equipe**.
-- **Diga:** "Conversem na equipe. Cada um vota no próprio celular e vê a contagem
-  da equipe. Vale a opção mais votada, e dá para mudar até eu encerrar. Se
-  ninguém votar, o app decide por vocês: é o piloto automático."
+  dica da barra mostra quanto falta do **tempo mínimo de conversa** (45 s). Quando
+  ela disser "Todas as equipes decidiram. Enter encerra.", ou quando o tempo
+  acabar, aperte Enter. Equipe sem celular: **Decidir por esta equipe**.
+- **Diga:**
+  - "Conversem na equipe. Alguém leia em voz alta o que está acontecendo na casa
+    de vocês este mês: está no celular."
+  - "Não tem resposta certa. Cada opção tem um preço, e ele pode aparecer só no
+    mês que vem."
+  - "Cada um vota no próprio celular e vê a contagem da equipe. Vale a opção mais
+    votada, e dá para mudar até eu encerrar. Se ninguém votar, o app decide por
+    vocês: é o piloto automático."
+- **O que atravessa os meses** (para você saber, não para anunciar antes):
+  - quem abre o **MEI** no mês 1 paga o DAS nos três meses, e só quem pagava o
+    MEI recebe o auxílio do INSS depois de um acidente, um mês depois. Mesmo
+    assim, a perícia pode negar (carta "A perícia do INSS negou o auxílio");
+  - a **fratura** do mês 2 continua no mês 3 (mais 25 dias parado), e a lesão pode
+    voltar (carta "A lesão voltou");
+  - a **conta bloqueada** no mês 2 continua bloqueada o mês 3 inteiro. Quem rodava
+    em dois apps no mês 2 segura metade da renda no outro app;
+  - o **empréstimo** do mês 3 cobra juros, e a dívida que sobra paga juros de
+    7,43% ao mês;
+  - a **associação** do mês 3 custa a mensalidade e um dia de assembleia.
 
 **Empate**
 - A equipe empatada tem uma prorrogação curta, só entre as opções empatadas:
@@ -309,42 +406,108 @@ slides.
 - **Diga:** "A decisão de vocês mudou o tamanho das fatias. A sorte escolhe a
   fatia. Decide-se antes de saber, como na vida."
 
-**Resultado**
-- **Telão:** uma linha por equipe, com a carta, a decisão e o saldo do mês. Só as
-  cartas de efeito mais forte ganham destaque (quantas, diz o `destacarCartas` do
+**Resultado** (D-044, D-046)
+- **Telão:** uma frase por equipe: a equipe, a letra da decisão, o título da
+  carta, a origem da decisão quando não foi a maioria ("piloto automático",
+  "empate na moeda", "na prorrogação" ou "pelo apresentador") e as **contas do
+  mês**: "entrou R$ X · básico R$ Y · faltou R$ Z" (ou
+  "sobrou"), com "juros R$ J" no meio quando a equipe já vinha devendo, e
+  "dívida R$ D" no fim quando o saldo ficou negativo. Com alguma dívida na tela,
+  o cabeçalho diz uma vez só "a dívida paga juros de 7,43% ao mês". Só as cartas
+  de efeito mais forte ganham destaque (quantas, diz o `destacarCartas` do
   config). Carta grave nunca anima.
-- **Celular:** a carta da equipe e o que ela fez com os indicadores.
-- **Faça:** comente as cartas destacadas e siga com Espaço para o próximo bloco.
-- **Diga:** leia a consequência de cada carta grave com o tom de quem conta um
-  fato, sem comemoração. Na primeira carta grave, avise: "As cartas graves foram
-  exageradas para caber em três meses de jogo" (D-030).
+- **Celular:** a carta da equipe, com a narrativa em primeira pessoa, e a conta
+  do mês: "Entrou R$ X · o básico da família custa R$ Y" e, em destaque, "Faltou
+  R$ Z". Com outra renda na casa, uma linha separa o que veio do trabalho e o que
+  veio da outra renda. Embaixo, "Dívida R$ D · juros de 7,43% ao mês".
+- **Como ler a conta:** "entrou" é o que o trabalho deu no mês (já com a carta,
+  a decisão e os custos do trabalho), mais a outra renda da casa. O básico é
+  cobrado **no fim do mês, depois de tudo**: a carta corta o que se ganha, e
+  nunca a conta da casa. O que falta vira dívida no cheque especial, e o mês
+  seguinte começa pagando juros sobre ela.
+  - O telão mostra o título da carta, e não o custo dela em dias e em reais: o
+    detalhe está na narrativa, no celular da equipe. Mostrar o custo no telão é
+    uma pergunta em aberto (rascunho, seção 7, pergunta 7).
+  - Com acidente, o "entrou" pode ficar negativo: o conserto e o remédio saem do
+    que o trabalho deu (rascunho, seção 7, pergunta 2).
+- **Faça:** comente as cartas destacadas e as equipes com a maior falta, e siga
+  com Espaço para o próximo bloco.
+- **Diga**, ao mostrar quanto faltou para o básico:
+  - "Faltou R$ 1.170 quer dizer: esta família chegou ao fim do mês sem pagar
+    tudo o que precisa para viver. Não é luxo: é comida, aluguel, luz e ônibus."
+  - "Essa falta não some. Vira dívida no cheque especial, a 7,43% ao mês, e o
+    mês que vem já começa pagando juros."
+  - Depois de uma carta de parada: "Cada dia parado é um dia sem renda. O app não
+    paga nenhum. O INSS, só para quem já pagava o MEI, e só depois."
+  - Sem tom de consolo nem de piada, e sem apontar "quem jogou mal": o objetivo é
+    a turma sentir a dúvida de quem decide sem saber o que vem (D-044).
+  - Leia a consequência de cada carta grave com o tom de quem conta um fato, sem
+    comemoração. Na primeira carta grave, avise: "As cartas graves foram
+    exageradas para caber em três meses de jogo" (D-030).
 
 Encerrou cedo demais? **Ctrl+Z** volta à decisão (confirmar: Tab e Enter). Os
 votos e o sorteio continuam guardados: com as mesmas decisões, encerrar de novo
 tira as mesmas cartas.
 
-### 5.7 Placar final
+### 5.7 Placar final (D-041, D-045)
 
-- **Telão:** "Quem ganhou depende do que se conta". Cada equipe tem uma barra em
-  três partes: piloto automático, efeito das decisões e sorte. Começa ordenado
-  pelo efeito das decisões.
-- **Celular:** o resumo da equipe e de onde veio o saldo.
-- **Faça:** **C** troca o critério (efeito das decisões, saldo acumulado, sorte,
-  pior caso, energia, proteção). **V** mostra as equipes na ordem do jogo, sem
-  vencedor. A linha de referência do config (hoje, "Jonas com carteira
-  assinada", R$ 840) aparece nas vistas de efeito das decisões, de saldo e de
-  sorte. Ela atravessa só as barras das equipes do Jonas, e o valor fica escrito
-  embaixo do gráfico.
+O placar é uma sequência de páginas. **Espaço passa de uma para a outra**, e na
+última segue o roteiro. A dica da barra diz em que página você está ("Espaço:
+próxima página (2 de 8)"). Não há critério a trocar nem vencedor: as teclas C e V
+saíram. Com 6 equipes são 8 páginas, e o tempo-alvo do passo é de 4 min: conte
+uns 30 s por página.
+
+**Página 1: "Quanto sobrou, e quanto faltou para o básico"**
+- **Telão:** uma barra por equipe que jogou, do maior saldo para o menor, com
+  "faltou R$ X" ou "sobrou R$ X" ao lado. O título é calculado, por exemplo "5 de
+  6 equipes não fecharam as contas" ("As 6 equipes fecharam as contas" se
+  nenhuma faltou). A linha da referência do config (hoje, "Jonas com carteira
+  assinada", −R$ 2.957: na mesma casa, com o mesmo básico) atravessa só as barras
+  das equipes do Jonas, e o valor fica escrito embaixo do gráfico.
 - **Diga:**
-  - "Cada barra tem três partes: o que viria sem decidir nada, o efeito das
-    decisões e a sorte."
-  - "Comparem as duas equipes da mesma persona: a mesma vida, decisões e sorte
+  - "A ordem não é de quem ganhou. É a fila de quanto faltou para o básico da
+    família nos três meses."
+  - "Comparem as duas equipes do Jonas: a mesma casa, decisões e sorte
     diferentes."
+  - Na linha de carteira assinada: "Com carteira, na mesma casa, também faltaria,
+    mas bem menos." O FGTS fica para o slide (D-030). O valor da linha ainda é uma
+    pergunta em aberto (rascunho, seção 6, pergunta 13).
+  - No config atual, é provável que nenhuma equipe feche as contas: nas contas do
+    rascunho, nenhum caminho termina com saldo positivo (seção 7, pergunta 5, em
+    aberto). Se acontecer: "Nenhuma família fechou. Não foi falta de esforço: o
+    básico custa mais do que o trabalho paga."
+
+**Página 2: "Escolha ou sorte?"**
+- **Telão:** uma linha por equipe, na mesma ordem, contada como história, sem
+  legenda: "se não mudassem nada: R$ a → as escolhas: ±R$ b → a sorte: ±R$ c →
+  terminaram com R$ d". Os termos "piloto automático", "efeito das decisões" e
+  "sorte" como legenda saíram da tela, porque confundiam no ensaio.
+- **Como ler:** "se não mudassem nada" é quanto a equipe terminaria, em média,
+  se ninguém tivesse votado; "as escolhas" é quanto as decisões mudaram essa
+  média; "a sorte" é o que as cartas fizeram além do esperado. As três somam o
+  total, ao real.
+- **Diga:**
+  - "A primeira conta é quanto vocês terminariam, em média, sem decidir nada. A
+    segunda, quanto as escolhas mudaram isso. A terceira, o que a sorte fez."
   - "Nestas contas, a sorte pesou mais que as decisões. É de propósito: a escolha
     individual não tira ninguém da precariedade" (D-009, D-024).
   - Se uma equipe se organizou no mês 3 e perdeu saldo: "O placar só mede três
     meses da própria equipe. A conquista coletiva não cabe nele" (D-029).
-  - Na linha de carteira assinada, o FGTS fica para o slide (D-030).
+  - Se alguém notar que trabalhar até a exaustão "deu mais dinheiro": "O placar
+    só conta o dinheiro. O corpo, o sono e a família não entram nele." (A
+    energia e a proteção fora do placar são uma pergunta em aberto: rascunho,
+    seção 7, pergunta 6.)
+
+**Páginas 3 em diante: a história de cada equipe**
+- **Telão:** uma página por equipe que jogou, na ordem das equipes: o título de
+  cada mês, "escolheram: …" (com "(piloto automático)" quando foi o caso),
+  "aconteceu: …" e as contas do mês, e no fim "No fim dos 3 meses: faltou R$ X".
+- **Celular:** a mesma história, com as narrativas da opção e da carta em
+  primeira pessoa, e "Escolha ou sorte?" da própria equipe.
+- **Faça:** em cada página, peça a alguém da equipe para ler no celular o que
+  aconteceu com a família. As narrativas estão lá, e não no telão.
+- **Diga:** "Três meses da vida do Jonas. O que vocês decidiriam diferente, e o
+  que não dependia de vocês?"
 
 ### 5.8 Termômetro
 
@@ -383,69 +546,77 @@ tira as mesmas cartas.
 
 - **"Fim: quem é o patrão?"** é conversa (D-014): o app não faz nada nesse
   momento, e texto livre nunca aparece no telão.
-- **Fim:** clique em **Exportar totais** (um JSON só com totais) e depois segure
-  **Apagar a sala (segure 2 s)** (D-015). O celular mostra "Esta sala foi
-  encerrada".
+- **Fim:** o telão mostra o título e o placar resumido; o celular de cada equipe
+  mostra a história dela, mês a mês. Os dois botões ficam **na barra** (D-047):
+  aperte H (ou encoste o mouse na borda de baixo), clique em **Exportar totais**
+  (um JSON só com totais) e depois segure **Apagar a sala (segure 2 s)** (D-015),
+  que só funciona neste passo. O celular mostra "Esta sala foi encerrada".
 
 ## 6. Minuto a minuto: 60 min
 
-Os tempos são os tempos-alvo do `config.json` de 28/09. A barra mostra o atraso
-ao vivo. Se atrasar, decida no dia o que encurtar: um bloco de slides pode ser
-mais curto sem mexer no jogo, e a enquete "antes" é o único passo marcado como
-opcional.
+Os tempos são os tempos-alvo do `config.json` do redesenho (versão
+`2026-09-29-v2-rascunho`): cada rodada ganhou 1 minuto (a decisão passou a 120 s),
+o placar final também, e as personas, 30 s; o tempo saiu do Gancho, do Mapa, da
+Gestão por algoritmo, do Contraponto e do Termômetro. Os cortes
+ainda são uma pergunta em aberto (rascunho, seção 6, pergunta 15). A barra mostra
+o atraso ao vivo. Se atrasar, decida no dia o que encurtar: um bloco de slides
+pode ser mais curto sem mexer no jogo, e a enquete "antes" é o único passo
+marcado como opcional.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
 | 1 | 0:00 | Lobby (2:00) | QR na tela. "Apontem a câmera… sem nome, sem cadastro." (5.1) |
 | 2 | 2:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
-| 3 | 3:30 | Bloco: Gancho: o lançamento (3:30) | Espaço, Alt+Tab. O lançamento encenado da trilha |
-| 4 | 7:00 | Bloco: Mapa do seminário (4:00) | Alt+Tab, Espaço, Alt+Tab. Slides |
-| 5 | 11:00 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque numa equipe; sentem juntos." (5.4) |
-| 6 | 13:00 | Personas (2:00) | "Três meses de uma dessas pessoas; duas equipes têm a mesma." (5.5) |
-| 7 | 15:00 | Bloco: Debrief e teoria: a conta do entregador (4:00) | Slides |
-| 8 | 19:00 | Rodada 1 · Mês 1: quanto trabalhar? (4:00) | Leia as opções; Enter depois do tempo mínimo; sorteio; resultado. "A decisão muda as fatias, a sorte escolhe." (5.6) |
-| 9 | 23:00 | Bloco: Debrief e teoria: gestão por algoritmo (5:00) | Slides |
-| 10 | 28:00 | Rodada 2 · Mês 2: o app muda a regra (4:00) | Como a rodada 1. Na primeira carta grave da aula: "exageradas para caber em três meses." (5.6) |
-| 11 | 32:00 | Bloco: Contraponto: a Viração e os dados sobre CLT (5:00) | Slides |
-| 12 | 37:00 | Bloco: Caminhos: regulação, proteção, organização e educação (4:00) | Slides |
-| 13 | 41:00 | Rodada 3 · Mês 3: e agora? (4:00) | Como a rodada 1 (5.6) |
-| 14 | 45:00 | Placar final (3:00) | C troca o critério, V sem vencedor. "Quem ganhou depende do que se conta." (5.7) |
-| 15 | 48:00 | Termômetro (6:00), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
+| 3 | 3:30 | Bloco: Gancho: o lançamento (3:00) | Espaço, Alt+Tab. O lançamento encenado da trilha |
+| 4 | 6:30 | Bloco: Mapa do seminário (3:00) | Espaço. A linha do tempo no telão é o mapa; depois, Alt+Tab para os slides, se houver (5.3) |
+| 5 | 9:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque numa equipe; sentem juntos." (5.4) |
+| 6 | 11:30 | Personas (2:30) | "Três meses de uma dessas famílias; o básico é cobrado todo mês." (5.5) |
+| 7 | 14:00 | Bloco: Debrief e teoria: a conta do entregador (4:00) | Slides |
+| 8 | 18:00 | Rodada 1 · Mês 1: quanto trabalhar? (5:00) | Leia as 4 opções; 120 s; Enter depois do tempo mínimo; sorteio; resultado. "A decisão muda as fatias, a sorte escolhe." Mostre quanto faltou (5.6) |
+| 9 | 23:00 | Bloco: Debrief e teoria: gestão por algoritmo (4:00) | Slides |
+| 10 | 27:00 | Rodada 2 · Mês 2: o app muda a regra (5:00) | Como a rodada 1. Na primeira carta grave da aula: "exageradas para caber em três meses." (5.6) |
+| 11 | 32:00 | Bloco: Contraponto: a Viração e os dados sobre CLT (4:00) | Slides |
+| 12 | 36:00 | Bloco: Caminhos: regulação, proteção, organização e educação (4:00) | Slides |
+| 13 | 40:00 | Rodada 3 · Mês 3: e agora? (5:00) | Como a rodada 1 (5.6) |
+| 14 | 45:00 | Placar final (4:00) | Espaço pagina: quanto faltou, escolha ou sorte, a história de cada equipe (5.7) |
+| 15 | 49:00 | Termômetro (5:00), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
 | 16 | 54:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
 | 17 | 55:30 | Comparativo (2:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
 | 18 | 58:00 | Bloco: Fim: quem é o patrão? (2:00) | Conversa; o app não faz nada (5.11) |
-| 19 | 60:00 | Fim | Exportar totais; segurar Apagar a sala (5.11) |
+| 19 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 7. Minuto a minuto: 120 min
 
 Os mesmos passos do roteiro de 60 min, com mais tempo nos blocos e quatro blocos
-a mais. Tempos-alvo do `config.json` de 28/09.
+a mais. Tempos-alvo do `config.json` do redesenho; aqui o tempo a mais das
+rodadas, do placar e das personas saiu das entrevistas, do mapa do patrão e do
+convidado.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
 | 1 | 0:00 | Lobby (2:30) | QR na tela (5.1) |
 | 2 | 2:30 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra (5.2) |
 | 3 | 4:00 | Bloco: Gancho: o lançamento (4:30) | O lançamento encenado da trilha |
-| 4 | 8:30 | Bloco: Mapa do seminário (4:30) | Slides |
+| 4 | 8:30 | Bloco: Mapa do seminário (4:30) | A linha do tempo no telão é o mapa (5.3) |
 | 5 | 13:00 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
-| 6 | 15:00 | Personas (2:00) | (5.5) |
-| 7 | 17:00 | Bloco: Debrief e teoria: a conta do entregador (5:00) | Slides |
-| 8 | 22:00 | Rodada 1 · Mês 1: quanto trabalhar? (4:00) | (5.6) |
-| 9 | 26:00 | Bloco: Debrief e teoria: gestão por algoritmo (6:00) | Slides |
-| 10 | 32:00 | Rodada 2 · Mês 2: o app muda a regra (4:00) | (5.6) |
-| 11 | 36:00 | Bloco: Debrief e teoria: quiz anúncio ou conteúdo (8:00) | Slides |
-| 12 | 44:00 | Bloco: Contraponto: a Viração e os dados sobre CLT (5:00) | Slides |
-| 13 | 49:00 | Bloco: Contraponto: entrevistas em Porto Alegre (10:00) | Slides |
-| 14 | 59:00 | Bloco: Caminhos: regulação, proteção, organização e educação (4:00) | Slides |
-| 15 | 63:00 | Rodada 3 · Mês 3: e agora? (4:00) | (5.6) |
-| 16 | 67:00 | Placar final (3:00) | (5.7) |
-| 17 | 70:00 | Bloco: Debrief e teoria: mapa do patrão em grupos (15:00) | Atividade em grupos. O telão fica na espera |
-| 18 | 85:00 | Bloco: Caminhos: convidado com perguntas (20:00) | Convidado. O telão fica na espera |
+| 6 | 15:00 | Personas (2:30) | (5.5) |
+| 7 | 17:30 | Bloco: Debrief e teoria: a conta do entregador (5:00) | Slides |
+| 8 | 22:30 | Rodada 1 · Mês 1: quanto trabalhar? (5:00) | (5.6) |
+| 9 | 27:30 | Bloco: Debrief e teoria: gestão por algoritmo (6:00) | Slides |
+| 10 | 33:30 | Rodada 2 · Mês 2: o app muda a regra (5:00) | (5.6) |
+| 11 | 38:30 | Bloco: Debrief e teoria: quiz anúncio ou conteúdo (8:00) | Slides |
+| 12 | 46:30 | Bloco: Contraponto: a Viração e os dados sobre CLT (5:00) | Slides |
+| 13 | 51:30 | Bloco: Contraponto: entrevistas em Porto Alegre (9:00) | Slides |
+| 14 | 60:30 | Bloco: Caminhos: regulação, proteção, organização e educação (4:00) | Slides |
+| 15 | 64:30 | Rodada 3 · Mês 3: e agora? (5:00) | (5.6) |
+| 16 | 69:30 | Placar final (4:00) | Espaço pagina (5.7) |
+| 17 | 73:30 | Bloco: Debrief e teoria: mapa do patrão em grupos (14:00) | Atividade em grupos. O telão fica na espera |
+| 18 | 87:30 | Bloco: Caminhos: convidado com perguntas (17:30) | Convidado. O telão fica na espera |
 | 19 | 105:00 | Termômetro (9:00), 3 afirmações | (5.8) |
 | 20 | 114:00 | Enquete de entrada · depois (1:30) | (5.9) |
 | 21 | 115:30 | Comparativo (2:30) | (5.10) |
 | 22 | 118:00 | Bloco: Fim: quem é o patrão? (2:00) | Conversa (5.11) |
-| 23 | 120:00 | Fim | Exportar totais; segurar Apagar a sala (5.11) |
+| 23 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 8. Se a rede cair
 
@@ -454,8 +625,10 @@ avisam. Espere: a conexão volta sozinha, e o voto feito durante a queda fica
 guardado no celular e é reenviado. Não feche o telão.
 - Enquanto o selo mostra **Reconectando…**, os comandos do telão (Espaço, Enter,
   +30 s…) são **recusados na hora**, com o aviso `Sem conexão com o serviço: o
-  comando não foi enviado`. Nada fica numa fila para sair depois: quando o selo
-  voltar a **Conectado**, confira a tela e aperte de novo.
+  comando não foi enviado`. O aviso aparece logo acima da barra, que se abre
+  sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica numa
+  fila para sair depois: quando o selo voltar a **Conectado**, confira a tela e
+  aperte de novo.
 - Se aparecer `O serviço não respondeu em 10 s`, o comando saiu, mas a
   confirmação não chegou: ele pode ser aplicado quando a rede voltar. Confira a
   tela antes de repetir.
@@ -481,8 +654,11 @@ guardado no celular e é reenviado. Não feche o telão.
      **Cancelar**: Enter cancela, e Tab e Enter confirmam.
    - Se a rede caiu no meio da enquete, a tela diz quantas pessoas já tinham
      votado pelo celular. O Enter apura esses votos. A contagem à mão os
-     substitui: a primeira tecla de contagem pede confirmação.
-3. Decisões: cada equipe anuncia a sua, e você clica na letra de cada equipe.
+     substitui: a primeira tecla de contagem pede confirmação. A dica da barra
+     repete isso e as teclas da contagem.
+3. Decisões: cada equipe anuncia a sua, e você clica na letra de cada equipe (A a
+   D). Sem celular, o contexto da família não chega às equipes: leia em voz alta
+   o de cada persona, se der tempo, ou siga só com a situação do mês.
 4. Clique em **Salvar estado** de vez em quando. Ele também é salvo sozinho a
    cada sorteio.
 5. Se o "depois" for por mão levantada e o "antes" foi pelo celular, o
@@ -535,8 +711,11 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | Aluno na equipe errada | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
 | Equipe sem celular, ou que anunciou em voz alta | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
 | O tempo acabou e a equipe ainda conversa | **+30 s** reabre o prazo. Até lá, o voto que chega é recusado |
-| Espaço não avança, e aparece `Votação aberta: quem fecha é o apresentador (Enter)` | Enter primeiro, depois Espaço |
+| Espaço não avança, e aparece `Votação aberta: quem fecha é o apresentador (Enter)` | Enter primeiro, depois Espaço. O aviso aparece junto da barra, que se abre sozinha |
 | `Encerre a votação (Enter) antes de pular.` | Enter, depois **Pular para…** |
+| Um aviso sumiu antes de você ler, ou apertou uma tecla e nada parece ter acontecido | Aperte H: o aviso fica 15 s junto da barra (seção 4) |
+| Não acho **Exportar totais** nem **Apagar a sala** | Estão na barra (H), e não na tela do Fim. **Apagar a sala** só funciona no passo Fim |
+| O placar final "não avança" | Ele tem várias páginas: cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
 
 ## 11. Cuidados com o tema
 
@@ -546,12 +725,18 @@ trabalhando, em plataformas.
 
 - **Convide, nunca obrigue.** Quem trabalha em plataforma fala se quiser. Não
   peça a ninguém para contar a própria situação, e não aponte ninguém.
-- **Carta grave** (no config atual: acidente, conta bloqueada e assalto): o telão a mostra sem
+- **Carta grave** (no config atual: a fratura, a conta bloqueada, o assalto, a
+  perícia do INSS que negou o auxílio e a lesão que voltou): o telão a mostra sem
   animação, sem som e sem cor de vitória. Leia a consequência com o tom de quem
   conta um fato, sem piada. Avise uma vez que as cartas graves foram exageradas
   para caber em três rodadas (D-030).
-- **Ninguém ganha a vida no jogo.** Use "quem ganhou depende do que se conta" e,
-  se o clima virar competição, o **Sem vencedor** (V).
+- **Sem suavizar, e sem expor ninguém** (D-044). O jogo mostra o custo real, em
+  dinheiro e em dias parados, com fonte, para a turma sentir a dúvida de quem
+  vive isso. Não amenize o número ("é só um jogo"), mas também não o dirija a
+  ninguém da sala.
+- **Ninguém ganha a vida no jogo.** O placar não aponta vencedor: a página 1 é a
+  fila de quanto faltou para o básico, e não um ranking. Se o clima virar
+  competição, lembre isso.
 - **As personas não são pessoas reais.** Foram montadas a partir de pesquisas (a
   base é o artigo de Ludmila Abílio) e de dados públicos, com a fonte de cada
   valor ao lado (D-005). Diga que as rendas da Rose, da Daiane e do Kauã são
@@ -569,7 +754,7 @@ trabalhando, em plataformas.
 ## 12. Depois da aula
 
 - A sala foi apagada no Fim, e com ela os votos individuais (D-015). Se não foi,
-  abra o telão, retome a sala, vá ao Fim e segure **Apagar a sala**.
+  abra o telão, retome a sala, vá ao Fim e segure **Apagar a sala**, na barra.
 - O `viracao-totais-….json` baixado no Fim tem só os totais: o número de
   participantes, os histogramas das enquetes, a decisão e a carta de cada equipe
   e o placar. Nenhum voto individual.
@@ -627,7 +812,16 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
     apareceu, refaça os ajustes de download da seção 2.
 12. **Retomar:** recarregue o telão (F5) → **Retomar sala**. Volta sem pedir PIN?
 13. **Continuar sem celulares:** no fim, com a sala de teste, segure o botão e veja
-    o telão seguir sozinho. Depois, apague a sala.
+    o telão seguir sozinho. Depois, apague a sala (pela barra, no passo Fim).
+14. **O redesenho no celular (D-043, "vamos testar"):** na decisão, cada celular
+    mostra o contexto da família e as 4 letras sem rolar? O "Mais opções abaixo ↓"
+    aparece quando falta espaço? 120 s bastam para a equipe ler e conversar?
+    Anote o modelo e o tamanho de tela de quem precisou rolar.
+15. **O redesenho no projetor (D-041, D-042, D-047, "vamos testar"):** do fundo
+    da sala, dá para ler a linha do tempo, a frase do resultado ("entrou · básico
+    · faltou") e as páginas do placar? O placar em páginas ficou claro, ou alguma
+    página confundiu? Com a barra escondida, **nada** de operação aparece na tela
+    projetada (dica de tecla, aviso, exportar, apagar, "ativos / membros")?
 
 ### Resultado
 
@@ -646,6 +840,8 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
 | 11. Download automático | | | |
 | 12. Retomar sem PIN | | | |
 | 13. Continuar sem celulares | | | |
+| 14. Decisão no celular (contexto, 4 opções, 120 s) | | | |
+| 15. Linha do tempo, resultado, placar em páginas e barra oculta | | | |
 
 ### O que fazer com o resultado
 
@@ -656,6 +852,9 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
   (seção 8).
 - **Texto pequeno ou QR que não lê do fundo:** anote a distância e a resolução, e
   leve para a correção entre 01/10 e 05/10.
+- **Algo do redesenho confundiu (itens 14 e 15):** anote o quê e em que tela. As
+  decisões marcadas "vamos testar" (D-041, D-042, D-043) são revistas com o
+  Kleberson antes da correção.
 - **Depois de cada correção (01 a 05/10):** se o `firebase/regras.json` mudou,
   publique as regras de novo (README, passo 6). A versão sobe junto (v4, v5…), e
   é ela que o bloco 3 passa a mostrar em `regras vN conferidas`. Em toda máquina

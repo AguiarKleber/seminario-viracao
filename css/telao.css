@@ -75,7 +75,6 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 .numero-destaque { font-size: var(--placar); line-height: 1; font-weight: 750; }
 .numero-grande { font-size: calc(var(--corpo) * 2); line-height: 1; font-weight: 750; }
 
-.dica-operador { color: var(--texto-2); }
 
 .rodape-enquete {
   margin-top: auto;
@@ -92,11 +91,7 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 .grafico > svg { position: absolute; inset: 0; }
 .grafico-vazio { min-height: 0; }
 
-.segmento-piloto { fill: var(--piloto); }
-.segmento-decisoes { fill: var(--depois); }
-.segmento-sorte { stroke: var(--antes); stroke-width: 2; }
 .segmento-simples { fill: var(--neutro); }
-.marcador-fim { stroke: var(--texto); stroke-width: 4; }
 .referencia { stroke: var(--texto); stroke-width: 3; stroke-dasharray: 10 8; }
 .parte-concorda { fill: var(--depois); }
 .parte-neutro { fill: var(--piloto); }
@@ -189,9 +184,6 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .lobby-chamada { font-size: var(--titulo); font-weight: 750; line-height: 1.05; }
 .lobby-url { overflow-wrap: anywhere; font-weight: 600; }
 .codigo-sala { font-size: var(--placar); font-weight: 800; letter-spacing: .08em; line-height: 1; }
-/* "N ativos / M membros": discreto, no tamanho do corpo (nunca menos de 28 px
-   no telão), em cinza para não competir com o número de conectados. */
-.lobby-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .lobby-offline { display: flex; flex-direction: column; gap: var(--espaco); }
 
 /* ---------- Faixa de entrada ---------- */
@@ -238,6 +230,40 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* ---------- Bloco ---------- */
 
 .tela-bloco { justify-content: flex-start; }
+
+/* Linha do tempo do seminário (D-042). Discreta nos blocos: uma trilha de
+   marcas, com o mês do jogo escrito dentro da dele, e uma linha de texto. A cor
+   nunca é o único canal: o passo atual também tem "você está aqui" escrito, e
+   o mês, o próprio rótulo. */
+.linha-tempo { display: flex; flex-direction: column; gap: .3em; }
+.linha-tempo-trilha { display: flex; align-items: stretch; gap: 6px; }
+.linha-tempo-trilha > .trecho { flex: 1 1 0; min-width: 10px; min-height: .9em; border-radius: 4px; background: var(--linha); }
+.linha-tempo-trilha > .trecho-passado { background: var(--linha-forte); }
+.linha-tempo-trilha > .trecho-atual { background: var(--foco); }
+.linha-tempo-trilha > .trecho-rodada {
+  flex: 0 0 auto; display: flex; align-items: center;
+  padding: 0 .35em; background: var(--fundo);
+  border: 2px solid var(--texto-2); color: var(--texto-2);
+  font-weight: 700; line-height: 1.2; white-space: nowrap;
+}
+.linha-tempo-trilha > .trecho-rodada.trecho-passado { background: var(--superficie-2); }
+.linha-tempo-seguir { color: var(--texto-2); }
+.linha-tempo-seguir b { color: var(--texto); }
+/* No "Mapa do seminário", a linha é o conteúdo: todos os trechos por extenso,
+   em duas colunas quando passam de seis. */
+.bloco-mapa .linha-tempo { flex: 1 1 auto; min-height: 0; justify-content: center; gap: var(--espaco); }
+.linha-tempo-lista {
+  display: grid; grid-auto-flow: column;
+  grid-template-rows: repeat(var(--linhas), auto);
+  grid-template-columns: repeat(var(--colunas), minmax(0, 1fr));
+  gap: .3em 2.5vw;
+}
+.trecho-mapa { display: flex; align-items: baseline; gap: .5em; line-height: 1.15; color: var(--texto-2); }
+.trecho-marca { flex: none; align-self: center; width: .8em; height: .4em; border-radius: 3px; background: var(--linha-forte); }
+.trecho-mapa.trecho-rodada .trecho-marca { height: .8em; background: transparent; border: 3px solid var(--texto-2); border-radius: 50%; }
+.trecho-mapa.trecho-atual { color: var(--texto); font-weight: 700; }
+.trecho-mapa.trecho-atual .trecho-marca { background: var(--foco); }
+.trecho-aqui { color: var(--foco); }
 .placar-resumido { display: flex; flex-direction: column; gap: .3em; }
 .placar-discreto { margin-top: auto; color: var(--texto-2); }
 .resumido-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25em 3vw; }
@@ -272,14 +298,18 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 /* ---------- Personas ---------- */
 
-.personas { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
+/* Duas linhas por persona, na largura toda: as equipes, o nome, o ofício e as
+ * pessoas em casa; embaixo, o básico, a outra renda e o furo de um mês comum
+ * (revisão de 29/09). Com as equipes numa coluna à esquerda, cinco personas
+ * com a casa passavam de 1024×768. */
+.personas { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: center; }
 .persona-linha {
-  display: grid; grid-template-columns: minmax(0, 13em) minmax(0, 1fr); gap: 2vw; align-items: start;
+  display: flex; flex-direction: column; gap: .05em; line-height: 1.2;
   padding-bottom: calc(var(--espaco) * .6);
   border-bottom: 1px solid var(--linha);
 }
-.persona-equipes { display: flex; flex-direction: column; gap: .15em; }
-.persona-texto { display: flex; flex-direction: column; gap: .1em; line-height: 1.22; }
+.persona-quem { display: flex; flex-wrap: wrap; align-items: baseline; gap: .05em .55em; }
+.persona-casa b { color: var(--texto); }
 
 /* ---------- Rodada ---------- */
 
@@ -322,35 +352,37 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .linha-rotulo-sorteio { flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12; }
 .linha-graves { color: var(--texto-2); }
 .linha-graves b { color: var(--texto); }
-.valor-criterio { justify-content: flex-end; white-space: nowrap; }
 .carta-sorteada { font-weight: 650; }
-.criterio b { font-weight: 800; }
 .referencias { color: var(--texto-2); display: flex; flex-wrap: wrap; gap: .2em 2em; }
 .referencias b { color: var(--texto); }
 .marca-referencia { font-weight: 800; color: var(--texto); }
 
 /* ---------- Resultado ---------- */
 
-/* Uma grade só, com as linhas em subgrid: as colunas se alinham entre as
-   equipes e cada uma tem só a largura de que precisa. */
+/* Uma frase por equipe (equipe, letra, carta, contas do mês, dívida), que
+   quebra entre os pedaços. Com as contas numa coluna ao lado da equipe, ou em
+   duas linhas fixas, seis equipes com a faixa de entrada não cabiam em
+   1024×768. */
 .grade-resultados {
-  display: grid; grid-template-columns: max-content minmax(0, 1fr);
-  gap: calc(var(--espaco) * .5) 0;
-  flex: 1 1 auto; min-height: 0; align-content: safe center;
+  display: flex; flex-direction: column; gap: calc(var(--espaco) * .45);
+  flex: 1 1 auto; min-height: 0; justify-content: safe center;
 }
 .cartao-resultado {
-  display: grid; grid-template-columns: subgrid; grid-column: 1 / -1;
-  align-items: center; column-gap: 1.6vw;
-  padding: .2em .6em;
+  display: flex; flex-direction: column;
+  padding: .12em .6em;
   border: 2px solid var(--linha); border-radius: var(--raio);
   background: var(--superficie);
-  line-height: 1.15;
+  line-height: 1.12;
 }
-.resultado-corpo { display: flex; flex-direction: column; gap: .05em; min-width: 0; }
+.resultado-frase .letra { height: 1.1em; min-width: 1.1em; vertical-align: -0.12em; }
 .resultado-carta { font-weight: 750; }
 .resultado-decisao { color: var(--texto-2); }
-.resultado-equipe { display: flex; flex-direction: column; gap: .05em; }
-.resultado-delta { font-weight: 700; white-space: nowrap; color: var(--texto-2); }
+.resultado-divida { font-weight: 700; white-space: nowrap; }
+.resultado-juros { color: var(--texto-2); max-width: 13em; text-align: right; line-height: 1.15; }
+/* As contas do mês (D-044), no resultado e na história: cada pedaço inteiro. */
+.contas { color: var(--texto-2); }
+.contas b { color: var(--texto); }
+.conta { white-space: nowrap; }
 .cartao-resultado.destaque { border-color: var(--texto); border-width: 3px; }
 /* Carta grave: só o texto da consequência, em cor neutra, sem animação e sem
    destaque (seção 8, "tema sensível"). */
@@ -369,10 +401,37 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .painel-titulo { color: var(--texto-2); }
 .paineis ~ .escala-legenda { font-size: var(--corpo); }
 
+/* ---------- Placar final em páginas (D-041) ---------- */
+
+.pagina-placar { color: var(--texto-2); font-weight: 600; white-space: nowrap; }
+/* O nome da equipe no título da história, no peso do título. */
+.tela-placar-final h1 .equipe-nome { font-weight: inherit; }
+.linha-rotulo-placar { flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12; }
+.linha-persona { color: var(--texto-2); }
+.valor-saldo { justify-content: flex-end; white-space: nowrap; }
+/* Escolha ou sorte: uma linha por equipe, contada como história. */
+.historias-escolha { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.historia-escolha {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: .05em .6em;
+  padding-bottom: calc(var(--espaco) * .5); border-bottom: 1px solid var(--linha);
+  line-height: 1.2;
+}
+/* A conta corre na mesma linha da equipe (display: contents põe cada passo
+ * como item da linha): com a equipe numa linha e a conta embaixo, seis equipes
+ * davam 18 linhas e passavam de 1024×768 (revisão de 29/09). */
+.historia-conta { display: contents; color: var(--texto-2); }
+.historia-conta b { color: var(--texto); }
+.passo-conta { white-space: nowrap; }
+/* A história de uma equipe: um mês por item. */
+.historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.historia-mes { display: flex; flex-direction: column; gap: .05em; padding-left: .6em; border-left: 4px solid var(--linha-forte); line-height: 1.2; }
+.historia-titulo { font-weight: 700; }
+.historia-fatos { color: var(--texto-2); }
+.historia-fatos b { color: var(--texto); }
+.historia-final { font-size: calc(var(--corpo) * 1.1); }
+
 /* ---------- Fim ---------- */
 
-.fim-acoes { display: flex; flex-wrap: wrap; gap: 1em; }
-.botao-grande { font-size: var(--corpo); padding: .4em 1.2em; }
 .placar-fim { margin-top: auto; }
 
 /* ---------- Barra do apresentador ----------
@@ -395,6 +454,8 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .barra-salvo:empty { display: none; }
 .barra-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .barra-ativos:empty { display: none; }
+.barra-dica { color: var(--texto); max-width: 40em; }
+.barra-dica:empty { display: none; }
 .barra-info .selo { align-self: flex-start; margin-top: 4px; }
 .barra-botoes { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
 .botao-barra { min-height: 40px; padding: .25em .7em; font-size: 17px; }
@@ -410,6 +471,16 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
   border-radius: var(--raio);
   font-size: 28px; font-weight: 600;
 }
+/* D-047: em sessão, o aviso é do apresentador e mora junto da barra oculta. Só
+ * aparece com ela aberta, logo acima dela, no tamanho da letra da barra; solto
+ * no topo, projetava textos de operação (revisão de 29/09). --altura-barra vem
+ * do mostrarBarra() do telao.js. */
+body.em-sessao .aviso {
+  top: auto; bottom: calc(var(--altura-barra, 72px) + 8px);
+  max-width: min(96vw, 60em);
+  font-size: 20px;
+}
+body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .aviso[data-tipo="erro"] { border-color: var(--texto); }
 
 .modal {

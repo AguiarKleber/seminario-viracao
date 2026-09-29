@@ -131,7 +131,12 @@ test('personas: a persona da equipe com os indicadores iniciais; sem equipe, esp
   const semEquipe = telaDoAluno(entrada(estado, { membro: { entrouEm: 1 } }));
   // Assert
   assert.equal(r.tipo, 'persona');
-  assert.deepEqual(r.dados.persona, { id: 'ciclista', nome: 'Dani', descricao: 'Ciclista de teste' });
+  assert.deepEqual(r.dados.persona, {
+    id: 'ciclista', nome: 'Dani', descricao: 'Ciclista de teste',
+    familia: { descricao: 'Mora sozinha.', pessoas: 1 },
+    basico: { total: 0, itens: [{ rotulo: 'básico de teste', valor: 0, fonte: 'valor de teste' }] },
+    outraRenda: null,
+  });
   assert.equal(r.dados.indicadores.find((i) => i.id === 'energia').valor, 9, 'persona.inicial sobrescreve o indicador');
   assert.deepEqual(semEquipe, { tipo: 'aguardando', dados: { motivo: 'semEquipe' } });
 });

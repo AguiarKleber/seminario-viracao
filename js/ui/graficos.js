@@ -1,5 +1,5 @@
 // Gráficos em SVG desenhado à mão: formas das equipes, histogramas das enquetes,
-// fatias do sorteio, cascata do placar, barras simples e o QR da sala.
+// fatias do sorteio, barras do placar final e o QR da sala.
 //
 // Por que à mão, e não uma biblioteca: o telão abre por file:// no pendrive, sem
 // internet e sem build; e cada gráfico aqui tem regras que uma biblioteca não
@@ -172,16 +172,15 @@
   }
 
   // Amostra desenhada para a legenda: "antes" hachurado e "depois" cheio nas
-  // enquetes; "piloto", "decisoes" e "sorte" (hachurada) no placar.
+  // enquetes.
   const CLASSE_AMOSTRA = {
     antes: 'barra barra-antes', depois: 'barra barra-depois', cheio: 'barra barra-cheio',
-    piloto: 'segmento segmento-piloto', decisoes: 'segmento segmento-decisoes', sorte: 'segmento segmento-sorte',
     discorda: 'barra parte-discorda', neutro: 'barra parte-neutro', concorda: 'barra parte-concorda',
   };
   function amostra(estilo) {
     const { svg } = D();
     const id = novoId('amostra');
-    const hachurada = estilo === 'antes' || estilo === 'sorte' || estilo === 'discorda';
+    const hachurada = estilo === 'antes' || estilo === 'discorda';
     const filhos = hachurada ? [svg('defs', {}, [hachura(id, estilo === 'discorda' ? '#8f8f8f' : '#bdbdbd')])] : [];
     filhos.push(svg('rect', {
       x: 1, y: 1, width: 30, height: 22, rx: 3, classe: CLASSE_AMOSTRA[estilo] || 'barra',
@@ -290,86 +289,14 @@
     return raizSvg(largura, altura, filhos, { 'aria-label': 'Fatias do sorteio por equipe', classe: ['grafico-svg', animar ? 'fatias-animadas' : null] });
   }
 
-  // ---------- Cascata do placar ----------
+  // ---------- Barras simples (o saldo do placar final) ----------
 
-  // linhas: [{ segmentos: [{ de, ate, estilo, rotulo, rotuloCurto? }], fim }]
-  // dominio: [min, max] comum a todas as linhas. Cada segmento vai de "de" até
-  // "ate" no eixo da renda: piloto (0 → piloto), decisões (piloto → +efeito) e
-  // sorte (→ saldo). Negativo anda para a esquerda, sem truque de eixo.
+  // linhas: [{ valor, rotulo? }], dominio: [min, max] comum a todas as linhas.
+  // Negativo anda para a esquerda do zero, sem truque de eixo.
   // referencias: [{ id, valor, linhas? }] viram linhas tracejadas; com `linhas`
-  // (índices), só nessas linhas (a referência de uma persona só atravessa as
-  // equipes dessa persona: revisão da F2, achado 20).
-  //
-  // Cada segmento tem a sua própria faixa dentro da linha, e os três números vão
-  // numa linha de texto logo abaixo, cada um com a amostra do segmento (revisão
-  // da F2, achado 7). Na mesma faixa, o caso comum (piloto negativo, decisão
-  // positiva, sorte negativa) punha um segmento por cima do outro: o efeito das
-  // decisões sumia sob a sorte, justamente a mensagem da D-009, e os rótulos se
-  // atropelavam. rotuloCurto (sem "R$") entra quando os três não cabem na largura.
-  function cascata({ largura, altura, fonte, dominio, linhas, referencias = [] }) {
-    const { svg } = D();
-    const [min, max] = dominio;
-    const escala = (v) => ((v - min) / (max - min || 1)) * largura;
-    const h = altura / Math.max(1, linhas.length);
-    const idHachura = novoId('hachura');
-    const filhos = [svg('defs', {}, [hachura(idHachura, '#bdbdbd')])];
-    const rotulos = [];
-    const folga = h * 0.06;
-    const linhaTexto = Math.min(fonte * 1.3, h * 0.55);
-    const faixa = Math.max(6, h - linhaTexto - folga * 2);
-    const sub = faixa / 3;
-    const amostraL = fonte * 0.9;
-    const vao = fonte * 0.6;
-    const preencher = (estilo) => (estilo === 'sorte' ? `url(#${idHachura})` : null);
-    const faixas = [];
-    linhas.forEach((linha, i) => {
-      const y0 = i * h + folga;
-      faixas.push([y0, y0 + faixa]);
-      linha.segmentos.forEach((s, k) => {
-        const x1 = escala(Math.min(s.de, s.ate));
-        const w = escala(Math.max(s.de, s.ate)) - x1;
-        if (w <= 0.5) return;
-        filhos.push(svg('rect', {
-          x: x1, y: y0 + k * sub + 1, width: w, height: Math.max(1, sub - 2), classe: ['segmento', `segmento-${s.estilo}`],
-          fill: preencher(s.estilo), dados: { segmento: s.estilo },
-        }));
-      });
-      if (Number.isFinite(linha.fim)) {
-        const xf = escala(linha.fim);
-        filhos.push(svg('line', { x1: xf, y1: y0 - 3, x2: xf, y2: y0 + faixa + 3, classe: 'marcador-fim' }));
-      }
-      // A linha dos números: amostra + número, na ordem piloto, decisões, sorte.
-      const medida = (chave) => linha.segmentos.reduce((t, s) => t + amostraL + 6 + larguraTexto(s[chave] ?? s.rotulo ?? '', fonte) + vao, -vao);
-      const chave = medida('rotulo') <= largura || !linha.segmentos.every((s) => s.rotuloCurto) ? 'rotulo' : 'rotuloCurto';
-      const yTexto = y0 + faixa + folga + linhaTexto / 2;
-      let x = 0;
-      for (const s of linha.segmentos) {
-        const texto = s[chave] ?? s.rotulo ?? '';
-        filhos.push(svg('rect', {
-          x, y: yTexto - fonte * 0.32, width: amostraL, height: fonte * 0.64, rx: 3,
-          classe: ['segmento', `segmento-${s.estilo}`, 'amostra-rotulo'], fill: preencher(s.estilo),
-        }));
-        rotulos.push(rotulo(texto, x + amostraL + 6, yTexto, fonte, 'start', 'rotulo-parcela'));
-        x += amostraL + 6 + larguraTexto(texto, fonte) + vao;
-      }
-    });
-    const x0 = escala(0);
-    filhos.push(svg('line', { x1: x0, y1: 0, x2: x0, y2: altura, classe: 'eixo' }));
-    for (const r of referencias) {
-      const xr = escala(r.valor);
-      const onde = Array.isArray(r.linhas) ? r.linhas : linhas.map((_, i) => i);
-      for (const i of onde) {
-        if (!faixas[i]) continue;
-        filhos.push(svg('line', { x1: xr, y1: faixas[i][0] - 3, x2: xr, y2: faixas[i][1] + 3, classe: 'referencia', dados: { referencia: r.id, linha: String(i) } }));
-      }
-    }
-    filhos.push(...rotulos);
-    return raizSvg(largura, altura, filhos, { 'aria-label': 'Saldo decomposto: piloto automático, efeito das decisões e sorte' });
-  }
-
-  // ---------- Barras simples (pior caso, energia, proteção) ----------
-
-  function barras({ largura, altura, fonte, dominio, linhas }) {
+  // (índices), só nessas linhas: a referência de uma persona ("Jonas com carteira
+  // assinada") atravessa só as equipes dessa persona (revisão da F2, achado 20).
+  function barras({ largura, altura, fonte, dominio, linhas, referencias = [] }) {
     const { svg } = D();
     const [min, max] = dominio;
     const escala = (v) => ((v - min) / (max - min || 1)) * largura;
@@ -389,7 +316,15 @@
       }
     });
     filhos.push(svg('line', { x1: x0, y1: 0, x2: x0, y2: altura, classe: 'eixo' }));
-    return raizSvg(largura, altura, filhos);
+    for (const r of referencias) {
+      const xr = escala(r.valor);
+      const onde = Array.isArray(r.linhas) ? r.linhas : linhas.map((_, i) => i);
+      for (const i of onde) {
+        if (!(i >= 0 && i < linhas.length)) continue;
+        filhos.push(svg('line', { x1: xr, y1: i * h + h * 0.08, x2: xr, y2: i * h + h * 0.92, classe: 'referencia', dados: { referencia: r.id, linha: String(i) } }));
+      }
+    }
+    return raizSvg(largura, altura, filhos, { 'aria-label': 'Saldo de cada equipe' });
   }
 
   // ---------- QR ----------
@@ -419,5 +354,5 @@
     ]);
   }
 
-  V.graficos = { forma, rotuloEquipe, histograma, rotulosEscala, legendaEscala, amostra, tresPartes, fatias, cascata, barras, qr, larguraTexto, contraste };
+  V.graficos = { forma, rotuloEquipe, histograma, rotulosEscala, legendaEscala, amostra, tresPartes, fatias, barras, qr, larguraTexto, contraste };
 })(globalThis);

@@ -23,6 +23,7 @@ export const ORDEM = [
   'js/nucleo/roteiro.js',
   'js/canal/canal-local.js',
   'js/nucleo/anfitriao.js',
+  'js/nucleo/historia.js',
   'js/nucleo/aluno-logica.js',
 ];
 
