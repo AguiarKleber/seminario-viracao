@@ -1,0 +1,7 @@
+# Fim de linha LF em tudo. O repositório é editado no Windows e servido pelo
+# GitHub Pages. Com CRLF misturado, o diff fica ilegível, e o hash do config.json
+# (que o telão compara com o do pendrive) muda sem nenhuma mudança real de conteúdo.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

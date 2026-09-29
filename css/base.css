@@ -1,0 +1,140 @@
+/* Base comum ao telão e ao celular (D-016: neutro e acadêmico).
+ *
+ * - Fundo escuro e texto claro, com contraste de pelo menos 7:1: o projetor de
+ *   sala de aula lava as cores, e o fundo escuro cansa menos a turma.
+ * - Fonte do sistema, sem fonte da web: o modo offline abre sem internet, e uma
+ *   fonte que não carrega trocaria a métrica do texto no meio da aula.
+ * - Números tabulares: contagens e reais não "dançam" quando mudam.
+ * - Paleta Okabe-Ito para as equipes (legível por daltônicos), sempre com
+ *   forma, nome e número: a cor nunca é o único canal.
+ */
+
+:root {
+  color-scheme: dark;
+  --fundo: #111111;
+  --superficie: #1a1a1a;
+  --superficie-2: #242424;
+  --linha: #3a3a3a;
+  --linha-forte: #767676;
+  --texto: #f2f2f2;        /* 17,4:1 sobre o fundo */
+  --texto-2: #c4c4c4;      /* 10,6:1 sobre o fundo; 9,6:1 sobre a superfície */
+  --foco: #f0e442;
+  /* O amarelo Okabe-Ito é a única cor da paleta que nenhuma equipe usa: fica
+     para o "depois" e o "efeito das decisões", sem parecer cor de equipe. */
+  --depois: #f0e442;
+  --antes: #bdbdbd;
+  --piloto: #8c8c8c;
+  --neutro: #9e9e9e;
+  --texto-sobre-claro: #111111;
+  --raio: 10px;
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html, body { margin: 0; }
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, p, ol, ul { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+b, strong { font-weight: 700; }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: .95em; }
+
+.invisivel {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* ---------- Botões ---------- */
+
+.botao {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5em;
+  min-height: 48px;          /* alvo de toque ≥ 48 px no celular */
+  padding: .45em 1em;
+  border: 2px solid var(--linha-forte);
+  border-radius: var(--raio);
+  background: var(--superficie-2);
+  color: var(--texto);
+  font: inherit; font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* Hover só com mouse de verdade (revisão da F2, achado 16): no celular, o botão
+   que fica sob o dedo mantinha o destaque na tela seguinte, e parecia uma
+   resposta pré-marcada na enquete (empurrão de ancoragem). */
+@media (hover: hover) and (pointer: fine) {
+  .botao:hover:not([disabled]) { border-color: var(--texto-2); }
+  .botao-primario:hover:not([disabled]) { border-color: var(--foco); }
+}
+.botao:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.botao[disabled], .botao.botao-inativo { opacity: .45; cursor: not-allowed; }
+.botao-primario { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
+.botao-marcado, .botao[aria-pressed="true"] { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
+.botao-perigo { border-color: var(--texto-2); }
+.botao-dica {
+  font: inherit; font-size: .75em; font-weight: 500;
+  padding: .05em .4em; border: 1px solid currentColor; border-radius: 4px; opacity: .8;
+}
+
+/* Segurar 2 s: a faixa de progresso cresce dentro do botão (--progresso de 0 a 1). */
+.botao-segurar {
+  background-image: linear-gradient(to right, rgba(240, 228, 66, .38) calc(var(--progresso, 0) * 100%), transparent 0);
+}
+
+/* ---------- Equipes: forma, número e nome ---------- */
+
+.forma { flex: none; display: inline-block; vertical-align: -0.12em; }
+.forma-traco { stroke: rgba(255, 255, 255, .85); stroke-width: 4; stroke-linejoin: round; }
+.forma-miolo { fill: var(--fundo); }
+
+.equipe { display: inline-flex; align-items: center; gap: .35em; white-space: nowrap; }
+.equipe-numero { min-width: 1.1em; text-align: center; }
+.equipe-nome { font-weight: 600; }
+
+/* ---------- Selo de conexão ---------- */
+
+.selo {
+  display: inline-flex; align-items: center; gap: .45em;
+  padding: .2em .7em;
+  border: 1px solid var(--linha-forte);
+  border-radius: 999px;
+  font-size: 16px; font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  white-space: nowrap;
+}
+.selo-icone { flex: none; }
+.selo[data-estado="reconectando"] .selo-icone { animation: selo-gira 1.2s linear infinite; }
+@keyframes selo-gira { to { transform: rotate(360deg); } }
+
+/* ---------- Gráficos ---------- */
+
+.grafico-svg { display: block; overflow: visible; font-family: var(--fonte); font-variant-numeric: tabular-nums; }
+.rotulo-halo {
+  fill: var(--texto);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--fundo);
+  stroke-width: .22em;
+  stroke-linejoin: round;
+}
+.eixo { stroke: var(--linha-forte); stroke-width: 2; }
+.barra-cheio, .barra-depois { fill: var(--depois); }
+.barra-antes { stroke: var(--antes); stroke-width: 2; }
+.amostra { display: inline-block; vertical-align: -0.1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

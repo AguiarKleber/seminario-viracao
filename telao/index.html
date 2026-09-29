@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Telão do seminário</title>
+  <link rel="stylesheet" href="../css/base.css?v=1">
+  <link rel="stylesheet" href="../css/telao.css?v=1">
+</head>
+<body class="telao">
+  <!-- A abertura já vem no HTML: o botão "Começar sem celulares" aparece na
+       primeira pintura, antes de qualquer script (arquitetura, seção 11). O
+       telao.js remonta esta tela assim que carrega. -->
+  <main id="palco" aria-live="polite">
+    <section class="tela tela-abertura">
+      <header class="tela-cabecalho">
+        <div class="cabecalho-textos">
+          <p class="kicker">Telão do apresentador</p>
+          <h1>Telão do seminário</h1>
+        </div>
+      </header>
+      <div class="abertura-grade">
+        <section class="abertura-bloco">
+          <h2>1. config.json</h2>
+          <p class="abertura-status">Lendo config.json…</p>
+        </section>
+        <section class="abertura-bloco">
+          <h2>3. Começar</h2>
+          <div class="abertura-acoes">
+            <button type="button" class="botao botao-primario" disabled>Começar sem celulares</button>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <aside id="faixa" class="faixa-entrada" hidden aria-label="Como entrar na sala"></aside>
+  <nav id="barra" class="barra" hidden aria-label="Barra do apresentador"></nav>
+  <div id="aviso" class="aviso" role="status" aria-live="assertive" hidden></div>
+  <dialog id="modal" class="modal"></dialog>
+
+  <!-- Só scripts clássicos, com ?v=: por file:// o Chrome e o Edge bloqueiam
+       módulos ES, import() e fetch. A ordem é a de test/carregar-nucleo.mjs
+       (o núcleo), depois o canal do Firebase (inerte sem o SDK), o QR, a
+       interface e o telão. -->
+  <script src="../js/nucleo/validar-config.js?v=1"></script>
+  <script src="../js/nucleo/sorte.js?v=1"></script>
+  <script src="../js/nucleo/motor.js?v=1"></script>
+  <script src="../js/nucleo/enquete.js?v=1"></script>
+  <script src="../js/nucleo/roteiro.js?v=1"></script>
+  <script src="../js/canal/canal-local.js?v=1"></script>
+  <script src="../js/nucleo/anfitriao.js?v=1"></script>
+  <script src="../js/nucleo/aluno-logica.js?v=1"></script>
+  <script src="../js/canal/canal-firebase.js?v=1"></script>
+  <script src="../vendor/qrcode.js?v=1"></script>
+  <script src="../js/ui/formatar.js?v=1"></script>
+  <script src="../js/ui/dom.js?v=1"></script>
+  <script src="../js/ui/graficos.js?v=1"></script>
+  <script src="../js/ui/conexao.js?v=1"></script>
+  <script src="../js/telao.js?v=1"></script>
+</body>
+</html>

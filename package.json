@@ -1,0 +1,30 @@
+{
+  "name": "seminario-viracao",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Enquetes de 1 a 5 com antes e depois e o Jogo da Viração, em tempo real, para um seminário universitário.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node bin/validar-config.mjs && eslint . && node --test \"test/*.test.mjs\"",
+    "test": "node --test \"test/*.test.mjs\"",
+    "lint": "eslint .",
+    "validar": "node bin/validar-config.mjs",
+    "e2e": "node e2e/telao-offline.e2e.mjs",
+    "e2e:online": "node e2e/sessao-online.e2e.mjs",
+    "emulador": "node bin/emulador.mjs \"node --test test/emulador/*.test.mjs\"",
+    "simular": "node bin/simular-alunos.mjs",
+    "servir": "node bin/servir.mjs",
+    "versao": "node bin/versao.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "firebase": "12.19.0",
+    "firebase-tools": "^15.31.0",
+    "globals": "^17.12.0",
+    "playwright": "^1.63.0"
+  }
+}
