@@ -31,8 +31,8 @@ continua passando, com as mesmas contas. O que entrou:
 
 | Campo | Onde | Resumo |
 | --- | --- | --- |
-| `fixo: true` | efeito | Custo fixo do trabalho (parcela da moto, DAS, curso, parcela do empréstimo): sai antes do "entrou", e nenhum `multiplica` o atinge. Veja "Efeito" |
-| `categoria: "gasto"` | efeito | Dinheiro gasto por causa de um evento (conserto, remédio, multa, saldo do empréstimo): fica fora do "entrou", numa linha própria, "gastos" (D-052) |
+| `fixo: true` | efeito | Custo fixo do trabalho (parcela da moto, DAS, curso): sai antes do "entrou", e nenhum `multiplica` o atinge. Veja "Efeito" |
+| `categoria: "gasto"` | efeito | Dinheiro gasto por causa de um evento (conserto, remédio, multa): fica fora do "entrou", numa linha própria, "gastos" (D-052) |
 | `diasParado` | carta | Os dias parados que a carta custa, de 0 a 30. Só informativo: a tela mostra "20 dias parado" (D-052) |
 | `rotuloPor`, `narrativaPor` | opção | A mesma escolha dita do jeito de cada ofício, por persona (D-054) |
 | `pisoTrabalho` | regras | O trabalho variável do mês nunca fica abaixo de R$ 0 |
@@ -41,6 +41,17 @@ continua passando, com as mesmas contas. O que entrou:
 
 A ordem do mês mudou junto: trabalho variável → custos fixos → gastos → outra
 renda → básico → juros (veja "Ordem fixa de aplicação").
+
+**Esquema v2.2 (teste de 30/09, D-065): o empréstimo é dívida, e não renda.**
+Também opcional: um config sem empréstimo continua passando, com as mesmas
+contas. No teste, o Jonas pegou R$ 1.500 no mês 2 e a tela disse "dívida R$ 1":
+o empréstimo era uma `soma` na renda, e a parcela e o saldo devedor eram efeitos
+do mês 3 escritos à mão (se o mês 3 fosse pulado, a dívida nunca aparecia).
+
+| Campo | Onde | Resumo |
+| --- | --- | --- |
+| `emprestimo: { valor, parcelas, taxaMes, fonte }` | efeito de uma opção | A equipe pega um empréstimo. O motor calcula a entrada, a tabela Price e cada parcela nos meses seguintes. Veja "Efeito" |
+| indicador `emprestimo` | `indicadores`, obrigatório quando há empréstimo | O saldo devedor. O placar e as telas mostram o saldo acumulado **menos** ele. Veja `indicadores` |
 
 ---
 
@@ -91,7 +102,7 @@ corrigidos. As conferências de equilíbrio, porém, só saem no `npm run valida
 | `tempos` | Duração das votações | Cronômetros |
 | `regras` | Regras do jogo, do placar e os juros da dívida | Resultado e celular (os juros) |
 | `escala` | Os 5 rótulos da escala de 1 a 5 | Botões do celular, legendas do telão |
-| `indicadores` | Saldo, energia, proteção | Placar, persona, resultado |
+| `indicadores` | Saldo, energia, proteção e o empréstimo a pagar (esquema v2.2) | Placar, persona, resultado |
 | `personas` | As pessoas do jogo, com a família, o básico e a outra renda da casa | Telão (personas, resultado, placar) e celular |
 | `equipes` | Nome, cor, forma e persona de cada equipe | Todas as telas do jogo |
 | `rodadas` | Os meses do jogo, com as opções e o contexto de cada família | Decisão, resultado, celular |
@@ -197,6 +208,21 @@ celular; os `longos`, nas legendas do telão.
 - O indicador `renda` é obrigatório: é o saldo que o básico, a outra renda e os
   juros movem, o que a página 1 do placar final compara ("quanto faltou") e o
   que a página 2 conta como "se não mudassem nada → as escolhas → a sorte".
+- O indicador `emprestimo` (esquema v2.2) é obrigatório quando algum efeito tem
+  `emprestimo`: é o **saldo devedor**, que só o motor mexe (a entrada do
+  empréstimo e a parte de cada parcela que abate a dívida). O que o placar, o
+  resumo mês a mês e "Escolha ou sorte?" mostram é o saldo acumulado menos ele,
+  e a "dívida" da tela é o cheque especial (a renda negativa) mais ele.
+
+  ```json
+  { "id": "emprestimo", "nome": "Empréstimo a pagar", "formato": "moeda", "inicial": 0, "min": 0, "max": 100000 }
+  ```
+
+  É **erro**: faltar com algum empréstimo no config; `formato` diferente de
+  `moeda`; `min` ou `inicial` diferente de 0 (também o
+  `persona.inicial.emprestimo`); `max` menor que a soma, por rodada, da opção
+  com mais empréstimo; e qualquer `soma` ou `multiplica` no `emprestimo`. O
+  celular nunca mostra o empréstimo em R$ 0 na lista de indicadores.
 - `formato`: `moeda` (R$ sem centavos) ou `inteiro`.
 - `min` menor que `max`, e `inicial` entre os dois. Depois de cada mês, o valor é
   preso entre `min` e `max`.
@@ -617,8 +643,8 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
 - `soma`: soma ao delta do mês. Aceita vários indicadores de uma vez.
 - `multiplica`: multiplica o delta do mês daquele indicador (por exemplo,
   `{ "renda": 0.3 }`).
-- **Um efeito tem `soma` ou `multiplica`, nunca os dois.** Para fazer as duas
-  coisas, use dois efeitos: a ordem entre eles importa.
+- **Um efeito tem `soma`, `multiplica` ou `emprestimo`, só um deles.** Para
+  fazer duas coisas, use dois efeitos: a ordem entre eles importa.
 - `se` (opcional): a condição para o efeito valer.
 - `rotulo` (opcional): descrição curta. Quase sempre é só para quem lê o config;
   a exceção são os efeitos gerais "de antes" (veja "Ordem fixa de aplicação"),
@@ -626,13 +652,14 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
 - `fonte` (opcional).
 - `fixo` (opcional, esquema v2.1): com `true`, é um **custo fixo do trabalho**,
   que vence parado ou não: a parcela da moto, o DAS do MEI, a parcela do curso,
-  a mensalidade, a parcela do empréstimo. Sai logo depois do trabalho variável,
+  a mensalidade. (A parcela do empréstimo era um `fixo` até o esquema v2.2; hoje
+  é o motor que a calcula, a partir do `emprestimo`.) Sai logo depois do trabalho variável,
   antes do "entrou", e nenhum `multiplica` o atinge (antes do v2.1, uma carta
   que zerava a renda zerava também a parcela, e o acidentado ficava R$ 741
   melhor). Pode estar no `todoMes`, nos `efeitosGerais`, na opção ou na carta.
 - `categoria` (opcional, esquema v2.1): `"gasto"`, o dinheiro
   gasto **por causa de um evento**: o conserto, o remédio, a fisioterapia, a
-  multa do aluguel, o saldo do empréstimo. Fica fora do "entrou" (dentro dele, o
+  multa do aluguel. Fica fora do "entrou" (dentro dele, o
   "entrou" chegava a −R$ 2.541) e sai numa linha própria: "entrou R$ X · gastos
   R$ G · básico R$ Y · faltou R$ Z". Os gastos da carta entram no custo dela
   (D-052).
@@ -654,6 +681,37 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
     nenhum. Para mexer na energia, use outro efeito;
   - nunca os dois no mesmo efeito;
   - `"fixo": false` é aceito e vale o mesmo que não ter a chave.
+
+- `emprestimo` (opcional, esquema v2.2, D-065): a equipe pega um empréstimo.
+
+  ```json
+  { "se": { "persona": "motorista" }, "emprestimo": { "valor": 1500, "parcelas": 12, "taxaMes": 0.0936, "fonte": "Banco Central, taxas por instituição…" }, "rotulo": "empréstimo do app da 99" }
+  ```
+
+  - `valor`: inteiro maior que 0, em reais; `parcelas`: inteiro de 1 a 60;
+    `taxaMes`: fração ao mês, entre 0 e 1 sem incluir os dois (`0.0639` =
+    6,39%, e não `6.39`); `fonte`: texto, obrigatório. Chave a mais dentro do
+    objeto é **erro**;
+  - o `rotulo` do efeito é o nome do empréstimo nas telas ("juros da parcela 1
+    de 12 do empréstimo no crédito pessoal");
+  - o motor faz o resto: a entrada no mês da opção (no caixa e no saldo devedor,
+    **fora** do saldo do mês) e, a partir do mês seguinte, uma parcela por mês
+    jogado, pela tabela Price em reais inteiros (parcela fixa arredondada; os
+    juros são o saldo × a taxa, arredondados; a última parcela fecha o saldo em
+    0). Os juros da parcela entram nos "juros" do mês; a parte que abate a dívida
+    sai do caixa e do saldo devedor, sem mexer no saldo do mês. As parcelas
+    continuam depois do fim do jogo, e o celular diz quanto falta;
+  - é **erro**: fora dos efeitos de uma opção (no `todoMes`, nos
+    `efeitosGerais` ou numa carta: é a equipe que decide pegar); junto de
+    `soma`, `multiplica`, `fixo` ou `categoria` no mesmo efeito; um `se` com
+    `indicador`, `decidiu` ou `sorteou` (só `opcao`, `persona`, `equipe` e
+    `rodada`: o motor refaz, nos meses seguintes, o empréstimo tomado lá atrás
+    só com o histórico, sem o estado daquele mês); e um roteiro com as rodadas
+    fora da ordem do config (as parcelas são contadas nessa ordem);
+  - não escreva a parcela nem o saldo devedor em efeitos do mês seguinte, como
+    o config fazia até 29/09: o motor já os cobra, e a conta sairia em dobro.
+    Mês pulado com "Pular para…" não cobra parcela (a k-ésima parcela vem no
+    k-ésimo mês **jogado** depois do empréstimo).
 
 ```json
 { "soma": { "renda": -480 }, "fixo": true, "rotulo": "parcela da moto", "fonte": "…" }
@@ -731,9 +789,9 @@ corre sempre nesta ordem:
    o `multiplica` vale. Com `regras.pisoTrabalho`, se a renda do trabalho
    terminar o passo abaixo de R$ 0, vira R$ 0 (veja abaixo).
 2. **Menos os custos fixos** (`fixo: true`), de qualquer origem: a parcela da
-   moto, o DAS, a parcela do curso ou do empréstimo.
+   moto, o DAS, a parcela do curso.
 3. **Menos os gastos** (`categoria: "gasto"`), de qualquer origem: o conserto, o
-   remédio, a multa, o saldo do empréstimo.
+   remédio, a multa.
 3b. **Mais a proteção** (`categoria: "protecao"`, D-059), de qualquer origem: o
    INSS do MEI, a ajuda da associação.
 
@@ -743,6 +801,11 @@ Depois, **as contas da casa**, só no saldo (`renda`) (D-044, D-046):
 5. menos o básico (a soma dos itens do `basico`);
 6. menos os juros: `jurosDividaMes` × a dívida que **vinha do mês anterior** (o
    saldo de antes da rodada, se negativo), arredondado ao real. Sem dívida, 0.
+7. **O empréstimo** (esquema v2.2), fora do trabalho, do piso e de qualquer
+   `multiplica`: a entrada do empréstimo tomado pela opção do mês (mais no caixa
+   e no saldo devedor) e a parcela de cada empréstimo tomado num mês anterior,
+   lida do histórico: os juros dela somam aos juros do passo 6, e a amortização
+   sai do caixa e do saldo devedor.
 
 No fim, o novo valor é o de antes mais o delta, preso entre `min` e `max`. Toda
 condição lê o estado **de antes** da rodada e o histórico da equipe.
@@ -751,7 +814,11 @@ A tela mostra o mês assim:
 - **"entrou"** = trabalho variável (passo 1) − custos fixos (2) + outra renda (4);
 - **"gastos"** = o passo 3, numa linha própria, só quando há;
 - **"a proteção pagou"** = o passo 3b, só quando há;
-- **"faltou"** (ou "sobrou") = entrou + proteção − gastos − básico − juros.
+- **"faltou"** (ou "sobrou") = entrou + proteção − gastos − básico − juros
+  (os juros do cheque especial mais os da parcela). É o saldo do mês que o
+  telão mostra em verde ou vermelho;
+- **o empréstimo fica fora do saldo do mês**: nem a entrada nem a amortização
+  entram nele, e a dívida de depois é a de antes mais o que faltou.
 
 É por isso que **uma carta que multiplica a renda corta o que se ganha, e não a
 conta da casa nem a parcela da moto**: o `multiplica` roda no passo 1, a parcela
@@ -773,7 +840,7 @@ carta** (os efeitos `categoria: "gasto"` dela).
 
 **Os rótulos dos efeitos gerais "de antes" aparecem na tela.** Um efeito de
 `efeitosGerais` cuja condição lê `decidiu`, `sorteou` ou `indicador` (a fratura
-que continua, o INSS, o bloqueio, a multa do aluguel, o saldo do empréstimo), e
+que continua, o INSS, o bloqueio, a multa do aluguel), e
 que não é custo fixo, sai nomeado no resultado da rodada, na história e no
 celular: "+25 dias da fratura −R$ 2.233". Por isso esses rótulos são curtos
 (até ~20 letras): seis equipes precisam caber em 1024×768. O corte que vale para
@@ -894,6 +961,14 @@ Erros comuns:
 | `N dias parado: um mês tem 30` | O `diasParado` da carta passou de 30. O que passa do mês vai num efeito geral do mês seguinte, com `sorteou` |
 | `texto com N caracteres (mais de 60)` (ou `160`) em `rotuloPor`/`narrativaPor` | O texto da persona ficou longo: 60 para o rótulo (botão do celular), 160 para a narrativa |
 | `precisa ser um objeto { persona: texto }` | `rotuloPor`/`narrativaPor` escrito como texto ou lista |
+| `empréstimo só vale nos efeitos de uma opção` | O `emprestimo` foi posto numa carta, no `todoMes` ou nos `efeitosGerais` |
+| `"soma" junto de "emprestimo"` (ou `multiplica`, `fixo`, `categoria`) | O empréstimo não soma na renda: tire a outra chave, ou separe em dois efeitos |
+| `a condição de um empréstimo só pode usar opcao, persona, equipe, rodada` | O `se` do empréstimo lê `indicador`, `decidiu` ou `sorteou` |
+| `taxaMes … precisa ser uma fração entre 0 e 1` | A taxa foi escrita em porcentagem (`6.39`) e não em fração (`0.0639`) |
+| `há empréstimo (…) e falta o indicador "emprestimo"` | Acrescente o indicador do saldo devedor (veja `indicadores`) |
+| `… é menor que os empréstimos somados` | O `max` do indicador `emprestimo` cortaria o saldo devedor: aumente |
+| `o saldo devedor ("emprestimo") só muda pelo empréstimo e pelas parcelas` | Um `soma`/`multiplica` mexe no indicador `emprestimo`: tire (a parcela e o saldo devedor escritos à mão, como até 29/09) |
+| `as rodadas (…) estão fora da ordem do config` | Com empréstimo, todo roteiro precisa das rodadas na ordem em que estão no config |
 
 ### As conferências de equilíbrio
 
@@ -956,8 +1031,15 @@ de 2 personas ficam entre 5% e 10% (a meta da D-058; antes era a faixa de 5% a
 (D-051).** Por mês: a melhor opção de cada persona (a de maior saldo final
 esperado, como em (c)), com aviso quando é a mesma para todas; e a letra (A a D)
 da opção de maior renda no próprio mês, na média das personas, com aviso quando
-é a mesma letra nos 3 meses. Atenção: a "renda do mês" leva todo dinheiro que
-não é custo fixo nem gasto, inclusive o empréstimo e o INSS (rascunho, seção 8).
+é a mesma letra nos 3 meses. Atenção: a "renda do mês" é a variação do
+patrimônio (o saldo acumulado menos o empréstimo a pagar, esquema v2.2): o
+empréstimo não conta como renda, e o INSS conta (rascunho, seção 8).
+
+**Com empréstimo no config, todas as conferências usam o patrimônio**, e não o
+caixa: o saldo final esperado, o pior caso, a dominância, a chance de fechar em
+(g) e a proteção em (h). O validador avisa com a linha "\"renda\" aqui e daqui em
+diante é o patrimônio…". Pelo caixa, o empréstimo do mês 2 aparecia como a
+melhor opção de todas as personas: R$ 1.500 que ainda não tinham sido pagos.
 
 Ainda em (h), duas conferências da D-059:
 - **Esgotamento:** por persona e por mês, a opção mais cansativa (a de maior

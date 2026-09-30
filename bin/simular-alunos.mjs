@@ -37,6 +37,14 @@ const PIN_SIMULADOR = PIN_EMULADOR;
 // A versão que as regras aceitam em regrasVersao: o ataque de prioridade usa o
 // valor certo, para a recusa vir só da prioridade.
 const REGRAS_VERSAO = JSON.parse(readFileSync(join(RAIZ, 'firebase', 'regras.json'), 'utf8')).rules.regrasVersao.$uid['.validate'].match(/=== '([^']+)'/)[1];
+// O prazo que o anfitrião grava é o da regra: o fim do cronômetro mais uma folga
+// (12 h no telão; contratos, seção 7), para o voto valer até o apresentador
+// encerrar (teste de 30/09). O telão simulado usa uma folga curta, só para o
+// ataque "depois do prazo + graça" provar o corte da regra sem esperar 12 h.
+const FOLGA_DO_TELAO_SIMULADO_MS = 2000;
+// Com o telão de verdade (--sala), a regra só corta 12 h depois: o ataque fora
+// do prazo fica "n/a" em vez de prender o simulador.
+const ESPERA_MAXIMA_ATAQUE_MS = 10 * 60 * 1000;
 
 // ---------- Opções ----------
 
@@ -309,10 +317,20 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
 
   const agoraServidor = () => robo.canal.agora();
 
-  function atrasoVoto(prazo) {
-    if (opcoes.rajada && typeof prazo === 'number') {
-      // "20 votos no último segundo" (seção 12): antes do prazo, pela hora do servidor.
-      return prazo - rng.entre(150, 900) - agoraServidor();
+  // O fim do cronômetro que o celular mostra: o prazo gravado menos a folga do
+  // telão que abriu a etapa (a curta, no telão simulado; a do núcleo, no de
+  // verdade).
+  function fimDoCronometro(estado) {
+    if (typeof estado?.prazo !== 'number') return null;
+    return estado.prazo - (opcoes.comAnfitriao ? FOLGA_DO_TELAO_SIMULADO_MS : V.alunoLogica.FOLGA_DA_REGRA_MS);
+  }
+
+  function atrasoVoto(estado) {
+    const fim = fimDoCronometro(estado);
+    if (opcoes.rajada && fim !== null) {
+      // "20 votos no último segundo" (seção 12): antes do fim do cronômetro, pela
+      // hora do servidor. No telão simulado, a regra corta 2 s depois dele.
+      return fim - rng.entre(150, 900) - agoraServidor();
     }
     // Esperas de 1 a 40 s (seção 12); no --rapido, 40 vezes mais curtas.
     const fator = opcoes.memoria ? 1 / 400 : opcoes.rapido ? 1 / 40 : 1;
@@ -508,7 +526,7 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
       const centro = d.momento === 'antes' ? 4 : d.momento === 'depois' ? 2 : rng.inteiro(1, 5);
       const valor = Math.min(5, Math.max(1, centro + rng.um([-1, 0, 0, 0, 1])));
       robo.esperandoAtraso = true;
-      await esperar(atrasoVoto(d.prazo));
+      await esperar(atrasoVoto(estado));
       robo.esperandoAtraso = false;
       // A pessoa demorou e a tela mudou (o telão encerrou ou foi para a próxima
       // afirmação): o botão sumiu, e o toque não acontece.
@@ -542,7 +560,7 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
         return;
       }
       robo.esperandoAtraso = true;
-      await esperar(atrasoVoto(d.prazo));
+      await esperar(atrasoVoto(estado));
       robo.esperandoAtraso = false;
       // A pessoa demorou e a tela mudou (o telão encerrou ou foi para a próxima
       // afirmação): o botão sumiu, e o toque não acontece.
@@ -739,7 +757,12 @@ function criarAtacante({ amb, sala, metricas, pedirDistribuicao, opcoes }) {
   async function faseForaDoPrazo(e) {
     if (!at.equipe || typeof e.prazo !== 'number') return;
     const graca = ((await at.canal.ler(s('conteudo', 'tempos', 'gracaSeg'))) || 0) * 1000;
+    // O prazo gravado é o da regra (com a folga do telão): é ele que se ataca.
     const espera = e.prazo + graca + 800 - at.canal.agora();
+    if (espera > ESPERA_MAXIMA_ATAQUE_MS) {
+      metricas.ataques.push({ grupo: 'fora da janela', nome: 'decidir depois do prazo + graça', resultado: 'n/a', detalhe: 'telão de verdade: a regra só corta com a folga de 12 h' });
+      return;
+    }
     await esperar(espera);
     const agora = await at.canal.ler(s('estado'));
     if (agora?.geracao !== e.geracao) {
@@ -832,6 +855,7 @@ async function criarTelao(amb, config, sala, opcoes, uidsTelao) {
     // Fora do núcleo, a semente vem do gerador do sistema, como no telão
     // (crypto.getRandomValues).
     gerarSemente: () => randomInt(0, 0xFFFFFFFF),
+    folgaDaRegraMs: FOLGA_DO_TELAO_SIMULADO_MS,
   });
   return { canal, anf };
 }

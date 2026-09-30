@@ -60,6 +60,14 @@
       "inicial": 0,
       "min": 0,
       "max": 10
+    },
+    {
+      "id": "emprestimo",
+      "nome": "Empréstimo a pagar",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": 0,
+      "max": 100000
     }
   ],
   "personas": [
@@ -1210,11 +1218,33 @@
           },
           "efeitos": [
             {
-              "soma": {
-                "renda": 1500
+              "se": {
+                "persona": [
+                  "motoboy",
+                  "bike",
+                  "vendedora",
+                  "manicure"
+                ]
               },
-              "rotulo": "empréstimo: R$ 1.500 entraram na conta",
-              "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
+              "emprestimo": {
+                "valor": 1500,
+                "parcelas": 12,
+                "taxaMes": 0.0639,
+                "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
+              },
+              "rotulo": "empréstimo no crédito pessoal"
+            },
+            {
+              "se": {
+                "persona": "motorista"
+              },
+              "emprestimo": {
+                "valor": 1500,
+                "parcelas": 12,
+                "taxaMes": 0.0936,
+                "fonte": "Banco Central, taxas por instituição (semana de 09 a 15/09/2026): 99Pay SCFI 9,36% ao mês. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 213,29 (conta nossa, sem IOF). iDinheiro: a 99Pay empresta de R$ 500 a R$ 10 mil, em 3 a 12 vezes"
+              },
+              "rotulo": "empréstimo do app da 99"
             }
           ]
         }
@@ -1364,146 +1394,6 @@
           "fixo": true,
           "rotulo": "DAS do MEI aberto para o app de delivery",
           "fonte": "iFood, Portal do Parceiro (MEI para restaurante; Como cadastrar seu restaurante no iFood): a loja precisa de CNPJ ativo com CNAE de alimentação; o MEI serve. https://blog-parceiros.ifood.com.br/mei-restaurante/ . DAS-MEI de comércio 2026: R$ 82,05 (Receita Federal)"
-        },
-        {
-          "se": {
-            "persona": "motoboy",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -183
-          },
-          "rotulo": "1ª parcela do empréstimo (de 12)",
-          "fixo": true,
-          "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
-        },
-        {
-          "se": {
-            "persona": "bike",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -183
-          },
-          "rotulo": "1ª parcela do empréstimo (de 12)",
-          "fixo": true,
-          "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
-        },
-        {
-          "se": {
-            "persona": "vendedora",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -183
-          },
-          "rotulo": "1ª parcela do empréstimo (de 12)",
-          "fixo": true,
-          "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
-        },
-        {
-          "se": {
-            "persona": "motorista",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -213
-          },
-          "rotulo": "1ª parcela do empréstimo da 99 (de 12)",
-          "fixo": true,
-          "fonte": "Banco Central, taxas por instituição (semana de 09 a 15/09/2026): 99Pay SCFI 9,36% ao mês. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 213,29 (conta nossa, sem IOF). iDinheiro: a 99Pay empresta de R$ 500 a R$ 10 mil, em 3 a 12 vezes"
-        },
-        {
-          "se": {
-            "persona": "manicure",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -183
-          },
-          "rotulo": "1ª parcela do empréstimo (de 12)",
-          "fixo": true,
-          "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 x R$ 182,76 (conta nossa, sem IOF)"
-        },
-        {
-          "se": {
-            "persona": "motoboy",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -1413
-          },
-          "rotulo": "saldo do empréstimo",
-          "categoria": "gasto",
-          "fonte": "Saldo devedor depois da 1ª parcela: 1.500 x 1,0639 − 182,76 = R$ 1.413,09 (99Pay: 1.500 x 1,0936 − 213,29 = R$ 1.427,11). Conta como dívida no placar, como o cheque especial: o empréstimo não fecha a conta, empurra"
-        },
-        {
-          "se": {
-            "persona": "bike",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -1413
-          },
-          "rotulo": "saldo do empréstimo",
-          "categoria": "gasto",
-          "fonte": "Saldo devedor depois da 1ª parcela: 1.500 x 1,0639 − 182,76 = R$ 1.413,09 (99Pay: 1.500 x 1,0936 − 213,29 = R$ 1.427,11). Conta como dívida no placar, como o cheque especial: o empréstimo não fecha a conta, empurra"
-        },
-        {
-          "se": {
-            "persona": "vendedora",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -1413
-          },
-          "rotulo": "saldo do empréstimo",
-          "categoria": "gasto",
-          "fonte": "Saldo devedor depois da 1ª parcela: 1.500 x 1,0639 − 182,76 = R$ 1.413,09 (99Pay: 1.500 x 1,0936 − 213,29 = R$ 1.427,11). Conta como dívida no placar, como o cheque especial: o empréstimo não fecha a conta, empurra"
-        },
-        {
-          "se": {
-            "persona": "motorista",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -1427
-          },
-          "rotulo": "saldo do empréstimo",
-          "categoria": "gasto",
-          "fonte": "Saldo devedor depois da 1ª parcela: 1.500 x 1,0639 − 182,76 = R$ 1.413,09 (99Pay: 1.500 x 1,0936 − 213,29 = R$ 1.427,11). Conta como dívida no placar, como o cheque especial: o empréstimo não fecha a conta, empurra"
-        },
-        {
-          "se": {
-            "persona": "manicure",
-            "decidiu": {
-              "r2": "d"
-            }
-          },
-          "soma": {
-            "renda": -1413
-          },
-          "rotulo": "saldo do empréstimo",
-          "categoria": "gasto",
-          "fonte": "Saldo devedor depois da 1ª parcela: 1.500 x 1,0639 − 182,76 = R$ 1.413,09 (99Pay: 1.500 x 1,0936 − 213,29 = R$ 1.427,11). Conta como dívida no placar, como o cheque especial: o empréstimo não fecha a conta, empurra"
         },
         {
           "se": {

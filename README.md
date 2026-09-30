@@ -18,7 +18,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo, cada um com a fonte |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (29/09)
+## Onde estamos (30/09)
 
 | Já feito | Situação |
 | --- | --- |
@@ -27,22 +27,30 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 3. Login anônimo | Ativado |
 | 4. `conexao.json` | Preenchido com as chaves do projeto |
 | 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #4, versão 4 do site) está no ar, e o telão publicado já criou sala |
-| Conteúdo | Calibragem de 29/09 à noite (D-058 e D-059, branch `claude/calibragem`): `config.json` versão `2026-09-29-v2.2-rascunho`, com as cartas de pico, o dinheiro da proteção (`categoria: "protecao"`) e as opções que protegem (`protege`), sobre a revisão de 29/09 (D-050 a D-057), no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 0.8 e 8 |
+| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #5, versão 5 do site) está no ar, e o teste de 30/09 foi feito nela |
+| Correções do teste de 30/09 | Branch `claude/correcoes-teste`, versão 6 do site (D-065, esquema v2.2): o voto vale até o apresentador encerrar, o empréstimo é dívida, o resultado do telão enxuto, o resumo mês a mês no celular e as personas do telão em três linhas. As regras não mudaram (v3) |
+| Conteúdo | Calibragem de 29/09 à noite (D-058 e D-059, PR #5): `config.json` versão `2026-09-29-v2.2-rascunho`, com as cartas de pico, o dinheiro da proteção (`categoria: "protecao"`) e as opções que protegem (`protege`), sobre a revisão de 29/09 (D-050 a D-057), no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 0.8 e 8 |
 
-**A calibragem de 29/09 à noite** (branch `claude/calibragem`, versão 5 do
-site) vem depois da revisão do conteúdo (D-050 a D-057, PR #4, já na `main`).
-Ela **não muda as regras do Firebase**: continuam v3, iguais às publicadas, e
-nada precisa ser publicado de novo no console. Depois de fundir o PR, recarregue
-o telão em toda máquina onde ele estiver aberto e repita o passo 8: o bloco 1 tem
-de mostrar a versão `2026-09-29-v2.2-rascunho`. Os celulares que ainda tiverem
-a versão 4 em cache veem a faixa "Há uma versão nova do app: atualize a página".
-A calibragem **não alcançou a meta da D-058** (de 5% a 10% das partidas de duas
-personas fechando o básico) nem tirou o esgotamento do topo no mês 2; as duas
-questões estão no [rascunho](docs/rascunho-conteudo.md), seção 0.8.
+**As correções do teste de 30/09** (branch `claude/correcoes-teste`, versão 6 do
+site) vêm depois da calibragem (PR #5, já no ar). O que muda está no
+[roteiro do apresentador](docs/roteiro-do-apresentador.md), no começo: o voto que
+não contava no mês 3 (o servidor cortava 5 s depois do fim do cronômetro, com a
+votação ainda aberta), o empréstimo que entrava como renda, o resultado do telão
+e a situação no celular, que estavam poluídos, e a tela das personas.
+- **As regras do Firebase não mudaram**: continuam v3, iguais às publicadas, e
+  nada precisa ser publicado de novo no console. A correção do voto está no
+  código do telão (o prazo que ele grava), e não nas regras.
+- Depois de fundir o PR, recarregue o telão em toda máquina onde ele estiver
+  aberto e repita o passo 8. O `config.json` mudou (o empréstimo virou
+  `emprestimo`), e por isso o hash do bloco 1 é outro, mas o nome da versão
+  continua `2026-09-29-v2.2-rascunho`. Os celulares que ainda tiverem a versão
+  5 em cache veem a faixa "Há uma versão nova do app: atualize a página".
+- As decisões D-060 a D-064 (12 meses, seis personagens em seis trabalhos,
+  ninguém de carteira assinada, o risco que cresce, o modo espectador) já estão
+  em [decisoes.md](docs/decisoes.md), mas ficam para a próxima rodada.
 
-Em seguida vêm o teste no eduroam (30/09), as correções (01 a 05/10), o
-congelamento (06/10) e o seminário (07/10).
+Em seguida vêm o resto das correções (01 a 05/10), o congelamento (06/10) e o
+seminário (07/10).
 
 ## Como funciona
 
@@ -437,6 +445,7 @@ deixa o pendrive carregar o estado salvo pelo telão online.
 | `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados |
 | `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador; nunca fala com o projeto real |
 | `npm run e2e:online:fixture` | O mesmo, com a fixture de teste no lugar do `config.json`: é o que passa sempre por "a proteção pagou" no celular (D-059). Rode junto com o anterior |
+| `npm run e2e:votos` | A matriz de votos: a sessão inteira com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, contra o emulador. Demora alguns minutos (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
 | `npm run simular -- --memoria` | 20 alunos simulados, sem rede |
 | `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador |
 | `npm run versao` | Sobe o `?v=` e a versão do app juntos |

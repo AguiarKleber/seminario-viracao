@@ -9,6 +9,8 @@ import { montarSessao, configDaSessao, SALA, HOST } from './fixtures/sessao.mjs'
 const V = await carregarNucleo();
 const s = (...partes) => ['salas', SALA, ...partes].join('/');
 const NEGADO = /PERMISSION_DENIED/;
+// O prazo gravado é o da regra: o fim do cronômetro mais a folga (contratos, seção 7).
+const FOLGA = V.alunoLogica.FOLGA_DA_REGRA_MS;
 
 // Sala criada, alunos distribuídos à mão e a rodada r1 aberta (índice 5 do
 // roteiro de teste). porEquipe = { e1: 2, e2: 1 } cria 2 alunos na e1 e 1 na e2.
@@ -280,7 +282,7 @@ test('empate: prorrogação só para a equipe empatada e, sem mudança, moeda co
   await anf.encerrar();
   // Assert
   assert.equal(naProrrogacao.subfase, 'prorrogacao');
-  assert.equal(naProrrogacao.prazo, sessao.relogio.agora() + config.tempos.prorrogacaoSeg * 1000);
+  assert.equal(naProrrogacao.prazo, sessao.relogio.agora() + config.tempos.prorrogacaoSeg * 1000 + FOLGA);
   assert.deepEqual(naProrrogacao.empatadas, { e1: { a: true, b: true } });
   assert.equal(resultadosNaProrrogacao, null, 'com empate, nenhum resultado é gravado ainda');
   assert.equal(telaEmpatado.tipo, 'prorrogacao');
@@ -463,25 +465,111 @@ test('o telão que cai durante o "fechando" é substituído: outra instância co
   assert.equal((await sessao.host.ler(s('resultados', 'r1', 'e1'))).decisao, 'b');
 });
 
-test('nada fecha sozinho pelo tempo: o prazo só corta o voto, e "+30 s" reabre', async () => {
+// Teste de 30/09: a decisão do mês 3 ficou aberta 7 min 35 s no telão, e a
+// regra recusou todo voto depois de 2 min 5 s, porque o prazo gravado era o
+// próprio fim do cronômetro. O voto tem de valer enquanto o apresentador não
+// encerrar (D-010): o prazo gravado passou a ser o da regra, com a folga.
+test('nada fecha sozinho pelo tempo: o voto vale muito depois do cronômetro, até o apresentador encerrar', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 2 } });
+  const { anf, alunos, relogio, config } = sessao;
+  const aberta = anf.estado();
+  // Act: 7 min 35 s depois de abrir, como no mês 3 do teste, e uma hora depois
+  relogio.passar(455_000);
+  await alunos.e1[0].decidir('r1', 'e1', 'a');
+  relogio.passar(60 * 60 * 1000);
+  await alunos.e1[1].decidir('r1', 'e1', 'a');
+  // Assert
+  assert.equal(V.alunoLogica.fimDoCronometro(aberta), aberta.abertoEm + config.tempos.decisaoSeg * 1000, 'o cronômetro continua sendo o tempo configurado');
+  assert.equal(aberta.prazo, aberta.abertoEm + config.tempos.decisaoSeg * 1000 + FOLGA);
+  assert.equal(anf.estado().subfase, 'decidindo');
+  await anf.encerrar();
+  const e1 = (await lerResultados(sessao, 'r1')).e1;
+  assert.deepEqual([e1.decisao, e1.origem, e1.contagem.a], ['a', 'maioria', 2], 'os dois votos tardios contaram');
+});
+
+test('a regra ainda corta depois da folga (a rede de segurança), e "+30 s" conta a partir de agora', async () => {
   // Arrange
   const { anf, alunos, relogio, config } = await prepararRodada({ porEquipe: { e1: 1 } });
   // Act
-  relogio.passar((config.tempos.decisaoSeg + config.tempos.gracaSeg) * 1000 + 60 * 60 * 1000);
+  relogio.passar(FOLGA + (config.tempos.decisaoSeg + config.tempos.gracaSeg) * 1000 + 1);
   const recusado = alunos.e1[0].decidir('r1', 'e1', 'a');
   // Assert
   await assert.rejects(recusado, NEGADO);
   assert.equal(anf.estado().subfase, 'decidindo');
   await anf.maisTempo(30);
-  assert.equal(anf.estado().prazo, relogio.agora() + 30_000);
+  assert.equal(V.alunoLogica.fimDoCronometro(anf.estado()), relogio.agora() + 30_000);
+  assert.equal(anf.estado().prazo, relogio.agora() + 30_000 + FOLGA);
   await alunos.e1[0].decidir('r1', 'e1', 'a');
+});
+
+test('"+30 s" com o cronômetro ainda correndo soma no fim dele, e não no prazo da regra', async () => {
+  // Arrange
+  const { anf, relogio, config } = await prepararRodada({ porEquipe: { e1: 1 } });
+  const fimAntes = V.alunoLogica.fimDoCronometro(anf.estado());
+  relogio.passar(10_000);
+  // Act
+  await anf.maisTempo(30);
+  // Assert
+  assert.equal(V.alunoLogica.fimDoCronometro(anf.estado()), fimAntes + 30_000);
+  assert.equal(fimAntes, relogio.agora() - 10_000 + config.tempos.decisaoSeg * 1000);
+});
+
+test('prorrogação: o voto vale depois dos 20 s do cronômetro, enquanto ela estiver aberta', async () => {
+  // Arrange
+  const sessao = await prepararRodada({ porEquipe: { e1: 2 } });
+  const { anf, alunos, relogio, config } = sessao;
+  await alunos.e1[0].decidir('r1', 'e1', 'a');
+  await alunos.e1[1].decidir('r1', 'e1', 'b');
+  relogio.passar(60_000);
+  await anf.encerrar();
+  assert.equal(anf.estado().subfase, 'prorrogacao');
+  // Act
+  relogio.passar((config.tempos.prorrogacaoSeg + config.tempos.gracaSeg) * 1000 + 60_000);
+  await alunos.e1[1].decidir('r1', 'e1', 'a');
+  await anf.encerrar();
+  // Assert
+  const e1 = (await lerResultados(sessao, 'r1')).e1;
+  assert.deepEqual([e1.decisao, e1.origem], ['a', 'prorrogacao']);
+});
+
+test('enquete: a resposta vale depois do cronômetro, até o apresentador encerrar', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const { anf, relogio, config } = sessao;
+  await anf.criarSala();
+  const aluno = sessao.novoAluno('aluno-1');
+  await aluno.entrar();
+  await anf.avancar(); // entrada "antes", a1
+  // Act
+  relogio.passar((config.tempos.enqueteSeg + config.tempos.gracaSeg) * 1000 + 5 * 60 * 1000);
+  await aluno.votar('entrada', 'antes', 'a1', 4);
+  // Assert
+  assert.equal(await sessao.host.ler(s('votosEnquete', 'entrada', 'antes', 'a1', 'aluno-1')), 4);
+  assert.equal(V.alunoLogica.fimDoCronometro(anf.estado()), anf.estado().abertoEm + config.tempos.enqueteSeg * 1000);
+});
+
+test('folgaDaRegraMs: o simulador passa uma folga curta; valor inválido é recusado na criação', async () => {
+  // Arrange
+  const sessao = montarSessao(V);
+  const criar = (folgaDaRegraMs) => V.anfitriao.criar({
+    canal: sessao.host, config: sessao.config, sala: SALA, nomeRoteiro: '60min', agora: sessao.relogio.agora, uid: HOST,
+    gerarSemente: () => 1, folgaDaRegraMs,
+  });
+  // Act + Assert
+  assert.throws(() => criar(-1), TypeError);
+  assert.throws(() => criar(Number.NaN), TypeError);
+  const curta = criar(2000);
+  await curta.criarSala();
+  await curta.avancar(); // entrada "antes"
+  assert.equal(curta.estado().prazo, sessao.relogio.agora() + sessao.config.tempos.enqueteSeg * 1000 + 2000);
 });
 
 test('pausar congela a votação e guarda o que faltava; retomar devolve o prazo', async () => {
   // Arrange
   const { anf, alunos, relogio, config } = await prepararRodada({ porEquipe: { e1: 1 } });
   relogio.passar(10_000);
-  const faltava = anf.estado().prazo - relogio.agora();
+  const faltava = V.alunoLogica.fimDoCronometro(anf.estado()) - relogio.agora();
   // Act
   await anf.pausar();
   const pausado = anf.estado();
@@ -494,7 +582,7 @@ test('pausar congela a votação e guarda o que faltava; retomar devolve o prazo
   // Assert
   assert.deepEqual([pausado.prazo, pausado.restanteMs], [undefined, faltava]);
   assert.equal(tela.dados.pausado, true);
-  assert.equal(anf.estado().prazo, relogio.agora() + faltava + 10_000);
+  assert.equal(anf.estado().prazo, relogio.agora() + faltava + 10_000 + FOLGA);
   assert.equal(config.tempos.decisaoSeg * 1000 - 10_000, faltava);
   await alunos.e1[0].decidir('r1', 'e1', 'a');
 });
@@ -728,7 +816,7 @@ test('avançar na enquete uma_por_vez pausada vai para a próxima afirmação e 
   // Assert
   assert.equal(pausado.afirmacao, 'a2');
   assert.deepEqual([pausado.prazo, pausado.restanteMs], [undefined, config.tempos.enqueteSeg * 1000]);
-  assert.equal(anf.estado().prazo, relogio.agora() + config.tempos.enqueteSeg * 1000);
+  assert.equal(anf.estado().prazo, relogio.agora() + config.tempos.enqueteSeg * 1000 + FOLGA);
 });
 
 test('definirEquipesAbertas recusa a lista vazia', async () => {
@@ -821,7 +909,7 @@ test('apuração de enquete que lança: desfazer volta a "votando"; na prorroga�
   assert.equal(sessao.anf.estado().subfase, 'votando');
   assert.equal(rod.anf.estado().subfase, 'prorrogacao');
   assert.deepEqual(rod.anf.estado().empatadas, { e1: { a: true, b: true } });
-  assert.equal(rod.anf.estado().prazo, rod.relogio.agora() + rod.config.tempos.prorrogacaoSeg * 1000);
+  assert.equal(rod.anf.estado().prazo, rod.relogio.agora() + rod.config.tempos.prorrogacaoSeg * 1000 + FOLGA);
 });
 
 // ---------- D-037: Ctrl+Z desfaz a abertura enquanto nenhum voto chegou ----------
@@ -927,7 +1015,7 @@ test('desfazer a abertura: prazo que vence durante a espera volta com os segundo
   relogio.passar(80_000); // faltam 10 s dos 90
   const espiao = canalComVotoNaTransacao(sessao, async () => {
     await alunos.e1[0].decidir('r1', 'e1', 'a');
-    relogio.passar(30_000); // a espera passou do prazo
+    relogio.passar(30_000); // a espera passou do fim do cronômetro
   });
   const anf = outroAnfitriao(sessao, espiao);
   await anf.carregarSala();
@@ -935,7 +1023,7 @@ test('desfazer a abertura: prazo que vence durante a espera volta com os segundo
   await assert.rejects(anf.desfazer(), /não dá para desfazer a abertura/);
   // Assert
   assert.equal(anf.estado().subfase, 'decidindo');
-  assert.equal(anf.estado().prazo, relogio.agora() + 10_000);
+  assert.equal(anf.estado().prazo, relogio.agora() + 10_000 + FOLGA);
 });
 
 test('desfazer a abertura pausada que recusa: volta pausada, com o mesmo restante', async () => {
@@ -1001,7 +1089,7 @@ test('desfazer a abertura na uma_por_vez: volta à afirmação anterior; na prim
   // Assert: a1 de novo em votação, com o voto dela guardado
   const e = anf.estado();
   assert.deepEqual([e.tipo, e.afirmacao, e.subfase], ['enquete', 'a1', 'votando']);
-  assert.equal(e.prazo, relogio.agora() + config.tempos.enqueteSeg * 1000);
+  assert.equal(e.prazo, relogio.agora() + config.tempos.enqueteSeg * 1000 + FOLGA);
   assert.equal(await sessao.host.ler(s('votosEnquete', 'entrada', 'antes', 'a1', 'aluno-1')), 3);
   // Act + Assert: em a1 já chegou voto, e o Ctrl+Z não volta ao lobby
   await assert.rejects(anf.desfazer(), /Já chegou 1 voto/);

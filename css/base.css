@@ -26,6 +26,14 @@
   --piloto: #8c8c8c;
   --neutro: #9e9e9e;
   --texto-sobre-claro: #111111;
+  /* Dinheiro que sobrou e que faltou (D-065): o saldo do mês no telão e o
+     resumo mês a mês no celular. Tons claros, longe do verde-azulado e do
+     vermelhão das equipes (Okabe-Ito), com contraste de 11:1 e 6,9:1 sobre a
+     superfície (#1a1a1a) e acima de 6:1 sobre a superfície 2: o projetor lava
+     as cores. A cor nunca vai sozinha: o valor leva sempre o sinal + ou −, ou
+     a palavra (sobrou, faltou). */
+  --positivo: #6ee787;
+  --negativo: #ff7b72;
   --raio: 10px;
   --fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }

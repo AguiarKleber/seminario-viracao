@@ -33,6 +33,13 @@ const LETRAS = 'ABCDEFGH';
 
 const V = await carregarNucleo();
 const M = V.motor;
+// O saldo de fim de jogo é o patrimônio (esquema v2.2): o saldo acumulado
+// menos o empréstimo a pagar, o mesmo do placar (motor.decompor). Pelo saldo
+// acumulado, o empréstimo do mês 2 aparecia aqui como a melhor opção de todas
+// as personas (R$ 1.500 que ainda não tinham sido pagos). "patrimonio" é um
+// indicador virtual: vale em qualquer lugar que lê um indicador do estado.
+const PATRIMONIO = 'patrimonio';
+const valorDe = (estado, ind) => (ind === PATRIMONIO ? M.patrimonio(estado) : estado[ind]);
 const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 const reais = (x) => (x < 0 ? '−R$ ' : 'R$ ') + numero.format(Math.abs(Math.round(x)));
 const pct = (x) => numero.format(x * 100) + '%';
@@ -144,7 +151,12 @@ function analisar(cfg) {
     for (const rodadaId of rodadas) lista.push(avancar(lista[lista.length - 1], equipeId, rodadaId, uniforme(rodadaId)));
     return lista;
   };
-  const esperado = (dist, ind) => dist.reduce((s, x) => s + x.p * x.estado[ind], 0);
+  const esperado = (dist, ind) => dist.reduce((s, x) => s + x.p * valorDe(x.estado, ind), 0);
+  // Com o empréstimo, a renda (o caixa) e o saldo devedor andam juntos; o que
+  // se compara entre as opções é o patrimônio. Os outros indicadores seguem
+  // como são (mais é melhor).
+  const temEmprestimo = inds.includes('emprestimo');
+  const indsComparados = [PATRIMONIO, ...inds.filter((i) => i !== 'renda' && i !== 'emprestimo')];
 
   const perfis = montarPerfis(cfg);
   const antesPorPerfil = new Map(perfis.map((pf) => [pf, distribuicoesAntes(pf.equipeId)]));
@@ -202,15 +214,15 @@ function analisar(cfg) {
     console.log(`  básico da casa ${reais(M.totalBasico(persona))}/mês (${itens})${outra}`);
     rodadas.forEach((rodadaId, k) => {
       for (const opcaoId of cfg.rodadas[rodadaId].ordemOpcoes) {
-        const soma = Object.fromEntries(inds.map((i) => [i, 0]));
-        const pior = Object.fromEntries(inds.map((i) => [i, Infinity]));
+        const soma = Object.fromEntries([...inds, PATRIMONIO].map((i) => [i, 0]));
+        const pior = Object.fromEntries([...inds, PATRIMONIO].map((i) => [i, Infinity]));
         const contas = { entrou: 0, gastos: 0, saldoMes: 0, juros: 0, piorEntrou: Infinity, piorGastos: 0, piorSaldo: Infinity, faltou: 0 };
         for (const x of antesPorPerfil.get(pf)[k]) {
           for (const c of M.chances(cfg, ctx(x, pf.equipeId, rodadaId, opcaoId))) {
             const { depois, mes } = M.aplicar(cfg, { ...ctx(x, pf.equipeId, rodadaId, opcaoId), cartaId: c.carta });
             const p = x.p * c.chance;
-            for (const i of inds) {
-              const variacao = depois[i] - x.estado[i];
+            for (const i of [...inds, PATRIMONIO]) {
+              const variacao = valorDe(depois, i) - valorDe(x.estado, i);
               soma[i] += p * variacao;
               pior[i] = Math.min(pior[i], variacao);
             }
@@ -224,9 +236,10 @@ function analisar(cfg) {
             if (mes.saldoMes < 0) contas.faltou += p;
           }
         }
-        (rendaDoMes.get(pf)[rodadaId] ||= {})[opcaoId] = soma.renda;
+        // A variação do patrimônio, e não do caixa: o empréstimo não é renda do mês.
+        (rendaDoMes.get(pf)[rodadaId] ||= {})[opcaoId] = soma[PATRIMONIO];
         if (Object.hasOwn(soma, 'energia')) (energiaDoMes.get(pf)[rodadaId] ||= {})[opcaoId] = soma.energia;
-        console.log(`  ${rodadaId} ${opcaoId}  ` + inds.map((i) => `${i} E ${sinal(soma[i])} pior ${sinal(pior[i])}`).join(' | '));
+        console.log(`  ${rodadaId} ${opcaoId}  ` + (temEmprestimo ? [...inds, PATRIMONIO] : inds).map((i) => `${i} E ${sinal(soma[i])} pior ${sinal(pior[i])}`).join(' | '));
         console.log(`         entrou E ${reais(contas.entrou)} (pior ${reais(contas.piorEntrou)})`
           + ` · gastos E ${reais(contas.gastos)} (pior ${reais(contas.piorGastos)}) · básico ${reais(M.totalBasico(persona))}`
           + ` · juros E ${reais(contas.juros)} · saldo do mês E ${reais(contas.saldoMes)} (pior ${reais(contas.piorSaldo)})`
@@ -238,6 +251,7 @@ function analisar(cfg) {
   // (c) opção dominante e (d) padrão que premia quem não votou
   console.log('\n== (c) e (d) Opção dominante e piloto automático ==');
   console.log('Critério: indicadores no FIM do jogo, escolhendo a opção naquela rodada e as outras ao acaso.');
+  if (temEmprestimo) console.log('"renda" aqui e daqui em diante é o patrimônio: o saldo acumulado menos o empréstimo a pagar (o placar).');
   console.log(`Dominante: vence as outras em todos os indicadores (esperado), ou vence em renda com mais de ${pct(LIMIAR_DOMINANCIA_RENDA)} de probabilidade.`);
   // A melhor opção de cada mês por perfil (a de maior renda final esperada),
   // para a conferência (h).
@@ -250,23 +264,23 @@ function analisar(cfg) {
       for (const opcaoId of rodada.ordemOpcoes) {
         let dist = avancar(antesPorPerfil.get(pf)[k], pf.equipeId, rodadaId, [[opcaoId, 1]]);
         for (const seguinte of rodadas.slice(k + 1)) dist = avancar(dist, pf.equipeId, seguinte, uniforme(seguinte));
-        fim[opcaoId] = { dist, e: Object.fromEntries(inds.map((i) => [i, esperado(dist, i)])) };
+        fim[opcaoId] = { dist, e: Object.fromEntries([...inds, PATRIMONIO].map((i) => [i, esperado(dist, i)])) };
       }
-      console.log(`  ${rodadaId}  ` + rodada.ordemOpcoes.map((o) => `${o}${o === rodada.padrao ? '*' : ''} renda E ${numero.format(fim[o].e.renda)}`).join(' · ') + '   (* = padrão)');
+      console.log(`  ${rodadaId}  ` + rodada.ordemOpcoes.map((o) => `${o}${o === rodada.padrao ? '*' : ''} renda E ${numero.format(fim[o].e[PATRIMONIO])}`).join(' · ') + '   (* = padrão)');
       for (const x of rodada.ordemOpcoes) {
         const outras = rodada.ordemOpcoes.filter((y) => y !== x);
         if (outras.length === 0) continue;
-        const venceTudo = outras.every((y) => inds.every((i) => fim[x].e[i] > fim[y].e[i]));
-        const probs = outras.map((y) => probabilidadeMaior(fim[x].dist, fim[y].dist, 'renda'));
+        const venceTudo = outras.every((y) => indsComparados.every((i) => fim[x].e[i] > fim[y].e[i]));
+        const probs = outras.map((y) => probabilidadeMaior(fim[x].dist, fim[y].dist, PATRIMONIO));
         const venceRenda = probs.every((p) => p > LIMIAR_DOMINANCIA_RENDA);
         if (venceTudo) avisar(`${pf.nome}, ${rodadaId}: a opção "${x}" é dominante (vence as outras em todos os indicadores).`);
         else if (venceRenda) {
           avisar(`${pf.nome}, ${rodadaId}: a opção "${x}" vence em renda com probabilidade ${probs.map(pct).join(' / ')} contra ${outras.join(' / ')}.`);
         }
       }
-      const maiorRenda = Math.max(...rodada.ordemOpcoes.map((o) => fim[o].e.renda));
-      melhorOpcao.get(pf)[rodadaId] = rodada.ordemOpcoes.find((o) => fim[o].e.renda === maiorRenda);
-      if (rodada.ordemOpcoes.length > 1 && fim[rodada.padrao].e.renda >= maiorRenda - 1e-9) {
+      const maiorRenda = Math.max(...rodada.ordemOpcoes.map((o) => fim[o].e[PATRIMONIO]));
+      melhorOpcao.get(pf)[rodadaId] = rodada.ordemOpcoes.find((o) => fim[o].e[PATRIMONIO] === maiorRenda);
+      if (rodada.ordemOpcoes.length > 1 && fim[rodada.padrao].e[PATRIMONIO] >= maiorRenda - 1e-9) {
         avisar(`${pf.nome}, ${rodadaId}: o padrão "${rodada.padrao}" é a opção de maior renda esperada; o piloto automático premia quem não votou.`);
       }
     });
@@ -290,9 +304,9 @@ function analisar(cfg) {
       let dist = [{ estado: M.estadoInicial(cfg, pf.equipeId), historico: {}, p: 1, bateu: 0, caminho: [] }];
       rodadas.forEach((rodadaId, k) => { dist = avancar(dist, pf.equipeId, rodadaId, [[combo[k], 1]]); });
       finais.push({ combo, dist });
-      const m = esperado(dist, 'renda');
+      const m = esperado(dist, PATRIMONIO);
       medias.push(m);
-      variancias.push(dist.reduce((s, x) => s + x.p * (x.estado.renda - m) ** 2, 0));
+      variancias.push(dist.reduce((s, x) => s + x.p * (M.patrimonio(x.estado) - m) ** 2, 0));
     }
     const mediaGeral = medias.reduce((s, x) => s + x, 0) / medias.length;
     const entre = medias.reduce((s, x) => s + (x - mediaGeral) ** 2, 0) / medias.length;
@@ -336,12 +350,13 @@ function analisar(cfg) {
 }
 
 // (g) D-050 e D-058: quem fecha o básico no fim dos 3 meses. "Fechar" é
-// terminar com o saldo acumulado (a renda) em 0 ou mais: o básico já foi
-// cobrado mês a mês. A D-058 pede também que quem fica só no padrão nunca feche.
+// terminar com o patrimônio (o saldo acumulado menos o empréstimo a pagar,
+// esquema v2.2) em 0 ou mais: o básico já foi cobrado mês a mês, e fechar com
+// dinheiro emprestado não é fechar. A D-058 pede também que quem fica só no padrão nunca feche.
 function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
   const padrao = cfg.ordem.rodadas.map((r) => cfg.rodadas[r].padrao).join('-');
   console.log('\n== (g) Quem fecha o básico no fim dos 3 meses (D-050, D-058) ==');
-  console.log('Critério: fecha quem termina com o saldo acumulado ≥ R$ 0. "Ao acaso": todas as combinações de decisões');
+  console.log('Critério: fecha quem termina com o saldo acumulado menos o empréstimo a pagar ≥ R$ 0. "Ao acaso": todas as combinações de decisões');
   console.log('igualmente prováveis, cartas pelas chances. "Melhor plano": a combinação com a maior chance de fechar.');
   console.log('"Melhor caminho": a maior renda final possível (decisões e cartas), com chance acima de 0.');
   console.log(`"Só o padrão": o plano ${padrao}, o de quem nunca vota.`);
@@ -354,12 +369,12 @@ function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
     let melhorCaminho = null;
     let soPadrao = 0;
     for (const { combo, dist } of finais) {
-      const fecha = dist.reduce((s, x) => s + (x.estado.renda >= 0 ? x.p : 0), 0);
+      const fecha = dist.reduce((s, x) => s + (M.patrimonio(x.estado) >= 0 ? x.p : 0), 0);
       aoAcaso += fecha / finais.length;
       if (combo.join('-') === padrao) soPadrao = fecha;
       if (!melhorPlano || fecha > melhorPlano.fecha) melhorPlano = { combo, fecha };
       for (const x of dist) {
-        if (x.p > 0 && (!melhorCaminho || x.estado.renda > melhorCaminho.renda)) melhorCaminho = { renda: x.estado.renda, caminho: x.caminho };
+        if (x.p > 0 && (!melhorCaminho || M.patrimonio(x.estado) > melhorCaminho.renda)) melhorCaminho = { renda: M.patrimonio(x.estado), caminho: x.caminho };
       }
     }
     // Sem nenhum plano que feche, o "melhor" seria só o primeiro da lista.
@@ -472,8 +487,8 @@ function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar) {
   for (const pf of perfis) {
     // Chave em JSON, e não com um separador: um id de opção pode ter hífen.
     const porCombo = new Map(finaisPorPerfil.get(pf).map(({ combo, dist }) => [JSON.stringify(combo), {
-      pior: dist.reduce((m, x) => Math.min(m, x.estado.renda), Infinity),
-      esperado: dist.reduce((t, x) => t + x.p * x.estado.renda, 0),
+      pior: dist.reduce((m, x) => Math.min(m, M.patrimonio(x.estado)), Infinity),
+      esperado: dist.reduce((t, x) => t + x.p * M.patrimonio(x.estado), 0),
     }]));
     for (const [r, o] of protegem) {
       const k = rodadas.indexOf(r);
@@ -599,9 +614,14 @@ function todasCondicoes(cfg) {
 }
 
 // As rodadas citadas por algum decidiu/sorteou: só elas mudam alguma chance ou
-// efeito, e por isso só elas entram na chave da distribuição.
+// efeito, e por isso só elas entram na chave da distribuição. As rodadas com
+// empréstimo também: a parcela de um mês depende de quando ele foi tomado.
 function rodadasCitadas(cfg) {
   const citadas = new Set();
+  for (const id of cfg.ordem.rodadas) {
+    const r = cfg.rodadas[id];
+    if (r.ordemOpcoes.some((o) => (r.opcoes[o].efeitos || []).some((e) => e.emprestimo))) citadas.add(id);
+  }
   for (const c of todasCondicoes(cfg)) {
     for (const r of Object.keys(c.decidiu || {})) citadas.add(r);
     for (const r of Object.keys(c.sorteou || {})) citadas.add(r);
@@ -618,13 +638,13 @@ function indicadoresLidos(cfg) {
 // P(X > Y) com X e Y independentes, cada um com a sua distribuição discreta.
 // Ordena Y e soma por busca binária: o produto direto passaria de milhões de pares.
 function probabilidadeMaior(distX, distY, ind) {
-  const ys = distY.map((y) => [y.estado[ind], y.p]).sort((a, b) => a[0] - b[0]);
+  const ys = distY.map((y) => [valorDe(y.estado, ind), y.p]).sort((a, b) => a[0] - b[0]);
   const acumulada = [];
   let soma = 0;
   for (const [, p] of ys) acumulada.push((soma += p));
   let resultado = 0;
   for (const x of distX) {
-    const valor = x.estado[ind];
+    const valor = valorDe(x.estado, ind);
     let lo = 0;
     let hi = ys.length;
     while (lo < hi) {

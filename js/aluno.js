@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '5';
+  const VERSAO_APP = '6';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -51,6 +51,11 @@
   // Voto em trânsito (arquitetura, seção 10).
   const ENVIO_LENTO_MS = 5000;
   const ENVIO_GUARDADO_MS = 20000;
+  // Escrita que falhou sem ser recusa da regra: o SDK não repete a escrita que
+  // falhou, e o "guardado; será reenviado" ficava sem reenvio até recarregar a
+  // página. O celular tenta de novo, poucas vezes, enquanto a etapa estiver aberta.
+  const REENVIO_MS = 3000;
+  const REENVIOS_MAX = 5;
   // O membro que sumiu (removido por inatividade) é registrado de novo, mas não
   // mais que uma vez nesse intervalo: uma recusa não pode virar laço.
   const REGISTRO_INTERVALO_MS = 5000;
@@ -79,7 +84,9 @@
     envios: new Map(), reenviados: new Set(),
     // aberta: a opção da decisão com a explicação à mostra (D-055); rolarAte: a
     // que acabou de ser aberta e ainda precisa rolar para a vista.
-    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null },
+    // recolhidos: os detalhes recolhidos que o aluno abriu nesta tela (D-065),
+    // para um redesenho (a contagem das equipes, um voto) não fechá-los na mão dele.
+    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, recolhidos: new Set() },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
   };
 
@@ -455,7 +462,11 @@
       // A prorrogação e a rodada seguinte começam com tudo fechado.
       app.ui.aberta = null;
       app.ui.rolarAte = null;
+      app.ui.recolhidos.clear();
     }
+    // O aviso de "movido de equipe" vale até a rodada acabar (a prorrogação é a
+    // mesma rodada).
+    if (app.ui.movido && !(e?.tipo === 'rodada' && e.rodada === app.ui.movido.rodada)) app.ui.movido = null;
     religarEquipe();
     religarVotos();
     talvezReenviar();
@@ -470,6 +481,7 @@
     const membro = app.membroConfirmado ? app.dados.membros?.[app.uid] : null;
     const chave = e?.tipo === 'rodada' && membro?.equipe ? `${e.rodada}|${membro.equipe}` : null;
     if (chave === app.chaveEquipe) return;
+    avisarSeMovido(app.chaveEquipe, chave, e);
     app.chaveEquipe = chave;
     if (app.desligarEquipe) app.desligarEquipe();
     app.desligarEquipe = null;
@@ -479,6 +491,22 @@
       app.dados.decisoes = v;
       desenhar();
     });
+  }
+
+  // Revisão de 30/09 (achado P1): o apresentador moveu o aparelho de equipe com
+  // a decisão aberta, depois de o aluno votar. O voto da equipe anterior deixa
+  // de valer (a apuração conta só quem é da equipe: anfitrião, votosDaEquipe),
+  // e a tela redesenhava a decisão da equipe nova sem voto marcado e sem uma
+  // palavra: só o crachá mudava. Chamado antes de trocar o ouvinte, com as
+  // decisões da equipe anterior ainda em app.dados.decisoes.
+  function avisarSeMovido(chaveAntiga, chaveNova, e) {
+    if (!chaveAntiga || !chaveNova || !['decidindo', 'prorrogacao'].includes(e?.subfase)) return;
+    const [rodadaAntiga, equipeAntiga] = chaveAntiga.split('|');
+    const [rodadaNova, equipeNova] = chaveNova.split('|');
+    if (rodadaAntiga !== rodadaNova || equipeAntiga === equipeNova) return;
+    const envio = app.envios.get(cam('decisoes', rodadaAntiga, equipeAntiga, app.uid));
+    const votou = typeof app.dados.decisoes?.[app.uid] === 'string' || emVoo(envio) || guardadoNoAparelho(envio) || envio?.estagio === 'registrado';
+    if (votou) app.ui.movido = { rodada: rodadaNova, de: equipeAntiga, para: equipeNova };
   }
 
   // Os próprios votos, lidos do servidor (a regra deixa cada um ler só a
@@ -543,6 +571,15 @@
     : cam('decisoes', p.rodada, p.equipe, app.uid));
   const valorDe = (p) => (p.tipo === 'enquete' ? p.valor : p.opcao);
   const emVoo = (envio) => Boolean(envio) && (envio.estagio === 'enviando' || envio.estagio === 'lento');
+  // Guardado no aparelho, esperando a rede ('guardado') ou o apresentador
+  // retomar a votação pausada ('esperaRetomar'): a tela marca a opção, mas a
+  // contagem da equipe fica com o que o servidor confirmou.
+  const guardadoNoAparelho = (envio) => Boolean(envio) && (envio.estagio === 'guardado' || envio.estagio === 'esperaRetomar');
+  // O que o motivoDaRecusa precisa saber de agora, além do pendente.
+  const contextoDaRecusa = (envio) => ({
+    estado: app.dados.estado, membro: app.dados.membros?.[app.uid] ?? null,
+    anterior: envio.anterior ?? null, entradaAberta: app.dados.meta?.entradaAberta !== false,
+  });
 
   // O valor que o servidor já confirmou para uma folha. O SDK aplica a escrita
   // no cache local antes da confirmação, e o ouvinte avisa na hora: sem este
@@ -564,10 +601,20 @@
     enviar(caminho, pendente);
   }
 
-  function enviar(caminho, pendente) {
+  function enviar(caminho, pendente, tentativa = 1) {
     const antigo = app.envios.get(caminho);
-    if (antigo) for (const t of antigo.timers) clearTimeout(t);
-    const envio = { pendente, estagio: 'enviando', anterior: emVoo(antigo) ? antigo.anterior : confirmadoAntes(pendente), timers: [] };
+    if (antigo) {
+      for (const t of antigo.timers) clearTimeout(t);
+      clearTimeout(antigo.reenvio);
+    }
+    // criadoEm: uma recusa anterior a este envio já foi vista pelo aluno quando
+    // este chega (recusaDaEtapa). Um envio que só repete o mesmo voto (o
+    // reenvio, o retomar da pausa) herda a hora do primeiro.
+    const repete = Boolean(antigo) && valorDe(antigo.pendente) === valorDe(pendente);
+    const envio = {
+      pendente, estagio: 'enviando', anterior: emVoo(antigo) || antigo?.estagio === 'esperaRetomar' ? antigo.anterior : confirmadoAntes(pendente),
+      timers: [], reenvio: 0, criadoEm: repete ? antigo.criadoEm : Date.now(),
+    };
     app.envios.set(caminho, envio);
     // 3. Sem confirmação em 5 s: "enviando…" e um ciclo de reconexão.
     envio.timers.push(setTimeout(() => {
@@ -597,16 +644,41 @@
         // A tela já passou para a próxima afirmação: a confirmação da anterior
         // aparece nela, para o aluno saber que a resposta chegou.
         app.ui.nota = `Resposta registrada: ${rotuloVoto(pendente.valor)}.`;
+        marcarRecusasVistas(envio);
       } else app.ui.nota = null;
-    }, (erro) => {
+    }, async (erro) => {
       if (app.envios.get(caminho) !== envio) return;
       if (recusado(erro)) {
-        // 5. Recusa da regra: o app nunca finge que contou.
+        // 5. Recusa da regra: o app nunca finge que contou, e nunca fica calado.
+        // O motivo sai do estado de agora, na hora do desenho (recusaParaTela):
+        // junto do botão tocado, na nota e nas telas seguintes desta etapa
+        // (recusaDaEtapa). No teste de 30/09, a única pista era uma nota fixa
+        // embaixo da lista, fora da tela, e o "Votar nesta" ficava igual.
+        const pausada = await pausadaNoServidor(pendente);
+        if (app.envios.get(caminho) !== envio) return;
+        if (pausada) {
+          // Revisão de 30/09 (achado 6): o voto em trânsito quando o
+          // apresentador apertou P era apagado do aparelho, e o aluno tinha de
+          // notar, depois da retomada, que precisava votar de novo. O voto
+          // recarregado com a votação pausada já ficava guardado e ia sozinho
+          // (talvezReenviar): agora o em trânsito faz o mesmo.
+          envio.estagio = 'esperaRetomar';
+          return;
+        }
         envio.estagio = 'recusado';
+        envio.recusadoEm = Date.now();
         removerPendente(caminho);
-        app.ui.nota = 'A votação fechou antes do seu voto chegar.';
-      } else {
+        // A explicação entra na opção aberta, que rola para a vista.
+        if (pendente.tipo === 'decisao' && app.ui.aberta === pendente.opcao) app.ui.rolarAte = pendente.opcao;
+      } else if (tentativa < REENVIOS_MAX) {
         envio.estagio = 'guardado';
+        envio.reenvio = setTimeout(() => reenviarSeVale(caminho, envio, tentativa + 1), REENVIO_MS);
+      } else {
+        // Revisão de 30/09 (achado 5): depois da última tentativa, a tela dizia
+        // "guardado: será reenviado" para sempre, e nada mais reenviava (o SDK
+        // não repete a escrita que falhou). O botão volta a valer, e a tela diz
+        // para tocar de novo. O pendente fica no aparelho: recarregar reenvia.
+        envio.estagio = 'falhou';
       }
     }).finally(() => {
       for (const t of envio.timers) clearTimeout(t);
@@ -614,22 +686,76 @@
     });
   }
 
+  // A votação do pendente está pausada, pelo estado lido agora do servidor. O
+  // celular que volta da rede recebe a recusa do voto guardado e o estado novo
+  // (pausado) quase juntos, em qualquer ordem: pelo estado em memória, a recusa
+  // podia ser julgada pelo estado de antes da pausa, e o voto se perdia.
+  async function pausadaNoServidor(pendente) {
+    let estado = app.dados.estado;
+    try {
+      estado = (await app.canal.ler(cam('estado'))) ?? estado;
+    } catch { /* fica o estado em memória */ }
+    return L().pendenteAindaVale(pendente, estado) && typeof estado.restanteMs === 'number';
+  }
+
+  // O reenvio da escrita que falhou sem recusa da regra. Com a etapa fechada
+  // nesse meio-tempo, o voto não chegou a tempo: a tela diz, como numa recusa.
+  function reenviarSeVale(caminho, envio, tentativa) {
+    if (app.envios.get(caminho) !== envio) return;
+    if (L().pendenteAindaVale(envio.pendente, app.dados.estado)) {
+      enviar(caminho, envio.pendente, tentativa);
+      return;
+    }
+    envio.estagio = 'recusado';
+    envio.recusadoEm = Date.now();
+    removerPendente(caminho);
+    desenhar();
+  }
+
   // Depois de recarregar: o pendente cuja etapa continua aberta é reenviado
   // (a chave é a mesma, então não duplica). O que já não vale é descartado, e o
-  // aluno fica sabendo.
+  // aluno fica sabendo. O mesmo para o voto recusado pela pausa, que esperava o
+  // apresentador retomar (esperaRetomar).
   function talvezReenviar() {
     const e = app.dados.estado;
     if (!app.membroConfirmado || !e) return;
     for (const [caminho, p] of Object.entries(lerPendentes())) {
-      if (app.envios.has(caminho)) continue;
+      const atual = app.envios.get(caminho);
+      const esperando = atual?.estagio === 'esperaRetomar';
+      if (atual && !esperando) continue;
       if (L().pendenteAindaVale(p, e)) {
-        if (app.reenviados.has(caminho)) continue;
-        app.reenviados.add(caminho);
+        // Pausada, a regra recusaria (sem prazo), e o voto guardado se perderia
+        // com a mensagem de "fechou". Fica no aparelho até o apresentador
+        // retomar: o retomar muda o estado, e esta função roda de novo.
+        if (typeof e.restanteMs === 'number') continue;
+        if (!esperando) {
+          if (app.reenviados.has(caminho)) continue;
+          app.reenviados.add(caminho);
+        }
         enviar(caminho, p);
+      } else if (esperando) {
+        // A votação fechou durante a pausa: o voto não foi contado, e a tela diz
+        // (recusaParaTela, com o motivo de agora).
+        removerPendente(caminho);
+        atual.estagio = 'recusado';
+        atual.recusadoEm = Date.now();
       } else {
         removerPendente(caminho);
         app.ui.nota = 'Um voto guardado no aparelho não chegou a tempo: aquela votação já tinha fechado.';
       }
+    }
+  }
+
+  // Revisão de 30/09 (achado P3): a recusa de uma afirmação anterior do mesmo
+  // momento aparece nas telas seguintes (recusaDaEtapa) até o aluno responder
+  // outra afirmação DEPOIS de vê-la. Sem isto, a tela "Registrado" mostrava em
+  // vermelho "não foi contado" logo acima das respostas que contaram.
+  function marcarRecusasVistas(confirmado) {
+    const c = confirmado.pendente;
+    for (const envio of app.envios.values()) {
+      const p = envio.pendente;
+      if (envio.estagio !== 'recusado' || p.tipo !== 'enquete' || p.enquete !== c.enquete || p.momento !== c.momento || p.afirmacao === c.afirmacao) continue;
+      if (envio.recusadoEm < confirmado.criadoEm) envio.vista = true;
     }
   }
 
@@ -645,7 +771,7 @@
       if (emVoo(envio)) {
         if (Number.isInteger(envio.anterior)) folha[p.afirmacao] = envio.anterior;
         else delete folha[p.afirmacao];
-      } else if (envio.estagio === 'guardado') folha[p.afirmacao] = p.valor;
+      } else if (guardadoNoAparelho(envio)) folha[p.afirmacao] = p.valor;
     }
     return v;
   }
@@ -660,7 +786,7 @@
     // Em voo ou guardado, a contagem da equipe fica com o que o servidor já
     // confirmou: "2 votos" com um deles só no aparelho seria fingir que contou.
     // A opção escolhida continua marcada (telaDecisao), com a nota explicando.
-    if (!emVoo(envio) && envio.estagio !== 'guardado') return d;
+    if (!emVoo(envio) && !guardadoNoAparelho(envio)) return d;
     const saida = d || {};
     if (envio.anterior) saida[app.uid] = envio.anterior;
     else delete saida[app.uid];
@@ -721,7 +847,9 @@
   function desenharAgora() {
     const tela = app.fase === 'sala' ? calcularTela() : null;
     const chave = JSON.stringify([
-      app.fase, app.aviso, app.erro?.titulo, app.erro?.texto, app.embutido, tela, app.ui.foco, app.ui.nota, app.ui.aberta,
+      app.fase, app.aviso, app.erro?.titulo, app.erro?.texto, app.embutido, tela, app.ui.foco, app.ui.nota, app.ui.aberta, app.ui.movido,
+      // A recusa já vista some da tela (marcarRecusasVistas) sem mudar o estágio.
+      [...app.envios.values()].filter((x) => x.vista).length,
       resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' ? contagemEquipes() : null,
       // Os votos ainda em leitura entram na chave: o "carregando…" do
       // comparativo só vira "sem resposta" com um redesenho, e a chegada de um
@@ -963,6 +1091,13 @@
     desempateDeOutrasEquipes: ['Outras equipes estão desempatando', 'A sua equipe já decidiu. Olhe o telão.'],
   };
 
+  // Por que o "Votar nesta" está apagado (telaDoAluno, motivo), dito junto do
+  // botão e embaixo da lista.
+  const MOTIVOS_SEM_VOTO = {
+    entrouDepois: 'Você entrou depois de esta decisão abrir: acompanhe a conversa. O seu voto vale na próxima.',
+    pausado: 'Pausado pelo apresentador: o voto volta a valer quando ele retomar.',
+  };
+
   function desenharTela(alvo, tela) {
     const d = tela.dados;
     switch (tela.tipo) {
@@ -994,7 +1129,7 @@
     const { el, acrescentar } = D();
     const kicker = d.titulo || app.dados.conteudo?.titulo || 'Seminário da Viração';
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { motivo: d.motivo } }, [
-      cabecalho(kicker, titulo), el('p', { classe: 'texto', texto }), nota(app.ui.nota),
+      cabecalho(kicker, titulo), el('p', { classe: 'texto', texto }), notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'aguardando';
   }
@@ -1024,7 +1159,8 @@
     const todas = lista(enq?.ordemAfirmacoes).length > 0 ? lista(enq.ordemAfirmacoes) : Object.keys(enq?.afirmacoes || {});
     return {
       ...d, afirmacao, posicao: todas.indexOf(afirmacao.id) + 1, total: todas.length,
-      escala: d.escala || escalaCurta(), prazo: e.prazo ?? null, pausado: typeof e.restanteMs === 'number', restanteMs: e.restanteMs ?? null,
+      // O fim do cronômetro, e não o prazo da regra, que leva a folga de 12 h.
+      escala: d.escala || escalaCurta(), prazo: L().fimDoCronometro(e), pausado: typeof e.restanteMs === 'number', restanteMs: e.restanteMs ?? null,
     };
   }
 
@@ -1032,16 +1168,98 @@
     return { antes: 'antes', depois: 'depois' }[m] || null;
   }
 
-  function textoEnvio(envio, registradoTexto = 'Voto registrado.') {
+  // A nota do envio da tela atual: o estágio dele, ou o motivo da recusa.
+  function notaDoEnvio(envio, registradoTexto = 'Voto registrado.') {
     if (!envio) return null;
-    return {
+    if (envio.estagio === 'recusado') return notaDaRecusa(recusaParaTela(envio));
+    const decisao = envio.pendente.tipo === 'decisao';
+    const texto = {
       enviando: null,
       lento: 'Enviando…',
       guardado: 'Guardado no aparelho: será reenviado quando a conexão voltar.',
+      esperaRetomar: decisao
+        ? 'Votação pausada pelo apresentador: o seu voto fica guardado no aparelho e vai sozinho quando ele retomar.'
+        : 'Votação pausada pelo apresentador: a sua resposta fica guardada no aparelho e vai sozinha quando ele retomar.',
+      falhou: decisao
+        ? 'Não foi possível enviar o voto: toque de novo em “Votar nesta”.'
+        : 'Não foi possível enviar a resposta: toque de novo nela.',
       registrado: registradoTexto,
-      recusado: 'A votação fechou antes do seu voto chegar.',
     }[envio.estagio];
+    return nota(texto, envio.estagio === 'falhou' ? 'erro' : 'info');
   }
+
+  const notaDaRecusa = (r) => (r ? nota(r.texto, r.tipo) : null);
+
+  // A posição da afirmação na enquete ("afirmação 1"), a mesma do "1 de 3".
+  function posicaoDaAfirmacao(p) {
+    const enq = app.dados.conteudo?.enquetes?.[p.enquete];
+    const todas = lista(enq?.ordemAfirmacoes).length > 0 ? lista(enq.ordemAfirmacoes) : Object.keys(enq?.afirmacoes || {});
+    return todas.indexOf(p.afirmacao) + 1;
+  }
+
+  // O que dizer quando a regra recusou um voto: o motivo (alunoLogica.
+  // motivoDaRecusa, com o estado, o registro de membro e a entrada de agora, e
+  // o voto que o servidor já tinha confirmado antes) e o que fazer. tipo 'info'
+  // quando nada se perdeu: na troca que chegou tarde, valeu o voto anterior.
+  function recusaParaTela(envio) {
+    const p = envio.pendente;
+    const motivo = L().motivoDaRecusa(p, contextoDaRecusa(envio));
+    const decisao = p.tipo === 'decisao';
+    const deNovo = decisao ? 'toque em “Votar nesta” de novo' : 'toque de novo na sua resposta';
+    const erro = (texto) => ({ texto, tipo: 'erro' });
+    switch (motivo) {
+      case 'fechou': return erro('A votação fechou antes do seu voto chegar: ele não foi contado.');
+      // Revisão de 30/09 (achado P2): quem trocou A por B sem rede via "não foi
+      // contado", e o A tinha contado; o apresentador podia até desfazer a
+      // apuração sem motivo.
+      case 'trocaTarde': return {
+        tipo: 'info',
+        texto: decisao
+          ? `A troca para ${letraDe(p.rodada, p.opcao)} chegou depois do fechamento: valeu o seu voto anterior, ${letraDe(p.rodada, envio.anterior)}.`
+          : `A mudança para ${rotuloVoto(p.valor)} chegou depois do fechamento: valeu a sua resposta anterior, ${rotuloVoto(envio.anterior)}.`,
+      };
+      case 'soEmpatadas': return erro('O seu voto chegou depois de a primeira votação fechar. Agora só valem as opções empatadas: vote numa delas.');
+      // Revisão de 30/09 (achado P3): diz qual resposta se perdeu.
+      case 'outraAfirmacao': return erro(`A resposta da afirmação ${posicaoDaAfirmacao(p)} chegou depois de o apresentador avançar e não foi contada.`);
+      case 'pausado': return erro(`A votação foi pausada antes do seu voto chegar: quando o apresentador retomar, ${deNovo}.`);
+      // Quem volta à sala depois de a decisão abrir só vota na próxima; na
+      // enquete, não há essa trava, e dá para responder de novo.
+      case 'foraDaSala': return erro(decisao
+        ? 'O seu aparelho saiu da sala antes de o voto chegar: ele entra de novo sozinho, e o voto vale na próxima decisão.'
+        : 'O seu aparelho saiu da sala antes de o voto chegar: ele entra de novo sozinho; depois, toque de novo na sua resposta.');
+      // Revisão de 30/09 (achado 7): com a entrada fechada, garantirMembro não
+      // regrava o membro, e o "entra de novo sozinho" era falso.
+      case 'foraDaSalaFechada': return erro('O seu aparelho saiu da sala antes de o voto chegar, e a entrada está fechada: peça ao apresentador para abrir a entrada.');
+      case 'outraEquipe': return erro('O seu aparelho mudou de equipe antes de o voto chegar: vote de novo, agora pela equipe nova.');
+      case 'entrouDepois': return erro('O seu aparelho entrou de novo na sala depois de a decisão abrir: o voto só vale na próxima.');
+      default: return erro(`O voto não foi aceito: ${deNovo}. Se não der certo, avise o apresentador.`);
+    }
+  }
+
+  // O voto recusado da etapa atual (a mesma rodada da própria equipe, ou a
+  // mesma enquete e momento), para as telas que vêm depois dele: "votação
+  // encerrada", "sorteando", "registrado". Sem isto, quem votou tarde via
+  // "Votação encerrada" e achava que o voto tinha contado. A recusa de outra
+  // equipe (o aparelho foi movido; revisão de 30/09, achado P1) não é desta, e
+  // a de uma afirmação anterior some depois que o aluno responde outra
+  // (marcarRecusasVistas). excetoAfirmacao: na tela de uma afirmação, a recusa
+  // dela mesma já sai pela notaDoEnvio.
+  function recusaDaEtapa({ excetoAfirmacao = null } = {}) {
+    const e = app.dados.estado;
+    if (!e) return null;
+    const equipe = app.dados.membros?.[app.uid]?.equipe;
+    let daEtapa = null;
+    for (const envio of app.envios.values()) {
+      if (envio.estagio !== 'recusado' || envio.vista) continue;
+      const p = envio.pendente;
+      const mesmaEtapa = p.tipo === 'decisao'
+        ? e.tipo === 'rodada' && p.rodada === e.rodada && p.equipe === equipe
+        : e.tipo === 'enquete' && p.enquete === e.enquete && p.momento === e.momento && p.afirmacao !== excetoAfirmacao;
+      if (mesmaEtapa) daEtapa = envio;
+    }
+    return daEtapa ? recusaParaTela(daEtapa) : null;
+  }
+  const notaDaRecusaDaEtapa = (opcoes) => notaDaRecusa(recusaDaEtapa(opcoes));
 
   function telaEnquete(alvo, d) {
     const { el, botao, acrescentar } = D();
@@ -1079,7 +1297,7 @@
       cabecalho(kicker, a.texto, { classeTitulo: 'afirmacao', lado: cronometro(d) }),
       el('p', { classe: 'progresso', texto: `${d.posicao} de ${d.total}` }),
       el('div', { classe: 'escala', role: 'group', 'aria-label': 'Sua resposta, de 1 a 5' }, botoes),
-      nota(textoEnvio(envio, `Registrado: ${escolhido ? rotuloVoto(escolhido) : ''}`), envio?.estagio === 'recusado' ? 'erro' : 'info') || nota(app.ui.nota),
+      notaDoEnvio(envio, `Registrado: ${escolhido ? rotuloVoto(escolhido) : ''}`) || notaDaRecusaDaEtapa({ excetoAfirmacao: a.id }) || nota(app.ui.nota),
       navegar.length > 0 ? el('div', { classe: 'navegar' }, navegar) : null,
       privacidade(),
     ]));
@@ -1088,7 +1306,8 @@
 
   function telaEnqueteRegistrada(alvo, d) {
     const { el, botao, acrescentar } = D();
-    const guardados = d.afirmacoes.filter((a) => app.envios.get(caminhoDe({ tipo: 'enquete', enquete: d.enquete.id, momento: d.momento, afirmacao: a.id }))?.estagio === 'guardado');
+    // Guardado à espera da rede ou do fim da pausa (guardadoNoAparelho).
+    const guardados = d.afirmacoes.filter((a) => guardadoNoAparelho(app.envios.get(caminhoDe({ tipo: 'enquete', enquete: d.enquete.id, momento: d.momento, afirmacao: a.id }))));
     const titulo = guardados.length > 0 ? 'Guardado no aparelho' : 'Registrado';
     const itens = d.afirmacoes.map((a) => el('li', { classe: 'resposta', dados: { afirmacao: a.id } }, [
       el('p', { classe: 'resposta-texto', texto: a.texto }),
@@ -1106,7 +1325,7 @@
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       cabecalho(kicker, titulo),
       el('p', { classe: 'texto', texto: d.encerrada ? 'A votação foi encerrada. Olhe o telão.' : 'Pode mudar até o apresentador encerrar.' }),
-      nota(app.ui.nota),
+      notaDaRecusaDaEtapa() || nota(app.ui.nota),
       el('ol', { classe: 'respostas respostas-compactas' }, itens),
       privacidade(),
     ]));
@@ -1140,9 +1359,19 @@
     return 'escolherEquipe';
   }
 
-  function listaIndicadores(indicadores, deltas) {
+  // semDinheiro: sem os indicadores em reais (o saldo acumulado e o empréstimo a
+  // pagar), nas telas que já trazem o resumo mês a mês e a dívida (D-065). No
+  // teste de 30/09, o Jonas via "Saldo acumulado −R$ 1" logo depois de pegar
+  // R$ 1.500 emprestado: o caixa, e não o que a família devia. O empréstimo em
+  // R$ 0 também sai (era uma linha a mais para todo mundo, sem dizer nada).
+  function listaIndicadores(indicadores, deltas, { semDinheiro = false } = {}) {
     const { el } = D();
-    return el('dl', { classe: 'indicadores' }, indicadores.flatMap((ind) => {
+    const visiveis = lista(indicadores).filter((ind) => {
+      if (semDinheiro && ind.formato === 'moeda') return false;
+      return !(ind.id === 'emprestimo' && !(ind.valor > 0) && !(deltas?.[ind.id]));
+    });
+    if (visiveis.length === 0) return null;
+    return el('dl', { classe: 'indicadores' }, visiveis.flatMap((ind) => {
       const delta = deltas ? deltas[ind.id] : undefined;
       return [
         el('dt', { texto: ind.nome }),
@@ -1258,8 +1487,32 @@
       origem.length > 0 ? el('p', { classe: 'conta-origem', texto: origem.join(' · ') }) : null,
       linhaDeAntes(deAntes),
       linhaProtecao(protecaoDoMes),
+      linhaEmprestimo(mes),
       el('p', { classe: 'conta-saldo' }, [faltou ? 'Faltou ' : 'Sobrou ', moeda(Math.abs(mes.saldoMes))]),
     ]);
+  }
+
+  // Esquema v2.2: o empréstimo é dívida, e não renda. O dinheiro entra no caixa,
+  // mas fica fora do "entrou" e do saldo do mês; a parcela sai do caixa, e só
+  // os juros dela entram na conta (a outra parte abate a dívida). Sem esta linha,
+  // o mês do empréstimo mostrava "faltou R$ 1.034" com o caixa em −R$ 1, e
+  // ninguém entendia de onde vinha a diferença. Sem empréstimo no mês (ou sala
+  // antiga, sem os campos), sem a linha.
+  function linhaEmprestimo(mes) {
+    const entrada = Number(mes?.emprestimo) || 0;
+    const parcela = Number(mes?.parcela) || 0;
+    if (entrada <= 0 && parcela <= 0) return null;
+    const { el } = D();
+    const moeda = (v) => el('b', { texto: F().moeda(v) });
+    const partes = [];
+    if (entrada > 0) partes.push(['Empréstimo de ', moeda(entrada), ': o dinheiro entrou no caixa, mas é dívida, e não conta como sobra do mês.']);
+    if (parcela > 0) {
+      partes.push([
+        entrada > 0 ? ' ' : '', 'Parcela do empréstimo ', moeda(parcela), ': ', moeda(Number(mes.jurosEmprestimo) || 0),
+        ' de juros (já na conta) e ', moeda(Number(mes.amortizacao) || 0), ' que abatem a dívida.',
+      ]);
+    }
+    return el('p', { classe: 'conta-emprestimo', dados: { emprestimo: entrada, parcela } }, partes);
   }
 
   // D-059: "A proteção pagou R$ 900: auxílio do INSS (MEI). Sem ela, teria
@@ -1306,53 +1559,196 @@
       ['O que a carta custou: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
-  // "Dívida R$ D · juros de J% ao mês" (D-046), só com o saldo negativo. Os juros
-  // são cobrados no fim do mês seguinte, sobre a dívida que vinha de antes.
+  // ----- A dívida da família (D-046; esquema v2.2, D-065)
+  //
+  // Duas dívidas: o cheque especial (o saldo acumulado negativo, com os juros do
+  // config) e o empréstimo a pagar. A "dívida" das telas é a soma
+  // (historia.dividaTotal). No teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e
+  // o celular disse "Dívida R$ 1", porque olhava só o cheque especial.
+
+  const valoresDe = (indicadores) => Object.fromEntries(lista(indicadores).map((i) => [i.id, i.valor]));
+
+  // As duas dívidas e o caixa, a partir dos indicadores do fim do mês (o
+  // "depois" gravado). null sem a renda (sala sem resultado).
+  function dividaDe(valores) {
+    const d = N().historia?.dividaTotal(valores);
+    if (!d) return null;
+    return { ...d, caixa: Number(valores.renda), jurosMes: app.dados.conteudo?.regras?.jurosDividaMes };
+  }
+
+  // Na decisão, uma linha só (a dobra de 360×740 não tem espaço): "Dívida R$ D ·
+  // juros de J% ao mês" quando é só o cheque especial, e "Dívida R$ D, com R$ E
+  // de empréstimo" quando há empréstimo (os juros dele são outros).
   function linhaDivida(divida) {
-    if (!divida || !(divida.valor > 0)) return null;
+    if (!divida || !(divida.total > 0)) return null;
     const { el } = D();
-    const juros = Number.isFinite(divida.jurosMes) ? [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'] : [];
-    return el('p', { classe: 'divida', dados: { divida: String(divida.valor) } }, ['Dívida ', el('b', { texto: F().moeda(divida.valor) }), ...juros]);
+    const moeda = (v) => el('b', { texto: F().moeda(v) });
+    let resto = [];
+    if (divida.emprestimo > 0) resto = [', com ', moeda(divida.emprestimo), ' de empréstimo'];
+    else if (Number.isFinite(divida.jurosMes)) resto = [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'];
+    return el('p', { classe: 'divida', dados: { divida: String(divida.total) } }, ['Dívida ', moeda(divida.total), ...resto]);
+  }
+
+  // Nas telas de situação, resultado e fim, a dívida por partes, debaixo do
+  // saldo: "Dívida hoje R$ 1.501", "Cheque especial R$ 1 · juros de 7,43% ao
+  // mês", "Empréstimo a 6,39% ao mês: fica devendo R$ 1.500 em 12 parcelas" e "a
+  // próxima: R$ 183 · R$ 2.192 no total, com os juros" (11 × 183 + 179). A taxa
+  // do empréstimo vem do mês gravado (taxaEmprestimo): sem ela, só a taxa do
+  // cheque especial aparecia, mesmo com R$ 1 nele (revisão de 30/09, achado 17). As parcelas vêm do mês gravado (o mesmo
+  // mês dos indicadores). Com empréstimo e caixa positivo, o caixa aparece: sem
+  // ele, "ficou com −R$ 1.000" ao lado de "dívida R$ 1.500" não fechava.
+  // Sem dívida, sem o bloco.
+  function blocoDivida(divida, mes) {
+    if (!divida || !(divida.total > 0)) return null;
+    const { el } = D();
+    const moeda = (v) => el('b', { texto: F().moeda(v) });
+    const partes = [];
+    if (divida.chequeEspecial > 0) {
+      partes.push(el('p', { classe: 'divida-parte', dados: { parte: 'cheque' } }, [
+        'Cheque especial ', moeda(divida.chequeEspecial),
+        Number.isFinite(divida.jurosMes) ? [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'] : null,
+      ]));
+    }
+    if (divida.emprestimo > 0) {
+      const n = Number(mes?.parcelasRestantes) || 0;
+      partes.push(el('p', { classe: 'divida-parte', dados: { parte: 'emprestimo', parcelas: n } }, [
+        'Empréstimo', Number.isFinite(mes?.taxaEmprestimo) ? [' a ', el('b', { texto: F().taxa(mes.taxaEmprestimo) }), ' ao mês'] : null,
+        ': fica devendo ', moeda(divida.emprestimo), n > 0 ? ` em ${n} ${n === 1 ? 'parcela' : 'parcelas'}` : null,
+      ]));
+      const proxima = Number(mes?.proximaParcela) || 0;
+      const aPagar = Number(mes?.aPagar) || 0;
+      if (n > 0 && proxima > 0) {
+        partes.push(el('p', { classe: 'divida-nota' }, [`a próxima: ${F().moeda(proxima)}`, aPagar > 0 ? ` · ${F().moeda(aPagar)} no total, com os juros` : null]));
+      }
+      if (divida.caixa > 0) partes.push(el('p', { classe: 'divida-nota', texto: `Dinheiro em caixa: ${F().moeda(divida.caixa)}` }));
+    }
+    return el('div', {
+      classe: 'divida', dados: { divida: divida.total, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo },
+    }, [el('p', { classe: 'divida-total' }, ['Dívida hoje ', moeda(divida.total)]), ...partes]);
+  }
+
+  // ----- O resumo mês a mês (D-065)
+  //
+  // No teste de 30/09, a situação da persona era um parágrafo de números
+  // ("entrou · gastos · básico · juros · faltou", a origem, o que veio de antes,
+  // a proteção, a carta, os indicadores), difícil de explicar em aula. Agora o
+  // topo é uma tabela: uma linha por mês jogado, com o saldo do mês e com quanto
+  // a família ficou, verde se positivo e vermelho se negativo, sempre com o
+  // sinal (a cor nunca é o único canal, D-016: o "+" e o "−" dizem o mesmo). O
+  // detalhe fica recolhido.
+
+  // "+" e "−" pelo valor arredondado, o mesmo que a tela mostra: −0,4 é "R$ 0",
+  // e não pode sair vermelho.
+  const sinalDe = (v) => {
+    const r = Math.round(v);
+    return r > 0 ? 'positivo' : r < 0 ? 'negativo' : 'zero';
+  };
+  function valorSaldo(v, classe) {
+    const ok = Number.isFinite(v);
+    return D().el('b', { classe: ['valor-saldo', classe], dados: { sinal: ok ? sinalDe(v) : 'zero' }, texto: ok ? F().moeda(v, { sinal: true }) : '—' });
+  }
+
+  // "Mês 1: quanto trabalhar?" vira "Mês 1": o título inteiro não cabe na
+  // coluna em 360 px. Sem os dois-pontos, o título inteiro.
+  function rotuloDoMes(titulo, i) {
+    const t = typeof titulo === 'string' ? titulo.split(':')[0].trim() : '';
+    return t || `Rodada ${i + 1}`;
+  }
+
+  // A história da equipe a partir dos resultados do banco, pela mesma função do
+  // placar final (historia.historiaDaEquipe): nos blocos, a telaDoAluno manda só
+  // o último mês.
+  function historiaDaSala(equipeId) {
+    const H = N().historia;
+    return H && equipeId ? H.historiaDaEquipe(app.dados.conteudo, equipeId, app.dados.resultados) : [];
+  }
+
+  // A tabela e, embaixo, a dívida de hoje (a do último mês jogado). "Ficou com"
+  // é o patrimônio (o saldo acumulado menos o empréstimo a pagar,
+  // historia.patrimonioDe): pelo caixa, quem pegou R$ 1.500 e não pagou nada
+  // parecia R$ 1.500 mais rico. Sala antiga, sem o "depois", fica com "—".
+  // null sem nenhum mês jogado.
+  function resumoMesAMes(historia) {
+    const meses = lista(historia).filter((h) => Number.isFinite(h?.mes?.saldoMes));
+    if (meses.length === 0) return null;
+    const { el } = D();
+    const linhas = meses.map((h, i) => el('tr', { dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, ficouCom: h.saldoAcumulado ?? '' } }, [
+      el('th', { scope: 'row', texto: rotuloDoMes(h.titulo, i) }),
+      el('td', {}, [valorSaldo(h.mes.saldoMes, 'saldo-mes')]),
+      el('td', {}, [valorSaldo(h.saldoAcumulado, 'saldo-ficou')]),
+    ]));
+    const ultimo = meses.at(-1);
+    const divida = ultimo.divida && Number.isFinite(ultimo.saldoAcumulado)
+      ? { ...ultimo.divida, caixa: ultimo.saldoAcumulado + ultimo.divida.emprestimo, jurosMes: app.dados.conteudo?.regras?.jurosDividaMes }
+      : null;
+    return el('section', { classe: 'resumo-meses', 'aria-label': 'Resumo mês a mês' }, [
+      el('table', { classe: 'tabela-meses' }, [
+        el('thead', {}, [el('tr', {}, [
+          el('th', { scope: 'col', texto: 'Mês' }), el('th', { scope: 'col', texto: 'Saldo do mês' }), el('th', { scope: 'col', texto: 'Ficou com' }),
+        ])]),
+        el('tbody', {}, linhas),
+      ]),
+      blocoDivida(divida, ultimo.mes),
+    ]);
+  }
+
+  // O detalhe recolhido (toque para abrir), com o mesmo marcador "▸ ver /
+  // ▾ fechar" da situação na decisão. A tela é remontada a cada mudança dos
+  // dados (alguém entra na sala, a equipe vota): o aberto fica lembrado em
+  // app.ui.recolhidos, pela chave, até o próximo passo.
+  function recolhido(chave, resumo, filhos) {
+    const { el } = D();
+    const corpo = [filhos].flat(Infinity).filter(Boolean);
+    if (corpo.length === 0) return null;
+    const caixa = el('details', { classe: 'recolhido', dados: { recolhido: chave }, open: app.ui.recolhidos.has(chave) }, [
+      el('summary', { texto: resumo }),
+      el('div', { classe: 'recolhido-corpo' }, corpo),
+    ]);
+    caixa.addEventListener('toggle', () => {
+      if (caixa.open) app.ui.recolhidos.add(chave);
+      else app.ui.recolhidos.delete(chave);
+    });
+    return caixa;
   }
 
   // A história da equipe, mês a mês (D-045): a opção, a carta e a conta de cada
   // mês. Carta grave aparece como as outras, sem destaque (arquitetura, seção 8).
+  // Fica recolhida debaixo do resumo mês a mês (D-065): aberta, eram de 8 a 10
+  // linhas por mês, e o placar final virava uma rolagem sem fim.
   function blocoHistoria(historia) {
     const meses = lista(historia);
     if (meses.length === 0) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
-    return [
-      el('h2', { classe: 'subtitulo', texto: 'A história da sua equipe' }),
-      el('ol', { classe: 'historia' }, meses.map((h) => {
-        const m = h.mes;
-        // A mesma ordem da conta do mês: entrou · gastos · básico · juros ·
-        // faltou (D-052), com gastos e juros só quando existem.
-        const conta = m && Number.isFinite(m.saldoMes)
-          ? el('p', { classe: 'historia-conta' }, [
-            'Entrou ', moeda(m.entrou),
-            m.protecao > 0 ? [' · a proteção pagou ', moeda(m.protecao)] : null,
-            m.gastos > 0 ? [' · gastos ', moeda(m.gastos)] : null,
-            ' · básico ', moeda(m.basico),
-            m.juros > 0 ? [' · juros ', moeda(m.juros)] : null,
-            m.saldoMes < 0 ? ' · faltou ' : ' · sobrou ', moeda(Math.abs(m.saldoMes)),
-          ])
-          : null;
-        // O texto da opção já vem do jeito da persona da equipe
-        // (historia.historiaDaEquipe, D-054).
-        return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
-          el('p', { classe: 'kicker', texto: h.titulo || '' }),
-          el('p', {}, ['Decisão: ', el('b', { texto: h.opcao?.rotulo || '' })]),
-          h.opcao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.opcao.narrativa }) : null,
-          el('p', {}, ['Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
-          h.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.carta.narrativa }) : null,
-          linhaCustoCarta(h.cartaCusto),
-          linhaDeAntes(h.deAntes),
-          conta,
-          linhaProtecao(h.protecaoDoMes),
-        ]);
-      })),
-    ];
+    return recolhido('historia', 'A história mês a mês', el('ol', { classe: 'historia' }, meses.map((h) => {
+      const m = h.mes;
+      // A mesma ordem da conta do mês: entrou · gastos · básico · juros ·
+      // faltou (D-052), com gastos e juros só quando existem.
+      const conta = m && Number.isFinite(m.saldoMes)
+        ? el('p', { classe: 'historia-conta' }, [
+          'Entrou ', moeda(m.entrou),
+          m.protecao > 0 ? [' · a proteção pagou ', moeda(m.protecao)] : null,
+          m.gastos > 0 ? [' · gastos ', moeda(m.gastos)] : null,
+          ' · básico ', moeda(m.basico),
+          m.juros > 0 ? [' · juros ', moeda(m.juros)] : null,
+          m.saldoMes < 0 ? ' · faltou ' : ' · sobrou ', moeda(Math.abs(m.saldoMes)),
+        ])
+        : null;
+      // O texto da opção já vem do jeito da persona da equipe
+      // (historia.historiaDaEquipe, D-054).
+      return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
+        el('p', { classe: 'kicker', texto: h.titulo || '' }),
+        el('p', {}, ['Decisão: ', el('b', { texto: h.opcao?.rotulo || '' })]),
+        h.opcao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.opcao.narrativa }) : null,
+        el('p', {}, ['Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
+        h.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.carta.narrativa }) : null,
+        linhaCustoCarta(h.cartaCusto),
+        linhaDeAntes(h.deAntes),
+        conta,
+        linhaEmprestimo(m),
+        linhaProtecao(h.protecaoDoMes),
+      ]);
+    })));
   }
 
   function telaPersona(alvo, d) {
@@ -1380,54 +1776,76 @@
     return origens[origem] ? `${base} (${origens[origem]})` : base;
   }
 
+  // A situação da persona nos blocos e no placar final (D-065). De cima para
+  // baixo: o resumo mês a mês e a dívida de hoje (o que se explica em aula, e
+  // cabe em 360×740 sem rolar), o detalhe recolhido e, por último, a família
+  // e os indicadores que não são dinheiro (energia, proteção). No teste de
+  // 30/09, a conta do mês, a origem, o que veio de antes, a proteção, a carta,
+  // a narrativa e os indicadores vinham todos abertos, um depois do outro.
   function telaSituacao(alvo, d) {
     const { el, acrescentar } = D();
+    const nome = d.persona?.nome || 'sua persona';
+    // No placar final a história vem pronta; nos blocos, a telaDoAluno manda só
+    // o último mês, e o resumo sai dos resultados do banco (a mesma função).
+    const historia = d.final ? lista(d.historia) : historiaDaSala(d.equipe?.id);
+    const resumo = resumoMesAMes(historia);
     const filhos = [
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
-      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? `A situação de ${d.persona?.nome || 'sua persona'}` : (d.titulo || `A situação de ${d.persona?.nome || 'sua persona'}`)),
-      linhaFamilia(d.persona),
+      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? `A situação de ${nome}` : (d.titulo || `A situação de ${nome}`)),
     ];
-    if (d.final) {
-      // No fim, a história dos meses substitui o "último mês" (D-045).
-      filhos.push(blocoHistoria(d.historia), linhaDivida(d.divida));
-    } else if (d.mes) {
-      // A conta do mês primeiro: é o que a família sente (D-044). Depois, a
-      // narrativa do último mês, em primeira pessoa (D-006). Carta grave: só o
-      // texto, sem destaque nenhum (arquitetura, seção 8, "tema sensível").
-      filhos.push(contaDoMes(d.mes, d.persona), linhaDivida(d.divida));
-      filhos.push(el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
-        el('p', { classe: 'kicker', texto: `Último mês · ${d.mes.titulo || ''}` }),
-        el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
-        el('p', {}, ['Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
-        linhaCustoCarta(d.mes.cartaCusto),
-        ...lista(d.narrativa).map((t) => el('blockquote', { classe: 'narrativa', texto: t })),
-      ]));
-    } else {
-      filhos.push(linhaBasico(d.persona), linhaDivida(d.divida),
+    if (resumo) filhos.push(resumo);
+    else if (!d.final) {
+      filhos.push(linhaBasico(d.persona), linhaDivida(dividaDe(valoresDe(d.indicadores))),
         el('p', { classe: 'texto-2', texto: 'Ainda não houve rodada: este é o ponto de partida.' }));
     }
-    filhos.push(el('h2', { classe: 'subtitulo', texto: 'Indicadores' }), listaIndicadores(d.indicadores));
-    if (d.final && N().historia.escolhaOuSorte(d.placar)) {
-      // "Escolha ou sorte?", contada como história (D-041): os termos "piloto
-      // automático", "efeito das decisões" e "sorte" como legenda saíram da tela,
-      // porque confundiam no ensaio.
-      // Os valores inteiros de historia.escolhaOuSorte fecham com o total: cada
-      // um arredondado sozinho errava a soma por R$ 1 (revisão de 29/09). Como
-      // no telão, os totais vão sem sinal de variação e as variações sempre com
-      // + ou −, e o total do fim, com "=", em destaque (rascunho, seção 7, item 11).
-      const c = N().historia.escolhaOuSorte(d.placar);
-      const linhas = c ? [
-        ['Se não mudassem nada', F().moeda(c.piloto)],
-        ['As escolhas', F().variacao(c.escolhas)],
-        ['A sorte', F().variacao(c.sorte)],
-        ['= Terminaram com', F().moeda(c.total), 'placar-total'],
-      ] : [];
-      filhos.push(el('h2', { classe: 'subtitulo', texto: 'Escolha ou sorte?' }),
-        el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])));
+    if (d.final) {
+      // "Escolha ou sorte?" e o pior caso logo depois do resumo: são o fecho da
+      // aula. A história inteira fica recolhida (D-045, D-065).
+      filhos.push(blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso), blocoHistoria(historia));
+    } else if (d.mes) {
+      // O último mês, recolhido: a conta (D-044, D-052), a decisão e a carta, com
+      // a narrativa em primeira pessoa (D-006). Carta grave: só o texto, sem
+      // destaque nenhum (arquitetura, seção 8, "tema sensível").
+      const rotulo = rotuloDoMes(d.mes.titulo, historia.length - 1);
+      filhos.push(recolhido(`mes:${d.mes.rodada}`, `${rotulo}: a conta em detalhe`, [
+        contaDoMes(d.mes, d.persona),
+        el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
+          el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
+          el('p', {}, ['Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
+          linhaCustoCarta(d.mes.cartaCusto),
+          ...lista(d.narrativa).map((t) => el('blockquote', { classe: 'narrativa', texto: t })),
+        ]),
+      ]));
     }
-    if (d.final) filhos.push(blocoPiorCaso(d.piorCaso));
+    filhos.push(linhaFamilia(d.persona));
+    const indicadores = listaIndicadores(d.indicadores, null, { semDinheiro: true });
+    if (indicadores) filhos.push(el('h2', { classe: 'subtitulo', texto: 'Indicadores' }), indicadores);
     acrescentar(alvo, el('section', { classe: 'bloco' }, filhos));
     return 'situacao';
+  }
+
+  // "Escolha ou sorte?", contada como história (D-041): os termos "piloto
+  // automático", "efeito das decisões" e "sorte" como legenda saíram da tela,
+  // porque confundiam no ensaio.
+  // Os valores inteiros de historia.escolhaOuSorte fecham com o total: cada um
+  // arredondado sozinho errava a soma por R$ 1 (revisão de 29/09). Como no
+  // telão, os totais vão sem sinal de variação e as variações sempre com + ou −,
+  // e o total do fim, com "=", em destaque (rascunho, seção 7, item 11). O total
+  // é o patrimônio, o mesmo "ficou com" da última linha do resumo.
+  function blocoEscolhaOuSorte(placar) {
+    const c = N().historia.escolhaOuSorte(placar);
+    if (!c) return null;
+    const { el } = D();
+    const linhas = [
+      ['Se não mudassem nada', F().moeda(c.piloto)],
+      ['As escolhas', F().variacao(c.escolhas)],
+      ['A sorte', F().variacao(c.sorte)],
+      ['= Terminaram com', F().moeda(c.total), 'placar-total'],
+    ];
+    return [
+      el('h2', { classe: 'subtitulo', texto: 'Escolha ou sorte?' }),
+      el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])),
+    ];
   }
 
   // ----- Decisão da equipe, com a contagem ao vivo (só da própria equipe)
@@ -1438,9 +1856,13 @@
     const pendenteBase = { tipo: 'decisao', rodada: d.rodada.id, equipe: membro.equipe };
     const envio = app.envios.get(caminhoDe(pendenteBase));
     const enviando = emVoo(envio);
-    const escolhido = enviando || envio?.estagio === 'guardado' ? envio.pendente.opcao : d.meuVoto;
+    const escolhido = enviando || guardadoNoAparelho(envio) ? envio.pendente.opcao : d.meuVoto;
     const personaId = personaIdDaEquipe(membro.equipe);
     const aberta = d.opcoes.some((op) => op.id === app.ui.aberta) ? app.ui.aberta : null;
+    const eqNova = app.ui.movido?.rodada === d.rodada.id && !escolhido ? app.dados.conteudo?.equipes?.[app.ui.movido.para] : null;
+    const eqNovaTexto = eqNova
+      ? `Você foi movido para a equipe ${numeroEquipe(app.ui.movido.para)} ${eqNova.nome}: o voto na equipe anterior não vale aqui. Vote de novo.`
+      : null;
     // D-055: tocar na opção abre a explicação dela, e só o "Votar nesta" vota. No
     // ensaio, o toque direto votava antes de a equipe ler o dilema. A narrativa
     // aparece só na opção aberta: com as quatro abertas, cada cartão tinha 5 ou
@@ -1459,22 +1881,24 @@
       if (estaAberta) b.setAttribute('aria-controls', idDetalhe);
       D().limpar(b);
       // "Seu voto" em texto, e não só no fundo claro: estado nunca só por cor (D-016).
+      // "✓" só com a confirmação do servidor: sem rede, a opção marcada dizia
+      // "✓ seu voto" com o voto ainda no aparelho, e parecia que tinha contado.
+      let marca = '✓ seu voto';
+      if (minha && enviando) marca = 'enviando…';
+      else if (minha && envio?.estagio === 'guardado') marca = 'guardado no aparelho';
+      else if (minha && envio?.estagio === 'esperaRetomar') marca = 'guardado até retomar';
       acrescentar(b, [
         el('b', { classe: 'opcao-letra', texto: letraDe(d.rodada.id, op.id) }),
         el('span', { classe: 'opcao-textos' }, [
           el('span', { classe: 'opcao-rotulo', texto: op.rotulo || op.id }),
-          minha ? el('span', { classe: 'opcao-seu-voto', texto: '✓ seu voto' }) : null,
+          minha ? el('span', { classe: 'opcao-seu-voto', texto: marca }) : null,
         ]),
         el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
       ]);
       return el('div', { classe: ['opcao-aluno', estaAberta ? 'aberta' : null], dados: { opcaoBloco: op.id } }, [
-        b, estaAberta ? detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase }) : null,
+        b, estaAberta ? detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase, movido: eqNovaTexto }) : null,
       ]);
     });
-    const motivos = {
-      entrouDepois: 'Você entrou depois de esta decisão abrir: acompanhe a conversa. O seu voto vale na próxima.',
-      pausado: 'Pausado pelo apresentador.',
-    };
     const forcada = d.forcada ? `O apresentador registrou a decisão da equipe: ${letraDe(d.rodada.id, d.forcada)}.` : null;
     const s = d.situacao;
     const persona = s?.persona?.nome;
@@ -1482,9 +1906,17 @@
     // as opções. O texto da rodada fica no telão: no celular, ele empurrava as
     // opções para baixo da dobra (revisão de 29/09). A situação completa fica fechada depois das opções,
     // para os botões de voto subirem na tela.
-    const pressao = [linhaBasico(s?.persona), linhaDivida(s?.divida)].filter(Boolean);
+    // A dívida é a soma do cheque especial com o empréstimo (esquema v2.2): no
+    // teste de 30/09, o Jonas decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500
+    // emprestados. Só a linha muda; o voto não.
+    const pressao = [linhaBasico(s?.persona), linhaDivida(s ? dividaDe(valoresDe(s.indicadores)) : null)].filter(Boolean);
     const aviso = botao('Mais opções abaixo ↓', () => rolarAteUltimaOpcao(), { classe: 'aviso-rolagem', dados: { avisoRolagem: '1' } });
     aviso.hidden = true;
+    // Movido de equipe depois de votar (avisarSeMovido): a nota fica acima das
+    // opções e dentro da opção aberta (onde o aluno está olhando), até ele
+    // votar pela equipe nova.
+    const movido = eqNovaTexto ? nota(eqNovaTexto, 'erro') : null;
+    if (movido) movido.dataset.movido = '1';
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { rodada: d.rodada.id } }, [
       // A dica de como se vota (D-055) no lugar do "Decisão da equipe": a frase
       // inteira fica depois das opções, e em 360×740 caía abaixo da dobra; uma
@@ -1497,10 +1929,11 @@
         el('p', { classe: 'contexto-texto', texto: d.contexto }),
       ]) : null,
       pressao.length > 0 ? el('div', { classe: 'pressao' }, pressao) : null,
+      movido,
       el('div', { classe: 'opcoes-aluno', role: 'group', 'aria-label': `Opções da rodada (${opcoes.length})` }, opcoes),
-      nota(d.motivo ? motivos[d.motivo] : null),
+      nota(d.motivo ? MOTIVOS_SEM_VOTO[d.motivo] : null),
       nota(forcada),
-      nota(textoEnvio(envio, escolhido ? `Seu voto: ${letraDe(d.rodada.id, escolhido)} · registrado.` : null), envio?.estagio === 'recusado' ? 'erro' : 'info') || nota(app.ui.nota),
+      notaDoEnvio(envio, escolhido ? `Seu voto: ${letraDe(d.rodada.id, escolhido)} · registrado.` : null) || nota(app.ui.nota),
       // A dica do toque que não vota (D-055) fica aqui, depois das opções: acima
       // delas, a linha a mais empurrava a letra D para baixo da dobra em 360×740.
       el('p', { classe: 'texto-2', texto: `Toque numa opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome || 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
@@ -1518,24 +1951,47 @@
   // equipe (D-054; o celular não recebe a narrativa da telaDoAluno, que manda
   // só id, rótulo e votos, e a busca no conteúdo pela mesma regra do telão) e o
   // "Votar nesta". Na opção que já tem o voto, uma frase no lugar do botão.
-  function detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase }) {
+  function detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase, movido }) {
     const { el, botao } = D();
     const { narrativa } = N().historia.textoDaOpcao(app.dados.conteudo, d.rodada.id, op.id, personaId);
     let confirmacao;
+    let aviso = null;
     if (!minha) {
       confirmacao = botao('Votar nesta', () => votar({ ...pendenteBase, opcao: op.id }), {
         classe: 'botao-primario botao-votar', desabilitado: !d.podeVotar || enviando, dados: { votar: op.id },
       });
+      // O porquê fica logo abaixo do botão tocado. No teste de 30/09, a recusa
+      // só aparecia numa nota embaixo da lista (fora da tela em 360×740), o
+      // botão ficava igual, e o "Votar nesta" parecia quebrado. O mesmo para o
+      // botão apagado (entrou depois, pausado): sem o motivo à vista, parecia defeito.
+      if (!d.podeVotar) aviso = avisoDaOpcao(MOTIVOS_SEM_VOTO[d.motivo], 'info');
+      else if (envio?.estagio === 'recusado' && envio.pendente.opcao === op.id) {
+        const r = recusaParaTela(envio);
+        aviso = avisoDaOpcao(r.texto, r.tipo);
+      } else if (envio?.estagio === 'falhou' && envio.pendente.opcao === op.id) {
+        aviso = avisoDaOpcao('Não foi possível enviar o voto: toque de novo em “Votar nesta”.', 'erro');
+      } else if (movido) aviso = avisoDaOpcao(movido, 'erro');
     } else {
       let texto = 'Seu voto está nesta.';
       if (enviando) texto = 'Enviando o seu voto nesta…';
       else if (envio?.estagio === 'guardado') texto = 'Seu voto nesta está guardado no aparelho.';
+      else if (envio?.estagio === 'esperaRetomar') texto = 'Seu voto nesta está guardado: vai sozinho quando o apresentador retomar.';
       confirmacao = el('p', { classe: 'opcao-votada', texto });
     }
     return el('div', { classe: 'opcao-detalhe', id: idDetalhe, dados: { detalhe: op.id } }, [
       narrativa ? el('p', { classe: 'opcao-narrativa', texto: narrativa }) : null,
       confirmacao,
+      aviso,
     ]);
+  }
+
+  // A nota de sempre (mesmo estilo), dentro da opção aberta, com a classe
+  // própria para o e2e achar a do botão, e não a do fim da lista.
+  function avisoDaOpcao(texto, tipo) {
+    if (!texto) return null;
+    const n = nota(texto, tipo);
+    n.classList.add('opcao-aviso');
+    return n;
   }
 
   // Uma aberta por vez: tocar na aberta fecha, tocar noutra troca. A que abriu
@@ -1575,17 +2031,19 @@
     if (!aviso) return;
     const ultima = ultimaOpcao();
     let mostrar = Boolean(ultima) && ultima.getBoundingClientRect().bottom > raiz.innerHeight + 1;
-    // D-055: o "Votar nesta" da opção aberta nunca fica atrás do aviso fixo. A
-    // faixa do aviso é medida com ele à mostra (a altura muda com a área segura
-    // do iPhone); trocar o hidden duas vezes no mesmo quadro não pisca.
-    const votar = app.el.tela.querySelector('[data-detalhe] [data-votar], [data-detalhe] .opcao-votada');
-    if (mostrar && votar) {
-      const r = votar.getBoundingClientRect();
+    // D-055: o "Votar nesta" da opção aberta nunca fica atrás do aviso fixo, nem
+    // a explicação logo abaixo dele (voto recusado, botão apagado). A faixa do
+    // aviso é medida com ele à mostra (a altura muda com a área segura do
+    // iPhone); trocar o hidden duas vezes no mesmo quadro não pisca.
+    const alvos = [...app.el.tela.querySelectorAll('[data-detalhe] [data-votar], [data-detalhe] .opcao-votada, [data-detalhe] .opcao-aviso')];
+    if (mostrar && alvos.length > 0) {
+      const topo = Math.min(...alvos.map((n) => n.getBoundingClientRect().top));
+      const baixo = Math.max(...alvos.map((n) => n.getBoundingClientRect().bottom));
       const estava = aviso.hidden;
       aviso.hidden = false;
       const topoAviso = aviso.getBoundingClientRect().top;
       aviso.hidden = estava;
-      if (r.bottom > topoAviso && r.top < raiz.innerHeight) mostrar = false;
+      if (baixo > topoAviso && topo < raiz.innerHeight) mostrar = false;
     }
     if (aviso.hidden === mostrar) aviso.hidden = !mostrar;
   }
@@ -1604,25 +2062,43 @@
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(d.rodada?.titulo || 'Rodada', 'Sorteando…'),
       el('p', { classe: 'texto', texto: 'Olhe o telão: a decisão mudou o tamanho das fatias, e a sorte escolhe a fatia.' }),
-      nota(app.ui.nota),
+      notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'sorteando';
   }
 
+  // O resultado da rodada no celular (D-065), o mesmo padrão da situação: a
+  // carta, a decisão em uma linha, o saldo do mês em destaque (verde se
+  // positivo, vermelho se negativo, sempre com o sinal) e a dívida de hoje. A
+  // conta inteira (D-044, D-052, D-059), a narrativa da decisão e o custo da
+  // carta ficam recolhidos; a energia e a proteção, com a variação do mês, ficam
+  // à vista (são duas linhas, e mudam a sorte do mês seguinte, D-051).
   function telaResultado(alvo, d) {
     const { el, acrescentar } = D();
     const grave = d.carta?.tom === 'grave';
+    const mes = d.mes;
+    const indicadores = listaIndicadores(d.indicadores, d.delta, { semDinheiro: true });
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { tom: grave ? 'grave' : 'normal', carta: d.carta?.id || '' } }, [
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(`${d.rodada?.titulo || 'Rodada'} · a carta da equipe`, d.carta?.titulo || ''),
+      // O voto que chegou depois do fechamento: o resultado não é o dele, e a
+      // tela diz, logo no alto (o celular pode ter pulado a "votação encerrada").
+      notaDaRecusaDaEtapa(),
       d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
-      linhaCustoCarta(d.cartaCusto),
-      el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
-      d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
-      contaDoMes(d.mes, personaDaEquipe(d.equipe?.id), d.deAntes, d.protecaoDoMes),
-      linhaDivida(d.divida),
-      el('h2', { classe: 'subtitulo', texto: 'Como ficou' }),
-      listaIndicadores(d.indicadores, d.delta),
+      el('p', { classe: 'decisao-linha' }, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
+      Number.isFinite(mes?.saldoMes)
+        ? el('p', { classe: 'saldo-destaque', dados: { saldoMes: mes.saldoMes, sinal: sinalDe(mes.saldoMes) } }, [
+          el('span', { classe: 'saldo-rotulo', texto: 'Saldo do mês' }),
+          valorSaldo(mes.saldoMes),
+        ])
+        : null,
+      blocoDivida(dividaDe(valoresDe(d.indicadores)), mes),
+      recolhido(`resultado:${d.rodada?.id}`, 'A conta do mês em detalhe', [
+        linhaCustoCarta(d.cartaCusto),
+        d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
+        contaDoMes(mes, personaDaEquipe(d.equipe?.id), d.deAntes, d.protecaoDoMes),
+      ]),
+      indicadores ? [el('h2', { classe: 'subtitulo', texto: 'Como ficou' }), indicadores] : null,
     ]));
     return 'resultado';
   }
@@ -1667,15 +2143,18 @@
     ]);
   }
 
+  // O fim (D-065): o resumo mês a mês e a dívida no topo, o pior caso e a
+  // história recolhida. Antes, a primeira linha era "Saldo acumulado da sua
+  // equipe", o caixa gravado no placar: com o empréstimo, ele dizia R$ 1.500 a
+  // mais do que a família tinha. O "ficou com" da última linha é o patrimônio.
   function telaFim(alvo, d) {
     const { el, acrescentar } = D();
-    const renda = app.dados.conteudo?.indicadores?.renda;
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       d.equipe ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
-      d.placar && renda ? el('p', { classe: 'texto' }, [`${renda.nome} da sua equipe: `, el('b', { texto: F().indicador(renda, d.placar.renda) })]) : null,
-      blocoHistoria(d.historia),
+      resumoMesAMes(d.historia),
       blocoPiorCaso(d.piorCaso),
+      blocoHistoria(d.historia),
       el('p', { classe: 'texto-2', texto: 'Pode fechar esta página. Os votos individuais são apagados com a sala.' }),
     ]));
     return 'fim';

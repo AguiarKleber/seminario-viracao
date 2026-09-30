@@ -306,18 +306,34 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 /* ---------- Personas ---------- */
 
-/* Duas linhas por persona, na largura toda: as equipes, o nome, o ofício e as
- * pessoas em casa; embaixo, o básico, a outra renda e o furo de um mês comum
- * (revisão de 29/09). Com as equipes numa coluna à esquerda, cinco personas
- * com a casa passavam de 1024×768. */
-.personas { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: center; }
+/* Três linhas por persona, na largura toda (D-065, teste de 30/09): quem é (as
+ * equipes, o nome e o ofício), a casa (pessoas, básico, outra renda) e a conta
+ * de um mês comum, em vermelho ou verde. Antes, duas linhas corridas: a equipe
+ * (com a forma) e o nome ficavam em linhas de base diferentes, e o "· 3 pessoas
+ * em casa" caía sozinho na linha de baixo; a tela parecia sobreposta. Cada
+ * pedaço é inteiro (.conta, .equipe): a linha só quebra entre eles. */
+.tela-personas h1 { font-size: calc(var(--corpo) * 1.4); }
+.personas {
+  display: flex; flex-direction: column; justify-content: safe center;
+  gap: calc(var(--espaco) * .6);
+  flex: 1 1 auto; min-height: 0;
+}
+/* Entrelinha 1,12 e vãos curtos: cinco personas (seis equipes) com a faixa de
+   entrada embaixo passavam 7 px da borda de 1024×768. O fio entre as personas
+   continua separando uma da outra. */
 .persona-linha {
-  display: flex; flex-direction: column; gap: .05em; line-height: 1.2;
-  padding-bottom: calc(var(--espaco) * .6);
+  display: flex; flex-direction: column; gap: .06em; line-height: 1.12;
+  padding-bottom: calc(var(--espaco) * .5);
   border-bottom: 1px solid var(--linha);
 }
-.persona-quem { display: flex; flex-wrap: wrap; align-items: baseline; gap: .05em .55em; }
+.persona-quem { display: flex; flex-wrap: wrap; align-items: center; gap: .1em 1em; }
+.persona-equipes { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .1em .45em; }
+.persona-e { color: var(--texto-2); }
+.persona-nome { white-space: nowrap; }
 .persona-casa b { color: var(--texto); }
+.persona-mes { font-weight: 600; }
+.persona-mes[data-sinal="negativo"] { color: var(--negativo); }
+.persona-mes[data-sinal="positivo"] { color: var(--positivo); }
 
 /* ---------- Rodada ---------- */
 
@@ -367,44 +383,58 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 /* ---------- Resultado ---------- */
 
-/* Uma frase por equipe (equipe, letra, carta, contas do mês, dívida), que
-   quebra entre os pedaços. Com as contas numa coluna ao lado da equipe, ou em
-   duas linhas fixas, seis equipes com a faixa de entrada não cabiam em
-   1024×768. */
-.grade-resultados {
-  display: flex; flex-direction: column; gap: calc(var(--espaco) * .3);
-  flex: 1 1 auto; min-height: 0; justify-content: safe center;
-}
-/* Padding e entrelinha mínimos: com o custo real da carta (D-052), seis equipes
-   de cartas caras dão três linhas cada, e com .12em e 1.12 a sexta passava da
-   borda de 1024×768 por ~25 px (e2e, parte 4). A fonte fica nos 28 px. */
-/* Revisão de 29/09, 2ª rodada (achado 13): o pior caso de seis equipes, todas
-   com origem, multa, gasto de carta e dívida, passava de 1024×768. O cartão
-   ganhou largura (padding lateral menor, e a tela do resultado usa parte da
-   margem lateral do palco): cada linha leva mais pedaços, e a frase fica em
-   três linhas. */
+/* D-065 (teste de 30/09): uma faixa por equipe, só com o essencial, em três
+ * colunas alinhadas entre as faixas (subgrid): a equipe e a persona; a carta,
+ * grande, com os dias parados embaixo; o saldo do mês em verde ou vermelho,
+ * com sinal, e a dívida embaixo. Antes, cada equipe era uma frase corrida de
+ * três linhas com todas as contas, sem espaço entre as equipes, e a tela era
+ * difícil de explicar em aula. O detalhamento ficou no celular e na história.
+ * Nada abaixo do corpo (28 px em 1024×768); o e2e prova seis equipes com a
+ * carta mais cara em 1024×768, sem rolagem e com espaço entre as faixas. */
 .tela-rodada-resultado { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
+.tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.4); }
+.resultado-legenda { color: var(--texto-2); padding-right: .6em; white-space: nowrap; }
+.grade-resultados {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-content: safe center;
+  row-gap: calc(var(--espaco) * 1.2);
+}
+/* O aperto (telao.js, apertarResultado): só quando seis faixas com a faixa de
+   entrada embaixo não cabem. As faixas se aproximam, sem encostar, e a origem
+   da decisão sai (o celular de cada equipe a mostra). */
+.grade-resultados[data-aperto] { row-gap: calc(var(--espaco) * .7); }
+.grade-resultados[data-aperto] .resultado-origem { display: none; }
 .cartao-resultado {
-  display: flex; flex-direction: column;
-  padding: .05em .3em;
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: subgrid; align-items: center;
+  column-gap: 1.2em;
+  padding: .2em .6em;
   border: 2px solid var(--linha); border-radius: var(--raio);
   background: var(--superficie);
   line-height: 1.08;
 }
-.resultado-frase .letra { height: 1.1em; min-width: 1.1em; vertical-align: -0.12em; }
-.resultado-carta { font-weight: 750; }
+.resultado-quem, .resultado-meio, .resultado-dinheiro { display: flex; flex-direction: column; gap: .04em; min-width: 0; }
+.resultado-persona { color: var(--texto-2); }
+/* "Jonas · decisão B" numa linha só (revisão de 30/09, achado 9). */
+.resultado-persona { white-space: nowrap; }
+.resultado-escolha b { color: var(--texto); }
+.resultado-carta { font-size: 1.15em; font-weight: 750; line-height: 1.08; }
+/* Cada pedaço da linha de detalhe inteiro (a decisão, o empréstimo, a parada,
+   a proteção, a origem): a linha só quebra entre eles. "ninguém / votou"
+   quebrava no meio (revisão de 30/09, achado 15). */
+.resultado-detalhe { color: var(--texto-2); }
+/* O separador " · " da origem fica fora do nowrap: dentro, não sobrava onde
+   quebrar, e a origem invadia a coluna do saldo. */
+.resultado-detalhe > span:not(.resultado-origem), .resultado-decisao { white-space: nowrap; }
+.resultado-detalhe b { color: var(--texto); }
 .resultado-decisao { color: var(--texto-2); }
-/* O aperto do pior caso (telao.js, apertarResultado): sem a origem e, no nível
-   2, sem o que veio de antes. O celular de cada equipe mostra os dois. */
-.grade-resultados[data-aperto] .resultado-origem,
-.grade-resultados[data-aperto="2"] .resultado-antes { display: none; }
-.resultado-divida { font-weight: 700; white-space: nowrap; }
-/* O título do mês menor que o das outras telas, e a nota dos juros numa linha
-   só: com o custo real da carta (D-052), cada linha de altura vale uma equipe
-   de seis em 1024×768, e o cabeçalho em duas linhas (a nota quebrada) custava
-   25 px. O título continua acima do corpo (1,3×, 36 px em 1024×768). */
-.tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.3); }
-.resultado-juros { color: var(--texto-2); max-width: 17em; text-align: right; line-height: 1.15; }
+.resultado-dinheiro { align-items: flex-end; text-align: right; }
+.resultado-saldo { font-size: 1.3em; font-weight: 800; white-space: nowrap; }
+.resultado-saldo[data-sinal="negativo"] { color: var(--negativo); }
+.resultado-saldo[data-sinal="positivo"] { color: var(--positivo); }
+.resultado-divida { color: var(--texto-2); white-space: nowrap; }
+.resultado-divida b { color: var(--texto); }
 /* As contas do mês (D-044) e o custo real da carta (D-052), no resultado e na
    história: cada pedaço inteiro, o rótulo discreto e o valor em destaque. */
 .contas, .custo-carta, .historia-dinheiro { color: var(--texto-2); }
@@ -412,10 +442,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .conta { white-space: nowrap; }
 /* Rótulo que quebra, com a última palavra colada ao valor (telao.js, rotuloEValor). */
 .conta-fim { white-space: nowrap; }
-.cartao-resultado.destaque { border-color: var(--texto); border-width: 3px; }
+/* O destaque engrossa o contorno por dentro (sombra), e não pela borda: 1 px a
+   mais de borda desalinhava as colunas da faixa destacada das outras. */
+.cartao-resultado.destaque { border-color: var(--texto); box-shadow: inset 0 0 0 1px var(--texto); }
 /* Carta grave: só o texto da consequência, em cor neutra, sem animação e sem
    destaque (seção 8, "tema sensível"). */
-.cartao-resultado.grave, .cartao-resultado.grave.destaque { border-color: var(--linha-forte); border-width: 2px; }
+.cartao-resultado.grave, .cartao-resultado.grave.destaque { border-color: var(--linha-forte); box-shadow: none; }
 /* O deslocamento cabe na margem que sobra do palco (o resultado usa parte
    dela): com −1,5vw, o cartão animado saía pela esquerda da tela. */
 @keyframes destacar { from { opacity: .15; transform: translateX(-1vw); } to { opacity: 1; transform: none; } }
@@ -474,6 +506,11 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 }
 .historia-fatos b { color: var(--texto); }
 .historia-final { font-size: calc(var(--corpo) * 1.1); }
+/* O empréstimo como dívida (esquema v2.2): "pegou empréstimo de R$ 1.500" depois
+   das contas do mês, e a dívida com que a equipe termina no fim da história. */
+.historia-emprestimo b { color: var(--texto); }
+.historia-divida { color: var(--texto-2); }
+.historia-divida b { color: var(--texto); }
 
 /* ---------- Fim ---------- */
 

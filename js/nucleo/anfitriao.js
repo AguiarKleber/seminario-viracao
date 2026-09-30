@@ -8,9 +8,15 @@
 //
 // Nada aqui usa timer. O telão fica escondido atrás dos slides (Alt+Tab, D-007),
 // e o navegador estrangula os timers de aba escondida: um fechamento por timer
-// dispararia minutos depois, ou nunca. O prazo é gravado só para a regra do banco
-// cortar o voto atrasado e para o cronômetro visual; quem encerra é o
-// apresentador (D-010).
+// dispararia minutos depois, ou nunca. Quem encerra é o apresentador (D-010).
+//
+// O prazo gravado é o da REGRA do banco: o fim do cronômetro mais uma folga
+// (alunoLogica.FOLGA_DA_REGRA_MS, 12 h), e o cronômetro visual é o prazo menos
+// a folga (alunoLogica.fimDoCronometro). No teste de 30/09, o prazo era o
+// próprio fim do cronômetro: a decisão do mês 3 ficou aberta 7 min 35 s no
+// telão, e a regra recusou todo voto depois de 2 min 5 s (120 s + 5 s de
+// graça). O celular tocava "Votar nesta" e nada contava. O voto tem de valer
+// enquanto o apresentador não encerrar: é o "fechando" que corta, e não o relógio.
 (function (raiz) {
   'use strict';
   const V = (raiz.Viracao ||= {});
@@ -36,6 +42,15 @@
     if (!RE_SALA.test(String(sala))) throw new Error(`Código de sala inválido: "${sala}".`);
     if (typeof gerarSemente !== 'function') throw new TypeError('gerarSemente é obrigatório: a semente nunca sai do núcleo.');
     const agora = opcoes.agora || (() => canal.agora());
+    // A folga entre o fim do cronômetro e o prazo da regra (o cabeçalho deste
+    // arquivo). Só o simulador e os testes passam outra, curta, para provar o
+    // corte da regra sem esperar 12 h; o telão usa sempre a do núcleo, a mesma
+    // que o celular desconta para desenhar o cronômetro.
+    const folga = opcoes.folgaDaRegraMs ?? N().alunoLogica.FOLGA_DA_REGRA_MS;
+    if (!(Number.isFinite(folga) && folga >= 0)) throw new TypeError(`folgaDaRegraMs inválida: ${folga}.`);
+    // fim do cronômetro → prazo gravado, e o caminho de volta.
+    const prazoDaRegra = (fimCronometro) => fimCronometro + folga;
+    const fimDoCronometro = (e) => e.prazo - folga;
     const passos = N().roteiro.passos(config, nomeRoteiro);
     const indiceFormar = passos.findIndex((p) => p.tipo === 'formarEquipes');
     const passosRodada = passos.filter((p) => p.tipo === 'rodada');
@@ -125,11 +140,11 @@
         e.momento = passo.momento;
         e.afirmacao = enq.modo === 'uma_por_vez' ? lista(enq.ordemAfirmacoes)[0] : '*';
         e.abertoEm = t;
-        e.prazo = t + config.tempos.enqueteSeg * 1000;
+        e.prazo = prazoDaRegra(t + config.tempos.enqueteSeg * 1000);
       } else if (passo.tipo === 'rodada') {
         e.rodada = passo.rodada;
         e.abertoEm = t;
-        e.prazo = t + config.tempos.decisaoSeg * 1000;
+        e.prazo = prazoDaRegra(t + config.tempos.decisaoSeg * 1000);
       } else if (passo.tipo === 'comparativo') {
         e.enquete = passo.enquete;
       }
@@ -223,7 +238,7 @@
             // do apresentador perderia o "pausado".
             return typeof srv.restanteMs === 'number'
               ? { ...proxima, prazo: null, restanteMs: duracao }
-              : { ...proxima, prazo: t + duracao, restanteMs: null };
+              : { ...proxima, prazo: prazoDaRegra(t + duracao), restanteMs: null };
           });
         }
       }
@@ -414,7 +429,7 @@
         // A marca vai no mesmo update do estado: ou os dois ficam, ou nenhum.
         // Gravada à parte, uma queda entre as duas escritas deixaria uma
         // prorrogação aberta sem a marca, e o refazer abriria outra.
-        return gravarComEstado({ ...e, subfase: 'prorrogacao', empatadas, prazo: t + config.tempos.prorrogacaoSeg * 1000, restanteMs: null }, {
+        return gravarComEstado({ ...e, subfase: 'prorrogacao', empatadas, prazo: prazoDaRegra(t + config.tempos.prorrogacaoSeg * 1000), restanteMs: null }, {
           [cam('prorrogacoes', r)]: true,
         });
       }
@@ -502,7 +517,7 @@
             const anterior = { ...srv, subfase: 'votando', afirmacao: ordem[i - 1], abertoEm: t };
             return typeof srv.restanteMs === 'number'
               ? { ...anterior, prazo: null, restanteMs: duracao }
-              : { ...anterior, prazo: t + duracao, restanteMs: null };
+              : { ...anterior, prazo: prazoDaRegra(t + duracao), restanteMs: null };
           };
         }
       }
@@ -555,7 +570,8 @@
     async function desfazerAbertura(e) {
       const t0 = agora();
       const pausado = typeof e.restanteMs === 'number';
-      const restante = pausado ? e.restanteMs : Math.max(0, e.prazo - t0);
+      // O que faltava no cronômetro (sem a folga da regra), como o restanteMs da pausa.
+      const restante = pausado ? e.restanteMs : Math.max(0, fimDoCronometro(e) - t0);
       const volta = await voltaDaAbertura(e);
       // A rodada com semente já foi apurada uma vez: este "decidindo" veio do
       // desfazer da apuração, e não de um Espaço por engano. Desfazer a abertura
@@ -591,9 +607,9 @@
       if (n === 0) return transicionar(volta);
       await transicionar((srv) => {
         if (marca.pausado) return { ...srv, subfase: marca.subfase, prazo: null, restanteMs: marca.restante };
-        // O mesmo prazo; se ele venceu durante a espera, os segundos que faltavam
-        // no Ctrl+Z (a espera não pode comer o tempo da turma).
-        const prazo = marca.restante > 0 && srv.prazo <= agora() ? agora() + marca.restante : srv.prazo;
+        // O mesmo prazo; se o cronômetro acabou durante a espera, os segundos que
+        // faltavam no Ctrl+Z (a espera não pode comer o tempo da turma).
+        const prazo = marca.restante > 0 && fimDoCronometro(srv) <= agora() ? prazoDaRegra(agora() + marca.restante) : srv.prazo;
         return { ...srv, subfase: marca.subfase, prazo, restanteMs: null };
       });
       throw recusaPorVotos(n, fechando);
@@ -622,9 +638,9 @@
       // no mesmo update do estado), e a semente, se já existe, fica.
       if (e.subfase === 'fechando') {
         let volta;
-        if (e.tipo === 'enquete') volta = { subfase: 'votando', prazo: t + config.tempos.enqueteSeg * 1000 };
-        else if (e.empatadas) volta = { subfase: 'prorrogacao', prazo: t + config.tempos.prorrogacaoSeg * 1000 };
-        else volta = { subfase: 'decidindo', prazo: t + config.tempos.decisaoSeg * 1000 };
+        if (e.tipo === 'enquete') volta = { subfase: 'votando', prazo: prazoDaRegra(t + config.tempos.enqueteSeg * 1000) };
+        else if (e.empatadas) volta = { subfase: 'prorrogacao', prazo: prazoDaRegra(t + config.tempos.prorrogacaoSeg * 1000) };
+        else volta = { subfase: 'decidindo', prazo: prazoDaRegra(t + config.tempos.decisaoSeg * 1000) };
         return transicionar((srv) => ({ ...srv, ...volta, restanteMs: null }));
       }
       // Votação aberta: desfaz a abertura (D-037). A prorrogação fica de fora:
@@ -634,13 +650,13 @@
         const resultados = { ...((await canal.ler(cam('resultados'))) || {}) };
         delete resultados[e.rodada];
         const placar = Object.keys(resultados).length > 0 ? calcularPlacar(resultados, e) : null;
-        return gravarComEstado({ ...e, subfase: 'decidindo', prazo: t + config.tempos.decisaoSeg * 1000, restanteMs: null, empatadas: null }, {
+        return gravarComEstado({ ...e, subfase: 'decidindo', prazo: prazoDaRegra(t + config.tempos.decisaoSeg * 1000), restanteMs: null, empatadas: null }, {
           [cam('resultados', e.rodada)]: null,
           [cam('placar')]: placar,
         });
       }
       if (e.tipo === 'enquete' && e.subfase === 'apurada') {
-        return gravarComEstado({ ...e, subfase: 'votando', prazo: t + config.tempos.enqueteSeg * 1000, restanteMs: null }, {
+        return gravarComEstado({ ...e, subfase: 'votando', prazo: prazoDaRegra(t + config.tempos.enqueteSeg * 1000), restanteMs: null }, {
           [cam('enquetes', e.enquete, e.momento)]: null,
         });
       }
@@ -660,23 +676,24 @@
       if (!(Number.isFinite(seg) && seg > 0)) throw new RangeError(`Tempo inválido: ${seg}.`);
       return transicionar((srv) => (typeof srv.restanteMs === 'number'
         ? { ...srv, restanteMs: srv.restanteMs + seg * 1000 }
-        // Prazo já vencido: "+30 s" conta a partir de agora, e não do prazo velho.
-        : { ...srv, prazo: Math.max(srv.prazo, agora()) + seg * 1000 }));
+        // Cronômetro já esgotado: "+30 s" conta a partir de agora, e não do fim velho.
+        : { ...srv, prazo: prazoDaRegra(Math.max(fimDoCronometro(srv), agora()) + seg * 1000) }));
     }
 
-    // Pausar tira o prazo e guarda o que faltava. Sem prazo, a regra do banco
-    // recusa voto (null + graça não vale): a pausa congela a votação inteira, e
-    // não só o cronômetro. Isso mantém o esboço das regras como está.
+    // Pausar tira o prazo e guarda o que faltava no cronômetro. Sem prazo, a
+    // regra do banco recusa voto (null + graça não vale): a pausa congela a
+    // votação inteira, e não só o cronômetro. Isso mantém o esboço das regras
+    // como está. O restanteMs é tempo de cronômetro, sem a folga da regra.
     async function pausar() {
       const e = exigirAberta();
       if (typeof e.restanteMs === 'number') throw new Error('Já está pausado.');
-      return transicionar((srv) => ({ ...srv, restanteMs: Math.max(0, srv.prazo - agora()), prazo: null }));
+      return transicionar((srv) => ({ ...srv, restanteMs: Math.max(0, fimDoCronometro(srv) - agora()), prazo: null }));
     }
 
     async function retomar() {
       const e = exigirAberta();
       if (typeof e.restanteMs !== 'number') throw new Error('Não está pausado.');
-      return transicionar((srv) => ({ ...srv, prazo: agora() + srv.restanteMs, restanteMs: null }));
+      return transicionar((srv) => ({ ...srv, prazo: prazoDaRegra(agora() + srv.restanteMs), restanteMs: null }));
     }
 
     // ---------- Equipes ----------
