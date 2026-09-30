@@ -7,23 +7,25 @@ import { carregarNucleo } from './carregar-nucleo.mjs';
 import { configDaSessao } from './fixtures/sessao.mjs';
 
 const V = await carregarNucleo();
-const { telaDoAluno, sugerirEquipe, pendenteAindaVale, cracha, codigoCracha } = V.alunoLogica;
+const { telaDoAluno, sugerirEquipe, pendenteAindaVale, motivoDaRecusa, cracha, codigoCracha, fimDoCronometro, FOLGA_DA_REGRA_MS: FOLGA } = V.alunoLogica;
 const conteudo = configDaSessao(V);
 const TODAS = { e1: true, e2: true, e3: true, e4: true, e5: true, e6: true };
 const meta = { roteiro: '60min', entradaAberta: true };
 const membro = { entrouEm: 100, equipe: 'e1' };
 
 // Uma entrada completa de telaDoAluno, com o que cada teste mudar por cima.
+// O prazo dos estados é o que o anfitrião grava: o fim do cronômetro mais a
+// folga da regra (contratos, seção 7).
 function entrada(estado, extra = {}) {
   return { conteudo, estado, membro, meusVotos: {}, decisoesDaEquipe: null, resultados: null, placar: null, uid: 'eu', agora: 0, meta, ...extra };
 }
 
 const rodada = (subfase, extra = {}) => ({
-  geracao: 9, indice: 5, tipo: 'rodada', rodada: 'r1', subfase, abertoEm: 200, prazo: 90_200,
+  geracao: 9, indice: 5, tipo: 'rodada', rodada: 'r1', subfase, abertoEm: 200, prazo: 90_200 + FOLGA,
   equipesTravadas: true, equipesAbertas: TODAS, ...extra,
 });
 const enquete = (subfase, extra = {}) => ({
-  geracao: 3, indice: 1, tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', subfase, abertoEm: 0, prazo: 60_000, ...extra,
+  geracao: 3, indice: 1, tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', subfase, abertoEm: 0, prazo: 60_000 + FOLGA, ...extra,
 });
 
 test('sem registro de membro: "entrando" com a entrada aberta, "entradaFechada" com ela fechada', () => {
@@ -55,6 +57,7 @@ test('enquete "uma_por_vez": só a afirmação da vez, e "registrada" depois do 
   assert.deepEqual([antes.dados.posicao, antes.dados.total], [2, 3]);
   assert.deepEqual(antes.dados.afirmacoes.map((a) => a.id), ['a2']);
   assert.deepEqual(antes.dados.escala, conteudo.escala.curtos);
+  // O cronômetro recebe o fim do tempo configurado, sem a folga da regra.
   assert.equal(antes.dados.prazo, 60_000);
   assert.equal(depois.tipo, 'enqueteRegistrada');
   assert.equal(depois.dados.encerrada, false);
@@ -318,4 +321,82 @@ test('pendenteAindaVale: voto guardado de outra janela da mesma etapa (outro abe
   assert.equal(pendenteAindaVale(decisaoA, rodada('decidindo')), true);
   assert.equal(pendenteAindaVale(decisaoA, rodada('prorrogacao', { empatadas: { e1: { a: true, b: true } } })), true, 'a prorrogação é a mesma janela');
   assert.equal(pendenteAindaVale(decisaoA, rodada('decidindo', { abertoEm: 500_000 })), false);
+});
+
+// Teste de 30/09: a decisão do mês 3 ficou aberta 7 min 35 s, e a regra recusou
+// todo voto depois de 2 min 5 s. O prazo gravado passou a ser o da regra (o fim
+// do cronômetro mais a folga), e o cronômetro desconta a folga.
+test('fimDoCronometro: o prazo da regra menos a folga; sem prazo (pausado), null', () => {
+  // Arrange
+  const aberta = rodada('decidindo');
+  // Act + Assert
+  assert.ok(FOLGA >= 2 * 60 * 60 * 1000, 'a folga passa da duração de qualquer roteiro (de 60 a 120 min, D-019)');
+  assert.equal(fimDoCronometro(aberta), 90_200);
+  assert.equal(telaDoAluno(entrada(aberta)).dados.prazo, 90_200, 'a tela da decisão leva o fim do cronômetro, e não o prazo da regra');
+  assert.equal(fimDoCronometro(rodada('decidindo', { prazo: undefined, restanteMs: 5000 })), null);
+  assert.equal(fimDoCronometro(null), null);
+});
+
+test('motivoDaRecusa: fechou, pausado, fora da sala, outra equipe, entrou depois, ou sem motivo à vista', () => {
+  // Arrange
+  const decisaoA = { tipo: 'decisao', rodada: 'r1', equipe: 'e1', opcao: 'a', abertoEm: 200 };
+  const votoA1 = { tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', valor: 3, abertoEm: 0 };
+  const aberta = rodada('decidindo');
+  // Act + Assert
+  assert.equal(motivoDaRecusa(decisaoA, { estado: rodada('fechando'), membro }), 'fechou');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: rodada('decidindo', { abertoEm: 900 }), membro }), 'fechou', 'outra janela (desfeita e reaberta)');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: null, membro }), 'fechou');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: rodada('decidindo', { prazo: undefined, restanteMs: 5000 }), membro }), 'pausado');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: aberta, membro: { entrouEm: 100, equipe: 'e2' } }), 'outraEquipe');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: aberta, membro: null }), 'foraDaSala', 'removido por inatividade');
+  assert.equal(motivoDaRecusa(votoA1, { estado: enquete('votando'), membro: null }), 'foraDaSala');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: aberta, membro: { entrouEm: 201, equipe: 'e1' } }), 'entrouDepois');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: aberta, membro }), 'semMotivo');
+  assert.equal(motivoDaRecusa(votoA1, { estado: enquete('apurada'), membro }), 'fechou');
+  assert.equal(motivoDaRecusa(votoA1, { estado: enquete('votando'), membro }), 'semMotivo');
+});
+
+// Revisão de 30/09 (achado P2): o celular votou A (confirmado), trocou para B
+// sem rede, e a troca chegou depois do fechamento. A tela dizia "ele não foi
+// contado", mas a apuração contou o A. "Não foi contado" fica só para quem não
+// tinha voto confirmado.
+test('motivoDaRecusa: troca que chegou tarde com o voto anterior contado, e a prorrogação que só aceita as empatadas', () => {
+  // Arrange
+  const trocaParaB = { tipo: 'decisao', rodada: 'r1', equipe: 'e1', opcao: 'b', abertoEm: 200 };
+  const mudouPara4 = { tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', valor: 4, abertoEm: 0 };
+  // Act + Assert
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('fechando'), membro, anterior: 'a' }), 'trocaTarde');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('sorteio'), membro, anterior: 'a' }), 'trocaTarde');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('fechando'), membro, anterior: null }), 'fechou', 'sem voto confirmado antes: não foi contado');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('fechando'), membro, anterior: 'b' }), 'fechou', 'o anterior igual ao recusado não é troca');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('fechando'), membro: { entrouEm: 100, equipe: 'e2' }, anterior: 'a' }), 'fechou', 'movido: o anterior não contou');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('decidindo', { abertoEm: 900 }), membro, anterior: 'a' }), 'fechou', 'outra janela');
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('decidindo', { rodada: 'r2' }), membro, anterior: 'a' }), 'fechou', 'outra rodada');
+  assert.equal(motivoDaRecusa(mudouPara4, { estado: enquete('apurada'), membro, anterior: 2 }), 'trocaTarde');
+  assert.equal(motivoDaRecusa(mudouPara4, { estado: enquete('apurada'), membro, anterior: null }), 'fechou');
+  // Na prorrogação da própria equipe, o voto numa opção que não empatou.
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('prorrogacao', { empatadas: { e1: { a: true, c: true } } }), membro, anterior: 'a' }), 'soEmpatadas');
+  // Na prorrogação de outra equipe, a própria já decidiu: valeu o anterior.
+  assert.equal(motivoDaRecusa(trocaParaB, { estado: rodada('prorrogacao', { empatadas: { e2: { a: true, c: true } } }), membro, anterior: 'a' }), 'trocaTarde');
+});
+
+// Revisão de 30/09 (achado P3): no termômetro de uma afirmação por vez, a
+// resposta que chegou depois de o apresentador avançar era dada como "a
+// votação fechou", na tela de outra afirmação.
+test('motivoDaRecusa: a resposta de uma afirmação que o apresentador já passou', () => {
+  // Arrange
+  const t1 = { tipo: 'enquete', enquete: 'entrada', momento: 'antes', afirmacao: 'a1', valor: 4, abertoEm: 0 };
+  // Act + Assert
+  assert.equal(motivoDaRecusa(t1, { estado: enquete('votando', { afirmacao: 'a2', abertoEm: 50 }), membro }), 'outraAfirmacao');
+  assert.equal(motivoDaRecusa(t1, { estado: enquete('apurada', { afirmacao: 'a3', abertoEm: 80 }), membro }), 'outraAfirmacao');
+  assert.equal(motivoDaRecusa(t1, { estado: enquete('votando', { afirmacao: '*' }), membro }), 'semMotivo', 'modo "todas": ainda vale');
+  assert.equal(motivoDaRecusa(t1, { estado: enquete('votando', { momento: 'depois' }), membro }), 'fechou', 'outro momento');
+});
+
+// Revisão de 30/09 (achado 7): "ele entra de novo sozinho" só é verdade com a
+// entrada aberta (garantirMembro não regrava o membro com ela fechada).
+test('motivoDaRecusa: fora da sala com a entrada fechada', () => {
+  const decisaoA = { tipo: 'decisao', rodada: 'r1', equipe: 'e1', opcao: 'a', abertoEm: 200 };
+  assert.equal(motivoDaRecusa(decisaoA, { estado: rodada('decidindo'), membro: null, entradaAberta: false }), 'foraDaSalaFechada');
+  assert.equal(motivoDaRecusa(decisaoA, { estado: rodada('decidindo'), membro: null, entradaAberta: true }), 'foraDaSala');
 });

@@ -65,6 +65,35 @@ ainda premia o esgotamento para 4 das 5 personas. As duas questões estão no
 teste. **Nada disso muda o teste de 30/09**, que mede rede, celulares, projetor e
 Alt+Tab.
 
+**Correções do teste de 30/09 (D-065, esquema v2.2, versão 6 do site).** O que
+muda para quem conduz:
+- **o voto vale enquanto a votação estiver aberta.** No teste, a decisão do mês
+  3 ficou aberta 7 min 35 s, e todo "Votar nesta" depois de 2 min 5 s foi
+  recusado em silêncio: o servidor cortava no fim do cronômetro mais 5 s. Agora
+  o cronômetro é só para a turma ver, e quem fecha o voto é o seu Enter (seções
+  4 e 5.6). Se um voto for recusado, o celular diz por quê, logo abaixo do botão
+  tocado;
+- **o empréstimo é dívida, e não renda.** No teste, o Jonas pegou R$ 1.500 no
+  mês 2 e a tela disse "dívida R$ 1": o empréstimo tinha entrado como se fosse
+  dinheiro ganho. Agora o saldo do mês não conta o empréstimo, a dívida mostra
+  os R$ 1.500 desde o mês em que ele foi tomado, e as 12 parcelas saem uma por
+  mês (seção 5.6, "O que atravessa os meses");
+- **o resultado no telão ficou enxuto:** uma faixa por equipe, com a carta, o
+  saldo do mês em verde (+) ou vermelho (−) e a dívida. As contas detalhadas
+  (entrou, gastos, básico, juros) saíram do telão e ficam no celular de cada
+  equipe e na história do placar final (seção 5.6, "Resultado");
+- **no celular, a situação começa pelo resumo mês a mês:** uma tabela com o
+  saldo de cada mês e com quanto a família ficou, em verde ou vermelho, e a
+  dívida embaixo. O detalhe fica recolhido em "▸ ver" (seção 5.3);
+- **a tela das personas** passou a ter três linhas por persona, sem nada
+  sobreposto (seção 5.5).
+
+As decisões D-060 a D-064 (12 meses em 6 rodadas, seis personagens em seis
+trabalhos, ninguém de carteira assinada, o risco que cresce com os meses e o
+modo espectador do apresentador) foram tomadas em 30/09, mas **não estão nesta
+versão**: o jogo ainda tem 3 meses e 5 personas. Elas vêm na próxima rodada de
+correções.
+
 Os pontos marcados "vamos testar" (D-041, D-042, D-043) são para observar no
 teste (seção 13). As perguntas de conteúdo ainda em aberto estão no
 [rascunho-conteudo.md](rascunho-conteudo.md), seções 0.8 e 8.
@@ -245,7 +274,7 @@ topo da tela.
 | --- | --- |
 | Avançar (Espaço) | O mesmo que a tecla |
 | Encerrar (Enter) | O mesmo que a tecla |
-| +30 s | Soma 30 s ao prazo da votação. Com o tempo já esgotado, reabre a votação |
+| +30 s | Soma 30 s ao cronômetro da votação. Com o tempo já esgotado, o cronômetro volta a contar a partir de agora. É só para a turma ver: o voto vale até você encerrar, com ou sem +30 s |
 | Pausar / Retomar (P) | O mesmo que a tecla |
 | Desfazer (Ctrl+Z) | O mesmo que a tecla |
 | Pular para… | Vai para um passo à frente. Só para a frente, e os passos do meio não acontecem |
@@ -283,8 +312,13 @@ celulares, as letras da decisão de cada equipe (o que ela anunciou). A abertura
   **Conectado** (seção 8).
 
 **O cronômetro é só visual.** Nada fecha sozinho: quem encerra é você (D-010).
-Mas o servidor recusa o voto que chega depois do prazo, com 5 s de tolerância. Se
-uma equipe ainda está conversando quando o tempo acaba, aperte **+30 s**.
+**O voto vale enquanto a votação estiver aberta**, mesmo com o cronômetro em
+"tempo esgotado": o servidor só recusa depois do seu Enter. Se uma equipe ainda
+está conversando quando o tempo acaba, espere, ou aperte **+30 s** para a turma
+ver quanto falta. Até o teste de 30/09 era diferente: o servidor cortava o voto 5 s
+depois do fim do cronômetro, e no mês 3 o "Votar nesta" parou de contar com a
+votação ainda aberta no telão. (Por segurança, o servidor ainda recusa o voto
+12 h depois do fim do cronômetro, o tempo de vida da sala.)
 
 ## 5. Como conduzir cada passo
 
@@ -327,7 +361,8 @@ slides.
 ### 5.3 Bloco (trecho da apresentação)
 
 - **Telão:** tela de espera discreta, com o título do trecho, a **linha do tempo
-  do seminário** (D-042) e, depois que as equipes travam, o placar resumido. Se a
+  do seminário** (D-042) e, depois que as equipes travam, o placar resumido (o
+  saldo de cada equipe, já descontado o empréstimo a pagar, D-065). Se a
   entrada estiver aberta, aparece também a faixa com o QR pequeno.
   - A linha do tempo tem o **seminário inteiro**, na ordem do roteiro: todo
     passo depois da entrada na sala (a enquete de entrada, os trechos, a
@@ -346,10 +381,20 @@ slides.
     todos os trechos por extenso (em duas colunas quando passam de seis), sem o
     placar resumido. É o mapa que você apresenta.
 - **Celular:** antes das equipes, "Acompanhe a apresentação". Depois, a situação
-  da persona: a família, a conta do último mês ("Entrou R$ X · o básico da
-  família custa R$ Y" e, em destaque, "Faltou R$ Z" ou "Sobrou R$ Z"), a dívida
-  com os juros ao mês, a decisão, a carta e o que aconteceu, em primeira pessoa.
-  Antes do primeiro mês, a família e o básico.
+  da persona, começando pelo que se explica em aula (D-065):
+  - o **resumo mês a mês**, uma tabela "Mês · Saldo do mês · Ficou com", uma
+    linha por mês jogado. "Ficou com" é o que a família tem, já descontado o
+    empréstimo a pagar: é o do mês anterior mais o saldo do mês. Os valores vão
+    sempre com + ou −, em verde quando positivos e em vermelho quando negativos
+    (o zero fica sem cor, "R$ 0");
+  - logo embaixo, a **dívida de hoje**: "Dívida hoje R$ D" e, quando há, o
+    cheque especial com os juros ao mês e o empréstimo ("fica devendo R$ E em N
+    parcelas · a próxima: R$ P");
+  - o resumo e a dívida cabem inteiros num celular de 360×740, sem rolar. O
+    resto fica recolhido: "▸ ver" abre "Mês N: a conta em detalhe" (entrou,
+    gastos, básico, juros, a decisão, a carta e o que aconteceu, em primeira
+    pessoa). A família vem numa linha só.
+  Antes do primeiro mês, a família, o básico e os indicadores, sem resumo.
 - **Faça:** Espaço entra no bloco; Alt+Tab para os slides; apresente; Alt+Tab de
   volta; Espaço vai ao próximo passo. Entre dois blocos seguidos, volte ao telão e
   aperte Espaço, para o celular, a barra e a linha do tempo acompanharem o título
@@ -378,12 +423,20 @@ slides.
 
 ### 5.5 Personas
 
-- **Telão:** uma linha por persona em jogo (D-044): as equipes dela, o nome, o
-  ofício e "N pessoas em casa" e, embaixo, a casa: "básico R$ Y · salário da
-  companheira R$ Z" (ou "sem outra renda na casa") e "falta R$ W por mês". Esse
-  "falta" é o de um mês comum, sem carta e sem decisão: o trabalho, a outra renda
-  e o básico. No config atual, todas as casas começam faltando, de R$ 773
-  (Marcos) a R$ 2.412 (Rose) por mês.
+- **Telão:** um bloco por persona em jogo, na ordem das equipes (D-044, D-065),
+  sempre em três linhas:
+  1. as equipes dela (a forma e o número, "1 e 2" no Jonas) e o nome com o
+     ofício ("Jonas · Motoboy");
+  2. a casa: "N pessoas em casa · básico da casa R$ Y · outra renda R$ Z" (ou
+     "sem outra renda");
+  3. o mês comum, em vermelho: "a conta do mês não fecha: faltam R$ W" (ou, em
+     verde, "a conta do mês fecha: sobram R$ W").
+  Esse "faltam" é o de um mês comum, sem carta e sem decisão: o trabalho, a outra
+  renda e o básico. No config atual, todas as casas começam faltando, de R$ 773
+  (Marcos) a R$ 2.412 (Rose) por mês. No teste de 30/09, esta tela parecia
+  sobreposta (a equipe e o nome em alturas diferentes, e "3 pessoas em casa"
+  caindo sozinho na linha de baixo); o e2e agora confere, com seis equipes, que
+  nenhum texto se sobrepõe.
 - **Celular:** a persona da equipe em detalhe: a descrição inteira, a família
   ("Em casa: …"), o básico da casa item a item com a fonte de cada valor, o total
   ("O básico da família custa R$ Y por mês") e a outra renda, quando houver.
@@ -413,8 +466,20 @@ slides.
   equipe, com o texto do jeito do ofício da persona (D-054). **Tocar numa opção
   abre a explicação dela e não vota**; o voto só vale no botão **"Votar
   nesta"**, logo abaixo da explicação (D-055). A opção com o voto do aluno diz
-  "✓ seu voto". Se as opções não couberem na tela, o botão "Mais opções abaixo
-  ↓" leva até elas.
+  "✓ seu voto" só depois que o servidor confirmou; antes, "enviando…" ou
+  "guardado no aparelho". Se as opções não couberem na tela, o botão "Mais
+  opções abaixo ↓" leva até elas. A dívida da família aparece numa linha:
+  "Dívida R$ D · juros de J% ao mês" ou, com empréstimo, "Dívida R$ D, com R$ E
+  de empréstimo".
+- **O voto vale até você encerrar**, mesmo com o cronômetro em "tempo
+  esgotado" (seção 4). O celular nunca fica calado: se um voto não contar, ele
+  diz por quê logo abaixo do botão tocado e diz o que fazer, por exemplo "A
+  votação fechou antes do seu voto chegar: ele não foi contado.", "…foi pausada
+  …: quando o apresentador retomar, toque em “Votar nesta” de novo." ou "Não foi
+  possível enviar o voto: toque de novo em “Votar nesta”." Sem rede, o voto fica
+  guardado no aparelho e vai sozinho quando a rede volta, se a votação ainda
+  estiver aberta. A troca de voto que chega depois do Enter não vale: o celular
+  diz que valeu o voto anterior.
 - **Faça:** Espaço abre a decisão. Leia a situação e as opções em voz alta. A
   dica da barra mostra quanto falta do **tempo mínimo de conversa** (45 s). Quando
   ela disser "Todas as equipes decidiram. Enter encerra.", ou quando o tempo
@@ -440,15 +505,25 @@ slides.
     3 só sai a carta "Normal". Quem rodava em dois apps no mês 2 segura metade da
     renda no outro app. A **associação** (mês 3, A) traz um advogado: com ela, a
     liminar devolve a conta no 21º dia;
-  - o **empréstimo** do mês 2 (D) põe R$ 1.500 na conta na hora. No mês 3 vêm a
-    1ª parcela (R$ 183; R$ 213 no empréstimo da 99 do Marcos) e o saldo devedor
-    (R$ 1.413), que o placar conta como gasto: a dívida continua depois do jogo.
-    Entre o resultado do mês 2 e o do mês 3, quem pegou o empréstimo aparece no
-    azul, sem "dívida". **Não use o "Pular para…" por cima do mês 3 com alguma
-    equipe que pegou o empréstimo:** ela terminaria com os R$ 1.500 sem dever
-    nada (rascunho, seção 8, item 13);
-  - quem termina um mês **no vermelho** (saldo acumulado negativo) paga a multa
-    do aluguel no mês seguinte, além dos juros de 7,43% ao mês;
+  - o **empréstimo** do mês 2 (D) é **dívida, e não renda** (D-065). Os
+    R$ 1.500 entram no caixa, mas não contam no saldo do mês: desde o
+    resultado do mês 2, a dívida da equipe mostra os R$ 1.500 do empréstimo.
+    São 12 parcelas pela tabela Price, a primeira no mês seguinte: R$ 183 no
+    crédito pessoal (6,39% ao mês; R$ 96 de juros e R$ 87 que abatem a dívida
+    na primeira) e R$ 213 no empréstimo do app da 99 do Marcos (9,36% ao mês;
+    R$ 140 de juros e R$ 73 de abatimento). No saldo do mês só entram os juros
+    da parcela, porque a outra parte só troca uma dívida por outra. No fim dos
+    3 meses, a equipe ainda deve 11 parcelas, que seguem depois do jogo: ao
+    todo, R$ 2.192 (R$ 2.560 na 99) por R$ 1.500 emprestados. Até o teste de
+    30/09, os R$ 1.500 entravam como renda, e o Jonas apareceu com "dívida R$ 1"
+    no mês 2;
+  - "Pular para…" por cima de um mês não cobra a parcela desse mês: a parcela
+    k é cobrada no k-ésimo mês **jogado** depois do empréstimo, e a dívida
+    continua inteira no placar;
+  - quem termina um mês **no vermelho** no caixa (o cheque especial, saldo
+    acumulado negativo) paga a multa do aluguel no mês seguinte, além dos juros
+    de 7,43% ao mês. O empréstimo, que põe dinheiro no caixa, pode evitar a
+    multa: é o que ele promete, a um custo alto;
   - **energia baixa custa** (D-051, D-059): abaixo de 3, a renda cai 10%
     ("exausto"); abaixo de 4, a chance de adoecer fica 4,24 vezes maior, e abaixo
     de 2, 4,5 vezes (o sono curto do estudo de Prather, 2015); e quanto mais
@@ -500,56 +575,77 @@ slides.
   perguntar da gorjeta: ela entrou na pesquisa e saiu do jogo, porque dá uns
   R$ 5 a R$ 10 por mês por entregador.
 
-**Resultado** (D-044, D-046, D-052)
-- **Telão:** uma frase por equipe: a equipe, a letra da decisão, a carta, **o
-  custo real dela**, o que veio do mês anterior, a origem da decisão quando não
-  foi a maioria ("ninguém votou", "empate na moeda", "na prorrogação" ou "pelo
-  apresentador") e as **contas do mês**. Por exemplo, o Jonas no mês 2, com o
-  breque (B), a fratura e nenhuma dívida de antes: "Fratura · 20 dias parado ·
-  renda perdida R$ 1.787 · entrou R$ 1.421 · gastos R$ 1.650 · básico
-  R$ 4.166 · faltou R$ 4.395 · dívida R$ 4.395".
-  - A carta com custo aparece pelo nome curto ("Fratura"); o título inteiro
-    acabou de sair no sorteio.
-  - "gastos" (conserto, remédio, multa) só aparece quando houve. Quando os gastos
-    têm mais de uma origem, a frase soma à vista: "gastos R$ 1.650 + multa
-    R$ 130".
-  - O que veio do mês anterior vem com nome e sinal: "+25 dias da fratura
-    −R$ 2.233", "INSS (45 dias) +R$ 2.431", "bloqueio: o mês todo".
-  - "juros R$ J" entra antes do "faltou" quando a equipe já vinha devendo, e
-    "dívida R$ D" no fim quando o saldo ficou negativo. Com alguma dívida na
-    tela, o cabeçalho diz uma vez só "a dívida paga juros de 7,43% ao mês".
-  - Só as cartas de efeito mais forte ganham destaque (quantas, diz o
-    `destacarCartas` do config). Carta grave nunca anima.
-  - No pior caso (seis equipes com carta cara, dívida e coisas do mês
-    anterior), a frase não cabe em 1024×768. O telão tira então, nesta ordem, a
-    origem da decisão e o que veio do mês anterior: o celular de cada equipe
-    continua mostrando os dois.
-- **Celular:** a carta da equipe, com a narrativa em primeira pessoa; "O que a
-  carta custou: 20 dias parado · renda perdida R$ 1.787 · gastos R$ 1.650"; e a
-  conta do mês: "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y" e,
-  em destaque, "Faltou R$ Z". Embaixo do "entrou", de onde ele veio ("Do
-  trabalho e da decisão · custos fixos do trabalho · salário da companheira") e,
-  quando há, "Veio dos meses anteriores (já na conta): …". No fim, "Dívida R$ D
-  · juros de 7,43% ao mês".
+**Resultado** (D-044, D-046, D-052, D-065)
+- **Telão:** só o essencial, uma faixa por equipe, com um vão entre elas e três
+  colunas alinhadas (D-065). No teste de 30/09, cada equipe era uma frase
+  corrida de três linhas com todas as contas, e a tela ficou difícil de explicar
+  em aula:
+  - **à esquerda, quem:** a equipe (forma, número e nome) e, embaixo, a persona
+    e a letra da decisão ("Jonas · decisão B");
+  - **no meio, a carta**, grande. Embaixo, só quando há o que dizer: o
+    empréstimo tomado no mês ("empréstimo R$ 1.500"), a parada ("20 dias
+    parado · perdeu R$ 1.787"), "a proteção pagou R$ X" (D-059) e a origem da
+    decisão quando não foi a maioria ("ninguém votou", "empate na moeda", "na
+    prorrogação" ou "pelo apresentador");
+  - **à direita, o dinheiro:** o **saldo do mês**, com + ou −, em verde
+    quando sobrou e em vermelho quando faltou ("R$ 0", sem cor, quando empatou);
+    embaixo, discreta, a dívida total depois do mês ("dívida R$ D", cheque
+    especial mais empréstimo, ou "sem dívida"). O cabeçalho da coluna diz "saldo
+    do mês": o sinal diz o mesmo que a cor.
+  - Por exemplo, o Jonas no mês 2, com o breque (B), a fratura e nenhuma dívida
+    de antes: "Fratura · 20 dias parado · perdeu R$ 1.787" no meio e
+    "−R$ 4.395 · dívida R$ 4.395" à direita.
+  - **O que saiu do telão:** entrou, gastos, multa, básico, juros e o que veio do
+    mês anterior. Ficam no celular de cada equipe e na história do placar final
+    (seção 5.7). Os juros ao mês também saíram do cabeçalho.
+  - A carta aparece pelo título inteiro; se ele não couber numa linha, pelo nome
+    curto ("Fratura"). Só as cartas de efeito mais forte ganham destaque
+    (quantas, diz o `destacarCartas` do config). Carta grave nunca anima.
+  - Com seis equipes e a faixa de entrada embaixo, as faixas se aproximam, sem
+    encostar, e a origem da decisão some do telão (o celular continua
+    mostrando). O e2e confere a tela em 1024×768 e 1920×1080: nada menor que
+    28 px, sem rolagem e nenhum texto sobreposto.
+- **Celular:** a carta da equipe, com a narrativa em primeira pessoa; a decisão
+  numa linha; o **saldo do mês em destaque**, verde ou vermelho (no vermelho,
+  também com a borda grossa); a dívida; e "Como ficou" (energia e proteção). A
+  conta fica recolhida em "▸ ver" ("A conta do mês em detalhe"): "O que a carta
+  custou: 20 dias parado · renda perdida R$ 1.787 · gastos R$ 1.650"; "Entrou
+  R$ X · gastos R$ G · o básico da família custa R$ Y" e "Faltou R$ Z"; de onde
+  veio o "entrou" ("Do trabalho e da decisão · custos fixos do trabalho ·
+  salário da companheira") e, quando há, "Veio dos meses anteriores (já na
+  conta): …".
+  - **A dívida** (D-065): "Dívida hoje R$ D"; o cheque especial, com "juros de
+    7,43% ao mês"; e o empréstimo, "Empréstimo a 6,39% ao mês: fica devendo
+    R$ E em N parcelas · a próxima: R$ P · R$ T no total, com os juros".
+  - **O empréstimo na conta:** no mês em que foi tomado, "Empréstimo de
+    R$ 1.500: o dinheiro entrou no caixa, mas é dívida, e não conta como sobra
+    do mês."; nos seguintes, "Parcela do empréstimo R$ 183: R$ 96 de juros (já
+    na conta) e R$ 87 que abatem a dívida."
 - **Como ler a conta:**
   - "entrou" é o que o trabalho deu no mês (já com a decisão e a carta), menos
     os custos fixos do trabalho (a parcela da moto, o DAS), mais a outra renda da
     casa;
-  - "gastos" é o que um evento custou (o conserto, o remédio, a multa, o saldo do
-    empréstimo), fora do "entrou";
+  - "gastos" é o que um evento custou (o conserto, o remédio, a multa), fora do
+    "entrou";
   - "a proteção pagou" (D-059) é o dinheiro que chegou por causa de uma proteção
     (hoje, o auxílio do INSS de quem pagava o MEI), também fora do "entrou". Só
     aparece quando houve;
   - o básico é cobrado **no fim do mês, depois de tudo**: a carta corta o que se
     ganha, e nunca a conta da casa nem a parcela da moto;
-  - "faltou" = entrou + proteção − gastos − básico − juros. O que falta vira dívida no
-    cheque especial, e o mês seguinte começa pagando juros sobre ela;
+  - "juros" são os do cheque especial mais os juros da parcela do empréstimo;
+  - "faltou" (o saldo do mês, no telão) = entrou + proteção − gastos − básico −
+    juros. O que falta vira dívida no cheque especial, e o mês seguinte começa
+    pagando juros sobre ela;
+  - **o empréstimo não entra no saldo do mês** (D-065): o dinheiro emprestado
+    não é sobra, e a parte da parcela que abate a dívida só troca uma dívida por
+    outra. Por isso a dívida de depois = a dívida de antes + o que faltou no
+    mês, com ou sem empréstimo;
   - "renda perdida" é o que a carta tirou do trabalho daquele mês. Nunca passa
     da renda que havia: o trabalho não fica abaixo de zero;
   - **em casos raros o "entrou" fica negativo** (Daiane e Rose, num mês 3 parado
-    depois de bloqueio e empréstimo): o trabalho foi a zero, e a parcela do curso,
-    a do empréstimo e o DAS continuam saindo. Se aparecer: "A parcela vence parado
-    ou não" (rascunho, seção 8, item 11).
+    depois de um bloqueio): o trabalho foi a zero, e a parcela do curso e o DAS
+    continuam saindo. Se aparecer: "A parcela vence parado ou não" (rascunho,
+    seção 8, item 11).
 - **Faça:** comente as cartas destacadas e as equipes com a maior falta, e siga
   com Espaço para o próximo bloco.
 - **Diga**, ao mostrar quanto faltou para o básico:
@@ -557,10 +653,15 @@ slides.
     tudo o que precisa para viver. Não é luxo: é comida, aluguel, luz e ônibus."
   - "Essa falta não some. Vira dívida no cheque especial, a 7,43% ao mês, e o
     mês que vem já começa pagando juros."
-  - Depois de uma carta de parada, leia o custo dela na tela: "Vinte dias
-    parado: R$ 1.787 que não entraram, mais R$ 1.650 de conserto e remédio. O
-    app não paga nenhum desses dias. O INSS, só para quem já pagava o MEI, e só
-    depois."
+  - Depois de uma carta de parada, leia o custo dela (os dias e a renda perdida
+    estão no telão; o conserto e o remédio, na conta recolhida do celular da
+    equipe): "Vinte dias parado: R$ 1.787 que não entraram, mais R$ 1.650 de
+    conserto e remédio. O app não paga nenhum desses dias. O INSS, só para quem
+    já pagava o MEI, e só depois."
+  - Quando uma equipe pegou o empréstimo (a faixa diz "empréstimo R$ 1.500"):
+    "O dinheiro entrou, mas a dívida subiu junto. São 12 parcelas de R$ 183, e
+    no fim a família terá pago R$ 2.192 por R$ 1.500." (Na 99 do Marcos: 12 de
+    R$ 213, R$ 2.560 ao todo.)
   - Quando a conta de uma equipe disser "a proteção pagou R$ X" (D-059): "O MEI
     custou o DAS todo mês. Neste mês, pagou R$ X. Proteção é seguro: custa
     sempre e salva quando dá errado."
@@ -587,7 +688,9 @@ página.
 - **Telão:** uma barra por equipe que jogou, do maior saldo para o menor, com
   "faltou R$ X" ou "sobrou R$ X" ao lado. O título é calculado, por exemplo "5 de
   6 equipes não fecharam as contas" ("As 6 equipes fecharam as contas" se
-  nenhuma faltou). A linha da referência do config (hoje, "Jonas com carteira
+  nenhuma faltou). O saldo é o que a família tem no fim, **já descontado o
+  empréstimo a pagar** (D-065): quem pegou os R$ 1.500 não aparece mais rico
+  por isso. A linha da referência do config (hoje, "Jonas com carteira
   assinada", −R$ 2.957: na mesma casa, com o mesmo básico) atravessa só as barras
   das equipes do Jonas, e o valor fica escrito embaixo do gráfico.
 - **Diga:**
@@ -685,10 +788,16 @@ página.
   da manhã até a madrugada, sete dias. Levaram o celular e o dinheiro do dia.")
   e uma linha do dinheiro: o custo real da carta, o que veio do mês anterior e
   as contas do mês ("20 dias parado · renda perdida R$ 1.787 · entrou … · gastos
-  … · faltou …"); no fim, "No fim dos 3 meses: faltou R$ X". A linha curta ocupa
+  … · faltou …"). É aqui, e no celular, que as contas que saíram do resultado da
+  rodada continuam (D-065). No mês do empréstimo, depois das contas, "pegou
+  empréstimo de R$ 1.500", como dívida e nunca no "entrou". No fim, "No fim dos 3
+  meses: faltou R$ X" e, com dívida, "· dívida R$ D" e "(R$ S do empréstimo, em N
+  parcelas)": as parcelas seguem depois do jogo. A linha curta ocupa
   no máximo duas linhas e, se não couber, termina em reticências, sem baixar dos
   28 px. O texto da opção é o do ofício da persona da equipe (D-054).
-- **Celular:** a mesma história, com as narrativas inteiras da opção e da carta,
+- **Celular:** no topo, o resumo mês a mês e a dívida (como na situação, seção
+  5.3); depois, a mesma história, recolhida em "A história mês a mês", com as
+  narrativas inteiras da opção e da carta,
   "O que a carta custou", "Veio dos meses anteriores" e a conta de cada mês
   (entrou · gastos · básico · juros · faltou), e "Escolha ou sorte?" da própria
   equipe, no mesmo formato do telão (os totais sem sinal, as variações com + ou
@@ -735,8 +844,9 @@ página.
 
 - **"Fim: quem é o patrão?"** é conversa (D-014): o app não faz nada nesse
   momento, e texto livre nunca aparece no telão.
-- **Fim:** o telão mostra o título e o placar resumido; o celular de cada equipe
-  mostra a história dela, mês a mês. Os dois botões ficam **na barra** (D-047):
+- **Fim:** o telão mostra o título e o placar resumido (o saldo de cada equipe já
+  descontado o empréstimo a pagar); o celular de cada equipe mostra o resumo mês
+  a mês, a dívida, o pior caso e a história dela, recolhida. Os dois botões ficam **na barra** (D-047):
   aperte H (ou encoste o mouse na borda de baixo), clique em **Exportar totais**
   (um JSON só com totais) e depois segure **Apagar a sala (segure 2 s)** (D-015),
   que só funciona neste passo. O celular mostra "Esta sala foi encerrada".
@@ -900,7 +1010,9 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | O celular diz "Você entrou depois de esta decisão abrir" | É a regra: ele vota na próxima decisão |
 | Aluno na equipe errada | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
 | Equipe sem celular, ou que anunciou em voz alta | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
-| O tempo acabou e a equipe ainda conversa | **+30 s** reabre o prazo. Até lá, o voto que chega é recusado |
+| O tempo acabou e a equipe ainda conversa | Espere: o voto vale até você apertar Enter, mesmo com "tempo esgotado". **+30 s** só mostra à turma mais 30 s no cronômetro |
+| Um aluno diz que tocou em "Votar nesta" e não contou | Peça para ele ler a frase logo abaixo do botão: ela diz por quê e o que fazer. "toque em “Votar nesta” de novo" quer dizer que basta tocar outra vez, com a votação aberta. Com a votação aberta, o voto só não conta por pausa (P), por ele ter saído da sala (**Remover inativos**), por ter entrado na sala depois de a decisão abrir ou por estar em outra equipe. "✓ seu voto" só aparece depois que o servidor confirmou |
+| O celular diz "Você foi movido para a equipe N…: o voto na equipe anterior não vale aqui. Vote de novo." | O aluno foi movido (**Mover aluno**) depois de votar: ele vota de novo, pela equipe nova. Com a decisão aberta, o telão pede confirmação antes de mover ("Mover e descartar o voto") |
 | Espaço não avança, e aparece `Votação aberta: quem fecha é o apresentador (Enter)` | Enter primeiro, depois Espaço. O aviso aparece junto da barra, que se abre sozinha |
 | `Encerre a votação (Enter) antes de pular.` | Enter, depois **Pular para…** |
 | Um aviso sumiu antes de você ler, ou apertou uma tecla e nada parece ter acontecido | Aperte H: o aviso fica 15 s junto da barra (seção 4) |
@@ -1050,8 +1162,12 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
   decisões marcadas "vamos testar" (D-041, D-042, D-043) são revistas com o
   Kleberson antes da correção.
 - **Antes do teste e depois de cada correção:** `npm run check`, `npm run
-  emulador`, `npm run e2e`, `npm run e2e:online` e `npm run
-  e2e:online:fixture`, todos verdes. O último joga com a fixture de teste, e é
+  emulador`, `npm run e2e`, `npm run e2e:online`, `npm run
+  e2e:online:fixture` e `npm run e2e:votos`, todos verdes. O `e2e:votos` (a
+  matriz de votos, desde o defeito do mês 3 no teste de 30/09) joga a sessão
+  inteira com um celular em cada equipe, votando pela tela, inclusive depois do
+  fim do cronômetro, com recarga, tela bloqueada, pausa, Ctrl+Z, prorrogação e
+  sem rede. Demora uns minutos, porque espera o relógio real do servidor. O último joga com a fixture de teste, e é
   o único que passa sempre pela frase "a proteção pagou" no celular: com o
   config.json, a proteção só paga no mês 3, e só se a carta quiser.
 - **Depois de cada correção (01 a 05/10):** se o `firebase/regras.json` mudou,

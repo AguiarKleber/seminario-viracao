@@ -17,9 +17,11 @@
 //    teclado e cliques da barra: contagens manuais nas enquetes e decisões pelo
 //    apresentador;
 // 2. o que foi projetado bate com o motor recalculado aqui no Node, a partir das
-//    sementes gravadas: a carta de cada equipe, o custo real dela (D-052), as
-//    contas de cada mês ("entrou · gastos · básico · faltou", a dívida) e as
-//    três páginas do placar final (D-041, D-044 a D-046);
+//    sementes gravadas: no resultado enxuto (D-065), a carta de cada equipe, os
+//    dias parados (D-052), o saldo do mês com sinal e cor e a dívida total
+//    (cheque especial + empréstimo); e as páginas do placar final (D-041, D-044
+//    a D-046), pelo patrimônio (o empréstimo é dívida), com as contas de cada
+//    mês na história;
 // 3. desfazer e encerrar de novo tira as mesmas cartas; recarregar a página
 //    oferece "Retomar a sessão"; "Carregar estado" retoma de um JSON salvo;
 // 4. em cada tipo de tela, nenhuma rolagem, nenhum texto abaixo de 28 px no
@@ -32,17 +34,19 @@
 // 6. as telas que dependem de celular (QR, "14 de 18 votaram", "2 de 3
 //    decidiram", prorrogação, faixa de entrada) desenhadas sobre um canal local
 //    com alunos simulados, pelo mesmo ponto de encaixe que o modo online usa.
-// 7. as seis equipes abertas: a tela de personas com a casa de cada uma (também
-//    com a faixa de entrada) e as páginas do placar final em 1024×768; com a
-//    barra escondida, nem o aviso de operação nem o modal ficam na projeção;
+// 7. as seis equipes abertas: a tela de personas com a casa de cada uma, em
+//    três linhas e sem nenhum texto sobreposto (também com a faixa de entrada),
+//    e as páginas do placar final em 1024×768; com a barra escondida, nem o
+//    aviso de operação nem o modal ficam na projeção;
 // 8. "piloto automático" em nenhuma tela projetada (D-041; item 14), a cadeia
 //    do "Escolha ou sorte?" com os totais sem sinal e as variações com + ou −
 //    (item 11), e a história de cada equipe com a linha curta em primeira
 //    pessoa de cada mês (D-045; item 12).
 // 9. esquema v2.1, com as seis equipes e a carta mais cara que cada uma podia
-//    tirar em cada mês (parte 4): o custo real da carta ("N dias parado ·
-//    renda perdida R$ X · gastos R$ Y", D-052) e os gastos fora do "entrou" no
-//    resultado da rodada e na história, cabendo em 1024×768; e a história com
+//    tirar em cada mês (parte 4): o resultado enxuto cabendo em 1024×768, com
+//    um vão entre as faixas, e a história com o custo real da carta ("N dias
+//    parado · renda perdida R$ X · gastos R$ Y", D-052), os gastos fora do
+//    "entrou" e o empréstimo como dívida (a equipe 1 o pega); e a história com
 //    o texto da opção do jeito do ofício da persona (rotuloPor/narrativaPor,
 //    D-054), quando o config o traz.
 // As funções passadas a page.evaluate/waitForFunction rodam no navegador, e não
@@ -137,7 +141,6 @@ const contagens = {
 // O que o telão escreve, recalculado aqui (a mesma regra da tela, js/telao.js).
 // Refeito aqui, e não pelo F da página: "7,43%" com as casas que a fonte usa
 // (revisão de 29/09; o decimal() de uma casa dava 7,4%).
-const pctJuros = `${(configNode.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
 function descreverPasso(p) {
   if (!p) return null;
   if (p.tipo === 'bloco') return p.titulo || 'Apresentação';
@@ -232,8 +235,26 @@ function conferirMesesDaHistoria(eq, historia, meses, resultados) {
     assert.equal(lido.custo, textoCusto(h.cartaCusto, h.mes, nomes.cartaNosGastos), `${onde}: o custo real da carta na história`);
     assert.deepEqual(lido.deAntes, textoDeAntes(nomes.antes), `${onde}: o que veio de antes na história`);
     assert.equal(lido.contas, textoContas(h.mes, nomes.gastos), `${onde}: as contas do mês na história`);
+    // O empréstimo do mês, como dívida, depois das contas (esquema v2.2).
+    assert.equal(lido.emprestimo, h.mes.emprestimo > 0 ? `pegou empréstimo de ${F.moeda(h.mes.emprestimo)}` : null, `${onde}: o empréstimo na história`);
   }
   return doOficio;
+}
+// A última linha da história: o saldo (o patrimônio) e, com dívida, quanto é e
+// quanto dela é do empréstimo, com as parcelas que faltam (elas seguem depois
+// do fim do jogo).
+function conferirFinalDaHistoria(eq, lida, realizado, placarEq, resultados) {
+  const n = RODADAS.filter((r) => resultados[r]?.[eq]).length;
+  const ultimo = [...RODADAS].reverse().find((r) => resultados[r]?.[eq]);
+  const parcelas = Number(resultados[ultimo][eq].mes?.parcelasRestantes) || 0;
+  const divida = dividaEsperada(placarEq);
+  const emprestimo = Math.max(0, placarEq.emprestimo ?? 0);
+  let esperado = `No fim ${n === 1 ? 'do mês' : `dos ${n} meses`}: ${textoSaldo(realizado)}`;
+  if (divida > 0) {
+    esperado += ` · dívida ${F.moeda(divida)}`;
+    if (emprestimo > 0) esperado += ` (${F.moeda(emprestimo)} do empréstimo${parcelas > 0 ? `, em ${parcelas === 1 ? '1 parcela' : `${parcelas} parcelas`}` : ''})`;
+  }
+  assert.equal(lida.final, esperado, `${eq}: a última linha da história`);
 }
 // D-059: o config tem alguma opção que protege? Com ela, o placar ganha a
 // página "O pior que podia acontecer" depois do "Escolha ou sorte?".
@@ -276,6 +297,177 @@ const textoSaldo = (renda) => (renda < 0 ? `faltou ${F.moeda(-renda)}` : `sobrou
 function tituloSaldo(naoFecharam, total) {
   if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
   return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
+}
+// O placar conta o empréstimo como dívida (esquema v2.2): o saldo de uma equipe
+// é o patrimônio (renda − empréstimo a pagar), e a dívida, o cheque especial
+// mais o saldo devedor. Conta refeita aqui, e não com o historia.js da tela.
+const patrimonioEsperado = (v) => v.renda - Math.max(0, v.emprestimo ?? 0) + 0;
+const dividaEsperada = (v) => Math.max(0, -v.renda) + Math.max(0, v.emprestimo ?? 0);
+
+// ---------- Resultado da rodada enxuto (D-065, teste de 30/09) ----------
+
+// A linha curta da carta de parada: "20 dias parado · perdeu R$ 1.787". Carta
+// sem dias parados não escreve nada (o custo em dinheiro está no saldo).
+function textoParada(custo) {
+  if (!(custo?.diasParado > 0)) return null;
+  const dias = `${custo.diasParado} ${custo.diasParado === 1 ? 'dia parado' : 'dias parado'}`;
+  return custo.rendaPerdida > 0 ? `${dias} · perdeu ${F.moeda(custo.rendaPerdida)}` : dias;
+}
+// O que a faixa de uma equipe precisa mostrar, a partir do resultado gravado:
+// a carta, a letra da decisão e o empréstimo tomado no mês (revisão de 30/09,
+// achado 9: duas equipes do Jonas com a mesma carta tinham saldos diferentes
+// sem explicação), a parada, o que a proteção pagou (D-059), a origem (quando
+// não é a maioria), o saldo do mês com sinal (o zero neutro, "R$ 0", achado
+// 16) e a dívida total de depois do mês.
+function faixaEsperada(x, origem, cfg, rodadaId) {
+  const saldo = Math.round(x.mes.saldoMes) + 0;
+  const divida = dividaEsperada(x.depois);
+  const letra = 'ABCDEFGHIJ'[lista(cfg.rodadas[rodadaId].ordemOpcoes).indexOf(x.decisao)];
+  return {
+    carta: x.carta,
+    escolha: `decisão ${letra}`,
+    emprestimo: x.mes.emprestimo > 0 ? `empréstimo ${F.moeda(x.mes.emprestimo)}` : null,
+    custo: textoParada(x.cartaCusto),
+    protecao: x.mes.protecao > 0 ? `a\u00a0proteção pagou ${F.moeda(x.mes.protecao)}` : null,
+    origem,
+    saldo: `${saldo < 0 ? '−' : saldo > 0 ? '+' : ''}${F.moeda(Math.abs(saldo))}`,
+    sinal: saldo < 0 ? 'negativo' : saldo > 0 ? 'positivo' : 'zero',
+    divida: divida > 0 ? `dívida ${F.moeda(divida)}` : 'sem dívida',
+  };
+}
+const lerFaixas = () => page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
+  carta: c.dataset.carta,
+  escolha: c.querySelector('.resultado-escolha')?.textContent ?? null,
+  emprestimo: c.querySelector('.resultado-emprestimo')?.textContent ?? null,
+  custo: c.querySelector('.resultado-custo')?.textContent ?? null,
+  protecao: c.querySelector('.conta-protecao')?.textContent ?? null,
+  origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
+  saldo: c.querySelector('.resultado-saldo')?.textContent ?? null,
+  sinal: c.querySelector('.resultado-saldo')?.dataset.sinal ?? null,
+  divida: c.querySelector('.resultado-divida')?.textContent ?? null,
+  titulo: c.querySelector('.resultado-carta')?.textContent ?? null,
+  encurtada: c.querySelector('.resultado-carta')?.dataset.encurtada === '1',
+}])));
+// Confere as faixas lidas contra o esperado. O nome da carta é o título do
+// config, ou o curto quando o título não coube numa linha (encurtada).
+function conferirFaixas(lidas, esperadas, cfg, onde) {
+  const semTitulo = Object.fromEntries(Object.entries(lidas).map(([eq, l]) => [eq, Object.fromEntries(Object.entries(l).filter(([k]) => k !== 'titulo' && k !== 'encurtada'))]));
+  assert.deepEqual(semTitulo, esperadas, `${onde}: carta, decisão, empréstimo, parada, proteção, origem, saldo do mês com sinal e dívida, por equipe`);
+  for (const [eq, l] of Object.entries(lidas)) {
+    const carta = cfg.cartas[l.carta];
+    if (l.encurtada) assert.equal(l.titulo, carta.curto, `${onde}/${eq}: o título que não coube vira o curto (D-040)`);
+    else assert.equal(l.titulo, carta.titulo, `${onde}/${eq}: o título da carta`);
+  }
+}
+// Contraste WCAG a partir de cores rgb() do navegador.
+function contrasteRgb(a, b) {
+  const lum = (rgb) => {
+    const [r, g, bl] = rgb.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((v) => {
+      const c = v / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [claro, escuro] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (claro + 0.05) / (escuro + 0.05);
+}
+const rgbDe = (hex) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+// Textos que se sobrepõem no palco (a tela de personas parecia sobreposta no
+// teste de 30/09): as caixas de cada linha de texto e de cada forma de equipe,
+// duas a duas. Cada caixa de texto é reduzida à metade do meio da altura: a
+// caixa que o navegador dá para o texto (ascendente + descendente) é mais alta
+// que a entrelinha de 1,15, e linhas vizinhas se tocariam sem sobrepor nada.
+const textoSobreposto = (seletor) => page.evaluate((sel) => {
+  const caixas = [];
+  for (const raiz of document.querySelectorAll(sel)) {
+    const w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) {
+      const t = w.currentNode;
+      if (!t.textContent.trim() || t.parentElement.getClientRects().length === 0) continue;
+      const faixa = document.createRange();
+      faixa.selectNodeContents(t);
+      for (const r of faixa.getClientRects()) {
+        if (r.width < 1) continue;
+        caixas.push({ nome: t.textContent.trim().slice(0, 30), l: r.left + 1, r: r.right - 1, t: r.top + r.height * 0.25, b: r.bottom - r.height * 0.25 });
+      }
+    }
+    for (const f of raiz.querySelectorAll('svg.forma')) {
+      const r = f.getBoundingClientRect();
+      caixas.push({ nome: `forma ${f.closest('[data-equipe]')?.dataset.equipe ?? ''}`, l: r.left + 1, r: r.right - 1, t: r.top + 1, b: r.bottom - 1 });
+    }
+  }
+  const achados = [];
+  for (let i = 0; i < caixas.length; i += 1) {
+    for (let j = i + 1; j < caixas.length; j += 1) {
+      const a = caixas[i];
+      const b = caixas[j];
+      if (a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b) achados.push(`"${a.nome}" × "${b.nome}"`);
+    }
+  }
+  return achados.slice(0, 6);
+}, seletor);
+// O resultado enxuto em cada tamanho de tela (chamado pelo conferirTela):
+// - sem texto sobreposto, e as colunas alinhadas entre as faixas (subgrid);
+// - um vão de pelo menos 8 px entre uma faixa e a seguinte;
+// - o saldo com sinal, em verde (+) ou vermelho (−), a cor do token do
+//   base.css, com contraste ≥ 4,5:1 sobre o fundo da faixa, e nunca abaixo do
+//   corpo;
+// - o detalhamento das contas fora do telão (fica no celular e na história).
+const VAO_MIN_FAIXAS = 8;
+// Até 1 px de diferença: o arredondamento de meio pixel entre faixas.
+const espalhamento = (xs) => Math.max(...xs) - Math.min(...xs);
+async function conferirVisualDoResultado(onde) {
+  // A entrada das cartas destacadas desloca a faixa (transform): as posições
+  // só valem depois que a animação termina.
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => null))));
+  const m = await page.evaluate(() => {
+    const faixas = [...document.querySelectorAll('.cartao-resultado')];
+    const rects = faixas.map((f) => f.getBoundingClientRect());
+    const raiz = getComputedStyle(document.documentElement);
+    return {
+      vaos: rects.slice(1).map((r, i) => Math.round((r.top - rects[i].bottom) * 10) / 10),
+      meio: faixas.map((f) => Math.round(f.querySelector('.resultado-meio').getBoundingClientRect().left)),
+      dinheiro: faixas.map((f) => Math.round(f.querySelector('.resultado-dinheiro').getBoundingClientRect().right)),
+      saldos: faixas.map((f) => {
+        const s = f.querySelector('.resultado-saldo');
+        return { equipe: f.dataset.equipe, texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, fundo: getComputedStyle(f).backgroundColor, px: parseFloat(getComputedStyle(s).fontSize) };
+      }),
+      tokens: { positivo: raiz.getPropertyValue('--positivo').trim(), negativo: raiz.getPropertyValue('--negativo').trim() },
+      corpo: parseFloat(getComputedStyle(document.body).fontSize),
+      texto: document.getElementById('palco').textContent,
+    };
+  });
+  assert.deepEqual(await textoSobreposto('#palco .grade-resultados'), [], `${onde}: texto sobreposto no resultado`);
+  assert.ok(m.vaos.every((v) => v >= VAO_MIN_FAIXAS), `${onde}: o vão entre as faixas (${m.vaos.join(', ')} px) é de pelo menos ${VAO_MIN_FAIXAS} px`);
+  assert.ok(espalhamento(m.meio) <= 1, `${onde}: a coluna da carta alinhada entre as faixas (${m.meio.join(', ')})`);
+  assert.ok(espalhamento(m.dinheiro) <= 1, `${onde}: a coluna do saldo alinhada entre as faixas (${m.dinheiro.join(', ')})`);
+  for (const s of m.saldos) {
+    // O zero é neutro, sem "+" e na cor da letra (revisão de 30/09, achado 16).
+    if (s.sinal === 'zero') {
+      assert.match(s.texto, /^R\$\s?0$/, `${onde}/${s.equipe}: o saldo zero sem sinal ("${s.texto}")`);
+      continue;
+    }
+    assert.match(s.texto, s.sinal === 'negativo' ? /^−R\$\s?[\d.]+$/ : /^\+R\$\s?[\d.]+$/, `${onde}/${s.equipe}: o saldo com o sinal ("${s.texto}")`);
+    assert.equal(s.cor, rgbDe(m.tokens[s.sinal]), `${onde}/${s.equipe}: o saldo ${s.sinal} na cor --${s.sinal}`);
+    const k = contrasteRgb(s.cor, s.fundo);
+    assert.ok(k >= 4.5, `${onde}/${s.equipe}: contraste do saldo ${k.toFixed(2)}:1 (mínimo 4,5:1)`);
+    assert.ok(s.px > m.corpo, `${onde}/${s.equipe}: o saldo em destaque (${s.px} px, corpo ${m.corpo} px)`);
+  }
+  assert.notEqual(m.tokens.positivo, m.tokens.negativo, 'verde e vermelho diferentes');
+  for (const termo of ['entrou', 'básico', 'juros', 'multa']) assert.ok(!m.texto.includes(termo), `${onde}: "${termo}" saiu do resultado projetado (D-065)`);
+}
+// As personas em cada tamanho de tela: nenhum texto sobreposto e três linhas
+// por persona (quem é, a casa, a conta do mês), cada uma sem quebrar.
+async function conferirVisualDasPersonas(onde) {
+  assert.deepEqual(await textoSobreposto('#palco .personas'), [], `${onde}: texto sobreposto nas personas`);
+  const linhas = await page.evaluate(() => Array.from(document.querySelectorAll('.persona-linha'), (n) => ({
+    persona: n.dataset.persona,
+    alturas: ['.persona-quem', '.persona-casa', '.persona-mes'].map((s) => {
+      const el = n.querySelector(s);
+      return el ? Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)) : 0;
+    }),
+  })));
+  for (const l of linhas) assert.deepEqual(l.alturas, [1, 1, 1], `${onde}/${l.persona}: quem é, a casa e a conta do mês, uma linha cada`);
 }
 
 // ---------- Navegador ----------
@@ -536,8 +728,10 @@ async function controlesNaProjecao() {
 }
 
 const verificadas = [];
-// Em cada tamanho: redesenha, esconde a barra, mede, captura.
-async function conferirTela(nome, { esperarMs = 0, criterios = true } = {}) {
+// Em cada tamanho: redesenha, esconde a barra, mede, captura. aoMedir(onde)
+// confere o que é próprio da tela (o resultado enxuto, as personas), no mesmo
+// tamanho.
+async function conferirTela(nome, { esperarMs = 0, criterios = true, aoMedir = null } = {}) {
   for (const [largura, altura] of TAMANHOS) {
     await page.setViewportSize({ width: largura, height: altura });
     await page.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a, [largura, altura]);
@@ -556,10 +750,13 @@ async function conferirTela(nome, { esperarMs = 0, criterios = true } = {}) {
       assert.deepEqual(m.cortados, [], `${nome} em ${largura}×${altura}: texto cortado com reticências`);
       assert.deepEqual(await controlesNaProjecao(), [], `${nome} em ${largura}×${altura}: controle de operador fora da barra (D-047)`);
       assert.ok(!/piloto autom/i.test(await page.textContent('#palco')), `${nome}: "piloto automático" na tela (D-041)`);
+      if (aoMedir) await aoMedir(`${nome} em ${largura}×${altura}`);
     }
   }
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.waitForFunction(() => innerWidth === 1024);
+  // O redesenho do novo tamanho, antes de quem chama ler a tela.
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   verificadas.push(nome);
 }
 
@@ -850,26 +1047,51 @@ if (OBRIGATORIA) {
 }
 await conferirTela('formar-equipes');
 await avancarPara((e) => e.tipo === 'personas' && e.equipesTravadas === true, 'personas');
-await conferirTela('personas');
-// Revisão de 29/09 (D-044 no telão): cada persona com as pessoas em casa, o
-// básico, a outra renda (ou "sem outra renda na casa") e o furo de um mês
-// comum, a conta do motor.mesComum.
+await conferirTela('personas', { aoMedir: conferirVisualDasPersonas });
+// D-044 e D-065 (teste de 30/09): cada persona em três linhas: as equipes
+// (duas da mesma persona juntas, com "e"), o nome e o ofício; as pessoas em
+// casa, o básico da casa e a outra renda (ou "sem outra renda"); e a conta de
+// um mês comum (motor.mesComum), em vermelho quando não fecha.
 async function conferirCasaDasPersonas(abertas) {
-  const lidas = await page.$$eval('.persona-linha', (ns) => ns.map((n) => ({
-    persona: n.dataset.persona, quem: n.querySelector('.persona-quem')?.textContent ?? '', casa: n.querySelector('.persona-casa')?.textContent ?? '',
+  // Num evaluate só, com a busca dentro: com o $$eval, um redesenho entre a
+  // busca e a leitura deixava os nós fora do documento, e a cor lida vinha vazia.
+  const lidas = await page.evaluate(() => Array.from(document.querySelectorAll('.persona-linha'), (n) => ({
+    persona: n.dataset.persona,
+    equipes: Array.from(n.querySelectorAll('.persona-equipes .equipe'), (x) => x.dataset.equipe),
+    juntas: n.querySelectorAll('.persona-e').length,
+    quem: n.querySelector('.persona-quem')?.textContent ?? '',
+    casa: n.querySelector('.persona-casa')?.textContent ?? '',
+    mes: n.querySelector('.persona-mes')?.textContent ?? '',
+    sinal: n.querySelector('.persona-mes')?.dataset.sinal ?? null,
+    cor: n.querySelector('.persona-mes') ? getComputedStyle(n.querySelector('.persona-mes')).color : null,
+    fundo: getComputedStyle(document.body).backgroundColor,
   })));
-  const esperadas = lista(configNode.ordem.personas).filter((pid) => abertas.some((eq) => configNode.equipes[eq].persona === pid));
-  assert.deepEqual(lidas.map((l) => l.persona), esperadas, 'uma linha por persona com equipe aberta');
+  const tokens = await page.evaluate(() => ({ positivo: getComputedStyle(document.documentElement).getPropertyValue('--positivo').trim(), negativo: getComputedStyle(document.documentElement).getPropertyValue('--negativo').trim() }));
+  // Na ordem das equipes, e não na das personas do config (revisão de 30/09,
+  // achado 12: a tela saía "1 e 2, 5, 3, 4, 6").
+  const esperadas = [...new Set(lista(configNode.ordem.equipes).filter((eq) => abertas.includes(eq)).map((eq) => configNode.equipes[eq].persona))];
+  assert.deepEqual(lidas.map((l) => l.persona), esperadas, 'uma linha por persona com equipe aberta, na ordem das equipes');
+  const numeros = lidas.flatMap((l) => l.equipes.map((eq) => lista(configNode.ordem.equipes).indexOf(eq)));
+  assert.deepEqual(numeros, [...numeros].sort((a, b) => a - b), 'os números das equipes crescem de cima para baixo');
   for (const l of lidas) {
     const p = configNode.personas[l.persona];
-    const mes = V.motor.mesComum(configNode, abertas.find((eq) => configNode.equipes[eq].persona === l.persona));
-    assert.ok(l.quem.includes(`${p.familia.pessoas} pessoas em casa`), `${l.persona}: as pessoas em casa ("${l.quem}")`);
-    const trechos = [
-      `básico ${F.moeda(mes.basico)}`,
-      p.outraRenda ? `${p.outraRenda.rotulo} ${F.moeda(p.outraRenda.valor)}` : 'sem outra renda na casa',
-      mes.saldoMes < 0 ? `falta ${F.moeda(-mes.saldoMes)} por mês` : `sobra ${F.moeda(mes.saldoMes)} por mês`,
-    ];
-    for (const t of trechos) assert.ok(l.casa.includes(t), `${l.persona}: "${t}" em "${l.casa}"`);
+    const suas = abertas.filter((eq) => configNode.equipes[eq].persona === l.persona);
+    assert.deepEqual(l.equipes, suas, `${l.persona}: as equipes da persona, juntas`);
+    assert.equal(l.juntas, suas.length - 1, `${l.persona}: duas equipes da mesma persona ligadas por "e"`);
+    assert.ok(l.quem.includes(`${p.nome} · `), `${l.persona}: o nome e o ofício ("${l.quem}")`);
+    const mes = V.motor.mesComum(configNode, suas[0]);
+    const pessoas = p.familia.pessoas;
+    const casa = [
+      `${pessoas} ${pessoas === 1 ? 'pessoa' : 'pessoas'} em casa`,
+      `básico da casa ${F.moeda(mes.basico)}`,
+      p.outraRenda?.valor > 0 ? `outra renda ${F.moeda(p.outraRenda.valor)}` : 'sem outra renda',
+    ].join(' · ');
+    assert.equal(l.casa, casa, `${l.persona}: a casa`);
+    const fecha = mes.saldoMes >= 0;
+    assert.equal(l.mes, fecha ? `a conta do mês fecha: sobram ${F.moeda(mes.saldoMes)}` : `a conta do mês não fecha: faltam ${F.moeda(-mes.saldoMes)}`, `${l.persona}: a conta do mês comum`);
+    assert.equal(l.sinal, Math.round(mes.saldoMes) > 0 ? 'positivo' : Math.round(mes.saldoMes) < 0 ? 'negativo' : 'zero');
+    assert.equal(l.cor, rgbDe(tokens[l.sinal]), `${l.persona}: a conta do mês na cor --${l.sinal}`);
+    assert.ok(contrasteRgb(l.cor, l.fundo) >= 4.5, `${l.persona}: contraste da conta do mês`);
   }
 }
 await conferirCasaDasPersonas(ATIVAS);
@@ -946,7 +1168,9 @@ for (const r of RODADAS) {
     assert.match(await contorno(), /rgba\(0, 0, 0, 0\)|transparent|none/, 'a fatia sorteada não aparece contornada antes da parada');
     const linhas = await page.locator('.linha-rotulo-sorteio').count();
     assert.equal(await page.locator('.linha-graves').count(), linhas, 'cada equipe mostra a chance de carta grave');
-    assert.ok((await page.locator('.linha-graves').allTextContents()).every((x) => /^cartas graves \d+%$/.test(x)));
+    // A letra da decisão antes da chance (revisão de 30/09, achado 9): é ela
+    // que mudou as fatias.
+    assert.ok((await page.locator('.linha-graves').allTextContents()).every((x) => /^decisão [A-D] · cartas graves \d+%$/.test(x)));
     await page.waitForTimeout(3000);
     assert.equal(await contorno(), 'rgb(242, 242, 242)', 'contornada depois que os ponteiros param');
     // Achado 9: o salvamento automático não cobre o título com um aviso.
@@ -964,7 +1188,7 @@ for (const r of RODADAS) {
   await avancarPara((e) => e.subfase === 'resultado', `resultado de ${r}`);
   await esperarTela('rodada-resultado');
   if (r === RODADAS[0]) {
-    await conferirTela('rodada-resultado', { esperarMs: 900 });
+    await conferirTela('rodada-resultado', { esperarMs: 900, aoMedir: conferirVisualDoResultado });
     cartasR1 = await page.evaluate(() => Array.from(document.querySelectorAll('.cartao-resultado'), (c) => `${c.dataset.equipe}:${c.dataset.carta}`));
     // Desfazer (Ctrl+Z, com confirmação) e encerrar de novo: mesmas cartas.
     await page.keyboard.press('Control+z');
@@ -988,19 +1212,13 @@ for (const r of RODADAS) {
     await esperarTela('rodada-resultado');
     ultimoAvanco = 0;
   }
-  // D-044 e D-046: por equipe, "entrou · básico · faltou" (ou "sobrou") e a
-  // dívida. Conferidos contra os resultados gravados no fim.
-  contasNaTela[r] = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
-    contas: c.querySelector('.resultado-contas')?.textContent ?? null,
-    custo: c.querySelector('.resultado-custo')?.textContent ?? null,
-    deAntes: Array.from(c.querySelectorAll('.de-antes'), (n) => n.textContent),
-    divida: c.querySelector('.resultado-divida')?.textContent ?? null,
-    origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
-  }])));
+  // D-065: por equipe, a carta, a parada, o saldo do mês com sinal e a dívida
+  // total. Conferidos contra os resultados gravados no fim.
+  contasNaTela[r] = await lerFaixas();
   contasNaTela[r].cabecalho = await page.textContent('#palco .tela-cabecalho');
   if (r !== RODADAS[0]) {
-    const temDivida = Object.values(contasNaTela[r]).some((x) => x?.divida);
-    if (temDivida) await conferirTela(`rodada-resultado-divida-${r}`, { esperarMs: 900 });
+    const temDivida = Object.values(contasNaTela[r]).some((x) => x?.divida?.startsWith('dívida'));
+    if (temDivida) await conferirTela(`rodada-resultado-divida-${r}`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
   }
   await page.waitForTimeout(300);
 }
@@ -1082,6 +1300,7 @@ const lerHistoria = () => page.evaluate(() => ({
     return {
       rodada: n.dataset.rodada, texto: n.textContent, contas: n.querySelector('.historia-contas')?.textContent ?? null,
       custo: n.querySelector('.historia-custo')?.textContent ?? null,
+      emprestimo: n.querySelector('.historia-emprestimo')?.textContent ?? null,
       deAntes: Array.from(n.querySelectorAll('.de-antes'), (x) => x.textContent),
       fatos: n.querySelector('.historia-fatos')?.textContent ?? null,
       narrativa: nar?.textContent ?? null,
@@ -1178,39 +1397,32 @@ for (const [k, r] of RODADAS.entries()) {
     const res = V.motor.resolverRodada(configNode, { equipeId: eq, rodadaId: r, opcaoId: opcao, estado: estadoNode[eq], semente: sementes[r], historico });
     assert.equal(resultados[r][eq].decisao, opcao, `${r}/${eq}: decisão`);
     assert.equal(resultados[r][eq].origem, plano[r][eq] ? 'apresentador' : 'piloto', `${r}/${eq}: origem`);
-    // Offline, a decisão do apresentador não é dita; a do padrão, sim, sem
-    // "piloto automático" (D-041; rascunho, seção 7, item 14).
-    assert.equal(contasNaTela[r][eq]?.origem, plano[r][eq] ? null : 'ninguém votou', `${r}/${eq}: a origem projetada`);
     assert.equal(resultados[r][eq].carta, res.carta, `${r}/${eq}: a carta sai da semente gravada`);
     assert.deepEqual(resultados[r][eq].depois, res.depois, `${r}/${eq}: indicadores depois da rodada`);
     assert.deepEqual(resultados[r][eq].mes, res.mes, `${r}/${eq}: as contas do mês gravadas`);
     assert.deepEqual(resultados[r][eq].cartaCusto, res.cartaCusto, `${r}/${eq}: o custo real da carta gravado (D-052)`);
-    // O que foi projetado no resultado da rodada.
-    const nomes = nomesEsperados(res.cartaCusto, res.mes, res.deAntes);
-    assert.equal(contasNaTela[r][eq]?.contas, textoContas(res.mes, nomes.gastos), `${r}/${eq}: "entrou · gastos · básico · faltou" projetado`);
-    assert.equal(contasNaTela[r][eq]?.custo, textoCusto(res.cartaCusto, res.mes, nomes.cartaNosGastos), `${r}/${eq}: o custo real da carta projetado`);
+    // O que foi projetado no resultado da rodada (D-065). Offline, a decisão
+    // do apresentador não é dita; a do padrão, sim, sem "piloto automático"
+    // (D-041; rascunho, seção 7, item 14).
+    conferirFaixas({ [eq]: contasNaTela[r][eq] }, { [eq]: faixaEsperada({ ...res, decisao: opcao }, plano[r][eq] ? null : 'ninguém votou', configNode, r) }, configNode, `${r}/${eq}`);
     assert.deepEqual(resultados[r][eq].deAntes ?? [], res.deAntes, `${r}/${eq}: o que veio de antes, gravado`);
     // D-059: o que a proteção pagou, gravado só quando houve.
     assert.equal(resultados[r][eq].protecaoEvitou ?? 0, res.protecaoEvitou, `${r}/${eq}: protecaoEvitou gravado`);
     assert.deepEqual(resultados[r][eq].protecaoItens ?? [], res.protecaoItens, `${r}/${eq}: protecaoItens gravado`);
-    assert.deepEqual(contasNaTela[r][eq]?.deAntes, textoDeAntes(nomes.antes), `${r}/${eq}: o que veio de antes, projetado`);
-    const divida = res.depois.renda < 0 ? `dívida ${F.moeda(-res.depois.renda)}` : null;
-    assert.equal(contasNaTela[r][eq]?.divida, divida, `${r}/${eq}: dívida projetada`);
     if (res.mes.juros > 0) viuJuros = true;
-    if (divida) {
-      viuDivida = true;
-      assert.ok(contasNaTela[r].cabecalho.includes(`juros de ${pctJuros} ao mês`), `${r}: com dívida na tela, os juros ao mês no cabeçalho ("${contasNaTela[r].cabecalho}")`);
-    }
+    if (dividaEsperada(res.depois) > 0) viuDivida = true;
+    assert.ok(contasNaTela[r].cabecalho.includes('saldo do mês'), `${r}: o cabeçalho diz que o número grande é o saldo do mês ("${contasNaTela[r].cabecalho}")`);
     estadoNode[eq] = res.depois;
     jogadas[eq].push({ rodadaId: r, opcaoId: opcao, cartaId: res.carta });
   }
 }
 if (CAMINHO_CONFIG.endsWith('config-teste-v2.json')) assert.ok(viuJuros && viuDivida, 'a fixture v2 exercita a dívida e os juros');
 assert.equal(placar[FECHADA].ativa, false, 'a equipe fechada não joga');
-// Página 1: saldo dos 3 meses, ordenado, com "faltou/sobrou" e o título calculado.
-const ordemEsperada = ATIVAS.slice().sort((a, b) => placar[b].renda - placar[a].renda || numeroDe(a) - numeroDe(b));
+// Página 1: saldo dos 3 meses, ordenado, com "faltou/sobrou" e o título
+// calculado. O saldo é o patrimônio (esquema v2.2): o empréstimo é dívida.
+const ordemEsperada = ATIVAS.slice().sort((a, b) => patrimonioEsperado(placar[b]) - patrimonioEsperado(placar[a]) || numeroDe(a) - numeroDe(b));
 assert.deepEqual(saldoNaTela.ordem, ordemEsperada, 'página 1: equipes ordenadas pelo saldo');
-assert.equal(saldoNaTela.titulo, tituloSaldo(ATIVAS.filter((eq) => placar[eq].renda < 0).length, ATIVAS.length), 'página 1: título calculado');
+assert.equal(saldoNaTela.titulo, tituloSaldo(ATIVAS.filter((eq) => patrimonioEsperado(placar[eq]) < 0).length, ATIVAS.length), 'página 1: título calculado');
 // A referência com persona atravessa só as linhas das equipes dessa persona.
 const referenciasEsperadas = lista(configNode.ordem.referencias).flatMap((id) => {
   const ref = configNode.referencias[id];
@@ -1220,7 +1432,11 @@ assert.deepEqual(saldoNaTela.referencias, referenciasEsperadas, 'página 1: refe
 for (const eq of ATIVAS) {
   const d = V.motor.decompor(configNode, { equipeId: eq, rodadas: jogadas[eq] });
   const p = placar[eq];
-  for (const [campo, esperado] of [['renda', d.realizado], ['piloto', d.esperadoPiloto], ['efeitoDecisoes', d.efeitoDecisoes], ['sorte', d.sorte], ['piorCaso', d.piorCaso], ['piorCasoSemProtecao', d.piorCasoSemProtecao]]) {
+  // O caixa e o empréstimo gravados são os do fim do último mês; o realizado
+  // do motor é o patrimônio (renda − empréstimo a pagar).
+  assert.deepEqual([p.renda, p.emprestimo ?? 0], [estadoNode[eq].renda, estadoNode[eq].emprestimo ?? 0], `${eq}: caixa e empréstimo do placar = os do fim do último mês`);
+  assert.ok(Math.abs(patrimonioEsperado(p) - d.realizado) < 1e-6, `${eq}.patrimônio: gravado ${patrimonioEsperado(p)}, motor ${d.realizado}`);
+  for (const [campo, esperado] of [['piloto', d.esperadoPiloto], ['efeitoDecisoes', d.efeitoDecisoes], ['sorte', d.sorte], ['piorCaso', d.piorCaso], ['piorCasoSemProtecao', d.piorCasoSemProtecao]]) {
     assert.ok(Math.abs(p[campo] - esperado) < 1e-6, `${eq}.${campo}: gravado ${p[campo]}, motor ${esperado}`);
   }
   assert.equal(saldoNaTela.valores[eq], textoSaldo(d.realizado), `${eq}: página 1, "faltou/sobrou" projetado`);
@@ -1237,7 +1453,7 @@ for (const eq of ATIVAS) {
   assert.equal(lPiloto + lEscolhas + lSorte, lTotal, `${eq}: página 2, as parcelas projetadas somam o "terminaram com"`);
   // Páginas da história: um item por mês, com a escolha, a carta e as contas.
   conferirMesesDaHistoria(eq, V.historia.historiaDaEquipe(configNode, eq, resultados), historiaNaTela[eq].meses, resultados);
-  assert.ok(historiaNaTela[eq].final?.includes(textoSaldo(d.realizado)), `${eq}: a história termina com "${textoSaldo(d.realizado)}"`);
+  conferirFinalDaHistoria(eq, historiaNaTela[eq], d.realizado, p, resultados);
 }
 
 if (piorNaTela) conferirPiorCaso(piorNaTela, configNode, placar, resultados, ATIVAS);
@@ -1342,7 +1558,7 @@ await conferirTela('formar-equipes-celulares');
   const abertas = EQUIPES.filter((eq) => e.equipesAbertas?.[eq]);
   assert.equal(abertas.length, EQUIPES.length, 'as seis equipes abertas');
   assert.equal(await page.locator('#faixa').isVisible(), true, 'com a faixa de entrada');
-  await conferirTela('personas-celulares');
+  await conferirTela('personas-celulares', { aoMedir: conferirVisualDasPersonas });
   await conferirCasaDasPersonas(abertas);
 }
 await clicarBarra('pular');
@@ -1385,7 +1601,7 @@ const origemE2 = await page.evaluate(([r, eq]) => globalThis.__canalTeste.ler(`s
 assert.equal(origemE2, 'moeda', 'empate que continua na prorrogação vai para a moeda');
 await avancarPara((e) => e.subfase === 'resultado', 'resultado (celulares)');
 await esperarTela('rodada-resultado');
-await conferirTela('rodada-resultado-celulares');
+await conferirTela('rodada-resultado-celulares', { esperarMs: 900, aoMedir: conferirVisualDoResultado });
 
 // ---------- Parte 3: seguir sem celulares no meio de uma enquete ----------
 
@@ -1499,10 +1715,15 @@ function cartaMaisCara(pedido) {
 }
 // A decisão de cada equipe: a opção com texto do ofício da persona, quando há
 // (D-054), senão o padrão.
-const plano4 = Object.fromEntries(EQUIPES.map((eq) => {
+// A primeira equipe (a do Jonas, no teste de 30/09) pega o empréstimo quando
+// o config tem um (esquema v2.2): o resultado mostra a dívida com ele, e a
+// história diz "pegou empréstimo de R$ X" e com quanto dele a equipe termina.
+const opcaoDeEmprestimo = (r) => opcoesDe(r).find((o) => lista(configNode.rodadas[r].opcoes[o].efeitos).some((ef) => ef.emprestimo));
+const plano4 = Object.fromEntries(EQUIPES.map((eq, i) => {
   const persona = configNode.equipes[eq].persona;
-  return [eq, RODADAS.map((r) => opcoesDe(r).find((o) => temTextoDoOficio(r, o, persona)) ?? configNode.rodadas[r].padrao)];
+  return [eq, RODADAS.map((r) => (i === 0 && opcaoDeEmprestimo(r)) || opcoesDe(r).find((o) => temTextoDoOficio(r, o, persona)) || configNode.rodadas[r].padrao)];
 }));
+const temEmprestimoNoConfig = RODADAS.some((r) => opcaoDeEmprestimo(r));
 // O que o anfitrião gravaria (js/nucleo/anfitriao.js, fecharRodada) com esta
 // decisão e esta carta. A origem é "ninguém votou" em todas: offline, é a
 // única origem que o telão escreve (a do apresentador fica calada, e moeda e
@@ -1564,32 +1785,24 @@ for (const [k, r] of RODADAS.entries()) {
     await globalThis.__canal4.gravar(m);
   }, escritas);
   // O telão redesenha com o que foi gravado (ouvinte do canal).
-  const esperado = Object.fromEntries(EQUIPES.map((eq) => {
-    const x = resultados4[r][eq];
-    const nomes = nomesEsperados(x.cartaCusto, x.mes, x.deAntes);
-    return [eq, {
-      carta: x.carta, contas: textoContas(x.mes, nomes.gastos), custo: textoCusto(x.cartaCusto, x.mes, nomes.cartaNosGastos),
-      deAntes: textoDeAntes(nomes.antes), origem: 'ninguém votou',
-    }];
-  }));
+  const esperado = Object.fromEntries(EQUIPES.map((eq) => [eq, faixaEsperada(resultados4[r][eq], 'ninguém votou', configNode, r)]));
   await page.waitForFunction((esp) => Object.entries(esp).every(([eq, x]) => {
     const c = document.querySelector(`.cartao-resultado[data-equipe="${eq}"]`);
-    return c?.dataset.carta === x.carta && c.querySelector('.resultado-contas')?.textContent === x.contas;
+    return c?.dataset.carta === x.carta && c.querySelector('.resultado-saldo')?.textContent === x.saldo;
   }), esperado);
-  const lido = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
-    carta: c.dataset.carta,
-    contas: c.querySelector('.resultado-contas')?.textContent ?? null,
-    custo: c.querySelector('.resultado-custo')?.textContent ?? null,
-    deAntes: Array.from(c.querySelectorAll('.de-antes'), (n) => n.textContent),
-    origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
-  }])));
-  assert.deepEqual(lido, esperado, `${r} (parte 4): carta, custo real (D-052), o que veio de antes e contas com os gastos fora do "entrou", por equipe`);
+  const lido = await lerFaixas();
+  conferirFaixas(lido, esperado, configNode, `${r} (parte 4)`);
   custosVistos4 += Object.values(lido).filter((x) => x.custo).length;
-  deAntesVistos4 += Object.values(lido).reduce((t, x) => t + x.deAntes.length, 0);
-  await conferirTela(`rodada-resultado-custos-${r}-6-equipes`, { esperarMs: 900 });
+  // O que veio de antes saiu do resultado projetado (D-065): fica no celular e
+  // na história, onde a parte 4 também o confere.
+  deAntesVistos4 += EQUIPES.reduce((t, eq) => t + lista(resultados4[r][eq].deAntes).length, 0);
+  await conferirTela(`rodada-resultado-custos-${r}-6-equipes`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
 }
 const temCustoNoConfig = Object.values(configNode.cartas).some((c) => c.diasParado > 0 || lista(c.efeitos).some((ef) => ef.categoria === 'gasto'));
-if (temCustoNoConfig) assert.ok(custosVistos4 > 0, 'o config tem carta com custo, e o resultado da rodada o mostrou');
+// Só a carta de parada escreve no resultado projetado (D-065): o custo em
+// dinheiro das outras está no saldo do mês, e o detalhe, na história.
+const temParadaNoConfig = temCustoNoConfig && Object.values(configNode.cartas).some((c) => c.diasParado > 0);
+if (temParadaNoConfig) assert.ok(custosVistos4 > 0, 'o config tem carta de parada, e o resultado da rodada mostrou os dias parados');
 await avancarAte((e) => e.tipo === 'placarFinal', 'placar final (parte 4)', { maximo: 12 });
 await esperarTela('placar-final');
 await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.dataset.pagina === 'saldo');
@@ -1616,17 +1829,22 @@ if (temProtecao(configNode)) {
 // A história de cada uma das seis equipes, com três meses de carta cara: o caso
 // mais alto da página. O texto da opção é o do ofício da persona (D-054).
 let doOficio4 = 0;
+let emprestimosVistos4 = 0;
 for (const eq of EQUIPES) {
   await avancar();
   await page.waitForFunction((x) => document.querySelector('.tela-placar-final')?.dataset.equipe === x, eq);
   const lida = await lerHistoria();
   doOficio4 += conferirMesesDaHistoria(eq, V.historia.historiaDaEquipe(configNode, eq, resultados4), lida.meses, resultados4);
+  const placar4 = placarDe(resultados4)[eq];
+  conferirFinalDaHistoria(eq, lida, patrimonioEsperado(placar4), placar4, resultados4);
+  emprestimosVistos4 += lida.meses.filter((m) => m.emprestimo).length;
   await conferirTela(`placar-historia-${eq}-6-equipes`);
 }
 const temOficio = EQUIPES.some((eq) => RODADAS.some((r, k) => temTextoDoOficio(r, plano4[eq][k], configNode.equipes[eq].persona)));
 if (temOficio) assert.ok(doOficio4 > 0, 'o config tem texto por ofício, e a história o mostrou (D-054)');
+if (temEmprestimoNoConfig) assert.ok(emprestimosVistos4 > 0, 'o config tem empréstimo, e a história o mostrou como dívida');
 const temDeAntesNoConfig = RODADAS.some((r) => lista(configNode.rodadas[r].efeitosGerais).some((ef) => ef.fixo !== true && ef.se && (ef.se.decidiu || ef.se.sorteou || ef.se.indicador)));
-if (temDeAntesNoConfig) assert.ok(deAntesVistos4 > 0, 'o config tem efeito geral de antes, e o resultado o mostrou');
+if (temDeAntesNoConfig) assert.ok(deAntesVistos4 > 0, 'o config tem efeito geral de antes, e a parte 4 o exercitou (a história o confere)');
 console.log(`  parte 4: ${custosVistos4} resultado(s) com custo da carta; ${deAntesVistos4} item(ns) do que veio de antes; ${doOficio4} mês(es) da história com o texto do ofício`);
 
 // ---------- Parte 5: a linha do tempo do roteiro longo ----------
@@ -1747,24 +1965,18 @@ console.log('Parte 6: a proteção (D-059), com a fixture v2.1');
       await globalThis.__canal6.gravar(Object.fromEntries(Object.keys(m).map((c) => [c, null])));
       await globalThis.__canal6.gravar(m);
     }, escritas);
-    // O resultado projetado: as contas de cada equipe, com "a proteção pagou"
-    // só em quem ela pagou.
-    const esperado = Object.fromEntries(equipes6.map((eq) => {
-      const x = resultados6[r][eq];
-      const nomes = nomesEsperados(x.cartaCusto, x.mes, x.deAntes);
-      return [eq, { contas: textoContas(x.mes, nomes.gastos), protecao: x.mes.protecao > 0 ? `a\u00a0proteção pagou ${F.moeda(x.mes.protecao)}` : null }];
-    }));
-    await page.waitForFunction((esp) => Object.entries(esp).every(([eq, x]) => (
-      document.querySelector(`.cartao-resultado[data-equipe="${eq}"] .resultado-contas`)?.textContent === x.contas
-    )), esperado);
-    const lido = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
-      contas: c.querySelector('.resultado-contas')?.textContent ?? null,
-      protecao: c.querySelector('.conta-protecao')?.textContent ?? null,
-    }])));
-    assert.deepEqual(lido, esperado, `${r} (parte 6): as contas do mês com o que a proteção pagou`);
+    // O resultado projetado (D-065), com "a proteção pagou" (D-059) só em quem
+    // ela pagou, embaixo da carta.
+    const esperado = Object.fromEntries(equipes6.map((eq) => [eq, faixaEsperada(resultados6[r][eq], 'ninguém votou', cfg6, r)]));
+    await page.waitForFunction((esp) => Object.entries(esp).every(([eq, x]) => {
+      const c = document.querySelector(`.cartao-resultado[data-equipe="${eq}"]`);
+      return c?.dataset.carta === x.carta && c.querySelector('.resultado-saldo')?.textContent === x.saldo;
+    }), esperado);
+    const lido = await lerFaixas();
+    conferirFaixas(lido, esperado, cfg6, `${r} (parte 6)`);
     const comProtecao = Object.values(lido).filter((x) => x.protecao).length;
     protecoesVistas += comProtecao;
-    if (comProtecao > 0) await conferirTela(`rodada-resultado-protecao-${r}`, { esperarMs: 900 });
+    if (comProtecao > 0) await conferirTela(`rodada-resultado-protecao-${r}`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
   }
   assert.equal(protecoesVistas, protegem6.size, 'o INSS do MEI apareceu no mês 2 de quem pagou o MEI, e só nele');
   assert.ok(equipes6.filter((eq) => protegem6.has(eq)).every((eq) => resultados6[rodadas6[1]][eq].mes.protecao === 900), 'o INSS do MEI é de R$ 900 na fixture');

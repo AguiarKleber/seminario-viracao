@@ -378,3 +378,43 @@ atual, ela não melhora o pior caso. Marcada como proteção, a página "O pior 
 podia acontecer" diria "ela evita o pior" ao lado de "a proteção não melhorou o
 pior caso". Só o MEI aparece como proteção nessa página. Desfazer é pôr
 `"protege": true` de volta na opção r3/0.
+
+## 30/09/2026: depois do teste do Kleberson no site publicado
+
+**D-060. O jogo dura 12 meses, em 6 rodadas bimestrais** (substitui as 3 rodadas
+da D-006). A sessão gira em torno do jogo: a apresentação acontece em cima dele,
+com dados da realidade brasileira. Duas ou três entrevistas cabem em blocos que
+somam no máximo 20 minutos. Continua havendo os roteiros de 60 e de 120 minutos.
+Marcado como "vamos testar".
+
+**D-061. Seis personagens, um por equipe, cada um num trabalho diferente**
+(substitui a D-004 e a D-026):
+- motorista de app (Marcos);
+- motoboy do iFood (Jonas);
+- entregador de bicicleta (Kauã);
+- manicure por app (Rose);
+- vendedora de doces no Instagram (Daiane);
+- influenciadora digital (personagem nova).
+
+**D-062. Ninguém tem carteira assinada na casa.** Todos são "empreendedores" em
+trabalho subordinado a plataformas. Quando a casa tem outra renda, ela também é
+informal (diária, bico). O 13º e o abono deixam de ser picos.
+
+**D-063. O risco cresce com os meses:** desgaste do veículo, do corpo e do
+algoritmo. Foi sugestão do Kleberson.
+
+**D-064. Modo espectador do apresentador no celular.**
+- Com o PIN, o celular do apresentador vê a tela de qualquer equipe, exatamente
+  como o aluno vê.
+- Ele não vira membro e não vota.
+
+**D-065. Telas enxutas.**
+- **No telão, o resultado da rodada mostra só o essencial:** a carta, o saldo do
+  mês em verde (+) ou vermelho (−) e a dívida.
+- **No celular, a situação traz o resumo mês a mês**, com o saldo colorido e o
+  detalhe recolhido.
+- **O empréstimo passa a ser dívida, e não renda.**
+
+**Defeito crítico registrado:** no teste de 30/09, um toque em "Votar nesta" não
+registrou o voto no mês 3. A correção é prioridade máxima e vem com uma matriz de
+votos: todas as equipes, todas as rodadas e as situações difíceis.

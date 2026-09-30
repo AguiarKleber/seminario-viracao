@@ -39,6 +39,29 @@
     };
   }
 
+  // Esquema v2.2: as duas dívidas da família, a partir dos indicadores (o
+  // "depois" gravado ou o placar). O cheque especial é o saldo acumulado
+  // negativo; o empréstimo é o saldo devedor. A "dívida" da tela é a soma:
+  // no teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e a tela disse
+  // "dívida R$ 1", porque olhava só o cheque especial. null quando os
+  // indicadores não têm a renda (sala sem resultado).
+  function dividaTotal(valores) {
+    const renda = em(valores, 'renda');
+    if (!Number.isFinite(renda)) return null;
+    const emprestimo = Math.max(0, Number(em(valores, 'emprestimo')) || 0);
+    const chequeEspecial = renda < 0 ? -renda : 0;
+    return { chequeEspecial, emprestimo, total: chequeEspecial + emprestimo };
+  }
+
+  // O patrimônio (esquema v2.2): o saldo acumulado menos o empréstimo a pagar.
+  // É o número do placar (motor.patrimonio, que o celular não carrega) e o
+  // "ficou com" do resumo mês a mês: pelo saldo acumulado, quem pegou R$ 1.500
+  // e ainda não pagou nada parecia R$ 1.500 mais rico. null sem a renda.
+  function patrimonioDe(valores) {
+    const d = dividaTotal(valores);
+    return d ? em(valores, 'renda') - d.emprestimo + 0 : null;
+  }
+
   // Na ordem das rodadas do config; rodada sem resultado da equipe (pulada no
   // dia, ou equipe fechada naquele mês) não entra. cartaCusto é o gravado pelo
   // telão (D-052); resultado de sala anterior ao v2.1 não o tem, e fica null.
@@ -64,6 +87,11 @@
         deAntes: lista(res.deAntes),
         // O que a proteção pagou no mês (D-059), ou null.
         protecaoDoMes: protecaoDoResultado(res),
+        // Esquema v2.2: como a família ficou no fim do mês (o resumo mês a
+        // mês: vermelho se negativo, verde se positivo) e as duas dívidas.
+        // null em sala sem o "depois".
+        saldoAcumulado: patrimonioDe(res.depois),
+        divida: dividaTotal(res.depois),
       });
     }
     return historia;
@@ -152,11 +180,14 @@
   // 29/09). A sorte exibida é o que falta para fechar com o total arredondado:
   // a diferença para a do motor fica abaixo de R$ 1,50, e a conta sempre fecha.
   // Placar sem os quatro números (sala antiga) devolve null: a tela não inventa.
+  // O total é o patrimônio (esquema v2.2): piloto e efeitoDecisoes vêm do
+  // motor.decompor, que já é no patrimônio; com a renda crua, a conta da
+  // equipe que pegou o empréstimo não fecharia por R$ 1.500.
   function escolhaOuSorte(placar) {
     if (!placar) return null;
     const { piloto, efeitoDecisoes, renda } = placar;
     if (![piloto, efeitoDecisoes, renda].every(Number.isFinite)) return null;
-    const total = Math.round(renda);
+    const total = Math.round(patrimonioDe(placar));
     const p = Math.round(piloto);
     const escolhas = Math.round(efeitoDecisoes);
     // "+ 0" troca -0 por 0: "−R$ 0" na tela seria um sinal sem valor.
@@ -183,6 +214,6 @@
 
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
-    temProtecao, escolheuProtecao,
+    temProtecao, escolheuProtecao, dividaTotal, patrimonioDe,
   };
 })(globalThis);

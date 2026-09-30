@@ -63,8 +63,8 @@ exibição fica num array de strings.
     em efeitos, `ajustesDePeso` e `somenteSe`;
   - todas as chaves presentes precisam valer ao mesmo tempo;
   - qualquer chave fora dessas é erro.
-- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto" }`, com
-  `soma` **ou** `multiplica`, nunca os dois (`fixo` e `categoria`: esquema v2.1, abaixo).
+- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto"|"protecao", emprestimo?: { valor, parcelas, taxaMes, fonte } }`, com
+  `soma` **ou** `multiplica` **ou** `emprestimo`, só um deles (`fixo` e `categoria`: esquema v2.1; `emprestimo`: esquema v2.2, abaixo).
 - `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
   - `momento` ∈ `antes | depois | unico`.
@@ -126,6 +126,22 @@ exibição fica num array de strings.
   `rotulo`/`narrativa`. As chaves de efeito continuam fechadas (`fixa` em vez de `fixo` é erro); nas
   opções e cartas, chave desconhecida continua aviso.
 
+**Esquema v2.2** (teste real de 30/09: o empréstimo é dívida, e não renda), conferido pelo validador. Opcional:
+um config sem empréstimo continua válido e dá as mesmas contas.
+- `efeito.emprestimo = { valor, parcelas, taxaMes, fonte }`: a equipe pega um empréstimo. `valor` inteiro > 0 (R$),
+  `parcelas` inteiro de 1 a 60, `taxaMes` fração ao mês `0 < x < 1` (0,0639 = 6,39%), `fonte` texto obrigatório.
+  Chave a mais no objeto é **erro**. O efeito leva também `rotulo` (o nome do empréstimo nas linhas) e `se`;
+- só nos efeitos de uma **opção** (em `todoMes`, `efeitosGerais` ou carta é erro: é a equipe que decide pegar);
+- junto de `soma`, `multiplica`, `fixo` ou `categoria` é erro: a entrada e as parcelas são calculadas pelo motor;
+- o `se` só pode usar `opcao`, `persona`, `equipe` e `rodada` (`indicador`, `decidiu` e `sorteou` são erro): o
+  motor refaz, nos meses seguintes, o empréstimo tomado lá atrás só com o histórico, sem o estado daquele mês;
+- com algum empréstimo no config: o indicador `emprestimo` (o saldo devedor) é obrigatório, em `moeda`, com
+  `min` 0 e `inicial` 0 (e `persona.inicial.emprestimo`, se houver, 0); o `max` precisa caber a soma, por rodada,
+  da opção com mais empréstimo; nenhum `soma`/`multiplica` pode mexer no indicador `emprestimo` (só o motor); e todo
+  roteiro precisa ter as rodadas na ordem do config (o motor conta as parcelas pagas nessa ordem). Tudo isso é erro;
+- a conferência de "carta possível" leva também as rodadas com empréstimo na chave do nó (a parcela de um mês depende
+  de quando o empréstimo foi tomado).
+
 **Valores padrão aplicados pela normalização** (o JSON pode omitir):
 - `obrigatoria: false`, `efeitosGerais: []`, `ajustesDePeso: []`, `todoMes: []`, `inicial: {}`;
 - `cartas[].curto` é opcional (D-040): texto não vazio de até 12 caracteres (contados por letra),
@@ -184,15 +200,17 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
 | `aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico? }) → { delta, depois, linhas, mes, cartaCusto, deAntes }` | a parte determinística, usada pela enumeração; `delta` é o de antes do clamp; `cartaId` nulo aplica o mês sem carta (`cartaCusto` em 0) |
 | `historicoDe(resultados, equipeId, rodadas: [ids]) → Historico` | monta o histórico a partir de `resultados/{r}/{eq}`, só com as rodadas pedidas que têm resultado (quem chama passa as anteriores à atual, na ordem do roteiro) |
 | `totalBasico(persona) → n` | a soma dos itens do básico da casa |
+| `patrimonio(estado) → n` | esquema v2.2: `renda − emprestimo` (o caixa menos o saldo devedor); sem o indicador `emprestimo`, a própria renda. É o número do placar |
+| `cronograma(valor, parcelas, taxaMes) → [{ parcela, juros, amortizacao, saldo }]` | a tabela Price em reais inteiros (uma cópia): parcela fixa = PMT arredondado; `juros = round(saldo × taxa)`; `amortizacao = parcela − juros`; a última parcela fecha o saldo em 0 |
 | `mesComum(config, equipeId) → mes` | o furo de um mês comum (tela de personas do telão): só o `todoMes` da persona (efeito com condição de rodada, opção ou histórico não entra; condição de indicador lê o estado inicial), na mesma ordem do mês (o custo fixo do `todoMes` entra, fora do `multiplica`), mais a outra renda, menos o básico, sem dívida; mesmo formato de `Resultado.mes` |
 | `consolidarDecisao(config, { rodadaId, votos, forcada, aposProrrogacao, semente, equipeId, candidatas? }) → Consolidacao` | ver abaixo |
 | `decompor(config, { equipeId, rodadas: [{ rodadaId, opcaoId, cartaId }] }) → Decomposicao` | enumeração exata dos caminhos de cartas, levando o histórico no caminho (a lista `rodadas`, na ordem do roteiro, é o histórico) |
 
 - `Historico = { [rodadaId]: { decisao, carta } }`: o que a equipe decidiu e tirou nas rodadas anteriores (o
   mesmo formato de `resultados/{r}/{eq}`). É o que `decidiu`/`sorteou` leem. Omitido, vale `{}`: toda
-  condição de histórico dá falso. **Quem chama o motor com um config que usa `decidiu`/`sorteou` precisa
-  passar o histórico**, senão calcula outro número.
-- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"piso"|"custoFixo"|"gasto"|"protecao"|"outraRenda"|"basico"|"juros", rotulo, indicador, valor, deAntes? }], mes, cartaCusto, deAntes, protecaoEvitou, protecaoItens }`
+  condição de histórico dá falso. **Quem chama o motor com um config que usa `decidiu`/`sorteou` ou empréstimo
+  precisa passar o histórico**, senão calcula outro número (sem ele, a parcela do empréstimo não é cobrada).
+- `Resultado = { carta, chances, delta, depois, linhas: [{ origem: "persona"|"geral"|"opcao"|"carta"|"piso"|"custoFixo"|"gasto"|"protecao"|"emprestimo"|"outraRenda"|"basico"|"juros"|"amortizacao", rotulo, indicador, valor, deAntes? }], mes, cartaCusto, deAntes, protecaoEvitou, protecaoItens }`
   (o `aplicar` devolve os mesmos `mes`, `cartaCusto`, `deAntes`, `protecaoEvitou` e `protecaoItens`)
   - `protecaoEvitou` (D-059) ≥ 0: quanto o saldo do mês seria menor sem os efeitos `protecao` daquele mês.
     É igual a `mes.protecao`: os juros do mês são cobrados sobre a dívida de **antes**, e a proteção do mês
@@ -206,23 +224,41 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   - `linha.deAntes = true` marca, na renda, os efeitos **gerais** (`rodada.efeitosGerais`) cuja condição lê
     `decidiu`, `sorteou` ou `indicador` (consequência de um mês anterior), fora os custos fixos;
   - `deAntes = [{ rotulo, valor, gasto? }]`: essas linhas, na ordem do mês, com `gasto: true` nas de
-    categoria "gasto" (a multa, o saldo do empréstimo: estão nos gastos, e não no "entrou"). Lista vazia
+    categoria "gasto" (a multa do aluguel atrasado: está nos gastos, e não no "entrou"). Lista vazia
     quando não há. É o que a tela nomeia ("+25 dias da fratura −R$ 2.233 · INSS (45 dias) +R$ 2.431").
     Gravado pelo anfitrião em `resultados/{r}/{eq}.deAntes` **só quando não é vazio** (o RTDB apaga lista
     vazia); ausente vale `[]`;
   - as linhas saem na ordem do mês: as do trabalho variável (com a origem do grupo), depois as de
     `custoFixo` e as de `gasto` (o rótulo é o do efeito, ou o do grupo de onde ele veio), depois
-    `outraRenda`, `basico` (uma por item, com valor negativo) e `juros` (rótulo "juros da dívida"); estas três
-    só entram com valor diferente de 0;
-  - `mes = { trabalho, custosFixos, gastos, protecao, outraRenda, entrou, basico, juros, saldoMes, dividaAntes }`, na
+    `emprestimo` (a entrada, na renda e no indicador `emprestimo`, com o rótulo do efeito), `outraRenda`,
+    `basico` (uma por item, com valor negativo), `juros` (rótulo "juros da dívida", o cheque especial; e uma por
+    parcela, "juros da parcela k de n do <rótulo>") e `amortizacao` (a parte da parcela que abate a dívida, na renda e,
+    negativa, no indicador `emprestimo`); outraRenda, básico e juros só entram com valor diferente de 0. As linhas
+    de cada indicador somam o `delta` dele;
+  - `mes = { trabalho, custosFixos, gastos, protecao, outraRenda, entrou, basico, juros, saldoMes, dividaAntes, emprestimo, parcela, jurosEmprestimo, amortizacao, saldoDevedor, parcelasRestantes, proximaParcela, aPagar, taxaEmprestimo? }`, na
     renda: `trabalho` é o trabalho **variável** (todoMes → gerais → opção → carta, sem os efeitos `fixo`,
     `gasto` e `protecao`); `custosFixos` e `gastos` são positivos quando tiram dinheiro (a soma dos efeitos `fixo` e
     `gasto`, com o sinal trocado); `protecao` ≥ 0 é a soma dos efeitos `protecao` (D-059), e fica **fora** do
     "entrou" (a tela diz "a proteção pagou R$ X"); `entrou = trabalho − custosFixos + outraRenda`;
-    `saldoMes = entrou + protecao − gastos − basico − juros` (é o `delta.renda`); com `regras.pisoTrabalho`, `trabalho` ≥ 0,
+    `saldoMes = entrou + protecao − gastos − basico − juros`; com `regras.pisoTrabalho`, `trabalho` ≥ 0,
     mas o `entrou` ainda pode ficar negativo (custos fixos maiores que o trabalho, num mês parado);
-    `dividaAntes` ≥ 0 é a dívida de antes
-    do mês. É gravado pelo anfitrião em `resultados/{r}/{eq}.mes`;
+    `dividaAntes` ≥ 0 é o cheque especial de antes do mês (a base dos juros dele). É gravado pelo anfitrião em
+    `resultados/{r}/{eq}.mes` (todos os campos, 0 quando não há empréstimo);
+  - empréstimo (esquema v2.2; tudo em 0 sem empréstimo): `emprestimo` é o que entrou de empréstimo no mês (fora do
+    "entrou" e do `saldoMes`); `parcela` é a soma das parcelas que venceram no mês (a de um empréstimo tomado num mês
+    anterior), que saem inteiras do caixa: `parcela = jurosEmprestimo + amortizacao`; `juros` é o **total** (cheque
+    especial + `jurosEmprestimo`), e a `amortizacao` fica fora do `saldoMes` (só troca uma dívida por outra);
+    `saldoDevedor` é o do empréstimo no fim do mês (o `emprestimo` do estado + a entrada − a amortização, antes do
+    limite); `parcelasRestantes` é quantas parcelas ainda faltam depois do mês (a maior, entre os empréstimos),
+    `proximaParcela` a soma das parcelas do mês seguinte e `aPagar` a soma de todas as que faltam, com juros. As
+    parcelas continuam depois do fim do jogo: "fica devendo R$ `saldoDevedor` em `parcelasRestantes` parcelas".
+    `taxaEmprestimo` é a taxa ao mês dos empréstimos em aberto (do mês em que entram até a última parcela), só
+    quando existe e é uma só (dois empréstimos de taxas diferentes: sem o campo); sem empréstimo, o campo não
+    existe (o RTDB apagaria o null, e o mês lido do banco tem de ser igual ao do motor). Revisão de 30/09,
+    achado 17: o celular mostrava só a taxa do cheque especial;
+  - por isso: `delta.renda = saldoMes + emprestimo − amortizacao` (o caixa), `delta.emprestimo = emprestimo −
+    amortizacao`, e `saldoMes` é a variação do patrimônio. A "dívida" da tela é o cheque especial mais o saldo
+    devedor (`historia.dividaTotal(depois)`), e dívida antes + o que faltou = dívida depois;
   - `cartaCusto = { diasParado, rendaPerdida, gastos }` (D-052), gravado pelo anfitrião em
     `resultados/{r}/{eq}.cartaCusto`: `diasParado` é o da carta (0 sem ele); `rendaPerdida` = trabalho
     variável sem a carta − com a carta, nunca abaixo de 0 (carta que ajuda dá 0); com o piso, o trabalho sem
@@ -242,11 +278,15 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
     que o voto antigo de quem saiu da equipe não faça uma opção de fora vencer. `contagem` continua
     com todas as opções, e sem nenhum voto vale o `padrao` (piloto). Lista sem nenhuma opção da
     rodada é ignorada.
-- `Decomposicao = { realizado, esperadoComDecisoes, esperadoPiloto, efeitoDecisoes, sorte, piorCaso, piorCasoSemProtecao }`, sempre para o indicador `renda`:
+- `Decomposicao = { realizado, esperadoComDecisoes, esperadoPiloto, efeitoDecisoes, sorte, piorCaso, piorCasoSemProtecao }`, sempre no
+  patrimônio (`motor.patrimonio`: renda − saldo devedor do empréstimo; sem o indicador `emprestimo`, a renda). Esquema v2.2:
+  pela renda, quem pegou o empréstimo no mês 2 ficava R$ 1.500 mais rico, e se o mês 3 fosse pulado a dívida nunca
+  aparecia no placar. O anfitrião grava no `placar/{eq}` o `depois` da última rodada (renda **e** `emprestimo`) junto
+  destes números; o total que a tela mostra é `renda − emprestimo` (`historia.patrimonioDe`, `historia.escolhaOuSorte`):
   - `esperadoPiloto`: o esperado se todas as rodadas jogadas tivessem ficado no `padrao`;
   - `efeitoDecisoes = esperadoComDecisoes - esperadoPiloto`;
   - `sorte = realizado - esperadoComDecisoes`;
-  - `piorCaso`: a menor renda possível com as decisões tomadas;
+  - `piorCaso`: o menor patrimônio possível com as decisões tomadas;
   - `piorCasoSemProtecao` (D-059): a menor renda possível com as **mesmas** decisões, exceto as opções com
     `protege: true`, trocadas pelo `padrao` do mês; enumeração exata, como o `piorCaso`. Sem nenhuma opção que
     protege nas decisões (ou com o padrão protegendo), é igual ao `piorCaso` e não refaz a enumeração. A
@@ -267,6 +307,11 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
   `juros = round(|saldo| × jurosDividaMes)` quando a renda do estado **antes** da rodada é negativa (a
   dívida que vinha do mês anterior), e 0 senão. A carta que corta a renda corta o que se ganha, e não
   a conta da casa;
+- (7) empréstimo (esquema v2.2), fora do trabalho, do piso e de qualquer `multiplica`: a entrada do empréstimo
+  tomado pela opção do mês (+ renda, + `emprestimo`); a parcela de cada empréstimo tomado num mês anterior, lida do
+  histórico (a k-ésima parcela no k-ésimo mês **jogado** depois dele, na ordem das rodadas do config: mês pulado no
+  dia não cobra parcela), com os juros dela em `juros` e a amortização saindo da renda e do `emprestimo`. Sem o
+  histórico, não há parcela;
 - toda condição lê o estado **antes** da rodada e o histórico da equipe;
 - no fim, `depois = clamp(estado + delta, min, max)`.
 
@@ -399,6 +444,11 @@ Só no Firebase:
 - voto de enquete: só na chave do próprio uid, já membro, com `tipo enquete`, a mesma enquete e o mesmo momento, `subfase votando`, `estado.afirmacao` igual a `*` ou à afirmação votada, dentro de `prazo + gracaSeg`, inteiro de 1 a 5 e afirmação existente;
 - decisão: só na chave do próprio uid, na própria equipe, com a mesma rodada, `subfase decidindo` (ou `prorrogacao` com a equipe em `estado.empatadas`, e então só opção empatada), `entrouEm <= estado.abertoEm`, dentro de `prazo + gracaSeg` e opção existente;
 - sem `prazo` (etapa pausada), nenhum voto passa, como na regra do Firebase (`null + graça` não vale);
+- o `prazo` que o anfitrião grava é o **da regra**: o fim do cronômetro mais a folga de 12 h
+  (`alunoLogica.FOLGA_DA_REGRA_MS`, seção 7). As regras não mudaram (continuam `v3`): na prática, o voto
+  vale enquanto a votação estiver aberta, e quem corta é o `fechando` do apresentador (D-010). No teste de
+  30/09, com o prazo igual ao fim do cronômetro, a decisão do mês 3 ficou aberta 7 min 35 s e todo voto
+  depois de 2 min 5 s foi recusado;
 - leitura: o aluno lê `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `enquetes` e `membros`; em `decisoes/{r}/{equipe}`, só a da própria equipe; em `votosEnquete`, só a própria folha; nunca `sementes`, `prorrogacoes`, `presenca` nem a sala inteira;
 - `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v3"`); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
   A versão fica em três lugares (`firebase/regras.json`, `REGRAS_VERSAO` em `js/telao.js` e em
@@ -442,10 +492,22 @@ Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras 
 
 ## 7. `Viracao.anfitriao`
 
-`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp? })` devolve os métodos abaixo.
+`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp?, folgaDaRegraMs? })` devolve os métodos abaixo.
 - `agora` padrão é `canal.agora`; sem `uid`, usa `canal.entrar()`;
 - `sala` segue `[A-HJ-NP-Z2-9]{4}`;
-- `aoMudar(estado)` é chamado a cada estado novo conhecido, inclusive o que chega por conflito.
+- `aoMudar(estado)` é chamado a cada estado novo conhecido, inclusive o que chega por conflito;
+- `folgaDaRegraMs` (padrão `alunoLogica.FOLGA_DA_REGRA_MS`, 12 h): número ≥ 0, senão `TypeError`. Só o
+  simulador e os testes passam outra, curta, para provar o corte da regra sem esperar 12 h.
+
+**O prazo gravado é o da regra (teste de 30/09).** Todo `prazo` que o anfitrião grava é
+`fim do cronômetro + folga`, e o fim do cronômetro é `prazo − folga` (`alunoLogica.fimDoCronometro`, que o
+telão e o celular usam para desenhar). O fim do cronômetro é o de antes: `abertoEm` + o tempo configurado da
+etapa (`enqueteSeg`, `decisaoSeg`, `prorrogacaoSeg`) + os "+30 s". O `restanteMs` da pausa é tempo de
+cronômetro, sem a folga. Por quê: com o prazo igual ao fim do cronômetro, a regra recusava todo voto depois de
+prazo + graça (125 s na decisão), com a votação ainda aberta no telão (quem encerra é o apresentador, D-010);
+no teste de 30/09 a decisão do mês 3 ficou aberta 7 min 35 s, e o "Votar nesta" não contava. Com a folga do
+tempo de vida da sala, o voto vale até o `fechando`; a regra continua cortando depois de prazo + graça, como
+rede de segurança. Nos métodos abaixo, "prazo novo" é `agora + tempo da etapa + folga`.
 
 | Método | O que faz |
 |---|---|
@@ -455,8 +517,8 @@ Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras 
 | `encerrar()` | fechamento em duas fases (abaixo). Também conclui um `fechando` interrompido (telão que caiu no meio) |
 | `desfazer()` | só no passo atual: rodada em `sorteio` ou `resultado` volta a `decidindo` (prazo novo, mesmo `abertoEm`, `forcadas` mantidas); enquete `apurada` volta a `votando`. Em `fechando` (a apuração lançou erro e o `encerrar` não conclui), volta à votação com prazo novo, sem apagar nada: enquete a `votando`, rodada a `prorrogacao` se há `empatadas`, senão a `decidindo`. Com a enquete em `votando` ou a rodada em `decidindo`, **desfaz a abertura** (D-037, abaixo); a `prorrogacao` não. Nos outros casos, lança erro |
 | `pularPara(indice)` | só para a frente, e nunca com votação aberta ou em `fechando` |
-| `maisTempo(seg)` | só com votação aberta; `prazo = max(prazo, agora) + seg`; pausado, soma no `restanteMs` |
-| `pausar()` / `retomar()` | pausar grava `restanteMs` e tira o `prazo` (a votação fica congelada); retomar faz `prazo = agora + restanteMs` |
+| `maisTempo(seg)` | só com votação aberta; o fim do cronômetro vira `max(fim, agora) + seg` (`prazo = max(prazo − folga, agora) + seg + folga`); pausado, soma no `restanteMs` |
+| `pausar()` / `retomar()` | pausar grava `restanteMs` = o que faltava no cronômetro (`max(0, prazo − folga − agora)`) e tira o `prazo` (a votação fica congelada); retomar faz `prazo = agora + restanteMs + folga` |
 | `decidirPorEquipe(equipeId, opcaoId|null)` | grava `estado.forcadas` (com `decidindo` ou `prorrogacao`, só equipe ativa); `null` desfaz |
 | `definirEquipesAbertas(ids)` | antes da trava; grava `estado.equipesAbertas` como `{ e1: true, … }`, sempre com as obrigatórias; lista vazia lança erro. O "de 3 a 6" (arquitetura seção 8) fica na tela |
 | `moverMembro(uid, equipeId)` | grava `membros/{uid}/equipe`; recusa membro inexistente e equipe fechada |
@@ -486,7 +548,7 @@ Transição de um nó só: `canal.transacao('salas/{S}/estado')`, que aborta se 
 Rodada:
 - Conta só o voto de quem **ainda** é da equipe e tem `entrouEm <= abertoEm` (a regra já barra, e a apuração confere de novo).
 - Equipes ativas = `estado.equipesAbertas`, na ordem do config. Estado antes da rodada = `depois` da última rodada apurada, na ordem do roteiro.
-- Empate: o passo 5 grava o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg` (o `abertoEm` não muda), e, no mesmo `gravar()`, a marca `prorrogacoes/{r} = true`. Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada (D-035):** se outra equipe empatar no segundo fechamento, vai direto para a moeda. O mesmo vale depois do `desfazer()`: o passo 4 também lê `prorrogacoes/{r}` e, se a marca existe, todo empate vai direto para a moeda (`aposProrrogacao: true`, sem `candidatas`: a moeda fica entre as opções empatadas agora).
+- Empate: o passo 5 grava o `estado`, com `subfase: "prorrogacao"`, `empatadas` e `prazo = agora + prorrogacaoSeg + folga` (o `abertoEm` não muda), e, no mesmo `gravar()`, a marca `prorrogacoes/{r} = true`. Nenhum resultado é gravado. Ao encerrar a prorrogação, o fechamento roda de novo, com `aposProrrogacao: true` e `candidatas` = as opções de `empatadas[equipe]` para as equipes de `empatadas` (a moeda e a maioria ficam entre as empatadas). **Uma prorrogação só por rodada (D-035):** se outra equipe empatar no segundo fechamento, vai direto para a moeda. O mesmo vale depois do `desfazer()`: o passo 4 também lê `prorrogacoes/{r}` e, se a marca existe, todo empate vai direto para a moeda (`aposProrrogacao: true`, sem `candidatas`: a moeda fica entre as opções empatadas agora).
 - Resultado por equipe: `{ decisao, origem, contagem, chances, carta, delta, depois, mes, cartaCusto, deAntes?, protecaoEvitou?, protecaoItens? }` (`cartaCusto` desde o esquema v2.1; `deAntes` e `protecaoItens` só quando não são vazios; `protecaoEvitou` só quando é maior que 0, D-059; as regras v3 aceitam qualquer filho de `resultados/{r}`, sem mudança). O anfitrião passa ao
   motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do roteiro que têm resultado). Placar de **todas** as equipes do config: `{ ...indicadores, piloto, efeitoDecisoes, sorte, piorCaso, piorCasoSemProtecao, ativa }`, com `piloto` = `esperadoPiloto` do `motor.decompor` (`piorCasoSemProtecao` desde a D-059; as regras v3 aceitam qualquer filho de `placar`, sem mudança).
 
@@ -518,10 +580,10 @@ aberta por engano:
      `apurada` numa enquete (a última afirmação da `uma_por_vez`, ou `*`). Se a apuração dessa
      enquete é `manual`, o `manual` é refeito dos histogramas dela: o `desfazer()` seguinte a reabre
      com as contagens digitadas, e não zeradas;
-6. houve voto: reabre a mesma votação (`votando`/`decidindo`, mesmo `prazo` e `abertoEm`; se o prazo
-   venceu durante a espera, `prazo = agora + o que faltava no Ctrl+Z`; pausada, o mesmo
-   `restanteMs`) e lança o erro "Já chegaram N votos; …". O voto que chegou antes do "fechando" fica
-   e conta no `encerrar`.
+6. houve voto: reabre a mesma votação (`votando`/`decidindo`, mesmo `prazo` e `abertoEm`; se o
+   cronômetro acabou durante a espera, `prazo = agora + o que faltava no Ctrl+Z + folga`; pausada, o
+   mesmo `restanteMs`) e lança o erro "Já chegaram N votos; …". O voto que chegou antes do "fechando"
+   fica e conta no `encerrar`.
 
 Se a rede cai entre as fases, a sala fica em `fechando`. O anfitrião guarda na memória a marca desse
 `fechando` (`desfazendoAbertura(estado?) → boolean`; não vai ao banco, porque o estado tem
@@ -532,7 +594,9 @@ interrompido comum: o `desfazer()` seguinte reabre a votação e o outro tenta d
 
 `desfazer()` apaga `resultados/{r}` e recalcula o `placar` sem esta rodada (`null` se não sobrar nenhuma), e **nunca** apaga `sementes/{r}` nem `prorrogacoes/{r}`. Votos, semente e marca continuam lá: encerrar de novo tira a mesma carta e não abre outra prorrogação.
 
-Nada fecha por timer: o prazo serve só à regra do banco e ao cronômetro visual (D-010; arquitetura, seção A, item 3).
+Nada fecha por timer: o prazo serve só à regra do banco (com a folga, uma rede de segurança de 12 h) e,
+descontada a folga, ao cronômetro visual (D-010; arquitetura, seção A, item 3). Chegar a "tempo esgotado"
+não fecha nada nem recusa voto: quem fecha é o `encerrar()` do apresentador.
 
 ---
 
@@ -543,6 +607,9 @@ Nada fecha por timer: o prazo serve só à regra do banco e ao cronômetro visua
 | `telaDoAluno({ conteudo, estado, membro, membros?, meusVotos, decisoesDaEquipe, resultados, placar, uid, agora, meta? }) → { tipo, dados }` | ver os tipos abaixo |
 | `sugerirEquipe(conteudo, { membros, ativos?, equipesAbertas? }) → equipeId|null` | completa até `alvoPorEquipe`, na ordem do config; com todas cheias, vai para a de menos membros ativos (empate: a primeira na ordem); sem nenhuma aberta, `null`. `ativos` e `equipesAbertas` aceitam `Set`, lista ou mapa |
 | `pendenteAindaVale(pendente, estado) → boolean` | o voto guardado ainda pode ser reenviado? |
+| `motivoDaRecusa(pendente, { estado, membro, anterior?, entradaAberta? }) → 'fechou'|'trocaTarde'|'soEmpatadas'|'outraAfirmacao'|'pausado'|'foraDaSala'|'foraDaSalaFechada'|'outraEquipe'|'entrouDepois'|'semMotivo'` | por que a regra recusou um voto, pelo estado e pelo registro de membro de agora (teste de 30/09: o celular nunca fica calado). Com `pendenteAindaVale` falso: `outraAfirmacao` (a mesma enquete e momento, uma afirmação por vez, e o apresentador já passou para outra); `soEmpatadas` (a própria equipe está na prorrogação, e a opção não empatou); `trocaTarde` (a mesma etapa e janela, e havia um voto anterior confirmado, diferente do recusado, que contou: na decisão, com o membro ainda na equipe e `entrouEm ≤ abertoEm`); senão `fechou` (outra etapa, outra janela, `fechando` sem voto anterior). Com ele verdadeiro: `pausado` (com `restanteMs`); `foraDaSala` (sem registro de membro), ou `foraDaSalaFechada` com `entradaAberta === false` (o aparelho não volta sozinho); na decisão, `outraEquipe` e `entrouDepois` (`entrouEm > abertoEm`); senão, `semMotivo` (tentar de novo). Revisão de 30/09, achados P2, P3 e 7 |
+| `fimDoCronometro(estado) → ms|null` | `estado.prazo − FOLGA_DA_REGRA_MS`: o fim do cronômetro que o telão e o celular desenham; `null` sem prazo (pausado) |
+| `FOLGA_DA_REGRA_MS` | 12 h (o tempo de vida da sala): a folga entre o fim do cronômetro e o prazo que o anfitrião grava para a regra (seção 7). Fica aqui porque o celular não carrega o anfitrião |
 | `cracha(uid, equipe|nome|null) → "Laranja · K7Q"` | derivado do uid, não pessoal; sem equipe, só o código |
 | `codigoCracha(uid) → "K7Q"` | 3 caracteres do alfabeto da sala (FNV-1a do uid); o telão usa para achar o aparelho no "Mover aluno" |
 
@@ -551,7 +618,8 @@ Entradas de `telaDoAluno`:
 - `meusVotos = { [enquete]: { [momento]: { [afirmacao]: 1..5 } } }`, só os do próprio aparelho;
 - `decisoesDaEquipe = decisoes/{rodada}/{minhaEquipe}`;
 - `membros` (opcional, o nó `membros` inteiro, que o aluno lê): com ele, a contagem ao vivo da decisão conta só o voto de quem ainda é da equipe e tem `entrouEm <= abertoEm`, o mesmo filtro da apuração. Sem ele, conta todos os votos do nó;
-- a tela não olha o relógio (invariante I5): o `prazo` vai em `dados` só para o cronômetro.
+- a tela não olha o relógio (invariante I5): o `prazo` vai em `dados` só para o cronômetro, e é o **fim do
+  cronômetro** (`fimDoCronometro(estado)`), e não o `estado.prazo` da regra, que leva a folga de 12 h.
 
 | `tipo` | Quando | `dados` |
 |---|---|---|
@@ -601,7 +669,9 @@ celular e no `test/carregar-nucleo.mjs`.
 
 | Função | O que faz |
 |---|---|
-| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes, protecaoDoMes }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]`; `protecaoDoMes` é o de `protecaoDoResultado` (D-059) |
+| `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes, protecaoDoMes, saldoAcumulado, divida }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045); a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]`; `protecaoDoMes` é o de `protecaoDoResultado` (D-059); `saldoAcumulado` é `patrimonioDe(depois)` e `divida` é `dividaTotal(depois)` (esquema v2.2: o resumo mês a mês), `null` sem o `depois` |
+| `dividaTotal(valores) → { chequeEspecial, emprestimo, total } \| null` | esquema v2.2, a partir dos indicadores (o `depois` ou o placar): `chequeEspecial` = renda negativa com o sinal trocado (0 se não é negativa), `emprestimo` = o saldo devedor (0 sem o indicador), `total` = a soma. É a "dívida" da tela. `null` sem a renda |
+| `patrimonioDe(valores) → n \| null` | esquema v2.2: `renda − emprestimo`, o mesmo `motor.patrimonio` (o celular não carrega o motor). `null` sem a renda |
 | `protecaoDoResultado(res) → { pagou, evitou, itens: [{ rotulo, valor }], saldoMes } \| null` | D-059, a partir do resultado gravado: `pagou = mes.protecao`, `evitou = protecaoEvitou` (ausente vale o `pagou`), `itens = protecaoItens` (lista que volta do RTDB como objeto é lida igual). `null` quando a proteção não pagou nada no mês, ou em sala de antes da D-059 |
 | `fraseDaProtecao(protecao, moeda) → string \| null` | a frase do celular: "A proteção pagou R$ X: <rótulos>." e, com o saldo do mês, "Sem ela, teria faltado R$ Y a mais." (fechou no vermelho), "Sem ela, teria faltado R$ Y." (fechou por causa dela) ou "Sem ela, teria sobrado R$ Y a menos." (sobrou de todo jeito). A `moeda` vem da tela (`formatar.moeda`): o núcleo não formata dinheiro |
 | `piorCasoDoPlacar(placar, protegeu) → { comEscolhas, semProtecao, evitou, situacao } \| null` | D-059: `piorCaso` e `piorCasoSemProtecao` do placar em reais inteiros para a tela. `situacao`: `"semEscolha"` (`protegeu` não é `true`), `"evitou"` (o "sem" é pior que o "com": `semProtecao` e `evitou = comEscolhas − semProtecao`), `"naoMelhorou"` (o "sem" é igual ou melhor: `semProtecao` `null`, `evitou` 0; o MEI com a sessão acabando antes do mês 3, a associação) ou `"semDado"` (sala de antes da D-059). O "sem" nunca sai melhor que o "com" (revisão da F5). `null` sem `piorCaso` |
@@ -609,7 +679,7 @@ celular e no `test/carregar-nucleo.mjs`.
 | `escolheuProtecao(conteudo, resultados, equipeId) → boolean` | a equipe decidiu, em algum mês com resultado, uma opção com `protege: true`. O telão e o celular usam a mesma |
 | `textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) → { rotulo, narrativa }` | D-054: `rotuloPor[persona]` e `narrativaPor[persona]`, e o `rotulo`/`narrativa` da opção quando a persona não tem entrada; opção inexistente dá os dois `null`. É o que o telão usa para falar do jeito de cada equipe |
 | `linhaDoMes(mes) → string \| null` | a linha curta de um mês da história no telão (D-045): a primeira frase da `opcao.narrativa` e a da `carta.narrativa`, separadas por espaço (o corte é sempre no fim de uma frase: ".", "!" ou "?" seguido de espaço); `null` sem nenhuma das duas |
-| `escolhaOuSorte(placar) → { piloto, escolhas, sorte, total } \| null` | "Escolha ou sorte?" em reais inteiros para a tela (telão e celular): `total = round(renda)`, `piloto = round(piloto)`, `escolhas = round(efeitoDecisoes)` e `sorte = total − piloto − escolhas`, para as três parcelas sempre somarem o total mostrado (arredondadas uma a uma, erravam por R$ 1). `null` sem `piloto`, `efeitoDecisoes` e `renda` finitos |
+| `escolhaOuSorte(placar) → { piloto, escolhas, sorte, total } \| null` | "Escolha ou sorte?" em reais inteiros para a tela (telão e celular): `total = round(renda − emprestimo)` (o patrimônio, esquema v2.2), `piloto = round(piloto)`, `escolhas = round(efeitoDecisoes)` e `sorte = total − piloto − escolhas`, para as três parcelas sempre somarem o total mostrado (arredondadas uma a uma, erravam por R$ 1). `null` sem `piloto`, `efeitoDecisoes` e `renda` finitos |
 
 `pendente = { tipo: "enquete", enquete, momento, afirmacao, valor, abertoEm } | { tipo: "decisao", rodada, equipe, opcao, abertoEm }`. Com `abertoEm`, só vale na mesma janela (`estado.abertoEm` igual): o voto guardado na janela desfeita pelo Ctrl+Z (D-037) não entra na reabertura. Vale se a mesma etapa continua em `votando` (com a afirmação `*` ou a mesma) ou em `decidindo`; na `prorrogacao`, só com a equipe e a opção em `empatadas`. Pausado ainda vale: o reenvio passa ao retomar.
 
@@ -666,7 +736,8 @@ com `viewBox` igual ao tamanho real, para o texto ter o tamanho do corpo.
   (`COR_FATIA`) fica no `graficos.js`, e não no CSS, porque é dela que sai essa escolha. Com `animar`, o SVG leva a
   classe `fatias-animadas`, e o contorno da fatia sorteada só aparece quando os
   ponteiros param (2,6 s; o mesmo atraso do `.revelar-apos`). A chance de carta grave
-  de cada equipe vai escrita sob o nome dela, no telão (`.linha-graves`).
+  de cada equipe vai escrita sob o nome dela, no telão (`.linha-graves`), depois da letra da decisão
+  (`.linha-decisao`: "decisão B · cartas graves 12%"; revisão de 30/09, achado 9: é a decisão que mudou as fatias).
 - `barras({ dominio, linhas: [{ valor, rotulo? }], referencias?: [{ id, valor, linhas? }] })`: uma
   barra por linha a partir do zero (negativo anda para a esquerda). Cada referência vira uma
   linha tracejada (`line.referencia`, com `data-referencia` e `data-linha`); com `linhas`
@@ -721,11 +792,22 @@ só aparece com a barra aberta (`body.barra-visivel`), logo acima dela (`--altur
 calado. Na abertura, continua no topo. O `controlesNaProjecao` também reprova o `#aviso` à vista com
 a barra escondida e o `#modal` aberto.
 
-**Personas:** uma entrada por persona com equipe aberta (`.persona-linha`, `data-persona`), em duas
-linhas: `.persona-quem` (as equipes, o nome, o ofício, que é a descrição até a primeira vírgula ou
-ponto, e "N pessoas em casa") e `.persona-casa` ("básico R$ Y · {rótulo da outra renda} R$ Z" ou
-"sem outra renda na casa", "· falta R$ W por mês" ou "sobra", com `motor.mesComum`;
-`data-saldo-mes-comum`). A frase inteira da família e o básico item a item ficam no celular.
+**Personas (D-044, D-065):** uma entrada por persona com equipe aberta, na ordem das equipes (a persona da
+equipe 1 primeiro; revisão de 30/09, achado 12: pela ordem das personas do config, a tela saía "1 e 2, 5,
+3, 4, 6") (`.persona-linha`, `data-persona`,
+`data-equipes` = as equipes, separadas por vírgula), sempre em três linhas (teste de 30/09: a tela
+parecia sobreposta, com a equipe e o nome em linhas de base diferentes e o "· 3 pessoas em casa" caindo
+sozinho na linha de baixo):
+- `.persona-quem`: `.persona-equipes` (as equipes da persona, ligadas por `.persona-e` "e" quando são
+  duas, antes do nome) e `.persona-nome` (o nome e o ofício, que é a descrição até a primeira vírgula ou
+  ponto);
+- `.persona-casa`: "N pessoas em casa · básico da casa R$ Y · outra renda R$ Z" (ou "sem outra renda"); o
+  rótulo da outra renda vai na dica (`title`);
+- `.persona-mes` (`data-saldo-mes-comum`, `data-sinal` = `negativo`|`positivo`|`zero`, `motor.mesComum`): "a conta
+  do mês não fecha: faltam R$ W" em `--negativo`, ou "a conta do mês fecha: sobram R$ W" em `--positivo`.
+A frase inteira da família e o básico item a item ficam no celular. O e2e confere as três linhas, uma linha
+cada, e nenhum texto sobreposto (as caixas das linhas de texto e das formas), com seis equipes e a faixa
+de entrada.
 
 **Teclas:** Espaço (→, PageDown) avança, e no comparativo e no placar final pagina dentro do passo;
 Enter encerra; P pausa; F tela cheia; H mostra ou esconde a barra; Ctrl+Z desfaz; 1 a 5 contam
@@ -744,54 +826,56 @@ seguir" nunca aponta para fora da linha. Nos outros blocos, discreta (uma trilha
 marcas, com "mês N" dentro das rodadas); no bloco cujo título começa por "Mapa do seminário"
 (`ehMapa`: o passo não tem campo próprio, e o validador descarta chave nova no roteiro), ela é o
 conteúdo (`.linha-tempo-mapa`, todos os trechos por extenso, em duas colunas acima de seis), e o
-placar resumido não aparece.
+placar resumido não aparece. O placar resumido (`.placar-resumido`, nos blocos depois da formação das equipes e no Fim)
+mostra o patrimônio de cada equipe (esquema v2.2: `historia.patrimonioDe`, o saldo acumulado menos o
+empréstimo a pagar; antes do placar, o do estado inicial).
 
-**Resultado da rodada (D-044, D-046, D-052; esquema v2.1):** uma frase por equipe: a equipe, a
-letra da decisão (a dica, `title`, é o rótulo da opção do jeito do ofício da persona,
-`historia.textoDaOpcao`, D-054), a carta, o custo real dela, a origem (curta, quando não é a maioria:
-"ninguém votou", "empate na moeda", "na prorrogação", "pelo apresentador", este só online), as
-contas do mês e, com saldo negativo, "dívida R$ D" (`.resultado-divida`, o saldo de depois do mês).
-- **custo da carta** (`.resultado-custo`, `span.custo-carta`, de `resultados/{r}/{eq}.cartaCusto`):
-  "N dias parado · renda perdida R$ X", só com o que for maior que zero; carta sem custo não escreve
-  nada. Os gastos da carta vão nas contas (abaixo); só quando as parcelas conhecidas não somam os
-  gastos do mês eles saem aqui, como "gastos da carta R$ Y";
-- **o que veio de antes** (`.resultado-antes` > `.resultado-de-antes`, cada item `.de-antes` com
-  `data-de-antes` = rótulo; de `resultados/{r}/{eq}.deAntes`, ou refeito pelo motor em sala antiga):
-  os itens sem `gasto`, "rótulo ±R$ V" com sinal ("+25 dias da fratura −R$ 2.233 · INSS (45 dias)
-  +R$ 2.431"); o rótulo é o do efeito no config, por isso curto. Revisão de 29/09, 2ª rodada, achado 10;
-- **nome da carta** (`.resultado-carta`): o `curto` (D-040) quando a carta tem custo e o config o
-  traz, e o título inteiro senão (fica na dica). O custo diz o resto, e o título repetia ("Queda
-  leve: 5 dias parado · 5 dias parado"); o título inteiro acabou de aparecer no sorteio;
-- **contas do mês** (`.resultado-contas`): "entrou R$ X[ · gastos R$ G] · básico R$ Y[ · juros R$ J]
-  · faltou R$ Z" ou "sobrou R$ Z", de `resultados/{r}/{eq}.mes`. Os gastos só com `mes.gastos > 0`;
-  entrou − gastos − básico − juros = o `saldoMes` do motor, e a conta lida na tela fecha. Os gastos
-  saem por origem (`nomesDoMes`, achado 13): a da carta sem nome, e cada gasto de antes com o rótulo,
-  juntas por " + " ("gastos R$ 1.650 + multa R$ 130"); com uma origem só, de antes, só ela ("multa
-  R$ 130"); se as parcelas não somam `mes.gastos` (um gasto de opção), "gastos R$ G", com os gastos de
-  antes nomeados como pedaços e os da carta no custo. Com `mes.protecao > 0` (D-059), logo depois do
-  "entrou", "a proteção pagou R$ P" (`.conta-protecao`, `data-protecao` = P; espaço fixo entre "a" e
-  "proteção", para o "a" não ficar sozinho no fim da linha), e a conta passa a ser entrou + proteção −
-  gastos − básico − juros = `saldoMes`. A mesma linha vale na história (página 3);
-- **aperto** (`.grade-resultados[data-aperto]`): medido depois do desenho, só quando a lista
-  transborda (seis equipes no pior caso: carta cara, origem, gastos por origem, dívida e o que veio de
-  antes). Nível 1 esconde a origem (`.resultado-origem`); nível 2 também o que veio de antes
-  (`.resultado-antes`). Os dois ficam no celular de cada equipe, e o texto continua no DOM.
-Cada rótulo quebra como texto, e só a última palavra fica colada ao valor (`.conta-quebra`,
-`.conta-fim`): com o pedaço inteiro sem quebra, a linha deixava meia linha vazia. O resultado usa
-parte da margem lateral do palco, e o cartão tem padding lateral de .3em.
-Os juros ao mês (`regras.jurosDividaMes`) vão uma vez no cabeçalho ("a dívida paga juros de J% ao
-mês", numa linha só, até 17em), e não em cada equipe. O título do mês dessa tela é menor que o das
-outras (1,3× o corpo): com o custo da carta, seis equipes de cartas caras dão três linhas cada, e o
-cabeçalho em duas linhas não deixava a sexta caber. O cartão tem entrelinha 1,08 e quase nenhum
-padding pelo mesmo motivo; a fonte continua nos 28 px (o e2e, parte 4, prova o pior caso).
+**Resultado da rodada (D-065, teste de 30/09; D-052, D-059):** só o essencial, uma faixa por equipe
+(`.cartao-resultado`, com `data-equipe`, `data-carta`, `data-origem`, `data-saldo-mes` e `data-divida`), em três
+colunas alinhadas entre as faixas (`.grade-resultados` em grid, a faixa em `subgrid`), com um vão entre elas.
+Antes, cada equipe era uma frase corrida de três linhas com todas as contas, e a tela era difícil de explicar
+em aula. O detalhamento das contas (entrou, gastos, multa, básico, juros, empréstimo, o que veio de antes)
+saiu do telão: fica no celular de cada equipe e na história do placar final.
+- `.resultado-quem`: a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão
+  (`.resultado-persona`: "Jonas · decisão B", com `.resultado-escolha`, `data-decisao` e o rótulo da opção na
+  dica). Revisão de 30/09, achado 9: sem a decisão, duas equipes do Jonas com a mesma carta mostravam saldos
+  diferentes sem explicação. Na linha de detalhe, a letra empurrava a parada para uma terceira linha;
+- `.resultado-meio`: a carta (`.resultado-carta`, 1,15× o corpo), pelo título inteiro; quando ele não cabe numa
+  linha, o `encurtarCartas` troca pelo `curto` (D-040; `data-curto`, `data-encurtada="1"`), e o título fica na
+  dica. Embaixo, `.resultado-detalhe`, só quando há o que dizer, juntando por " · " (cada pedaço sem
+  quebra; a linha só quebra entre eles):
+  - o empréstimo tomado no mês (`.resultado-emprestimo`, `data-emprestimo`, de `mes.emprestimo`): "empréstimo
+    R$ 1.500" (a dívida total fica igual com ou sem ele, e nada mostrava que a equipe o tinha pegado);
+  - a parada (`span.custo-carta.resultado-custo`, de `resultados/{r}/{eq}.cartaCusto`): "N dias parado · perdeu
+    R$ X", só com `diasParado > 0` (o custo em dinheiro das outras cartas está no saldo do mês);
+  - o que a proteção pagou (D-059, `.conta-protecao`, `data-protecao`): "a proteção pagou R$ P", com espaço fixo
+    entre "a" e "proteção";
+  - a origem (`.resultado-origem` > `.resultado-decisao`), curta, quando não é a maioria: "ninguém votou",
+    "empate na moeda", "na prorrogação", "pelo apresentador" (este só online);
+- `.resultado-dinheiro`, alinhada à direita: o saldo do mês (`.resultado-saldo`, 1,3× o corpo, `mes.saldoMes`
+  arredondado) com + ou − (`formatar.moeda` com sinal), em `--positivo` (`data-sinal="positivo"`) ou
+  `--negativo`; o zero fica neutro, "R$ 0", `data-sinal="zero"`, como no celular (achado 16). Embaixo, a
+  dívida total de depois do mês, discreta (`.resultado-divida`): "dívida R$ D" (cheque especial
+  + empréstimo, `historia.dividaTotal(r.depois).total`) ou "sem dívida". O cabeçalho diz "saldo do mês"
+  (`.resultado-legenda`) sobre a coluna: o sinal e o cabeçalho dizem o mesmo que a cor, que nunca é o único canal.
+As cores ficam no `base.css` (`--positivo` #6ee787, `--negativo` #ff7b72; 11:1 e 6,9:1 sobre a superfície). Os
+juros ao mês saíram do cabeçalho (ficam no celular). **Aperto** (`.grade-resultados[data-aperto="1"]`): medido
+depois do desenho, quando a lista transborda (seis equipes com a faixa de entrada embaixo) ou quando a linha de
+detalhe de alguma faixa quebra em duas (revisão de 30/09, achado 15): as faixas se
+aproximam, sem encostar, e a origem some (o texto continua no DOM; o celular a mostra). O título do mês é de
+1,4× o corpo. O e2e (`conferirVisualDoResultado`) confere, em 1024×768 e 1920×1080: nada abaixo de 28 px, sem
+rolagem, vão ≥ 8 px entre as faixas, colunas alinhadas, nenhum texto sobreposto, o saldo com sinal, na cor do
+token e com contraste ≥ 4,5:1 sobre a faixa, e nenhum "entrou", "básico", "juros" ou "multa" na tela.
 Resultado sem `mes` ou sem `cartaCusto` (sala de antes do esquema v2 ou do v2.1) é refeito com
-`motor.aplicar`, com o histórico. A animação das cartas mais extremas (`regras.destacarCartas`) usa
-o efeito da carta no saldo do mês (o mês com a carta menos o mesmo mês sem carta): somar só as
-linhas de origem `carta` deixava de fora os gastos, que no v2.1 saem com a origem `gasto`.
+`motor.aplicar`, com o histórico. A animação das cartas mais extremas (`regras.destacarCartas`) usa o efeito
+da carta no saldo do mês (o mês com a carta menos o mesmo mês sem carta); o destaque engrossa o contorno por
+dentro (sombra), e não pela borda, para não desalinhar as colunas.
 
 **Placar final em páginas (D-041, D-045):** paginação local do passo `placarFinal`
 (`app.ui.pagina`, como no comparativo; a seção leva `data-pagina` e, na história, `data-equipe`):
-1. `saldo`, "Quanto sobrou, e quanto faltou para o básico": uma barra por equipe que jogou
+1. `saldo`, "Quanto sobrou, e quanto faltou para o básico": uma barra por equipe que jogou, pelo patrimônio
+   (esquema v2.2: `historia.patrimonioDe(placar[eq])`, o saldo acumulado menos o empréstimo a pagar; a ordem,
+   o título e o "faltou/sobrou" também)
    (`placar[eq].ativa`), do maior saldo para o menor, com "faltou R$ X" ou "sobrou R$ X"
    (`.valor-saldo`) ao lado; o título conta quantas terminaram com saldo negativo ("5 de 6 equipes
    não fecharam as contas"; "As 6 equipes fecharam as contas" quando nenhuma); a referência com
@@ -820,12 +904,29 @@ linhas de origem `carta` deixava de fora os gastos, que no v2.1 saem com a orige
    com um `.historia-mes` por rodada (o título da rodada, a linha curta `.historia-narrativa` =
    `historia.linhaDoMes(h)`, em até duas linhas com reticências no fim e sem baixar dos 28 px; sem
    narrativa no conteúdo, `.historia-fatos` "escolheram: {rótulo} · aconteceu: {carta}") e a linha
-   do dinheiro (`.historia-dinheiro`): o custo real da carta (`.historia-custo`, com a mesma regra do
-   resultado da rodada, de `h.cartaCusto`), o que veio de antes (`.historia-de-antes`, de `h.deAntes`)
-   e as contas do mês (`.historia-contas`, com os gastos por origem, a regra do resultado), na mesma frase: numa linha própria, três meses de narrativa de duas linhas, custo e
-   contas passavam da altura de 1024×768. O texto da opção é o do ofício da persona da equipe
-   (`historiaDaEquipe` já traz `rotuloPor`/`narrativaPor`, D-054). No fim, `.historia-final` com o
-   saldo dos meses ("faltou/sobrou R$ X").
+   do dinheiro (`.historia-dinheiro`), na mesma frase (numa linha própria, três meses de narrativa de duas
+   linhas, custo e contas passavam da altura de 1024×768). É aqui, e no celular, que o detalhamento que
+   saiu do resultado da rodada (D-065) continua:
+   - o custo real da carta (`.historia-custo`, `span.custo-carta`, de `h.cartaCusto`, D-052): "N dias parado
+     · renda perdida R$ X", só com o que for maior que zero; os gastos da carta vão nas contas, e só quando
+     as parcelas conhecidas não somam os gastos do mês saem aqui, como "gastos da carta R$ Y";
+   - o que veio de antes (`.historia-de-antes`, cada item `.de-antes` com `data-de-antes` = rótulo, de
+     `h.deAntes`): os itens sem `gasto`, "rótulo ±R$ V" com sinal ("+25 dias da fratura −R$ 2.233 · INSS
+     (45 dias) +R$ 2.431");
+   - as contas do mês (`.historia-contas`): "entrou R$ X[ · a proteção pagou R$ P][ · gastos R$ G] · básico
+     R$ Y[ · juros R$ J] · faltou R$ Z" ou "sobrou R$ Z", de `h.mes`; entrou + proteção − gastos − básico −
+     juros = o `saldoMes` do motor (os juros são o total: cheque especial e juros da parcela). Os gastos saem
+     por origem (`nomesDoMes`, achado 13): a da carta sem nome, e cada gasto de antes com o rótulo, juntas
+     por " + " ("gastos R$ 1.650 + multa R$ 130"); com uma origem só, de antes, só ela; se as parcelas não
+     somam `mes.gastos`, "gastos R$ G". Cada rótulo quebra como texto, e só a última palavra fica colada
+     ao valor (`.conta-quebra`, `.conta-fim`);
+   - o empréstimo do mês, depois das contas e como dívida (esquema v2.2; `.historia-emprestimo`,
+     `data-emprestimo`): "pegou empréstimo de R$ E", com `mes.emprestimo > 0`. Nunca no "entrou".
+   O texto da opção é o do ofício da persona da equipe (`historiaDaEquipe` já traz
+   `rotuloPor`/`narrativaPor`, D-054). No fim, `.historia-final`: "No fim dos N meses: faltou R$ X" (ou
+   "sobrou"), pelo patrimônio do placar, e, com dívida, "· dívida R$ D" (`.historia-divida`, `data-divida`,
+   `historia.dividaTotal(placar[eq])`) e, quando o empréstimo continua, "(R$ S do empréstimo, em N parcelas)",
+   com o `parcelasRestantes` do último mês: as parcelas seguem depois do fim do jogo.
    A tela de decisão (`decidindo`) continua com o rótulo comum da opção: é a mesma para todas as
    equipes, e não mostra narrativa por persona.
 A última página avança o roteiro. Sem nenhuma equipe no placar, uma página só ("Nenhuma rodada foi
@@ -985,13 +1086,46 @@ anfitrião: quem decide é o telão.
   - o pendente vai para o `localStorage` antes do `gravar()`;
   - "registrado" só com a confirmação do servidor;
   - 5 s: "Enviando…" e `reconectar()`; 20 s: "Guardado no aparelho: será reenviado";
-  - `PERMISSION_DENIED`: "A votação fechou antes do seu voto chegar";
+  - estágios do envio: `enviando`, `lento`, `guardado`, `esperaRetomar`, `falhou`, `recusado` e
+    `registrado`. `guardado` e `esperaRetomar` marcam a opção ("guardado no aparelho", "guardado até
+    retomar"), mas a contagem da equipe fica com o que o servidor confirmou;
+  - `PERMISSION_DENIED` (teste de 30/09: o celular **nunca** fica calado): o motivo vem de
+    `alunoLogica.motivoDaRecusa`, com o estado de agora, e diz o que fazer ("A votação fechou antes do seu
+    voto chegar: ele não foi contado.", "…foi pausada…: quando o apresentador retomar, toque em “Votar nesta”
+    de novo.", "…saiu da sala…", "…mudou de equipe…", "…entrou de novo na sala depois de a decisão abrir…", ou "O voto não foi
+    aceito: toque em “Votar nesta” de novo…"). Aparece logo abaixo do botão tocado (`.opcao-aviso`, dentro da
+    opção aberta, que rola para a vista), na nota depois das opções e nas telas seguintes da mesma etapa
+    ("votação encerrada", "sorteando", "registrado" e o resultado). Antes, a única pista era essa nota, fora da
+    tela em 360×740, e o "Votar nesta" ficava igual;
+  - revisão de 30/09: a troca que chegou depois do fechamento com o voto anterior contado (`trocaTarde`) diz
+    "A troca para B chegou depois do fechamento: valeu o seu voto anterior, A." (nota `info`, e não erro); na
+    prorrogação, "…Agora só valem as opções empatadas: vote numa delas."; no termômetro de uma por vez, "A
+    resposta da afirmação N chegou depois de o apresentador avançar e não foi contada.", já na tela da
+    afirmação seguinte; fora da sala com a entrada fechada, "peça ao apresentador para abrir a entrada". As
+    telas seguintes (`recusaDaEtapa`) mostram só a recusa da própria equipe (o aparelho movido não carrega a
+    recusa da anterior), e a de uma afirmação anterior some depois que o aluno responde outra (`vista`);
+  - recusa com a votação pausada no servidor (lida de novo na hora: a recusa e o estado novo chegam em
+    qualquer ordem ao celular que volta da rede): `esperaRetomar`, o pendente fica no aparelho e vai sozinho
+    quando o apresentador retomar ("…fica guardado no aparelho e vai sozinho quando ele retomar."); se a
+    votação fechar antes, vira recusa. Antes, o pendente era apagado (revisão de 30/09, achado 6);
+  - falha de escrita que não é recusa da regra: "guardado", e o celular tenta de novo a cada 3 s (até 5
+    vezes) enquanto a etapa estiver aberta (o SDK não repete a escrita que falhou); se ela fechou, vale a
+    recusa acima. Depois da quinta falha, `falhou`: o botão volta a valer, e a tela diz "Não foi possível
+    enviar o voto: toque de novo em “Votar nesta”." (o pendente fica no aparelho: recarregar reenvia).
+    Antes, o "será reenviado" ficava para sempre (revisão de 30/09, achado 5);
+  - movido de equipe com a decisão aberta depois de votar (confirmado, em voo ou guardado): o voto da equipe
+    anterior deixa de valer, e o celular diz, acima das opções (`[data-movido]`) e dentro da opção aberta, "Você
+    foi movido para a equipe N Nome: o voto na equipe anterior não vale aqui. Vote de novo.", até votar pela
+    equipe nova ou a rodada acabar. No telão, "Mover aluno" com a decisão aberta e o voto do aparelho na
+    equipe de agora pede confirmação ("…esse voto é descartado…", botão "Mover e descartar o voto", foco no
+    Cancelar). Revisão de 30/09, achado P1;
   - botões desabilitados enquanto envia;
   - enquanto não confirma (e no guardado), a tela e a contagem usam o valor já
     confirmado: o SDK aplica a escrita no cache antes da confirmação. O guardado
     conta como respondido só para a navegação da enquete;
   - ao carregar, reenvia os pendentes com `pendenteAindaVale`; os que não valem
-    são descartados, com aviso.
+    são descartados, com aviso. Com a etapa pausada, o pendente espera no aparelho (a regra recusaria, sem
+    prazo) e vai quando o apresentador retomar.
 - **Queda própria:** `.info/connected` falso por mais de 5 s com a página visível
   = `reconectar()`, repetido a cada 10 s; presença sem confirmação em 5 s (sonda) =
   `reconectar()`; `visibilitychange`, `pageshow` e `online` = `reconectar()` e
@@ -1022,9 +1156,14 @@ anfitrião: quem decide é o telão.
     (`.opcao-detalhe[data-detalhe]`) traz a narrativa da persona
     (`.opcao-narrativa`, por `historia.textoDaOpcao`: a `telaDoAluno` manda só id,
     rótulo e votos) e o botão "Votar nesta" (`[data-votar]`, 48 px, desabilitado
-    sem `podeVotar` ou com um voto em voo). Na opção que já tem o voto do aparelho,
-    uma frase (`.opcao-votada`) no lugar do botão. A opção votada fica marcada
-    (`.meu-voto`, `data-meu-voto="1"`, fundo claro e o texto "✓ seu voto"). Dá para
+    sem `podeVotar` ou com um voto em voo). Sem `podeVotar`, o motivo ("Você entrou
+    depois de esta decisão abrir…", "Pausado pelo apresentador…") fica logo abaixo do
+    botão apagado (`.opcao-aviso`). Na opção que já tem o voto do aparelho,
+    uma frase (`.opcao-votada`: "Seu voto está nesta.", "Enviando o seu voto nesta…"
+    ou "Seu voto nesta está guardado no aparelho.") no lugar do botão. A opção votada
+    fica marcada (`.meu-voto`, `data-meu-voto="1"`, fundo claro) e o texto diz o
+    estado: "✓ seu voto" **só** com a confirmação do servidor; antes, "enviando…" ou
+    "guardado no aparelho" (sem rede, o "✓" dizia que tinha contado). Dá para
     abrir outra e mudar o voto até o fechamento.
   - **Dobra:** sem nenhuma aberta, a primeira opção cabe inteira em 360×740, e as
     letras de todas as opções aparecem sem rolar (o e2e:online confere). Enquanto a
@@ -1056,16 +1195,64 @@ anfitrião: quem decide é o telão.
     quando é maior que 0, e nenhuma linha se as três forem 0 ou sem `cartaCusto`.
     `data-dias-parado`, `data-renda-perdida` e `data-gastos` repetem os valores.
     Mesma forma para toda carta: a grave não ganha destaque.
-  - **Dívida** (`.divida`): "Dívida R$ D · juros de J% ao mês", só com o saldo
-    negativo.
-  - **Antes do primeiro mês**, a situação mostra a família e o básico, sem conta do
-    mês.
-  - **Placar final:** a história da equipe no lugar do "último mês" e "Escolha ou
+  - **Dívida (esquema v2.2):** é o cheque especial (o saldo acumulado negativo)
+    **mais** o empréstimo a pagar, por `historia.dividaTotal` a partir dos
+    indicadores do fim do mês. No teste de 30/09, o Jonas pegou R$ 1.500 e a tela
+    disse "Dívida R$ 1". Sem dívida, sem a linha nem o bloco.
+    - Na decisão (`.pressao .divida`, uma linha): "Dívida R$ D · juros de J% ao
+      mês" só com cheque especial; com empréstimo, "Dívida R$ D, com R$ E de
+      empréstimo".
+    - Nas telas de situação, resultado e fim (`div.divida`, com `data-divida`,
+      `data-cheque` e `data-emprestimo`): "Dívida hoje R$ D", "Cheque especial R$ C ·
+      juros de J% ao mês", "Empréstimo a T% ao mês: fica devendo R$ E em N parcelas" (T de
+      `mes.taxaEmprestimo`; sem ela, "Empréstimo: fica devendo…") e "a
+      próxima: R$ P · R$ T no total, com os juros" (do `mes` gravado:
+      `parcelasRestantes`, `proximaParcela`, `aPagar`); com empréstimo e caixa
+      positivo, "Dinheiro em caixa: R$ X".
+  - **Empréstimo na conta do mês** (`.conta-emprestimo`, `data-emprestimo`,
+    `data-parcela`): "Empréstimo de R$ 1.500: o dinheiro entrou no caixa, mas é
+    dívida, e não conta como sobra do mês." e "Parcela do empréstimo R$ 183: R$ 96
+    de juros (já na conta) e R$ 87 que abatem a dívida." Também na história.
+  - **Telas enxutas (D-065).** Toda tela do jogo no celular começa pelo que se
+    explica em aula, e o detalhe fica recolhido (`details.recolhido`, com
+    `data-recolhido`, fechado ao chegar e com o marcador "▸ ver / ▾ fechar"; o
+    aberto fica lembrado em `app.ui.recolhidos` até o próximo passo, para a
+    contagem das equipes não fechá-lo na mão do aluno).
+    - **Resumo mês a mês** (`.resumo-meses`, `table.tabela-meses`): colunas "Mês ·
+      Saldo do mês · Ficou com", uma linha por mês jogado (`tr[data-rodada]`, o
+      rótulo é o título da rodada até os dois-pontos, "Mês 1"). "Ficou com" é o
+      patrimônio (`historia.patrimonioDe`: saldo acumulado menos empréstimo) e é o
+      anterior mais o saldo do mês. Os valores (`.valor-saldo`, `data-sinal` =
+      `positivo`|`negativo`|`zero`, os mesmos nomes do telão) vão sempre com o
+      sinal, verdes (`--positivo`) se positivos e vermelhos (`--negativo`) se
+      negativos, com os tokens do `base.css`, iguais aos do telão (revisão de
+      30/09, achado 16: o celular tinha tokens próprios); o zero fica neutro,
+      "R$ 0", na cor da letra (o sinal diz o mesmo que a cor, D-016). A dívida de hoje fica no mesmo
+      cartão, embaixo. Nos blocos, a história sai de `historia.historiaDaEquipe`
+      com os `resultados` do banco (a `telaDoAluno` manda só o último mês).
+    - **Situação (blocos):** o resumo e a dívida, inteiros em 360×740 sem rolar (o
+      e2e:online confere); o último mês recolhido ("Mês N: a conta em detalhe":
+      a conta, `.mes` com a decisão, a carta, o custo e as narrativas); a família
+      em uma linha; e os indicadores sem os que são em reais (o saldo acumulado é
+      o caixa, que com empréstimo não é o que a família tem). O empréstimo em R$ 0
+      nunca aparece na lista de indicadores.
+    - **Resultado:** a carta e a narrativa, a decisão em uma linha, o saldo do mês
+      em destaque (`.saldo-destaque`, com `data-saldo-mes` e `data-sinal`; no
+      vermelho, também a borda grossa), a dívida, a conta recolhida ("A conta do
+      mês em detalhe": custo da carta, narrativa da decisão, `.conta-mes`) e
+      "Como ficou" (energia e proteção, com a variação do mês).
+  - **Antes do primeiro mês**, a situação mostra o básico, a família e os
+    indicadores, sem resumo nem conta do mês.
+  - **Placar final:** o resumo mês a mês e a dívida no topo; "Escolha ou
     sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte ·
     = Terminaram com", as variações sempre com + ou −, o total do fim em
-    `.placar-total`), sem "piloto automático" nem "efeito das decisões" (D-041).
-    A decisão sem voto aparece como "ninguém votou: ficou o de sempre".
-  - **Fim:** a história da própria equipe, mês a mês (`.historia-mes`, com
+    `.placar-total`, igual ao último "Ficou com"), sem "piloto automático" nem
+    "efeito das decisões" (D-041); o pior caso; e a história recolhida ("A
+    história mês a mês", `data-recolhido="historia"`). A decisão sem voto aparece
+    como "ninguém votou: ficou o de sempre".
+  - **Fim:** o resumo mês a mês e a dívida (no lugar do "Saldo acumulado" do
+    placar, que era o caixa), o pior caso e a história da própria equipe,
+    recolhida, mês a mês (`.historia-mes`, com
     `data-rodada`): opção e narrativa (do jeito da persona, D-054), carta e
     narrativa, o custo da carta e a conta do mês ("Entrou · a proteção pagou ·
     gastos · básico · juros · faltou", a proteção só quando pagou) e, no mês em que
@@ -1111,3 +1298,34 @@ anfitrião: quem decide é o telão.
   bloco "sem serviço" recebe um `conexao.json` com
   `COLE_AQUI` servido pelo Playwright: o do repositório tem as chaves do projeto real, e
   nenhum passo do e2e pode falar com ele (AGENTS.md, regra 6).
+- `e2e/matriz-votos.e2e.mjs` (`npm run e2e:votos`, fora do `check`; teste de 30/09): a sessão inteira do
+  roteiro `60min` com o `config.json` real (lido uma vez e servido ao telão; reprova se ele não passa no
+  validador), no emulador, com 6 equipes e um celular de 360×740 em cada, mais um na segunda equipe do
+  Jonas (o empate). Todo voto é pela tela, com toques (`tap`): tocar na opção e em "Votar nesta", tocar no
+  número da enquete. A cada voto confere o retorno à vista no celular (a opção com "✓ seu voto" e "Seu voto
+  está nesta." inteiros na tela), o servidor (`decisoes`/`votosEnquete`) e o "k de m decidiram" (ou "n de m
+  votaram") do telão; no fim de cada etapa, a apuração (`resultados/{r}` com decisão, origem e contagem;
+  `enquetes/{e}/{m}` com histogramas e `n`). Cobre: as 3 rodadas e as 3 enquetes; o voto depois do
+  cronômetro em tempo real: a espera vai, pelo relógio do próprio servidor (`{".sv": "timestamp"}` pelo
+  administrador do emulador; o do telão e o do celular são estimativas, e o de um celular chegou a errar 22 s
+  numa execução com 8 páginas), até 5 s depois do corte que a regra fazia com o prazo antigo (fim do cronômetro
+  + graça: 125 s no mês 3, 25 s na prorrogação, 65 s na enquete de entrada), com o cronômetro em "tempo
+  esgotado" no celular e no telão; celular recarregado na enquete e nas rodadas, e o que volta da tela
+  bloqueada (`visibilitychange`, o ciclo de reconexão) e vota logo em seguida; a pausa (P), com o "Votar
+  nesta" apagado e o motivo à vista, e o voto de volta ao retomar; o Ctrl+Z que desfaz a
+  abertura do mês 1 e a reabertura (outro `abertoEm`); o Ctrl+Z que desfaz a apuração e o voto mudado depois;
+  a prorrogação com só as empatadas; a ordem das opções de cada mês, no celular e no telão; o voto sem rede
+  ("enviando" à vista na hora, sem "✓", e contado quando a rede volta) e o voto sem rede que só chega
+  depois do fechamento ("guardado no aparelho", depois recusado, com o aviso à vista e fora da apuração);
+  o membro regravado no meio do mês 3 (`entrouEm > abertoEm`), com o motivo do botão apagado à vista.
+  Revisão de 30/09: o número de rodadas e a equipe do empate vêm do config (pelo menos 3 rodadas; as do meio
+  são votadas por todos, e a última é o caso do teste de 30/09); o aluno movido de equipe depois de votar
+  (confirmação no telão, aviso no celular, o voto pela equipe nova contado e o da anterior fora da apuração);
+  a troca de voto que chega depois do fechamento (o aviso de que valeu o anterior, e o anterior na apuração);
+  no termômetro de uma por vez, a resposta sem rede que chega depois do avanço (o aviso nomeando a afirmação,
+  que some depois de responder a seguinte, e a resposta fora da apuração); a escrita que falha 5 vezes sem ser
+  recusa (falha simulada por um `addInitScript` que embrulha o `canalFirebase.criar`: o aviso e o botão de
+  volta); e o voto em trânsito na hora da pausa (guardado e enviado sozinho na retomada). Com o emulador já no
+  ar, aberto por outro processo, a matriz avisa que uma queda dele no meio não é defeito do app.
+  Capturas `e2e/capturas/votos-*.png`. `--sem-espera` encolhe as esperas longas para depurar o próprio
+  teste, e não vale como verificação.

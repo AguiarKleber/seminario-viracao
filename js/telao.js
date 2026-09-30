@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '5';
+  const VERSAO_APP = '6';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -973,7 +973,23 @@
     const baixados = lista(lerLocal(chaveBaixados(app.sala)));
     if (baixados.includes(marca)) return;
     gravarLocal(chaveBaixados(app.sala), [...baixados, marca]);
-    salvarEstado(e.rodada).catch(mostrarErro);
+    esperarEspelhoDaRodada(e).then(() => salvarEstado(e.rodada)).catch(mostrarErro);
+  }
+
+  // O espelho (o ouvinte da sala inteira) chega depois do ouvinte do estado.
+  // Salvar no instante em que o estado vira "sorteio" gravava o arquivo com a
+  // rodada ainda "fechando" e sem o resultado: os três arquivos do teste de
+  // 30/09 saíram assim, e carregar um deles refaria a rodada sem nenhum voto
+  // (os votos ficam fora do arquivo). Espera o espelho alcançar a geração do
+  // sorteio e trazer o resultado da rodada, por até 10 s. Offline não há
+  // espelho: o salvarEstado lê o canal local, que já está consistente.
+  async function esperarEspelhoDaRodada(e) {
+    if (typeof app.lerEspelho !== 'function') return;
+    for (let i = 0; i < 50; i += 1) {
+      const esp = app.lerEspelho();
+      if (esp && (esp.estado?.geracao || 0) >= e.geracao && esp.resultados?.[e.rodada]) return;
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
 
   // ---------- Salvar e carregar estado ----------
@@ -1387,11 +1403,14 @@
   const rodapeEnquete = () => D().el('footer', { classe: 'rodape-enquete', texto: RODAPE_ENQUETE });
 
   // O cronômetro é só desenho (I5): lê o prazo gravado e o relógio do canal.
-  // Chegar a zero não fecha nada; quem fecha é o apresentador (D-010).
+  // Chegar a zero não fecha nada; quem fecha é o apresentador (D-010). O prazo
+  // gravado é o da regra, com a folga de 12 h (contratos, seção 7): o
+  // cronômetro desconta a folga e mostra o tempo configurado da etapa.
   function textoCronometro(e) {
     if (typeof e.restanteMs === 'number') return `pausado · ${F().relogio(e.restanteMs)}`;
-    if (typeof e.prazo !== 'number') return '';
-    const resta = e.prazo - agora();
+    const fim = N().alunoLogica.fimDoCronometro(e);
+    if (fim === null) return '';
+    const resta = fim - agora();
     return resta > 0 ? F().relogio(resta) : 'tempo esgotado';
   }
 
@@ -1677,7 +1696,9 @@
     const renda = app.config.indicadores.renda;
     const itens = ativas(e).map((id) => {
       const persona = app.config.personas[app.config.equipes[id].persona];
-      const valor = app.dados.placar?.[id]?.renda ?? N().motor.estadoInicial(app.config, id).renda;
+      // O patrimônio (esquema v2.2): o empréstimo a pagar é dívida, e não
+      // dinheiro em caixa. Antes do placar, o estado inicial da equipe.
+      const valor = patrimonioDe(app.dados.placar?.[id] ?? N().motor.estadoInicial(app.config, id));
       return el('li', { classe: 'resumido-linha', dados: { equipe: id } }, [
         rotuloEquipe(id),
         el('span', { classe: 'resumido-persona', texto: persona?.nome || '' }),
@@ -1854,47 +1875,63 @@
   }
 
   // A casa de cada persona no telão, que é o que a sala inteira vê (D-044;
-  // revisão de 29/09): quantas pessoas, o básico, a outra renda (ou que não há
-  // outra) e o furo de um mês comum (motor.mesComum: o todoMes, a outra renda e
-  // o básico, sem rodada nem carta). A frase inteira da família e o básico item
-  // a item ficam no celular: com eles, cinco personas não cabiam em 1024×768.
-  // Cada pedaço é inteiro: a linha só quebra entre eles. Os indicadores
-  // iniciais saíram daqui ("Saldo acumulado R$ 0" não dizia nada, e o espaço
-  // foi para a casa); as pessoas em casa vão na linha do nome.
-  function linhaCasa(p, equipeId) {
+  // D-065): quantas pessoas, o básico, a outra renda (ou que não há outra) e,
+  // numa linha própria, o furo de um mês comum (motor.mesComum: o todoMes, a
+  // outra renda e o básico, sem rodada nem carta). A frase inteira da família,
+  // o rótulo da outra renda e o básico item a item ficam no celular (o rótulo
+  // vai na dica). Cada pedaço é inteiro: a linha só quebra entre eles.
+  //
+  // No teste de 30/09, a tela parecia sobreposta: o nome da equipe (com a
+  // forma) e o nome da persona tinham linhas de base diferentes, e o "· 3
+  // pessoas em casa" caía sozinho na linha de baixo, com o ponto na frente.
+  // Agora são três linhas fixas por persona: quem é, a casa, e a conta do mês.
+  function linhasDaCasa(p, equipeId) {
     const { el } = D();
     const mes = N().motor.mesComum(app.config, equipeId);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
+    const pessoas = p.familia?.pessoas;
+    const pedaco = (texto, valor, extra) => el('span', { classe: 'conta', ...extra }, [texto, valor ? el('b', { texto: valor }) : null]);
     const pedacos = [
-      ['básico ', F().moeda(mes.basico)],
-      outra ? [`${outra.rotulo} `, F().moeda(outra.valor)] : ['sem outra renda na casa'],
-      // "por mês" e não "num mês comum": a linha precisa caber inteira em
-      // 1024×768 com a faixa de entrada embaixo, e o furo é o de todo mês sem carta.
-      mes.saldoMes < 0 ? ['falta ', F().moeda(-mes.saldoMes), ' por mês'] : ['sobra ', F().moeda(mes.saldoMes), ' por mês'],
+      Number.isInteger(pessoas) ? pedaco(pessoas === 1 ? '1 pessoa em casa' : `${pessoas} pessoas em casa`) : null,
+      pedaco('básico da casa ', F().moeda(mes.basico)),
+      outra ? pedaco('outra renda ', F().moeda(outra.valor), { title: outra.rotulo }) : pedaco('sem outra renda'),
+    ].filter(Boolean);
+    // "A conta do mês não fecha: faltam R$ W", e não "falta R$ W por mês": no
+    // ensaio, "falta" solto no fim da linha não dizia o que faltava. Em
+    // vermelho (ou verde, quando sobra), como o saldo do resultado da rodada, e
+    // com a palavra dizendo o mesmo que a cor.
+    const fecha = mes.saldoMes >= 0;
+    return [
+      el('p', { classe: ['texto-secundario', 'persona-casa'] }, juntarPedacos(pedacos)),
+      el('p', {
+        classe: 'persona-mes', dados: { saldoMesComum: String(mes.saldoMes), sinal: sinalDoSaldo(mes.saldoMes) },
+      }, fecha
+        ? ['a conta do mês fecha: sobram ', el('b', { texto: F().moeda(mes.saldoMes) })]
+        : ['a conta do mês não fecha: faltam ', el('b', { texto: F().moeda(-mes.saldoMes) })]),
     ];
-    return el('p', { classe: ['texto-secundario', 'persona-casa'], dados: { saldoMesComum: String(mes.saldoMes) } }, pedacos.flatMap(([texto, valor, depois], i) => [
-      i > 0 ? ' · ' : null,
-      el('span', { classe: 'conta' }, [texto, valor ? el('b', { texto: valor }) : null, depois || null]),
-    ]));
   }
 
   function telaPersonas(s, e) {
     const { el } = D();
-    s.appendChild(cabecalho('O jogo', 'As personas'));
+    s.appendChild(cabecalho(null, 'As personas'));
     const abertas = ativas(e);
     const linhas = el('div', { classe: 'personas' });
-    for (const pid of lista(app.config.ordem.personas)) {
+    // Na ordem das equipes (a persona da equipe 1 primeiro), e não na ordem das
+    // personas do config: com o config de 30/09, a tela saía "1 e 2, 5, 3, 4,
+    // 6", e cada equipe tinha de varrer a tela atrás do próprio número (revisão
+    // de 30/09, achado 12). As equipes da mesma persona continuam juntas.
+    const personas = [...new Set(abertas.map((id) => app.config.equipes[id].persona))];
+    for (const pid of personas) {
       const equipes = abertas.filter((id) => app.config.equipes[id].persona === pid);
-      if (equipes.length === 0) continue;
       const p = app.config.personas[pid];
-      const pessoas = p.familia?.pessoas;
-      linhas.appendChild(el('div', { classe: 'persona-linha', dados: { persona: pid } }, [
+      linhas.appendChild(el('div', { classe: 'persona-linha', dados: { persona: pid, equipes: equipes.join(',') } }, [
         el('p', { classe: 'persona-quem' }, [
-          ...equipes.map((id) => rotuloEquipe(id)),
-          el('span', { classe: 'conta' }, [el('b', { texto: p.nome }), ` · ${primeiroTrecho(p.descricao)}`]),
-          Number.isInteger(pessoas) ? el('span', { classe: ['conta', 'texto-secundario'], texto: `· ${pessoas === 1 ? '1 pessoa' : `${pessoas} pessoas`} em casa` }) : null,
+          // Duas equipes da mesma persona: "1 Laranja e 2 Azul-céu", juntas e
+          // antes do nome, para a sala ver que as duas jogam com o Jonas.
+          el('span', { classe: 'persona-equipes' }, equipes.flatMap((id, i) => [i > 0 ? el('span', { classe: 'persona-e', texto: 'e' }) : null, rotuloEquipe(id)])),
+          el('span', { classe: 'persona-nome' }, [el('b', { texto: p.nome }), ` · ${primeiroTrecho(p.descricao)}`]),
         ]),
-        linhaCasa(p, equipes[0]),
+        ...linhasDaCasa(p, equipes[0]),
       ]));
     }
     s.appendChild(linhas);
@@ -2046,10 +2083,13 @@
     s.appendChild(el('div', { classe: 'linhas-grafico linhas-sorteio' }, [
       // A chance de carta grave de cada equipe, escrita sob o nome (achado 8): as
       // fatias graves são finas demais para levar o número, e é essa chance que a
-      // decisão mudou ("a decisão muda o tamanho das fatias", seção 8).
+      // decisão mudou ("a decisão muda o tamanho das fatias", seção 8). A letra
+      // da decisão vem antes (revisão de 30/09, achado 9): é ela que mudou as
+      // fatias, e o sorteio não dizia qual tinha sido.
       el('div', { classe: 'coluna-rotulos', estilo: estiloLinhas }, itens.map(({ eq, r }) => el('div', { classe: 'linha-rotulo linha-rotulo-sorteio' }, [
         rotuloEquipe(eq),
         graves.size > 0 ? el('span', { classe: 'linha-graves', dados: { equipe: eq } }, [
+          el('span', { classe: 'linha-decisao', dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]), ' · ',
           'cartas graves ', el('b', { texto: F().porcento(lista(r.chances).filter((c) => graves.has(c.carta)).reduce((t, c) => t + c.chance, 0)) }),
         ]) : null,
       ]))),
@@ -2212,19 +2252,27 @@
     return pedacos.length > 0 ? D().el('span', { classe: ['custo-carta', classe] }, juntarPedacos(pedacos)) : null;
   }
 
-  // O texto da opção do jeito do ofício da equipe (D-054): a letra do resultado
-  // leva o rótulo da persona na dica, e a história conta com as palavras dela.
-  const textoDaOpcao = (rodadaId, opcaoId, eq) => N().historia.textoDaOpcao(app.config, rodadaId, opcaoId, app.config.equipes[eq]?.persona);
-
-  const textoSaldo = (renda) => (renda < 0 ? `faltou ${F().moeda(-renda)}` : `sobrou ${F().moeda(renda)}`);
-  const taxaJuros = () => F().taxa(app.config.regras.jurosDividaMes || 0);
+  const textoSaldo = (valor) => (valor < 0 ? `faltou ${F().moeda(-valor)}` : `sobrou ${F().moeda(valor)}`);
+  // A regra do celular (aluno.js, sinalDe): pelo valor arredondado, e o zero
+  // neutro. Antes, o telão pintava "+R$ 0" de verde e o celular mostrava "R$ 0"
+  // sem cor (revisão de 30/09, achado 16).
+  const sinalDoSaldo = (v) => (Math.round(v) > 0 ? 'positivo' : Math.round(v) < 0 ? 'negativo' : 'zero');
   const personaDaEquipe = (eq) => app.config.personas[app.config.equipes[eq]?.persona];
 
-  // No resultado, a origem vai curta: a linha já leva a letra, a carta, a dívida
-  // e as contas, e seis equipes precisam caber em 1024×768. O celular da equipe
-  // traz a frase inteira ("ninguém votou: ficou o de sempre"). O termo "piloto
-  // automático" saiu de todas as telas (D-041; rascunho, seção 7, item 14): no
-  // ensaio, ele confundia, e soava como a opção boa de quem não votou.
+  // O placar e a dívida contam o empréstimo como dívida (esquema v2.2): o
+  // "saldo" de uma equipe é o patrimônio (o saldo acumulado menos o empréstimo
+  // a pagar), e a dívida é o cheque especial mais o saldo devedor. No teste de
+  // 30/09, o Jonas pegou R$ 1.500 no mês 2 e a tela mostrou "dívida R$ 1": o
+  // empréstimo tinha entrado como renda, e a dívida dele não aparecia.
+  const patrimonioDe = (valores) => N().historia.patrimonioDe(valores) ?? 0;
+  const dividaDe = (valores) => N().historia.dividaTotal(valores)?.total ?? 0;
+  const patrimonioNoPlacar = (eq) => patrimonioDe(app.dados.placar?.[eq]);
+
+  // No resultado, a origem vai curta e discreta, ao lado do custo da carta. O
+  // celular da equipe traz a frase inteira ("ninguém votou: ficou o de
+  // sempre"). O termo "piloto automático" saiu de todas as telas (D-041;
+  // rascunho, seção 7, item 14): no ensaio, ele confundia, e soava como a opção
+  // boa de quem não votou.
   const ORIGENS = {
     piloto: 'ninguém votou',
     moeda: 'empate na moeda',
@@ -2232,6 +2280,40 @@
     apresentador: 'pelo apresentador',
   };
 
+  // A linha curta da carta de parada (D-052, D-065): "20 dias parado · perdeu
+  // R$ 1.787". Só com dias parados; a carta que custa só dinheiro (o conserto,
+  // o calote) já aparece no saldo do mês, e o detalhe fica no celular e na
+  // história. "perdeu", e não "renda perdida": a linha tem de caber ao lado do
+  // saldo, numa linha só, com seis equipes em 1024×768.
+  function linhaDaParada(custo) {
+    if (!(custo?.diasParado > 0)) return null;
+    const { el } = D();
+    return el('span', { classe: ['custo-carta', 'resultado-custo'] }, [
+      el('span', { classe: 'conta', dados: { custo: 'dias' } }, [el('b', { texto: F().inteiro(custo.diasParado) }), custo.diasParado === 1 ? ' dia parado' : ' dias parado']),
+      custo.rendaPerdida > 0 ? [' · ', rotuloEValor('perdeu', F().moeda(custo.rendaPerdida), [], { custo: 'renda' })] : null,
+    ]);
+  }
+
+  // D-065 (teste de 30/09): o resultado projetado mostra só o essencial, com
+  // espaço entre as equipes. Antes, cada equipe era uma frase de três linhas
+  // (letra, carta, custo, o que veio de antes, entrou, gastos, multa, básico,
+  // juros, faltou, dívida), e o Kleberson achou a tela difícil de explicar em
+  // aula. Agora, uma faixa por equipe, em três colunas alinhadas entre as
+  // faixas (subgrid):
+  // - a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão;
+  // - a carta que saiu, grande, e embaixo só o que a sala precisa ouvir: o
+  //   empréstimo tomado no mês, os dias parados, o que a proteção pagou (D-059)
+  //   e a origem da decisão quando não foi a maioria;
+  // - o saldo do mês em destaque, com + ou − e em verde ou vermelho (o sinal e
+  //   o cabeçalho "saldo do mês" dizem o mesmo que a cor, que nunca é o único
+  //   canal; o zero fica neutro, "R$ 0", como no celular), e embaixo a dívida
+  //   total, discreta.
+  // Revisão de 30/09 (achado 9): sem a decisão, duas equipes do Jonas com a
+  // mesma carta mostravam saldos diferentes sem explicação, e nada dizia que
+  // uma delas tinha pegado R$ 1.500 (a dívida total fica igual com ou sem o
+  // empréstimo). A letra é a mesma do telão da decisão e do celular (D-051).
+  // O detalhamento das contas (entrou, gastos, multa, básico, juros,
+  // empréstimo) fica no celular de cada equipe e na história do placar final.
   function telaResultado(s, e) {
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
@@ -2244,73 +2326,98 @@
     const destacadas = new Set(efeitos.filter((x) => x.efeito !== 0)
       .sort((a, b) => Math.abs(b.efeito) - Math.abs(a.efeito) || numeroEquipe(a.eq) - numeroEquipe(b.eq))
       .slice(0, n).map((x) => x.eq));
-    const dividas = new Map(itens.map(({ eq, r }) => [eq, Math.max(0, -(r.depois?.renda ?? 0))]));
-    // Os juros da dívida são os mesmos para todas as equipes (D-046): ditos uma
-    // vez, no cabeçalho. Repetidos em cada linha, empurravam as contas para uma
-    // terceira linha, e seis equipes não cabiam em 1024×768 com a faixa de
-    // entrada embaixo. Pelo mesmo motivo o cabeçalho tem uma linha só.
-    const comDivida = [...dividas.values()].some((d) => d > 0);
     s.appendChild(cabecalho(null, rodada.titulo, {
-      extra: comDivida ? D().el('p', { classe: 'resultado-juros', texto: `a dívida paga juros de ${taxaJuros()} ao mês` }) : null,
+      extra: el('p', { classe: 'resultado-legenda', texto: 'saldo do mês' }),
     }));
-    // Cada equipe é uma frase só: equipe, letra da decisão, carta, o custo real
-    // dela, as contas do mês e a dívida, quebrando entre os pedaços. Em duas linhas fixas (a carta
-    // em cima, as contas embaixo), a origem e a dívida empurravam uma terceira
-    // linha em metade das equipes; corrida, a frase aproveita o que sobra da
-    // linha da carta.
     const grade = el('div', { classe: 'grade-resultados', role: 'list', 'aria-label': 'Resultado do mês por equipe' });
     for (const { eq, r } of itens) {
       const carta = app.config.cartas[r.carta] || {};
       const grave = carta.tom === 'grave';
-      const divida = dividas.get(eq);
-      // Offline, toda decisão é do apresentador: dizer isso em cada linha é ruído.
-      const origem = r.origem === 'apresentador' && app.modo === 'offline' ? null : ORIGENS[r.origem];
       const mes = mesDoResultado(e.rodada, eq, r);
-      // O custo real da carta vem logo depois do título dela (D-052): "o tempo
-      // parado custa quanto?" era a pergunta que a tela não respondia.
-      const custoGravado = custoDoResultado(e.rodada, eq, r);
-      const nomes = nomesDoMes(custoGravado, mes, deAntesDoResultado(e.rodada, eq, r));
-      const custo = custoDaCarta(custoGravado, mes, 'resultado-custo', nomes.cartaNosGastos);
-      // Carta com custo vai pelo nome curto (D-040), quando há: o custo diz o
-      // resto, e o título inteiro repetia a informação ("Queda leve: 5 dias
-      // parado · 5 dias parado") e empurrava a sexta equipe para fora de
-      // 1024×768. O título inteiro acabou de aparecer no sorteio, e fica na dica.
-      const nomeCarta = ((custo || nomes.antes.length > 0) && carta.curto) || carta.titulo || r.carta;
+      const saldo = Math.round(mes.saldoMes) + 0;
+      // A dívida de depois do mês (cheque especial + empréstimo). Resultado de
+      // sala antiga sem o "depois" não tem de onde tirá-la, e fica em 0.
+      const divida = dividaDe(r.depois);
+      // Offline, toda decisão é do apresentador: dizer isso em cada faixa é ruído.
+      const origem = r.origem === 'apresentador' && app.modo === 'offline' ? null : ORIGENS[r.origem];
+      const rotuloDaOpcao = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo;
+      const detalhes = [
+        mes.emprestimo > 0 ? el('span', { classe: ['conta', 'resultado-emprestimo'], dados: { emprestimo: String(mes.emprestimo) } }, ['empréstimo ', el('b', { texto: F().moeda(mes.emprestimo) })]) : null,
+        linhaDaParada(custoDoResultado(e.rodada, eq, r)),
+        mes.protecao > 0 ? rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }) : null,
+      ].filter(Boolean);
       grade.appendChild(el('article', {
         classe: ['cartao-resultado', grave ? 'grave' : null, destacadas.has(eq) ? 'destaque' : null, destacadas.has(eq) && !grave ? 'animada' : null],
-        dados: { equipe: eq, carta: r.carta, origem: r.origem }, role: 'listitem',
+        dados: { equipe: eq, carta: r.carta, origem: r.origem, saldoMes: String(saldo), divida: String(divida) }, role: 'listitem',
       }, [
-        el('p', { classe: 'resultado-frase' }, [
-          rotuloEquipe(eq), ' ',
-          el('b', { classe: 'letra', title: textoDaOpcao(e.rodada, r.decisao, eq).rotulo || r.decisao, texto: letraDe(rodada, r.decisao) }), ' ',
-          el('span', { classe: 'resultado-carta', title: carta.titulo || null, texto: nomeCarta }),
-          custo ? [' · ', custo] : null,
-          // O separador vai dentro do mesmo span: no aperto, some junto.
-          nomes.antes.length > 0 ? el('span', { classe: 'resultado-antes' }, [' · ', el('span', { classe: ['custo-carta', 'resultado-de-antes'] }, juntarPedacos(pedacosDeAntes(nomes.antes)))]) : null,
-          origem ? el('span', { classe: 'resultado-origem' }, [' · ', el('span', { classe: 'resultado-decisao', texto: origem })]) : null,
-          ' · ', contasDoMes(mes, 'resultado-contas', 'span', nomes.gastos),
-          divida > 0 ? [' · ', el('span', { classe: 'resultado-divida', texto: `dívida ${F().moeda(divida)}` })] : null,
+        el('div', { classe: 'resultado-quem' }, [
+          rotuloEquipe(eq),
+          // "Jonas · decisão B": quem jogou e o que decidiu, à esquerda; o que
+          // aconteceu (a carta) no meio; o dinheiro à direita. Na linha de
+          // detalhe, a letra empurrava a parada para uma terceira linha, e seis
+          // faixas deixavam de caber em 1024×768 com a faixa de entrada.
+          el('span', { classe: 'resultado-persona' }, [
+            personaDaEquipe(eq)?.nome || '', ' · ',
+            el('span', { classe: 'resultado-escolha', title: rotuloDaOpcao || null, dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]),
+          ]),
+        ]),
+        el('div', { classe: 'resultado-meio' }, [
+          // O título inteiro da carta; se ele não couber numa linha, o
+          // encurtarCartas troca pelo curto (D-040), e o título fica na dica.
+          el('p', { classe: 'resultado-carta', title: carta.titulo || null, dados: carta.curto ? { curto: carta.curto } : undefined, texto: carta.titulo || r.carta }),
+          detalhes.length > 0 || origem ? el('p', { classe: 'resultado-detalhe' }, [
+            juntarPedacos(detalhes),
+            // O separador vai dentro do mesmo span: no aperto, some junto.
+            origem ? el('span', { classe: 'resultado-origem' }, [detalhes.length > 0 ? ' · ' : null, el('span', { classe: 'resultado-decisao', texto: origem })]) : null,
+          ]) : null,
+        ]),
+        el('div', { classe: 'resultado-dinheiro' }, [
+          el('p', {
+            classe: 'resultado-saldo', title: textoSaldo(saldo),
+            dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }),
+          }),
+          el('p', { classe: 'resultado-divida' }, divida > 0 ? ['dívida ', el('b', { texto: F().moeda(divida) })] : ['sem dívida']),
         ]),
       ]));
     }
     s.appendChild(grade);
-    app.depoisDeMedir.push(() => apertarResultado(grade));
+    app.depoisDeMedir.push(() => {
+      encurtarCartas(grade);
+      apertarResultado(grade);
+    });
   }
 
-  // O pior caso do resultado não cabe: seis equipes, todas com a carta cara, a
-  // origem, os gastos por origem, a dívida e o que veio de antes (a fratura do
-  // mês 2 que continua) dão quatro linhas cada, e a sexta passava de 1024×768
-  // (revisão de 29/09, 2ª rodada, achado 13). Não há fonte menor que 28 px
-  // nem rolagem no telão; então, só quando a lista transborda, a tela tira o
-  // que o celular de cada equipe também mostra, nesta ordem: a origem da
-  // decisão ("ninguém votou") e, se ainda não couber, o que veio de antes. O
-  // desenho refaz a conta a cada tamanho de tela (a chave inclui a janela).
-  function apertarResultado(grade) {
-    const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
-    for (const nivel of ['1', '2']) {
-      if (!transborda()) return;
-      grade.dataset.aperto = nivel;
+  // O título da carta vai inteiro quando cabe numa linha ("Uma semana boa") e
+  // pelo curto do config quando quebraria ("A mobilização arrancou um reajuste"
+  // → "Reajuste"): uma carta em duas linhas faz a faixa crescer, e seis faixas
+  // deixam de caber em 1024×768. O título inteiro acabou de aparecer no
+  // sorteio e fica na dica. O desenho refaz a conta a cada tamanho de tela.
+  function encurtarCartas(grade) {
+    for (const p of grade.querySelectorAll('.resultado-carta[data-curto]')) {
+      const linha = parseFloat(getComputedStyle(p).lineHeight);
+      if (Number.isFinite(linha) && p.getBoundingClientRect().height > linha * 1.5) {
+        p.textContent = p.dataset.curto;
+        p.dataset.encurtada = '1';
+      }
     }
+  }
+
+  // O pior caso ainda pode não caber: seis equipes com a faixa de entrada
+  // embaixo (online), todas com a carta de parada, a proteção e a origem. Não
+  // há fonte menor que 28 px nem rolagem no telão; então, só quando a lista
+  // transborda, a tela aproxima as faixas (sem colar uma na outra) e tira a
+  // origem da decisão ("ninguém votou"), que o celular de cada equipe também
+  // mostra. O texto continua no DOM.
+  // Revisão de 30/09 (achado 15): também quando a linha de detalhe de alguma
+  // faixa quebra em duas. Com seis equipes, "a proteção pagou R$ 900 · ninguém
+  // votou" cabia no limite, o aperto não agia, e a faixa ganhava uma terceira
+  // linha que encostava o título na lista.
+  function apertarResultado(grade) {
+    const quebrou = [...grade.querySelectorAll('.resultado-detalhe')].some((p) => {
+      const linha = parseFloat(getComputedStyle(p).lineHeight);
+      return Number.isFinite(linha) && p.getBoundingClientRect().height > linha * 1.5;
+    });
+    if (quebrou || grade.scrollHeight > grade.clientHeight + 1) grade.dataset.aperto = '1';
   }
 
   // ---------- Tela: placar final (D-041) ----------
@@ -2327,10 +2434,10 @@
   const equipesDoPlacar = () => equipesOrdem().filter((id) => app.dados.placar?.[id]?.ativa === true);
 
   // Maior saldo primeiro. Não é ranking de vencedor: é a fila de quanto faltou,
-  // e o título conta quantas não fecharam as contas.
+  // e o título conta quantas não fecharam as contas. O saldo é o patrimônio
+  // (esquema v2.2): o empréstimo a pagar conta como dívida.
   function equipesPorSaldo() {
-    const placar = app.dados.placar;
-    return equipesDoPlacar().sort((a, b) => placar[b].renda - placar[a].renda || numeroEquipe(a) - numeroEquipe(b));
+    return equipesDoPlacar().sort((a, b) => patrimonioNoPlacar(b) - patrimonioNoPlacar(a) || numeroEquipe(a) - numeroEquipe(b));
   }
 
   // Três páginas, e a terceira se repete para cada equipe: (1) o saldo contra o
@@ -2380,12 +2487,11 @@
   // equipes da persona dela (revisão da F2, achado 20).
   function paginaSaldo(s, lado) {
     const { el } = D();
-    const placar = app.dados.placar;
     const ordenadas = equipesPorSaldo();
-    const naoFecharam = ordenadas.filter((id) => placar[id].renda < 0).length;
+    const naoFecharam = ordenadas.filter((id) => patrimonioNoPlacar(id) < 0).length;
     s.appendChild(cabecalho('Quanto sobrou, e quanto faltou para o básico', tituloSaldo(naoFecharam, ordenadas.length), { extra: lado }));
     const referencias = lista(app.config.ordem.referencias).map((id) => app.config.referencias[id]).filter(Boolean);
-    const dominio = dominioCom(ordenadas.map((id) => placar[id].renda).concat(referencias.map((r) => r.renda)));
+    const dominio = dominioCom(ordenadas.map(patrimonioNoPlacar).concat(referencias.map((r) => r.renda)));
     const estiloLinhas = { '--linhas': String(ordenadas.length) };
     s.appendChild(el('div', { classe: 'linhas-grafico linhas-placar' }, [
       el('div', { classe: 'coluna-rotulos', estilo: estiloLinhas }, ordenadas.map((id) => el('div', { classe: 'linha-rotulo linha-rotulo-placar' }, [
@@ -2394,15 +2500,15 @@
       ]))),
       grafico('grafico-placar', (largura, altura, fonte) => G().barras({
         largura, altura, fonte, dominio,
-        linhas: ordenadas.map((id) => ({ valor: placar[id].renda })),
+        linhas: ordenadas.map((id) => ({ valor: patrimonioNoPlacar(id) })),
         referencias: referencias.map((r) => ({
           id: r.id, valor: r.renda,
           linhas: r.persona ? ordenadas.flatMap((id, k) => (app.config.equipes[id]?.persona === r.persona ? [k] : [])) : undefined,
         })),
       })),
       el('div', { classe: 'coluna-valores', estilo: estiloLinhas }, ordenadas.map((id) => el('div', {
-        classe: 'linha-valor valor-saldo', dados: { equipe: id, valor: String(placar[id].renda) },
-      }, [textoSaldo(placar[id].renda)]))),
+        classe: 'linha-valor valor-saldo', dados: { equipe: id, valor: String(patrimonioNoPlacar(id)) },
+      }, [textoSaldo(patrimonioNoPlacar(id))]))),
     ]));
     if (referencias.length > 0) {
       s.appendChild(el('ul', { classe: 'referencias' }, referencias.map((r) => el('li', { dados: { referencia: r.id } }, [
@@ -2523,12 +2629,31 @@
           custo, custo ? ' · ' : null,
           nomes.antes.length > 0 ? [el('span', { classe: 'historia-de-antes' }, juntarPedacos(pedacosDeAntes(nomes.antes))), ' · '] : null,
           contasDoMes(mes, 'historia-contas', 'span', nomes.gastos),
+          // O empréstimo do mês vai depois das contas, como dívida, e nunca
+          // dentro do "entrou" (esquema v2.2): a conta lida continua fechando
+          // no "faltou", e a sala vê que o dinheiro entrou devendo.
+          mes.emprestimo > 0 ? [' · ', rotuloEValor('pegou empréstimo de', F().moeda(mes.emprestimo), ['historia-emprestimo'], { emprestimo: String(mes.emprestimo) })] : null,
         ]),
       ]);
     })));
-    const renda = app.dados.placar?.[eq]?.renda ?? 0;
     const meses = historia.length === 1 ? 'do mês' : `dos ${historia.length} meses`;
-    s.appendChild(el('p', { classe: 'historia-final' }, [`No fim ${meses}: `, el('b', { texto: textoSaldo(renda) })]));
+    s.appendChild(el('p', { classe: 'historia-final' }, [`No fim ${meses}: `, el('b', { texto: textoSaldo(patrimonioNoPlacar(eq)) }), ...pedacosDaDividaFinal(eq, historia)]));
+  }
+
+  // A dívida com que a equipe termina (cheque especial + empréstimo) e, quando
+  // o empréstimo continua, quanto dele e em quantas parcelas: as parcelas
+  // seguem depois do fim do jogo (esquema v2.2), e a história que só dizia
+  // "faltou R$ X" escondia que a conta continua chegando.
+  function pedacosDaDividaFinal(eq, historia) {
+    const { el } = D();
+    const divida = N().historia.dividaTotal(app.dados.placar?.[eq]);
+    if (!divida || divida.total <= 0) return [];
+    const ultimo = historia.at(-1)?.mes;
+    const parcelas = Number(ultimo?.parcelasRestantes) || 0;
+    const doEmprestimo = divida.emprestimo > 0
+      ? [' (', el('b', { texto: F().moeda(divida.emprestimo) }), ' do empréstimo', parcelas > 0 ? `, em ${parcelas === 1 ? '1 parcela' : `${parcelas} parcelas`}` : null, ')']
+      : [];
+    return [' · ', el('span', { classe: 'historia-divida', dados: { divida: String(divida.total) } }, ['dívida ', el('b', { texto: F().moeda(divida.total) }), ...doEmprestimo])];
   }
 
   // ---------- Tela: comparativo ----------
@@ -2923,7 +3048,22 @@
     if (achados.length === 0) return avisar(`Nenhum aparelho com o crachá ${alvo}.`, 'erro');
     if (achados.length > 1) return avisar(`Dois aparelhos com o crachá ${alvo}: peça para um deles recarregar a página.`, 'erro');
     const eq = await escolher(`Mover ${alvo} para qual equipe?`, ativas(app.estado).map((id) => ({ rotulo: `${numeroEquipe(id)} ${app.config.equipes[id].nome}`, valor: id })));
-    if (eq) executar(() => app.anf.moverMembro(achados[0], eq));
+    if (!eq) return;
+    // Revisão de 30/09 (achado P1): com a decisão aberta, o voto que o aparelho
+    // já deu pela equipe de agora deixa de valer (a apuração conta só quem é da
+    // equipe: anfitrião, votosDaEquipe). O celular avisa o aluno; aqui, o
+    // apresentador confirma sabendo disso. Sem voto, move direto.
+    const e = app.estado;
+    const de = app.dados.membros?.[achados[0]]?.equipe;
+    const aberta = e?.tipo === 'rodada' && ['decidindo', 'prorrogacao'].includes(e.subfase);
+    if (aberta && de && de !== eq && typeof app.dados.decisoes?.[de]?.[achados[0]] === 'string') {
+      const ok = await confirmar(
+        `${alvo} já votou nesta decisão pela equipe ${numeroEquipe(de)} ${app.config.equipes[de]?.nome || ''}. Movido agora, esse voto é descartado, e o aluno precisa votar de novo pela equipe ${numeroEquipe(eq)} ${app.config.equipes[eq].nome}.`,
+        'Mover e descartar o voto', { focarCancelar: true },
+      );
+      if (!ok) return;
+    }
+    executar(() => app.anf.moverMembro(achados[0], eq));
   }
 
   // "Remover inativos" (arquitetura, seção 10): apaga o registro de quem está

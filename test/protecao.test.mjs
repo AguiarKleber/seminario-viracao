@@ -58,7 +58,7 @@ test('motor: a proteção entra fora do "entrou", do multiplica e do piso, e o s
   const r = M.aplicar(config, { equipeId: 'e1', rodadaId: 'r1', opcaoId: 'a', cartaId: 'acidente', estado: { renda: 0, energia: 8 } });
 
   // Assert
-  assert.deepEqual(r.mes, { trabalho: 0, custosFixos: 100, gastos: 400, protecao: 600, outraRenda: 0, entrou: -100, basico: 800, juros: 0, saldoMes: -700, dividaAntes: 0 });
+  assert.deepEqual(r.mes, { trabalho: 0, custosFixos: 100, gastos: 400, protecao: 600, outraRenda: 0, entrou: -100, basico: 800, juros: 0, saldoMes: -700, dividaAntes: 0, emprestimo: 0, parcela: 0, jurosEmprestimo: 0, amortizacao: 0, saldoDevedor: 0, parcelasRestantes: 0, proximaParcela: 0, aPagar: 0 });
   assert.equal(r.delta.renda, r.mes.saldoMes, 'o saldo do mês continua sendo o delta da renda');
   assert.deepEqual(r.linhas.filter((l) => l.origem === 'protecao').map((l) => [l.rotulo, l.valor]), [['auxílio do INSS', 600]]);
   assert.equal(r.protecaoEvitou, 600, 'sem a proteção, o saldo do mês seria 600 menor');

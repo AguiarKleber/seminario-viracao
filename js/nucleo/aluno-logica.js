@@ -16,6 +16,25 @@
   // telão e falados em voz alta.
   const ALFABETO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+  // A folga da regra: o anfitrião grava em estado.prazo o fim do cronômetro MAIS
+  // esta folga, e é esse prazo que a regra do banco confere (now <= prazo +
+  // graça). No teste de 30/09, o prazo era o próprio fim do cronômetro: a decisão
+  // do mês 3 ficou aberta 7 min 35 s no telão (quem encerra é o apresentador,
+  // D-010), a regra recusou todo voto depois de 2 min 5 s, e o "Votar nesta" do
+  // Jonas não contava. Com a folga do tempo de vida da sala (12 h), o voto vale
+  // enquanto a votação estiver aberta: é o "fechando" que corta, e não o relógio.
+  // Fica aqui, e não no anfitrião, porque o celular não carrega o anfitrião e
+  // precisa da mesma folga para desenhar o cronômetro.
+  const FOLGA_DA_REGRA_MS = 12 * 60 * 60 * 1000;
+
+  // O fim do cronômetro (o tempo configurado da etapa, mais o "+30 s"), a partir
+  // do prazo da regra. Só desenho (I5): o voto não olha isto. null sem prazo
+  // (etapa pausada, ou sem votação).
+  function fimDoCronometro(estado) {
+    const prazo = estado?.prazo;
+    return typeof prazo === 'number' ? prazo - FOLGA_DA_REGRA_MS : null;
+  }
+
   function lista(x) {
     if (Array.isArray(x)) return x;
     return x && typeof x === 'object' ? Object.values(x) : [];
@@ -170,7 +189,8 @@
       return tela('enquete', {
         ...cabecalho, afirmacao: itens[falta], posicao: todas.indexOf(itens[falta].id) + 1, total: todas.length, afirmacoes: itens,
         escala: lista(em(conteudo, 'escala', 'curtos')),
-        prazo: estado.prazo ?? null, pausado: typeof estado.restanteMs === 'number', restanteMs: estado.restanteMs ?? null,
+        // O fim do cronômetro, e não o prazo da regra (que leva a folga de 12 h).
+        prazo: fimDoCronometro(estado), pausado: typeof estado.restanteMs === 'number', restanteMs: estado.restanteMs ?? null,
       });
     }
     // Fechando ou apurada: "registrado" só para quem votou. Quem não votou não
@@ -227,7 +247,7 @@
         podeVotar: motivo === null,
         motivo,
         forcada: em(estado, 'forcadas', equipeId),
-        prazo: estado.prazo ?? null, pausado, restanteMs: estado.restanteMs ?? null,
+        prazo: fimDoCronometro(estado), pausado, restanteMs: estado.restanteMs ?? null,
         // A situação junto com a decisão: decide-se olhando os indicadores (R13).
         situacao: dadosSituacao(conteudo, equipeId, resultados),
       });
@@ -415,6 +435,58 @@
     return false;
   }
 
+  // Por que a regra recusou um voto, pelo que o celular sabe AGORA (o estado e o
+  // próprio registro de membro). No teste de 30/09 a recusa só aparecia numa
+  // nota embaixo da lista, fora da tela em 360×740, e o "Votar nesta" ficava
+  // igual: o aluno achava que o botão não funcionava. A tela diz o motivo junto
+  // do botão, e o motivo diz o que fazer:
+  // - 'fechou': aquela votação (a mesma janela) já não está aberta;
+  // - 'pausado': a mesma votação, pausada pelo apresentador (sem prazo, a regra
+  //   recusa tudo);
+  // - 'foraDaSala': o registro de membro sumiu (removido por inatividade);
+  // - 'outraEquipe': o aparelho foi movido para outra equipe;
+  // - 'entrouDepois': o aparelho entrou (ou voltou) depois de a decisão abrir;
+  // - 'semMotivo': a votação continua aberta e nada explica a recusa; vale tentar de novo.
+  // Revisão de 30/09, os casos em que o 'fechou' ("ele não foi contado") ou o
+  // 'foraDaSala' diziam uma coisa falsa ou fora de contexto:
+  // - 'trocaTarde': o que chegou tarde foi a TROCA; o voto anterior (anterior,
+  //   o valor que o servidor já tinha confirmado) contou na apuração;
+  // - 'soEmpatadas': a própria equipe está na prorrogação, e a opção votada não
+  //   é uma das empatadas;
+  // - 'outraAfirmacao': no termômetro de uma afirmação por vez, a resposta de
+  //   uma afirmação que o apresentador já passou;
+  // - 'foraDaSalaFechada': fora da sala com a entrada fechada: o aparelho não
+  //   volta sozinho (garantirMembro só regrava o membro com a entrada aberta).
+  function motivoDaRecusa(pendente, { estado, membro, anterior = null, entradaAberta = true } = {}) {
+    if (!pendenteAindaVale(pendente, estado)) return motivoDoFechamento(pendente, estado, membro, anterior);
+    if (typeof estado.restanteMs === 'number') return 'pausado';
+    if (!membro) return entradaAberta === false ? 'foraDaSalaFechada' : 'foraDaSala';
+    if (pendente.tipo === 'decisao') {
+      if (membro.equipe !== pendente.equipe) return 'outraEquipe';
+      const aTempo = typeof membro.entrouEm === 'number' && typeof estado.abertoEm === 'number' && membro.entrouEm <= estado.abertoEm;
+      if (!aTempo) return 'entrouDepois';
+    }
+    return 'semMotivo';
+  }
+
+  // Por que a votação do pendente já não estava aberta quando ele chegou.
+  function motivoDoFechamento(p, estado, membro, anterior) {
+    if (!p || !estado) return 'fechou';
+    // A mesma janela: o pendente sem abertoEm é de antes desta conferência.
+    const mesmaJanela = typeof p.abertoEm !== 'number' || p.abertoEm === estado.abertoEm;
+    if (p.tipo === 'enquete') {
+      if (estado.tipo !== 'enquete' || estado.enquete !== p.enquete || estado.momento !== p.momento) return 'fechou';
+      if (estado.afirmacao !== '*' && estado.afirmacao !== p.afirmacao) return 'outraAfirmacao';
+      return mesmaJanela && votoValido(anterior) && anterior !== p.valor ? 'trocaTarde' : 'fechou';
+    }
+    if (p.tipo !== 'decisao' || estado.tipo !== 'rodada' || estado.rodada !== p.rodada) return 'fechou';
+    if (estado.subfase === 'prorrogacao' && em(estado, 'empatadas', p.equipe)) return 'soEmpatadas';
+    // O anterior só contou se o aparelho continuava na equipe e tinha entrado
+    // antes da abertura: é o filtro da apuração (anfitrião, votosDaEquipe).
+    const contava = Boolean(membro) && membro.equipe === p.equipe && typeof membro.entrouEm === 'number' && membro.entrouEm <= estado.abertoEm;
+    return mesmaJanela && contava && typeof anterior === 'string' && anterior !== p.opcao ? 'trocaTarde' : 'fechou';
+  }
+
   // Três caracteres derivados do uid (FNV-1a de 32 bits, 5 bits por caractere).
   // Não é pessoal e não identifica ninguém fora da sala; serve para o
   // apresentador achar o aparelho no "Mover aluno". Com 32^3 = 32.768 códigos e
@@ -436,5 +508,7 @@
     return nome ? `${nome} · ${codigo}` : codigo;
   }
 
-  V.alunoLogica = { telaDoAluno, sugerirEquipe, pendenteAindaVale, cracha, codigoCracha };
+  V.alunoLogica = {
+    telaDoAluno, sugerirEquipe, pendenteAindaVale, motivoDaRecusa, cracha, codigoCracha, fimDoCronometro, FOLGA_DA_REGRA_MS,
+  };
 })(globalThis);

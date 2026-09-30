@@ -33,7 +33,7 @@ test('ordem do mês v2.1: trabalho variável → − custos fixos → − gastos
   const r = aplicarMinimo(b, { estado: { renda: -500, energia: 8 } });
 
   // Assert
-  assert.deepEqual(r.mes, { trabalho: 3300, custosFixos: 560, gastos: 550, protecao: 0, outraRenda: 250, entrou: 2990, basico: 1000, juros: 50, saldoMes: 1390, dividaAntes: 500 });
+  assert.deepEqual(r.mes, { trabalho: 3300, custosFixos: 560, gastos: 550, protecao: 0, outraRenda: 250, entrou: 2990, basico: 1000, juros: 50, saldoMes: 1390, dividaAntes: 500, emprestimo: 0, parcela: 0, jurosEmprestimo: 0, amortizacao: 0, saldoDevedor: 0, parcelasRestantes: 0, proximaParcela: 0, aPagar: 0 });
   assert.equal(r.delta.renda, 1390);
   assert.equal(r.depois.renda, 890);
   assert.deepEqual(r.linhas.map((l) => [l.origem, l.rotulo, l.valor]), [
@@ -153,7 +153,7 @@ test('mesComum entra com o custo fixo do todoMes, e o gasto fora do "entrou"', (
   const mes = M.mesComum(config, 'e1');
 
   // Assert: 2200 × 0,5 = 1100 de trabalho; 1100 − 480 = 620 entrou; 620 − 60 − 1000 = −440.
-  assert.deepEqual(mes, { trabalho: 1100, custosFixos: 480, gastos: 60, protecao: 0, outraRenda: 0, entrou: 620, basico: 1000, juros: 0, saldoMes: -440, dividaAntes: 0 });
+  assert.deepEqual(mes, { trabalho: 1100, custosFixos: 480, gastos: 60, protecao: 0, outraRenda: 0, entrou: 620, basico: 1000, juros: 0, saldoMes: -440, dividaAntes: 0, emprestimo: 0, parcela: 0, jurosEmprestimo: 0, amortizacao: 0, saldoDevedor: 0, parcelasRestantes: 0, proximaParcela: 0, aPagar: 0 });
 });
 
 test('config v2 (sem fixo nem gasto): as contas continuam as mesmas, com custosFixos e gastos em 0', () => {

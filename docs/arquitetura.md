@@ -285,6 +285,108 @@ seção 0. O site passou à versão 5 (`?v=5`, `VERSAO_APP`).
     `piorCasoSemProtecao` cabem nas regras de `resultados` e `placar`, que só o
     anfitrião escreve.
 
+### Correções do teste de 30/09 (D-065, esquema v2.2, versão 6)
+
+No teste de 30/09, no site publicado (versão 5), o Kleberson achou um defeito
+crítico e quatro problemas de tela. Os itens valem sobre o resto do documento,
+como os de cima; o contrato exato está em [contratos.md](contratos.md). O site
+passou à versão 6 (`?v=6`, `VERSAO_APP`). As decisões D-060 a D-064 (12 meses
+em 6 rodadas, seis personagens em seis trabalhos, ninguém de carteira assinada,
+o risco que cresce com os meses, o modo espectador do apresentador) foram
+registradas no mesmo dia, mas **ficam para a próxima rodada**: nada delas está
+na versão 6.
+
+34. **O voto vale enquanto a votação estiver aberta** (o defeito crítico). No
+    mês 3, na equipe do Jonas, "Votar nesta" não registrou o voto. A causa,
+    conferida no JSON baixado pelo telão: a decisão ficou aberta 7 min 35 s (quem
+    fecha é o apresentador, D-010), mas o `prazo` gravado era o fim do
+    cronômetro, e a regra recusava todo voto depois de `prazo + gracaSeg` (125 s
+    na decisão). A única pista no celular era uma nota fora da tela em 360×740.
+    - **A correção está no anfitrião, e não nas regras:** todo `prazo` que ele
+      grava é o da regra, o fim do cronômetro mais uma folga de 12 h, o tempo de
+      vida da sala (`alunoLogica.FOLGA_DA_REGRA_MS`). Na prática, quem corta o
+      voto é o `fechando` do apresentador; a regra continua cortando depois de
+      `prazo + graça`, como rede de segurança.
+    - O telão e o celular desenham o cronômetro com
+      `alunoLogica.fimDoCronometro(estado)` (`prazo − folga`), e não com o
+      `prazo`. `maisTempo`, `pausar`, `retomar`, a prorrogação e o Ctrl+Z somam
+      e descontam a folga do mesmo jeito (contratos, seção do anfitrião). O "+30
+      s" só estende o cronômetro visual.
+35. **O celular nunca fica calado.** Toda recusa da regra
+    (`PERMISSION_DENIED`) vira uma frase com o motivo e o que fazer, calculada
+    por `alunoLogica.motivoDaRecusa` com o estado de agora (fechou, troca que
+    chegou tarde, só as empatadas, outra afirmação, pausado, fora da sala,
+    outra equipe, entrou depois), logo abaixo do botão tocado (`.opcao-aviso`)
+    e nas telas seguintes da mesma etapa.
+    - "✓ seu voto" só com a confirmação do servidor; antes, "enviando…" ou
+      "guardado no aparelho".
+    - A escrita que falha sem ser recusa é tentada de novo a cada 3 s, até 5
+      vezes, enquanto a etapa estiver aberta; depois, o botão volta a valer e a
+      tela pede para tocar de novo (o SDK não repete a escrita que falhou).
+    - O voto em trânsito na hora da pausa fica guardado e vai sozinho quando o
+      apresentador retoma.
+    - O aluno movido de equipe depois de votar é avisado para votar de novo, e o
+      telão pede confirmação antes de mover com a decisão aberta ("Mover e
+      descartar o voto").
+36. **A matriz de votos** (`npm run e2e:votos`, `e2e/matriz-votos.e2e.mjs`). A
+    sessão inteira do roteiro de 60 min, com o `config.json`, contra o emulador:
+    um celular de 360×740 em cada uma das 6 equipes (mais um para o empate),
+    votando pela tela, com toques. Cobre o voto depois do fim do cronômetro, em
+    tempo real pelo relógio do servidor (o mês 3 é o caso do teste: todos votam
+    depois do cronômetro), recarga, tela bloqueada, pausa, Ctrl+Z, prorrogação,
+    a ordem das opções, sem rede, membro regravado, e os cinco achados da
+    revisão de 30/09. Fica fora do `npm run check`, como os outros e2e. O número
+    de rodadas vem do roteiro, para já servir aos 6 meses da D-060.
+37. **O empréstimo é dívida, e não renda** (esquema v2.2). No mês 2, o Jonas
+    pegou R$ 1.500 e a tela disse "dívida R$ 1": o empréstimo era uma `soma` na
+    renda, e a parcela e o saldo devedor eram efeitos do mês 3 escritos à mão.
+    - `efeito.emprestimo = { valor, parcelas, taxaMes, fonte }`, só nas opções.
+      O indicador `emprestimo` guarda o saldo devedor, e só o motor mexe nele.
+    - O motor ganhou o passo 7 da ordem do mês: a entrada (no caixa e no saldo
+      devedor, fora do `saldoMes`) e, lida do histórico, a parcela de cada
+      empréstimo tomado antes, pela tabela Price em reais inteiros
+      (`motor.cronograma`): os juros entram em `juros`, e a amortização sai do
+      caixa e do saldo devedor, fora do `saldoMes`. A k-ésima parcela vem no
+      k-ésimo mês jogado: mês pulado não cobra.
+    - `motor.patrimonio(estado) = renda − emprestimo` é o número do placar, do
+      `decompor` e das conferências do validador. `historia.patrimonioDe` e
+      `historia.dividaTotal` (cheque especial + saldo devedor) são o mesmo para
+      o celular, que não carrega o motor. O anfitrião grava no `placar/{eq}` a
+      renda **e** o `emprestimo`.
+    - `mes` ganhou `emprestimo`, `parcela`, `jurosEmprestimo`, `amortizacao`,
+      `saldoDevedor`, `parcelasRestantes`, `proximaParcela`, `aPagar` e, quando
+      há uma taxa só, `taxaEmprestimo`. Invariante: dívida antes + o que faltou
+      = dívida depois.
+38. **O resultado da rodada no telão ficou enxuto.** Uma faixa por equipe, em
+    três colunas alinhadas (`.grade-resultados` em grid, a faixa em `subgrid`):
+    quem (equipe, persona e decisão), a carta (e, só quando há, o empréstimo do
+    mês, a parada, a proteção e a origem da decisão) e o dinheiro (o saldo do
+    mês com sinal, em `--positivo` ou `--negativo`, e a dívida). O detalhamento
+    das contas saiu do telão: fica no celular e na história do placar final. O
+    e2e confere, em 1024×768 e 1920×1080, nada abaixo de 28 px, sem rolagem,
+    vão entre as faixas, colunas alinhadas, nenhum texto sobreposto e o
+    contraste do saldo.
+39. **Telas enxutas no celular.** Toda tela do jogo começa pelo que se explica
+    em aula, e o detalhe fica recolhido (`details.recolhido`, lembrado em
+    `app.ui.recolhidos` até o próximo passo). A situação, o placar final e o Fim
+    começam pelo **resumo mês a mês** (`table.tabela-meses`: mês, saldo do mês e
+    "Ficou com", o patrimônio), com os valores sempre com sinal, em verde ou
+    vermelho, e a dívida de hoje embaixo; na situação, o resumo e a dívida cabem
+    em 360×740 sem rolar. O resultado mostra o saldo do mês em destaque
+    (`.saldo-destaque`).
+40. **Personas do telão em três linhas**, na ordem das equipes: quem (equipes,
+    nome e ofício), a casa e o mês comum, com o sinal e a cor. No teste, a tela
+    parecia sobreposta; o e2e confere que nenhum texto se sobrepõe, com seis
+    equipes e a faixa de entrada.
+41. **Um par de cores só.** `--positivo` e `--negativo` ficam no `base.css`, os
+    mesmos para o telão e o celular (antes, o celular tinha os seus). A cor
+    nunca é o único canal: o valor sempre leva o sinal (D-016).
+42. **Regras e versão.** As regras do Firebase **não mudaram** (continuam v3,
+    iguais à `main`): a correção do voto está no valor do `prazo`, que a regra
+    só exige que seja número, e os campos novos de `resultados` e `placar`
+    cabem nas regras que só o anfitrião escreve. O site sobe para a versão 6: os
+    celulares com a versão 5 em cache veem "atualize a página".
+
 ---
 
 ## 0. Resumo

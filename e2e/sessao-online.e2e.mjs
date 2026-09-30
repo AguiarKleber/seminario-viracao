@@ -526,16 +526,148 @@ async function jogar({ site, navegador, vigiar }) {
     for (const k of ['diasParado', 'rendaPerdida', 'gastos']) assert.equal(Number(lido[k]), custo[k], `${onde}: ${k} da carta`);
     for (const x of await trechosDoCusto(c, custo)) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
   }
-  // "Dívida R$ D · juros de J% ao mês" (D-046), só quando o saldo está negativo.
-  async function conferirDivida(c, renda, onde) {
-    const texto = await c.p.evaluate(() => document.querySelector('.divida')?.textContent ?? null);
-    if (renda >= 0) {
-      assert.equal(texto, null, `${onde}: sem dívida, sem a linha da dívida`);
-      return;
+  // A dívida de hoje (D-046; esquema v2.2, D-065): o cheque especial MAIS o
+  // empréstimo a pagar, a partir do "depois" que o telão gravou. No teste de
+  // 30/09, o Jonas pegou R$ 1.500 no mês 2 e o celular disse "Dívida R$ 1": a
+  // soma é refeita aqui (historia.dividaTotal, a mesma função pura do núcleo),
+  // e o texto é conferido parte por parte. Sem dívida, sem o bloco.
+  async function conferirDivida(c, res, onde) {
+    const lido = await c.p.evaluate(() => {
+      const n = document.querySelector('.divida');
+      return n ? { ...n.dataset, texto: n.textContent } : null;
+    });
+    const d = C.historia.dividaTotal(res.depois);
+    assert.ok(d, `${onde}: o telão gravou o "depois" do mês`);
+    if (!(d.total > 0)) {
+      assert.equal(lido, null, `${onde}: sem dívida, sem o bloco da dívida`);
+      return d;
     }
+    assert.ok(lido, `${onde}: a dívida aparece`);
+    assert.deepEqual([Number(lido.divida), Number(lido.cheque), Number(lido.emprestimo)], [d.total, d.chequeEspecial, d.emprestimo], `${onde}: a dívida é o cheque especial mais o empréstimo`);
+    const trechos = [`dívida hoje ${await moedaNa(c, d.total)}`];
     // Com as casas da fonte (7,43%), refeito aqui, e não pelo formatador da página.
     const juros = `${(C.cfg.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
-    for (const x of [`dívida ${await moedaNa(c, -renda)}`, `juros de ${juros} ao mês`]) assert.ok(inclui(texto, x), `${onde}: "${x}" em "${texto}"`);
+    if (d.chequeEspecial > 0) trechos.push(`cheque especial ${await moedaNa(c, d.chequeEspecial)}`, `juros de ${juros} ao mês`);
+    if (d.emprestimo > 0) {
+      const n = res.mes.parcelasRestantes;
+      assert.ok(n > 0 && res.mes.saldoDevedor === d.emprestimo, `${onde}: o mês gravado traz as parcelas do empréstimo (${JSON.stringify(res.mes)})`);
+      // A taxa do empréstimo (revisão de 30/09, achado 17), com as casas da
+      // fonte do config, refeita aqui como a do cheque especial.
+      assert.ok(Number.isFinite(res.mes.taxaEmprestimo), `${onde}: o mês gravado traz a taxa do empréstimo`);
+      const taxaEmp = `${(res.mes.taxaEmprestimo * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+      trechos.push(`empréstimo a ${taxaEmp} ao mês: fica devendo ${await moedaNa(c, d.emprestimo)} em ${n} ${n === 1 ? 'parcela' : 'parcelas'}`,
+        `a próxima: ${await moedaNa(c, res.mes.proximaParcela)}`, `${await moedaNa(c, res.mes.aPagar)} no total, com os juros`);
+    }
+    for (const x of trechos) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
+    return d;
+  }
+
+  // As cores do saldo (D-065), lidas dos tokens do próprio CSS: "rgb(r, g, b)".
+  const corDoToken = (c, token) => c.p.evaluate((t) => {
+    const hex = getComputedStyle(document.documentElement).getPropertyValue(t).trim();
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    return `rgb(${r}, ${g}, ${b})`;
+  }, token);
+  // Um valor de saldo na tela: o texto com o sinal ("+R$ 466", "−R$ 1.034",
+  // "R$ 0") e a cor (verde se positivo, vermelho se negativo, a do texto no zero).
+  async function conferirSaldo(c, lido, valor, onde) {
+    assert.ok(lido, `${onde}: o valor aparece`);
+    const r = Math.round(valor);
+    const sinal = r > 0 ? 'positivo' : r < 0 ? 'negativo' : 'zero';
+    assert.equal(lido.texto, await c.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), valor), `${onde}: o valor com o sinal`);
+    if (r > 0) assert.match(lido.texto, /^\+R\$/, `${onde}: positivo com "+"`);
+    if (r < 0) assert.match(lido.texto, /^−R\$/, `${onde}: negativo com "−"`);
+    assert.equal(lido.sinal, sinal, `${onde}: data-sinal`);
+    // Os mesmos tokens do telão (base.css; revisão de 30/09, achado 16).
+    const esperada = r !== 0 ? await corDoToken(c, `--${sinal}`) : await c.p.evaluate(() => getComputedStyle(document.body).color);
+    assert.equal(lido.cor, esperada, `${onde}: a cor do saldo (${sinal})`);
+  }
+
+  // O resumo mês a mês (D-065): uma linha por mês jogado, na ordem, com o saldo
+  // do mês e com quanto a família ficou (o patrimônio: o saldo acumulado menos o
+  // empréstimo a pagar), refeitos pela mesma função pura do núcleo. O "ficou
+  // com" de um mês é o do mês anterior mais o saldo do mês (o empréstimo não é
+  // sobra), e a dívida embaixo fecha com o último "ficou com". naDobra: o resumo
+  // inteiro cabe em 360×740 sem rolar.
+  async function conferirResumo(c, eq, onde, { naDobra = false } = {}) {
+    const resultadosDaSala = await administrador('GET', `salas/${sala}/resultados`);
+    const esperada = C.historiaDaEquipe(C.cfg, eq, resultadosDaSala).filter((h) => Number.isFinite(h.mes?.saldoMes));
+    await c.p.evaluate(() => globalThis.scrollTo(0, 0));
+    const lido = await c.p.evaluate(() => {
+      const r = document.querySelector('.resumo-meses');
+      if (!r) return null;
+      const valor = (n) => (n ? { texto: n.textContent, sinal: n.dataset.sinal, cor: getComputedStyle(n).color } : null);
+      return {
+        baixo: r.getBoundingClientRect().bottom,
+        cabecalho: Array.from(r.querySelectorAll('thead th'), (n) => n.textContent),
+        linhas: Array.from(r.querySelectorAll('tbody tr'), (tr) => ({
+          rodada: tr.dataset.rodada, mes: tr.querySelector('th').textContent, saldo: valor(tr.querySelector('.saldo-mes')), ficou: valor(tr.querySelector('.saldo-ficou')),
+        })),
+      };
+    });
+    assert.ok(lido, `${onde}: o resumo mês a mês aparece`);
+    assert.deepEqual(lido.cabecalho, ['Mês', 'Saldo do mês', 'Ficou com'], `${onde}: as colunas do resumo`);
+    assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId), `${onde}: uma linha por mês jogado, na ordem`);
+    for (const [i, h] of esperada.entries()) {
+      assert.equal(lido.linhas[i].mes, h.titulo.split(':')[0].trim(), `${onde}: o rótulo curto do mês ${h.rodadaId}`);
+      await conferirSaldo(c, lido.linhas[i].saldo, h.mes.saldoMes, `${onde}, ${h.rodadaId}, saldo do mês`);
+      await conferirSaldo(c, lido.linhas[i].ficou, h.saldoAcumulado, `${onde}, ${h.rodadaId}, ficou com`);
+      // Antes do primeiro mês, o saldo inicial da persona (sem empréstimo).
+      const antes = i === 0 ? (personaDe(eq).inicial?.renda ?? C.cfg.indicadores.renda.inicial ?? 0) : esperada[i - 1].saldoAcumulado;
+      assert.equal(h.saldoAcumulado, antes + h.mes.saldoMes, `${onde}, ${h.rodadaId}: o "ficou com" é o anterior mais o saldo do mês`);
+    }
+    // A dívida de hoje é a do último mês, e fecha com o último "ficou com":
+    // sem caixa positivo, dívida = −"ficou com".
+    const ultimo = esperada.at(-1);
+    const res = resultadosDaSala[ultimo.rodadaId][eq];
+    const d = await conferirDivida(c, res, `${onde}, a dívida de hoje`);
+    if (res.depois.renda <= 0) assert.equal(d.total, Math.max(0, -ultimo.saldoAcumulado), `${onde}: a dívida fecha com o último "ficou com"`);
+    if (naDobra) assert.ok(lido.baixo <= 740, `${onde}: o resumo mês a mês cabe em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+    return { esperada, resultadosDaSala };
+  }
+
+  // O detalhe recolhido (D-065): fechado ao chegar na tela, com o marcador
+  // "▸ ver"; um toque abre e mostra o que estava dentro, outro fecha. dentro: o
+  // seletor de algo que só existe dentro da caixa. Visível pelo checkVisibility:
+  // o Chromium esconde o miolo do <details> fechado com content-visibility, e a
+  // caixa do elemento escondido continua com altura.
+  async function conferirRecolhido(c, chave, dentro, onde) {
+    const caixa = `details.recolhido[data-recolhido="${chave}"]`;
+    const estadoDaCaixa = () => c.p.evaluate(([s, d]) => {
+      const n = document.querySelector(s);
+      const alvo = n?.querySelector(d);
+      return n ? { aberto: n.open, marcador: getComputedStyle(n.querySelector('summary'), '::after').content, visivel: Boolean(alvo) && alvo.checkVisibility() } : null;
+    }, [caixa, dentro]);
+    const antes = await estadoDaCaixa();
+    assert.ok(antes, `${onde}: o detalhe recolhido "${chave}" existe`);
+    assert.deepEqual([antes.aberto, antes.visivel], [false, false], `${onde}: o detalhe chega fechado`);
+    assert.match(antes.marcador, /ver/, `${onde}: o marcador diz que abre`);
+    await c.p.click(`${caixa} > summary`);
+    const aberto = await estadoDaCaixa();
+    assert.deepEqual([aberto.aberto, aberto.visivel], [true, true], `${onde}: um toque abre o detalhe`);
+    assert.match(aberto.marcador, /fechar/);
+    await c.p.click(`${caixa} > summary`);
+    assert.equal((await estadoDaCaixa()).aberto, false, `${onde}: outro toque fecha`);
+  }
+  // O saldo do mês em destaque no resultado (D-065): o mesmo valor gravado, com
+  // o sinal e a cor; no vermelho, a borda grossa (nunca só a cor, D-016).
+  async function conferirDestaque(c, mes, onde) {
+    const lido = await c.p.evaluate(() => {
+      const p = document.querySelector('.saldo-destaque');
+      const v = p?.querySelector('.valor-saldo');
+      return p ? { saldoMes: Number(p.dataset.saldoMes), borda: getComputedStyle(p).borderLeftWidth, valor: { texto: v.textContent, sinal: v.dataset.sinal, cor: getComputedStyle(v).color } } : null;
+    });
+    assert.ok(lido, `${onde}: o saldo do mês em destaque`);
+    assert.equal(lido.saldoMes, mes.saldoMes, `${onde}: o saldo do mês gravado`);
+    await conferirSaldo(c, lido.valor, mes.saldoMes, `${onde}, saldo em destaque`);
+    if (Math.round(mes.saldoMes) < 0) assert.equal(lido.borda, '8px', `${onde}: no vermelho, a borda grossa`);
+  }
+  // Os indicadores em reais (o saldo acumulado é o caixa, e com empréstimo ele
+  // não é o que a família tem) saem das telas que trazem o resumo e a dívida.
+  async function conferirSemDinheiroNosIndicadores(c, onde) {
+    const nomes = await c.p.$$eval('.indicadores:not(.placar-historia):not(.pior-caso-lista) dt', (ns) => ns.map((n) => n.textContent));
+    const emReais = listaDe(C.cfg.ordem.indicadores).map((id) => C.cfg.indicadores[id]).filter((i) => i.formato === 'moeda').map((i) => i.nome);
+    for (const nome of emReais) assert.ok(!nomes.includes(nome), `${onde}: "${nome}" fora dos indicadores (${JSON.stringify(nomes)})`);
   }
   async function conferirFamilia(c, eq, onde) {
     const texto = await c.p.evaluate(() => document.querySelector('.familia')?.textContent ?? '');
@@ -974,6 +1106,11 @@ async function jogar({ site, navegador, vigiar }) {
   await votada(bia, OC);
   console.log('Recarga com voto pendente: reenviado pela página nova.');
 
+  // D-015: o seguro do fim da rodada. No teste de 30/09 os três arquivos saíram
+  // com a rodada ainda "fechando" e sem o resultado (o telão salvava antes de o
+  // espelho da sala alcançar o sorteio); carregar um deles refaria a rodada
+  // sem nenhum voto. O arquivo baixado tem de trazer o resultado da rodada.
+  const baixandoRodada = telao.waitForEvent('download', { timeout: 30000 });
   await telao.keyboard.press('Enter');
   // Ainda no tempo mínimo de conversa: o telão pede confirmação.
   await telao.waitForFunction(() => document.getElementById('modal').open);
@@ -981,6 +1118,13 @@ async function jogar({ site, navegador, vigiar }) {
   await telao.keyboard.press('Tab');
   await telao.keyboard.press('Enter');
   await esperarEstado((e) => e.subfase === 'sorteio', 'sorteio', 20000);
+  {
+    const salvo = JSON.parse(readFileSync(await (await baixandoRodada).path(), 'utf8'));
+    assert.ok(salvo.dados.resultados?.[R], 'o seguro do fim da rodada traz o resultado da rodada');
+    assert.ok(['sorteio', 'resultado'].includes(salvo.dados.estado.subfase), `o seguro do fim da rodada não sai no meio do fechamento (${salvo.dados.estado.subfase})`);
+    for (const k of ['votosEnquete', 'decisoes', 'presenca', 'membros']) assert.ok(!(k in salvo.dados), `o seguro não leva ${k}`);
+    console.log('Seguro do fim da rodada: baixado com o resultado da rodada, sem voto individual.');
+  }
   for (const c of cel) await esperarTela(c, 'sorteando');
   await conferirCelular(cel[0], 'sorteando');
   const resultados = await administrador('GET', `salas/${sala}/resultados/${R}`);
@@ -995,7 +1139,12 @@ async function jogar({ site, navegador, vigiar }) {
   assert.equal(cartaAna, resultados[E1].carta, 'o celular mostra a carta que o telão sorteou');
   if (C.usandoFixture) assert.ok(resultados[E1].mes.saldoMes < 0 && resultados[E1].depois.renda < 0, 'com a fixture, o mês 1 da equipe 1 não fecha');
   await conferirContaDoMes(cel[0], resultados[E1].mes, 'resultado');
-  await conferirDivida(cel[0], resultados[E1].depois.renda, 'resultado');
+  await conferirDivida(cel[0], resultados[E1], 'resultado');
+  // D-065: o saldo do mês em destaque (verde ou vermelho, com o sinal), a
+  // conta inteira recolhida, e nenhum indicador em reais solto na tela.
+  await conferirDestaque(cel[0], resultados[E1].mes, 'resultado');
+  await conferirRecolhido(cel[0], `resultado:${R}`, '.conta-mes', 'resultado');
+  await conferirSemDinheiroNosIndicadores(cel[0], 'resultado');
   // D-052: o custo real da carta. Com a fixture, o mês 1 é sempre o acidente;
   // com o config real, o mês 1 só tem cartas de parada.
   if (C.usandoFixture) {
@@ -1025,7 +1174,12 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarTela(cel[0], 'situacao');
   assert.ok(await cel[0].p.locator('.mes').count() === 1, 'a situação traz o último mês');
   await conferirContaDoMes(cel[0], resultados[E1].mes, 'situação depois da rodada');
-  await conferirDivida(cel[0], resultados[E1].depois.renda, 'situação depois da rodada');
+  await conferirDivida(cel[0], resultados[E1], 'situação depois da rodada');
+  // D-065: o resumo mês a mês no topo, inteiro na primeira tela, e o último mês
+  // recolhido.
+  await conferirResumo(cel[0], E1, 'situação depois da rodada', { naDobra: true });
+  await conferirRecolhido(cel[0], `mes:${R}`, '.conta-mes', 'situação depois da rodada');
+  await conferirSemDinheiroNosIndicadores(cel[0], 'situação depois da rodada');
   await conferirCartaCusto(cel[0], resultados[E1].cartaCusto, 'situação depois da rodada');
   {
     const t = textoE1(R, resultados[E1].decisao);
@@ -1160,7 +1314,10 @@ async function jogar({ site, navegador, vigiar }) {
   const hostTerceira = await administrador('GET', `salas/${sala}/meta/hostUid`);
   assert.notEqual(hostTerceira, novoHost, 'a terceira máquina assumiu');
   await outra.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-  await outra.waitForFunction(() => /Outra máquina assumiu/.test(document.getElementById('aviso')?.textContent || ''), null, { timeout: 15000 });
+  // 30 s, e não 15: numa execução com outros e2e na mesma máquina, o aviso
+  // demorou mais de 15 s uma vez (revisão de 30/09, achado 19), e a execução
+  // seguinte passou. O aviso depende de a página religar e ler o hostUid novo.
+  await outra.waitForFunction(() => /Outra máquina assumiu/.test(document.getElementById('aviso')?.textContent || ''), null, { timeout: 30000 });
   await outra.waitForTimeout(2000);
   assert.equal(await administrador('GET', `salas/${sala}/meta/hostUid`), hostTerceira, 'a máquina que perdeu a sala não a tomou de volta');
   const geracaoAntes = (await administrador('GET', `salas/${sala}/estado`)).geracao;
@@ -1189,7 +1346,15 @@ async function jogar({ site, navegador, vigiar }) {
   // ---------- Prorrogação: empate dentro da equipe ----------
   await avancarAte((e) => e.tipo === 'rodada' && e.subfase === 'decidindo', 'segunda rodada');
   const R2 = (await estado()).rodada;
-  const [P1, P2] = C.opcoesDe(R2);
+  // O empate da equipe 1 é entre a primeira opção e a do empréstimo, quando o
+  // conteúdo tem uma (o config real: "Pegar R$ 1.500 emprestado"), e a
+  // prorrogação decide pelo empréstimo: é o caminho do Jonas no teste de 30/09,
+  // em que o celular disse "Dívida R$ 1" (esquema v2.2: o empréstimo é dívida).
+  const opcoesR2 = C.opcoesDe(R2);
+  const temEmprestimo = (r, o) => listaDe(C.cfg.rodadas[r].opcoes[o].efeitos).some((e) => e.emprestimo);
+  const OE = opcoesR2.find((o) => temEmprestimo(R2, o)) ?? null;
+  const P1 = opcoesR2.find((o) => o !== OE);
+  const P2 = OE ?? opcoesR2.find((o) => o !== P1);
   for (const c of cel) await esperarTela(c, 'decisao');
   await votarNa(cel[0], P1);
   await temNota(cel[0], /registrado/);
@@ -1203,7 +1368,7 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarEstado((e) => e.subfase === 'prorrogacao', 'prorrogação', 20000);
   await esperarTela(cel[0], 'prorrogacao');
   await esperarTela(caio, 'prorrogacao');
-  assert.deepEqual(await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => b.dataset.opcao)), [P1, P2], 'na prorrogação, só as opções empatadas');
+  assert.deepEqual(await cel[0].p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => b.dataset.opcao)), opcoesR2.filter((o) => o === P1 || o === P2), 'na prorrogação, só as opções empatadas');
   await conferirCelular(cel[0], 'prorrogacao');
   // A outra equipe (a da Bia, que não votou) espera o desempate.
   await esperarTela(bia, 'aguardando');
@@ -1239,6 +1404,25 @@ async function jogar({ site, navegador, vigiar }) {
     // mês 1 é sempre o acidente): a conta e a frase da proteção no celular, e
     // "a proteção pagou" nas contas do telão.
     await conferirContaDoMes(cel[0], res2[E1].mes, 'resultado da segunda rodada');
+    await conferirDivida(cel[0], res2[E1], 'resultado da segunda rodada');
+    await conferirDestaque(cel[0], res2[E1].mes, 'resultado da segunda rodada');
+    if (OE) {
+      // Esquema v2.2: o empréstimo entra no caixa e na dívida, e NÃO no
+      // "entrou" nem no saldo do mês. No teste de 30/09 ele entrava como renda,
+      // e a tela dizia "Dívida R$ 1".
+      const m = res2[E1].mes;
+      assert.ok(m.emprestimo > 0 && res2[E1].depois.emprestimo === m.emprestimo, `o empréstimo do mês 2 foi gravado como dívida (${JSON.stringify(m)})`);
+      assert.equal(m.entrou, m.trabalho - (m.custosFixos ?? 0) + (m.outraRenda ?? 0), 'o empréstimo fica fora do "entrou"');
+      const linha = await cel[0].p.evaluate(() => {
+        const n = document.querySelector('.conta-emprestimo');
+        return n ? { emprestimo: Number(n.dataset.emprestimo), texto: n.textContent } : null;
+      });
+      assert.equal(linha?.emprestimo, m.emprestimo, 'a conta do mês diz que o empréstimo entrou');
+      assert.ok(linha.texto.includes(`Empréstimo de ${await moedaNa(cel[0], m.emprestimo)}: o dinheiro entrou no caixa, mas é dívida`), `a linha do empréstimo: "${linha.texto}"`);
+      const d = C.historia.dividaTotal(res2[E1].depois);
+      assert.ok(d.total >= m.emprestimo, `a dívida do celular leva o empréstimo inteiro (${JSON.stringify(d)})`);
+      await conferirCelular(cel[0], 'resultado-emprestimo');
+    }
     const viu = await conferirFraseDaProtecao(cel[0], res2[E1], 'resultado da segunda rodada');
     if (C.usandoFixture) {
       assert.ok(viu && res2[E1].mes.protecao === 500, `com a fixture, a proteção pagou no mês 2 (${JSON.stringify(res2[E1].mes)})`);
@@ -1254,6 +1438,66 @@ async function jogar({ site, navegador, vigiar }) {
     await bia.p.waitForFunction(() => document.querySelector('.mes'));
     assert.match(await bia.p.textContent('.mes'), /\(ninguém votou: ficou o de sempre\)/, 'celular da equipe sem voto: a origem da decisão');
     await conferirCelular(bia, 'situacao-sem-voto');
+    // D-065: dois meses no resumo, com o empréstimo como dívida (config real).
+    await esperarTela(cel[0], 'situacao');
+    await conferirResumo(cel[0], E1, 'situação depois do mês 2', { naDobra: true });
+    await conferirRecolhido(cel[0], `mes:${R2}`, '.conta-mes', 'situação depois do mês 2');
+    await conferirCelular(cel[0], 'situacao-mes-a-mes');
+    await conferirResumo(bia, E2, 'situação depois do mês 2 (equipe sem voto)', { naDobra: true });
+  }
+
+  // ---------- Mês 3: a primeira parcela do empréstimo (esquema v2.2) ----------
+  // A parcela sai do caixa: os juros entram na conta do mês, e a outra parte
+  // abate a dívida ("fica devendo R$ X em N parcelas"). Só com o empréstimo no
+  // conteúdo e com uma rodada antes do placar final.
+  {
+    const atual = await estado();
+    const proximaRodada = C.passos.findIndex((p, i) => i > atual.indice && p.tipo === 'rodada');
+    const placarFinal = C.passos.findIndex((p, i) => i > atual.indice && p.tipo === 'placarFinal');
+    if (OE && proximaRodada > 0 && proximaRodada < placarFinal) {
+      await avancarAte((e) => e.tipo === 'rodada' && e.subfase === 'decidindo', 'terceira rodada');
+      const R3 = (await estado()).rodada;
+      const [Q1] = C.opcoesDe(R3);
+      await esperarTela(cel[0], 'decisao');
+      await esperarTela(caio, 'decisao');
+      // Na decisão, a dívida numa linha: a soma, com a parte do empréstimo.
+      {
+        const d = C.historia.dividaTotal(res2[E1].depois);
+        const linha = await cel[0].p.textContent('.pressao .divida');
+        const esperado = `dívida ${await moedaNa(cel[0], d.total)}, com ${await moedaNa(cel[0], d.emprestimo)} de empréstimo`;
+        assert.ok(inclui(linha, esperado), `decisão do mês 3: "${esperado}" em "${linha}"`);
+      }
+      await votarNa(cel[0], Q1);
+      await temNota(cel[0], /registrado/);
+      await votarNa(caio, Q1);
+      await temNota(caio, /registrado/);
+      await telao.keyboard.press('Enter');
+      // Dentro do tempo mínimo de conversa, o telão pede confirmação.
+      await telao.waitForFunction(() => document.getElementById('modal').open || globalThis.Viracao.telao.estado().subfase !== 'decidindo', null, { timeout: 10000 });
+      if (await telao.evaluate(() => document.getElementById('modal').open)) {
+        await telao.keyboard.press('Tab');
+        await telao.keyboard.press('Enter');
+      }
+      await esperarEstado((e) => e.subfase === 'sorteio', 'sorteio do mês 3', 20000);
+      await avancar();
+      await esperarEstado((e) => e.subfase === 'resultado', 'resultado do mês 3');
+      await esperarTela(cel[0], 'resultado');
+      const res3 = await administrador('GET', `salas/${sala}/resultados/${R3}`);
+      const m = res3[E1].mes;
+      assert.ok(m.parcela > 0 && m.parcela === m.jurosEmprestimo + m.amortizacao, `a primeira parcela do empréstimo no mês 3 (${JSON.stringify(m)})`);
+      const linha = await cel[0].p.evaluate(() => {
+        const n = document.querySelector('.conta-emprestimo');
+        return n ? { parcela: Number(n.dataset.parcela), texto: n.textContent } : null;
+      });
+      assert.equal(linha?.parcela, m.parcela, 'a conta do mês 3 traz a parcela');
+      const esperado = `Parcela do empréstimo ${await moedaNa(cel[0], m.parcela)}: ${await moedaNa(cel[0], m.jurosEmprestimo)} de juros (já na conta) e ${await moedaNa(cel[0], m.amortizacao)} que abatem a dívida.`;
+      assert.ok(linha.texto.includes(esperado), `"${esperado}" em "${linha.texto}"`);
+      await conferirContaDoMes(cel[0], m, 'resultado do mês 3');
+      await conferirDivida(cel[0], res3[E1], 'resultado do mês 3');
+      await conferirDestaque(cel[0], m, 'resultado do mês 3');
+      await conferirCelular(cel[0], 'resultado-parcela');
+      console.log(`Empréstimo: R$ ${res2[E1].mes.emprestimo} no mês 2 como dívida; no mês 3, parcela de R$ ${m.parcela} e ${m.parcelasRestantes} parcelas a pagar.`);
+    }
   }
 
   // ---------- Placar final no celular: a história da equipe (D-045) ----------
@@ -1280,6 +1524,12 @@ async function jogar({ site, navegador, vigiar }) {
     const c = await cel[0].p.evaluate((p) => globalThis.Viracao.historia.escolhaOuSorte(p), placarE1);
     assert.deepEqual(lidos, [c.piloto, c.escolhas, c.sorte, c.total], 'escolha ou sorte: os valores de historia.escolhaOuSorte');
     assert.equal(lidos[0] + lidos[1] + lidos[2], lidos[3], 'escolha ou sorte: as parcelas somam o total mostrado');
+    // O "terminaram com" é o patrimônio: o mesmo "ficou com" da última linha
+    // do resumo mês a mês (D-065).
+    const { esperada } = await conferirResumo(cel[0], E1, 'placar final', { naDobra: true });
+    assert.equal(c.total, Math.round(esperada.at(-1).saldoAcumulado), 'escolha ou sorte: o total é o último "ficou com" do resumo');
+    await conferirRecolhido(cel[0], 'historia', '.historia-mes', 'placar final');
+    await conferirSemDinheiroNosIndicadores(cel[0], 'placar final');
     // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),
     // as variações sempre com + ou −, e o total do fim com "=" e em destaque.
     const linhas = await cel[0].p.$$eval('.placar-historia dd', (ns) => ns.map((n) => ({ texto: n.textContent.trim(), total: n.classList.contains('placar-total') })));
@@ -1324,6 +1574,11 @@ async function jogar({ site, navegador, vigiar }) {
   await pularPara((p) => p.tipo === 'fim', 'fim');
   for (const c of cel) await esperarTela(c, 'fim');
   await conferirHistoria(cel[0], E1, resultadosDaSala, 'fim');
+  // D-065: o resumo mês a mês no topo do fim, e não mais o "Saldo acumulado"
+  // do placar (o caixa, que com o empréstimo dizia R$ 1.500 a mais).
+  await conferirResumo(cel[0], E1, 'fim', { naDobra: true });
+  assert.ok(!(await cel[0].p.textContent('#tela')).includes(C.cfg.indicadores.renda.nome), 'fim: sem o saldo acumulado do placar');
+  await conferirRecolhido(cel[0], 'historia', '.historia-mes', 'fim');
   await conferirHistoria(bia, E2, resultadosDaSala, 'fim (outra equipe)');
   await conferirPiorCasoNoCelular(cel[0], await administrador('GET', `salas/${sala}/placar/${E1}`), resultadosDaSala, 'fim');
   await conferirCelular(cel[0], 'fim');

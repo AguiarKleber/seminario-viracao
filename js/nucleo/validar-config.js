@@ -52,6 +52,17 @@
   // Acima disto a conferência de "carta possível" desiste com ERRO, em vez de
   // travar o telão enumerando estados (sem a conferência, não há a garantia).
   const MAX_ESTADOS = 20000;
+  // Esquema v2.2: o empréstimo (efeito "emprestimo" numa opção). 60 parcelas
+  // (5 anos) já passa de qualquer crédito pessoal de app; mais que isso é
+  // quase certo um erro de digitação, e a tabela Price rodaria à toa.
+  const MAX_PARCELAS = 60;
+  // O indicador do saldo devedor: o motor o lê pelo id (motor, INDICADOR_EMPRESTIMO).
+  const IND_EMPRESTIMO = 'emprestimo';
+  // A condição do empréstimo só pode ler o que não muda com o jogo. O motor
+  // refaz, nos meses seguintes, o empréstimo tomado lá atrás só com o
+  // histórico (a opção decidida), sem o estado daquele mês: uma condição de
+  // indicador valeria no mês do empréstimo e poderia não valer na parcela.
+  const CONDICAO_EMPRESTIMO = new Set(['opcao', 'persona', 'equipe', 'rodada']);
 
   const TIPOS_PASSO = new Set([
     'lobby', 'enquete', 'bloco', 'formarEquipes', 'personas', 'rodada', 'placarFinal', 'comparativo', 'fim',
@@ -95,7 +106,8 @@
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
     passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada'],
-    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria'],
+    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria', 'emprestimo'],
+    emprestimo: ['valor', 'parcelas', 'taxaMes', 'fonte'],
     condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador', 'decidiu', 'sorteou'],
     limite: ['abaixoDe', 'acimaDe'],
     ajuste: ['se', 'soma', 'multiplica'],
@@ -397,12 +409,15 @@
     return n;
   }
 
-  function efeito(r, bruto, caminho, idx, onde) {
+  // naOpcao: o efeito está nos efeitos de uma opção, o único lugar em que o
+  // empréstimo vale (esquema v2.2).
+  function efeito(r, bruto, caminho, idx, onde, naOpcao = false) {
     if (!ehObjeto(bruto)) {
       r.erro(caminho, 'efeito precisa ser um objeto');
       return null;
     }
     conferirChaves(r, bruto, CHAVES.efeito, caminho, true);
+    if (tem(bruto, 'emprestimo')) return efeitoEmprestimo(r, bruto, caminho, idx, onde, naOpcao);
     const temSoma = tem(bruto, 'soma');
     const temFator = tem(bruto, 'multiplica');
     // Juntos, a ordem entre os dois dentro do mesmo efeito ficaria implícita, e
@@ -418,6 +433,62 @@
     const fonte = texto(r, bruto, 'fonte', caminho, true);
     if (fonte !== undefined) n.fonte = fonte;
     tipoDoEfeito(r, bruto, n, caminho, temFator);
+    // Com empréstimo no config, o saldo devedor só anda pelo motor (entra o
+    // empréstimo, a parcela abate). Uma soma de fora desencontraria o saldo da
+    // tabela Price; a conferência é feita depois, quando se sabe se há
+    // empréstimo (conferirEmprestimos).
+    for (const chave of ['soma', 'multiplica']) {
+      if (n[chave] && Object.hasOwn(n[chave], IND_EMPRESTIMO)) idx.mexemNoEmprestimo.push(junta(junta(caminho, chave), IND_EMPRESTIMO));
+    }
+    return n;
+  }
+
+  // Esquema v2.2 (teste real de 30/09): o empréstimo é dívida, e não renda.
+  // { "emprestimo": { valor, parcelas, taxaMes, fonte }, "rotulo", "se"? }: o
+  // valor entra no caixa e no saldo devedor (indicador "emprestimo"), e nos
+  // meses seguintes a parcela da tabela Price sai do caixa e abate o saldo.
+  // Antes, os R$ 1.500 eram uma soma na renda, e a tela os mostrava como se
+  // fossem ganho do mês ("dívida R$ 1" para quem devia R$ 1.501).
+  function efeitoEmprestimo(r, bruto, caminho, idx, onde, naOpcao) {
+    const c = junta(caminho, 'emprestimo');
+    if (!naOpcao) {
+      r.erro(c, 'empréstimo só vale nos efeitos de uma opção: é a equipe que decide pegar');
+      return null;
+    }
+    for (const chave of ['soma', 'multiplica', 'fixo', 'categoria']) {
+      if (tem(bruto, chave)) r.erro(junta(caminho, chave), `"${chave}" junto de "emprestimo": o empréstimo não soma na renda; a entrada e as parcelas são calculadas pelo motor`);
+    }
+    const n = {};
+    if (tem(bruto, 'se')) {
+      for (const chave of Object.keys(ehObjeto(bruto.se) ? bruto.se : {})) {
+        if (CHAVES.condicao.has(chave) && !CONDICAO_EMPRESTIMO.has(chave)) {
+          r.erro(junta(junta(caminho, 'se'), chave), `a condição de um empréstimo só pode usar ${[...CONDICAO_EMPRESTIMO].join(', ')}: a parcela dos meses seguintes é refeita sem o estado nem o histórico daquele mês`);
+        }
+      }
+      n.se = condicao(r, bruto.se, junta(caminho, 'se'), idx, onde);
+    }
+    const e = bruto.emprestimo;
+    if (!ehObjeto(e)) {
+      r.erro(c, 'precisa ser um objeto { valor, parcelas, taxaMes, fonte }');
+      return null;
+    }
+    conferirChaves(r, e, CHAVES.emprestimo, c, true);
+    const valor = numero(r, e, 'valor', c, { inteiro: true, positivo: true });
+    const parcelas = numero(r, e, 'parcelas', c, { inteiro: true, positivo: true });
+    const taxaMes = numero(r, e, 'taxaMes', c);
+    const fonte = texto(r, e, 'fonte', c);
+    if (parcelas !== undefined && parcelas > MAX_PARCELAS) r.erro(junta(c, 'parcelas'), `${parcelas} parcelas: o máximo é ${MAX_PARCELAS}`);
+    // Fração ao mês, como os juros da dívida (D-046): "6,39" em vez de 0,0639
+    // faria a parcela passar do próprio empréstimo.
+    if (taxaMes !== undefined && !(taxaMes > 0 && taxaMes < 1)) {
+      r.erro(junta(c, 'taxaMes'), `${taxaMes} inválido: precisa ser uma fração entre 0 e 1, sem incluir os dois (0,0639 = 6,39% ao mês)`);
+    }
+    const rotulo = texto(r, bruto, 'rotulo', caminho, true);
+    if (rotulo !== undefined) n.rotulo = rotulo;
+    const fonteEfeito = texto(r, bruto, 'fonte', caminho, true);
+    if (fonteEfeito !== undefined) n.fonte = fonteEfeito;
+    n.emprestimo = { valor, parcelas, taxaMes, fonte };
+    idx.emprestimos.push({ caminho: c, opcao: caminho.replace(/\.efeitos\[\d+\]$/, ''), rodadaId: onde && onde[0], valor: valor || 0 });
     return n;
   }
 
@@ -451,7 +522,7 @@
     else n.categoria = categoria;
   }
 
-  function efeitos(r, obj, chave, caminho, idx, obrigatorio, onde = null) {
+  function efeitos(r, obj, chave, caminho, idx, obrigatorio, onde = null, naOpcao = false) {
     const c = junta(caminho, chave);
     if (!tem(obj, chave)) {
       if (obrigatorio) r.erro(c, 'campo obrigatório ausente (use [] para nenhum efeito)');
@@ -461,7 +532,7 @@
       r.erro(c, 'precisa ser uma lista de efeitos');
       return [];
     }
-    return obj[chave].map((e, i) => efeito(r, e, `${c}[${i}]`, idx, onde)).filter(Boolean);
+    return obj[chave].map((e, i) => efeito(r, e, `${c}[${i}]`, idx, onde, naOpcao)).filter(Boolean);
   }
 
   // Texto opcional: ausente é ok, presente e vazio é erro.
@@ -674,7 +745,7 @@
     if (tem(b, 'protege') && booleano(r, b, 'protege', c, false) === true) n.protege = true;
     n.efeitos = [];
     r.depois(() => {
-      n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId]);
+      n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId], true);
       textoPorPersona(r, b, n, c, idx, 'rotuloPor', MAX_ROTULO_POR);
       textoPorPersona(r, b, n, c, idx, 'narrativaPor', MAX_NARRATIVA_POR);
     });
@@ -1010,6 +1081,51 @@
     }
   }
 
+  // Esquema v2.2: o que o empréstimo precisa para a conta andar certa.
+  // - o indicador "emprestimo" em moeda, começando em 0 e com mínimo 0: é o
+  //   saldo devedor, e um saldo que já começa diferente de 0 não tem tabela de
+  //   parcelas, então nunca seria pago;
+  // - o máximo cabe todos os empréstimos juntos: o limite cortaria o saldo, e
+  //   a tabela continuaria cobrando parcela de uma dívida que a tela não mostra;
+  // - nenhuma soma/multiplica mexe nele (só o motor);
+  // - todo roteiro na ordem das rodadas do config: o motor conta as parcelas
+  //   pagas nessa ordem.
+  function conferirEmprestimos(r, cfg, idx) {
+    if (idx.emprestimos.length === 0) return;
+    const ind = Object.hasOwn(cfg.indicadores, IND_EMPRESTIMO) ? cfg.indicadores[IND_EMPRESTIMO] : null;
+    if (!ind) {
+      r.erro('indicadores', `há empréstimo (${idx.emprestimos[0].caminho}) e falta o indicador "${IND_EMPRESTIMO}", que guarda o saldo devedor`);
+    } else {
+      const c = `indicadores.${IND_EMPRESTIMO}`;
+      if (ind.formato !== undefined && ind.formato !== 'moeda') r.erro(junta(c, 'formato'), 'o saldo devedor do empréstimo é dinheiro: use "moeda"');
+      if (ind.min !== undefined && ind.min !== 0) r.erro(junta(c, 'min'), `${ind.min}: o saldo devedor nunca fica negativo, e o mínimo precisa ser 0`);
+      if (ind.inicial !== undefined && ind.inicial !== 0) r.erro(junta(c, 'inicial'), `${ind.inicial}: o saldo devedor começa em 0 (um saldo sem empréstimo não tem parcelas e nunca seria pago)`);
+      for (const id of cfg.ordem.personas) {
+        const inicial = cfg.personas[id].inicial || {};
+        if (Object.hasOwn(inicial, IND_EMPRESTIMO) && inicial[IND_EMPRESTIMO] !== 0) {
+          r.erro(`personas.${id}.inicial.${IND_EMPRESTIMO}`, 'o saldo devedor começa em 0 (um saldo sem empréstimo não tem parcelas e nunca seria pago)');
+        }
+      }
+      // O pior caso: em cada rodada, a opção com mais empréstimo somado.
+      const porOpcao = new Map();
+      for (const e of idx.emprestimos) porOpcao.set(e.opcao, { rodadaId: e.rodadaId, total: (porOpcao.get(e.opcao)?.total || 0) + e.valor });
+      const maiorPorRodada = new Map();
+      for (const { rodadaId, total } of porOpcao.values()) maiorPorRodada.set(rodadaId, Math.max(maiorPorRodada.get(rodadaId) || 0, total));
+      const teto = [...maiorPorRodada.values()].reduce((s, x) => s + x, 0);
+      if (ind.max !== undefined && ind.max < teto) r.erro(junta(c, 'max'), `${ind.max} é menor que os empréstimos somados (${teto}): o limite cortaria o saldo devedor`);
+    }
+    for (const caminho of idx.mexemNoEmprestimo) {
+      r.erro(caminho, `o saldo devedor ("${IND_EMPRESTIMO}") só muda pelo empréstimo e pelas parcelas, calculados pelo motor; uma soma aqui desencontraria a tabela de parcelas`);
+    }
+    for (const [nome, passos] of Object.entries(cfg.roteiros)) {
+      const seq = passos.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
+      const posicoes = seq.map((id) => cfg.ordem.rodadas.indexOf(id));
+      if (posicoes.some((p, i) => i > 0 && p <= posicoes[i - 1])) {
+        r.erro(`roteiros.${nome}`, `as rodadas (${seq.join(', ')}) estão fora da ordem do config (${cfg.ordem.rodadas.join(', ')}): com empréstimo, as parcelas são contadas nessa ordem`);
+      }
+    }
+  }
+
   function conferirEquipes(r, cfg) {
     const { equipes, personas, ordem } = cfg;
     if (ordem.equipes.length > MAX_EQUIPES) {
@@ -1075,7 +1191,9 @@
     const jaAvisado = new Set();
     // Só as rodadas citadas por algum decidiu/sorteou entram na chave do nó: as
     // outras não mudam nenhuma chance, e contá-las multiplicaria os estados à toa.
-    const citadas = [...new Set(idx.historicos.flatMap((h) => Object.keys(h.valor)))];
+    // As rodadas com empréstimo também: a parcela de um mês depende de quando a
+    // equipe pegou o empréstimo, e isso está no histórico.
+    const citadas = [...new Set([...idx.historicos.flatMap((h) => Object.keys(h.valor)), ...idx.emprestimos.map((e) => e.rodadaId)])];
     for (const equipeId of cfg.ordem.equipes) {
       for (const seq of sequencias.values()) {
         if (!explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado, citadas)) return;
@@ -1153,7 +1271,11 @@
     // entram num conjunto só, porque carta e persona valem em qualquer rodada.
     // historicos: cada decidiu/sorteou encontrado, para conferir a ordem no
     // roteiro depois que os roteiros existirem.
-    const idx = { indicadores: {}, personas: {}, equipes: {}, rodadas: {}, cartas: {}, enquetes: {}, opcoes: new Set(), historicos: [] };
+    const idx = {
+      indicadores: {}, personas: {}, equipes: {}, rodadas: {}, cartas: {}, enquetes: {}, opcoes: new Set(), historicos: [],
+      // Esquema v2.2: cada empréstimo, e cada soma/multiplica no indicador dele.
+      emprestimos: [], mexemNoEmprestimo: [],
+    };
     const cfg = {
       versao: texto(r, bruto, 'versao', ''),
       titulo: texto(r, bruto, 'titulo', ''),
@@ -1182,6 +1304,7 @@
     cfg.roteiros = roteiros(r, bruto, idx);
     cfg.ordem = ordem;
     conferirHistorico(r, cfg, idx);
+    conferirEmprestimos(r, cfg, idx);
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.

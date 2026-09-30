@@ -10,8 +10,16 @@
   'use strict';
   const V = (raiz.Viracao ||= {});
 
-  // O placar é decomposto sempre na renda (contratos seção 3, Decomposicao).
+  // A renda é o caixa da família: o saldo da conta, que fica negativo quando
+  // entra o cheque especial. As linhas do mês e as contas da casa são nela.
   const INDICADOR_PLACAR = 'renda';
+  // O saldo devedor do empréstimo (esquema v2.2, teste real de 30/09). É uma
+  // dívida à parte do cheque especial: o dinheiro emprestado entra no caixa, e
+  // este indicador sobe o mesmo valor. Antes dele, os R$ 1.500 entravam como
+  // renda do trabalho, e o Jonas aparecia com "dívida R$ 1" no fim do mês 2
+  // devendo R$ 1.501; se o mês 3 fosse pulado, o empréstimo virava dinheiro de
+  // graça no placar.
+  const INDICADOR_EMPRESTIMO = 'emprestimo';
 
   // O motor também lê o conteúdo que volta do Realtime Database, e o RTDB some com
   // lista vazia e pode devolver lista como objeto { "0": …, "1": … }. Sem isto, um
@@ -131,6 +139,107 @@
     return possiveis.map((p) => ({ carta: p.carta, peso: p.peso, chance: p.peso / total }));
   }
 
+  // O placar é o patrimônio líquido: o caixa menos o saldo devedor do
+  // empréstimo. Pelo caixa, quem pegou R$ 1.500 no mês 2 e não pagou nada
+  // ainda (a 1ª parcela vence no mês seguinte) ficaria R$ 1.500 mais rico. Sem
+  // o indicador do empréstimo (config antigo), é a própria renda.
+  function patrimonio(estado) {
+    const saldoDevedor = Number(estado && estado[INDICADOR_EMPRESTIMO]) || 0;
+    return estado[INDICADOR_PLACAR] - saldoDevedor + 0;
+  }
+
+  // A tabela Price em reais inteiros, parcela a parcela: a parcela fixa é o
+  // PMT arredondado; os juros de cada mês, o saldo × a taxa, arredondados; o
+  // resto abate o saldo; a última parcela fecha o saldo. Inteiros porque o
+  // resto do jogo é em reais inteiros, e a conta do mês tem de fechar
+  // exatamente. A mesma tabela sai a cada chamada (a enumeração do placar
+  // chama o motor centenas de milhares de vezes; daí o cache).
+  const cronogramas = new Map();
+  function cronograma(valor, parcelas, taxaMes) {
+    const chave = `${valor}|${parcelas}|${taxaMes}`;
+    const pronto = cronogramas.get(chave);
+    if (pronto) return pronto;
+    const fixa = Math.round((valor * taxaMes) / (1 - (1 + taxaMes) ** -parcelas));
+    const tabela = [];
+    let saldo = valor;
+    for (let k = 1; k <= parcelas; k += 1) {
+      const juros = Math.round(saldo * taxaMes);
+      const amortizacao = k === parcelas ? saldo : Math.max(0, Math.min(saldo, fixa - juros));
+      saldo -= amortizacao;
+      tabela.push({ parcela: juros + amortizacao, juros, amortizacao, saldo });
+    }
+    cronogramas.set(chave, tabela);
+    return tabela;
+  }
+
+  // Os empréstimos de uma opção cuja condição vale. O validador só aceita
+  // empréstimo em efeito de opção e com condição que não lê estado nem
+  // histórico: é isso que deixa o motor refazer, meses depois, o empréstimo
+  // tomado lá atrás só com o histórico (qual opção a equipe decidiu).
+  function emprestimosDaOpcao(config, opcao, ctx) {
+    const achados = [];
+    for (const efeito of lista(opcao && opcao.efeitos)) {
+      if (!efeito || !efeito.emprestimo || !condicaoVale(config, efeito.se, ctx)) continue;
+      const { valor, parcelas, taxaMes } = efeito.emprestimo;
+      achados.push({ rotulo: efeito.rotulo || opcao.rotulo, valor, parcelas, taxaMes });
+    }
+    return achados;
+  }
+
+  // O empréstimo no mês: o que entra (tomado neste mês, pela opção) e as
+  // parcelas que vencem (de empréstimos tomados em meses anteriores, lidos do
+  // histórico). A parcela k é a do k-ésimo mês jogado depois do empréstimo, na
+  // ordem das rodadas do config: mês pulado no dia não cobra parcela, e também
+  // não mexeu no saldo devedor gravado, então as duas contas andam juntas (o
+  // validador exige que todo roteiro siga a ordem do config quando há
+  // empréstimo). As parcelas continuam depois do fim do jogo: restantes,
+  // proxima e aPagar dizem quanto fica ("fica devendo R$ X em N parcelas").
+  function emprestimoDoMes(config, ctx, opcao) {
+    const entradas = emprestimosDaOpcao(config, opcao, ctx).map((e) => {
+      const tabela = cronograma(e.valor, e.parcelas, e.taxaMes);
+      return { ...e, restantes: e.parcelas, proxima: tabela[0].parcela, aPagar: tabela.reduce((s, p) => s + p.parcela, 0) };
+    });
+    const parcelas = [];
+    const ordem = ids(config, 'rodadas');
+    const atual = ordem.indexOf(ctx.rodadaId);
+    for (let pos = 0; pos < atual; pos += 1) {
+      const rodadaId = ordem[pos];
+      const feito = obter(ctx.historico, rodadaId);
+      if (!feito) continue;
+      const opcaoDela = obter(obter(config.rodadas, rodadaId)?.opcoes, feito.decisao);
+      const doMes = emprestimosDaOpcao(config, opcaoDela, { ...ctx, rodadaId, opcaoId: feito.decisao });
+      if (doMes.length === 0) continue;
+      const pagas = ordem.slice(pos + 1, atual).filter((id) => obter(ctx.historico, id)).length;
+      for (const e of doMes) {
+        const tabela = cronograma(e.valor, e.parcelas, e.taxaMes);
+        const item = tabela[pagas];
+        if (!item || item.parcela === 0) continue;
+        const depois = tabela.slice(pagas + 1).filter((p) => p.parcela > 0);
+        parcelas.push({
+          rotulo: e.rotulo, taxaMes: e.taxaMes, numero: pagas + 1, de: e.parcelas, parcela: item.parcela, juros: item.juros,
+          amortizacao: item.amortizacao, restantes: depois.length, proxima: depois.length > 0 ? depois[0].parcela : 0,
+          aPagar: depois.reduce((s, p) => s + p.parcela, 0),
+        });
+      }
+    }
+    const soma = (itens, campo) => itens.reduce((s, x) => s + x[campo], 0);
+    const todos = [...entradas, ...parcelas];
+    return {
+      entradas, parcelas,
+      entrada: soma(entradas, 'valor'), parcela: soma(parcelas, 'parcela'), juros: soma(parcelas, 'juros'),
+      amortizacao: soma(parcelas, 'amortizacao'),
+      restantes: todos.reduce((m, x) => Math.max(m, x.restantes), 0),
+      proxima: soma(todos, 'proxima'), aPagar: soma(todos, 'aPagar'),
+      // A taxa ao mês dos empréstimos em aberto, para a tela dizer "empréstimo a
+      // 6,39% ao mês" (revisão de 30/09, achado 17: só a taxa do cheque especial
+      // aparecia). Com dois empréstimos de taxas diferentes, null: uma taxa só
+      // seria mentira.
+      taxaMes: todos.length > 0 && todos.every((x) => x.taxaMes === todos[0].taxaMes) ? todos[0].taxaMes : null,
+    };
+  }
+
+  const SEM_EMPRESTIMO = { entradas: [], parcelas: [], entrada: 0, parcela: 0, juros: 0, amortizacao: 0, restantes: 0, proxima: 0, aPagar: 0, taxaMes: null };
+
   // O básico da casa é a soma dos itens (D-044). O motor soma, e não o config:
   // um total escrito à mão desencontraria dos itens na primeira edição.
   function totalBasico(persona) {
@@ -190,6 +299,9 @@
     const valem = [];
     for (const [origem, efeitos, rotuloPadrao] of grupos) {
       for (const efeito of lista(efeitos)) {
+        // O empréstimo não é soma nem multiplica: é dívida, e entra à parte
+        // (emprestimoDoMes), fora do trabalho, do piso e de qualquer multiplica.
+        if (efeito.emprestimo) continue;
         if (condicaoVale(config, efeito.se, ctx)) valem.push({ origem, efeito, rotulo: efeito.rotulo || rotuloPadrao });
       }
     }
@@ -278,6 +390,9 @@
   // que ela evita de juros nos meses seguintes aparece nas contas deles e no
   // piorCasoSemProtecao do placar. protecaoItens nomeia o que pagou ("auxílio
   // do INSS (45 dias)"), para a frase do celular.
+  // O empréstimo (esquema v2.2) entra depois de tudo, nas contas da casa
+  // (contasDoMes): o dinheiro emprestado no caixa e no saldo devedor, a
+  // parcela saindo do caixa e abatendo o saldo devedor.
   function aplicar(config, { equipeId, rodadaId, opcaoId, cartaId, estado, historico }) {
     const ctx = contexto(config, equipeId, rodadaId, opcaoId, estado, historico);
     const persona = exigir(config.personas, ctx.personaId, 'Persona');
@@ -295,7 +410,7 @@
       ['carta', carta ? carta.efeitos : [], carta ? carta.titulo : ''],
     ];
     const efeitos = efeitosDoMes(config, ctx, grupos, delta, linhas);
-    const mes = contasDoMes(config, persona, estado, delta, linhas, efeitos);
+    const mes = contasDoMes(config, persona, estado, delta, linhas, efeitos, emprestimoDoMes(config, ctx, opcao));
     const cartaCusto = {
       diasParado: carta && Number.isInteger(carta.diasParado) ? carta.diasParado : 0,
       rendaPerdida: efeitos.rendaPerdida,
@@ -309,7 +424,7 @@
     }
     // O que veio dos meses anteriores, nomeado para a tela (deAntes, acima). O
     // anfitrião grava junto do resultado: o celular não carrega o motor. O
-    // gasto (a multa, o saldo do empréstimo) vai marcado: está nos "gastos" do
+    // gasto (a multa do aluguel atrasado) vai marcado: está nos "gastos" do
     // mês, e não no "entrou", e a tela o nomeia quando os gastos têm mais de
     // uma origem.
     const antes = linhas.filter((l) => l.deAntes)
@@ -317,10 +432,33 @@
     return { delta, depois, linhas, mes, cartaCusto, deAntes: antes, protecaoEvitou: mes.protecao, protecaoItens: efeitos.protecaoItens };
   }
 
-  // Outra renda, básico e juros entram no delta da renda e nas linhas. Linha de
-  // valor 0 não entra: "juros R$ 0" em todo mês sem dívida seria só ruído.
-  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos, protecao }) {
+  // Outra renda, básico, juros e o empréstimo entram no delta da renda e nas
+  // linhas. Linha de valor 0 não entra: "juros R$ 0" em todo mês sem dívida
+  // seria só ruído.
+  // O empréstimo (esquema v2.2) é dívida, e não renda:
+  // - o que entra vai para o caixa (alivia o cheque especial do mês) e sobe o
+  //   saldo devedor o mesmo valor. Fica fora do "entrou" e do saldoMes: o
+  //   Jonas do teste de 30/09 aparecia com "entrou R$ 4.797" e "sobrou R$ 466"
+  //   num mês que, sem os R$ 1.500 emprestados, faltou R$ 1.034;
+  // - a parcela sai inteira do caixa. Os juros dela entram em "juros" (é o
+  //   preço da dívida, como os do cheque especial); a amortização abate o
+  //   saldo devedor e fica fora do saldoMes, porque só troca uma dívida por
+  //   outra (sai do caixa, sai da dívida).
+  // Assim o saldoMes é a variação do patrimônio (caixa − saldo devedor), a
+  // conta lida na tela continua fechando (entrou + proteção − gastos − básico
+  // − juros = saldoMes), e "dívida antes + faltou = dívida depois", somando o
+  // cheque especial e o empréstimo. O caixa anda saldoMes + emprestimo −
+  // amortizacao.
+  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos, protecao }, emp = SEM_EMPRESTIMO) {
     const ind = INDICADOR_PLACAR;
+    for (const e of emp.entradas) {
+      delta[ind] += e.valor;
+      linhas.push({ origem: 'emprestimo', rotulo: e.rotulo, indicador: ind, valor: e.valor });
+      if (Object.hasOwn(delta, INDICADOR_EMPRESTIMO)) {
+        delta[INDICADOR_EMPRESTIMO] += e.valor;
+        linhas.push({ origem: 'emprestimo', rotulo: e.rotulo, indicador: INDICADOR_EMPRESTIMO, valor: e.valor });
+      }
+    }
     const outra = persona.outraRenda && Number(persona.outraRenda.valor) > 0 ? persona.outraRenda.valor : 0;
     if (outra > 0) {
       delta[ind] += outra;
@@ -336,19 +474,47 @@
     const antes = estado && Object.hasOwn(estado, ind) ? estado[ind] : config.indicadores[ind].inicial;
     const dividaAntes = antes < 0 ? -antes : 0;
     const taxa = Number(config.regras && config.regras.jurosDividaMes) || 0;
-    const juros = Math.round(dividaAntes * taxa);
-    if (juros > 0) {
-      delta[ind] -= juros;
-      linhas.push({ origem: 'juros', rotulo: 'juros da dívida', indicador: ind, valor: -juros });
+    const jurosCheque = Math.round(dividaAntes * taxa);
+    if (jurosCheque > 0) {
+      delta[ind] -= jurosCheque;
+      linhas.push({ origem: 'juros', rotulo: 'juros da dívida', indicador: ind, valor: -jurosCheque });
     }
+    for (const p of emp.parcelas) {
+      const nome = `parcela ${p.numero} de ${p.de} do ${p.rotulo}`;
+      if (p.juros > 0) {
+        delta[ind] -= p.juros;
+        linhas.push({ origem: 'juros', rotulo: `juros da ${nome}`, indicador: ind, valor: -p.juros });
+      }
+      if (p.amortizacao > 0) {
+        delta[ind] -= p.amortizacao;
+        linhas.push({ origem: 'amortizacao', rotulo: `${nome}, a parte que abate a dívida`, indicador: ind, valor: -p.amortizacao });
+        if (Object.hasOwn(delta, INDICADOR_EMPRESTIMO)) {
+          delta[INDICADOR_EMPRESTIMO] -= p.amortizacao;
+          linhas.push({ origem: 'amortizacao', rotulo: `${nome}, a parte que abate a dívida`, indicador: INDICADOR_EMPRESTIMO, valor: -p.amortizacao });
+        }
+      }
+    }
+    const juros = jurosCheque + emp.juros;
+    const devedorAntes = estado && Object.hasOwn(estado, INDICADOR_EMPRESTIMO) ? Number(estado[INDICADOR_EMPRESTIMO]) || 0 : 0;
     const basico = totalBasico(persona);
     // O "entrou" é o que o trabalho deixou (já sem os custos fixos) mais a outra
     // renda da casa; os gastos do problema e o que a proteção pagou (D-059)
     // ficam cada um numa linha própria.
     const entrou = trabalho - custosFixos + outra;
+    // juros é o total (cheque especial + os juros da parcela); jurosEmprestimo,
+    // a parte do empréstimo. dividaAntes continua sendo o cheque especial de
+    // antes (a base dos juros dele); saldoDevedor é o do empréstimo no fim do
+    // mês, e dividaTotal (cheque especial + empréstimo) é o que a tela chama de
+    // "dívida" (historia.dividaTotal, a partir do "depois").
     return {
       trabalho, custosFixos, gastos, protecao, outraRenda: outra, entrou, basico, juros,
       saldoMes: entrou + protecao - gastos - basico - juros, dividaAntes,
+      emprestimo: emp.entrada, parcela: emp.parcela, jurosEmprestimo: emp.juros, amortizacao: emp.amortizacao,
+      saldoDevedor: devedorAntes + emp.entrada - emp.amortizacao, parcelasRestantes: emp.restantes,
+      proximaParcela: emp.proxima, aPagar: emp.aPagar,
+      // Só com empréstimo em aberto: o RTDB apaga o campo null, e o mês lido do
+      // banco tem de ser igual ao do motor.
+      ...(emp.taxaMes === null ? {} : { taxaEmprestimo: emp.taxaMes }),
     };
   }
 
@@ -425,14 +591,18 @@
     return { decisao, origem: 'moeda', contagem, empate: lideres };
   }
 
-  // Esperado e pior caso da renda final, enumerando a árvore inteira de cartas.
+  // Esperado e pior caso do patrimônio final (caixa − saldo devedor do
+  // empréstimo), enumerando a árvore inteira de cartas.
   // Árvore, e não produto de chances independentes: a chance da carta do mês 2
   // depende do estado depois do mês 1 (condições de indicador), e o clamp faz o
   // resultado depender do caminho.
   // O histórico vai junto no caminho: a recaída do mês 3 só existe no ramo em
   // que o mês 2 tirou o acidente.
   function explorar(config, equipeId, plano, estado, k, historico) {
-    if (k === plano.length) return { esperado: estado[INDICADOR_PLACAR], pior: estado[INDICADOR_PLACAR] };
+    if (k === plano.length) {
+      const final = patrimonio(estado);
+      return { esperado: final, pior: final };
+    }
     const { rodadaId, opcaoId } = plano[k];
     const baralho = chances(config, { equipeId, rodadaId, opcaoId, estado, historico });
     if (baralho.length === 0) {
@@ -464,7 +634,9 @@
     return trocou ? sem : null;
   }
 
-  // O placar decomposto (D-009): realizado = piloto + efeitoDecisoes + sorte.
+  // O placar decomposto (D-009): realizado = piloto + efeitoDecisoes + sorte,
+  // todos no patrimônio (esquema v2.2): o empréstimo que ainda não foi pago
+  // conta contra, mesmo que a sessão acabe antes da 1ª parcela.
   // piorCasoSemProtecao (D-059): a proteção funciona como seguro, que perde em
   // valor esperado e ganha no pior caso. O esperado nunca mostraria o que ela
   // vale; o pior caso com e sem ela mostra.
@@ -476,7 +648,7 @@
       estado = aplicar(config, { equipeId, rodadaId: r.rodadaId, opcaoId: r.opcaoId, cartaId: r.cartaId, estado, historico }).depois;
       historico[r.rodadaId] = { decisao: r.opcaoId, carta: r.cartaId };
     }
-    const realizado = estado[INDICADOR_PLACAR];
+    const realizado = patrimonio(estado);
     const planoDecidido = rodadas.map((r) => ({ rodadaId: r.rodadaId, opcaoId: r.opcaoId }));
     const planoPiloto = rodadas.map((r) => ({
       rodadaId: r.rodadaId,
@@ -496,5 +668,10 @@
     };
   }
 
-  V.motor = { estadoInicial, condicaoVale, chances, resolverRodada, aplicar, consolidarDecisao, decompor, historicoDe, totalBasico, mesComum };
+  V.motor = {
+    estadoInicial, condicaoVale, chances, resolverRodada, aplicar, consolidarDecisao, decompor, historicoDe, totalBasico, mesComum,
+    patrimonio,
+    // Cópia: a tabela do cache não pode ser alterada por quem chama.
+    cronograma: (valor, parcelas, taxaMes) => cronograma(valor, parcelas, taxaMes).map((p) => ({ ...p })),
+  };
 })(globalThis);
