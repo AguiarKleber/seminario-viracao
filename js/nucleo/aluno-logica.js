@@ -102,7 +102,10 @@
   function resumoPersona(conteudo, equipeId) {
     const id = em(conteudo, 'equipes', equipeId, 'persona');
     const p = em(conteudo, 'personas', id) || {};
-    const itens = lista(em(p, 'basico', 'itens')).map((i) => ({ rotulo: i.rotulo, valor: i.valor, fonte: i.fonte ?? null }));
+    // D-066: o item da comida vai marcado ("o que faltou na mesa" sai dele).
+    const itens = lista(em(p, 'basico', 'itens')).map((i) => ({
+      rotulo: i.rotulo, valor: i.valor, fonte: i.fonte ?? null, ...(i.comida === true ? { comida: true } : {}),
+    }));
     const outra = em(p, 'outraRenda');
     return {
       id, nome: p.nome, descricao: p.descricao,
@@ -114,9 +117,17 @@
 
   // D-046: "dívida: R$ X · juros de Y% ao mês". A dívida é o saldo negativo, e os
   // juros dela são cobrados no fim do próximo mês.
+  // Esquema v3.1 (D-066): com o limite do cheque especial, a dívida leva
+  // também o limite ("R$ 1.500 de R$ 1.500 do limite"), as contas atrasadas
+  // (dívida, com multa e mora) e o que faltou na mesa até aqui (custo humano,
+  // à parte da dívida). Sem o limite, o objeto fica igual ao de antes.
   function dividaDe(conteudo, valores) {
     const renda = em(valores, 'renda');
-    return { valor: typeof renda === 'number' && renda < 0 ? -renda : 0, jurosMes: em(conteudo, 'regras', 'jurosDividaMes') };
+    const divida = { valor: typeof renda === 'number' && renda < 0 ? -renda : 0, jurosMes: em(conteudo, 'regras', 'jurosDividaMes') };
+    const limite = em(conteudo, 'regras', 'limiteChequeEspecial');
+    if (!Number.isInteger(limite)) return divida;
+    const num = (id) => Math.max(0, Number(em(valores, id)) || 0);
+    return { ...divida, limite, contasAtrasadas: num('contas_atrasadas'), faltouNaMesa: num('faltou_na_mesa') };
   }
 
   // A situação da persona nos blocos (D-006): indicadores e a narrativa do
@@ -139,6 +150,10 @@
       mes: null,
       divida: dividaDe(conteudo, valores),
       narrativa: [],
+      // Esquema v3: o período de cada rodada ("no bimestre") e o resumo por
+      // rodada (D-065), uma linha por rodada jogada, com N rodadas.
+      periodo: periodoDe(conteudo),
+      resumo: resumoDe(conteudo, equipeId, resultados),
     };
     if (ultimo) {
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
@@ -219,7 +234,7 @@
   }
 
   function telaRodada(conteudo, estado, entrada, equipeId) {
-    const { membro, membros, decisoesDaEquipe, resultados, uid } = entrada;
+    const { membro, membros, decisoesDaEquipe, resultados, uid, espectador } = entrada;
     const rodada = em(conteudo, 'rodadas', estado.rodada);
     if (!rodada) return aguardando('telao');
     const sub = estado.subfase;
@@ -234,7 +249,11 @@
       const entrouATempo = typeof membro.entrouEm === 'number' && typeof estado.abertoEm === 'number' && membro.entrouEm <= estado.abertoEm;
       const pausado = typeof estado.restanteMs === 'number';
       let motivo = null;
-      if (!entrouATempo) motivo = 'entrouDepois';
+      // D-064: o celular do apresentador vê a decisão da equipe como o aluno
+      // vê, com a contagem ao vivo, mas não vota (nem é membro: a regra
+      // recusaria). Vem antes dos outros motivos, que falam de um aluno.
+      if (espectador === true) motivo = 'espectador';
+      else if (!entrouATempo) motivo = 'entrouDepois';
       else if (pausado) motivo = 'pausado';
       return tela(sub === 'decidindo' ? 'decisao' : 'prorrogacao', {
         rodada: infoRodada,
@@ -248,6 +267,7 @@
         motivo,
         forcada: em(estado, 'forcadas', equipeId),
         prazo: fimDoCronometro(estado), pausado, restanteMs: estado.restanteMs ?? null,
+        periodo: periodoDe(conteudo),
         // A situação junto com a decisão: decide-se olhando os indicadores (R13).
         situacao: dadosSituacao(conteudo, equipeId, resultados),
       });
@@ -276,6 +296,8 @@
       // D-059: "A proteção pagou R$ 900: auxílio do INSS. Sem ela, teria
       // faltado R$ 900 a mais." null quando ela não pagou nada.
       protecaoDoMes: protecaoDe(res),
+      // Esquema v3: "o saldo do bimestre" com rodadas de 2 meses.
+      periodo: periodoDe(conteudo),
     });
   }
 
@@ -330,6 +352,8 @@
         return tela('fim', {
           equipe: equipeValida ? resumoEquipe(conteudo, equipeValida) : null, placar: equipeValida ? em(placar, equipeValida) : null,
           historia: equipeValida ? historia(conteudo, equipeValida, resultados) : [],
+          resumo: equipeValida ? resumoDe(conteudo, equipeValida, resultados) : [],
+          periodo: periodoDe(conteudo),
           piorCaso: equipeValida ? piorCasoDaEquipe(conteudo, placar, resultados, equipeValida) : null,
         });
       default:
@@ -353,6 +377,19 @@
     const H = raiz.Viracao.historia;
     if (!H || !H.temProtecao(conteudo)) return null;
     return H.piorCasoDoPlacar(em(placar, equipeId), H.escolheuProtecao(conteudo, resultados, equipeId));
+  }
+
+  // Esquema v3: o período e o resumo por rodada vêm de historia.js (a mesma
+  // regra do telão), buscado na hora da chamada. Sem ele, o período de sempre
+  // (um mês) e nenhum resumo: a decisão não pode depender da ordem de carga.
+  function periodoDe(conteudo) {
+    const H = raiz.Viracao.historia;
+    return H ? H.periodo(conteudo) : { meses: 1, nome: 'mês', noPeriodo: 'no mês', doPeriodo: 'do mês' };
+  }
+
+  function resumoDe(conteudo, equipeId, resultados) {
+    const H = raiz.Viracao.historia;
+    return H ? H.resumoPorRodada(conteudo, equipeId, resultados) : [];
   }
 
   // A história da equipe (D-045) vem de historia.js, buscado na hora da chamada

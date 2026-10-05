@@ -43,6 +43,47 @@ body.aluno {
 .cracha-codigo { font-weight: 700; letter-spacing: .06em; }
 .topo-selo { flex: none; }
 .topo-selo .selo { font-size: 14px; }
+/* No modo espectador, o seletor de equipe ocupa uma segunda linha do topo. */
+.topo { flex-wrap: wrap; row-gap: 8px; }
+
+/* ---------- Modo espectador (D-064) ----------
+   O celular do apresentador: o selo no lugar do crachá (tracejado, e com o
+   texto: estado nunca só por cor) e um botão por equipe, com a forma e o
+   número, sempre à vista no topo. A equipe vista fica com o fundo claro do
+   aria-pressed (base.css). */
+.selo-espectador {
+  padding: 4px 10px;
+  border: 2px dashed var(--texto); border-radius: var(--raio);
+  font-size: 15px; font-weight: 750; letter-spacing: .02em;
+}
+.barra-espectador:not([hidden]) { display: flex; flex-basis: 100%; gap: 6px; }
+.botao-ver-equipe {
+  flex: 1 1 0; min-width: 0; min-height: 48px;
+  justify-content: center; gap: 4px;
+  padding: 4px 2px;
+  font-size: 18px; font-weight: 750;
+}
+.botao-ver-equipe .forma { flex: none; }
+/* O topo do espectador tem duas linhas: a opção aberta rola para baixo delas. */
+body.espectador .opcao-aluno { scroll-margin-top: 124px; }
+.botao-sair-espectador { margin-top: 8px; }
+
+/* O link discreto da entrada ("Sou apresentador", "Voltar"): parece texto, mas
+   tem os 48 px de toque de todo botão. */
+.botao-discreto {
+  align-self: center; min-height: 48px;
+  background: none; border-color: transparent;
+  color: var(--texto-2); font-size: 16px; font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.campo-pin {
+  width: 100%; min-height: 56px;
+  padding: 8px 12px;
+  font: inherit; font-size: 22px; letter-spacing: .1em;
+  background: var(--fundo); color: var(--texto);
+  border: 2px solid var(--linha-forte); border-radius: var(--raio);
+}
+.campo-pin:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
 
 /* ---------- Faixas (versão nova, telão calado) ---------- */
 
@@ -278,6 +319,14 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .divida-parte b { color: var(--texto); }
 .divida-nota { font-size: 14px; color: var(--texto-2); }
 .conta-emprestimo { font-size: 15px; }
+/* D-066: o bimestre em que o limite do cheque especial acabou (contas
+   atrasadas, multa, comida cortada, mora) e, à parte da dívida, o que faltou na
+   mesa. D-067: a proteção que passou do trabalho. As três com o mesmo fio à
+   esquerda da frase da proteção: são argumento da aula, e não alerta; nenhuma
+   ganha cor (D-016), e a carta grave continua sem destaque. */
+.conta-limite, .conta-acima-trabalho { font-size: 15px; padding-left: 10px; border-left: 3px solid var(--linha-forte); }
+.acima-trabalho { font-size: 16px; padding-left: 10px; border-left: 3px solid var(--linha-forte); }
+.faltou-mesa { font-size: 15px; padding-left: 10px; border-left: 3px solid var(--linha-forte); }
 
 /* ---------- O resumo mês a mês (D-065) ----------
    Uma tabela de três colunas: o mês, o saldo do mês e com quanto a família
@@ -297,9 +346,13 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .tabela-meses tbody th { font-size: 16px; font-weight: 600; }
 .tabela-meses tbody tr + tr > * { border-top: 1px solid var(--linha); }
 .resumo-meses .divida { padding: 10px 0 0; border-left: 0; border-top: 1px solid var(--linha-forte); border-radius: 0; background: none; }
+/* No cartão do resumo, o que faltou na mesa fica logo embaixo da dívida, sem o
+   fio e sem o recuo: o cartão já separa, e o resumo inteiro tem de caber em
+   360×740 (o e2e:online confere). */
+.resumo-meses .faltou-mesa { padding-left: 0; border-left: 0; }
 
 .valor-saldo { font-weight: 700; }
-/* Verde se positivo, vermelho se negativo, a pedido do Kleberson depois do
+/* Verde se positivo, vermelho se negativo, a pedido do Kleber depois do
    teste de 30/09, com os mesmos tokens e nomes do telão (base.css: --positivo e
    --negativo; data-sinal positivo, negativo ou zero). Antes, o celular tinha
    tokens próprios (--saldo-mais, --saldo-menos), e o mesmo mês saía com cores

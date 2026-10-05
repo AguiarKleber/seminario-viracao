@@ -1010,7 +1010,11 @@ async function conferirApuracao({ canal, config, sala, opcoes, abertoEm, metrica
         !mesmoValor(esperado.deAntes, lista(res.deAntes)) ? 'deAntes' : null,
         // D-059: o que a proteção pagou, gravado só quando houve (ausente vale 0 e []).
         (res.protecaoEvitou ?? 0) !== esperado.protecaoEvitou ? 'protecaoEvitou' : null,
+        // Revisão da F6c: a comida que a proteção evitou cortar, só com o limite (ausente vale 0).
+        (res.protecaoEvitouMesa ?? 0) !== (esperado.protecaoEvitouMesa ?? 0) ? 'protecaoEvitouMesa' : null,
         !mesmoValor(esperado.protecaoItens, lista(res.protecaoItens)) ? 'protecaoItens' : null,
+        // D-067: gravado só quando a proteção passou do trabalho comum (ausente vale null).
+        !mesmoValor(esperado.protecaoAcimaDoTrabalho ?? null, res.protecaoAcimaDoTrabalho ?? null) ? 'protecaoAcimaDoTrabalho' : null,
       ].filter(Boolean);
       if (divergentes.length > 0) {
         metricas.violacoes.push(`${r}/${eq}: o motor com a semente gravada difere do gravado em ${divergentes.join(', ')}`);

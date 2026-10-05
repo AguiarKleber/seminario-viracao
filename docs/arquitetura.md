@@ -49,7 +49,7 @@ adversariais. A seção 15 lista o que os revisores mudaram.
    liberado para poupar bateria.
 7. **Referência opcional no placar final:** `referencias` no config, por exemplo
    "a mesma pessoa com carteira assinada". Aparece como linha de comparação, não
-   como equipe. O valor precisa de fonte e é validado junto com o Kleberson
+   como equipe. O valor precisa de fonte e é validado junto com o Kleber
    (D-005). Com `persona`, a linha atravessa só as equipes dessa persona (no
    config de 28/09, "Jonas com carteira assinada" só nas equipes do Jonas).
 8. **Playwright como `devDependency` do projeto**, usando o Chrome ou o Edge
@@ -62,7 +62,7 @@ adversariais. A seção 15 lista o que os revisores mudaram.
 
 ### Redesenho de 29/09 (D-041 a D-048)
 
-Depois do primeiro ensaio no telão, o Kleberson aprovou o redesenho abaixo. Os
+Depois do primeiro ensaio no telão, o Kleber aprovou o redesenho abaixo. Os
 itens valem sobre o resto do documento, como os de cima. O contrato exato de cada
 função e tela está em [contratos.md](contratos.md).
 
@@ -70,7 +70,8 @@ função e tela está em [contratos.md](contratos.md).
     empilhada da seção 8, a tecla C (critério), o interruptor "sem vencedor" (V) e
     a `cascata` dos gráficos. O passo `placarFinal` pagina com o Espaço, como o
     comparativo:
-    1. "Quanto sobrou, e quanto faltou para o básico": uma barra por equipe, do
+    1. "Quanto sobrou, e quanto faltou para o básico" ("Quanto sobrou, e quanto
+       ficou devendo" com o limite do cheque especial): uma barra por equipe, do
        maior saldo para o menor, com "faltou R$ X" ao lado e o título calculado
        ("5 de 6 equipes não fecharam as contas"); a referência com `persona` só
        nas equipes dela;
@@ -145,7 +146,7 @@ função e tela está em [contratos.md](contratos.md).
 
 ### Revisão do conteúdo de 29/09 (D-050 a D-057, esquema v2.1)
 
-Depois da revisão do conteúdo v2 (rascunho, seção 7), o Kleberson aprovou as
+Depois da revisão do conteúdo v2 (rascunho, seção 7), o Kleber aprovou as
 recomendações D-050 a D-057. Os itens valem sobre o resto do documento, como os
 de cima, e sobre os itens 11 a 18 onde houver conflito (o `mes` do item 14
 ganhou campos). O contrato exato está em [contratos.md](contratos.md); o site
@@ -209,7 +210,7 @@ passou à versão 4 (`?v=4`, `VERSAO_APP`).
 
 ### Calibragem de 29/09 à noite (D-058 e D-059, conteúdo v2.2)
 
-A calibragem da F4 não cumpriu a D-050 nem a D-051, e o Kleberson as detalhou na
+A calibragem da F4 não cumpriu a D-050 nem a D-051, e o Kleber as detalhou na
 D-058 (picos reais tornam o fechamento possível) e na D-059 (a proteção vale
 pelo pior caso que ela evita). Os itens valem sobre o resto do documento, como
 os de cima. O contrato exato está em [contratos.md](contratos.md); os números e
@@ -287,7 +288,7 @@ seção 0. O site passou à versão 5 (`?v=5`, `VERSAO_APP`).
 
 ### Correções do teste de 30/09 (D-065, esquema v2.2, versão 6)
 
-No teste de 30/09, no site publicado (versão 5), o Kleberson achou um defeito
+No teste de 30/09, no site publicado (versão 5), o Kleber achou um defeito
 crítico e quatro problemas de tela. Os itens valem sobre o resto do documento,
 como os de cima; o contrato exato está em [contratos.md](contratos.md). O site
 passou à versão 6 (`?v=6`, `VERSAO_APP`). As decisões D-060 a D-064 (12 meses
@@ -387,6 +388,221 @@ na versão 6.
     cabem nas regras que só o anfitrião escreve. O site sobe para a versão 6: os
     celulares com a versão 5 em cache veem "atualize a página".
 
+### Doze meses (D-060 a D-067, esquemas v3 e v3.1, versão 7)
+
+As decisões de 30/09 que ficaram fora da versão 6, mais as de 01/10 (D-066 e
+D-067, itens 51 e 52), que entraram na mesma versão 7 e nas mesmas regras v4. Os itens valem sobre o resto
+do documento, como os de cima, e sobre os itens 1 a 42 onde houver conflito (o
+item 5, "5 personas e 6 equipes", deixa de descrever o conteúdo). O contrato
+exato está em [contratos.md](contratos.md); o conteúdo, com as fontes e o que
+depende de decisão, no [rascunho-conteudo.md](rascunho-conteudo.md). O site
+passou à versão 7 (`?v=7`, `VERSAO_APP`), e as regras do Firebase, à **v4**.
+
+43. **12 meses em 6 rodadas bimestrais** (D-060, "vamos testar"). Uma chave nova
+    e opcional, `regras.mesesPorRodada` (inteiro ≥ 1; ausente vale 1, fora do
+    normalizado, e o hash de um config de rodadas mensais não muda). Com 2:
+    - o motor conta o `soma` do `persona.todoMes`, o `persona.basico`, a
+      `persona.outraRenda` e as parcelas do empréstimo duas vezes por rodada; os
+      efeitos gerais, da opção e da carta contam uma vez (são acontecimentos); o
+      `multiplica` do `todoMes` age uma vez sobre o bimestre;
+    - os juros do cheque especial compõem os meses: `(1 + jurosDividaMes)^m − 1`
+      (15,41% no bimestre), com m = 1 sem passar pela potência;
+    - a rodada jogada k depois do empréstimo paga as parcelas 2k − 1 e 2k, uma
+      linha de juros por parcela; rodada pulada no dia não cobra;
+    - `carta.diasParado` vai até `30 × mesesPorRodada`;
+    - `motor.mesComum` continua sendo **um** mês (a tela de personas diz "a
+      conta do mês").
+    O motor, o anfitrião, o validador e as telas já tratavam N rodadas; o que
+    faltava era o período. `historia.periodo` ("mês", "bimestre", "trimestre",
+    "semestre"), `historia.rotuloDaRodada` (o título até os dois-pontos,
+    "Jan–fev"), `historia.mesesJogados` ("No fim dos 12 meses") e
+    `historia.resumoPorRodada` servem o telão e o celular pela mesma regra.
+44. **Simulação determinística quando a conta exata não cabe.** Com 6 rodadas e
+    ~20 cartas, uma equipe chega a milhões de caminhos (1,45 a 4,04 milhões no
+    config de 12 meses). Acima de `motor.LIMITE_CAMINHOS` (200.000, contado por
+    `motor.caminhosDeCartas` nas rodadas jogadas), o `motor.decompor` sorteia
+    `motor.AMOSTRAS` (20.000) caminhos pelas chances, com a semente derivada do
+    hash do config, da equipe e das rodadas jogadas: o telão, o pendrive, o
+    simulador e os testes chegam ao mesmo número, e as três contas (com as
+    decisões, o piloto, sem a proteção) usam os mesmos sorteios, para o efeito
+    das decisões sair sem o ruído de duas amostras. O pior caso é o menor entre
+    o da amostra e uma busca dirigida: um caminho de verdade, nunca abaixo do
+    pior exato. `realizado` é sempre exato.
+    - O placar ganha `estimado: true` (a partir da 5ª rodada do config de 12
+      meses), e as telas dizem "valores estimados por simulação" e "pior caso
+      estimado". As regras aceitam o campo sem mudança (`placar` é do anfitrião).
+    - O fechamento de uma rodada com 6 equipes leva ~1,5 s no Node (medido com a
+      fixture v3), dentro do "Apurando…". **Risco conhecido, para decisão:** o
+      `calcularPlacar` roda síncrono dentro do `executar` do telão, que espera a
+      confirmação por 10 s; no fechamento da 6ª rodada com 6 equipes, ele trava o
+      telão alguns segundos, e numa máquina lenta o aviso "O serviço não
+      respondeu" sai falso, com o comando já gravado. O roteiro (seção 10) manda
+      esperar e não repetir o Enter.
+    - O validador faz o mesmo nas conferências (a) a (j), com amostras menores
+      (cerca de 2 minutos e meio no config de 12 meses com o limite, medido em
+      05/10) e a mesma saída a cada execução. A semente sai do hash do config,
+      que inclui os textos de `fonte`: trocar só uma fonte muda a amostra, e
+      avisos de diferenças de dezenas de reais podem trocar de bimestre.
+      A garantia de "sempre há uma carta possível" continua exata: com 6
+      rodadas, vem sem enumerar quando toda equipe × rodada × opção tem uma carta
+      que sai em qualquer estado; sem ela, a enumeração roda como antes, e passar
+      de 20.000 estados é erro.
+45. **As telas contam por período.** O resultado da rodada diz "saldo do
+    bimestre"; o celular traz o resumo "Bimestre · Saldo do bimestre · Ficou
+    com", seis linhas que cabem em 360×740; a linha do tempo usa o nome curto de
+    cada rodada e, se os seis nomes não cabem, o começo do período ("Jan",
+    `data-compacta="curto"`) e, só se nem assim, o número
+    (`data-compacta="numero"`; revisão da F7, achado 13); no resultado, a
+    parada diz "perdeu R$ X" com a renda perdida **mais** os gastos da carta
+    (achado 11), e a história nomeia cada gasto pela regra do núcleo
+    (`historia.nomesDosGastos`, achado 9); o
+    mapa vira colunas de texto corrido; a história de cada equipe no placar
+    final vai em páginas de até 3 rodadas (duas por equipe, 15 páginas com seis
+    equipes), com "Depois de 6 meses" no fim da primeira. Os apertos são medidos
+    depois do desenho e só entram quando a lista transborda, sem baixar dos
+    28 px.
+46. **Seis personagens, ninguém de carteira, risco que cresce** (D-061, D-062,
+    D-063). É conteúdo, sem código novo no motor: uma persona por equipe (Jonas,
+    Rose, Marcos, Bruna, Kauã, Daiane; o validador continua aceitando persona
+    compartilhada), outra renda sempre informal, e o desgaste por
+    `ajustesDePeso` com condição de rodada. Desde 01/10, os pesos de "Quebrou",
+    "Dor", "Bloqueio", "Alcance" e "Burnout" sobem por persona e bimestre, o
+    bastante para que a **chance**, no plano padrão com a carta "Normal" em todos
+    os bimestres, nunca caia de um bimestre para o seguinte (fora as duas quedas
+    da própria escolha do padrão) e chegue em Nov–dez a pelo menos 1,25 vez a de
+    Jan–fev; nas partidas sorteadas, a média recua até 1 ponto em alguns
+    bimestres (D-063, "como se mede"; rascunho, seção 4). O conteúdo de 3 meses (v2.2, o do
+    teste de 30/09) fica congelado em `test/fixtures/config-real-v22.json`,
+    porque os testes do empréstimo refazem o caminho do Jonas daquele dia.
+47. **Modo espectador do apresentador** (D-064). O celular do apresentador entra
+    por "Sou apresentador", com o código da sala e o PIN, e vê a tela de
+    qualquer equipe pela mesma `alunoLogica.telaDoAluno`, com um membro virtual
+    da equipe escolhida que nunca vai para o banco (na decisão, `motivo:
+    'espectador'` e `podeVotar: false`). Nunca grava `membros`, presença, voto
+    nem `meta/hostUid`: não conta no "N de M" e não assume a sala.
+    - **Regras v4, a única mudança nas regras desta versão:** em
+      `salas/$s/decisoes/$r/$eq`, `.read` passa a aceitar também o PIN_OK (o
+      mesmo da retomada: `privado/pinApresentador` existe e
+      `pedidosAnfitriao/{auth.uid}` é igual a ele). É só leitura, uma equipe por
+      vez: nunca `decisoes/$r` inteiro, a sala, `sementes` ou voto de enquete, e
+      votar continua exigindo ser membro da equipe. Nas v3, o celular do
+      apresentador não via a contagem da equipe nem tinha como provar o PIN
+      (`pedidosAnfitriao` aceita qualquer texto de 8 a 32 caracteres).
+    - **A prova do PIN** é ler `decisoes/_pin/_pin`: nenhum aparelho é da equipe
+      `_pin`, então só o PIN_OK passa. Recusada, o pedido é apagado e a tela
+      volta ao PIN.
+    - **O pedido não fica no banco:** o `apagarAoDesconectar` é registrado
+      **antes** da gravação, com a confirmação esperada (o servidor trata os
+      pedidos de uma conexão em ordem, então não há instante com o pedido no
+      banco sem ele), e a mesma ordem vale a cada reconexão
+      (`reafirmarPedido`); sair, a prova que falha ou expira, fechar a aba e a
+      sala encerrada apagam. Deixado lá, daria ao uid anônimo daquele navegador
+      um PIN_OK permanente. O PIN só existe em memória: recarregar volta ao
+      campo do PIN e nunca entra como aluno.
+    - **Nunca vira membro por engano** (revisão da F6b, achados 14 e 16): na
+      tela do espectador, o Enter do campo do código só passa ao PIN (antes,
+      chamava `entrarNaSala`); e um uid que já é membro da sala é recusado antes
+      de gravar o pedido ("Este aparelho já entrou como aluno nesta sala…"),
+      porque o registro dele seguiria no "N de M" e o celular não pode apagar o
+      próprio membro depois da trava.
+    - **Risco conhecido, para decisão:** o telão e um espectador no mesmo
+      navegador (o mesmo perfil) têm o mesmo uid anônimo e o mesmo
+      `pedidosAnfitriao/{uid}`, e um apaga o do outro: o telão apaga ao fim de
+      criar ou retomar a sala, e o espectador, ao sair ou cair, pode derrubar
+      uma criação ou retomada em curso. O roteiro (seção 4) manda usar o
+      celular, e nunca o navegador do telão.
+    - **Amarração da versão:** `regrasVersao/{uid}` só aceita `"v4"`; o telão
+      (`REGRAS_VERSAO` em `js/telao.js`) e o `canal-local` gravam `"v4"`. Com as
+      v3 ainda publicadas, o telão mostra "REGRAS ABERTAS ou DESATUALIZADAS" e
+      não cria a sala: **as regras v4 têm de ser publicadas antes do site v7**
+      (README, passo 6). `test/regras.test.mjs` confere o texto da regra, e o
+      emulador, a leitura com e sem o PIN (`test/emulador/regras-paridade`).
+48. **Roteiros centrados no jogo** (D-060). As 6 rodadas somam 21 min no roteiro
+    de 60 min (3:30 cada) e 27 min no de 120 (4:30 cada); a decisão tem 90 s
+    (`tempos.decisaoSeg`, a validar), os blocos de dados, 2 min no roteiro de 60,
+    e as "Entrevistas" são um `bloco` com `opcional` (4 e 20 min). O validador
+    descarta chave nova no passo, por isso não há um tipo "entrevista".
+49. **Testes.** A matriz de votos (`npm run e2e:votos`) joga as **6 rodadas** do
+    `config.json` (e reprova se ele não tiver 6) e uma segunda sessão com a
+    fixture v3, com um oitavo celular no modo espectador ligado o tempo todo,
+    que não pode mudar nenhuma contagem nem apuração. O `e2e:online` ganhou a
+    entrada do espectador e uma sala de 6 bimestres montada pelo núcleo e
+    copiada para o emulador, e uma terceira, com a fixture v3.1 (o limite, a
+    multa e a mora de teste, e o auxílio do e2e acima do trabalho), que passa
+    pelos casos da D-066 e da D-067. O `e2e` offline confere as telas de 12
+    meses em 1024×768 e 1920×1080, inclusive seis faixas no limite com a frase
+    da D-067.
+50. **O que o conteúdo de 12 meses não cumpre** (rascunho, seção 8, para
+    decisão; números do config `472f94a0`, de 05/10, com as propostas 3(a) e
+    1(b), estimados): ninguém fecha o básico em caminho nenhum (D-050, D-058; o
+    mais perto, o Jonas, −R$ 1.524); a referência "com carteira assinada" fica
+    abaixo do Jonas de app em 93% das partidas do plano padrão; o esgotamento
+    ainda é o melhor plano nos 6 bimestres para 3 ou mais personas (D-059); em Set–out a melhor opção é a mesma para 5 das 6
+    personas (D-051); com o limite, o placar da Rose e da Daiane quase não
+    separa as escolhas (item 51).
+51. **O cheque especial tem limite** (D-066, esquema v3.1). Chaves novas e
+    opcionais em `regras`: `limiteChequeEspecial` (inteiro > 0) e, com ele,
+    obrigatórias, `limiteFonte`, `multaAtraso`, `moraMes` e `atrasoFonte`, e
+    `cortarPrimeiro` (`"contas"` ou `"comida"`; ausente, `"contas"`, **a validar**).
+    Sem o limite, o config, o hash, as contas e as telas ficam como antes,
+    atributo por atributo. Com ele:
+    - o item da comida vem marcado no básico (`comida: true`; `semAtraso: true`
+      marca o que fica sem comprar em vez de atrasar; desde 05/10, numa branch
+      separada, o config marca o gás, o ônibus e o remédio das 6 casas), e os indicadores `contas_atrasadas` (entra no patrimônio) e
+      `faltou_na_mesa` (custo humano, fora dele) são obrigatórios, e só o motor
+      mexe neles;
+    - o motor, depois do empréstimo (contratos, seção 3, passos 8 a 11): a mora
+      simples sobre o principal atrasado (guardado em
+      `contas_atrasadas_principal`, fora dos indicadores do config); a folga até
+      o limite paga o atrasado (primeiro a multa e a mora, Código Civil,
+      art. 354); o corte, com o caixa parado em −limite: as contas do período,
+      depois os itens `semAtraso`, depois a comida, e o resto atrasa; a multa
+      sobre o que atrasou. A multa e a mora vão para as contas atrasadas, e não
+      para o caixa. O `saldoMes` continua sendo a variação do patrimônio, e os
+      juros do cheque especial nunca passam da taxa sobre o limite;
+    - `patrimonio = renda − emprestimo − contas_atrasadas` (no motor e em
+      `historia.patrimonioDe`); o placar, o resumo e "Escolha ou sorte?" leem
+      isso. A "dívida" do telão e do celular é a do banco e do empréstimo
+      (`historia.dividaTotal`), e as contas atrasadas têm número próprio (antes
+      da revisão da F6c, o telão e o celular davam números diferentes para a
+      mesma equipe);
+    - telas: no resultado do telão, uma linha embaixo da faixa ("contas
+      atrasadas R$ Y · faltou na mesa R$ Z"); a página 1 do placar passa a
+      "Quanto sobrou, e quanto ficou devendo", com "Faltou na mesa no ano (fora do
+      saldo)" embaixo do gráfico; no celular, "Dívida no banco", "Cheque especial
+      R$ C de R$ L do limite", as contas atrasadas com a multa e a mora, "Faltou
+      na mesa" à parte, e a frase do limite na conta recolhida
+      (`historia.fraseDoLimite`);
+    - conteúdo: limite de R$ 2.000, multa de 8% e mora de 1% ao mês, com fonte
+      (até 05/10, 7% e 0,8%: a média mudou quando gás, ônibus e remédio
+      deixaram de atrasar);
+      duas cartas graves que só saem com contas atrasadas ("Cortaram a luz" e "O
+      dono entrou com o despejo"); a antiga multa do aluguel por bimestre no
+      vermelho saiu (seria cobrada duas vezes);
+    - validador: a conferência (j), dívida no fim do jogo (o banco, as contas
+      atrasadas, o que faltou na mesa e a dívida total), com aviso quando o banco
+      passa do limite ou a dívida volta a crescer sem teto;
+    - **para decisão:** o padrão `"contas"` foi escolhido pelo efeito no jogo, e
+      a pesquisa citada não diz qual das duas ordens é a mais comum; o aluguel sem
+      pagar por meses quase nunca leva ao despejo (a chance da carta é
+      estimativa), e as contas atrasadas ainda chegam a dezenas de milhares de
+      reais no fim; e, como a comida não comprada fica fora do placar, a Rose e a
+      Daiane terminam com as quatro opções a dezenas de reais umas das outras
+      (rascunho, seção 8, itens 15, 18 e 20).
+52. **O auxílio acima do trabalho** (D-067). Sem chave nova:
+    `motor.trabalhoComum` (o que o trabalho deixa num período comum, sem a outra
+    renda) e `motor.protecaoAcimaDoTrabalho` detectam quando a proteção do
+    período passou dele, e o anfitrião grava `protecaoAcimaDoTrabalho = {
+    pagou, trabalhoComum }` no resultado (só quando acontece; o celular não
+    carrega o motor). `historia.fraseAcimaDoTrabalho` monta a frase ("Auxílio do
+    INSS pelo MEI (45 dias de 1 salário mínimo): R$ 2.431, mais do que Bruna
+    ganhava trabalhando num bimestre comum (R$ 1.400).") a partir do rótulo do
+    efeito: o "1 salário mínimo" está no config, porque o núcleo não escreve
+    conteúdo. Aparece no resultado do telão (embaixo da faixa), no resultado do
+    celular (à vista, abaixo do saldo) e na história. No config atual, acontece
+    com a Bruna e a Daiane que pagaram o MEI e tiveram a fratura. As regras v4
+    aceitam o campo sem mudança (qualquer filho de `resultados/{r}`).
+
 ---
 
 ## 0. Resumo
@@ -404,7 +620,7 @@ na versão 6.
 
 ## 1. Fontes do conteúdo
 
-Estes arquivos ficam na pasta Downloads do Kleberson e **não** entram no repositório:
+Estes arquivos ficam na pasta Downloads do Kleber e **não** entram no repositório:
 - **`trilha_seminario_viracao.html`:** a trilha do seminário. Traz o Termômetro
   (afirmações de 1 a 5), a Medição (a mesma enquete do início), o Gancho com
   lançamento encenado e os planos B em papel e cartões coloridos.
@@ -616,7 +832,7 @@ O simulador confere que o número de votos confirmados é igual ao de votos cont
 ```
 privado/pinApresentador               PIN (≥ 10 caracteres) gravado à mão no console, uma vez. Ninguém lê.
 pedidosAnfitriao/{uid}             PIN digitado no telão (string de 8 a 32 caracteres); ninguém lê
-regrasVersao/{uid}                 só aceita "v3" → prova que as regras publicadas são as desta versão
+regrasVersao/{uid}                 só aceita "v4" → prova que as regras publicadas são as desta versão
 autoteste/{uid}                    .write false → se a escrita PASSAR, as regras estão abertas: o telão bloqueia
 
 salas/{SALA}                       SALA = 4 caracteres de A-H J-N P-Z 2-9 (sem 0/O/1/I)
@@ -692,7 +908,7 @@ salas/$s          .read: HOST      .write: HOST && !newData.exists()     ← só
                   .write: auth.uid === $uid && membros/$uid existe && E.tipo === 'enquete'
                           && E.enquete === $e && E.momento === $m && E.subfase === 'votando' && ABERTO
                   .validate: inteiro de 1 a 5 && a afirmação $a existe no conteudo
-  decisoes/$r/$eq .read: membros/{auth.uid}/equipe === $eq || HOST
+  decisoes/$r/$eq .read: membros/{auth.uid}/equipe === $eq || PIN_OK || HOST      ← PIN_OK desde a v4 (D-064, modo espectador)
     $uid          .write: auth.uid === $uid && membros/$uid/equipe === $eq && E.rodada === $r
                           && (E.subfase === 'decidindo' || (E.subfase === 'prorrogacao' && a equipe está em E.empatadas))
                           && membros/$uid/entrouEm <= E.abertoEm && ABERTO
@@ -703,7 +919,7 @@ salas/$s          .read: HOST      .write: HOST && !newData.exists()     ← só
   resultados/$r, enquetes/$e/$m   .read: auth != null   .write: HOST && (!data.exists() || !newData.exists())
   placar          .read: auth != null   .write: HOST
 pedidosAnfitriao/$uid  .write: auth.uid === $uid   .validate: string de 8 a 32 caracteres
-regrasVersao/$uid      .write: auth.uid === $uid   .validate: newData.val() === 'v3'
+regrasVersao/$uid      .write: auth.uid === $uid   .validate: newData.val() === 'v4'
 autoteste/$uid         .write: false
 privado                .read: false   .write: false
 ```
@@ -715,7 +931,7 @@ privado                .read: false   .write: false
 
 **Autoteste ao abrir o telão:**
 - grava em `autoteste/{uid}` (**tem de falhar**);
-- grava `"v3"` (a versão atual das regras) em `regrasVersao/{uid}` (**tem de passar**).
+- grava `"v4"` (a versão atual das regras) em `regrasVersao/{uid}` (**tem de passar**).
 
 Se qualquer um dos dois der errado, o telão mostra "REGRAS ABERTAS ou DESATUALIZADAS: não use" e não cria a sala. O teste **nunca** escreve na sala real.
 
@@ -759,7 +975,7 @@ Nenhuma carta ou persona exige código próprio.
 
 **Atenção:** o exemplo abaixo é do esquema de 28/09 e não passa no validador do esquema v2: faltam `familia` e `basico` nas personas e `jurosDividaMes`/`jurosFonte` nas regras. O exemplo atual de cada campo está em [como-editar-config.md](como-editar-config.md).
 
-O real terá 6 equipes sobre 5 personas, 3 rodadas, cerca de 8 cartas e os roteiros de 60 e 120 min. **Todos os valores em R$ são ilustrativos:** os reais saem do rascunho de conteúdo com fonte, validado com o Kleberson (D-005).
+O real terá 6 equipes sobre 5 personas, 3 rodadas, cerca de 8 cartas e os roteiros de 60 e 120 min. **Todos os valores em R$ são ilustrativos:** os reais saem do rascunho de conteúdo com fonte, validado com o Kleber (D-005).
 
 **Campos de texto para o celular** (todos opcionais), que alimentam a narrativa em primeira pessoa mostrada nos `bloco`:
 - `narrativa` na opção: "Rodei 12 horas por dia.";
@@ -1112,7 +1328,7 @@ Todos com `node --test`, sem framework.
 ## 16. Plano de execução
 
 Branch `claude/fundacao`, commits assinados e cada entrega copiada para
-`Downloads/seminario-viracao/`. Nada é publicado: **quem publica é o Kleberson**.
+`Downloads/seminario-viracao/`. Nada é publicado: **quem publica é o Kleber**.
 Decisões e padrões ficam em [decisoes.md](decisoes.md).
 
 A ordem foi pensada para o **teste com celulares nesta semana** (D-020).
@@ -1122,6 +1338,6 @@ A ordem foi pensada para o **teste com celulares nesta semana** (D-020).
 | F0 | Pasta, repositório, `AGENTS.md`, `package.json`, `.gitattributes`, esta especificação | `npm run check` verde, ainda vazio |
 | F1 | Núcleo puro (validador, sorte, motor, enquete, roteiro, anfitrião sobre `canal-local`, lógica do celular) + rascunho do conteúdo com fontes | `node --test`, incluindo 1.000 partidas e a sessão inteira sobre `canal-local` |
 | F2 | Telão (online e offline), `canal-firebase`, regras, celular, simulador | e2e por `file://`; `npm run emulador` com 20 robôs e `--atacar`, sem nenhuma violação |
-| F3 | README com o passo a passo de publicação, roteiro do apresentador, `como-editar-config.md` | O Kleberson segue o README do zero e publica |
-| F4 | Teste no eduroam com celulares reais (Kleberson), ajustes | Checklist do teste |
+| F3 | README com o passo a passo de publicação, roteiro do apresentador, `como-editar-config.md` | O Kleber segue o README do zero e publica |
+| F4 | Teste no eduroam com celulares reais (Kleber), ajustes | Checklist do teste |
 | F5 | Conteúdo validado junto e calibrado; ZIP para o pendrive | Validador sem erro; tabela de chances aprovada |

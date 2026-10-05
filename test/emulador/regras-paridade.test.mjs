@@ -402,6 +402,34 @@ paridade('leitura: o aluno não lê semente, presença, voto alheio, decisão de
   await tentar('anfitrião lê a sala', () => h.canal.ler(S), 'aceito');
 });
 
+// D-064 (regras v4): o celular do apresentador, com o PIN, vê a tela de
+// qualquer equipe, contagem ao vivo incluída, sem virar membro. Nas regras v3,
+// a decisão da equipe só era lida por quem é da equipe (ou pelo anfitrião): o
+// PIN não dava leitura nenhuma, e o espectador não via a contagem nem tinha
+// como saber se o PIN conferia (pedidosAnfitriao aceita qualquer texto).
+paridade('espectador (D-064): com o PIN, lê a decisão de qualquer equipe, e nada além; sem o PIN, não lê', async (amb, tentar) => {
+  const { S, h, membro } = await salaPronta(amb);
+  await membro('a', 'e1');
+  await h.canal.gravar({ [`${S}/sementes/r1`]: 5 });
+  const esp = await amb.usuario('espectador');
+  const pedido = `pedidosAnfitriao/${esp.uid}`;
+  await tentar('sem pedido, a decisão da equipe 1', () => esp.canal.ler(`${S}/decisoes/r1/e1`), 'recusado');
+  await esp.canal.gravar({ [pedido]: 'pin-errado-000' });
+  await tentar('PIN errado, a decisão da equipe 1', () => esp.canal.ler(`${S}/decisoes/r1/e1`), 'recusado');
+  await esp.canal.gravar({ [pedido]: PIN });
+  await tentar('com o PIN, a decisão da equipe 1', () => esp.canal.ler(`${S}/decisoes/r1/e1`), 'aceito');
+  await tentar('com o PIN, a decisão da equipe 2', () => esp.canal.ler(`${S}/decisoes/r1/e2`), 'aceito');
+  // A permissão não sobe: a rodada inteira, a sala, a semente e o voto de
+  // enquete continuam fechados (o espectador vê o que o aluno da equipe vê).
+  await tentar('com o PIN, as decisões da rodada inteira', () => esp.canal.ler(`${S}/decisoes/r1`), 'recusado');
+  await tentar('com o PIN, a sala inteira', () => esp.canal.ler(S), 'recusado');
+  await tentar('com o PIN, a semente', () => esp.canal.ler(`${S}/sementes/r1`), 'recusado');
+  await tentar('com o PIN, o voto de enquete de outro', () => esp.canal.ler(`${S}/votosEnquete/q/antes/a1/outro`), 'recusado');
+  await tentar('com o PIN, votar sem ser membro', () => esp.canal.gravar({ [`${S}/decisoes/r1/e1/${esp.uid}`]: 'a' }), 'recusado');
+  await esp.canal.gravar({ [pedido]: null });
+  await tentar('pedido apagado, a decisão da equipe 1', () => esp.canal.ler(`${S}/decisoes/r1/e1`), 'recusado');
+});
+
 paridade('ouvinte que perde a permissão (aluno movido de equipe) é cancelado com erro', async (amb, tentar) => {
   const { S, h, membro } = await salaPronta(amb);
   const a = await membro('a', 'e1');

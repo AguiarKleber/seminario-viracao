@@ -34,3 +34,14 @@ test('simulador: 20 robôs, ataques, quedas, recargas e telão derrubado, com 0 
   assert.match(saida, /placar recalculado === gravado/, saida);
   assert.equal(codigo, 0, saida);
 });
+
+test('simulador: 12 meses com o limite do cheque especial (D-066) contra as regras reais, com 0 violações', { timeout: 300_000 }, async () => {
+  // A fixture v3.1: 6 bimestres, o limite de R$ 1.500, contas atrasadas,
+  // multa, mora e o que faltou na mesa. Prova que o RTDB devolve o mês e o
+  // placar com os campos novos igual ao motor (a conferência final refaz cada
+  // resultado com a semente gravada) e que as regras v4 aceitam gravá-los.
+  const { codigo, saida } = await simular(['--emulador', '--rapido', '--config', 'test/fixtures/config-teste-v31.json']);
+  assert.match(saida, /RESULTADO: 0 violações\./, saida);
+  assert.match(saida, /placar recalculado === gravado/, saida);
+  assert.equal(codigo, 0, saida);
+});

@@ -372,6 +372,10 @@
           piorCasoSemProtecao: d.piorCasoSemProtecao,
           ativa: tem(e.equipesAbertas, eq) && e.equipesAbertas[eq] === true,
         };
+        // Esquema v3: com caminhos de cartas demais (6 rodadas), o decompor
+        // simula em vez de enumerar, e a tela diz "pior caso estimado". Gravado
+        // só quando é estimado: o placar de 3 rodadas fica igual ao de antes.
+        if (d.estimado) placar[eq].estimado = true;
       }
       return placar;
     }
@@ -457,7 +461,16 @@
         // quanto ela evitou. Só quando houve: gravar 0 em toda equipe de todo
         // mês seria ruído, e lista vazia o RTDB apaga.
         if (res.protecaoEvitou > 0) daRodada[eq].protecaoEvitou = res.protecaoEvitou;
+        // Revisão da F6c: com o limite, a comida que a proteção evitou cortar
+        // ("e R$ 1.659 de comida não teria dado para comprar"). Só quando há;
+        // as regras v4 aceitam qualquer filho de resultados/{r}.
+        if (res.protecaoEvitouMesa > 0) daRodada[eq].protecaoEvitouMesa = res.protecaoEvitouMesa;
         if (res.protecaoItens.length > 0) daRodada[eq].protecaoItens = res.protecaoItens;
+        // D-067: a proteção pagou mais que o trabalho de um período comum
+        // ({ pagou, trabalhoComum }), para a tela dizer por quê. Só quando
+        // acontece; o celular não carrega o motor para calcular o trabalho
+        // comum. As regras v4 aceitam qualquer filho de resultados/{r}.
+        if (res.protecaoAcimaDoTrabalho) daRodada[eq].protecaoAcimaDoTrabalho = res.protecaoAcimaDoTrabalho;
       }
       const placar = calcularPlacar({ ...(resultados || {}), [r]: daRodada }, e);
       return gravarComEstado({ ...e, subfase: 'sorteio', empatadas: null, restanteMs: null }, {
@@ -767,11 +780,46 @@
       return Object.keys(escritas).length;
     }
 
+    // Onde estão os votos da etapa em andamento, que o "Remover inativos" não
+    // pode apagar: a rodada do passo (decidindo, prorrogação, fechando e também
+    // sorteio e resultado, que o desfazer reabre e apura de novo) e a enquete
+    // aberta. null quando nenhuma votação depende de quem é membro agora.
+    function votosDaEtapa(e) {
+      if (e?.tipo === 'rodada' && typeof e.rodada === 'string') return cam('decisoes', e.rodada);
+      if (e?.tipo === 'enquete' && ['votando', 'fechando'].includes(e.subfase) && typeof e.enquete === 'string') {
+        return cam('votosEnquete', e.enquete, e.momento);
+      }
+      return null;
+    }
+
+    // Os uids com algum voto no nó da etapa: decisoes/{r}/{eq}/{uid} e
+    // votosEnquete/{e}/{m}/{afirmacao}/{uid} têm o uid no mesmo nível.
+    function quemVotou(votos) {
+      const uids = new Set();
+      for (const porGrupo of Object.values(votos || {})) {
+        for (const u of Object.keys(porGrupo && typeof porGrupo === 'object' ? porGrupo : {})) uids.add(u);
+      }
+      return uids;
+    }
+
+    // Revisão da F6a: com uma votação aberta, quem já votou nela NÃO sai, mesmo
+    // sem sinal há mais de limiteMs. A apuração da rodada conta só o voto de quem
+    // ainda é membro (votosDaEquipe), e o celular removido que volta é
+    // registrado de novo com entrouEm depois do abertoEm, sem direito a voto: o
+    // "Remover inativos" apagava um voto já confirmado (o celular no bolso, com
+    // a tela apagada, perde a presença em 1 min). O estado é lido do banco, e
+    // não o conhecido: o botão pode ser segurado logo depois de uma transição.
     async function removerInativos(limiteMs = ATIVO_MS) {
-      const [membros, presenca] = await Promise.all([canal.ler(cam('membros')), canal.ler(cam('presenca'))]);
+      const e = await canal.ler(cam('estado'));
+      const noDosVotos = votosDaEtapa(e);
+      const [membros, presenca, votos] = await Promise.all([
+        canal.ler(cam('membros')), canal.ler(cam('presenca')), noDosVotos ? canal.ler(noDosVotos) : null,
+      ]);
+      const votaram = quemVotou(votos);
       const t = agora();
       const escritas = {};
       for (const u of Object.keys(membros || {})) {
+        if (votaram.has(u)) continue;
         const p = presenca?.[u];
         if (typeof p !== 'number' || t - p > limiteMs) escritas[cam('membros', u)] = null;
       }

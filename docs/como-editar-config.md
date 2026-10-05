@@ -53,6 +53,42 @@ do mês 3 escritos à mão (se o mês 3 fosse pulado, a dívida nunca aparecia).
 | `emprestimo: { valor, parcelas, taxaMes, fonte }` | efeito de uma opção | A equipe pega um empréstimo. O motor calcula a entrada, a tabela Price e cada parcela nos meses seguintes. Veja "Efeito" |
 | indicador `emprestimo` | `indicadores`, obrigatório quando há empréstimo | O saldo devedor. O placar e as telas mostram o saldo acumulado **menos** ele. Veja `indicadores` |
 
+**Esquema v3 (30/09, D-060): 12 meses em 6 rodadas bimestrais.** Uma chave só,
+opcional: um config sem ela continua passando, com o mesmo hash e as mesmas
+contas (o de 3 rodadas mensais, congelado em `test/fixtures/config-real-v22.json`).
+
+| Campo | Onde | Resumo |
+| --- | --- | --- |
+| `mesesPorRodada` | regras, opcional | Quantos meses cada rodada vale. Com `2`, cada rodada é um bimestre: o trabalho do mês, o básico, a outra renda e as parcelas do empréstimo contam duas vezes, e os juros compõem dois meses. Veja `regras` |
+| `diasParado` | carta | Passa a ir de 0 a `30 × mesesPorRodada` (60 no bimestre) |
+
+Com 6 rodadas, as conferências e o placar final deixam de caber na conta exata
+e passam a uma **simulação determinística** (veja "Exato ou estimado", em "O
+validador"). O código já trata qualquer número de rodadas; as telas dizem "no
+bimestre", "saldo do bimestre" e usam o nome curto de cada rodada (o título até
+os dois-pontos, veja `rodadas`).
+
+**Esquema v3.1 (01/10, D-066): o cheque especial tem limite.** Opcional: um
+config sem `limiteChequeEspecial` continua passando, com o mesmo hash e as
+mesmas contas (o de 12 meses sem o limite está congelado em
+`test/fixtures/config-real-v3.json`). Com o limite, as outras chaves passam a
+ser obrigatórias:
+
+| Campo | Onde | Resumo |
+| --- | --- | --- |
+| `limiteChequeEspecial`, `limiteFonte` | regras | Até quanto o banco empresta no cheque especial, em R$, com fonte. Passado ele, o banco corta o crédito. Veja `regras` |
+| `multaAtraso`, `moraMes`, `atrasoFonte` | regras, obrigatórios com o limite | A multa (uma vez) e a mora (ao mês, simples) das contas atrasadas, com fonte |
+| `cortarPrimeiro` | regras, opcional | `"contas"` (o padrão, **a validar**) ou `"comida"`: o que a casa deixa de pagar primeiro quando o limite acaba |
+| `comida: true` | item do `basico` | Marca o item da comida, o único que a casa pode deixar de comprar. Com o limite, toda persona precisa de um |
+| `semAtraso: true` | item do `basico`, opcional | Marca o item que não atrasa (gás, ônibus, remédio: quem não paga fica sem). O config atual marca o gás, o ônibus e o remédio das 6 casas |
+| indicadores `contas_atrasadas` e `faltou_na_mesa` | `indicadores`, obrigatórios com o limite | O que a casa deve de contas, com multa e mora, e a comida que não deu para comprar. Só o motor mexe nos dois. Veja `indicadores` |
+
+E a D-067: quando o dinheiro de uma proteção passa do que o trabalho daria num
+período comum, o motor marca o resultado, e as telas dizem "…, mais do que Bruna
+ganhava trabalhando num bimestre comum (R$ 1.400)". Não há chave nova: o "1
+salário mínimo" está no `rotulo` do efeito do auxílio, porque a tela usa o
+rótulo e o núcleo não escreve conteúdo.
+
 ---
 
 ## Antes de mexer
@@ -100,12 +136,12 @@ corrigidos. As conferências de equilíbrio, porém, só saem no `npm run valida
 | `versao` | Nome da versão do conteúdo | Abertura do telão |
 | `titulo` | Título do seminário | Telão e celular |
 | `tempos` | Duração das votações | Cronômetros |
-| `regras` | Regras do jogo, do placar e os juros da dívida | Resultado e celular (os juros) |
+| `regras` | Regras do jogo e do placar, os juros da dívida, o período da rodada e o limite do cheque especial com a multa e a mora (esquema v3.1) | Resultado, placar e celular |
 | `escala` | Os 5 rótulos da escala de 1 a 5 | Botões do celular, legendas do telão |
-| `indicadores` | Saldo, energia, proteção e o empréstimo a pagar (esquema v2.2) | Placar, persona, resultado |
+| `indicadores` | Saldo, energia, proteção, o empréstimo a pagar (esquema v2.2), as contas atrasadas e o que faltou na mesa (esquema v3.1) | Placar, persona, resultado |
 | `personas` | As pessoas do jogo, com a família, o básico e a outra renda da casa | Telão (personas, resultado, placar) e celular |
 | `equipes` | Nome, cor, forma e persona de cada equipe | Todas as telas do jogo |
-| `rodadas` | Os meses do jogo, com as opções e o contexto de cada família | Decisão, resultado, celular |
+| `rodadas` | Os meses do jogo (bimestres, com `mesesPorRodada` 2), com as opções e o contexto de cada família | Decisão, resultado, celular |
 | `cartas` | Os eventos sorteados | Sorteio, resultado, celular |
 | `enquetes` | As afirmações de 1 a 5 | Enquetes, termômetro, comparativo |
 | `referencias` | Linhas de comparação no placar final | Placar final |
@@ -139,7 +175,7 @@ aparecem na tela.
 ### `tempos`
 
 ```json
-"tempos": { "enqueteSeg": 60, "decisaoSeg": 120, "decisaoMinSeg": 45, "prorrogacaoSeg": 20, "gracaSeg": 5 }
+"tempos": { "enqueteSeg": 60, "decisaoSeg": 90, "decisaoMinSeg": 45, "prorrogacaoSeg": 20, "gracaSeg": 5 }
 ```
 
 Todos em segundos, inteiros e maiores que 0. **Nenhum tempo fecha nada sozinho**:
@@ -149,7 +185,7 @@ servidor, que recusa o voto atrasado.
 | Campo | O que é |
 | --- | --- |
 | `enqueteSeg` | Tempo de cada votação de enquete. Na enquete `uma_por_vez`, vale para cada afirmação; na `todas`, para todas juntas |
-| `decisaoSeg` | Tempo da decisão da rodada. 120 s desde o redesenho (D-043): são 4 opções e o contexto da família para ler |
+| `decisaoSeg` | Tempo da decisão da rodada. Foi 120 s no redesenho (D-043: são 4 opções e o contexto da família para ler) e é 90 s no conteúdo de 12 meses, para as 6 rodadas caberem no roteiro de 60 min (D-060; a validar: rascunho, seção 8, item 12) |
 | `decisaoMinSeg` | Tempo mínimo de conversa. Antes dele, o Enter pede confirmação. Maior que `decisaoSeg` gera aviso |
 | `prorrogacaoSeg` | Tempo da prorrogação de empate |
 | `gracaSeg` | Opcional (padrão 5). Segundos depois do prazo em que o voto ainda é aceito |
@@ -162,7 +198,13 @@ servidor, que recusa o voto atrasado.
   "desempate": "prorrogacao-depois-moeda", "cartaPor": "equipe", "mostrarChances": "no_sorteio",
   "placarPadrao": "efeitoDecisoes", "alvoPorEquipe": 3, "minPareados": 5, "destacarCartas": 2,
   "jurosDividaMes": 0.0743,
-  "jurosFonte": "Banco Central, SGS 25463: cheque especial, 7,43% ao mês em ago/2026 (…)"
+  "jurosFonte": "Banco Central, SGS 25463: cheque especial, 7,43% ao mês em ago/2026 (…)",
+  "pisoTrabalho": true, "mesesPorRodada": 2,
+  "limiteChequeEspecial": 2000,
+  "limiteFonte": "Banco Central, Estudo Especial nº 84/2020 (…)",
+  "multaAtraso": 0.07, "moraMes": 0.008,
+  "atrasoFonte": "Aluguel: … Luz: … Água: … Conta nossa: a média ponderada (…)",
+  "cortarPrimeiro": "contas"
 }
 ```
 
@@ -178,14 +220,84 @@ servidor, que recusa o voto atrasado.
 | `jurosDividaMes` | obrigatório; número entre 0 e 1, sem incluir os dois | Os juros **ao mês** sobre a dívida, como fração: `0.0743` é 7,43%. Escrever `7.43` é erro: seriam 743% ao mês. Ver "Ordem fixa de aplicação" |
 | `jurosFonte` | obrigatório; texto | De onde vem a taxa. Nunca aparece no telão; o validador a imprime nas conferências |
 | `pisoTrabalho` | opcional; `true` ou `false` | Com `true` (esquema v2.1), o trabalho variável do mês nunca fica abaixo de R$ 0: os dias parados (somas a preço cheio) não tiram mais renda do que havia depois do "exausto" ou do bloqueio. Custos fixos e gastos continuam saindo. Deixe ausente num config v2 |
+| `mesesPorRodada` | opcional; inteiro ≥ 1 | Esquema v3 (D-060): quantos meses cada rodada vale. Ausente vale 1, e o config fica igual ao de antes, com o mesmo hash. `0`, fração, texto ou `null` é erro. Veja "Rodadas de mais de um mês", logo abaixo |
+| `limiteChequeEspecial` | opcional; inteiro > 0, em R$ | Esquema v3.1 (D-066): até quanto o banco empresta. O caixa nunca fica abaixo de −limite; o que passaria dele vira conta atrasada ou comida não comprada. Ausente, o cheque especial não tem teto, como antes. Veja "O limite do cheque especial", logo abaixo |
+| `limiteFonte` | obrigatório com o limite; texto | De onde vem o limite. Nunca aparece no telão; o validador a imprime na conferência (j) |
+| `multaAtraso` | obrigatório com o limite; número de 0 a 1, sem o 1 | A multa, como fração, cobrada **uma vez** sobre o que atrasou no período: `0.07` é 7%. Escrever `7` é erro |
+| `moraMes` | obrigatório com o limite; número de 0 a 1, sem o 1 | A mora **ao mês**, simples, sobre o principal que já estava atrasado: `0.01` é 1% ao mês. No bimestre, conta duas vezes (× `mesesPorRodada`) |
+| `atrasoFonte` | obrigatório com o limite; texto | De onde vêm a multa e a mora |
+| `cortarPrimeiro` | opcional, só com o limite; `"contas"` ou `"comida"` | O que a casa deixa de pagar primeiro quando o limite acaba. Ausente vale `"contas"` (**a validar**, D-066). Qualquer dessas cinco chaves sem o limite é erro: não teria efeito |
 
 Os três primeiros só têm um valor porque só um foi decidido, e o motor não
 implementa outro.
 
+**Rodadas de mais de um mês (`mesesPorRodada`, esquema v3).** Com `2`, cada
+rodada é um bimestre, e o jogo de 6 rodadas dura 12 meses. O que muda na conta
+(contratos, seção 3):
+- **conta `mesesPorRodada` vezes:** o `soma` do `persona.todoMes` (o
+  trabalho, os custos fixos, o DAS), o `persona.basico`, a
+  `persona.outraRenda` e as parcelas do empréstimo (a rodada jogada k depois do
+  empréstimo paga as parcelas 2k − 1 e 2k). Por isso o `todoMes`, o básico e a
+  outra renda continuam escritos **por mês**: nunca escreva o valor do bimestre
+  no config;
+- **conta uma vez:** os efeitos gerais da rodada, os da opção e os da carta.
+  São acontecimentos, e o valor que se escreve neles é o do bimestre inteiro
+  (a promoção do bimestre, o IPVA, os 45 dias da fratura);
+- **o `multiplica` do `todoMes`** age uma vez sobre o bimestre já somado: o
+  "exausto" tira 10% do bimestre, e não 19%;
+- **os juros** compõem os meses: a taxa do bimestre é (1 + `jurosDividaMes`)² − 1,
+  15,41% com 7,43% ao mês, sobre a dívida de antes da rodada;
+- **a tela de personas** continua mostrando **um** mês comum ("a conta do mês
+  não fecha: faltam R$ W"), e o resto das telas fala do período: "no bimestre",
+  "saldo do bimestre", "Bimestre · Saldo do bimestre · Ficou com", "No fim dos 12
+  meses". O nome do período sai do número: 1 "mês", 2 "bimestre", 3
+  "trimestre", 6 "semestre".
+- **`diasParado`** vai até `30 × mesesPorRodada` (60 no bimestre). A
+  `referencias[].renda` é escrita à mão e tem de seguir a mesma conta (veja
+  `referencias`).
+
 **Os juros da dívida (D-046)** substituem os juros que o config de 28/09 escrevia
-como efeito. A taxa aparece nas telas com até duas casas ("7,43% ao mês"): no
-cabeçalho do resultado, quando alguma equipe está devendo, e no celular, junto
-da dívida.
+como efeito. A taxa aparece nas telas com até duas casas ("7,43% ao mês"), no
+celular, junto da dívida.
+
+**O limite do cheque especial (`limiteChequeEspecial`, esquema v3.1, D-066).**
+Sem limite, a dívida de um bimestre virava juros compostos no seguinte, e as
+casas mais pobres terminavam o ano devendo dezenas de milhares de reais ao banco
+(a Rose, R$ 35.112 no plano padrão sem nenhuma carta ruim), o que nenhum banco
+empresta a quem ganha isso. Com o limite, no fim de cada período (contratos,
+seção 3, passos 8 a 11):
+1. **a mora:** `moraMes × meses` sobre o principal das contas que já estavam
+   atrasadas (juros simples, como cobram a lei e as concessionárias), somada a
+   elas;
+2. **o mês bom paga o atrasado:** se o caixa ficou acima de −limite, a folga
+   até o limite paga primeiro as contas atrasadas (a multa e a mora antes do
+   principal, Código Civil, art. 354);
+3. **o corte:** se o caixa ficaria abaixo de −limite, o banco para no limite, e
+   o que passaria dele vira, com `"contas"`: conta atrasada (o básico do período
+   menos a comida e menos os itens `semAtraso`); depois, os itens `semAtraso`
+   ficam sem comprar; depois, a comida não comprada (no máximo a comida do
+   período); e o que ainda passar (um conserto, por exemplo) atrasa também. Com
+   `"comida"`, a comida corta primeiro;
+4. **a multa:** `multaAtraso` sobre o que atrasou neste período, uma vez.
+A multa e a mora vão para as contas atrasadas, e nunca para o caixa (lá,
+passariam do limite de novo). O patrimônio, que o placar mostra, é o caixa menos
+o empréstimo a pagar **menos as contas atrasadas**; a comida não comprada fica
+fora dele, porque não é dívida, e aparece à parte, como "faltou na mesa".
+
+**Por que `"contas"` é o padrão (a validar):** as duas coisas acontecem.
+22% dos brasileiros trocaram a conta de luz pela comida (Ipec para o iCS,
+nov/2021); 30% dos que ganham até 1 salário mínimo deixam de comprar comida para
+pagar a luz (Instituto Pólis/Ipec, mai/2024); 21% das dívidas atrasadas do país
+são contas básicas (Serasa, mar/2026). Com a falta das personas, `"comida"`
+zeraria a comida das casas mais pobres em todo bimestre antes de atrasar um real
+de conta, o que nenhuma das fontes descreve. **Atenção:** a escolha foi feita
+pelo efeito no jogo, e a pesquisa citada não diz qual das duas é a mais comum.
+Trocar é uma chave: `"cortarPrimeiro": "comida"`, e depois `npm run validar`.
+
+**As cartas que leem o atraso.** Uma condição pode ler os dois indicadores
+novos (`se.indicador` em `ajustesDePeso`): é assim que "Cortaram a luz" e "O
+dono entrou com o despejo" só saem com contas atrasadas. Nenhum `soma` ou
+`multiplica` pode mexer neles: só o motor.
 
 ### `escala`
 
@@ -223,6 +335,23 @@ celular; os `longos`, nas legendas do telão.
   `persona.inicial.emprestimo`); `max` menor que a soma, por rodada, da opção
   com mais empréstimo; e qualquer `soma` ou `multiplica` no `emprestimo`. O
   celular nunca mostra o empréstimo em R$ 0 na lista de indicadores.
+- Os indicadores `contas_atrasadas` e `faltou_na_mesa` (esquema v3.1, D-066)
+  são obrigatórios com `regras.limiteChequeEspecial`, e só o motor mexe neles:
+  o primeiro é o que a casa deve de contas (com a multa e a mora) e entra no
+  patrimônio do placar; o segundo é a comida que não deu para comprar,
+  acumulada, e fica **fora** do patrimônio (é custo humano, não dívida).
+
+  ```json
+  { "id": "contas_atrasadas", "nome": "Contas atrasadas", "formato": "moeda", "inicial": 0, "min": 0, "max": 200000 },
+  { "id": "faltou_na_mesa", "nome": "Faltou na mesa", "formato": "moeda", "inicial": 0, "min": 0, "max": 200000 }
+  ```
+
+  É **erro**: `formato` diferente de `moeda`; `min` ou `inicial` diferente de
+  0 (também na persona); `max` menor que a faixa inteira da renda (`max − min`
+  da renda: o teto do indicador cortaria a dívida); o mínimo da renda acima de
+  −limite; qualquer `soma` ou `multiplica` nos dois; e usar os dois ids sem o
+  limite. O id `contas_atrasadas_principal` é reservado (o motor guarda nele o
+  principal, a base da mora).
 - `formato`: `moeda` (R$ sem centavos) ou `inteiro`.
 - `min` menor que `max`, e `inicial` entre os dois. Depois de cada mês, o valor é
   preso entre `min` e `max`.
@@ -271,8 +400,19 @@ celular; os `longos`, nas legendas do telão.
     obrigatória em cada item (D-005).
   - O total é a soma dos itens, calculada pelo código. **Nunca escreva o total no
     config**: não há campo para ele.
-  - Uma chave fora de `rotulo`, `valor` e `fonte` é **erro**, e não aviso: o
-    básico entra na conta, e um `"valor "` com espaço deixaria o item sem valor.
+  - Uma chave fora de `rotulo`, `valor`, `fonte`, `comida` e `semAtraso` é
+    **erro**, e não aviso: o básico entra na conta, e um `"valor "` com espaço
+    deixaria o item sem valor.
+  - `comida: true` (esquema v3.1, D-066) marca o item da comida: é o único que
+    a casa pode deixar de comprar quando o limite do cheque especial acaba, e
+    o que deixou de comprar vira "faltou na mesa". Com o limite, toda persona
+    precisa de pelo menos um item marcado. `false` é aceito e some (o hash não
+    muda); outro valor é erro.
+  - `semAtraso: true` (opcional) marca o item que não atrasa, porque quem não
+    paga fica sem: gás, ônibus, remédio. Quando o limite acaba, ele não vira
+    conta atrasada com multa e mora; a casa fica sem ele. Não pode estar junto
+    com `comida`. O config atual não marca nenhum item, e por isso todo o
+    básico menos a comida atrasa (conteúdo a decidir).
   - O telão mostra o total ("básico R$ 4.166") na tela das personas e em cada
     resultado; o celular mostra o básico item a item, com a fonte de cada um.
   - O básico é cobrado **no fim de todo mês, depois de tudo** (veja "Ordem fixa
@@ -303,8 +443,10 @@ celular; os `longos`, nas legendas do telão.
 
 - **No máximo 6.** A ordem da lista é a ordem em que o "Me coloque" preenche as
   equipes, a ordem em que elas somem quando há menos de 6, e a posição que dá a
-  cor e a forma a cada uma (D-027). No conteúdo validado em 28/09: Jonas, Jonas,
-  Daiane, Marcos, Kauã e Rose, com as duas do Jonas `obrigatoria`.
+  cor e a forma a cada uma (D-027). No conteúdo de 12 meses (D-061), uma persona
+  por equipe: Jonas, Rose, Marcos, Bruna, Kauã e Daiane, com as do Jonas e da
+  Rose `obrigatoria` (proposta a validar: rascunho, seção 8, item 5). Até 30/09
+  eram Jonas, Jonas, Daiane, Marcos, Kauã e Rose.
 - `cor`: hexadecimal, diferente entre as equipes. A paleta é a Okabe-Ito, pensada
   para quem não distingue cores (D-016):
 
@@ -321,7 +463,8 @@ celular; os `longos`, nas legendas do telão.
   `hexagono`, diferente entre as equipes. Outro nome vira um círculo com miolo. Forma, número
   e nome aparecem sempre juntos: a cor nunca é o único jeito de reconhecer a
   equipe.
-- `persona`: o id de uma persona. Duas equipes podem ter a mesma (D-004).
+- `persona`: o id de uma persona. Duas equipes podem ter a mesma (D-004), mas
+  desde a D-061 o config usa uma persona por equipe.
 - `obrigatoria` (opcional, padrão `false`): com `true`, a equipe nunca fecha. Sem
   ninguém, ela joga no piloto automático ou com a decisão do apresentador.
 - `lugar` (opcional): aparece na tela de formação das equipes, para cada uma
@@ -349,13 +492,18 @@ celular; os `longos`, nas legendas do telão.
 }
 ```
 
-(Encurtado: no config real, as opções têm efeitos, e o contexto tem as 5
-personas. As rodadas e as opções também podem vir como lista, cada item com o
+(Encurtado, do config de 3 meses: no config real, as opções têm efeitos, e o
+contexto tem as 6 personas. As rodadas e as opções também podem vir como lista, cada item com o
 seu `id`, como no `config.json` atual.)
 
-- `titulo` e `texto`: a situação do mês. O telão mostra os dois na decisão; o
-  celular mostra o título (o texto fica no telão, para as opções caberem na
-  tela do celular).
+- `titulo` e `texto`: a situação do mês (ou do bimestre). O telão mostra os
+  dois na decisão; o celular mostra o título (o texto fica no telão, para as
+  opções caberem na tela do celular).
+  - **O nome curto** da rodada é o título até os dois-pontos: "Jan–fev: quanto
+    trabalhar no calor?" vira "Jan–fev". Com `mesesPorRodada` maior que 1, é ele
+    que aparece na linha do tempo, no resumo por bimestre do celular e na
+    história da equipe. Título sem dois-pontos aparece inteiro nesses lugares:
+    mantenha o "Período: pergunta".
 - `padrao`: a opção que vale quando ninguém da equipe vota ("ninguém votou: ficou o de sempre"). Não deve ser a de maior saldo: o validador avisa,
   porque premiaria quem não votou.
 - `contexto` (opcional, D-043): `{ persona: texto }`, o que está acontecendo na
@@ -439,40 +587,42 @@ seu `id`, como no `config.json` atual.)
 }
 ```
 
-- **Quantas:** o config atual tem 17 cartas; a D-043 pedia de 12 a 14, e a
-  D-058 acrescentou as cartas de pico. Duas delas ("A perícia do INSS negou" e
-  "A lesão voltou") só existem depois de outra carta. O validador não impõe o
-  número.
+- **Quantas:** o config de 12 meses tem 19 cartas (o de 3 meses tinha 17; a
+  D-043 pedia de 12 a 14, e a D-058 acrescentou as cartas de pico). "A perícia do
+  INSS negou" só existe depois de outra carta. O validador não impõe o número.
+  O exemplo acima é do config de 3 meses: no de 12, a fratura tira os 45 dias
+  num bimestre só (`diasParado: 45`).
 - **Realismo (D-044):** o efeito de uma carta de parada diz o custo real, com
-  fonte: os dias sem renda, o conserto, o remédio. O que continua no mês seguinte
-  (a fratura que dura 45 dias, a conta que segue bloqueada) vai num efeito geral
-  da rodada seguinte, com `sorteou` (veja "Condição").
-- **Carta de pico (D-058):** dinheiro a mais que existe de verdade ("Uma semana
-  boa", "Uma data forte puxou a procura", "Bati a meta do desafio do app"). Cada
-  valor leva `fonte`, e a chance segue o calendário ou a regra da plataforma,
-  e não a vontade de fazer alguém fechar as contas. Para ela sair **no máximo
-  uma vez por partida**, limite as rodadas e zere o peso no mês seguinte se ela
-  já saiu:
+  fonte: os dias sem renda, o conserto, o remédio. O que continua na rodada
+  seguinte vai num efeito geral dela, com `sorteou` (veja "Condição"). No config
+  de 3 meses, a fratura de 45 dias se dividia em 20 + 25; no de 12, cabe inteira
+  num bimestre.
+- **Carta de pico (D-058):** dinheiro a mais que existe de verdade (no config de
+  12 meses, "Promoções e desafios do bimestre", "Temporal em Porto Alegre", "Um
+  vídeo viralizou" e "A mobilização arrancou um reajuste"; as datas fortes do
+  calendário viraram efeitos gerais das rodadas). Cada valor leva `fonte`, e a
+  chance segue o calendário ou a regra da plataforma, e não a vontade de fazer
+  alguém fechar as contas. Para uma carta sair **no máximo uma vez por partida**
+  (no config de 12 meses, a fratura e o bloqueio), limite as rodadas e zere o
+  peso nas rodadas seguintes se ela já saiu. Do config de 3 meses:
 
   ```json
   { "id": "data_forte", "rodadas": ["r2", "r3"], "peso": 16,
     "ajustesDePeso": [ { "se": { "rodada": "r3", "sorteou": { "r2": "data_forte" } }, "multiplica": 0 } ], … }
   ```
 
-  O motor só lembra que uma carta saiu pelo `sorteou`. Por isso as duas cartas
-  novas não saem no mês 1: a mesma trava sobre o mês 1 quebra o `e2e:online`,
-  que tira do mês 1 as cartas sem dias parados, e o validador recusa uma
-  condição que nunca vale. Sem a trava, quem ficava só no padrão fechava em
-  0,0011% das partidas, e a D-058 pede que nunca. Depois de mexer num pico,
-  confira as metas da conferência (g) do validador.
-- **O dinheiro da proteção num mês que tem uma carta que o nega:** o auxílio do
-  INSS do MEI (`categoria: "protecao"`) vai **em cada carta** do mês 3 que pode
-  sair depois da fratura, menos em "A perícia do INSS negou", e não nos efeitos
-  gerais. Nenhuma condição lê a carta do próprio mês: num efeito geral, o INSS
-  entraria também para quem teve o auxílio negado, e a tela diria "a proteção
-  pagou". Carta nova no mês 3 que pode sair nesse ramo precisa dos mesmos dois
-  efeitos do INSS (copie de "O mês passado ainda pesa"; a "Um mês como os
-  outros" não sai no mês 3 depois da fratura, e por isso não os tem).
+  O motor só lembra que uma carta saiu pelo `sorteou`: com 6 rodadas, a trava
+  leva um ajuste por rodada anterior (é o que a fratura e o bloqueio fazem, com
+  cinco `multiplica: 0` cada). Depois de mexer num pico, confira as metas da
+  conferência (g) do validador.
+- **O dinheiro da proteção numa rodada que tem uma carta que o nega:** o auxílio
+  do INSS do MEI (`categoria: "protecao"`) vai **em cada carta** que pode sair
+  na rodada seguinte à fratura, menos em "A perícia do INSS negou", e não nos
+  efeitos gerais. Nenhuma condição lê a carta da própria rodada: num efeito
+  geral, o INSS entraria também para quem teve o auxílio negado, e a tela diria
+  "a proteção pagou". Carta nova que pode sair nesse ramo precisa dos mesmos
+  efeitos do INSS (copie de uma carta que já os tem, como "Um bimestre como os
+  outros"; rascunho, seção 4).
 - `titulo`: no sorteio e no resultado do telão, e na história da equipe.
   `narrativa` (opcional): no celular, no resultado, na situação e na história.
 - `curto` (opcional, D-040): o nome da carta escrito **dentro da fatia** do
@@ -485,14 +635,16 @@ seu `id`, como no `config.json` atual.)
   4%"). A carta grave usa o mesmo estilo das outras. Sem `curto`, a fatia leva
   só a porcentagem, como antes.
 - `peso`: inteiro, 0 ou mais. Peso 0 nunca sai.
-- `diasParado` (opcional, esquema v2.1, D-052): inteiro de 0 a 30, os dias sem
-  trabalhar **neste mês** (a fratura tem 45 dias no total: 20 aqui, e os outros
+- `diasParado` (opcional, esquema v2.1, D-052): inteiro de 0 a 30 (de 0 a
+  `30 × mesesPorRodada` no esquema v3: 60 no bimestre), os dias sem
+  trabalhar **nesta rodada** (a fratura tem 45 dias no total: 20 aqui, e os outros
   25 vão num efeito geral do mês seguinte). É **só informativo**: o dinheiro sai
   pelos efeitos. O resultado do telão, o celular e a história da equipe mostram
   "O que a carta custou: 20 dias parado · renda perdida R$ 1.787 · gastos
   R$ 1.650". A renda perdida e os gastos são calculados pelo motor (o trabalho
   sem a carta menos o trabalho com ela; a soma dos efeitos `categoria: "gasto"`
-  da carta), e não escritos no config. Mais de 30 é erro: um mês tem 30 dias.
+  da carta), e não escritos no config. Mais de 30 é erro: um mês tem 30 dias
+  (no bimestre, mais de 60: "61 dias parado: uma rodada de 2 meses tem 60").
   Carta sem a chave, e sem renda perdida nem gasto, não escreve a linha.
 - `rodadas` (opcional): em que rodadas a carta pode sair. Sem a chave, em todas.
   Lista vazia é erro.
@@ -554,17 +706,23 @@ seu `id`, como no `config.json` atual.)
 ### `referencias`
 
 ```json
-{ "id": "clt", "nome": "Jonas com carteira assinada", "renda": -2957, "persona": "motoboy", "fonte": "CAGED…" }
+{ "id": "clt", "nome": "Jonas com carteira assinada", "renda": -14750, "persona": "motoboy", "fonte": "CAGED…" }
 ```
 
 Opcional. Cada referência vira uma linha de comparação na página 1 do placar
 final ("quanto faltou para o básico"), e não uma equipe. O valor precisa de fonte
 e de validação (D-005).
-- `renda`: o saldo dos três meses, na mesma conta das equipes: desde o esquema
-  v2, com a mesma casa (outra renda, básico e juros). É por isso que o "Jonas com
-  carteira assinada" do config atual é negativo: com carteira, na mesma casa,
-  também falta, mas menos. O código não recalcula esse número: ele vem pronto do
-  config, e muda à mão quando o básico ou os juros mudam.
+- `renda`: o saldo do jogo inteiro (12 meses no config atual), na mesma conta
+  das equipes: desde o esquema v2, com a mesma casa (outra renda, básico e
+  juros); no esquema v3, com os juros compostos no bimestre, e o 13º e o terço de
+  férias no último bimestre; no esquema v3.1, com o mesmo limite do cheque
+  especial, a mesma multa e a mesma mora, e descontando as contas atrasadas. É
+  por isso que o "Jonas com carteira assinada" do config atual é negativo
+  (−R$ 14.939; era −R$ 18.846 antes do limite e −R$ 14.750 com a multa de 7% e a mora de 0,8%): com carteira, na mesma casa,
+  também falta. Ela ficou **abaixo** do Jonas de app em 93% das partidas no
+  plano padrão (rascunho, seção 8, item 2, a decidir). O código não recalcula
+  esse número: ele vem pronto do config, e muda à mão quando o básico, os juros,
+  o limite, a multa, a mora ou o `mesesPorRodada` mudam.
 - `persona` (opcional): o id de uma persona. Com ela, a linha atravessa só as
   barras das equipes dessa persona: "Jonas com carteira assinada" não serve de
   régua para a Rose nem para o Kauã. Sem ela, a linha atravessa todas as
@@ -600,18 +758,21 @@ validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 | `bloco` | `titulo` | Um trecho da apresentação. O telão fica na espera, com o título e a linha do tempo do seminário; o título aparece também no celular |
 | `formarEquipes` | — | Formação das equipes. Ao sair dele, as equipes travam |
 | `personas` | — | As personas em jogo, com a casa de cada uma |
-| `rodada` | `rodada` | Um mês do jogo: decisão, sorteio e resultado |
-| `placarFinal` | — | O placar em páginas: quanto faltou para o básico, "Escolha ou sorte?" e a história de cada equipe (D-041, D-045) |
+| `rodada` | `rodada` | Uma rodada do jogo (um mês, ou um bimestre com `mesesPorRodada` 2): decisão, sorteio e resultado |
+| `placarFinal` | — | O placar em páginas: quanto faltou para o básico, "Escolha ou sorte?", o pior caso e a história de cada equipe, em páginas de até 3 rodadas (D-041, D-045, D-059) |
 | `comparativo` | `enquete` | O antes e depois da enquete pareada |
 | `fim` | — | O fim da sessão. Exportar totais e apagar a sala ficam na barra do apresentador (D-047) |
 
 - `alvoSeg`: o tempo-alvo do passo, em segundos. Alimenta o atraso na barra do
   apresentador; nada fecha por tempo.
-- `opcional`: marca o passo como opcional no "Pular para…".
+- `opcional`: marca o passo como opcional no "Pular para…". Serve também para um
+  bloco (as "Entrevistas" do config de 12 meses): nada é pulado sozinho, só
+  aparece "(opcional)" na lista do "Pular para…".
 
 **A linha do tempo (D-042)** sai do roteiro, sem campo próprio: ela lista os
-passos `bloco` e `rodada` na ordem do roteiro (as rodadas como "mês 1", "mês 2"…),
-com o título de cada um. Por isso o `titulo` do bloco é o nome que a turma lê na
+passos `bloco` e `rodada` na ordem do roteiro (as rodadas como "mês 1", "mês 2"…; com
+`mesesPorRodada` maior que 1, pelo nome curto, "Jan–fev"), com o título de cada um.
+Com mais de 16 passos, os que vêm depois da última rodada viram um item só. Por isso o `titulo` do bloco é o nome que a turma lê na
 linha, e vale a pena mantê-lo curto. O bloco cujo título **começa por "Mapa do
 seminário"** é especial: nele, a linha do tempo vira o conteúdo da tela, com
 todos os trechos por extenso. Mudou esse título? O mapa passa a ser um bloco
@@ -806,6 +967,12 @@ Depois, **as contas da casa**, só no saldo (`renda`) (D-044, D-046):
    e no saldo devedor) e a parcela de cada empréstimo tomado num mês anterior,
    lida do histórico: os juros dela somam aos juros do passo 6, e a amortização
    sai do caixa e do saldo devedor.
+8. a 11. **Só com `regras.limiteChequeEspecial`** (esquema v3.1, D-066), depois de
+   tudo: a mora das contas que já estavam atrasadas; o pagamento do atrasado com
+   a folga até o limite; o corte (contas atrasadas, depois a comida, na ordem
+   de `cortarPrimeiro`), com o caixa parado em −limite; e a multa sobre o que
+   atrasou. O detalhe está em "O limite do cheque especial", na seção `regras`.
+   Os juros do passo 6 nunca passam de `jurosDividaMes` sobre o limite.
 
 No fim, o novo valor é o de antes mais o delta, preso entre `min` e `max`. Toda
 condição lê o estado **de antes** da rodada e o histórico da equipe.
@@ -816,7 +983,12 @@ A tela mostra o mês assim:
 - **"a proteção pagou"** = o passo 3b, só quando há;
 - **"faltou"** (ou "sobrou") = entrou + proteção − gastos − básico − juros
   (os juros do cheque especial mais os da parcela). É o saldo do mês que o
-  telão mostra em verde ou vermelho;
+  telão mostra em verde ou vermelho. Com o limite, também − a multa e a mora
+  das contas atrasadas (dívida nova) + a comida não comprada (ela não saiu do
+  caixa); continua sendo a variação do patrimônio;
+- **"contas atrasadas"** e **"faltou na mesa"** (D-066), só com o limite e só
+  quando há: o telão mostra numa linha própria, embaixo da faixa da equipe, e o
+  celular, com nome, ao lado da dívida;
 - **o empréstimo fica fora do saldo do mês**: nem a entrada nem a amortização
   entram nele, e a dívida de depois é a de antes mais o que faltou.
 
@@ -847,7 +1019,9 @@ celular: "+25 dias da fratura −R$ 2.233". Por isso esses rótulos são curtos
 todos, o efeito da opção e a carta não saem assim: a rodada, a letra e o custo
 da carta já os dizem.
 
-Exemplo com o Jonas (config atual), calculado pelo motor:
+Exemplo com o Jonas, calculado pelo motor num config de 3 meses de 29/09,
+anterior ao de 12 meses e ao limite (o mecanismo é o mesmo; os valores de hoje
+estão no rascunho, seções 2 e 6):
 - **Num mês comum:** as entregas dão R$ 2.680, a parcela da moto (custo fixo)
   tira R$ 480, e a companheira traz R$ 1.499: entrou R$ 3.699. O básico é
   R$ 4.166: faltou R$ 467. No fim do mês seguinte, essa dívida cobra
@@ -972,11 +1146,51 @@ Erros comuns:
 
 ### As conferências de equilíbrio
 
-Com o config sem erro, o validador calcula o jogo inteiro por **enumeração
-exata**, e não por simulação: o número é o mesmo a cada execução, e mudar 1 no
-peso de uma carta aparece sem ruído. São oito seções, de (a) a (i), com (c) e
-(d) na mesma; (g), (h) e (i) chegaram com o esquema v2.1 (D-050, D-051 e a
-revisão de 29/09):
+Com o config sem erro, o validador calcula o jogo inteiro. São nove seções, de
+(a) a (j), com (c) e (d) na mesma; (g), (h) e (i) chegaram com o esquema v2.1
+(D-050, D-051 e a revisão de 29/09), e (j), com o limite do cheque especial
+(esquema v3.1, D-066).
+
+**Exato ou estimado.** Com poucas rodadas, a conta é a **enumeração exata** de
+todos os caminhos de cartas: o número é o mesmo a cada execução, e mudar 1 no
+peso de uma carta aparece sem ruído. Com 6 rodadas, cada equipe chega a milhões
+de caminhos (até 9,8 milhões no config de 12 meses com as cartas de atraso), e o validador passa
+a uma **simulação determinística**. A primeira linha diz qual das duas rodou:
+
+```
+Modo: SIMULAÇÃO determinística. Até 9.784.320 caminhos de cartas por equipe,
+acima do limite de 200.000 da enumeração exata. Os números de (a) a (i) são ESTIMADOS: …
+semente derivada do hash do config (a mesma saída a cada execução). …
+```
+
+- **Determinística** quer dizer que a semente dos sorteios sai do hash do
+  config: rodar de novo o mesmo arquivo dá **exatamente** a mesma saída, e é
+  isso que permite comparar duas execuções. Mudou qualquer coisa no config, o
+  hash muda, e com ele a amostra: diferenças pequenas entre duas versões podem
+  ser ruído da amostra, e não efeito da mudança. Para conferir uma mudança pequena
+  num peso, olhe os números que mudam bastante, ou teste a mudança numa cópia com
+  menos rodadas, que volta à conta exata.
+- **Estimado** vale para tudo o que depende de somar caminhos: as chances médias
+  de (a), os esperados, a variância de (e), a chance de fechar de (g) e os piores
+  casos, que são o pior achado na simulação mais uma busca dirigida (a carta de
+  menor saldo em cada rodada). O pior caso estimado é um caminho que existe, então
+  nunca fica abaixo do pior de verdade das mesmas escolhas; mas pode ficar um
+  pouco acima dele, se a busca não achou o pior de todos. O mesmo vale, ao
+  contrário, para o melhor caminho de (g).
+- **O tempo.** No config de 12 meses, `npm run validar` leva cerca de 2 minutos
+  e meio (medido em 05/10; o `npm run check` começa por ele). A amostra do validador é menor que a do
+  placar: 2.000 estados antes de cada rodada, 4.000 caminhos até o fim e 200
+  planos sorteados com 400 caminhos cada.
+- **O placar do telão** usa a mesma ideia com 20.000 sorteios, a partir da 5ª
+  rodada (até a 4ª, o número de caminhos ainda cabe na conta exata). As páginas
+  "Escolha ou sorte?" e "O pior que podia acontecer" dizem então "valores
+  estimados por simulação" e "pior caso estimado"; o saldo e a história de cada
+  equipe são sempre exatos.
+- A conferência de que **sempre há uma carta possível** não é estimada: com 6
+  rodadas, ela vale sem enumerar quando, em toda equipe × rodada × opção, há uma
+  carta que sai em qualquer estado (no config atual, "Um bimestre como os
+  outros"). Sem essa carta, a enumeração roda como antes, e passar de 20.000
+  estados é erro.
 
 **(a) Chances efetivas das cartas**, por persona, rodada e opção. Por exemplo:
 
@@ -1018,9 +1232,9 @@ escolha individual não tira ninguém da precariedade (D-009).
 indicador cai até o mínimo. Avisa quando isso passa de 30% das partidas e nenhuma
 condição do config lê aquele indicador, ou seja, ele cai sem consequência.
 
-**(g) Quem fecha o básico no fim dos 3 meses (D-050, D-058).** Por persona: a
+**(g) Quem fecha o básico no fim do jogo (D-050, D-058).** Por persona: a
 chance de terminar com o saldo acumulado em R$ 0 ou mais, com as decisões ao
-acaso; o plano (as três decisões) com a maior chance de fechar; o melhor caminho
+acaso; o plano (uma decisão por rodada) com a maior chance de fechar; o melhor caminho
 possível (decisões e cartas) com a renda final; e a chance de fechar ficando só
 no padrão. Avisa quando nenhum caminho fecha ("quase ninguém", e não
 "ninguém"), quando uma persona fecha em mais de 10% das partidas, quando menos
@@ -1031,7 +1245,7 @@ de 2 personas ficam entre 5% e 10% (a meta da D-058; antes era a faixa de 5% a
 (D-051).** Por mês: a melhor opção de cada persona (a de maior saldo final
 esperado, como em (c)), com aviso quando é a mesma para todas; e a letra (A a D)
 da opção de maior renda no próprio mês, na média das personas, com aviso quando
-é a mesma letra nos 3 meses. Atenção: a "renda do mês" é a variação do
+é a mesma letra em todas as rodadas. Atenção: a "renda do mês" é a variação do
 patrimônio (o saldo acumulado menos o empréstimo a pagar, esquema v2.2): o
 empréstimo não conta como renda, e o INSS conta (rascunho, seção 8).
 
@@ -1055,8 +1269,41 @@ Ainda em (h), duas conferências da D-059:
   troca da página "O pior que podia acontecer". Avisa quando nenhuma opção que
   protege melhora o pior caso de alguma persona.
 
-**O que (g) e (h) dizem do config de 29/09 à noite** (conteúdo v2.2; os números
-e as decisões pendentes estão no rascunho, seções 0.7 e 0.8):
+**O que (g), (h), (i) e (j) dizem do config de 12 meses** (`2026-10-05-v3.1`,
+hash `472f94a0` de 05/10, com o limite e as propostas 3(a) e 1(b), aguardando
+o Kleber, estimado; as decisões pendentes estão no rascunho, seção 8). Os
+números abaixo são de uma execução: **compare com a saída do `npm run validar`
+do dia**, e não com o hash escrito aqui. Uma troca só de texto muda o hash e,
+com ele, a amostra: da `0c67f01e` para a `472f94a0` (só a `versao` e um texto
+de `fonte`), o melhor caminho do Jonas foi de −R$ 591 para −R$ 1.524, e o
+esgotamento passou a ser o melhor plano em 6 dos 6 bimestres (eram 5).
+Diferenças de dezenas de reais entre opções estão dentro do ruído da simulação:
+- (g): **nenhuma persona fecha o básico**, em nenhum caminho que a simulação
+  achou; o melhor caminho vai de −R$ 1.524 (Jonas, com a carta de promoção nos
+  seis bimestres) a −R$ 20.238 (Rose). Só o padrão fecha em 0% nas 6. Avisos:
+  os seis "nenhum caminho fecha" e "só 0 persona(s) entre 5% e 10%".
+- (c) e (d): a opção A de Jan–fev vence em saldo com mais de 70% de
+  probabilidade na Rose e na Daiane, e a C de Mar–abr (o crédito pessoal), na
+  Bruna; a A de Mar–abr da Daiane é dominante, e o padrão é a opção de maior
+  saldo para a Rose em Jul–ago. Só os dois últimos são diferenças de dezenas de
+  reais; os três primeiros vão de R$ 330 a R$ 1.113 (rascunho, seção 6.3 e
+  seção 8, item 18).
+- (h), esgotamento: a opção mais cansativa é a de maior saldo esperado para 3
+  personas em Jan–fev, Mar–abr e Jul–ago, e para 5 em Mai–jun, Set–out e
+  Nov–dez (seis avisos).
+- (h), proteção: no plano padrão, o MEI só melhora o pior caso estimado do Kauã
+  (R$ 27), não muda o da Rose e piora o do Jonas (R$ 457), o da Daiane
+  (R$ 427), o do Marcos (R$ 186) e o da Bruna (R$ 24); no esperado, perde de
+  R$ 180 (Rose) a R$ 726 (Jonas).
+- (i): o trabalho nunca fica negativo; o "entrou" só fica negativo na Daiane
+  (pior −R$ 456, Jul–ago com a opção D e a fratura; ao acaso, até 3,2% dos casos,
+  em Set–out), com aviso.
+- (j): o banco termina em R$ 2.000 nas 6 personas; no plano padrão, as contas
+  atrasadas no fim vão de R$ 9.946 (Jonas) a R$ 20.923 (Rose), em média, e o
+  que faltou na mesa no ano, de R$ 486 (Jonas) a R$ 9.258 (Daiane).
+
+**O que (g) e (h) diziam do config de 29/09 à noite** (conteúdo v2.2, 3 meses,
+exato; hoje em `test/fixtures/config-real-v22.json`):
 - (g): ao acaso, Jonas fecha em 0,01% e Marcos em 0,1% (no melhor plano, A-C-B,
   0,4% e 2,8%); Daiane, Kauã e Rose não fecham em caminho nenhum; só o padrão
   fecha em 0% nas 5. Avisos: os três "nenhum caminho fecha" e "só 0 persona(s)
@@ -1067,6 +1314,17 @@ e as decisões pendentes estão no rascunho, seções 0.7 e 0.8):
 - (h), proteção: o MEI melhora o pior caso das 5 personas (na média das
   combinações, de R$ 333 a R$ 1.226) e perde de R$ 210 a R$ 267 no esperado; a
   associação perde nos dois. Sem aviso, porque o MEI basta.
+
+**(j) Dívida no fim do jogo (D-066)**, só com `regras.limiteChequeEspecial`: o
+limite e a fonte dele, a ordem do corte, a multa e a mora; e, por persona, ao
+acaso e no plano padrão, o esperado e o pior de quatro números no fim: a dívida
+no banco (nunca passa do limite), as contas atrasadas, o que faltou na mesa
+(acumulado, fora da dívida) e a dívida total (o banco, o empréstimo e as contas
+atrasadas). Avisa quando o banco passa do limite (seria defeito do motor) e
+quando a dívida total passa do teto de uma casa que não pagou nada (o limite,
+mais os empréstimos do config, mais o básico de todos os meses): é a volta dos
+juros compostos sem fim. Sem o limite no config, a seção diz só isso. Leia-a
+antes de mudar o limite, a multa, a mora ou o `cortarPrimeiro`.
 
 **(i) Conta do mês: trabalho e "entrou".** Em todos os estados alcançáveis ×
 opção × carta: com `regras.pisoTrabalho`, confere que o trabalho nunca fica

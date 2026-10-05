@@ -20,6 +20,19 @@ export const CAMINHO_CONFIG_TESTE_V2 = join(PASTA_FIXTURES, 'config-teste-v2.jso
 // no mês 2 (para quem pagou e tirou o acidente no mês 1) e o auxílio do mês 3
 // como efeitos de categoria "protecao".
 export const CAMINHO_CONFIG_TESTE_V21 = join(PASTA_FIXTURES, 'config-teste-v21.json');
+// O esquema v3 (D-060: 12 meses em 6 rodadas bimestrais): regras.mesesPorRodada
+// 2, 6 rodadas, 20 cartas (o risco do acidente cresce do bimestre 4 em diante,
+// D-063), o MEI que protege, o empréstimo de 6 parcelas no bimestre 2 (pago de
+// duas em duas) e as enquetes no formato da matriz de votos (a de entrada no
+// modo "todas", o termômetro uma afirmação por vez). Com 6 rodadas, os
+// caminhos de cartas passam de 200 mil já na 5ª, e o placar vira estimado.
+export const CAMINHO_CONFIG_TESTE_V3 = join(PASTA_FIXTURES, 'config-teste-v3.json');
+// O config.json real do teste de 30/09 (v2.2: 3 rodadas mensais, hash fc0c3c35),
+// congelado quando o conteúdo passou a 12 meses (D-060). Os testes do empréstimo
+// refazem o caminho exato do Jonas naquele dia (faltou R$ 467 no mês 1, pegou
+// R$ 1.500 no mês 2); com o config.json novo, esse caminho deixou de existir e
+// os testes quebravam por mudança de conteúdo, e não de motor.
+export const CAMINHO_CONFIG_REAL_V22 = join(PASTA_FIXTURES, 'config-real-v22.json');
 
 // Lido do disco a cada chamada: os testes de mutação alteram o objeto.
 export function lerConfigTeste() {
@@ -32,6 +45,15 @@ export function lerConfigTesteV2() {
 
 export function lerConfigTesteV21() {
   return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V21, 'utf8'));
+}
+
+export function lerConfigTesteV3() {
+  return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V3, 'utf8'));
+}
+
+// Em texto, para passar por validarTexto do mesmo jeito que o config.json passa.
+export function textoConfigRealV22() {
+  return readFileSync(CAMINHO_CONFIG_REAL_V22, 'utf8');
 }
 
 export function configMinimo() {
@@ -72,4 +94,16 @@ export function normalizar(V, bruto) {
   const r = V.validarConfig.validar(bruto);
   if (!r.ok) throw new Error('config de teste inválido:\n' + r.erros.map((e) => `${e.caminho}: ${e.mensagem}`).join('\n'));
   return r.config;
+}
+
+// O esquema v3.1 (D-066: o cheque especial tem limite): a fixture v3 com
+// regras.limiteChequeEspecial 1.500, multa de 10%, mora de 1% ao mês, os
+// indicadores contas_atrasadas e faltou_na_mesa e o item da comida marcado no
+// básico de cada persona (na Dani, o único item, "aluguel e comida": prova a
+// borda em que não há conta do período para atrasar antes da comida). Valores
+// ilustrativos, sem fonte.
+export const CAMINHO_CONFIG_TESTE_V31 = join(PASTA_FIXTURES, 'config-teste-v31.json');
+
+export function lerConfigTesteV31() {
+  return JSON.parse(readFileSync(CAMINHO_CONFIG_TESTE_V31, 'utf8'));
 }

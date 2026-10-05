@@ -34,7 +34,7 @@
   // O valor que firebase/regras.json aceita em regrasVersao (test/regras.test.mjs
   // confere que é o mesmo do regras.json e do telão, e que a versão está presa
   // ao conteúdo das regras).
-  const REGRAS_VERSAO = 'v3';
+  const REGRAS_VERSAO = 'v4';
   const LIVRES_PARA_LER = new Set(['meta', 'conteudo', 'estado', 'pulso', 'resultados', 'placar', 'enquetes', 'membros']);
 
   function negar(motivo) {
@@ -396,7 +396,9 @@
     if (segs.length < 3) return false;
     const no = segs[2];
     if (LIVRES_PARA_LER.has(no)) return true;
-    if (no === 'decisoes') return segs.length >= 5 && em(sala, ['membros', uid, 'equipe']) === segs[4];
+    // Regras v4 (D-064): o celular do apresentador, com o PIN, lê a decisão de
+    // qualquer equipe (o modo espectador), e continua sem ler a rodada inteira.
+    if (no === 'decisoes') return segs.length >= 5 && (em(sala, ['membros', uid, 'equipe']) === segs[4] || pinConfere(arvore, uid));
     if (no === 'votosEnquete') return segs.length >= 7 && segs[6] === uid;
     return false;
   }

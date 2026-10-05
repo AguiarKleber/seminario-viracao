@@ -133,6 +133,7 @@ test('toda escrita de aluno exige prioridade nula, nó a nó', () => {
 const HASH_POR_VERSAO = {
   v2: '962556dea5c3',
   v3: '7066bfc58f46', // D-035: salas/$s/prorrogacoes/$r
+  v4: '56db60124643', // D-064: o apresentador com o PIN lê salas/$s/decisoes/$r/$eq (modo espectador)
 };
 
 function versaoEHash() {
@@ -171,14 +172,18 @@ test('toda expressão de prazo soma a graça (gracaSeg) e exige número', () => 
   }
 });
 
-test('leitura nó a nó: sementes, prorrogações e presença sem leitura de aluno; votos e decisões só do próprio', () => {
+test('leitura nó a nó: sementes, prorrogações e presença sem leitura de aluno; votos e decisões só do próprio (e o espectador com o PIN)', () => {
   for (const c of ['meta', 'conteudo', 'estado', 'pulso', 'resultados', 'placar', 'enquetes', 'membros']) assert.equal(sala[c]['.read'], 'auth != null', c);
   assert.equal(sala.sementes['.read'], undefined);
   assert.equal(sala.prorrogacoes['.read'], undefined);
   assert.equal(sala.prorrogacoes.$r['.read'], undefined);
   assert.equal(sala.presenca['.read'], undefined);
   assert.equal(sala.votosEnquete.$e.$m.$a.$uid['.read'], 'auth != null && auth.uid === $uid');
-  assert.equal(sala.decisoes.$r.$eq['.read'], "auth != null && root.child('salas/'+$s+'/membros/'+auth.uid+'/equipe').val() === $eq");
+  // Regras v4 (D-064): além de quem é da equipe, o celular do apresentador com
+  // o PIN (o modo espectador) lê a decisão de uma equipe; nunca a rodada inteira.
+  assert.equal(sala.decisoes.$r.$eq['.read'], "auth != null && (root.child('salas/'+$s+'/membros/'+auth.uid+'/equipe').val() === $eq || (root.child('privado/pinApresentador').exists() && root.child('pedidosAnfitriao/'+auth.uid).val() === root.child('privado/pinApresentador').val()))");
+  assert.equal(sala.decisoes['.read'], undefined);
+  assert.equal(sala.decisoes.$r['.read'], undefined);
   const leituras = expressoes.filter(([c]) => c.endsWith('/.read') && c.startsWith('salas/')).map(([c]) => c);
   assert.equal(leituras.length, 11);
 });

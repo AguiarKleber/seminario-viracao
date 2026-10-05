@@ -132,7 +132,10 @@ test('referência: config, decisões e semente fixos dão um placar exato', () =
       rodadas.push({ rodadaId, opcaoId: opcoes[i], cartaId: r.carta });
       estado = r.depois;
     });
-    const d = M.decompor(config, { equipeId, rodadas });
+    // Esquema v3: 3 rodadas ficam muito abaixo do limite de caminhos, e a conta
+    // continua a enumeração exata (os números de referência não mudam).
+    const { estimado, ...d } = M.decompor(config, { equipeId, rodadas });
+    assert.equal(estimado, false, `${equipeId}: 3 rodadas continuam exatas`);
     placar[equipeId] = { cartas: rodadas.map((r) => r.cartaId).join(','), ...estado, ...arredondar(d) };
   }
 
@@ -172,7 +175,7 @@ test('decompor: enumeração exata num caso feito à mão', () => {
   const d = M.decompor(config, { equipeId: 'e1', rodadas: [{ rodadaId: 'r1', opcaoId: 'a', cartaId: 'boa' }] });
 
   // Assert
-  assert.deepEqual(d, { realizado: 500, esperadoComDecisoes: 300, esperadoPiloto: 200, efeitoDecisoes: 100, sorte: 200, piorCaso: 100, piorCasoSemProtecao: 100 });
+  assert.deepEqual(d, { realizado: 500, esperadoComDecisoes: 300, esperadoPiloto: 200, efeitoDecisoes: 100, sorte: 200, piorCaso: 100, piorCasoSemProtecao: 100, estimado: false });
 });
 
 test('decompor: a chance do mês 2 depende do mês 1 (árvore, não produto)', () => {

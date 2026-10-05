@@ -359,6 +359,27 @@ test('trava de leitura: o aluno não lê semente, voto alheio nem a decisão de 
   assert.equal(await h.ler(`${S}/sementes/r1`), 5);
 });
 
+test('regras v4 (D-064): com o PIN, o espectador lê a decisão de qualquer equipe, e só isso; sem o PIN, não', async () => {
+  // Arrange: o PIN em privado/, semeado por fora, como no console.
+  const { canal } = await salaPronta();
+  const arvore = canal.exportar();
+  arvore.privado = { pinApresentador: 'pin-certo-0001' };
+  canal.importar(arvore);
+  await membro(canal, 'a', 'e1');
+  const esp = canal.comoUsuario('esp');
+  // Act + Assert
+  await assert.rejects(esp.ler(`${S}/decisoes/r1/e1`), negado(), 'sem pedido');
+  await esp.gravar({ 'pedidosAnfitriao/esp': 'pin-errado-000' });
+  await assert.rejects(esp.ler(`${S}/decisoes/r1/e1`), negado(), 'PIN errado');
+  await esp.gravar({ 'pedidosAnfitriao/esp': 'pin-certo-0001' });
+  assert.equal(await esp.ler(`${S}/decisoes/r1/e1`), null);
+  assert.equal(await esp.ler(`${S}/decisoes/r1/e2`), null);
+  await assert.rejects(esp.ler(`${S}/decisoes/r1`), negado(), 'a rodada inteira, não');
+  await assert.rejects(esp.ler(S), negado(), 'a sala inteira, não');
+  await esp.gravar({ 'pedidosAnfitriao/esp': null });
+  await assert.rejects(esp.ler(`${S}/decisoes/r1/e1`), negado(), 'pedido apagado');
+});
+
 test('ouvinte que perde a permissão (aluno movido de equipe) é cancelado com erro', async () => {
   // Arrange
   const { canal, h } = await salaPronta();
@@ -402,7 +423,8 @@ test('regrasVersao só aceita a versão destas regras; autoteste e privado nunca
   // Arrange
   const canal = V.canalLocal.criar().comoUsuario('u');
   // Act + Assert
-  await canal.gravar({ 'regrasVersao/u': 'v3' });
+  await canal.gravar({ 'regrasVersao/u': 'v4' });
+  await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v3' }), negado());
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v2' }), negado());
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v1' }), negado());
   await assert.rejects(canal.gravar({ 'autoteste/u': true }), negado());

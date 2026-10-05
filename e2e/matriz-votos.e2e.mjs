@@ -46,10 +46,30 @@
 //   pede para tocar de novo (achado 5);
 // - o voto em trânsito na hora da pausa: fica guardado e vai sozinho quando o
 //   apresentador retoma (achado 6).
+// D-064: o celular do apresentador fica ligado a matriz inteira no modo
+// espectador (com o PIN), trocando de equipe a cada rodada e conferindo a tela e
+// a contagem de cada uma; todas as conferências dos alunos continuam as mesmas,
+// e ele nunca vira membro nem vota. Revisão da F7: antes dele, outro celular
+// aperta Enter no código da tela do espectador (tem de ir ao PIN, e não entrar
+// como aluno) e pede o modo com a prova do PIN sem resposta (o pedido tem de
+// sair do banco quando o tempo-limite expira, ao voltar à entrada e ao fechar a
+// aba). Revisão da F6b (achado 16): um aparelho que já é membro da sala pede o
+// modo espectador e fica na tela do PIN, com o aviso, sem gravar o pedido e sem
+// apagar o próprio membro. Revisão do voto da F6b (achado 1): o sétimo celular
+// passa pelo modo espectador, volta ("Voltar") e entra como aluno; na primeira
+// rodada do meio, recarrega com o voto guardado e tem de voltar à sala e
+// reenviá-lo.
 // O número de rodadas vem do roteiro (a D-060 leva a 6): a primeira e a
 // segunda têm os casos acima, as do meio são votadas por todos, e a última é o
 // caso do teste de 30/09 (todos votam depois do cronômetro).
-// Capturas em e2e/capturas/votos-*.png (as antigas são apagadas no começo).
+// Esquema v3 (D-060: 12 meses em 6 bimestres): a matriz roda DUAS sessões,
+// uma com o config.json (as 6 rodadas bimestrais do conteúdo real) e outra com a fixture
+// de 6 rodadas bimestrais (test/fixtures/config-teste-v3.json), para as 6
+// rodadas, o placar estimado das duas últimas e o fechamento mais pesado do
+// telão (o decompor simulado) passarem pelos mesmos toques. Com --config
+// <arquivo>, só aquele.
+// Capturas em e2e/capturas/votos-*.png (as antigas são apagadas no começo; as
+// da fixture v3 levam "votos-v3-").
 //
 // Uso: npm run e2e:votos. Com --sem-espera, as esperas longas encolhem para
 // depurar o próprio teste; a verificação de verdade é sem ele.
@@ -68,6 +88,10 @@ const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const SDK_CDN = 'https://www.gstatic.com/firebasejs/12.19.0/';
 const UA_CELULAR = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
 const SEM_ESPERA = process.argv.includes('--sem-espera');
+// Os configs da matriz: o do --config, ou os dois (o real e a fixture de 6
+// rodadas). Relativos à raiz do projeto.
+const ARG_CONFIG = process.argv.includes('--config') ? process.argv[process.argv.indexOf('--config') + 1] : null;
+const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : ['config.json', 'test/fixtures/config-teste-v3.json'];
 const ROTEIRO = '60min';
 const LETRAS = 'ABCDEFGHIJ';
 const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
@@ -83,7 +107,7 @@ if (!process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
   if (await emuladorNoAr()) {
     console.warn('AVISO: o emulador já estava no ar, aberto por outro processo. Se ele cair no meio (outro e2e terminando), a matriz falha sem defeito no app: rode de novo com as portas 9000 e 9099 livres.');
   }
-  process.exitCode = await rodarNoEmulador(`node e2e/matriz-votos.e2e.mjs${SEM_ESPERA ? ' --sem-espera' : ''}`);
+  process.exitCode = await rodarNoEmulador(`node e2e/matriz-votos.e2e.mjs${SEM_ESPERA ? ' --sem-espera' : ''}${ARG_CONFIG ? ` --config ${ARG_CONFIG}` : ''}`);
 } else {
   await matriz();
 }
@@ -114,14 +138,15 @@ async function servirSdk(contexto) {
   });
 }
 
-// O config.json da raiz, lido UMA vez e servido pelo Playwright ao telão: o
-// conteúdo ainda muda até o congelamento (outro agente pode estar gravando o
-// arquivo agora), e a sessão inteira precisa de um conteúdo só.
-async function conteudoDoTeste() {
+// O config (o config.json da raiz, ou a fixture v3), lido UMA vez e servido
+// pelo Playwright ao telão: o conteúdo ainda muda até o congelamento (outro
+// agente pode estar gravando o arquivo agora), e a sessão inteira precisa de
+// um conteúdo só.
+async function conteudoDoTeste(arquivo) {
   const V = await carregarNucleo();
-  const texto = readFileSync(join(RAIZ, 'config.json'), 'utf8');
+  const texto = readFileSync(join(RAIZ, arquivo), 'utf8');
   const r = V.validarConfig.validarTexto(texto);
-  assert.ok(r.ok, `o config.json precisa passar no validador para a matriz de votos: ${JSON.stringify(r.erros.slice(0, 3))}`);
+  assert.ok(r.ok, `o ${arquivo} precisa passar no validador para a matriz de votos: ${JSON.stringify(r.erros.slice(0, 3))}`);
   const cfg = r.config;
   const passos = lista(cfg.roteiros[ROTEIRO]);
   const equipes = lista(cfg.ordem.equipes);
@@ -132,9 +157,13 @@ async function conteudoDoTeste() {
   // jogo a 6 rodadas, e a D-061 dá uma persona a cada equipe. O empate da
   // prorrogação não depende da persona: é o sétimo celular na equipe 2.
   assert.ok(rodadas.length >= 3, `a matriz precisa de pelo menos 3 rodadas no roteiro ${ROTEIRO} (tem ${rodadas.length})`);
+  // A D-060 leva o jogo a 6 rodadas: a matriz do config.json tem de passar pelas 6 (revisão da F7).
+  if (arquivo === 'config.json') assert.equal(rodadas.length, 6, `o config.json tem 6 rodadas no roteiro ${ROTEIRO} (D-060)`);
   for (const rId of rodadas) assert.ok(lista(cfg.rodadas[rId].ordemOpcoes).length >= 3, `a rodada ${rId} tem pelo menos 3 opções`);
-  console.log(`Conteúdo: config.json (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos.`);
-  return { V, cfg, texto, passos, equipes, rodadas, enquetes, opcoesDe: (rId) => lista(cfg.rodadas[rId].ordemOpcoes) };
+  console.log(`Conteúdo: ${arquivo} (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos, ${rodadas.length} rodadas de ${V.motor.mesesPorRodada(cfg)} mês(es).`);
+  // As capturas da fixture v3 levam o prefixo, para não sobrescrever as do config.json.
+  const prefixo = arquivo === 'config.json' ? 'votos' : 'votos-v3';
+  return { V, cfg, texto, passos, equipes, rodadas, enquetes, prefixo, opcoesDe: (rId) => lista(cfg.rodadas[rId].ordemOpcoes) };
 }
 
 // O que o telão grava logo depois de a tela mudar chega um instante depois:
@@ -152,7 +181,10 @@ async function esperarNoBanco(caminho, esperado, esperaMs = 8000) {
 async function matriz() {
   mkdirSync(CAPTURAS, { recursive: true });
   for (const n of readdirSync(CAPTURAS)) if (/^votos-.*\.png$/.test(n)) rmSync(join(CAPTURAS, n));
-  const C = await conteudoDoTeste();
+  for (const arquivo of CONFIGS) await sessaoDaMatriz(await conteudoDoTeste(arquivo));
+}
+
+async function sessaoDaMatriz(C) {
   const site = await servir({ porta: 0 });
   // O PIN só do emulador (no projeto real, ele fica só no console, AGENTS.md regra 7).
   await administrador('PUT', 'privado/pinApresentador', PIN_EMULADOR);
@@ -176,7 +208,7 @@ async function matriz() {
     await site.fechar();
   }
   assert.deepEqual(errosDaPagina, [], 'nenhum erro inesperado no console das páginas');
-  console.log(`ok: matriz de votos em ${Math.round((Date.now() - inicio) / 1000)} s${SEM_ESPERA ? ' (--sem-espera: NÃO vale como verificação)' : ''}.`);
+  console.log(`ok: matriz de votos (${C.rodadas.length} rodadas, ${C.cfg.versao}) em ${Math.round((Date.now() - inicio) / 1000)} s${SEM_ESPERA ? ' (--sem-espera: NÃO vale como verificação)' : ''}.`);
 }
 
 async function jogar({ C, site, navegador, vigiar }) {
@@ -314,6 +346,16 @@ async function jogar({ C, site, navegador, vigiar }) {
                 }
                 return gravar.call(canal, escritas);
               };
+              // A prova do PIN que não responde (revisão da F7, achado 2):
+              // com globalThis.__provaSemResposta, a leitura de
+              // decisoes/_pin/_pin nunca volta, como numa rede que cai entre a
+              // gravação do pedido e a prova. O emulador não segura uma
+              // leitura: é o único jeito de chegar a esse caminho.
+              const ler = canal.ler;
+              canal.ler = (caminho, ...resto) => {
+                if (globalThis.__provaSemResposta && String(caminho).includes('decisoes/_pin')) return new Promise(() => {});
+                return ler.call(canal, caminho, ...resto);
+              };
               return canal;
             },
           };
@@ -356,7 +398,7 @@ async function jogar({ C, site, navegador, vigiar }) {
     }
   }
   let capturas = 0;
-  const capturar = (c, nome) => c.p.screenshot({ path: join(CAPTURAS, `votos-${String(++capturas).padStart(2, '0')}-${nome}.png`) });
+  const capturar = (c, nome) => c.p.screenshot({ path: join(CAPTURAS, `${C.prefixo}-${String(++capturas).padStart(2, '0')}-${nome}.png`) });
 
   // Os 6 da matriz (um por equipe, na ordem do config) e o sétimo, na segunda
   // equipe do Jonas, para o empate da prorrogação.
@@ -368,6 +410,14 @@ async function jogar({ C, site, navegador, vigiar }) {
     cel.push(c);
   }
   const extra = cel[6];
+  // Revisão do voto (achado da marca do espectador): o sétimo celular passa
+  // antes pelo modo espectador, recarrega (volta ao campo do PIN), toca em
+  // "Voltar" e entra como ALUNO, como na orientação do teste das 18h (um
+  // celular a mais, entrando como aluno). Antes, a marca "espectador" da aba
+  // sobrevivia ao "Voltar": toda recarga desse aparelho caía no campo do PIN e
+  // não voltava à sala. A recarga com o voto guardado fica na primeira rodada
+  // do meio (votoGuardadoERecarga).
+  await espectadorQueViraAluno(extra);
   for (const c of cel) {
     await esperarTela(c, 'entrada');
     await c.p.locator('[data-acao="entrar"]').tap();
@@ -379,6 +429,178 @@ async function jogar({ C, site, navegador, vigiar }) {
   assert.equal(new Set(cel.map((c) => c.uid)).size, cel.length, 'cada celular é um aparelho');
   await telao.waitForFunction((n) => document.querySelector('.lobby-conectados b')?.textContent === String(n), cel.length, { timeout: 30000 });
   console.log(`${cel.length} celulares na sala.`);
+
+  // ---------- O espectador (D-064), ligado a matriz inteira ----------
+  // O celular do apresentador entra com o PIN no lobby e fica ligado até o fim,
+  // trocando de equipe a cada rodada. O voto dos alunos não pode sentir nada:
+  // o "N de M" do telão, os votos no servidor e a apuração continuam os dos
+  // alunos (as conferências abaixo são as mesmas de sem ele), e ele nunca vira
+  // membro nem vota.
+  // Revisão da F7 (achados 1 e 2), só na primeira sessão (a prova sem
+  // resposta espera os 15 s do tempo-limite): dois caminhos em que o celular do
+  // apresentador escapava do modo espectador.
+  if (C.prefixo === 'votos') await tropecosDoEspectador();
+  const esp = await novoCelular('espectador');
+  await esperarTela(esp, 'entrada');
+  await esp.p.locator('[data-acao="sou-apresentador"]').tap();
+  await esp.p.locator('#pin-espectador').fill(PIN_EMULADOR);
+  await esp.p.locator('[data-acao="entrar-espectador"]').tap();
+  await esperarTela(esp, 'aguardando');
+  esp.uid = await esp.p.evaluate(() => globalThis.Viracao.aluno.uid());
+  assert.equal(await administrador('GET', `pedidosAnfitriao/${esp.uid}`), PIN_EMULADOR, 'o pedido do espectador está no banco');
+  await telao.waitForTimeout(1500);
+  assert.equal(await telao.textContent('.lobby-conectados b'), String(cel.length), 'o espectador não entra na contagem do lobby');
+  async function tropecosDoEspectador() {
+    const t = await novoCelular('espectador-tropecos');
+    const uidDe = () => t.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    const membroDe = async (uid) => (uid ? (await administrador('GET', s('membros')))?.[uid] ?? null : null);
+    // (1) Enter no campo do código, na tela do modo espectador, é o gesto de
+    // quem passa ao campo do PIN. Antes, entrava como ALUNO: membros/{uid}
+    // gravado, contado no "N de M" depois da trava e, recarregada a página,
+    // a sala guardada entrava direto como aluno, sem o "Sou apresentador".
+    await esperarTela(t, 'entrada');
+    await t.p.locator('[data-acao="sou-apresentador"]').tap();
+    await t.p.locator('#pin-espectador').waitFor();
+    await t.p.locator('#codigo-sala').focus();
+    await t.p.keyboard.press('Enter');
+    await t.p.waitForTimeout(2500);
+    assert.equal(await telaDe(t), 'entrada', 'Enter no código do espectador: continua na tela do PIN');
+    assert.equal(await t.p.evaluate(() => document.activeElement?.id), 'pin-espectador', 'Enter no código do espectador: o foco vai para o PIN');
+    assert.equal(await membroDe(await uidDe()), null, 'Enter no código do espectador: não vira membro');
+    await t.p.reload();
+    await esperarTela(t, 'entrada');
+    await t.p.waitForTimeout(1500);
+    assert.equal(await telaDe(t), 'entrada', 'recarregada, a página não entra sozinha na sala');
+    assert.equal(await t.p.locator('[data-acao="sou-apresentador"]').count(), 1, 'recarregada, a entrada tem o "Sou apresentador"');
+    console.log('Espectador: Enter no código leva ao PIN, e o aparelho não vira aluno (achado 1).');
+    // (2) A prova do PIN sem resposta depois de o pedido gravado: o pedido
+    // não pode ficar no banco (seria um PIN_OK permanente para o uid anônimo
+    // deste navegador), nem ao sair pela tela de erro, nem ao fechar a aba no
+    // meio da espera.
+    async function pedirSemProva() {
+      await t.p.evaluate(() => { globalThis.__provaSemResposta = true; });
+      if (await t.p.locator('#pin-espectador').count() === 0) await t.p.locator('[data-acao="sou-apresentador"]').tap();
+      await t.p.locator('#pin-espectador').fill(PIN_EMULADOR);
+      await t.p.locator('[data-acao="entrar-espectador"]').tap();
+      await t.p.waitForFunction(() => globalThis.Viracao.aluno.uid(), null, { timeout: 20000 });
+      const uid = await uidDe();
+      assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uid}`, PIN_EMULADOR), PIN_EMULADOR, 'o pedido foi gravado antes da prova');
+      return uid;
+    }
+    const uidT = await pedirSemProva();
+    await esperarTela(t, 'erro', 30000);
+    // O tempo-limite da prova expirou: o pedido sai já, sem esperar o toque.
+    assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidT}`, null, 5000), null, 'prova sem resposta: o pedido sai do banco quando o tempo-limite expira');
+    await t.p.locator('[data-acao="outra-sala"]').tap();
+    await esperarTela(t, 'entrada');
+    assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidT}`, null), null, 'prova sem resposta: o pedido sai do banco ao voltar à entrada');
+    assert.equal(await pedirSemProva(), uidT, 'o mesmo aparelho');
+    await t.p.close();
+    assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidT}`, null, 20000), null, 'prova sem resposta: o pedido sai do banco quando a aba fecha no meio da espera');
+    assert.equal(await membroDe(uidT), null, 'o aparelho nunca virou membro');
+    await t.ctx.close();
+    console.log('Espectador: com a prova do PIN sem resposta, o pedido some ao sair e ao fechar a aba (achado 2).');
+    // (3) Um aparelho que já é membro da sala não entra no modo espectador:
+    // seria um membro fantasma no "N de M" (o registro fica, e o espectador
+    // nunca manda presença nem vota). O celular avisa e não apaga o membro: quem
+    // tira um aluno da sala é o apresentador, pelo telão. O caminho real: o
+    // aparelho entrou como aluno e voltou à entrada por uma tela de erro
+    // ("Entrar em outra sala" esquece a sala guardada), como faz o teste.
+    const m = await novoCelular('espectador-ja-membro');
+    await esperarTela(m, 'entrada');
+    await m.p.locator('[data-acao="entrar"]').tap();
+    await esperarTela(m, 'aguardando');
+    const uidM = await m.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    // A tela "aguardando" vem antes do registro ("Entrando na sala…"): espera
+    // o membro chegar ao banco.
+    for (let i = 0; i < 100 && !(await membroDe(uidM)); i += 1) await m.p.waitForTimeout(100);
+    assert.ok(await membroDe(uidM), 'o aparelho entrou como aluno');
+    await m.p.evaluate(() => localStorage.removeItem('viracao:aluno:sala'));
+    await m.p.reload();
+    await esperarTela(m, 'entrada');
+    await m.p.locator('[data-acao="sou-apresentador"]').tap();
+    await m.p.locator('#pin-espectador').fill(PIN_EMULADOR);
+    await m.p.locator('[data-acao="entrar-espectador"]').tap();
+    await m.p.waitForFunction(() => /já entrou como aluno/.test(document.querySelector('[data-espectador] .nota')?.textContent || ''), null, { timeout: 20000 })
+      .catch(async () => { throw new Error(`aparelho que já é membro: esperava o aviso na tela do PIN; tela "${await telaDe(m)}", espectador ${JSON.stringify(await m.p.evaluate(() => globalThis.Viracao.aluno.espectador()))}`); });
+    assert.equal(await m.p.evaluate(() => globalThis.Viracao.aluno.uid()), uidM, 'o mesmo aparelho');
+    assert.equal(await telaDe(m), 'entrada', 'aparelho que já é membro: fica na tela do PIN');
+    assert.equal(await m.p.evaluate(() => globalThis.Viracao.aluno.espectador()), null, 'aparelho que já é membro: não entra no modo espectador');
+    assert.equal(await administrador('GET', `pedidosAnfitriao/${uidM}`), null, 'aparelho que já é membro: o PIN nem vai para o banco');
+    assert.ok(await membroDe(uidM), 'aparelho que já é membro: o celular não apaga o próprio membro');
+    await capturar(m, 'espectador-ja-membro');
+    await m.ctx.close();
+    // A limpeza é do teste (o apresentador usaria "Remover inativos"): a matriz
+    // conta só os celulares dela.
+    await administrador('DELETE', s('membros', uidM));
+    await administrador('DELETE', s('presenca', uidM));
+    await telao.waitForFunction((n) => document.querySelector('.lobby-conectados b')?.textContent === String(n), cel.length, { timeout: 30000 });
+    console.log('Espectador: um aparelho que já é membro da sala não entra no modo espectador, com o aviso (achado 16).');
+  }
+  async function espectadorQueViraAluno(c) {
+    await esperarTela(c, 'entrada');
+    await c.p.locator('[data-acao="sou-apresentador"]').tap();
+    await c.p.locator('#pin-espectador').fill(PIN_EMULADOR);
+    await c.p.locator('[data-acao="entrar-espectador"]').tap();
+    await esperarTela(c, 'aguardando');
+    const uid = await c.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uid}`, PIN_EMULADOR), PIN_EMULADOR, `${c.nome}: entrou no modo espectador`);
+    await c.p.reload();
+    await c.p.locator('#pin-espectador').waitFor({ timeout: 15000 });
+    await c.p.locator('[data-acao="voltar-entrada"]').tap();
+    await c.p.locator('[data-acao="entrar"]').waitFor();
+    assert.equal(await c.p.evaluate(() => sessionStorage.getItem('viracao:aluno:espectador') || null), null, `${c.nome}: o "Voltar" apaga a marca do modo espectador na aba`);
+    assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uid}`, null), null, `${c.nome}: o pedido do espectador saiu do banco`);
+  }
+  // O voto que falha sem ser recusa fica guardado no aparelho; a recarga tem de
+  // voltar à sala (e não ao campo do PIN do espectador) e reenviar o voto. A
+  // falha simulada do novoCelular some com a recarga (o addInitScript começa
+  // sem o contador).
+  async function votoGuardadoERecarga(c, rId, op) {
+    await c.p.evaluate(() => { globalThis.__falhasGravar = 99; });
+    const botaoOpcao = c.p.locator(opcaoNoCelular(op));
+    if (await botaoOpcao.getAttribute('aria-expanded') !== 'true') await botaoOpcao.tap();
+    await c.p.locator(`[data-detalhe="${op}"] [data-votar]`).tap();
+    await c.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length > 0, null, { timeout: 10000 });
+    assert.equal(await administrador('GET', s('decisoes', rId, c.equipe, c.uid)), null, `${c.nome}: o voto ficou só no aparelho`);
+    await c.p.reload();
+    await esperarTela(c, 'decisao').catch(async (erro) => {
+      throw new Error(`${c.nome}: recarregado, não voltou à sala (campo do PIN na tela: ${await c.p.locator('#pin-espectador').count()}; ${erro.message})`);
+    });
+    assert.equal(await esperarNoBanco(s('decisoes', rId, c.equipe, c.uid), op, 15000), op, `${c.nome}: o voto guardado no aparelho foi reenviado depois da recarga`);
+    await c.p.waitForFunction(() => Object.keys(globalThis.Viracao.aluno.pendentes()).length === 0, null, { timeout: 10000 });
+    console.log(`${c.nome}: o aparelho que foi espectador e entrou como aluno recarregou com o voto guardado, voltou à sala e o voto foi reenviado.`);
+  }
+  async function espectadorFora(oque) {
+    const m = await administrador('GET', s('membros'));
+    assert.equal(m?.[esp.uid], undefined, `${oque}: o espectador não é membro`);
+    assert.equal(await administrador('GET', s('presenca', esp.uid)), null, `${oque}: nem manda presença`);
+  }
+  await espectadorFora('lobby');
+  // Troca o espectador para a equipe e confere que ele vê a tela de um aluno
+  // dela: a mesma tela, as mesmas opções e a mesma contagem ao vivo, com o
+  // "Votar nesta" apagado e o motivo junto dele.
+  const contagemNaTela = (c) => c.p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => [b.dataset.opcao, b.querySelector('.opcao-votos')?.textContent]));
+  async function espectadorVe(eq, oque) {
+    await esp.p.locator(`[data-ver-equipe="${eq}"]`).tap();
+    await esp.p.waitForFunction((e) => globalThis.Viracao.aluno.espectador()?.equipe === e, eq, { timeout: 10000 });
+    const aluno = cel.find((c) => c.equipe === eq);
+    const tela = await telaDe(aluno);
+    await esperarTela(esp, tela);
+    const esperado = JSON.stringify(await contagemNaTela(aluno));
+    await esp.p.waitForFunction((x) => JSON.stringify([...document.querySelectorAll('.botao-opcao-aluno')].map((b) => [b.dataset.opcao, b.querySelector('.opcao-votos')?.textContent])) === x, esperado, { timeout: 15000 })
+      .catch(async () => { throw new Error(`${oque}: o espectador na equipe ${eq} mostra ${JSON.stringify(await contagemNaTela(esp))}; o ${aluno.nome}, ${esperado}`); });
+    if (tela === 'decisao' || tela === 'prorrogacao') {
+      const [[op]] = await contagemNaTela(aluno);
+      const b = esp.p.locator(opcaoNoCelular(op));
+      if (await b.getAttribute('aria-expanded') !== 'true') await b.tap();
+      const votar = esp.p.locator(`[data-detalhe="${op}"] [data-votar]`);
+      await votar.waitFor({ timeout: 10000 });
+      assert.equal(await votar.isDisabled(), true, `${oque}: o espectador não vota`);
+      assert.equal(await esp.p.textContent(`[data-detalhe="${op}"] .opcao-aviso`), 'Modo espectador: não vota.', `${oque}: o motivo junto do botão`);
+    }
+    await espectadorFora(oque);
+  }
 
   // ---------- Enquete ----------
   // Toca no número da escala da afirmação da vez. No modo "todas", o celular
@@ -612,6 +834,8 @@ async function jogar({ C, site, navegador, vigiar }) {
   const antes = C.enquetes.find((x) => x.momento === 'antes');
   await avancar('enquete de entrada', (e) => e.tipo === 'enquete');
   assert.equal((await estado()).indice, passoDaEnquete(antes.enquete, antes.momento));
+  await esperarTela(esp, 'enquete');
+  assert.equal(await esp.p.locator('[data-valor="1"]').isDisabled(), true, 'o espectador não responde a enquete');
   await jogarEnquete({ enq: antes.enquete, momento: antes.momento, tardios: [cel[4], cel[5], cel[6]], recarrega: cel[3] });
 
   // ---------- 2. Equipes ----------
@@ -695,6 +919,8 @@ async function jogar({ C, site, navegador, vigiar }) {
   await votarPelaTela(movido, R1, o1[0]);
   assert.equal(await movido.p.locator('[data-movido]').count(), 0, `${movido.nome}: votou pela equipe nova, e o aviso sai`);
   await decidiramNoTelao(E5, 2, 2);
+  await espectadorVe(E2, 'mês 1');
+  await capturar(esp, 'mes1-espectador');
   await capturar(cel[0], 'mes1-votado');
   await encerrar('apurar o mês 1', (e) => e.subfase === 'sorteio');
   const esperado1 = {
@@ -781,6 +1007,7 @@ async function jogar({ C, site, navegador, vigiar }) {
     (votos2[c.equipe] ||= []).push(op);
     await decidiramNoTelao(c.equipe, votos2[c.equipe].length, cel.filter((x) => x.equipe === c.equipe).length);
   }
+  await espectadorVe(E1, 'mês 2');
   // Recarregar depois de votar: o voto continua marcado.
   await cel[3].p.reload();
   await esperarTela(cel[3], 'decisao');
@@ -839,6 +1066,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   assert.equal((await estado()).subfase, 'prorrogacao', 'a prorrogação continua aberta no telão');
   await votarPelaTela(extra, R2, o2[0]);
   await decidiramNoTelao(E2, 2, 2);
+  await espectadorVe(E2, 'prorrogação do mês 2');
   await encerrar('apurar o mês 2', (e) => e.subfase === 'sorteio');
   const padrao2 = C.cfg.rodadas[R2].padrao;
   await conferirResultado(R2, {
@@ -853,7 +1081,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   console.log('Mês 2: pausa com o motivo à vista, e o voto em trânsito guardado e enviado na retomada; prorrogação votada depois do corte do prazo antigo; voto sem rede que chegou depois do fechamento recusado e avisado à vista; troca tardia avisada com o voto anterior contado.');
 
   // ---------- 4b. As rodadas do meio (a D-060 leva o roteiro a 6): todos votam ----------
-  for (const rMeio of C.rodadas.slice(2, -1)) {
+  for (const [iMeio, rMeio] of C.rodadas.slice(2, -1).entries()) {
     await avancarAte((e) => e.tipo === 'rodada' && e.rodada === rMeio, `até ${rMeio}`);
     await esperarEstado((e) => e.subfase === 'decidindo', `${rMeio} aberto`);
     await conferirOrdemNoTelao(rMeio);
@@ -862,9 +1090,11 @@ async function jogar({ C, site, navegador, vigiar }) {
     for (const c of cel) {
       await esperarTela(c, 'decisao');
       await conferirOrdem(c, rMeio);
-      await votarPelaTela(c, rMeio, op);
+      if (c === extra && iMeio === 0) await votoGuardadoERecarga(c, rMeio, op);
+      else await votarPelaTela(c, rMeio, op);
       votosMeio[c.equipe] = (votosMeio[c.equipe] || 0) + 1;
     }
+    await espectadorVe(C.equipes[(2 + iMeio) % C.equipes.length], rMeio);
     await encerrar(`apurar ${rMeio}`, (e) => e.subfase === 'sorteio');
     await conferirResultado(rMeio, Object.fromEntries(C.equipes.map((eq) => [eq, { decisao: op, origem: 'maioria', contagem: { [op]: votosMeio[eq] } }])));
     await avancar(`resultado de ${rMeio}`, (e) => e.subfase === 'resultado');
@@ -927,6 +1157,7 @@ async function jogar({ C, site, navegador, vigiar }) {
     await decidiramNoTelao(c.equipe, votos3[c.equipe].length, 1);
   }
   const ultimoVoto3 = await agoraNoServidor();
+  await espectadorVe(E4, 'mês 3');
   await capturar(cel[0], 'mes3-jonas-votou-depois-do-cronometro');
   await capturar(cel[1], 'mes3-jonas2-votou-depois-do-cronometro');
   await encerrar('apurar o mês 3', (e) => e.subfase === 'sorteio');
@@ -958,9 +1189,22 @@ async function jogar({ C, site, navegador, vigiar }) {
   for (const c of cel) await esperarTela(c, 'fim');
   await capturar(cel[0], 'fim');
 
+  // O espectador ficou ligado a sessão inteira sem virar membro; ao sair, o
+  // pedido sai do banco.
+  await espectadorFora('fim');
+  await esp.p.locator('[data-acao="sair-espectador"]').tap();
+  await esperarTela(esp, 'entrada');
+  assert.equal(await esperarNoBanco(`pedidosAnfitriao/${esp.uid}`, null), null, 'ao sair, o espectador apaga o próprio pedido');
+
   // Nenhum voto individual sai do banco pelo telão: o placar tem as 6 equipes.
   const placar = await administrador('GET', s('placar'));
   assert.deepEqual(Object.keys(placar).sort(), [...C.equipes].sort());
+  // Esquema v3: com caminhos de cartas demais (as 6 rodadas da fixture), o
+  // placar é estimado e diz isso; com o config de 3 rodadas, exato e sem a marca.
+  for (const eq of C.equipes) {
+    const estimado = C.V.motor.caminhosDeCartas(C.cfg, eq, C.rodadas) > C.V.motor.LIMITE_CAMINHOS;
+    assert.equal(placar[eq].estimado === true, estimado, `placar ${eq}: estimado ${estimado}`);
+  }
   await telao.keyboard.press('h');
   await telao.locator('[data-acao="apagar"]').hover();
   await telao.mouse.down();

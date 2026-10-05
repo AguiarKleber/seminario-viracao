@@ -33,7 +33,7 @@ test('historiaDaEquipe: um item por mês jogado, na ordem das rodadas, com opç�
   // Assert
   assert.deepEqual(h, [
     {
-      rodadaId: 'r1', titulo: 'Mês 1: quanto trabalhar?',
+      rodadaId: 'r1', titulo: 'Mês 1: quanto trabalhar?', rotulo: 'Mês 1',
       opcao: { rotulo: 'Pegar R$ 1.500 emprestado', narrativa: 'Escolhi: Pegar R$ 1.500 emprestado.' },
       carta: { titulo: 'Acidente: 20 dias parado', narrativa: 'Aconteceu: Acidente: 20 dias parado.', tom: 'grave' },
       mes: mes1,
@@ -44,7 +44,7 @@ test('historiaDaEquipe: um item por mês jogado, na ordem das rodadas, com opç�
       divida: null,
     },
     {
-      rodadaId: 'r3', titulo: 'Mês 3: e agora?',
+      rodadaId: 'r3', titulo: 'Mês 3: e agora?', rotulo: 'Mês 3',
       opcao: { rotulo: 'Guardar reserva', narrativa: 'Escolhi: Guardar reserva.' },
       carta: { titulo: 'Semana de chuva', narrativa: null, tom: null },
       mes: null,
@@ -151,4 +151,88 @@ test('linhaDoMes: com as narrativas do config.json real, cada pedaço é uma fra
       assert.ok(partido, `"${linha}"`);
     }
   }
+});
+
+// Revisão da F7 (achado 9 da revisão de conteúdo e legibilidade): a história
+// nomeava os gastos do mês só quando a carta e o que veio de antes somavam
+// todos eles. Com um gasto de opção (o curso de gel, os pneus, a inscrição do
+// Enem, comuns no esquema v3), caía no caminho antigo: "gastos da carta
+// R$ 1.079 · multa do aluguel atrasado −R$ 130 · … · gastos R$ 2.709". A multa
+// saía com sinal trocado, contada de novo dentro dos R$ 2.709, e o curso de
+// R$ 1.500 ficava sem nome.
+const configReal = () => V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8')).config;
+// O config de 12 meses de antes do limite do cheque especial (v3, hash 19b12a5d),
+// congelado: ele ainda tem a "multa do aluguel atrasado" por bimestre começado no
+// vermelho, que o config.json perdeu com a D-066 (o atraso passou a ser do motor,
+// e as duas multas juntas cobrariam duas vezes). Os dois testes abaixo refazem o
+// caso da revisão da F7, que precisa da multa ao lado do gasto de opção.
+const configV3SemLimite = () => V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v3.json'), 'utf8')).config;
+const somaDe = (partes) => partes.reduce((t, p) => t + p.valor, 0);
+
+test('nomesDosGastos: com gasto de opção, cada gasto aparece uma vez, positivo, e as parcelas somam os gastos do mês', () => {
+  // Arrange: a Rose (manicure, e2) em mai–jun, com o curso de gel (r3 "b"), o
+  // assalto e o mês começando no vermelho (a multa do aluguel atrasado).
+  const config = configV3SemLimite();
+  const quem = { equipeId: 'e2', rodadaId: 'r3', decisao: 'b' };
+  const a = V.motor.aplicar(config, { ...quem, opcaoId: 'b', cartaId: 'assalto', estado: { renda: -500 }, historico: [] });
+
+  // Act
+  const nomes = V.historia.nomesDosGastos(config, quem, a.cartaCusto, a.mes, a.deAntes);
+
+  // Assert
+  assert.deepEqual(nomes.gastos, [
+    { rotulo: 'gastos', valor: 1079 },
+    { rotulo: 'curso de alongamento em gel, com kit', valor: 1500 },
+    { rotulo: 'multa do aluguel atrasado', valor: 130 },
+  ]);
+  assert.equal(somaDe(nomes.gastos), a.mes.gastos);
+  assert.deepEqual(nomes.antes, [], 'a multa não sai de novo, com sinal, entre o que veio de antes');
+  assert.equal(nomes.cartaNosGastos, true);
+});
+
+test('nomesDosGastos: sem gasto de opção, o jeito de antes (a carta sem nome e a multa)', () => {
+  // Arrange: o mesmo mês com a opção "a", sem gasto.
+  const config = configV3SemLimite();
+  const quem = { equipeId: 'e2', rodadaId: 'r3', decisao: 'a' };
+  const a = V.motor.aplicar(config, { ...quem, opcaoId: 'a', cartaId: 'assalto', estado: { renda: -500 }, historico: [] });
+
+  // Act
+  const nomes = V.historia.nomesDosGastos(config, quem, a.cartaCusto, a.mes, a.deAntes);
+
+  // Assert
+  assert.deepEqual(nomes.gastos, [{ rotulo: 'gastos', valor: 1079 }, { rotulo: 'multa do aluguel atrasado', valor: 130 }]);
+  assert.equal(somaDe(nomes.gastos), a.mes.gastos);
+});
+
+test('nomesDosGastos: só a multa, ou só o gasto da opção, sai com o próprio nome; o que não tem origem conhecida vira "outros gastos"', () => {
+  const config = configReal();
+  const multa = [{ rotulo: 'multa do aluguel atrasado', valor: -130, gasto: true }];
+  const semCarta = { diasParado: 0, rendaPerdida: 0, gastos: 0 };
+  const so = (quem, gastos, deAntes = []) => V.historia.nomesDosGastos(config, quem, semCarta, { gastos }, deAntes).gastos;
+
+  assert.deepEqual(so({ equipeId: 'e1', rodadaId: 'r1', decisao: 'a' }, 130, multa), [{ rotulo: 'multa do aluguel atrasado', valor: 130 }]);
+  assert.deepEqual(so({ equipeId: 'e2', rodadaId: 'r3', decisao: 'b' }, 1630, multa), [
+    { rotulo: 'gastos: curso de alongamento em gel, com kit', valor: 1500 },
+    { rotulo: 'multa do aluguel atrasado', valor: 130 },
+  ]);
+  // Um gasto que a conta tem e o config não explica (sala antiga, conteúdo
+  // editado depois): fica com nome genérico, e a soma continua fechando.
+  assert.deepEqual(so({ equipeId: 'e1', rodadaId: 'r1', decisao: 'a' }, 200, multa), [
+    { rotulo: 'gastos: multa do aluguel atrasado', valor: 130 },
+    { rotulo: 'outros gastos', valor: 70 },
+  ]);
+});
+
+test('nomesDosGastos: parcelas que passam dos gastos do mês não somam; a multa nunca sai duas vezes', () => {
+  // Arrange: dados incoerentes (os gastos gravados menores que a carta mais a multa).
+  const config = configReal();
+  const deAntes = [{ rotulo: 'fratura: mais 25 dias parado', valor: -2233 }, { rotulo: 'multa do aluguel atrasado', valor: -130, gasto: true }];
+
+  // Act
+  const nomes = V.historia.nomesDosGastos(config, { equipeId: 'e1', rodadaId: 'r1', decisao: 'a' }, { gastos: 1079 }, { gastos: 500 }, deAntes);
+
+  // Assert: "gastos R$ 500" sem partes, e só o trabalho entre o que veio de antes.
+  assert.equal(nomes.gastos, null);
+  assert.deepEqual(nomes.antes, [deAntes[0]]);
+  assert.equal(nomes.cartaNosGastos, false);
 });
