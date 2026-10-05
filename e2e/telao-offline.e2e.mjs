@@ -1121,6 +1121,33 @@ async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
     };
   });
   assert.ok(r && r.visivel, `bloco ${e.indice}: sem a linha do tempo`);
+  if (mapa) {
+    // Teste do Kleber de 05/10 (print 10): o mapa traz só os meses e os blocos
+    // de dados (o título com a palavra "dados", como o "Contraponto: a Viração
+    // e os dados sobre CLT"), um item por passo, na ordem; o termômetro, a
+    // formação, as personas, a conta de cada casa, as entrevistas e o fim
+    // saíram. O passo atual (o próprio mapa) não está na lista: o rodapé diz o
+    // nome dele, e o "a seguir" é o primeiro item da lista depois dele.
+    assert.equal(r.mapa, true, 'no "Mapa do seminário", a linha do tempo é o conteúdo principal');
+    const doMapa = passos.filter((p) => p.tipo === 'rodada' || (p.tipo === 'bloco' && /\bdados\b/i.test(p.titulo || ''))).map((p) => [p.indice]);
+    assert.deepEqual(r.itens.map((x) => x.passos), doMapa, 'o mapa traz só os meses e os blocos de dados, na ordem');
+    assert.ok(doMapa.length >= RODADAS.length, 'o mapa tem pelo menos um item por mês');
+    for (const x of r.itens) {
+      assert.equal(x.rotulo, descreverPasso(passos[x.passos[0]]), `o item do passo ${x.passos[0]} no mapa`);
+      assert.ok(r.texto.includes(x.rotulo), `o mapa traz "${x.rotulo}"`);
+    }
+    const k = r.itens.findIndex((x) => x.atual === 'step');
+    assert.ok(r.itens.filter((x) => x.atual === 'step').length <= 1, 'no máximo um item com "você está aqui"');
+    const seguinte = k >= 0 ? r.itens[k + 1] : r.itens.find((x) => x.passos[0] > e.indice);
+    if (k >= 0) assert.ok(r.seguir.includes(`(${k + 1} de ${r.itens.length})`), `"${k + 1} de ${r.itens.length}" em "${r.seguir}"`);
+    else assert.ok(r.seguir.startsWith(`Você está aqui: ${descreverPasso(passos[e.indice])}`), `o rodapé diz o passo atual, fora da lista ("${r.seguir}")`);
+    assert.deepEqual(r.itens.filter((x) => x.seguinte), seguinte ? [seguinte] : [], 'só o item do "a seguir" fica marcado no mapa');
+    if (seguinte) {
+      assert.ok(r.seguir.includes(`a seguir: ${seguinte.rotulo}`), `"a seguir: ${seguinte.rotulo}" em "${r.seguir}"`);
+      assert.ok(seguinte.visivel, `o item do "a seguir" (${seguinte.rotulo}) está à vista`);
+    }
+    return;
+  }
   assert.deepEqual(r.itens.flatMap((x) => x.passos), visiveis, 'a linha do tempo traz o seminário inteiro, até o fim, na ordem, sem esconder passo');
   const final = r.itens.at(-1);
   if (final.passos.length > 1) {

@@ -995,11 +995,16 @@ ainda transborda (ou o título não tem o traço de um período), `data-compacta
 inteiro fica na dica. Revisão da F7, achado 13 da revisão de conteúdo e legibilidade: ia direto para o número,
 e em 1024×768 as marcas saíam "1"…"6", sem o vínculo com o calendário da D-060); no bloco cujo título começa por "Mapa do seminário"
 (`ehMapa`: o passo não tem campo próprio, e o validador descarta chave nova no roteiro), ela é o
-conteúdo (`.linha-tempo-mapa`, todos os trechos por extenso, em duas colunas acima de seis; esquema v3, colunas
-de texto corrido, CSS `columns`, e não linhas de grade: com 6 rodadas o roteiro de 60 min dá 19 itens, e a grade,
-com cada linha na altura do item mais alto do par, passava da faixa de entrada em 1024×768; se ainda transborda,
-medido depois do desenho, `data-aperto="1"` aproxima os itens), e o
-placar resumido não aparece. O placar resumido (`.placar-resumido`, nos blocos depois da formação das equipes e no Fim)
+conteúdo (`.linha-tempo-mapa`, em duas colunas acima de seis; esquema v3, colunas de texto corrido, CSS `columns`,
+e não linhas de grade: a grade, com cada linha na altura do item mais alto do par, passava da faixa de entrada em
+1024×768; se ainda transborda, medido depois do desenho, `data-aperto="1"` aproxima os itens), e o placar resumido
+não aparece. **No mapa, só os meses e os blocos de dados** (teste do Kleber de 05/10, print 10): os itens de
+`roteiro.linhaDoTempo(config, passos)` sem `maxItens` (sem o item `final` agrupado), filtrados por `noMapa`: o passo
+`rodada` e o `bloco` com a palavra "dados" no título (`RE_DADOS`: "Dados: quem trabalha por aplicativo", "Contraponto:
+a Viração e os dados sobre CLT"); com o config de 05/10, 11 itens. Termômetro, formação, personas, a conta de cada
+casa, entrevistas, debrief e fechamento saem da lista. O passo atual (o próprio mapa) não está nela: o rodapé diz
+"Você está aqui: {nome do passo} · a seguir: {primeiro item da lista depois dele}", e esse item fica marcado. Na
+trilha dos outros blocos, nada muda: o seminário inteiro. O placar resumido (`.placar-resumido`, nos blocos depois da formação das equipes e no Fim)
 mostra o patrimônio de cada equipe (esquema v2.2: `historia.patrimonioDe`, o saldo acumulado menos o
 empréstimo a pagar; antes do placar, o do estado inicial).
 

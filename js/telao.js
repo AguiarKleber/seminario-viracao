@@ -1809,6 +1809,15 @@
   const RE_MAPA = /^mapa do semin[aá]rio\b/i;
   const ehMapa = (passo) => passo?.tipo === 'bloco' && RE_MAPA.test(passo.titulo || '');
 
+  // Teste do Kleber de 05/10 (print 10): o mapa listava todos os passos
+  // (termômetro, formação, personas, a conta de cada casa, entrevistas,
+  // debrief…), e o Kleber pediu só as linhas dos meses e dos dados. Um bloco
+  // de dados é o que tem a palavra "dados" no título ("Dados: quem trabalha por
+  // aplicativo", "Contraponto: a Viração e os dados sobre CLT"): o passo não
+  // tem campo próprio, como o mapa.
+  const RE_DADOS = /\bdados\b/i;
+  const noMapa = (passo) => passo?.tipo === 'rodada' || (passo?.tipo === 'bloco' && RE_DADOS.test(passo.titulo || ''));
+
   const maiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const descreverItem = (item) => (item.tipo === 'final' ? maiuscula(item.palavras.join(', ')) : descreverPasso(app.passos[item.indices[0]]));
 
@@ -1819,7 +1828,12 @@
   // estava na linha (formação das equipes, placar, termômetro, "Fim").
   function linhaDoTempo(e, { mapa }) {
     const { el } = D();
-    const { itens } = N().roteiro.linhaDoTempo(app.config, app.passos, { maxItens: MAX_ITENS_LINHA });
+    // No mapa, só os meses e os blocos de dados (noMapa), um item por passo,
+    // sem o agrupamento do fim (os passos do fim não entram). Nos outros
+    // blocos, a trilha continua com o seminário inteiro.
+    const itens = mapa
+      ? N().roteiro.linhaDoTempo(app.config, app.passos).itens.filter((x) => noMapa(app.passos[x.indices[0]]))
+      : N().roteiro.linhaDoTempo(app.config, app.passos, { maxItens: MAX_ITENS_LINHA }).itens;
     const posicao = itens.findIndex((x) => x.indices.includes(e.indice));
     const seguinte = posicao >= 0 ? itens[posicao + 1] : itens.find((x) => x.indices[0] > e.indice);
     const momento = (item) => {
@@ -1831,16 +1845,19 @@
       dados: { trecho: String(item.indices[0]), passos: item.indices.join(','), ...(item === seguinte ? { seguinte: '1' } : {}) },
       'aria-current': momento(item) === 'atual' ? 'step' : null,
     });
+    // O passo atual pode não estar na linha (no mapa, o próprio mapa nunca
+    // está): então o rodapé diz o nome dele, "Você está aqui: Mapa do
+    // seminário", e o "a seguir" é o primeiro item da linha depois dele.
     const seguir = el('p', { classe: 'linha-tempo-seguir' }, [
       el('b', { texto: 'Você está aqui' }),
-      posicao >= 0 ? ` (${posicao + 1} de ${itens.length})` : null,
+      posicao >= 0 ? ` (${posicao + 1} de ${itens.length})` : [': ', el('b', { texto: descreverPasso(app.passos[e.indice]) })],
       seguinte ? [' · a seguir: ', el('b', { texto: descreverItem(seguinte) })] : ' · é o último trecho',
     ]);
     if (mapa) {
-      // No "Mapa do seminário", a linha é o conteúdo: todos os itens por
-      // extenso, em duas colunas quando passam de seis (cabe em 1024×768).
-      // Esquema v3 (D-060): com 6 rodadas e os blocos de dados entre elas, o
-      // roteiro de 60 min dá 19 itens, e vários títulos quebram em duas linhas.
+      // No "Mapa do seminário", a linha é o conteúdo: os meses e os blocos de
+      // dados por extenso, em duas colunas quando passam de seis (cabe em
+      // 1024×768). Com o config de 05/10, 11 itens (6 meses e 5 blocos de
+      // dados), vários títulos quebrando em duas linhas.
       // As colunas são de texto corrido (CSS columns), e não linhas de grade: na
       // grade, cada linha tinha a altura do item mais alto do par, e a lista
       // passava da faixa de entrada em 1024×768. Se ainda transbordar (medido
