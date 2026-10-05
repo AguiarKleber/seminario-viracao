@@ -718,8 +718,8 @@ e de validação (D-005).
   férias no último bimestre; no esquema v3.1, com o mesmo limite do cheque
   especial, a mesma multa e a mesma mora, e descontando as contas atrasadas. É
   por isso que o "Jonas com carteira assinada" do config atual é negativo
-  (−R$ 14.750; era −R$ 18.846 antes do limite): com carteira, na mesma casa,
-  também falta. Ela ficou **abaixo** do Jonas de app em 87% das partidas no
+  (−R$ 14.939; era −R$ 18.846 antes do limite e −R$ 14.750 com a multa de 7% e a mora de 0,8%): com carteira, na mesma casa,
+  também falta. Ela ficou **abaixo** do Jonas de app em 90% das partidas no
   plano padrão (rascunho, seção 8, item 2, a decidir). O código não recalcula
   esse número: ele vem pronto do config, e muda à mão quando o básico, os juros,
   o limite, a multa, a mora ou o `mesesPorRodada` mudam.

@@ -1015,7 +1015,7 @@ básico")
   descontados o empréstimo a pagar** (D-065) **e as contas atrasadas** (D-066):
   quem pegou os R$ 1.500 não aparece mais rico por isso, e as parcelas que
   ficam para depois do jogo entram na conta. A linha da referência do config
-  (hoje, "Jonas com carteira assinada", −R$ 14.750: a mesma casa, com o mesmo
+  (hoje, "Jonas com carteira assinada", −R$ 14.939: a mesma casa, com o mesmo
   básico, o mesmo limite, os mesmos juros, a mesma multa e mora, o 13º e o
   terço de férias) atravessa só a barra da equipe do Jonas, e o valor fica
   escrito embaixo do gráfico.
@@ -1038,8 +1038,8 @@ básico")
     esforço: o básico custa mais do que o trabalho paga, e a dívida de um mês
     vira juros, conta atrasada e comida que falta no seguinte." Se uma equipe fechar: "Fechou, com boas escolhas e
     muita sorte. Foi a exceção."
-  - **A linha de carteira assinada ficou abaixo do Jonas de app em 87% das
-    partidas no plano padrão** (−R$ 14.750 contra a mediana de −R$ 12.123;
+  - **A linha de carteira assinada ficou abaixo do Jonas de app em 90% das
+    partidas no plano padrão** (−R$ 14.939 contra a mediana de −R$ 12.134;
     rascunho, seção 8, item 2, ainda sem decisão). O mais
     provável é a barra do Jonas ficar à direita dela. **Não diga "o app paga
     mais"** nem "com carteira faltaria menos". Diga o que o número não mede: "O
