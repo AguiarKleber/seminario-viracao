@@ -576,6 +576,14 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .historias-escolha[data-aperto] .historia-escolha { line-height: 1.08; padding-bottom: 3px; }
 .historia-meses[data-aperto] { gap: calc(var(--espaco) * .4); }
 .historia-meses[data-aperto] .historia-mes { line-height: 1.08; gap: 0; }
+/* O segundo aperto do "Escolha ou sorte?" (telao.js, telaPlacarFinal; teste do
+   Kleber de 05/10, pedido 14): com a linha de onde a conta parte, seis equipes
+   passavam ~23 px de 1024×768 mesmo apertadas. O título da página menor (34 px
+   em 1024×768, ainda maior que o corpo), os vãos da tela pela metade e o fio
+   entre as equipes colado; a letra do corpo continua nos 28 px. */
+.tela-placar-final[data-aperto="2"] { gap: calc(var(--espaco) * .5); }
+.tela-placar-final[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.2); }
+.historias-escolha[data-aperto="2"] .historia-escolha { padding-bottom: 1px; }
 /* O segundo aperto (telao.js, telaPlacarFinal): só se o primeiro não bastou. */
 .historia-meses[data-aperto="2"] .historia-narrativa { -webkit-line-clamp: 1; line-clamp: 1; }
 /* "Escolha ou sorte?" em grade fixa (revisão da F7, achado 13 da revisão de

@@ -2843,6 +2843,16 @@
         // linha (com reticências no fim, como já ficava na segunda): as contas
         // fecham no saldo e não podem ser cortadas.
         if (lista.dataset.aperto && lista.classList.contains('historia-meses') && lista.scrollHeight > lista.clientHeight + 1) lista.dataset.aperto = '2';
+        // Teste do Kleber de 05/10 (pedido 14): a linha que diz de onde a conta
+        // parte, embaixo do título do "Escolha ou sorte?", fez seis equipes com
+        // valores de cinco dígitos passarem ~23 px de 1024×768 mesmo apertadas
+        // (e2e, partes 4 e 8). Só então, um segundo aperto: o título da página
+        // menor (ainda maior que o corpo) e os vãos da tela e entre as equipes
+        // no mínimo. A letra do corpo continua nos 28 px, e a linha fica.
+        if (lista.dataset.aperto && lista.classList.contains('historias-escolha') && lista.scrollHeight > lista.clientHeight + 1) {
+          lista.dataset.aperto = '2';
+          s.dataset.aperto = '2';
+        }
       }
     });
   }

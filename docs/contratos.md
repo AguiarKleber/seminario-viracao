@@ -1241,7 +1241,11 @@ comprido passavam 6 px de 1024×768 no "Escolha ou sorte?"), as linhas se aproxi
 listas centralizam com `safe center`, para nunca subir por cima do título. D-066: na história, se ainda transborda
 (com o limite, três bimestres com o que veio de antes, a comida que faltou e a multa do atraso passavam ~60 px),
 `.historia-meses[data-aperto="2"]`: a linha curta de cada bimestre fica em uma linha, com reticências no fim; as
-contas fecham no saldo e não podem ser cortadas. No e2e, a grade do "Escolha ou sorte?" prova que cada coluna tem a
+contas fecham no saldo e não podem ser cortadas. No "Escolha ou sorte?", se ainda transborda depois do primeiro
+aperto (teste do Kleber de 05/10, pedido 14: com a linha `.escolhas-nota`, seis equipes com valores de cinco
+dígitos passavam ~23 px de 1024×768; e2e, partes 4 e 8), `.historias-escolha[data-aperto="2"]` e
+`.tela-placar-final[data-aperto="2"]`: o título da página a 1,2× o corpo, os vãos da tela pela metade e o fio entre
+as equipes colado, com a letra do corpo nos 28 px e a linha da nota mantida. No e2e, a grade do "Escolha ou sorte?" prova que cada coluna tem a
 largura do passo mais largo dela (e não mais); o teto antigo de 8 letras de vão falhava com a sorte ao acaso e valores
 de cinco dígitos, sem a coluna esticar. O `regras.placarPadrao` não é mais lido pelo telão.
 
