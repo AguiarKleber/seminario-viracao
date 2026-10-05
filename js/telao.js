@@ -274,7 +274,57 @@
   const passoDe = (e) => (app.passos && e ? app.passos[e.indice] : null);
   const equipesOrdem = () => lista(app.config.ordem.equipes);
   const numeroEquipe = (id) => equipesOrdem().indexOf(id) + 1;
-  const rotuloEquipe = (id, classe) => G().rotuloEquipe(app.config.equipes[id], numeroEquipe(id), { classe });
+
+  // Teste do Kleber de 05/10 (prints 12 a 14): o telão chamava a equipe pelo
+  // nome da cor ("1 Laranja"), e a sala não ligava a cor ao personagem que
+  // estava jogando. Agora a equipe aparece pelo personagem, "Jonas, motoboy",
+  // com a forma e a cor na frente (são elas que ligam a equipe do telão à do
+  // celular) e o número (o das teclas e dos modais do apresentador). A cor por
+  // extenso fica na formação das equipes (cor: true), onde o aluno escolhe a
+  // equipe pela cor, e na dica (title). O nome e o ofício são pedaços inteiros:
+  // numa coluna estreita (a célula da decisão, a coluna da equipe no resultado),
+  // o rótulo só quebra entre eles.
+  function rotuloEquipe(id, classe, { cor = false } = {}) {
+    const equipe = app.config.equipes[id];
+    const rotulo = G().rotuloEquipe(equipe, numeroEquipe(id), { classe });
+    const persona = personaDaEquipe(id);
+    const nome = rotulo.querySelector('.equipe-nome');
+    if (cor || !persona || !nome) return rotulo;
+    const oficio = oficioDe(persona);
+    D().acrescentar(D().limpar(nome), [
+      D().el('span', { classe: 'equipe-quem', texto: oficio ? `${persona.nome},` : persona.nome }),
+      oficio ? [' ', D().el('span', { classe: 'equipe-oficio', texto: oficio })] : null,
+    ]);
+    nome.setAttribute('title', equipe.nome);
+    return rotulo;
+  }
+
+  // O ofício do personagem, para o rótulo da equipe: o começo da descrição da
+  // persona no config (até a primeira vírgula ou ponto, primeiroTrecho),
+  // cortado antes da primeira preposição ou "e", com a primeira letra
+  // minúscula. Com o config de 05/10: "Motoboy, 34 anos…" → "motoboy";
+  // "Manicure por aplicativo" → "manicure"; "Motorista de aplicativo na 99 e na
+  // Uber" → "motorista"; "Influenciadora de beleza" → "influenciadora";
+  // "Entregador de bicicleta pelo iFood" → "entregador"; "Vende doces e
+  // marmitas pelo Instagram" → "vende doces". O trecho inteiro ("Bruna,
+  // influenciadora de beleza") não cabia na coluna da equipe do sorteio e do
+  // resultado em 1024×768. O texto vem só do config (AGENTS.md, regra 1): para
+  // mudar o ofício na tela, muda-se o começo da descrição.
+  const RE_CORTE_OFICIO = /\s(?:de|do|da|dos|das|em|no|na|nos|nas|por|pelo|pela|pelos|pelas|com|e)\s/i;
+  function oficioDe(persona) {
+    const curto = primeiroTrecho(persona?.descricao).trim().split(RE_CORTE_OFICIO)[0].trim();
+    // Só quando a segunda letra já é minúscula: uma sigla ("DJ") fica como está.
+    return /^\p{Lu}\p{Ll}/u.test(curto) ? curto.charAt(0).toLowerCase() + curto.slice(1) : curto;
+  }
+
+  // "Jonas, motoboy": o personagem por extenso (a formação das equipes, ao lado
+  // da cor).
+  function nomeDoPersonagem(id) {
+    const persona = personaDaEquipe(id);
+    if (!persona) return '';
+    const oficio = oficioDe(persona);
+    return oficio ? `${persona.nome}, ${oficio}` : persona.nome;
+  }
   const ativas = (e) => equipesOrdem().filter((id) => e && e.equipesAbertas && e.equipesAbertas[id] === true);
   const ordemOpcoes = (rodada) => (lista(rodada.ordemOpcoes).length > 0 ? lista(rodada.ordemOpcoes) : Object.keys(rodada.opcoes));
   const letraDe = (rodada, opcao) => LETRAS[ordemOpcoes(rodada).indexOf(opcao)] || '?';
@@ -1730,13 +1780,12 @@
     const e = app.estado;
     const renda = app.config.indicadores.renda;
     const itens = ativas(e).map((id) => {
-      const persona = app.config.personas[app.config.equipes[id].persona];
       // O patrimônio (esquema v2.2): o empréstimo a pagar é dívida, e não
-      // dinheiro em caixa. Antes do placar, o estado inicial da equipe.
+      // dinheiro em caixa. Antes do placar, o estado inicial da equipe. O nome
+      // do personagem já está no rótulo da equipe (teste do Kleber de 05/10).
       const valor = patrimonioDe(app.dados.placar?.[id] ?? N().motor.estadoInicial(app.config, id));
       return el('li', { classe: 'resumido-linha', dados: { equipe: id } }, [
         rotuloEquipe(id),
-        el('span', { classe: 'resumido-persona', texto: persona?.nome || '' }),
         el('span', { classe: 'resumido-valor', texto: F().indicador(renda, valor) }),
       ]);
     });
@@ -1921,14 +1970,17 @@
     equipesOrdem().forEach((id) => {
       const eq = app.config.equipes[id];
       const aberta = abertas.includes(id);
-      const persona = app.config.personas[eq.persona];
-      const detalhes = [el('span', { classe: 'equipe-persona', texto: persona?.nome || '' })];
+      // A cor (é por ela que o aluno escolhe a equipe no celular) e o
+      // personagem, "Jonas, motoboy": daqui em diante, o telão chama a equipe
+      // pelo personagem (teste do Kleber de 05/10), e é aqui que a sala liga um
+      // ao outro.
+      const detalhes = [el('span', { classe: 'equipe-persona', texto: nomeDoPersonagem(id) })];
       if (eq.lugar) detalhes.push(el('span', { classe: 'equipe-lugar', texto: eq.lugar }));
       if (!offline && aberta) detalhes.push(el('span', { classe: 'equipe-conta', texto: F().pessoas(conta[id] || 0) }));
       detalhes.push(el('span', { classe: 'equipe-situacao', texto: aberta ? (eq.obrigatoria ? 'sempre joga' : 'aberta') : 'fechada' }));
       const b = botao('', () => alternarEquipe(id), { classe: ['cartao-equipe', aberta ? 'aberta' : 'fechada'], pressionado: aberta, dados: { equipe: id } });
       D().limpar(b);
-      D().acrescentar(b, [rotuloEquipe(id), el('span', { classe: 'cartao-equipe-detalhes' }, detalhes)]);
+      D().acrescentar(b, [rotuloEquipe(id, null, { cor: true }), el('span', { classe: 'cartao-equipe-detalhes' }, detalhes)]);
       grade.appendChild(b);
     });
     s.appendChild(grade);
@@ -2000,10 +2052,11 @@
       const p = app.config.personas[pid];
       linhas.appendChild(el('div', { classe: 'persona-linha', dados: { persona: pid, equipes: equipes.join(',') } }, [
         el('p', { classe: 'persona-quem' }, [
-          // Duas equipes da mesma persona: "1 Laranja e 2 Azul-céu", juntas e
-          // antes do nome, para a sala ver que as duas jogam com o Jonas.
+          // A equipe pelo personagem, "◯ 1 Jonas, motoboy" (teste do Kleber de
+          // 05/10): o nome e o ofício já estão no rótulo, e o ".persona-nome"
+          // ao lado repetiria os dois. Duas equipes da mesma persona (config
+          // anterior à D-061) ficam juntas, ligadas por "e".
           el('span', { classe: 'persona-equipes' }, equipes.flatMap((id, i) => [i > 0 ? el('span', { classe: 'persona-e', texto: 'e' }) : null, rotuloEquipe(id)])),
-          el('span', { classe: 'persona-nome' }, [el('b', { texto: p.nome }), ` · ${primeiroTrecho(p.descricao)}`]),
         ]),
         ...linhasDaCasa(p, equipes[0]),
       ]));
@@ -2103,7 +2156,7 @@
     const filhos = [rotuloEquipe(eq)];
     const forcada = e.forcadas?.[eq] ?? null;
     if (app.modo === 'offline') {
-      filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${app.config.equipes[eq].nome}` },
+      filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${numeroEquipe(eq)}, ${nomeDoPersonagem(eq)}` },
         opcoesVisiveis.map((op) => botao(letraDe(rodada, op), () => decidirOffline(eq, op), {
           classe: ['botao-letra', forcada === op ? 'botao-marcado' : null], pressionado: forcada === op,
           titulo: rodada.opcoes[op].rotulo, dados: { equipe: eq, opcao: op },
@@ -2518,14 +2571,12 @@
       }, [
         el('div', { classe: 'resultado-quem' }, [
           rotuloEquipe(eq),
-          // "Jonas · decisão B": quem jogou e o que decidiu, à esquerda; o que
-          // aconteceu (a carta) no meio; o dinheiro à direita. Na linha de
-          // detalhe, a letra empurrava a parada para uma terceira linha, e seis
-          // faixas deixavam de caber em 1024×768 com a faixa de entrada.
-          el('span', { classe: 'resultado-persona' }, [
-            personaDaEquipe(eq)?.nome || '', ' · ',
-            el('span', { classe: 'resultado-escolha', title: rotuloDaOpcao || null, dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]),
-          ]),
+          // Quem jogou e o que decidiu, à esquerda; o que aconteceu (a carta)
+          // no meio; o dinheiro à direita. Na linha de detalhe, a letra
+          // empurrava a parada para uma terceira linha, e seis faixas deixavam
+          // de caber em 1024×768 com a faixa de entrada. O nome do personagem
+          // saiu daqui: está no rótulo da equipe (teste do Kleber de 05/10).
+          el('span', { classe: 'resultado-escolha', title: rotuloDaOpcao || null, dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]),
         ]),
         el('div', { classe: 'resultado-meio' }, [
           // O título inteiro da carta; se ele não couber numa linha, o
@@ -2730,9 +2781,10 @@
     const dominio = dominioCom(ordenadas.map(patrimonioNoPlacar).concat(referencias.map((r) => r.renda)));
     const estiloLinhas = { '--linhas': String(ordenadas.length) };
     s.appendChild(el('div', { classe: 'linhas-grafico linhas-placar' }, [
+      // O nome do personagem está no rótulo da equipe (teste do Kleber de
+      // 05/10): a linha de baixo com o nome saiu.
       el('div', { classe: 'coluna-rotulos', estilo: estiloLinhas }, ordenadas.map((id) => el('div', { classe: 'linha-rotulo linha-rotulo-placar' }, [
         rotuloEquipe(id),
-        el('span', { classe: 'linha-persona', texto: personaDaEquipe(id)?.nome || '' }),
       ]))),
       grafico('grafico-placar', (largura, altura, fonte) => G().barras({
         largura, altura, fonte, dominio,
@@ -2902,14 +2954,15 @@
   function paginaHistoria(s, pagina, lado) {
     const { el } = D();
     const { eq, parte, partes } = pagina;
-    const persona = personaDaEquipe(eq);
     const historia = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados);
     const inicio = parte * RODADAS_POR_PAGINA_HISTORIA;
     const trecho = historia.slice(inicio, inicio + RODADAS_POR_PAGINA_HISTORIA);
     const kicker = partes > 1 && trecho.length > 0
       ? `A história da equipe · ${trecho[0].rotulo}${trecho.length > 1 ? ` a ${trecho.at(-1).rotulo}` : ''}`
       : 'A história da equipe';
-    s.appendChild(cabecalho(kicker, [rotuloEquipe(eq), persona ? ` · ${persona.nome}` : null], { extra: lado }));
+    // A equipe pelo personagem ("◯ 1 Jonas, motoboy"): o " · Jonas" que vinha
+    // depois do nome da cor repetiria o nome (teste do Kleber de 05/10).
+    s.appendChild(cabecalho(kicker, [rotuloEquipe(eq)], { extra: lado }));
     s.appendChild(el('ol', { classe: 'historia-meses' }, trecho.map((h) => {
       const r = app.dados.resultados?.[h.rodadaId]?.[eq] || {};
       const linha = N().historia.linhaDoMes(h);

@@ -138,6 +138,9 @@ const MESES = mesesDe(configNode);
 const DO_PERIODO = doPeriodoDe(configNode);
 // O período do config carregado no telão agora (a parte 6 troca pela fixture v2.1, mensal).
 let doPeriodoNaTela = DO_PERIODO;
+// O config carregado no telão agora (as partes 6, 7 e 8 trocam), para conferir
+// o rótulo de cada equipe pelo personagem.
+let configNaTela = configNode;
 // A história em páginas de até 3 rodadas (js/telao.js, RODADAS_POR_PAGINA_HISTORIA).
 const RODADAS_POR_PAGINA = 3;
 console.log(`  ${RODADAS.length} rodadas de ${MESES} ${MESES === 1 ? 'mês' : 'meses'}`);
@@ -937,6 +940,47 @@ async function controlesNaProjecao() {
   }, [SELETORES_OPERADOR, RE_TEXTO_OPERADOR.source]);
 }
 
+// Teste do Kleber de 05/10 (prints 12 a 14): o telão chamava a equipe pelo nome
+// da cor ("1 Laranja"). Fora da formação das equipes, ela aparece pelo
+// personagem, "Jonas, motoboy", com a forma da equipe na frente; na formação
+// (é pela cor que o aluno escolhe a equipe no celular), pela cor, com o
+// personagem ao lado. O ofício é refeito aqui, e não com a função da tela: o
+// começo da descrição da persona até a primeira vírgula ou ponto, cortado antes
+// da primeira preposição ou "e", com a primeira letra minúscula.
+const RE_CORTE_OFICIO = /\s(?:de|do|da|dos|das|em|no|na|nos|nas|por|pelo|pela|pelos|pelas|com|e)\s/i;
+function oficioEsperado(p) {
+  const m = /^(.+?)[,.;:!?](\s|$)/.exec(String(p.descricao || ''));
+  const trecho = (m ? m[1] : String(p.descricao || '')).trim().split(RE_CORTE_OFICIO)[0].trim();
+  return /^\p{Lu}\p{Ll}/u.test(trecho) ? trecho.charAt(0).toLowerCase() + trecho.slice(1) : trecho;
+}
+function personagemEsperado(cfg, eq) {
+  const p = cfg.personas[cfg.equipes[eq].persona];
+  const oficio = oficioEsperado(p);
+  return oficio ? `${p.nome}, ${oficio}` : p.nome;
+}
+console.log(`  personagens no telão: ${EQUIPES.map((eq) => `${numeroDe(eq)} ${personagemEsperado(configNode, eq)}`).join('; ')}`);
+for (const eq of EQUIPES) assert.ok(oficioEsperado(configNode.personas[configNode.equipes[eq].persona]).length > 0, `${eq}: o ofício sai do começo da descrição da persona`);
+async function conferirRotulosDasEquipes(onde) {
+  const lido = await page.evaluate(() => ({
+    tela: document.body.dataset.tela,
+    rotulos: Array.from(document.querySelectorAll('#palco .equipe[data-equipe]'), (n) => ({
+      equipe: n.dataset.equipe,
+      nome: n.querySelector('.equipe-nome')?.textContent ?? '',
+      forma: Boolean(n.querySelector('svg.forma')),
+      personagem: n.closest('.cartao-equipe')?.querySelector('.equipe-persona')?.textContent ?? null,
+    })),
+  }));
+  for (const r of lido.rotulos) {
+    assert.ok(r.forma, `${onde}/${r.equipe}: a forma da equipe na frente do nome`);
+    if (lido.tela === 'formar-equipes') {
+      assert.equal(r.nome, configNaTela.equipes[r.equipe].nome, `${onde}/${r.equipe}: na formação, a equipe pela cor`);
+      assert.equal(r.personagem, personagemEsperado(configNaTela, r.equipe), `${onde}/${r.equipe}: na formação, o personagem ao lado da cor`);
+    } else {
+      assert.equal(r.nome, personagemEsperado(configNaTela, r.equipe), `${onde}/${r.equipe}: a equipe pelo personagem, e não pela cor`);
+    }
+  }
+}
+
 const verificadas = [];
 // Em cada tamanho: redesenha, esconde a barra, mede, captura. aoMedir(onde)
 // confere o que é próprio da tela (o resultado enxuto, as personas), no mesmo
@@ -960,6 +1004,7 @@ async function conferirTela(nome, { esperarMs = 0, criterios = true, aoMedir = n
       assert.deepEqual(m.cortados, [], `${nome} em ${largura}×${altura}: texto cortado com reticências`);
       assert.deepEqual(await controlesNaProjecao(), [], `${nome} em ${largura}×${altura}: controle de operador fora da barra (D-047)`);
       assert.ok(!/piloto autom/i.test(await page.textContent('#palco')), `${nome}: "piloto automático" na tela (D-041)`);
+      await conferirRotulosDasEquipes(`${nome} em ${largura}×${altura}`);
       if (aoMedir) await aoMedir(`${nome} em ${largura}×${altura}`);
     }
   }
@@ -1317,7 +1362,8 @@ async function conferirCasaDasPersonas(abertas, configNode = CONFIG_PADRAO) {
     const suas = abertas.filter((eq) => configNode.equipes[eq].persona === l.persona);
     assert.deepEqual(l.equipes, suas, `${l.persona}: as equipes da persona, juntas`);
     assert.equal(l.juntas, suas.length - 1, `${l.persona}: duas equipes da mesma persona ligadas por "e"`);
-    assert.ok(l.quem.includes(`${p.nome} · `), `${l.persona}: o nome e o ofício ("${l.quem}")`);
+    // O nome e o ofício estão no rótulo de cada equipe (teste do Kleber de 05/10).
+    assert.ok(l.quem.includes(`${p.nome}, ${oficioEsperado(p)}`), `${l.persona}: o nome e o ofício ("${l.quem}")`);
     const mes = V.motor.mesComum(configNode, suas[0]);
     const pessoas = p.familia.pessoas;
     const casa = [
@@ -2174,6 +2220,7 @@ console.log('Parte 6: a proteção (D-059), com a fixture v2.1');
   assert.ok(r6.ok, `a fixture da parte 6 é válida: ${JSON.stringify(r6.erros.slice(0, 3))}`);
   const cfg6 = r6.config;
   doPeriodoNaTela = doPeriodoDe(cfg6);
+  configNaTela = cfg6;
   assert.ok(temProtecao(cfg6), 'a fixture v2.1 tem uma opção que protege');
   const passos6 = V.roteiro.passos(cfg6, ROTEIRO);
   const rodadas6 = passos6.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
@@ -2315,6 +2362,7 @@ console.log('Parte 7: a tela de personas com uma persona por equipe');
   assert.ok(r7.ok, `o config da parte 7 é válido: ${JSON.stringify(r7.erros.slice(0, 3))}`);
   const cfg7 = r7.config;
   doPeriodoNaTela = doPeriodoDe(cfg7);
+  configNaTela = cfg7;
   const equipes7 = lista(cfg7.ordem.equipes);
   assert.equal(new Set(equipes7.map((eq) => cfg7.equipes[eq].persona)).size, equipes7.length, 'uma persona por equipe');
   const passos7 = V.roteiro.passos(cfg7, ROTEIRO);
@@ -2383,6 +2431,7 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
   const cfg8 = r8.config;
   assert.ok(cfg8.regras.limiteChequeEspecial > 0, 'a fixture v3.1 tem o limite do cheque especial');
   doPeriodoNaTela = doPeriodoDe(cfg8);
+  configNaTela = cfg8;
   const passos8 = V.roteiro.passos(cfg8, ROTEIRO);
   const rodadas8 = passos8.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
   const equipes8 = lista(cfg8.ordem.equipes);

@@ -85,6 +85,14 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 
 .legenda { color: var(--texto-2); display: flex; flex-wrap: wrap; align-items: center; gap: .2em .5em; }
 
+/* A equipe pelo personagem, "◯ 1 Jonas, motoboy" (telao.js, rotuloEquipe;
+   teste do Kleber de 05/10). O nome e o ofício são pedaços inteiros: numa
+   coluna estreita (a célula da decisão, a coluna da equipe no resultado), o
+   rótulo quebra entre os dois, nunca no meio de uma palavra, e a forma e o
+   número ficam na frente. */
+.equipe-nome { white-space: normal; min-width: 0; }
+.equipe-quem, .equipe-oficio { white-space: nowrap; }
+
 /* ---------- Gráficos medidos ---------- */
 
 .grafico { position: relative; flex: 1 1 auto; min-height: 90px; min-width: 0; }
@@ -277,16 +285,16 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .placar-resumido { display: flex; flex-direction: column; gap: .3em; }
 .placar-discreto { margin-top: auto; color: var(--texto-2); }
 .resumido-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25em 3vw; }
-/* A persona vai na linha de baixo do nome da equipe, e não entre ele e o
-   valor: ali, em 1024×768, sobravam poucos pixels e o nome virava "Ka…"
-   (revisão da F2, achado 18). */
+/* O rótulo da equipe já traz o personagem ("◯ 1 Jonas, motoboy", teste do
+   Kleber de 05/10), e a linha de baixo com o nome saiu. Revisão da F2, achado
+   18: entre o nome e o valor, em 1024×768, o nome virava "Ka…"; o rótulo
+   quebra entre o nome e o ofício, e nunca é cortado. */
 .resumido-linha {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 .6em;
   padding: .15em 0; border-bottom: 1px solid var(--linha);
 }
 .resumido-linha > .equipe { grid-column: 1; grid-row: 1; }
-.resumido-persona { grid-column: 1; grid-row: 2; color: var(--texto-2); min-width: 0; overflow-wrap: anywhere; line-height: 1.15; }
-.resumido-valor { grid-column: 2; grid-row: 1 / span 2; font-weight: 700; color: var(--texto); }
+.resumido-valor { grid-column: 2; grid-row: 1; font-weight: 700; color: var(--texto); }
 
 /* ---------- Formar equipes ---------- */
 
@@ -331,7 +339,6 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .persona-quem { display: flex; flex-wrap: wrap; align-items: center; gap: .1em 1em; }
 .persona-equipes { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .1em .45em; }
 .persona-e { color: var(--texto-2); }
-.persona-nome { white-space: nowrap; }
 .persona-casa b { color: var(--texto); }
 .persona-mes { font-weight: 600; }
 .persona-mes[data-sinal="negativo"] { color: var(--negativo); }
@@ -401,9 +408,15 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .tela-rodada-resultado { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
 .tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.4); }
 .resultado-legenda { color: var(--texto-2); padding-right: .6em; white-space: nowrap; }
+/* A coluna da equipe em fit-content: com o personagem no rótulo ("◯ 1 Bruna,
+   influenciadora", teste do Kleber de 05/10), em max-content ela tirava ~70 px
+   da carta em 1024×768. Até 9em o rótulo fica numa linha; o mais comprido
+   quebra entre o nome e o ofício, e a coluna da equipe ocupa as linhas da
+   faixa inteira (.resultado-quem), ao lado da carta, do dinheiro e da linha de
+   baixo. */
 .grade-resultados {
   flex: 1 1 auto; min-height: 0;
-  display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content;
+  display: grid; grid-template-columns: fit-content(9em) minmax(0, 1fr) max-content;
   align-content: safe center;
   row-gap: calc(var(--espaco) * 1.2);
 }
@@ -437,9 +450,16 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
   line-height: 1.08;
 }
 .resultado-quem, .resultado-meio, .resultado-dinheiro { display: flex; flex-direction: column; gap: .04em; min-width: 0; }
-.resultado-persona { color: var(--texto-2); }
-/* "Jonas · decisão B" numa linha só (revisão de 30/09, achado 9). */
-.resultado-persona { white-space: nowrap; }
+/* As linhas da faixa (telao.js, telaResultado): a equipe na primeira coluna,
+   de cima a baixo; a carta e o dinheiro na primeira linha; embaixo deles, a
+   linha da dívida (.resultado-limite); e a frase da D-067 na largura inteira.
+   Linha sem nada fica com altura zero (a faixa não tem vão entre linhas). */
+.resultado-quem { grid-column: 1; grid-row: 1 / span 2; }
+.resultado-meio { grid-column: 2; grid-row: 1; }
+.resultado-dinheiro { grid-column: 3; grid-row: 1; }
+/* "decisão B" numa linha só (revisão de 30/09, achado 9); o nome do
+   personagem está no rótulo da equipe (teste do Kleber de 05/10). */
+.resultado-escolha { color: var(--texto-2); white-space: nowrap; }
 .resultado-escolha b { color: var(--texto); }
 .resultado-carta { font-size: 1.15em; font-weight: 750; line-height: 1.08; }
 /* Cada pedaço da linha de detalhe inteiro (a decisão, o empréstimo, a parada,
@@ -467,14 +487,14 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna e a parada
    da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só quebra
    entre eles. */
-.resultado-limite { grid-column: 2 / -1; justify-self: end; text-align: right; color: var(--texto-2); }
+.resultado-limite { grid-column: 2 / -1; grid-row: 2; justify-self: end; text-align: right; color: var(--texto-2); }
 .resultado-limite > span { white-space: nowrap; }
 .resultado-limite b { color: var(--texto); }
 /* D-067: a frase de quando a proteção pagou mais do que o trabalho, na largura
    da faixa inteira, embaixo das três colunas (numa coluna só, ela ocupava três
    ou quatro linhas). No tom do texto, e não no secundário: é o dado que a sala
    precisa ler, e não um detalhe. */
-.resultado-acima { grid-column: 1 / -1; line-height: 1.12; padding-top: .1em; }
+.resultado-acima { grid-column: 1 / -1; grid-row: 3; line-height: 1.12; padding-top: .1em; }
 /* As contas do mês (D-044) e o custo real da carta (D-052), no resultado e na
    história: cada pedaço inteiro, o rótulo discreto e o valor em destaque. */
 .contas, .custo-carta, .historia-dinheiro { color: var(--texto-2); }
@@ -510,7 +530,6 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O nome da equipe no título da história, no peso do título. */
 .tela-placar-final h1 .equipe-nome { font-weight: inherit; }
 .linha-rotulo-placar { flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12; }
-.linha-persona { color: var(--texto-2); }
 .valor-saldo { justify-content: flex-end; white-space: nowrap; }
 /* Escolha ou sorte: uma linha por equipe, contada como história. */
 .historias-escolha { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: safe center; }

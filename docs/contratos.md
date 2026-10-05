@@ -936,6 +936,23 @@ a barra escondida e o `#modal` aberto.
 das personas e do mapa mede a altura que sobra com ela. Desenhada depois, a primeira tela depois do lobby, e toda
 troca de tamanho (a altura do QR é 12% da tela), era medida sem a faixa.
 
+**A equipe pelo personagem (teste do Kleber de 05/10, prints 12 a 14):** em toda tela do telão, a equipe aparece
+pelo personagem, e não pelo nome da cor: `rotuloEquipe(id)` monta o `graficos.rotuloEquipe` (a forma na cor da
+equipe e o número, que ligam a equipe do telão à do celular e às teclas) e troca o texto de `.equipe-nome` por
+`.equipe-quem` ("Jonas,") e `.equipe-oficio` ("motoboy"), com o nome da cor na dica (`title`). Os dois pedaços
+são inteiros (CSS): numa coluna estreita, o rótulo quebra só entre eles. O ofício (`oficioDe`) é o começo da
+`descricao` da persona até a primeira vírgula ou ponto, cortado antes da primeira preposição ou "e" (de, do, da,
+em, no, na, por, pelo, pela, com, e…), com a primeira letra minúscula quando a segunda já é minúscula. Com o config
+de 05/10: motoboy, manicure, motorista, influenciadora, entregador, vende doces. O trecho inteiro ("Bruna,
+influenciadora de beleza") não cabia na coluna da equipe do sorteio e do resultado em 1024×768. Para mudar o
+ofício na tela, muda-se o começo da descrição no config. Exceção: a **formação das equipes** mostra a cor
+(`rotuloEquipe(id, null, { cor: true })`, é por ela que o aluno escolhe a equipe no celular) e, ao lado, o
+personagem por extenso (`.equipe-persona`, `nomeDoPersonagem`: "Jonas, motoboy"). As linhas que repetiam o nome
+do personagem ao lado do rótulo saíram: `.resumido-persona` (placar resumido), `.linha-persona` (placar, página do
+saldo), `.persona-nome` (personas), o "Jonas ·" do resultado e o " · Jonas" do título da história. Os modais do
+apresentador ("Decidir por esta equipe", "Mover aluno") continuam com "1 Laranja": o e2e:online procura o botão
+por esse nome exato. O e2e confere o rótulo de toda equipe em toda tela (`conferirRotulosDasEquipes`).
+
 **Personas (D-044, D-065):** uma entrada por persona com equipe aberta, na ordem das equipes (a persona da
 equipe 1 primeiro; revisão de 30/09, achado 12: pela ordem das personas do config, a tela saía "1 e 2, 5,
 3, 4, 6") (`.persona-linha`, `data-persona`,
@@ -943,8 +960,8 @@ equipe 1 primeiro; revisão de 30/09, achado 12: pela ordem das personas do conf
 parecia sobreposta, com a equipe e o nome em linhas de base diferentes e o "· 3 pessoas em casa" caindo
 sozinho na linha de baixo):
 - `.persona-quem`: `.persona-equipes` (as equipes da persona, ligadas por `.persona-e` "e" quando são
-  duas, antes do nome) e `.persona-nome` (o nome e o ofício, que é a descrição até a primeira vírgula ou
-  ponto);
+  duas), cada uma pelo rótulo do personagem ("◯ 1 Jonas, motoboy", abaixo). O `.persona-nome` ao lado
+  saiu (teste do Kleber de 05/10): repetiria o nome e o ofício do rótulo;
 - `.persona-casa`: "N pessoas em casa · básico da casa R$ Y · outra renda R$ Z" (ou "sem outra renda"); o
   rótulo da outra renda vai na dica (`title`);
 - `.persona-mes` (`data-saldo-mes-comum`, `data-sinal` = `negativo`|`positivo`|`zero`, `motor.mesComum`): "a conta
@@ -993,10 +1010,12 @@ colunas alinhadas entre as faixas (`.grade-resultados` em grid, a faixa em `subg
 Antes, cada equipe era uma frase corrida de três linhas com todas as contas, e a tela era difícil de explicar
 em aula. O detalhamento das contas (entrou, gastos, multa, básico, juros, empréstimo, o que veio de antes)
 saiu do telão: fica no celular de cada equipe e na história do placar final.
-- `.resultado-quem`: a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão
-  (`.resultado-persona`: "Jonas · decisão B", com `.resultado-escolha`, `data-decisao` e o rótulo da opção na
-  dica). Revisão de 30/09, achado 9: sem a decisão, duas equipes do Jonas com a mesma carta mostravam saldos
-  diferentes sem explicação. Na linha de detalhe, a letra empurrava a parada para uma terceira linha;
+- `.resultado-quem`: a equipe pelo personagem ("◯ 1 Jonas, motoboy") e, embaixo, a letra da decisão
+  (`.resultado-escolha`: "decisão B", com `data-decisao` e o rótulo da opção na dica). Revisão de 30/09, achado
+  9: sem a decisão, duas equipes do Jonas com a mesma carta mostravam saldos diferentes sem explicação. Na linha
+  de detalhe, a letra empurrava a parada para uma terceira linha. A coluna é `fit-content(9em)` e ocupa a faixa de
+  cima a baixo (`grid-row: 1 / span 2`): o rótulo mais comprido quebra entre o nome e o ofício, ao lado da carta,
+  do dinheiro e da linha de baixo (em `max-content`, o personagem tirava ~70 px da carta em 1024×768);
 - `.resultado-meio`: a carta (`.resultado-carta`, 1,15× o corpo), pelo título inteiro; quando ele não cabe numa
   linha, o `encurtarCartas` troca pelo `curto` (D-040; `data-curto`, `data-encurtada="1"`), e o título fica na
   dica. Embaixo, `.resultado-detalhe`, só quando há o que dizer, juntando por " · " (cada pedaço sem
