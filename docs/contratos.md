@@ -981,8 +981,40 @@ passavam 84 px da borda): entrelinha 1,04 e vãos de 2 a 3 px, com a letra nos 2
 
 **Teclas:** Espaço (→, PageDown) avança, e no comparativo e no placar final pagina dentro do passo;
 Enter encerra; P pausa; F tela cheia; H mostra ou esconde a barra; Ctrl+Z desfaz; 1 a 5 contam
-(offline) e 1 a N abrem e fecham equipes; ↑ e ↓ trocam a afirmação da contagem (offline). As teclas C
-(critério do placar) e V ("sem vencedor") saíram com a tela decomposta (D-041).
+(offline) e 1 a N abrem e fecham equipes; ↑ e ↓ trocam a afirmação da contagem (offline); ← e PageUp (o
+"voltar" do passador) entram no modo revendo (abaixo; antes, não faziam nada, porque voltar o roteiro
+mexeria nos celulares). As teclas C (critério do placar) e V ("sem vencedor") saíram com a tela decomposta
+(D-041).
+
+**Modo revendo (pedido 6 do Kleber, teste de 05/10):** o apresentador revê a tela de um passo que já passou,
+**só no telão**: os celulares continuam no passo atual. É estado de interface (`app.revendo` = o índice do
+passo revisto, ou `null`): nada é gravado no canal, no banco ou no localStorage, nada entra na fila de comandos,
+e o estado e a `geracao` continuam os do passo atual; igual online e offline (o e2e confere a sala inteira no
+canal e o localStorage, antes e depois).
+- **Teclas:** ← ou PageUp mostram o passo anterior (o primeiro aperto parte do passo atual; repetir volta mais,
+  até o passo 0; no passo 0, nada acontece); → ou Esc voltam ao passo atual. Qualquer outra tecla de comando
+  (Espaço, Enter, P, Ctrl+Z, os números) **só sai do modo, sem rodar o comando**: o Espaço dado por hábito não
+  avança o roteiro de quem estava olhando para trás. A saída por tecla conta para a trava de 1,5 s do avançar
+  (o segundo Espaço do passador, logo depois, também não avança), e a repetição da tecla mantida apertada que
+  chega nesse 1,5 s é ignorada. H (a barra), F (tela cheia) e os atalhos do navegador valem normalmente. Um
+  comando **clicado** na barra sai do modo e roda (o clique é de propósito; a "Tela cheia" não sai).
+- **Selo:** `#revendo` (`.selo-revendo`, `role="status"`), uma faixa em cima do `#palco`, no fluxo (as medidas
+  do desenho contam com a altura dela), em amarelo (`--foco`) com o texto escuro: "Revendo: {título do passo} ·
+  os celulares continuam no passo atual · → volta" (offline, "a sessão continua no passo atual"). A dica da
+  barra (`[data-barra-dica]`) diz "Revendo o passo N (só no telão; …) · ← volta mais · → ou Esc volta ao passo
+  atual · outra tecla só sai do modo, sem rodar o comando"; o passo da barra continua o atual.
+- **A tela revista** (`telaRevista`): `body[data-tela="revendo"]`, e a seção leva a classe da tela refeita
+  (`tela-{id}`), `.tela-revista` e `data-revendo` = o índice. Refeita só a partir do banco, como estava na hora:
+  `lobby` (a entrada na sala); `bloco`, com a linha do tempo marcando o passo revisto ("você está aqui") e o
+  placar resumido **de então** (`placarResumido(classe, ateIndice)`: o "depois" da última rodada antes do passo,
+  e não o placar de agora); `personas`; `rodada` já apurada → o resultado (`rodada-resultado`, de
+  `resultados/{r}`, sem a animação de entrada das cartas); `enquete` já apurada → `enquete-apurada` (de
+  `enquetes/{e}/{momento}`; a revelada só no comparativo continua "Respostas registradas"); `placarFinal` e
+  `comparativo`, na primeira página (o saldo; a primeira afirmação). O resto vira o **cartão**
+  (`tela-revista-cartao`: "Passo k de N" e o título do passo): a formação das equipes (refeita, mostraria os
+  membros de agora) e a rodada ou enquete pulada, sem apuração.
+- O modo acaba sozinho quando o passo atual volta para o passo revisto ou para antes dele (o desfazer, outra
+  máquina) e ao encerrar a sessão.
 
 **Linha do tempo (D-042; rascunho, seção 7, item 15):** todo passo `bloco` mostra
 `nav.linha-tempo` com os itens de `roteiro.linhaDoTempo(config, passos, { maxItens: 16 })`: um
