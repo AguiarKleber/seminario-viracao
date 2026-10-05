@@ -401,16 +401,17 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* ---------- Resultado ---------- */
 
 /* D-065 (teste de 30/09): uma faixa por equipe, só com o essencial, em três
- * colunas alinhadas entre as faixas (subgrid): a equipe e a persona; a carta,
- * grande, com os dias parados embaixo; o saldo do mês em verde ou vermelho,
- * com sinal, e a dívida embaixo. Antes, cada equipe era uma frase corrida de
+ * colunas alinhadas entre as faixas (subgrid): a equipe pelo personagem; a
+ * carta, grande, com os dias parados embaixo; o saldo do período em verde ou
+ * vermelho, com sinal e com o rótulo "saldo do bimestre" logo acima; e, numa
+ * linha embaixo da carta e do saldo, a dívida total e o que faltou na mesa
+ * (teste do Kleber de 05/10). Antes, cada equipe era uma frase corrida de
  * três linhas com todas as contas, sem espaço entre as equipes, e a tela era
  * difícil de explicar em aula. O detalhamento ficou no celular e na história.
  * Nada abaixo do corpo (28 px em 1024×768); o e2e prova seis equipes com a
  * carta mais cara em 1024×768, sem rolagem e com espaço entre as faixas. */
 .tela-rodada-resultado { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
 .tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.4); }
-.resultado-legenda { color: var(--texto-2); padding-right: .6em; white-space: nowrap; }
 /* A coluna da equipe em fit-content: com o personagem no rótulo ("◯ 1 Bruna,
    influenciadora", teste do Kleber de 05/10), em max-content ela tirava ~70 px
    da carta em 1024×768. Até 9em o rótulo fica numa linha; o mais comprido
@@ -428,9 +429,9 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    da decisão sai (o celular de cada equipe a mostra). */
 .grade-resultados[data-aperto] { row-gap: calc(var(--espaco) * .7); }
 .grade-resultados[data-aperto] .resultado-origem { display: none; }
-/* D-066: com o limite do cheque especial, a faixa de quem estourou tem três
-   linhas (a dívida e, embaixo, as contas atrasadas e o que faltou na mesa), e
-   seis delas com a entrelinha de 1,08 passavam ~60 px de 1024×768. No aperto,
+/* A faixa tem três linhas (a carta e, ao lado, o rótulo e o saldo; embaixo,
+   a linha da dívida total; teste do Kleber de 05/10), e seis delas com a
+   entrelinha de 1,08 passavam ~60 px de 1024×768 (D-066). No aperto,
    a entrelinha fecha em 1 e o respiro de dentro da faixa diminui; a letra fica
    nos 28 px. */
 .grade-resultados[data-aperto] .cartao-resultado { line-height: 1; padding-top: .1em; padding-bottom: .1em; }
@@ -483,16 +484,20 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .resultado-detalhe b { color: var(--texto); }
 .resultado-decisao { color: var(--texto-2); }
 .resultado-dinheiro { align-items: flex-end; text-align: right; }
+/* Teste do Kleber de 05/10 (print 7): o número colorido não dizia o que era (o
+   "saldo do bimestre" ficava só no cabeçalho, no canto de cima). O rótulo vai
+   logo acima de cada saldo, discreto e no corpo (28 px em 1024×768). */
+.resultado-saldo-rotulo { color: var(--texto-2); white-space: nowrap; }
 .resultado-saldo { font-size: 1.3em; font-weight: 800; white-space: nowrap; }
 .resultado-saldo[data-sinal="negativo"] { color: var(--negativo); }
 .resultado-saldo[data-sinal="positivo"] { color: var(--positivo); }
-.resultado-divida, .resultado-caixa { color: var(--texto-2); white-space: nowrap; }
-.resultado-divida b, .resultado-caixa b { color: var(--texto); }
-/* D-066: as contas atrasadas e o que faltou na mesa, numa linha embaixo do
-   dinheiro, alinhada à direita como ele, da coluna da carta até a borda. Na
-   coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna e a parada
-   da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só quebra
-   entre eles. */
+/* A linha de baixo, alinhada à direita, da coluna da carta até a borda: a
+   dívida total (o banco, o empréstimo e as contas atrasadas num número só;
+   teste do Kleber de 05/10, print 7: em duas linhas, "dívida" e "contas
+   atrasadas" se liam como duas dívidas), o caixa positivo e o que faltou na
+   mesa (D-066). Na coluna do dinheiro, um texto comprido alargava a coluna e a
+   parada da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só
+   quebra entre eles. */
 .resultado-limite { grid-column: 2 / -1; grid-row: 2; justify-self: end; text-align: right; color: var(--texto-2); }
 .resultado-limite > span { white-space: nowrap; }
 .resultado-limite b { color: var(--texto); }
@@ -611,8 +616,8 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O empréstimo como dívida (esquema v2.2): "pegou empréstimo de R$ 1.500" depois
    das contas do mês, e a dívida com que a equipe termina no fim da história. */
 .historia-emprestimo b { color: var(--texto); }
-.historia-divida, .historia-caixa, .historia-atrasadas { color: var(--texto-2); white-space: nowrap; }
-.historia-divida b, .historia-caixa b, .historia-atrasadas b, .historia-mesa b, .historia-mesa-total b, .conta-atraso b { color: var(--texto); }
+.historia-divida, .historia-caixa { color: var(--texto-2); white-space: nowrap; }
+.historia-divida b, .historia-caixa b, .historia-mesa b, .historia-mesa-total b, .conta-atraso b { color: var(--texto); }
 /* D-067: a mesma frase do resultado, no mês da história em que aconteceu. */
 .historia-acima { color: var(--texto); }
 /* D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.

@@ -1031,26 +1031,27 @@ saiu do telão: fica no celular de cada equipe e na história do placar final.
     entre "a" e "proteção". Com a frase da D-067 na faixa (abaixo), este pedaço sai: a frase já diz o valor;
   - a origem (`.resultado-origem` > `.resultado-decisao`), curta, quando não é a maioria: "ninguém votou",
     "empate na moeda", "na prorrogação", "pelo apresentador" (este só online);
-- `.resultado-dinheiro`, alinhada à direita: o saldo do mês (`.resultado-saldo`, 1,3× o corpo, `mes.saldoMes`
-  arredondado) com + ou − (`formatar.moeda` com sinal), em `--positivo` (`data-sinal="positivo"`) ou
-  `--negativo`; o zero fica neutro, "R$ 0", `data-sinal="zero"`, como no celular (achado 16). Embaixo, a
-  dívida total de depois do mês, discreta (`.resultado-divida`): "dívida R$ D" (cheque especial
-  + empréstimo, `historia.dividaTotal(r.depois).total`) ou "sem dívida"; e o caixa, quando positivo
-  (`.resultado-caixa`, revisão da F6a: a dívida é sempre a total, e o caixa positivo aparece como "caixa R$ X"):
-  com dívida, numa linha própria embaixo dela (na mesma, a coluna do dinheiro apertava a carta); sem dívida, no
-  lugar do "sem dívida". Valores em reais inteiros. O cabeçalho diz "saldo " + `historia.periodo(config).doPeriodo`
-  ("saldo do mês"; esquema v3, "saldo do bimestre") (`.resultado-legenda`) sobre a coluna: o sinal e o
-  cabeçalho dizem o mesmo que a cor, que nunca é o único canal.
-  Esquema v3.1 (D-066, sala com `regras.limiteChequeEspecial`): a "dívida" passa a ser a do banco mais o empréstimo
-  (`historia.dividaTotal(r.depois).total`, que já não leva as contas atrasadas; o banco nunca passa do limite), e as contas atrasadas
-  ganham número próprio. Sem o limite, tudo como antes;
-- `.resultado-limite` (D-066), só quando há o que dizer: uma linha própria embaixo do dinheiro, alinhada à direita
-  como ele, da coluna da carta até a borda, juntando por " · " "contas atrasadas R$ Y" (`.resultado-atrasadas`, o
-  indicador `contas_atrasadas` do `depois`: o que a casa deve de aluguel, luz e água no fim do período) e "faltou na
-  mesa R$ Z" (`.resultado-mesa`, `mes.faltouNaMesa`: a comida que não deu para comprar NESTE período; não é dívida
-  nem entra no saldo). Na coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna em ~120 px, a parada
-  quebrava em duas linhas, e seis equipes passavam de 1024×768. Com contas atrasadas, o caixa está no limite (o banco
-  cortou o crédito): a linha do caixa nunca aparece junto, e a faixa fica com três linhas;
+- `.resultado-dinheiro`, alinhada à direita: o rótulo `.resultado-saldo-rotulo`, "saldo " +
+  `historia.periodo(config).doPeriodo` ("saldo do mês"; esquema v3, "saldo do bimestre"), discreto e no corpo, e logo
+  abaixo dele o saldo do período (`.resultado-saldo`, 1,3× o corpo, `mes.saldoMes` arredondado) com + ou −
+  (`formatar.moeda` com sinal), em `--positivo` (`data-sinal="positivo"`) ou `--negativo`; o zero fica neutro, "R$ 0",
+  `data-sinal="zero"`, como no celular (achado 16). O sinal e o rótulo dizem o mesmo que a cor, que nunca é o único
+  canal. Teste do Kleber de 05/10 (print 7): o rótulo ficava só no cabeçalho (`.resultado-legenda`, que saiu), longe
+  do número, e o número colorido não dizia que era o saldo do bimestre;
+- `.resultado-limite`, sempre: uma linha embaixo da carta e do dinheiro (`grid-row: 2`, da coluna da carta até a
+  borda), alinhada à direita, juntando por " · ": a **dívida total** (`.resultado-divida`, "dívida total R$ D", ou "sem
+  dívida" quando não há dívida nem caixa), o caixa, quando positivo (`.resultado-caixa`, "caixa R$ X"; revisão da F6a:
+  com o empréstimo, a família pode ter dinheiro no bolso e dever ao banco) e "faltou na mesa R$ Z" (`.resultado-mesa`,
+  `mes.faltouNaMesa`: a comida que não deu para comprar NESTE período; não é dívida nem entra no saldo, D-066). A
+  dívida total é a do banco (cheque especial), o empréstimo e as contas atrasadas, num número só
+  (`historia.dividaTotal(r.depois)`: `total + contasAtrasadas`; `data-divida`), e a parte das contas atrasadas fica em
+  `data-contas-atrasadas`. Teste do Kleber de 05/10 (print 7): "dívida R$ 2.000" numa linha e "contas atrasadas
+  R$ 19.797" na outra se liam como duas dívidas, que a sala não somava; com o caixa zerado, a dívida total é o mesmo
+  número do "faltou R$ X" do placar (o patrimônio desconta as três). Isso muda a D-066 no telão, que dava às contas
+  atrasadas um número próprio; o celular da equipe ainda escreve "dívida no banco" e as contas atrasadas à parte
+  (`js/aluno.js`, fora deste pedido). Sala sem o limite: a dívida total é o banco e o empréstimo. Valores em reais
+  inteiros. Na coluna do dinheiro, um texto comprido alargava a coluna e a parada quebrava em duas linhas: por isso a
+  linha de baixo;
 - `.resultado-acima` (D-067), só quando o resultado traz `protecaoAcimaDoTrabalho`: a frase de
   `historia.fraseAcimaDoTrabalho(historia.protecaoDoResultado(r), persona.nome, formatar.moeda, historia.periodo(config))`
   ("Auxílio do INSS (MEI): R$ 4.000, mais do que Dani ganhava trabalhando num bimestre comum (R$ 3.800).") na largura da
@@ -1165,12 +1166,15 @@ nenhuma sombra.
    O texto da opção é o do ofício da persona da equipe (`historiaDaEquipe` já traz
    `rotuloPor`/`narrativaPor`, D-054). No fim da última página, `.historia-final`: "No fim dos N meses: faltou
    R$ X" (ou "sobrou"; N = `historia.mesesJogados`, as rodadas jogadas × `mesesPorRodada`: "dos 12 meses" com 6
-   bimestres), pelo patrimônio do placar, e, com dívida, "· dívida R$ D" (`.historia-divida`, `data-divida`, a
-   total: `historia.dividaTotal(placar[eq])`) e, com a dívida e o caixa positivo (o empréstimo), "· caixa R$ C"
+   bimestres), pelo patrimônio do placar, e, com dívida, "· dívida total R$ D" (`.historia-divida`, `data-divida`,
+   a mesma dívida total do resultado da rodada: o banco, o empréstimo e as contas atrasadas,
+   `historia.dividaTotal(placar[eq])` `total + contasAtrasadas`; `data-contas-atrasadas` com a parte das contas
+   atrasadas, em sala com o limite) e, com a dívida e o caixa positivo (o empréstimo), "· caixa R$ C"
    (`.historia-caixa`, `data-caixa`; sem dívida, o "sobrou" já é o caixa, e o número não se repete). Esquema v3.1
-   (D-066): a dívida é a do banco mais o empréstimo, e depois vêm "· contas atrasadas R$ A" (`.historia-atrasadas`,
-   `data-contas-atrasadas`) e "· faltou na mesa R$ F" (`.historia-mesa-total`, o acumulado). Nas páginas do meio, `.historia-final.historia-parcial`: "Depois de 6 meses: faltou R$ X[ ·
-   dívida R$ D][ · caixa R$ C][ · contas atrasadas R$ A][ · faltou na mesa R$ F]", pelo `depois` gravado da última rodada da página. A parcela do empréstimo
+   (D-066): depois vem "· faltou na mesa R$ F" (`.historia-mesa-total`, o acumulado). Teste do Kleber de 05/10: o
+   "· contas atrasadas R$ A" à parte (`.historia-atrasadas`) saiu, e as contas atrasadas entram na dívida total. Nas
+   páginas do meio, `.historia-final.historia-parcial`: "Depois de 6 meses: faltou R$ X[ · dívida total R$ D][ · caixa
+   R$ C][ · faltou na mesa R$ F]", pelo `depois` gravado da última rodada da página. A parcela do empréstimo
    ("R$ S do empréstimo, em N parcelas") saiu do telão (revisão da F6a): a parcela detalhada fica só no celular.
    A tela de decisão (`decidindo`) continua com o rótulo comum da opção: é a mesma para todas as
    equipes, e não mostra narrativa por persona.

@@ -2424,14 +2424,22 @@
   // eram do banco e o resto era aluguel e luz atrasados, com risco de despejo e
   // corte, que é a escolha que a D-066 quer mostrar. contasAtrasadas é null em
   // sala sem o limite (os valores não têm o indicador), e a tela fica como antes.
-  // O total de historia.dividaTotal já é o banco e o empréstimo (revisão da
-  // F6c): é a mesma "dívida" que o celular da equipe escreve.
+  // Teste do Kleber de 05/10 (print 7): com "dívida R$ 2.000" numa linha e
+  // "contas atrasadas R$ 19.797" na outra, a sala lia dois números de dívida e
+  // não somava. No telão, a dívida volta a ser um número só, a "dívida total":
+  // o banco (cheque especial), o empréstimo e as contas atrasadas
+  // (historia.dividaTotal: total + contasAtrasadas). É o mesmo número do
+  // "faltou R$ X" do placar quando o caixa é zero (o patrimônio desconta as
+  // três), no resultado, na história e no placar. contasAtrasadas continua no
+  // retorno (o data-contas-atrasadas do resultado). O celular da equipe ainda
+  // separa "dívida no banco" e "contas atrasadas" (js/aluno.js, fora deste
+  // pedido).
   function dividaECaixa(valores) {
     const renda = Number(valores?.renda);
     const d = N().historia.dividaTotal(valores);
     const atrasadas = Number.isFinite(d?.contasAtrasadas) ? Math.round(d.contasAtrasadas) + 0 : null;
     return {
-      divida: Math.round(d?.total ?? 0) + 0,
+      divida: Math.round((d?.total ?? 0) + (d?.contasAtrasadas ?? 0)) + 0,
       contasAtrasadas: atrasadas,
       caixa: Number.isFinite(renda) && Math.round(renda) > 0 ? Math.round(renda) : 0,
     };
@@ -2492,14 +2500,21 @@
   // juros, faltou, dívida), e o Kleber achou a tela difícil de explicar em
   // aula. Agora, uma faixa por equipe, em três colunas alinhadas entre as
   // faixas (subgrid):
-  // - a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão;
+  // - a equipe (forma, número e personagem) e, embaixo, a letra da decisão;
   // - a carta que saiu, grande, e embaixo só o que a sala precisa ouvir: o
   //   empréstimo tomado no mês, os dias parados, o que a proteção pagou (D-059)
   //   e a origem da decisão quando não foi a maioria;
-  // - o saldo do mês em destaque, com + ou − e em verde ou vermelho (o sinal e
-  //   o cabeçalho "saldo do mês" dizem o mesmo que a cor, que nunca é o único
-  //   canal; o zero fica neutro, "R$ 0", como no celular), e embaixo a dívida
-  //   total, discreta.
+  // - o saldo do período em destaque, com + ou − e em verde ou vermelho, e o
+  //   rótulo "saldo do bimestre" logo acima dele (o sinal e o rótulo dizem o
+  //   mesmo que a cor, que nunca é o único canal; o zero fica neutro, "R$ 0",
+  //   como no celular);
+  // - embaixo da carta e do saldo, uma linha discreta com a dívida total e o
+  //   que faltou na mesa.
+  // Teste do Kleber de 05/10 (print 7): o "saldo do bimestre" ficava só no
+  // cabeçalho, no canto de cima, e o número colorido não dizia o que era; e a
+  // dívida vinha em duas linhas ("dívida R$ 2.000" e "contas atrasadas
+  // R$ 19.797"), que a sala lia como duas dívidas. Agora o rótulo vai junto de
+  // cada saldo, e a dívida é um número só (dividaECaixa).
   // Revisão de 30/09 (achado 9): sem a decisão, duas equipes do Jonas com a
   // mesma carta mostravam saldos diferentes sem explicação, e nada dizia que
   // uma delas tinha pegado R$ 1.500 (a dívida total fica igual com ou sem o
@@ -2519,20 +2534,21 @@
       .sort((a, b) => Math.abs(b.efeito) - Math.abs(a.efeito) || numeroEquipe(a.eq) - numeroEquipe(b.eq))
       .slice(0, n).map((x) => x.eq));
     // "saldo do bimestre" com rodadas de 2 meses (esquema v3): o número grande
-    // é o saldo da rodada inteira, e "do mês" diria metade do que ele é.
+    // é o saldo da rodada inteira, e "do mês" diria metade do que ele é. O
+    // rótulo vai em cada faixa, logo acima do número (teste do Kleber de 05/10);
+    // no cabeçalho, ele ficava longe do número que nomeava.
     const { doPeriodo } = periodo();
-    s.appendChild(cabecalho(null, rodada.titulo, {
-      extra: el('p', { classe: 'resultado-legenda', texto: `saldo ${doPeriodo}` }),
-    }));
+    const rotuloSaldo = `saldo ${doPeriodo}`;
+    s.appendChild(cabecalho(null, rodada.titulo));
     const grade = el('div', { classe: 'grade-resultados', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
     for (const { eq, r } of itens) {
       const carta = app.config.cartas[r.carta] || {};
       const grave = carta.tom === 'grave';
       const mes = mesDoResultado(e.rodada, eq, r);
       const saldo = Math.round(mes.saldoMes) + 0;
-      // A dívida de depois do mês (cheque especial + empréstimo) e o caixa, se
-      // positivo. Resultado de sala antiga sem o "depois" não tem de onde
-      // tirá-los, e fica em 0.
+      // A dívida total de depois do período (cheque especial, empréstimo e
+      // contas atrasadas) e o caixa, se positivo. Resultado de sala antiga sem
+      // o "depois" não tem de onde tirá-los, e fica em 0.
       const { divida, contasAtrasadas, caixa } = dividaECaixa(r.depois);
       const mesa = reaisInteiros(mes.faltouNaMesa);
       const acima = fraseAcimaDoTrabalho(eq, r);
@@ -2546,17 +2562,20 @@
         // mesmo valor duas vezes; a frase já diz quanto ela pagou.
         mes.protecao > 0 && !acima ? rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }) : null,
       ].filter(Boolean);
-      // D-066: as contas atrasadas (o que a casa deve de aluguel, luz e água,
-      // no fim do período) e a comida que não deu para comprar NESTE período,
-      // numa linha própria embaixo do dinheiro, alinhada à direita como ele.
-      // Na coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna
-      // em ~120 px, a parada da carta quebrava em duas linhas, e seis equipes
-      // passavam de 1024×768; ao lado da parada, a linha de detalhe ia a três.
-      // Aqui, a linha cabe inteira na largura da faixa. Com contas atrasadas, o
-      // caixa está no limite do cheque especial (o banco cortou o crédito):
-      // a linha do caixa nunca aparece junto, e a faixa fica com três linhas.
+      // A linha de baixo, embaixo da carta e do saldo, alinhada à direita: a
+      // dívida total ("sem dívida" quando não há dívida nem caixa), o caixa
+      // positivo, quando há (revisão da F6a: com o empréstimo, a família pode
+      // ter dinheiro no bolso e dever ao banco), e a comida que não deu para
+      // comprar NESTE período (D-066), que não é dívida e por isso vem com o
+      // próprio nome. Na coluna do dinheiro, um texto comprido alargava a
+      // coluna, a parada da carta quebrava em duas linhas, e seis equipes
+      // passavam de 1024×768; aqui, a linha cabe inteira na largura da faixa.
+      // Teste do Kleber de 05/10 (print 7): a dívida e as contas atrasadas eram
+      // duas linhas; a "dívida total" junta as duas.
       const limite = [
-        contasAtrasadas > 0 ? el('span', { classe: ['conta', 'resultado-atrasadas'] }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })]) : null,
+        divida > 0 ? el('span', { classe: ['conta', 'resultado-divida'] }, ['dívida total ', el('b', { texto: F().moeda(divida) })])
+          : caixa === 0 ? el('span', { classe: ['conta', 'resultado-divida'] }, ['sem dívida']) : null,
+        caixa > 0 ? el('span', { classe: ['conta', 'resultado-caixa'] }, ['caixa ', el('b', { texto: F().moeda(caixa) })]) : null,
         mesa > 0 ? pedacoMesa(mesa, 'resultado-mesa') : null,
       ].filter(Boolean);
       const dados = { equipe: eq, carta: r.carta, origem: r.origem, saldoMes: String(saldo), divida: String(divida), caixa: String(caixa) };
@@ -2589,18 +2608,13 @@
           ]) : null,
         ]),
         el('div', { classe: 'resultado-dinheiro' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: rotuloSaldo }),
           el('p', {
             classe: 'resultado-saldo', title: textoSaldo(saldo),
             dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }),
           }),
-          // Sem dívida, o caixa no lugar do "sem dívida"; com os dois, o caixa
-          // numa linha própria (na mesma, a coluna do dinheiro apertava a carta).
-          divida > 0 || (caixa === 0 && !(contasAtrasadas > 0))
-            ? el('p', { classe: 'resultado-divida' }, divida > 0 ? ['dívida ', el('b', { texto: F().moeda(divida) })] : ['sem dívida'])
-            : null,
-          caixa > 0 ? el('p', { classe: 'resultado-caixa' }, ['caixa ', el('b', { texto: F().moeda(caixa) })]) : null,
         ]),
-        limite.length > 0 ? el('p', { classe: 'resultado-limite' }, juntarPedacos(limite)) : null,
+        el('p', { classe: 'resultado-limite' }, juntarPedacos(limite)),
         // D-067: a faixa inteira, embaixo das três colunas. É dado real e
         // ponto de debate (o auxílio tem o piso de um salário mínimo, e a renda
         // do app fica abaixo dele); sem a frase, a sala lia "o acidente
@@ -3016,18 +3030,22 @@
   // diz só quanto a família deve e quanto tem. Aqui o caixa só vem junto de
   // uma dívida (o empréstimo): sem dívida, o "sobrou R$ X" já é o caixa, e
   // "sobrou R$ 8.252 · caixa R$ 8.252" repetia o número.
-  // D-066: com o limite, a dívida é a do banco mais o empréstimo, e as contas
-  // atrasadas e o que faltou na mesa até ali vêm em seguida, cada um com o
-  // próprio nome (o "faltou na mesa" não é dívida: é a comida que não deu para
-  // comprar, acumulada). Sala sem o limite: como antes.
+  // D-066: com o limite, o que faltou na mesa até ali vem em seguida, com o
+  // próprio nome (não é dívida: é a comida que não deu para comprar,
+  // acumulada). Teste do Kleber de 05/10 (print 7): a dívida é a total, o
+  // banco, o empréstimo e as contas atrasadas num número só ("dívida total"),
+  // o mesmo do resultado da rodada; antes, "dívida" e "contas atrasadas" vinham
+  // separadas. data-contas-atrasadas fica no span da dívida (a parte dela que é
+  // aluguel, luz e água atrasados). Sala sem o limite: a dívida é o banco e o
+  // empréstimo, como antes.
   function pedacosDaDivida(valores) {
     const { el } = D();
     const { divida, contasAtrasadas, caixa } = dividaECaixa(valores);
     const mesa = reaisInteiros(N().historia.faltouNaMesaDe(valores));
+    const dadosDivida = { divida: String(divida), ...(contasAtrasadas !== null ? { contasAtrasadas: String(contasAtrasadas) } : {}) };
     return [
-      divida > 0 ? [' · ', el('span', { classe: 'historia-divida', dados: { divida: String(divida) } }, ['dívida ', el('b', { texto: F().moeda(divida) })])] : null,
+      divida > 0 ? [' · ', el('span', { classe: 'historia-divida', dados: dadosDivida }, ['dívida total ', el('b', { texto: F().moeda(divida) })])] : null,
       divida > 0 && caixa > 0 ? [' · ', el('span', { classe: 'historia-caixa', dados: { caixa: String(caixa) } }, ['caixa ', el('b', { texto: F().moeda(caixa) })])] : null,
-      contasAtrasadas > 0 ? [' · ', el('span', { classe: 'historia-atrasadas', dados: { contasAtrasadas: String(contasAtrasadas) } }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })])] : null,
       mesa > 0 ? [' · ', pedacoMesa(mesa, 'historia-mesa-total')] : null,
     ];
   }

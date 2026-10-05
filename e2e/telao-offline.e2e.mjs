@@ -52,12 +52,16 @@
 //    + empréstimo), com "caixa R$ X" quando o caixa é positivo; nenhum contorno
 //    de destaque no resultado; a parcela do empréstimo detalhada só no celular.
 // 12. D-066 e D-067 (parte 8, fixture v3.1 com o limite do cheque especial):
-//    no resultado, a dívida (banco + empréstimo) e, numa linha própria, as
-//    contas atrasadas e o que faltou na mesa; a frase da proteção acima do
-//    trabalho; no placar final, o saldo pelo patrimônio (menos as contas
-//    atrasadas) e a linha "Faltou na mesa no ano" por equipe; na história, a
-//    comida que faltou, a multa e os juros do atraso e, no fim, as contas
-//    atrasadas e o que faltou na mesa. Seis equipes em 1024×768, sem rolagem.
+//    no resultado, numa linha embaixo da carta e do saldo, a dívida total
+//    (banco, empréstimo e contas atrasadas num número só, pedido 3 do Kleber
+//    de 05/10) e o que faltou na mesa; a frase da proteção acima do trabalho;
+//    no placar final, o saldo pelo patrimônio (menos as contas atrasadas) e a
+//    linha "Faltou na mesa no ano" por equipe; na história, a comida que
+//    faltou, a multa e os juros do atraso e, no fim, a dívida total e o que
+//    faltou na mesa. Seis equipes em 1024×768, sem rolagem.
+// 13. Pedidos do Kleber de 05/10: o rótulo "saldo do bimestre" logo acima de
+//    cada saldo do resultado; a equipe pelo personagem ("Jonas, motoboy") em
+//    toda tela, menos na formação (a cor, com o personagem ao lado).
 // 9. esquema v2.1, com as seis equipes e a carta mais cara que cada uma podia
 //    tirar em cada mês (parte 4): o resultado enxuto cabendo em 1024×768, com
 //    um vão entre as faixas, e a história com o custo real da carta ("N dias
@@ -322,17 +326,17 @@ function conferirMesesDaHistoria(eq, historia, meses, resultados, cfg = configNo
 // empréstimo ficam só no celular. Esquema v3: "No fim dos 12 meses" (rodadas ×
 // meses por rodada), e cada página do meio termina com "Depois de 6 meses: …",
 // pelo "depois" da última rodada dela.
-// D-066: com o limite, depois da dívida (banco + empréstimo) vêm as contas
-// atrasadas e o que faltou na mesa até ali, cada um com o próprio nome.
+// D-066: com o limite, depois da dívida vem o que faltou na mesa até ali, com o
+// próprio nome. Teste do Kleber de 05/10 (print 7): a dívida é a total (banco,
+// empréstimo e contas atrasadas num número só, "dívida total"), a mesma do
+// resultado da rodada; as contas atrasadas não têm mais pedaço próprio.
 const textoDividaECaixa = (v) => {
   const divida = Math.round(dividaEsperada(v)) + 0;
   const caixa = Math.round(v.renda) > 0 ? Math.round(v.renda) : 0;
-  const atrasadas = Math.round(v.contas_atrasadas ?? 0);
   const mesa = Math.round(v.faltou_na_mesa ?? 0);
   return [
-    divida > 0 ? ` · dívida ${F.moeda(divida)}` : '',
+    divida > 0 ? ` · dívida total ${F.moeda(divida)}` : '',
     divida > 0 && caixa > 0 ? ` · caixa ${F.moeda(caixa)}` : '',
-    atrasadas > 0 ? ` · contas atrasadas ${F.moeda(atrasadas)}` : '',
     mesa > 0 ? ` · faltou na mesa ${F.moeda(mesa)}` : '',
   ].join('');
 };
@@ -402,10 +406,11 @@ function tituloSaldo(naoFecharam, total) {
 // é o patrimônio (renda − empréstimo a pagar), e a dívida, o cheque especial
 // mais o saldo devedor. Conta refeita aqui, e não com o historia.js da tela.
 // Esquema v3.1 (D-066): menos as contas atrasadas também (o "faltou na mesa"
-// não entra: não é dívida). A dívida da tela continua sendo a do banco mais o
-// empréstimo; as contas atrasadas têm linha própria.
+// não entra: não é dívida). Teste do Kleber de 05/10 (print 7): a dívida do
+// telão é a total, o banco, o empréstimo e as contas atrasadas ("dívida
+// total"); com o caixa zerado, é o mesmo número do "faltou" do placar.
 const patrimonioEsperado = (v) => v.renda - Math.max(0, v.emprestimo ?? 0) - Math.max(0, v.contas_atrasadas ?? 0) + 0;
-const dividaEsperada = (v) => Math.max(0, -v.renda) + Math.max(0, v.emprestimo ?? 0);
+const dividaEsperada = (v) => Math.max(0, -v.renda) + Math.max(0, v.emprestimo ?? 0) + Math.max(0, v.contas_atrasadas ?? 0);
 
 // ---------- Resultado da rodada enxuto (D-065, teste de 30/09) ----------
 
@@ -425,19 +430,25 @@ function textoParada(custo) {
 // achado 9: duas equipes do Jonas com a mesma carta tinham saldos diferentes
 // sem explicação), a parada, o que a proteção pagou (D-059), a origem (quando
 // não é a maioria), o saldo do mês com sinal (o zero neutro, "R$ 0", achado
-// 16) e a dívida total de depois do mês.
-// D-066: com o limite, uma linha embaixo do dinheiro com as contas atrasadas
-// (no fim do período) e o que faltou na mesa NESTE período. D-067: a frase da
-// proteção acima do trabalho na largura da faixa, e então "a proteção pagou"
-// sai do detalhe (a frase já diz o valor).
+// 16), com o rótulo "saldo do bimestre" logo acima dele, e, numa linha embaixo
+// da carta e do saldo, a dívida total de depois do período, o caixa positivo e
+// o que faltou na mesa NESTE período (D-066). Teste do Kleber de 05/10 (print
+// 7): a dívida e as contas atrasadas eram duas linhas, e o número colorido não
+// dizia que era o saldo do bimestre. D-067: a frase da proteção acima do
+// trabalho na largura da faixa, e então "a proteção pagou" sai do detalhe (a
+// frase já diz o valor).
 function faixaEsperada(x, origem, cfg, rodadaId, eq) {
   const saldo = Math.round(x.mes.saldoMes) + 0;
-  const divida = dividaEsperada(x.depois);
+  const divida = Math.round(dividaEsperada(x.depois)) + 0;
+  const caixa = Math.round(x.depois.renda) > 0 ? Math.round(x.depois.renda) : 0;
   const letra = 'ABCDEFGHIJ'[lista(cfg.rodadas[rodadaId].ordemOpcoes).indexOf(x.decisao)];
   const acima = fraseAcimaEsperada(cfg, eq, x);
-  const atrasadas = Math.round(x.depois.contas_atrasadas ?? 0);
   const mesa = Math.round(x.mes.faltouNaMesa ?? 0);
-  const limite = [atrasadas > 0 ? `contas atrasadas ${F.moeda(atrasadas)}` : null, mesa > 0 ? `faltou na mesa ${F.moeda(mesa)}` : null].filter(Boolean).join(' · ') || null;
+  // Revisão da F6a: sem dívida e com caixa, só "caixa R$ X"; sem os dois,
+  // "sem dívida".
+  const textoDivida = divida > 0 ? `dívida total ${F.moeda(divida)}` : caixa > 0 ? null : 'sem dívida';
+  const textoCaixa = caixa > 0 ? `caixa ${F.moeda(caixa)}` : null;
+  const limite = [textoDivida, textoCaixa, mesa > 0 ? `faltou na mesa ${F.moeda(mesa)}` : null].filter(Boolean).join(' · ');
   return {
     carta: x.carta,
     escolha: `decisão ${letra}`,
@@ -447,10 +458,9 @@ function faixaEsperada(x, origem, cfg, rodadaId, eq) {
     origem,
     saldo: `${saldo < 0 ? '−' : saldo > 0 ? '+' : ''}${F.moeda(Math.abs(saldo))}`,
     sinal: saldo < 0 ? 'negativo' : saldo > 0 ? 'positivo' : 'zero',
-    // Revisão da F6a: sem dívida e com caixa, só "caixa R$ X"; com os dois,
-    // "dívida" e "caixa" em linhas próprias.
-    divida: Math.round(divida) > 0 ? `dívida ${F.moeda(divida)}` : Math.round(x.depois.renda) > 0 || atrasadas > 0 ? null : 'sem dívida',
-    caixa: Math.round(x.depois.renda) > 0 ? `caixa ${F.moeda(x.depois.renda)}` : null,
+    rotuloSaldo: `saldo ${doPeriodoDe(cfg)}`,
+    divida: textoDivida,
+    caixa: textoCaixa,
     limite,
     acima,
   };
@@ -478,6 +488,7 @@ const lerFaixas = () => page.evaluate(() => Object.fromEntries(Array.from(docume
   origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
   saldo: c.querySelector('.resultado-saldo')?.textContent ?? null,
   sinal: c.querySelector('.resultado-saldo')?.dataset.sinal ?? null,
+  rotuloSaldo: c.querySelector('.resultado-saldo-rotulo')?.textContent ?? null,
   divida: c.querySelector('.resultado-divida')?.textContent ?? null,
   caixa: c.querySelector('.resultado-caixa')?.textContent ?? null,
   limite: c.querySelector('.resultado-limite')?.textContent ?? null,
@@ -622,12 +633,19 @@ async function conferirVisualDoResultado(onde) {
       dinheiro: faixas.map((f) => Math.round(f.querySelector('.resultado-dinheiro').getBoundingClientRect().right)),
       saldos: faixas.map((f) => {
         const s = f.querySelector('.resultado-saldo');
-        return { equipe: f.dataset.equipe, texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, fundo: getComputedStyle(f).backgroundColor, px: parseFloat(getComputedStyle(s).fontSize) };
+        const rotulo = f.querySelector('.resultado-saldo-rotulo');
+        const rs = s.getBoundingClientRect();
+        const rr = rotulo?.getBoundingClientRect();
+        return {
+          equipe: f.dataset.equipe, texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, fundo: getComputedStyle(f).backgroundColor, px: parseFloat(getComputedStyle(s).fontSize),
+          // O rótulo "saldo do bimestre" logo acima do número e alinhado com ele à direita.
+          rotulo: rotulo?.textContent ?? null, rotuloAcima: rr ? rr.bottom <= rs.top + 2 && rs.top - rr.bottom < rs.height : false, rotuloDireita: rr ? Math.abs(rr.right - rs.right) <= 1 : false,
+        };
       }),
       tokens: { positivo: raiz.getPropertyValue('--positivo').trim(), negativo: raiz.getPropertyValue('--negativo').trim() },
       corpo: parseFloat(getComputedStyle(document.body).fontSize),
       texto: document.getElementById('palco').textContent,
-      legenda: document.querySelector('.resultado-legenda')?.textContent ?? '',
+      legenda: document.querySelector('.resultado-legenda')?.textContent ?? null,
       contornos: faixas.map((f) => ({ grave: f.classList.contains('grave'), borda: getComputedStyle(f).borderTopColor, sombra: getComputedStyle(f).boxShadow })),
     };
   });
@@ -636,6 +654,10 @@ async function conferirVisualDoResultado(onde) {
   assert.ok(espalhamento(m.meio) <= 1, `${onde}: a coluna da carta alinhada entre as faixas (${m.meio.join(', ')})`);
   assert.ok(espalhamento(m.dinheiro) <= 1, `${onde}: a coluna do saldo alinhada entre as faixas (${m.dinheiro.join(', ')})`);
   for (const s of m.saldos) {
+    // Teste do Kleber de 05/10 (print 7): o número colorido diz que é o saldo
+    // do período, com o rótulo junto dele (e não só no cabeçalho).
+    assert.equal(s.rotulo, `saldo ${doPeriodoNaTela}`, `${onde}/${s.equipe}: o rótulo do saldo`);
+    assert.ok(s.rotuloAcima && s.rotuloDireita, `${onde}/${s.equipe}: o rótulo "saldo ${doPeriodoNaTela}" logo acima do número e alinhado com ele`);
     // O zero é neutro, sem "+" e na cor da letra (revisão de 30/09, achado 16).
     if (s.sinal === 'zero') {
       assert.match(s.texto, /^R\$\s?0$/, `${onde}/${s.equipe}: o saldo zero sem sinal ("${s.texto}")`);
@@ -655,7 +677,8 @@ async function conferirVisualDoResultado(onde) {
   // são graves têm todas a mesma borda, e nenhuma tem sombra por dentro.
   const bordas = new Set(m.contornos.filter((c) => !c.grave).map((c) => c.borda));
   assert.ok(bordas.size <= 1 && m.contornos.every((c) => c.sombra === 'none'), `${onde}: faixa com contorno de destaque (${JSON.stringify(m.contornos)})`);
-  assert.equal(m.legenda, `saldo ${doPeriodoNaTela}`, `${onde}: o cabeçalho da coluna do saldo`);
+  // O rótulo saiu do cabeçalho: está em cada faixa.
+  assert.equal(m.legenda, null, `${onde}: o "saldo do período" do cabeçalho saiu (vai em cada faixa)`);
 }
 // As personas em cada tamanho de tela: nenhum texto sobreposto e três linhas
 // por persona (quem é, a casa, a conta do mês), cada uma sem quebrar.
@@ -1505,7 +1528,6 @@ for (const r of RODADAS) {
   // D-065: por equipe, a carta, a parada, o saldo do mês com sinal e a dívida
   // total. Conferidos contra os resultados gravados no fim.
   contasNaTela[r] = await lerFaixas();
-  contasNaTela[r].cabecalho = await page.textContent('#palco .tela-cabecalho');
   if (r !== RODADAS[0]) {
     const temDivida = Object.values(contasNaTela[r]).some((x) => x?.divida?.startsWith('dívida'));
     if (temDivida) await conferirTela(`rodada-resultado-divida-${r}`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
@@ -1731,7 +1753,10 @@ for (const [k, r] of RODADAS.entries()) {
     assert.deepEqual(resultados[r][eq].protecaoItens ?? [], res.protecaoItens, `${r}/${eq}: protecaoItens gravado`);
     if (res.mes.juros > 0) viuJuros = true;
     if (dividaEsperada(res.depois) > 0) viuDivida = true;
-    assert.ok(contasNaTela[r].cabecalho.includes(`saldo ${DO_PERIODO}`), `${r}: o cabeçalho diz que o número grande é o saldo ${DO_PERIODO} ("${contasNaTela[r].cabecalho}")`);
+    // Teste do Kleber de 05/10 (print 7): cada número grande diz que é o saldo
+    // do período (o rótulo saiu do cabeçalho e vai em cada faixa; o
+    // conferirFaixas acima confere o texto).
+    assert.equal(contasNaTela[r][eq].rotuloSaldo, `saldo ${DO_PERIODO}`, `${r}/${eq}: o rótulo diz que o número grande é o saldo ${DO_PERIODO}`);
     estadoNode[eq] = res.depois;
     jogadas[eq].push({ rodadaId: r, opcaoId: opcao, cartaId: res.carta });
   }
@@ -2526,8 +2551,9 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
     }), esperado);
     const lido = await lerFaixas();
     conferirFaixas(lido, esperado, cfg8, `${r} (parte 8)`);
-    // A dívida da faixa é a do banco mais o empréstimo; as contas atrasadas
-    // vão num atributo próprio (e o banco nunca passa do limite).
+    // A dívida da faixa é a total (o banco, o empréstimo e as contas
+    // atrasadas); a parte das contas atrasadas fica num atributo próprio (e o
+    // banco nunca passa do limite).
     const dados = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, { divida: c.dataset.divida, atrasadas: c.dataset.contasAtrasadas ?? null, mesa: c.dataset.faltouNaMesa ?? null }])));
     for (const eq of equipes8) {
       const x = resultados8[r][eq];
@@ -2536,13 +2562,15 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
         divida: String(Math.round(dividaEsperada(x.depois))), atrasadas: String(Math.round(x.depois.contas_atrasadas)),
         mesa: x.mes.faltouNaMesa > 0 ? String(Math.round(x.mes.faltouNaMesa)) : null,
       }, `${r}/${eq}: data-divida, data-contas-atrasadas e data-faltou-na-mesa`);
-      // Revisão da F6c: a "dívida" do telão é o total de historia.dividaTotal,
-      // o mesmo que o celular da equipe escreve em "Dívida no banco" (o
-      // e2e:online confere o lado do celular contra a mesma função). Antes, o
-      // telão dizia "dívida R$ 3.000" e o celular, "Dívida hoje R$ 7.811".
-      assert.equal(dados[eq].divida, String(Math.round(V.historia.dividaTotal(x.depois).total)), `${r}/${eq}: a dívida do telão é a do celular`);
+      // Teste do Kleber de 05/10 (print 7): a "dívida total" do telão é o
+      // total de historia.dividaTotal (o banco e o empréstimo, a "Dívida no
+      // banco" do celular) mais as contas atrasadas, e, com o caixa zerado, o
+      // mesmo número do "faltou" do placar (o patrimônio).
+      const d = V.historia.dividaTotal(x.depois);
+      assert.equal(dados[eq].divida, String(Math.round(d.total + d.contasAtrasadas)), `${r}/${eq}: a dívida total do telão é o banco, o empréstimo e as contas atrasadas`);
+      if (Math.round(x.depois.renda) <= 0) assert.equal(Number(dados[eq].divida), Math.round(-patrimonioEsperado(x.depois)), `${r}/${eq}: sem caixa, a dívida total é o "faltou" do patrimônio`);
     }
-    limitesVistos += Object.values(lido).filter((x) => x.limite?.includes('contas atrasadas')).length;
+    limitesVistos += Object.values(dados).filter((x) => Number(x.atrasadas) > 0).length;
     mesasVistas += Object.values(lido).filter((x) => x.limite?.includes('faltou na mesa')).length;
     for (const [eq, x] of Object.entries(lido)) if (x.acima) acimaVistas.push(`${r}/${eq}`);
     await conferirTela(`rodada-resultado-limite-${r}-6-equipes`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
