@@ -81,6 +81,11 @@
     ultimoSalvo: '',
     // O último "N ativos / M membros" desenhado (o tique compara com ele).
     ultimosAtivos: '',
+    // Pedido 6 do Kleber (05/10): o índice do passo que o apresentador está
+    // revendo (← ou PageUp), ou null. Só interface: nada vai ao banco nem à fila.
+    // saiuDoRevendoEm: a hora (performance.now) da saída do modo por uma tecla,
+    // que segura a repetição da tecla mantida apertada (aoTeclar).
+    revendo: null, saiuDoRevendoEm: -Infinity,
   };
 
   // ---------- Utilidades ----------
@@ -921,6 +926,7 @@
     app.ui = { pagina: 0, afirmacaoManual: 0, lp: false };
     app.inicioPasso = lerLocal(chavePassoLocal(sala));
     app.passivo = false;
+    app.revendo = null;
     // Só o anfitrião desta sessão desenha: o de uma sessão anterior (um comando
     // online que ainda termina depois de seguir sem celulares) não mexe na tela.
     const anf = N().anfitriao.criar({
@@ -962,7 +968,8 @@
       apagarLocal(chaveBaixados(app.sala));
       if (lerLocal(CHAVE_ULTIMA)?.sala === app.sala) apagarLocal(CHAVE_ULTIMA);
     }
-    Object.assign(app, { anf: null, canal: null, sala: null, estado: null, modo: null, chaveDesenho: null });
+    Object.assign(app, { anf: null, canal: null, sala: null, estado: null, modo: null, chaveDesenho: null, revendo: null });
+    atualizarSeloRevendo();
     app.wake.desligar();
     esconderBarra(true);
     document.body.classList.remove('em-sessao');
@@ -1432,15 +1439,25 @@
     // com a faixa. Desenhada depois, a primeira tela depois do lobby (e toda
     // troca de tamanho, que muda a altura do QR) era medida sem ela.
     desenharFaixa();
-    const tela = escolherTela(e);
+    // O passo revisto tem de ser um que já passou: se o estado voltou (o
+    // desfazer, outra máquina), o modo revendo acaba.
+    if (app.revendo !== null && !(app.revendo >= 0 && app.revendo < e.indice)) app.revendo = null;
+    // O selo antes da tela, como a faixa: ele ocupa uma faixa em cima, e as
+    // medidas do desenho precisam da altura que sobra.
+    atualizarSeloRevendo();
+    const revendo = app.revendo !== null;
+    const tela = revendo ? telaRevista(app.revendo) : escolherTela(e);
     const chave = JSON.stringify([
-      tela.id, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
+      tela.id, app.revendo, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
       raiz.innerWidth, raiz.innerHeight, tela.chave ? tela.chave(e) : null,
     ]);
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
-      document.body.dataset.tela = tela.id;
-      const secao = D().el('section', { classe: ['tela', `tela-${tela.id}`] });
+      document.body.dataset.tela = revendo ? 'revendo' : tela.id;
+      const secao = D().el('section', {
+        classe: ['tela', `tela-${tela.id}`, revendo ? 'tela-revista' : null],
+        dados: revendo ? { revendo: String(app.revendo) } : undefined,
+      });
       D().limpar(app.el.palco).appendChild(secao);
       app.graficos.clear();
       app.depoisDeMedir = [];
@@ -1523,7 +1540,7 @@
     }
     const dica = app.el.barra.querySelector('[data-barra-dica]');
     if (dica) {
-      const t = dicaDoPasso(e);
+      const t = app.revendo !== null ? dicaDoRevendo() : dicaDoPasso(e);
       if (dica.textContent !== t) dica.textContent = t;
     }
     const info = app.el.barra.querySelector('[data-barra-passo]');
@@ -1787,7 +1804,22 @@
 
   // ---------- Tela: bloco ----------
 
-  function placarResumido(classe) {
+  // O "depois" da última rodada apurada antes do passo k, na ordem do roteiro
+  // (o estado inicial, sem nenhuma): é o placar de quando o passo k estava na
+  // tela, a mesma conta do calcularPlacar do anfitrião (o último "depois").
+  function estadoAtePasso(equipe, k) {
+    let estado = null;
+    for (const p of app.passos.slice(0, k)) {
+      const r = p.tipo === 'rodada' ? app.dados.resultados?.[p.rodada]?.[equipe] : null;
+      if (r?.depois) estado = r.depois;
+    }
+    return estado;
+  }
+
+  // ateIndice: o modo revendo (pedido 6 do Kleber, 05/10) mostra o placar de
+  // quando o passo revisto estava na tela, e não o de agora: um bloco entre a
+  // rodada 2 e a 3, revisto depois da 3, mostraria o saldo de depois dela.
+  function placarResumido(classe, ateIndice = null) {
     const { el } = D();
     const e = app.estado;
     const renda = app.config.indicadores.renda;
@@ -1795,7 +1827,8 @@
       // O patrimônio (esquema v2.2): o empréstimo a pagar é dívida, e não
       // dinheiro em caixa. Antes do placar, o estado inicial da equipe. O nome
       // do personagem já está no rótulo da equipe (teste do Kleber de 05/10).
-      const valor = patrimonioDe(app.dados.placar?.[id] ?? N().motor.estadoInicial(app.config, id));
+      const valores = ateIndice === null ? app.dados.placar?.[id] : estadoAtePasso(id, ateIndice);
+      const valor = patrimonioDe(valores ?? N().motor.estadoInicial(app.config, id));
       return el('li', { classe: 'resumido-linha', dados: { equipe: id } }, [
         rotuloEquipe(id),
         el('span', { classe: 'resumido-valor', texto: F().indicador(renda, valor) }),
@@ -1945,7 +1978,8 @@
     if (mapa) s.classList.add('bloco-mapa');
     s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
     s.appendChild(linhaDoTempo(e, { mapa }));
-    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto'));
+    // Revisto (modo revendo), o placar de quando o bloco estava na tela.
+    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
   }
 
   // ---------- Tela: formar equipes ----------
@@ -2773,10 +2807,12 @@
     return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
   }
 
-  function telaPlacarFinal(s) {
+  // paginaPedida: a do apresentador (app.ui.pagina); o modo revendo mostra a
+  // primeira.
+  function telaPlacarFinal(s, _e, paginaPedida = app.ui.pagina) {
     const { el } = D();
     const paginas = paginasDoPlacar();
-    const i = Math.min(Math.max(0, app.ui.pagina), paginas.length - 1);
+    const i = Math.min(Math.max(0, paginaPedida), paginas.length - 1);
     const pagina = paginas[i];
     s.dataset.pagina = pagina.tipo;
     if (pagina.eq) s.dataset.equipe = pagina.eq;
@@ -3160,11 +3196,13 @@
     ]);
   }
 
-  function telaComparativo(s, e) {
+  // paginaPedida: a do apresentador (app.ui.pagina); o modo revendo mostra a
+  // primeira afirmação.
+  function telaComparativo(s, e, paginaPedida = app.ui.pagina) {
     const { el } = D();
     const enq = app.config.enquetes[e.enquete];
     const ordem = ordemAfirmacoes(enq);
-    const pagina = Math.min(Math.max(0, app.ui.pagina), ordem.length - 1);
+    const pagina = Math.min(Math.max(0, paginaPedida), ordem.length - 1);
     const a = ordem[pagina];
     const antes = app.dados.enquetes?.[e.enquete]?.antes ?? null;
     const depois = app.dados.enquetes?.[e.enquete]?.depois ?? null;
@@ -3220,6 +3258,148 @@
     if (app.dados.placar && ativas(app.estado).length > 0) s.appendChild(placarResumido('placar-fim'));
   }
 
+  // ---------- Revendo: voltar só para ver (pedido 6 do Kleber, 05/10) ----------
+  //
+  // Teste do Kleber de 05/10: o apresentador precisava rever a tela anterior
+  // (o resultado da rodada que acabou de passar, para comentar com a turma), e
+  // não havia como. Voltar o roteiro (o anfitrião) mudaria o estado da sala, e
+  // os celulares iriam junto. O modo revendo é só desenho: app.revendo guarda o
+  // índice do passo revisto, e nada é gravado no canal, no banco ou no
+  // localStorage, nem entra na fila de comandos (I6: a tela é função dos
+  // dados; o estado e a geracao continuam os do passo atual). Igual online e
+  // offline.
+  //
+  // O que dá para refazer fielmente a partir do banco é refeito como estava na
+  // hora: os blocos (slides) e o "Mapa do seminário", com o "você está aqui" no
+  // passo revisto e o placar resumido de então; a entrada na sala; as personas;
+  // o resultado de cada rodada já apurada (resultados/{r}); a enquete já
+  // apurada (enquetes/{e}/{momento}); a primeira página do placar final e do
+  // comparativo. O resto (a formação das equipes, que hoje mostraria os
+  // membros de agora; uma rodada ou enquete pulada, sem apuração) vira um
+  // cartão com o título do passo.
+
+  // ← e PageUp: um passo antes (o primeiro aperto entra no modo, a partir do
+  // passo atual). No passo 0 não há o que rever.
+  function recuarRevendo() {
+    const e = app.estado;
+    if (!e) return;
+    const de = app.revendo ?? e.indice;
+    if (de <= 0) {
+      if (app.revendo === null) avisar('Não há passo antes deste para rever.');
+      return;
+    }
+    app.revendo = de - 1;
+    agendarDesenho();
+  }
+
+  // pelaTecla: a saída por uma tecla de comando conta como um avanço para a
+  // trava do passador (TRAVA_AVANCAR_MS). O passador manda dois "avançar"
+  // seguidos (arquitetura, seção 5): o primeiro sai do modo, e sem a trava o
+  // segundo avançaria o roteiro de quem só queria voltar ao passo atual. A
+  // hora da saída também segura a repetição de uma tecla mantida apertada
+  // (aoTeclar), que, depois da saída, rodaria o comando.
+  function sairRevendo({ pelaTecla = false } = {}) {
+    if (app.revendo === null) return false;
+    app.revendo = null;
+    if (pelaTecla) {
+      app.ultimoAvanco = performance.now();
+      app.saiuDoRevendoEm = app.ultimoAvanco;
+    }
+    agendarDesenho();
+    return true;
+  }
+
+  // As teclas que não são comando e valem também no modo revendo: as que só
+  // mexem na tela do telão (H, a barra; F, a tela cheia), as teclas de
+  // modificador sozinhas e os atalhos do navegador. O Ctrl+Z é comando.
+  const TECLAS_SO_DE_TELA = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'h', 'H', 'f', 'F']);
+  function teclaSoDeTela(ev) {
+    if (TECLAS_SO_DE_TELA.has(ev.key)) return true;
+    return (ev.ctrlKey || ev.altKey || ev.metaKey) && !(ev.ctrlKey && /^z$/i.test(ev.key));
+  }
+
+  // Online, quem segue no passo atual são os celulares. Offline não há
+  // celular, e "os celulares continuam" diria à turma que há algum.
+  const oQueContinua = () => (app.modo === 'offline' ? 'a sessão continua no passo atual' : 'os celulares continuam no passo atual');
+
+  function dicaDoRevendo() {
+    return `Revendo o passo ${app.revendo + 1} (só no telão; ${oQueContinua()}) · ← volta mais · → ou Esc volta ao passo atual · outra tecla só sai do modo, sem rodar o comando`;
+  }
+
+  // O selo bem visível em cima do palco: "Revendo: <título do passo> · os
+  // celulares continuam no passo atual · → volta". Fica fora do #palco: ele é
+  // do modo, e não da tela revista.
+  function atualizarSeloRevendo() {
+    const selo = app.el.revendo;
+    if (!selo) return;
+    const k = app.revendo;
+    document.body.classList.toggle('revendo', k !== null);
+    if (k === null || !app.passos?.[k]) {
+      selo.hidden = true;
+      return;
+    }
+    const titulo = descreverPasso(app.passos[k]);
+    const texto = `${titulo}|${oQueContinua()}`;
+    if (selo.dataset.texto !== texto) {
+      selo.dataset.texto = texto;
+      D().acrescentar(D().limpar(selo), [
+        D().el('b', { texto: 'Revendo: ' }), titulo,
+        ` · ${oQueContinua()} · `, D().el('b', { texto: '→ volta' }),
+      ]);
+    }
+    selo.hidden = false;
+  }
+
+  // O estado de quando o passo k estava na tela, só com o que as telas
+  // revistas leem: o tipo, o índice (a linha do tempo marca o passo revisto
+  // como "você está aqui", como estava na hora), as equipes abertas de agora
+  // (a formação já passou quando há resultado) e travadas só se o passo
+  // revisto vem depois da formação. revisto: o bloco usa o placar resumido de
+  // então (placarResumido), e não o de agora.
+  function estadoDoPasso(k) {
+    const passo = app.passos[k];
+    const e = app.estado;
+    return {
+      tipo: passo.tipo, indice: k, geracao: e.geracao, equipesAbertas: e.equipesAbertas, revisto: true,
+      equipesTravadas: e.equipesTravadas === true && app.passos.slice(0, k).some((p) => p.tipo === 'formarEquipes'),
+    };
+  }
+
+  function telaRevista(k) {
+    const passo = app.passos[k];
+    const falso = estadoDoPasso(k);
+    const cartao = { id: 'revista-cartao', desenhar: (s) => telaCartaoRevisto(s, passo, k) };
+    switch (passo.tipo) {
+      case 'lobby': return { id: 'lobby', desenhar: (s) => telaLobby(s), chave: chaveLobby };
+      case 'bloco': return { id: 'bloco', desenhar: (s) => telaBloco(s, falso), chave: () => app.dados.resultados };
+      case 'personas': return ativas(falso).length > 0 ? { id: 'personas', desenhar: (s) => telaPersonas(s, falso) } : cartao;
+      case 'rodada':
+        // Só a rodada apurada: a pulada (pularPara) não tem resultado.
+        if (!app.dados.resultados?.[passo.rodada]) return cartao;
+        return {
+          id: 'rodada-resultado', chave: () => app.dados.resultados?.[passo.rodada] ?? null,
+          desenhar: (s) => telaResultado(s, { ...falso, rodada: passo.rodada, subfase: 'resultado' }),
+        };
+      case 'enquete':
+        if (!app.dados.enquetes?.[passo.enquete]?.[passo.momento]) return cartao;
+        return {
+          id: 'enquete-apurada', chave: () => app.dados.enquetes?.[passo.enquete]?.[passo.momento] ?? null,
+          desenhar: (s) => telaEnqueteApurada(s, { ...falso, enquete: passo.enquete, momento: passo.momento, subfase: 'apurada' }),
+        };
+      // O placar final e o comparativo, na primeira página (o saldo; a primeira
+      // afirmação): o Espaço, que pagina, aqui só sai do modo.
+      case 'placarFinal': return { id: 'placar-final', desenhar: (s) => telaPlacarFinal(s, falso, 0), chave: () => app.dados.placar };
+      case 'comparativo':
+        return { id: 'comparativo', desenhar: (s) => telaComparativo(s, { ...falso, enquete: passo.enquete }, 0), chave: () => app.dados.enquetes?.[passo.enquete] ?? null };
+      default: return cartao;
+    }
+  }
+
+  // O cartão do passo que não dá para refazer fielmente.
+  function telaCartaoRevisto(s, passo, k) {
+    s.appendChild(cabecalho(`Passo ${k + 1} de ${app.passos.length}`, descreverPasso(passo)));
+  }
+
   // ---------- Barra do apresentador ----------
 
   const BOTOES = [
@@ -3236,7 +3416,8 @@
     { id: 'entrada', rotulo: 'Entrada', acao: () => executar(() => app.anf.abrirEntrada(app.dados.meta?.entradaAberta !== true)) },
     { id: 'rede', rotulo: 'Rede restrita', acao: () => { app.ui.lp = !app.ui.lp; app.chaveDesenho = null; agendarDesenho(); } },
     { id: 'salvar', rotulo: 'Salvar estado', acao: () => socorro(() => salvarEstado('manual')) },
-    { id: 'telaCheia', rotulo: 'Tela cheia', dica: 'F', acao: () => alternarTelaCheia() },
+    // soDeTela: não sai do modo revendo, como a tecla F (teclaSoDeTela).
+    { id: 'telaCheia', rotulo: 'Tela cheia', dica: 'F', soDeTela: true, acao: () => alternarTelaCheia() },
     { id: 'encerrarJogo', rotulo: 'Encerrar jogo (segure)', segurar: true, acao: () => encerrarJogo() },
     { id: 'semCelulares', rotulo: 'Continuar sem celulares (segure)', segurar: true, acao: () => socorro(continuarSemCelulares) },
     // Vieram da tela do fim (D-047). Apagar só no fim: no meio da aula, um
@@ -3260,7 +3441,13 @@
   function montarBarra() {
     const { el, botao, limpar } = D();
     const barra = limpar(app.el.barra);
-    const botoes = BOTOES.map((b) => botao(b.rotulo, b.acao, { dica: b.dica, segurarMs: b.segurar ? SEGURAR_MS : null, dados: { acao: b.id }, classe: 'botao-barra' }));
+    // Pedido 6 do Kleber (05/10): um comando clicado na barra durante o modo
+    // revendo sai dele antes de rodar. O clique no botão é de propósito (no
+    // teclado, o Espaço dado por hábito só sai do modo, para não avançar sem
+    // querer), e o apresentador passa a ver o passo atual, que é onde o
+    // comando age. A tela cheia não é comando do roteiro e não sai.
+    const acaoDe = (b) => (b.soDeTela ? b.acao : (...args) => { sairRevendo(); return b.acao(...args); });
+    const botoes = BOTOES.map((b) => botao(b.rotulo, acaoDe(b), { dica: b.dica, segurarMs: b.segurar ? SEGURAR_MS : null, dados: { acao: b.id }, classe: 'botao-barra' }));
     D().acrescentar(barra, [
       el('div', { classe: 'barra-info' }, [
         el('p', { classe: 'barra-passo', dados: { barraPasso: '1' } }),
@@ -3675,12 +3862,33 @@
     if (!app.anf) return; // na abertura, o teclado é o do formulário
     const tecla = ev.key;
     const numero = numeroDaTecla(ev);
+    // Pedido 6 do Kleber (05/10), modo revendo: ← e PageUp voltam mais um
+    // passo; → e Esc voltam ao passo atual; e qualquer outra tecla de comando
+    // (Espaço, Enter, P, Ctrl+Z, os números…) só sai do modo, sem rodar o
+    // comando: o Espaço do passador, dado por hábito, não avança o roteiro de
+    // quem estava olhando para trás. H e F (barra e tela cheia) e os atalhos do
+    // navegador valem normalmente.
+    if (app.revendo !== null && !teclaSoDeTela(ev)) {
+      if (tecla === 'ArrowLeft' || tecla === 'PageUp') recuarRevendo();
+      else sairRevendo({ pelaTecla: true });
+      ev.preventDefault();
+      return;
+    }
+    // A tecla de comando mantida apertada repete: a repetição que chega logo
+    // depois de sair do modo revendo rodaria o comando (o Enter encerraria a
+    // votação) que a primeira batida só usou para sair.
+    if (ev.repeat && !teclaSoDeTela(ev) && performance.now() - app.saiuDoRevendoEm < TRAVA_AVANCAR_MS) {
+      ev.preventDefault();
+      return;
+    }
     let tratada = true;
     if (ev.ctrlKey && (tecla === 'z' || tecla === 'Z')) desfazer();
     else if (ev.ctrlKey || ev.altKey || ev.metaKey) tratada = false;
     else if (tecla === ' ' || tecla === 'ArrowRight' || tecla === 'PageDown') avancar();
-    // O passador de slides manda ← e PageUp no "voltar": aqui não fazem nada.
-    else if (tecla === 'ArrowLeft' || tecla === 'PageUp') { /* de propósito, nada */ }
+    // ← e PageUp (o "voltar" do passador de slides) entram no modo revendo
+    // (pedido 6): mostram o passo anterior só no telão. Antes, não faziam nada,
+    // porque voltar o roteiro mexeria nos celulares; o modo revendo não mexe.
+    else if (tecla === 'ArrowLeft' || tecla === 'PageUp') recuarRevendo();
     else if (tecla === 'Enter') encerrar();
     else if (tecla === 'p' || tecla === 'P') pausarOuRetomar();
     else if (tecla === 'f' || tecla === 'F') alternarTelaCheia();
@@ -3767,6 +3975,10 @@
   function iniciar() {
     const $ = (sel) => document.querySelector(sel);
     app.el = { palco: $('#palco'), faixa: $('#faixa'), barra: $('#barra'), aviso: $('#aviso'), modal: $('#modal') };
+    // O selo do modo revendo (pedido 6), criado aqui para não mexer no HTML:
+    // uma faixa em cima do palco, escondida fora do modo.
+    app.el.revendo = D().el('p', { id: 'revendo', classe: 'selo-revendo', role: 'status', hidden: true });
+    document.body.insertBefore(app.el.revendo, app.el.palco);
     app.selo = N().conexao.criarSelo();
     app.wake = N().conexao.criarWakeLock();
     document.body.classList.add('em-abertura');

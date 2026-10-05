@@ -656,6 +656,31 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 .placar-fim { margin-top: auto; }
 
+/* ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
+ * O telão mostra um passo que já passou, só na projeção (telao.js,
+ * telaRevista), e o selo em cima do palco diz isso à turma e ao apresentador:
+ * "Revendo: <passo> · os celulares continuam no passo atual · → volta". É uma
+ * faixa do fluxo (flex: none), e não uma camada por cima: as medidas do
+ * desenho (o aperto do resultado, das personas e do mapa) contam com a altura
+ * que sobra. No amarelo que nenhuma equipe usa (--foco), com o texto escuro
+ * (14,3:1): não se confunde com nada da tela revista. A letra é a do aviso de
+ * operação (~20 px em 1024×768), para o selo caber numa linha e a tela revista
+ * continuar cabendo. */
+.selo-revendo {
+  flex: none;
+  padding: .3em var(--lateral);
+  background: var(--foco);
+  color: var(--texto-sobre-claro);
+  font-size: clamp(18px, min(1.95vw, 2.8vh), 40px);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.selo-revendo b { font-weight: 800; }
+/* O resultado revisto não repete a entrada animada das cartas: rever é para
+   comentar, e a animação já mostrou, na hora, quais cartas pesaram. */
+.tela-revista .cartao-resultado.animada { animation: none; }
+.tela-revista-cartao { justify-content: center; }
+
 /* ---------- Barra do apresentador ----------
  * Sobreposta ao que está projetado. Só aparece com H ou com o mouse PARADO
  * ~400 ms na faixa fina do pé da tela (D-038; pedido 8 do Kleber, 05/10;
