@@ -1135,8 +1135,14 @@ nenhuma sombra.
    `historia.piorCasoDoPlacar(placar[eq], historia.escolheuProtecao(…))` (`piorCaso` e
    `piorCasoSemProtecao` do anfitrião): "com as escolhas de vocês: R$ A · sem a proteção: R$ B · a
    proteção evitou R$ X" (`evitou`), "com as escolhas de vocês: R$ A · a proteção não melhorou o pior
-   caso" (`naoMelhorou`), "com as escolhas de vocês: R$ A · não escolheram proteção" (`semEscolha`) ou
-   só o primeiro número (`semDado`). O celular mostra o mesmo no placar final e no Fim ("O pior que
+   caso" (`naoMelhorou`), "com as escolhas de vocês: R$ A · não escolheram proteção (podiam: B em Jan–fev)"
+   (`semEscolha`; o parêntese, `.pior-podiam`, com as opções que protegem nas rodadas que a equipe jogou, e sem ele
+   quando ela não jogou nenhuma) ou só o primeiro número (`semDado`). Teste do Kleber de 05/10 (print 16), "o que
+   seria escolher a proteção?": entre o título e a nota, a linha `.pior-o-que`, "Proteção é pagar antes para ter ajuda
+   se der errado: B em Jan–fev (Jornada de sempre e abrir o MEI).", com as opções de `protege: true` do config
+   (`opcoesQueProtegem`: na ordem das rodadas do roteiro, pela letra da decisão, o período, `historia.rotuloDaRodada`,
+   e o rótulo comum da opção). Com o config de 05/10, só o MEI de jan–fev tem `protege: true`; a associação de
+   mai–jun não (é conteúdo: marcar a opção no config a põe nas duas listas). O celular mostra o mesmo no placar final e no Fim ("O pior que
    podia acontecer", `.pior-caso`, com o `piorCaso` de `alunoLogica`, `null` em config sem proteção). É
    uma página à parte porque não cabia: com seis equipes, a conta do "Escolha ou sorte?" já ocupa até
    três linhas por equipe em 1024×768, e a página 1 é o gráfico. Config sem proteção fica com as

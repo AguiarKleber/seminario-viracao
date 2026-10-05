@@ -362,6 +362,7 @@ const escolheuProtecao = (cfg, resultados, eq) => Object.entries(resultados).som
 // A página "O pior que podia acontecer", lida na tela.
 const lerPiorCaso = () => page.evaluate(() => ({
   titulo: document.querySelector('#palco h1').textContent,
+  oQue: document.querySelector('#palco .pior-o-que')?.textContent ?? null,
   kicker: document.querySelector('#palco .kicker')?.textContent ?? '',
   estimados: document.querySelectorAll('.piores-casos .historia-escolha[data-estimado="1"]').length,
   linhas: Object.fromEntries(Array.from(document.querySelectorAll('.piores-casos .historia-escolha'), (n) => [n.dataset.equipe, {
@@ -374,8 +375,21 @@ const lerPiorCaso = () => page.evaluate(() => ({
 // proteção que não melhorou (o MEI com a sessão acabando antes do mês 3, a
 // associação) vê um texto neutro, sem número: o "sem" nunca aparece melhor que
 // o "com" (revisão da F5, achado 1). Devolve quantas mostraram o "sem".
+// Teste do Kleber de 05/10 (print 16): "o que seria escolher a proteção?". A
+// página diz o que é proteção e quais opções protegem (protege: true), pela
+// letra e pelo período, na ordem das rodadas do roteiro; e, em quem não
+// escolheu, as que a equipe podia ter escolhido (nas rodadas que jogou).
+function opcoesQueProtegemEsperadas(cfg) {
+  return V.roteiro.passos(cfg, ROTEIRO).filter((p) => p.tipo === 'rodada').flatMap(({ rodada: r }) => lista(cfg.rodadas[r].ordemOpcoes)
+    .filter((o) => cfg.rodadas[r].opcoes[o].protege === true)
+    .map((o) => ({ r, letra: 'ABCDEFGHIJ'[lista(cfg.rodadas[r].ordemOpcoes).indexOf(o)], quando: rotuloCurto(r, cfg), rotulo: cfg.rodadas[r].opcoes[o].rotulo })));
+}
+const juntarEsperado = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs.at(-1)}` : xs[0] || '');
 function conferirPiorCaso(lido, cfg, placar, resultados, equipes) {
   assert.equal(lido.titulo, 'O pior que podia acontecer');
+  const protegem = opcoesQueProtegemEsperadas(cfg);
+  assert.ok(protegem.length > 0, 'a página do pior caso só existe com opção que protege');
+  assert.equal(lido.oQue, `Proteção é pagar antes para ter ajuda se der errado: ${juntarEsperado(protegem.map((o) => `${o.letra} em ${o.quando} (${o.rotulo})`))}.`, 'o que é proteção e quais opções protegem');
   const estimados = equipes.filter((eq) => placar[eq].estimado === true).length;
   assert.equal(lido.estimados, estimados, 'data-estimado nas linhas do placar simulado');
   assert.equal(lido.kicker, estimados > 0 ? 'Placar final · pior caso estimado' : 'Placar final', 'o kicker diz "pior caso estimado" só quando o motor simulou');
@@ -386,7 +400,8 @@ function conferirPiorCaso(lido, cfg, placar, resultados, equipes) {
     const sem = Math.round(placar[eq].piorCasoSemProtecao) + 0;
     const protegeu = escolheuProtecao(cfg, resultados, eq);
     const mostra = protegeu && sem < pior;
-    let depois = ' · não escolheram proteção';
+    const podiam = protegem.filter((o) => resultados[o.r]?.[eq]);
+    let depois = ` · não escolheram proteção${podiam.length > 0 ? ` (podiam: ${juntarEsperado(podiam.map((o) => `${o.letra} em ${o.quando}`))})` : ''}`;
     if (mostra) depois = ` · sem a proteção: ${F.moeda(sem)} · a proteção evitou ${F.moeda(pior - sem)}`;
     else if (protegeu) depois = ' · a proteção não melhorou o pior caso';
     const texto = `com as escolhas de vocês: ${F.moeda(pior)}${depois}`;

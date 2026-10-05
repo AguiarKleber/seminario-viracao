@@ -615,6 +615,10 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
  * com uma frase curta embaixo do título. "Não escolheram proteção" fica no
  * tom secundário: é a ausência do número, e não um número. */
 .pior-nota { color: var(--texto-2); }
+/* O que é proteção no jogo e quais opções protegem (teste do Kleber de 05/10,
+   print 16: "o que seria escolher a proteção?"). No tom do texto: é a
+   explicação que a sala precisa ler para entender a página. */
+.pior-o-que { color: var(--texto); }
 /* "Escolha ou sorte?": a linha que explica de onde a conta parte (teste do
    Kleber de 05/10), no tom da nota do pior caso. */
 .escolhas-nota { color: var(--texto-2); }

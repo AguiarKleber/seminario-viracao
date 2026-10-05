@@ -2961,6 +2961,19 @@
     const ordenadas = equipesPorSaldo();
     const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
     s.appendChild(cabecalho(estimado ? 'Placar final · pior caso estimado' : 'Placar final', 'O pior que podia acontecer', { extra: lado }));
+    // Teste do Kleber de 05/10 (print 16): "o que seria escolher a proteção?".
+    // A tela não dizia o que é proteção no jogo nem quais opções protegem.
+    // Agora uma linha diz as duas coisas, com as opções do config (protege:
+    // true), pela letra e pelo período da decisão: "Proteção é pagar antes
+    // para ter ajuda se der errado: B em Jan–fev (Jornada de sempre e abrir o
+    // MEI)." Com o config de 05/10, só o MEI de jan–fev tem protege: true.
+    const protegem = opcoesQueProtegem();
+    if (protegem.length > 0) {
+      s.appendChild(el('p', { classe: 'pior-o-que' }, [
+        'Proteção é pagar antes para ter ajuda se der errado: ',
+        juntarOpcoes(protegem.map((o) => `${o.letra} em ${o.quando} (${o.rotulo})`)), '.',
+      ]));
+    }
     s.appendChild(el('p', { classe: 'pior-nota', texto: 'Na média, a proteção custa dinheiro. O que ela pode fazer é evitar o pior.' }));
     s.appendChild(el('ol', { classe: ['historias-escolha', 'piores-casos'] }, ordenadas.map((id) => {
       const p = N().historia.piorCasoDoPlacar(placar[id], N().historia.escolheuProtecao(app.config, app.dados.resultados, id));
@@ -2980,7 +2993,16 @@
           passo('· a proteção evitou ', F().moeda(p.evitou), ['passo-total', 'passo-final', 'pior-evitou']),
         ];
       } else if (p?.situacao === 'naoMelhorou') depois = nota('· a proteção não melhorou o pior caso');
-      else if (p?.situacao === 'semEscolha') depois = nota('· não escolheram proteção');
+      else if (p?.situacao === 'semEscolha') {
+        // "(podiam: B em Jan–fev)": as opções que protegem nas rodadas que a
+        // equipe jogou (teste do Kleber de 05/10). Num pedaço à parte, para a
+        // linha poder quebrar antes dele.
+        const podiam = protegem.filter((o) => app.dados.resultados?.[o.rodadaId]?.[id]);
+        depois = [
+          nota('· não escolheram proteção'),
+          podiam.length > 0 ? [' ', el('span', { classe: ['passo-conta', 'pior-sem-escolha', 'pior-podiam'], texto: `(podiam: ${juntarOpcoes(podiam.map((o) => `${o.letra} em ${o.quando}`))})` })] : null,
+        ];
+      }
       return el('li', { classe: 'historia-escolha', dados }, [
         rotuloEquipe(id),
         p ? el('span', { classe: 'historia-conta' }, [
@@ -2989,6 +3011,20 @@
       ]);
     })));
   }
+
+  // As opções que protegem (D-059, protege: true no config), na ordem das
+  // rodadas do roteiro: a letra (a mesma da decisão no telão e no celular), o
+  // período ("Jan–fev") e o rótulo comum da opção.
+  function opcoesQueProtegem() {
+    return app.passos.filter((p) => p.tipo === 'rodada').flatMap(({ rodada: rodadaId }) => {
+      const rodada = app.config.rodadas[rodadaId];
+      return ordemOpcoes(rodada).filter((op) => rodada.opcoes[op]?.protege === true)
+        .map((op) => ({ rodadaId, opcaoId: op, letra: letraDe(rodada, op), quando: rotuloDaRodada(rodadaId), rotulo: rodada.opcoes[op].rotulo }));
+    });
+  }
+
+  // "A", "A e B", "A, B e C".
+  const juntarOpcoes = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs.at(-1)}` : xs[0] || '');
 
   // Página 3 (uma por equipe; com 6 bimestres, duas, de até 3 rodadas cada):
   // cada rodada com uma linha curta em primeira pessoa (a primeira frase da
