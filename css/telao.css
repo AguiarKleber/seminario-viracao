@@ -90,7 +90,7 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
    coluna estreita (a célula da decisão, a coluna da equipe no resultado), o
    rótulo quebra entre os dois, nunca no meio de uma palavra, e a forma e o
    número ficam na frente. */
-.equipe-nome { white-space: normal; min-width: 0; }
+.equipe-nome { white-space: normal; }
 .equipe-quem, .equipe-oficio { white-space: nowrap; }
 
 /* ---------- Gráficos medidos ---------- */
@@ -454,7 +454,10 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    de cima a baixo; a carta e o dinheiro na primeira linha; embaixo deles, a
    linha da dívida (.resultado-limite); e a frase da D-067 na largura inteira.
    Linha sem nada fica com altura zero (a faixa não tem vão entre linhas). */
-.resultado-quem { grid-column: 1; grid-row: 1 / span 2; }
+/* min-width: auto na equipe: com o 0 das três colunas, o fit-content deixava a
+   coluna mais estreita que a palavra mais comprida do rótulo
+   ("influenciadora"), e ela passava por cima da carta. */
+.resultado-quem { grid-column: 1; grid-row: 1 / span 2; min-width: auto; }
 .resultado-meio { grid-column: 2; grid-row: 1; }
 .resultado-dinheiro { grid-column: 3; grid-row: 1; }
 /* "decisão B" numa linha só (revisão de 30/09, achado 9); o nome do
