@@ -2197,6 +2197,17 @@
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
+    app.depoisDeMedir.push(() => apertarDecisao(s));
+  }
+
+  // Com a equipe pelo personagem (teste do Kleber de 05/10), o rótulo mais
+  // comprido quebra em duas linhas na célula de cada equipe, e as seis células
+  // com a faixa de entrada embaixo passavam ~96 px de 1024×768. Só quando a
+  // tela transborda (medida depois do desenho), a situação, as opções e as
+  // células se aproximam (data-aperto): entrelinhas e vãos menores, com a
+  // letra nos 28 px.
+  function apertarDecisao(s) {
+    if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1';
   }
 
   function telaProrrogacao(s, e) {
@@ -2217,6 +2228,7 @@
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, celulas));
+    app.depoisDeMedir.push(() => apertarDecisao(s));
   }
 
   function resultadosDaRodada(e) {
