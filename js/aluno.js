@@ -2223,27 +2223,43 @@
   // "piloto automático"). O mesmo texto do descreverDecisao.
   const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
 
-  // A frase do topo. "Escolheram" conta os bimestres decididos pela equipe:
-  // o "ninguém votou" (origem piloto) não é escolha, e a frase não pode dizer
-  // "em todos" quando a equipe ficou calada num deles. O "faltou" é o
-  // patrimônio do placar (historia.patrimonioDe, o mesmo "faltou R$ X" da barra
-  // do telão), e, sem placar, o "ficou com" do último bimestre.
-  function fraseDasEscolhas(meses, patrimonio) {
-    if (!Number.isFinite(patrimonio)) return null;
-    const { el } = D();
-    const p = periodo();
-    const total = meses.length;
-    const escolheram = meses.filter((m) => m.origem !== 'piloto').length;
+  // A frase do topo, em partes e sem DOM (o test/aluno-textos.test.mjs confere
+  // cada caso): { antes, reais, depois } (o valor em negrito no meio) e os
+  // atributos { resultado, valor, escolheram, total }; null sem o patrimônio ou
+  // sem rodada. origens: a origem de cada rodada jogada, na ordem; nome: o do
+  // período ("bimestre").
+  // "Escolheram" conta as rodadas decididas pela equipe: o "ninguém votou"
+  // (origem piloto) não é escolha, e a frase não pode dizer "em todos" quando
+  // a equipe ficou calada numa delas. O "faltou" é o patrimônio do placar
+  // (historia.patrimonioDe, o mesmo "faltou R$ X" da barra do telão).
+  function partesDaFrase(origens, patrimonio, nome) {
+    const total = lista(origens).length;
+    if (!Number.isFinite(patrimonio) || total === 0) return null;
+    const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
     let quem;
-    if (escolheram === total) quem = total === 1 ? `Vocês escolheram no ${p.nome} jogado` : `Vocês escolheram em todos os ${total} ${pluralDoPeriodo(p.nome)}`;
-    else if (escolheram > 0) quem = `Vocês escolheram em ${escolheram} dos ${total} ${pluralDoPeriodo(p.nome)}`;
-    else quem = `A equipe não votou em nenhum ${p.nome}`;
+    if (escolheram === total) quem = total === 1 ? `Vocês escolheram no ${nome} jogado` : `Vocês escolheram em todos os ${total} ${pluralDoPeriodo(nome)}`;
+    else if (escolheram > 0) quem = `Vocês escolheram em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
+    else quem = `A equipe não votou em nenhum ${nome}`;
     const valor = Math.round(patrimonio) + 0;
-    const faltou = valor < 0;
-    let resto = [' e fecharam as contas: sobrou ', el('b', { texto: F().moeda(valor) }), '.'];
-    if (faltou) resto = [escolheram > 0 ? ', e ainda faltou ' : ', e faltou ', el('b', { texto: F().moeda(-valor) }), '.'];
-    return el('p', { classe: 'escolhas-frase', dados: { resultado: faltou ? 'faltou' : 'fechou', valor, escolheram, total } }, [quem, ...resto]);
+    const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
+    if (valor < 0) return { antes: `${quem}${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}`, reais: -valor, depois: '.', ...atributos };
+    // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
+    // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
+    return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
   }
+
+  // A frase na tela; sem placar, o "ficou com" do último bimestre.
+  function fraseDasEscolhas(meses, patrimonio) {
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome);
+    if (!f) return null;
+    const { el } = D();
+    return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },
+      [f.antes, el('b', { texto: F().moeda(f.reais) }), f.depois]);
+  }
+
+  // "no ano" com os 12 meses jogados, "no mês" com 1, senão "em N meses": a
+  // mesma regra do "Faltou na mesa no ano" do telão (linhaDaMesaNoAno).
+  const quandoDosMeses = (meses) => (meses === 12 ? 'no ano' : meses === 1 ? 'no mês' : `em ${meses} meses`);
 
   // "Faltou na mesa no ano: R$ X de comida que não deu para comprar (fora do
   // saldo)." O mesmo número e o mesmo "no ano" do telão (linhaDaMesaNoAno, pela
@@ -2255,7 +2271,7 @@
     const valor = doPlacar ?? lista(historia).at(-1)?.faltouNaMesa ?? null;
     if (!Number.isFinite(valor)) return null;
     const meses = H?.mesesJogados ? H.mesesJogados(app.dados.conteudo, historia) : lista(historia).length * periodo().meses;
-    const quando = meses === 12 ? 'no ano' : meses === 1 ? 'no mês' : `em ${meses} meses`;
+    const quando = quandoDosMeses(meses);
     const { el } = D();
     const reais = Math.round(valor) + 0;
     return el('p', { classe: 'faltou-mesa faltou-mesa-ano', dados: { faltouNaMesa: reais } },
@@ -2890,6 +2906,10 @@
     envios: () => resumoEnvios(),
     // D-064: a equipe que o espectador vê, ou null fora do modo espectador.
     espectador: () => (app.espectador ? { equipe: app.espectador.equipe } : null),
+    // As contas puras das telas de 05/10 (a dívida total, a frase das escolhas
+    // e o "no ano"), para o teste unitário, que roda no Node sem DOM: não leem
+    // nem mudam o estado.
+    textos: { totalDaDivida, partesDaFrase, quandoDosMeses },
   };
 
   if (typeof document !== 'undefined') {

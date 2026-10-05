@@ -960,7 +960,8 @@ async function conferirEscolhas(c, { H, config, equipe, resultados, placar, onde
   if (total === 1 && escolheram === 1) quem = `Vocês escolheram no ${per.nome} jogado`;
   else if (escolheram === 0) quem = `A equipe não votou em nenhum ${per.nome}`;
   else if (escolheram < total) quem = `Vocês escolheram em ${escolheram} dos ${total} ${plural}`;
-  const fim = valor < 0 ? `${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}${await moeda(-valor)}.` : ` e fecharam as contas: sobrou ${await moeda(valor)}.`;
+  // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam".
+  const fim = valor < 0 ? `${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}${await moeda(-valor)}.` : ` e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou ${await moeda(valor)}.`;
   assert.ok(lido.frase, `${onde}: a frase do topo aparece`);
   assert.equal(lido.frase.texto, `${quem}${fim}`, `${onde}: a frase do topo`);
   assert.deepEqual([lido.frase.resultado, Number(lido.frase.valor), Number(lido.frase.escolheram), Number(lido.frase.total)], [valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total], `${onde}: os atributos da frase`);
@@ -968,15 +969,26 @@ async function conferirEscolhas(c, { H, config, equipe, resultados, placar, onde
   // Uma linha por bimestre.
   assert.deepEqual(lido.cabecalho, [`${per.nome.charAt(0).toLocaleUpperCase('pt-BR')}${per.nome.slice(1)} · escolha · carta`, `Saldo ${per.doPeriodo}`], `${onde}: o cabeçalho diz que o número colorido é o saldo ${per.doPeriodo}`);
   assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId), `${onde}: uma linha por ${per.nome} jogado, na ordem`);
+  // O rótulo e o título refeitos aqui direto do config, do jeito da persona
+  // da equipe (rotuloPor, D-054; tituloPor da carta, D-075), e não só pela
+  // historiaDaEquipe: no teste do Kleber de 05/10, seis equipes com "O
+  // instrumento de trabalho quebrou" pareciam repetição. Sem tituloPor no
+  // config, o título comum.
+  const persona = config.equipes[equipe]?.persona;
   for (const [i, h] of esperada.entries()) {
     const l = lido.linhas[i];
     const r = res(h);
     const ordem = lista(config.rodadas[h.rodadaId].ordemOpcoes).length > 0 ? lista(config.rodadas[h.rodadaId].ordemOpcoes) : Object.keys(config.rodadas[h.rodadaId].opcoes);
     const letra = 'ABCDEFGHIJ'[ordem.indexOf(r.decisao)];
+    const opcao = config.rodadas[h.rodadaId].opcoes[r.decisao];
+    const rotulo = opcao.rotuloPor?.[persona] ?? opcao.rotulo;
+    const carta = config.cartas[r.carta];
+    const tituloCarta = carta.tituloPor?.[persona] ?? carta.titulo;
     assert.equal(l.textoMes, h.rotulo, `${onde}, ${h.rodadaId}: o nome curto`);
     assert.deepEqual([l.opcao, l.letra, l.origem, l.carta], [r.decisao, letra, r.origem, r.carta], `${onde}, ${h.rodadaId}: a letra, a origem e a carta nos atributos`);
-    assert.equal(l.textoOpcao, `${letra} · ${h.opcao.rotulo}${origens[r.origem] ? ` (${origens[r.origem]})` : ''}`, `${onde}, ${h.rodadaId}: a letra e o rótulo da persona`);
-    assert.equal(l.textoCarta, `Carta: ${config.cartas[r.carta].titulo}`, `${onde}, ${h.rodadaId}: a carta`);
+    assert.equal(h.opcao.rotulo, rotulo, `${onde}, ${h.rodadaId}: a história traz o rótulo da persona`);
+    assert.equal(l.textoOpcao, `${letra} · ${rotulo}${origens[r.origem] ? ` (${origens[r.origem]})` : ''}`, `${onde}, ${h.rodadaId}: a letra e o rótulo da persona`);
+    assert.equal(l.textoCarta, `Carta: ${tituloCarta}`, `${onde}, ${h.rodadaId}: a carta, com o título da persona quando há`);
     assert.equal(Number(l.saldoMes), h.mes.saldoMes);
     const arredondado = Math.round(h.mes.saldoMes);
     const sinal = arredondado > 0 ? 'positivo' : arredondado < 0 ? 'negativo' : 'zero';

@@ -1598,7 +1598,8 @@ anfitrião: quem decide é o telão.
       "Terminaram com" do "Escolha ou sorte?"; sem placar, o "ficou com" do último bimestre). "Escolheram" conta as
       rodadas com origem diferente de `piloto` (o "ninguém votou" não é escolha): com uma delas, "em 5 dos 6
       bimestres"; sem nenhuma, "A equipe não votou em nenhum bimestre, e faltou R$ X."; uma rodada só, "no bimestre
-      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X.". `data-resultado` =
+      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
+      não votou em nenhum bimestre e fechou as contas: sobrou R$ X."). O texto sai de `partesDaFrase`. `data-resultado` =
       `faltou`|`fechou`, `data-valor` (o patrimônio arredondado), `data-escolheram` e `data-total`; no `faltou`,
       a borda grossa (nunca só cor, D-016);
     - o cartão `section.escolhas-ano`: o cabeçalho `.escolhas-cabecalho` ("Bimestre · escolha · carta" e "Saldo do
@@ -1609,8 +1610,9 @@ anfitrião: quem decide é o telão.
       (`.escolha-opcao`: a letra pela `ordemOpcoes` da rodada e o rótulo do jeito da persona, D-054, com a origem
       entre parênteses quando não foi o voto simples, os mesmos textos do `descreverDecisao`: "ninguém votou: ficou
       o de sempre", "empate decidido na moeda", "decidida na prorrogação", "registrada pelo apresentador") e
-      "Carta: título" (`.escolha-carta`). A letra, a origem e a carta saem de `resultados/{r}/{eq}`, que o celular
-      já ouve; nenhuma leitura nova (as regras v4 ficam como estão). No fim do cartão,
+      "Carta: título" (`.escolha-carta`, o título da `historiaDaEquipe`: com o `tituloPor` da carta no config, D-075,
+      o do jeito da persona; o e2e refaz o rótulo e o título direto do config). A letra, a origem e a carta saem de
+      `resultados/{r}/{eq}`, que o celular já ouve; nenhuma leitura nova (as regras v4 ficam como estão). No fim do cartão,
       `p.faltou-mesa.faltou-mesa-ano` ("Faltou na mesa no ano: R$ M de comida que não deu para comprar (fora do
       saldo)."), M = `historia.faltouNaMesaDe(placar/{eq})`, inclusive R$ 0, com o "no ano" do telão (12 meses
       jogados; 1, "no mês"; senão "em N meses"); sala sem o limite, sem a linha;
@@ -1638,6 +1640,11 @@ anfitrião: quem decide é o telão.
   No sessionStorage, além das marcas da recarga do SDK, `espectador` (a sala do modo espectador, sem o PIN).
 - `Viracao.aluno` (só leitura, para o e2e): `versaoApp`, `uid()`, `sala()`,
   `tela()`, `pendentes()`, `envios()` e `espectador()` (`{ equipe }` no modo espectador, ou `null`).
+  E `textos`, as contas puras dos pedidos de 05/10, conferidas no `test/aluno-textos.test.mjs` (o `js/aluno.js`
+  carrega no Node sem DOM): `totalDaDivida(d) → número` (a dívida total, de `historia.dividaTotal`; `0` com
+  `null`), `partesDaFrase(origens, patrimonio, nomeDoPeriodo) → { antes, reais, depois, resultado, valor,
+  escolheram, total } | null` (a frase do placar final, com o valor em negrito entre `antes` e `depois`; `null`
+  sem rodada ou sem patrimônio) e `quandoDosMeses(n)` ("no ano", "no mês", "em N meses").
 
 ### Ferramentas
 
