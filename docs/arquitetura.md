@@ -547,8 +547,8 @@ passou à versão 7 (`?v=7`, `VERSAO_APP`), e as regras do Firebase, à **v4**.
     Sem o limite, o config, o hash, as contas e as telas ficam como antes,
     atributo por atributo. Com ele:
     - o item da comida vem marcado no básico (`comida: true`; `semAtraso: true`
-      marca o que fica sem comprar em vez de atrasar, e o config atual não marca
-      nenhum), e os indicadores `contas_atrasadas` (entra no patrimônio) e
+      marca o que fica sem comprar em vez de atrasar; desde 05/10, numa branch
+      separada, o config marca o gás, o ônibus e o remédio das 6 casas), e os indicadores `contas_atrasadas` (entra no patrimônio) e
       `faltou_na_mesa` (custo humano, fora dele) são obrigatórios, e só o motor
       mexe neles;
     - o motor, depois do empréstimo (contratos, seção 3, passos 8 a 11): a mora
@@ -573,7 +573,9 @@ passou à versão 7 (`?v=7`, `VERSAO_APP`), e as regras do Firebase, à **v4**.
       R$ C de R$ L do limite", as contas atrasadas com a multa e a mora, "Faltou
       na mesa" à parte, e a frase do limite na conta recolhida
       (`historia.fraseDoLimite`);
-    - conteúdo: limite de R$ 2.000, multa de 7% e mora de 0,8% ao mês, com fonte;
+    - conteúdo: limite de R$ 2.000, multa de 8% e mora de 1% ao mês, com fonte
+      (até 05/10, 7% e 0,8%: a média mudou quando gás, ônibus e remédio
+      deixaram de atrasar);
       duas cartas graves que só saem com contas atrasadas ("Cortaram a luz" e "O
       dono entrou com o despejo"); a antiga multa do aluguel por bimestre no
       vermelho saiu (seria cobrada duas vezes);

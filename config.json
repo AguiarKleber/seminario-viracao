@@ -22,9 +22,9 @@
     "mesesPorRodada": 2,
     "limiteChequeEspecial": 2000,
     "limiteFonte": "Banco Central, Estudo Especial nº 84/2020 (microdados do SCR, dez/2019): limite médio de cheque especial de R$ 1.693 na faixa de renda abaixo de R$ 1,5 mil (R$ 21.422 acima de R$ 10 mil). Corrigido pelo IPCA de jan/2020 a ago/2026 (× 1,4347, BCB SGS 433): R$ 2.429. O próprio estudo avisa que o método superestima o limite (o do cheque especial é achado por resíduo) e que só entra quem teve carteira em 24 dos 36 meses; as personas não têm carteira (D-062). Usado R$ 2.000, o teto da faixa da D-066 (R$ 1.000 a R$ 2.000), abaixo dos R$ 2.429. Passado o limite, o banco não empresta mais",
-    "multaAtraso": 0.07,
-    "moraMes": 0.008,
-    "atrasoFonte": "Aluguel: a lei não fixa a multa, vale o contrato; o costume é 10% de multa e 1% de juros ao mês (Procon-SP, \"Multas por atraso\", jul/2019; Lei 8.245/1991). Luz: multa de até 2% e juros de 1% ao mês (ANEEL, REN 1.000/2021). Água: 2% e 1% ao mês (o teto do Código de Defesa do Consumidor para contas de consumo; DMAE). Celular e internet: 2% de multa (o teto do Código de Defesa do Consumidor, art. 52, § 1º) e 1% de juros ao mês (o que a operadora cobra pelo contrato: Vivo, via Selectra, 02/03/2023); a Resolução Anatel 765/2023 não fixa percentual, só manda informar a multa e os juros na fatura. Gás, ônibus e remédio não têm multa: quem não paga fica sem. Conta nossa: a média ponderada pelo peso de cada conta no que não é comida no básico das 6 casas (o aluguel é de 58% a 67%) dá multa de 6,7% e mora de 0,82% ao mês; usados 7% e 0,8%. A multa é cobrada uma vez, sobre o que atrasou no bimestre; a mora é simples, sobre o que já estava atrasado",
+    "multaAtraso": 0.08,
+    "moraMes": 0.01,
+    "atrasoFonte": "Aluguel: a lei não fixa a multa, vale o contrato; o costume é 10% de multa e 1% de juros ao mês (Procon-SP, \"Multas por atraso\", jul/2019; Lei 8.245/1991). Luz: multa de até 2% e juros de 1% ao mês (ANEEL, REN 1.000/2021). Água: 2% e 1% ao mês (o teto do Código de Defesa do Consumidor para contas de consumo; DMAE). Celular e internet: 2% de multa (o teto do Código de Defesa do Consumidor, art. 52, § 1º) e 1% de juros ao mês (o que a operadora cobra pelo contrato: Vivo, via Selectra, 02/03/2023); a Resolução Anatel 765/2023 não fixa percentual, só manda informar a multa e os juros na fatura. Gás, ônibus e remédio não têm multa: quem não paga fica sem, e por isso no jogo eles não viram conta atrasada (a casa fica sem). Conta nossa: a média ponderada pelo peso de cada conta que pode atrasar no básico das 6 casas (aluguel, luz, água e celular; o aluguel é de 74% a 79% delas) dá multa de 8,1% e mora de 1% ao mês; usados 8% e 1%. A multa é cobrada uma vez, sobre o que atrasou no bimestre; a mora é simples, sobre o que já estava atrasado",
     "cortarPrimeiro": "contas"
   },
   "escala": {
@@ -128,12 +128,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 89,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus da companheira",
             "valor": 159,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
@@ -143,7 +145,8 @@
           {
             "rotulo": "remédios",
             "valor": 90,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },
@@ -229,12 +232,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 89,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus dos filhos",
             "valor": 159,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
@@ -244,7 +249,8 @@
           {
             "rotulo": "remédios",
             "valor": 90,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },
@@ -322,12 +328,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 119,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 1 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 1 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus da esposa",
             "valor": 233,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 44 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 44 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
@@ -337,7 +345,8 @@
           {
             "rotulo": "remédios",
             "valor": 120,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },
@@ -415,12 +424,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 71,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,6 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,6 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus da mãe",
             "valor": 106,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 20 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 20 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "internet e celular (o trabalho dela)",
@@ -430,7 +441,8 @@
           {
             "rotulo": "remédios",
             "valor": 60,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },
@@ -508,12 +520,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 89,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus da mãe",
             "valor": 159,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
@@ -523,7 +537,8 @@
           {
             "rotulo": "remédios",
             "valor": 90,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },
@@ -601,12 +616,14 @@
           {
             "rotulo": "gás de cozinha",
             "valor": 71,
-            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,6 botijão por mês (estimativa)"
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,6 botijão por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "ônibus",
             "valor": 106,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 20 passagens por mês (estimativa)"
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 20 passagens por mês (estimativa)",
+            "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
@@ -616,7 +633,8 @@
           {
             "rotulo": "remédios",
             "valor": 60,
-            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico"
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
           }
         ]
       },

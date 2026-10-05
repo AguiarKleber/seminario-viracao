@@ -72,9 +72,13 @@ for (const [nomeConfig, ler, partidas] of [
         // do patrimônio: o que virou conta atrasada saiu do patrimônio, e não do
         // caixa; a comida não comprada não saiu do caixa, e a multa e a mora são
         // dívida nova. Sem o limite, os campos não existem e valem 0.
+        // O que a casa ficou sem (itens semAtraso: gás, ônibus, remédio) também
+        // não saiu do caixa, como a comida (contratos, seção 3). A conta não o
+        // somava porque, até 05/10, o config.json não marcava nenhum item, e o
+        // campo nem existia no mês.
         const atrasadasNoMes = (r.mes.contasAtrasadas ?? 0) - (r.mes.contasAtrasadasAntes ?? 0);
         assert.equal(r.mes.saldoMes + r.mes.emprestimo - r.mes.amortizacao + atrasadasNoMes, r.delta.renda, `${onde}: saldoMes difere do delta da renda`);
-        const doLimite = (r.mes.faltouNaMesa ?? 0) - (r.mes.multa ?? 0) - (r.mes.mora ?? 0);
+        const doLimite = (r.mes.faltouNaMesa ?? 0) + (r.mes.ficouSem ?? 0) - (r.mes.multa ?? 0) - (r.mes.mora ?? 0);
         assert.equal(r.mes.entrou + r.mes.protecao - r.mes.gastos - r.mes.basico - r.mes.juros + doLimite, r.mes.saldoMes, `${onde}: contas do mês não fecham`);
         // O saldo devedor do mês é o indicador do empréstimo, e as linhas de
         // cada indicador somam o delta dele.

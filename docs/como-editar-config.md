@@ -80,7 +80,7 @@ ser obrigatórias:
 | `multaAtraso`, `moraMes`, `atrasoFonte` | regras, obrigatórios com o limite | A multa (uma vez) e a mora (ao mês, simples) das contas atrasadas, com fonte |
 | `cortarPrimeiro` | regras, opcional | `"contas"` (o padrão, **a validar**) ou `"comida"`: o que a casa deixa de pagar primeiro quando o limite acaba |
 | `comida: true` | item do `basico` | Marca o item da comida, o único que a casa pode deixar de comprar. Com o limite, toda persona precisa de um |
-| `semAtraso: true` | item do `basico`, opcional | Marca o item que não atrasa (gás, ônibus, remédio: quem não paga fica sem). O config atual não marca nenhum |
+| `semAtraso: true` | item do `basico`, opcional | Marca o item que não atrasa (gás, ônibus, remédio: quem não paga fica sem). O config atual marca o gás, o ônibus e o remédio das 6 casas |
 | indicadores `contas_atrasadas` e `faltou_na_mesa` | `indicadores`, obrigatórios com o limite | O que a casa deve de contas, com multa e mora, e a comida que não deu para comprar. Só o motor mexe nos dois. Veja `indicadores` |
 
 E a D-067: quando o dinheiro de uma proteção passa do que o trabalho daria num
@@ -224,7 +224,7 @@ servidor, que recusa o voto atrasado.
 | `limiteChequeEspecial` | opcional; inteiro > 0, em R$ | Esquema v3.1 (D-066): até quanto o banco empresta. O caixa nunca fica abaixo de −limite; o que passaria dele vira conta atrasada ou comida não comprada. Ausente, o cheque especial não tem teto, como antes. Veja "O limite do cheque especial", logo abaixo |
 | `limiteFonte` | obrigatório com o limite; texto | De onde vem o limite. Nunca aparece no telão; o validador a imprime na conferência (j) |
 | `multaAtraso` | obrigatório com o limite; número de 0 a 1, sem o 1 | A multa, como fração, cobrada **uma vez** sobre o que atrasou no período: `0.07` é 7%. Escrever `7` é erro |
-| `moraMes` | obrigatório com o limite; número de 0 a 1, sem o 1 | A mora **ao mês**, simples, sobre o principal que já estava atrasado: `0.008` é 0,8% ao mês. No bimestre, conta duas vezes (× `mesesPorRodada`) |
+| `moraMes` | obrigatório com o limite; número de 0 a 1, sem o 1 | A mora **ao mês**, simples, sobre o principal que já estava atrasado: `0.01` é 1% ao mês. No bimestre, conta duas vezes (× `mesesPorRodada`) |
 | `atrasoFonte` | obrigatório com o limite; texto | De onde vêm a multa e a mora |
 | `cortarPrimeiro` | opcional, só com o limite; `"contas"` ou `"comida"` | O que a casa deixa de pagar primeiro quando o limite acaba. Ausente vale `"contas"` (**a validar**, D-066). Qualquer dessas cinco chaves sem o limite é erro: não teria efeito |
 

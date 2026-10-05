@@ -127,8 +127,9 @@ seminário de 07/10. O que muda para quem conduz:
 do site e as regras v4).** O que muda para quem conduz:
 - **o banco empresta até R$ 2.000** (o limite do cheque especial, com fonte).
   Passado o limite, ele corta o crédito, e o que falta vira **conta atrasada**
-  (aluguel, luz, água, celular), com multa de 7% uma vez e mora de 0,8% ao mês,
-  e, quando nem atrasar as contas basta, **comida que não deu para comprar**
+  (aluguel, luz, água, celular), com multa de 8% uma vez e mora de 1% ao mês;
+  o gás, o ônibus e o remédio não atrasam: a casa **fica sem** eles (proposta de
+  05/10, aguardando o Kleber); e, quando nem isso basta, **comida que não deu para comprar**
   ("faltou na mesa"). Acabam os juros compostos sem fim: antes, no plano
   padrão e sem nenhuma carta ruim, a Rose terminava o ano devendo R$ 35.112 ao
   banco (rascunho, seção 5.1). Veja "Dívida, contas atrasadas e
@@ -531,7 +532,7 @@ slides.
     cheque especial ("Cheque especial R$ C de R$ 2.000 do limite · juros de
     7,43% ao mês"), o empréstimo ("fica devendo R$ E em N parcelas · a próxima:
     R$ P") e, numa linha própria, fora do banco, as contas atrasadas ("Contas
-    atrasadas R$ A · multa de 7% e mora de 0,8% ao mês"). Embaixo, à parte,
+    atrasadas R$ A · multa de 8% e mora de 1% ao mês"). Embaixo, à parte,
     porque não é dívida: "Faltou na mesa: R$ X de comida que não deu para
     comprar, até agora.";
   - o resumo e a dívida cabem inteiros num celular de 360×740, sem rolar. O
@@ -743,15 +744,16 @@ explicar quando aparecer)
   até o limite de R$ 2.000 (Banco Central, Estudo Especial nº 84/2020,
   corrigido pela inflação). Passado o limite, o banco corta o crédito, e o que
   passaria dele vira, nesta ordem: **conta atrasada** (o básico menos a comida:
-  aluguel, luz, água, celular), com multa de 7% uma vez e mora de 0,8% ao mês,
-  simples; depois, **comida que não deu para comprar** ("faltou na mesa"), no
+  aluguel, luz, água, celular), com multa de 8% uma vez e mora de 1% ao mês,
+  simples; depois, o gás, o ônibus e o remédio, que não atrasam: a casa **fica
+  sem** eles, sem multa (a tela diz "ficou sem R$ Z"); depois, **comida que não deu para comprar** ("faltou na mesa"), no
   máximo a comida do bimestre; e o que passar disso (um conserto, por exemplo)
   atrasa também. Num bimestre bom, a folga até o limite paga primeiro as
   contas atrasadas.
 - **Quanto, no config atual** (validador, conferência j, estimado): o banco
   termina o ano em R$ 2.000 nas seis casas. As contas atrasadas no fim, no
-  plano padrão, vão de R$ 10.376 (Jonas) a R$ 24.040 (Rose), em média; o que
-  faltou na mesa no ano vai de R$ 582 (Jonas) a R$ 9.107 (Daiane). A Daiane
+  plano padrão, vão de R$ 10.448 (Jonas) a R$ 20.954 (Rose), em média; o que
+  faltou na mesa no ano vai de R$ 542 (Jonas) a R$ 9.116 (Daiane). A Daiane
   corta comida em quase todo bimestre; a Rose fica na beira, e qualquer carta
   ruim vira comida cortada (rascunho, seção 5.1).
 - **No telão**, a faixa da equipe diz "dívida R$ D" (o banco e o empréstimo) e,
@@ -906,7 +908,7 @@ explicar quando aparecer)
     "R$ C de R$ 2.000 do limite · juros de 7,43% ao mês"; o empréstimo,
     "Empréstimo a 6,39% ao mês: fica devendo R$ E em N parcelas · a próxima:
     R$ P · R$ T no total, com os juros"; e, à parte, "Contas atrasadas R$ A ·
-    multa de 7% e mora de 0,8% ao mês".
+    multa de 8% e mora de 1% ao mês".
   - **O que faltou na mesa**, à vista, depois da dívida: "Faltou na mesa: R$ Y
     de comida que não deu para comprar neste bimestre (R$ X até agora)."
   - **O auxílio acima do trabalho** (D-067), à vista, logo abaixo do saldo,
