@@ -533,11 +533,11 @@ passou à versão 7 (`?v=7`, `VERSAO_APP`), e as regras do Firebase, à **v4**.
     meses em 1024×768 e 1920×1080, inclusive seis faixas no limite com a frase
     da D-067.
 50. **O que o conteúdo de 12 meses não cumpre** (rascunho, seção 8, para
-    decisão; números do config `fccc2a93`, estimados): ninguém fecha o básico em
-    caminho nenhum (D-050, D-058; o mais perto, o Jonas, −R$ 770); a referência
-    "com carteira assinada" fica abaixo do Jonas de app em 87% das partidas do
-    plano padrão; o esgotamento ainda é o melhor plano em 4 dos 6 bimestres para
-    3 ou mais personas (D-059); em Set–out a melhor opção é a mesma para 5 das 6
+    decisão; números do config `472f94a0`, de 05/10, com as propostas 3(a) e
+    1(b), estimados): ninguém fecha o básico em caminho nenhum (D-050, D-058; o
+    mais perto, o Jonas, −R$ 1.524); a referência "com carteira assinada" fica
+    abaixo do Jonas de app em 93% das partidas do plano padrão; o esgotamento
+    ainda é o melhor plano nos 6 bimestres para 3 ou mais personas (D-059); em Set–out a melhor opção é a mesma para 5 das 6
     personas (D-051); com o limite, o placar da Rose e da Daiane quase não
     separa as escolhas (item 51).
 51. **O cheque especial tem limite** (D-066, esquema v3.1). Chaves novas e

@@ -189,7 +189,15 @@ function textoContas(mes, gastos = null) {
   // mora) vêm depois dos juros do banco. A conta lida continua fechando no
   // saldo do motor.
   const mesa = Math.round(mes.faltouNaMesa ?? 0);
-  partes.push(mesa > 0 ? `básico ${F.moeda(mes.basico - mesa)} (faltou na mesa ${F.moeda(mesa)})` : `básico ${F.moeda(mes.basico)}`);
+  // Revisão da F6c: o que a casa ficou sem (itens semAtraso: gás, ônibus,
+  // remédio) também não saiu do caixa; sai do básico, como a comida, e vem
+  // logo depois ("ficou sem R$ Z"). Até 05/10 o config.json não marcava nenhum
+  // item e esta conta não o previa: com a proposta 3(a), a história do telão
+  // mostrava a conta certa e a conferência esperava o básico cheio.
+  const semComprar = Math.round(mes.ficouSem ?? 0);
+  const consumido = mes.basico - mesa - semComprar;
+  partes.push(mesa > 0 ? `básico ${F.moeda(consumido)} (faltou na mesa ${F.moeda(mesa)})` : `básico ${F.moeda(consumido)}`);
+  if (semComprar > 0) partes.push(`ficou sem ${F.moeda(semComprar)}`);
   if (mes.juros > 0) partes.push(`juros ${F.moeda(mes.juros)}`);
   const multa = Math.round(mes.multa ?? 0);
   const mora = Math.round(mes.mora ?? 0);

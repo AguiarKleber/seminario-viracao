@@ -1100,10 +1100,14 @@ async function jogar({ site, navegador, vigiar }) {
     if (Number.isFinite(mes.contasAtrasadas)) {
       const doMes = [];
       if (mes.faltouNaMesa > 0) doMes.push(`(${await moedaNa(c, mes.faltouNaMesa)} de comida não foi comprada)`);
+      if (mes.ficouSem > 0) doMes.push(`(a casa ficou sem ${await moedaNa(c, mes.ficouSem)} do que não se paga depois)`);
       if (mes.multa + mes.mora > 0) doMes.push(`multa e mora das contas atrasadas ${await moedaNa(c, mes.multa + mes.mora)}`);
       for (const x of doMes) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
     }
-    const doLimite = (mes.faltouNaMesa ?? 0) - (mes.multa ?? 0) - (mes.mora ?? 0);
+    // Revisão da F6c: o que a casa ficou sem (gás, ônibus, remédio) também não
+    // saiu do caixa. Até 05/10 o config.json não marcava nenhum item, e a conta
+    // daqui não o somava; com a proposta 3(a), sem ele a conta não fecha.
+    const doLimite = (mes.faltouNaMesa ?? 0) + (mes.ficouSem ?? 0) - (mes.multa ?? 0) - (mes.mora ?? 0);
     assert.equal(mes.entrou + (mes.protecao ?? 0) - (mes.gastos ?? 0) - mes.basico - mes.juros + doLimite, mes.saldoMes, `${onde}: a conta do mês fecha`);
   }
   // D-059: "A proteção pagou R$ X: <rótulo>. Sem ela, teria faltado R$ Y a

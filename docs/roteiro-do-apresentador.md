@@ -755,8 +755,8 @@ explicar quando aparecer)
   contas atrasadas.
 - **Quanto, no config atual** (validador, conferência j, estimado): o banco
   termina o ano em R$ 2.000 nas seis casas. As contas atrasadas no fim, no
-  plano padrão, vão de R$ 10.075 (Jonas) a R$ 20.936 (Rose), em média; o que
-  faltou na mesa no ano vai de R$ 502 (Jonas) a R$ 9.259 (Daiane). A Daiane
+  plano padrão, vão de R$ 9.946 (Jonas) a R$ 20.923 (Rose), em média; o que
+  faltou na mesa no ano vai de R$ 486 (Jonas) a R$ 9.258 (Daiane). A Daiane
   corta comida em quase todo bimestre; a Rose fica na beira, e qualquer carta
   ruim vira comida cortada (rascunho, seção 5.1).
 - **No telão**, a faixa da equipe diz "dívida R$ D" (o banco e o empréstimo) e,
@@ -768,15 +768,27 @@ explicar quando aparecer)
 - **"Faltou na mesa" não é dívida** e não entra no saldo: é a comida que a casa
   deixou de comer. Por isso aparece sempre à parte, no resultado, no celular e
   no placar final.
+- **"Ficou sem" não tem consequência no jogo** (proposta 3(a) de 05/10,
+  aguardando o Kleber): ficar sem o ônibus não tira a renda de quem trabalha
+  fora (a companheira do Jonas, a esposa do Marcos, a mãe da Bruna e a do
+  Kauã), e ficar sem o remédio não aumenta a chance de adoecer, ao contrário
+  do "remédio adiado" de jul–ago. Para a Rose e o Kauã, em vários bimestres
+  do meio do ano, a carta sorteada nem muda o saldo: o que ela tira vira
+  "ficou sem" ou "faltou na mesa". Se perguntarem, diga que é uma
+  simplificação do jogo (rascunho, seção 8, item 21).
 - **As cartas que o atraso puxa:** "Cortaram a luz" (só com mais de R$ 1.000 de
   contas atrasadas no começo do bimestre; dois dias no escuro, a religação e a
   comida da geladeira) e "O dono entrou com o despejo" (acima de R$ 3.000, no
   máximo uma vez por partida: é o começo do processo, e o custo é o medo,
   energia −2). **A chance cresce com o atraso** (proposta 1(b) de 05/10,
-  aguardando o Kleber): o despejo chega a ~30% por bimestre quando a casa deve
-  mais de 4 aluguéis, e o corte de luz, quando deve mais de 2 bimestres das
-  contas (a luz já passou dos 90 dias da ANEEL). No padrão, de 37% (Jonas) a
-  76% (Daiane) das partidas tiram o despejo. As regras e os custos têm fonte;
+  aguardando o Kleber): o despejo chega a ~30% por bimestre quando as contas
+  atrasadas, com multa e mora, passam do valor de 4 aluguéis (uns 3 meses de
+  aluguel atrasado), e o corte de luz, quando passam de 2 bimestres das
+  contas; depois que o despejo já saiu, o corte vai a ~40%. No jogo, a
+  religação não quita a luz atrasada, e o corte pode voltar no bimestre
+  seguinte. No padrão, de 37% (Jonas) a 76% (Daiane) das partidas tiram o
+  despejo; numa sala de 6 equipes, em média 3,8 tiram o despejo e 4 tiram o
+  corte no ano. As regras e os custos têm fonte;
   **a chance é estimativa** (rascunho, seção 8, item 20).
 - **O que dizer:**
   - Na primeira equipe que passar do limite: "O banco emprestou até R$ 2.000.
@@ -794,7 +806,7 @@ explicar quando aparecer)
     zeraria a comida das casas mais pobres em todo bimestre antes de atrasar
     um real de conta.
   - Quando sair o despejo ou o corte de luz: "Com meses de aluguel atrasado, o
-    dono entra na Justiça; com meses de luz atrasada, a distribuidora corta. No
+    dono entra na Justiça; com a conta de luz atrasada, a distribuidora pode cortar depois do aviso de 15 dias. No
     jogo, a chance cresce com o atraso e chega a mais ou menos uma em três por
     bimestre. É estimativa: a lei diz o que pode acontecer, e não com que
     frequência." (Lei 8.245/1991, arts. 9º, III, e 62; ANEEL, REN 1.000/2021.
@@ -858,7 +870,7 @@ explicar quando aparecer)
     (Set–out, D), e não carta.
 - **O que os picos fazem:** melhoram o bimestre, e não o ano. No config atual,
   **ninguém fecha o básico em 12 meses**, em nenhum caminho que a simulação
-  achou: o mais perto é o Jonas, com −R$ 591 no fim (estimado: confira na
+  achou: o mais perto é o Jonas, com −R$ 1.524 no fim (estimado: confira na
   conferência g do validador do dia), e só com a carta de promoção nos seis
   bimestres. Até um bimestre no azul é raro (o Jonas, em 17,9% das partidas ao
   acaso, e o Marcos, em 15,2%; as outras casas, quase nunca; rascunho, seção
@@ -1032,6 +1044,14 @@ básico")
   nos 12 meses (inclusive R$ 0). Fica fora da barra de propósito: não é dívida,
   e a barra ficava menor justamente porque a família comeu menos. No config
   atual, a Daiane e a Rose são as de maior número (rascunho, seção 5.1).
+- **O que a casa ficou sem não aparece no placar final** (proposta 3(a) de
+  05/10, aguardando o Kleber): o gás, o ônibus e o remédio que a casa não
+  pôde pagar aparecem só no resultado de cada bimestre ("ficou sem R$ Z"), e
+  não em nenhum total do fim. Com a 3(a), a barra da Rose fica uns R$ 3 mil
+  menos negativa (contas atrasadas no fim, no padrão: de R$ 24.040 para
+  R$ 20.923) sem a casa estar melhor: é a passagem, o gás e o remédio que ela
+  deixou de comprar (R$ 3.170 no ano, em média). Se perguntarem, diga isso
+  (rascunho, seção 8, item 21).
 - **Diga:**
   - "A ordem não é de quem ganhou. É a fila de quanto cada família ficou
     devendo em um ano, e a comida que faltou está embaixo."
@@ -1040,7 +1060,7 @@ básico")
     carta."
   - No config atual, é quase certo que **nenhuma equipe feche as contas**:
     nenhum caminho que a simulação achou termina com saldo ≥ R$ 0, e o mais
-    perto é o Jonas, com −R$ 591 (estimado), só com a carta de promoção nos seis
+    perto é o Jonas, com −R$ 1.524 (estimado), só com a carta de promoção nos seis
     bimestres. A D-050 ("quase ninguém") e a meta da D-058 não estão cumpridas
     (rascunho, seção 8, item 1). Diga: "Nenhuma família fechou. Não foi falta de
     esforço: o básico custa mais do que o trabalho paga, e a dívida de um mês
@@ -1071,7 +1091,7 @@ básico")
     segunda, quanto as escolhas mudaram isso. A terceira, o que a sorte fez."
   - "Nestas contas, a sorte pesou mais que as decisões. É de propósito: a
     escolha individual não tira ninguém da precariedade" (D-009, D-024). No
-    config atual, as decisões explicam de 20,6% (Jonas) a 44% (Daiane) da diferença
+    config atual, as decisões explicam de 19,5% (Kauã) a 61,2% (Daiane) da diferença
     entre as partidas; o resto é carta (validador, conferência e).
   - Se uma equipe se organizou (a associação, a greve, o protesto, o breque) e
     perdeu saldo: "O placar só mede o dinheiro de uma família. A conquista
@@ -1102,8 +1122,8 @@ básico")
 - **Os números do config atual** (conferência h do validador, plano padrão,
   estimado, com a proposta 1(b) de 05/10): o MEI só melhora o pior caso do
   Kauã (R$ 27, dentro do ruído), não muda o da Rose e piora o do Jonas
-  (R$ 457), o da Daiane (R$ 423), o do Marcos (R$ 186) e o da Bruna (R$ 29);
-  no esperado, perde de R$ 152 (Daiane) a R$ 808 (Marcos). Antes da 1(b),
+  (R$ 457), o da Daiane (R$ 427), o do Marcos (R$ 186) e o da Bruna (R$ 24);
+  no esperado, perde de R$ 180 (Rose) a R$ 726 (Jonas). Antes da 1(b),
   melhorava o pior caso de todas menos Rose e Daiane. São 12
   meses de DAS contra um auxílio que só vem com a fratura, e que a perícia
   nega em metade dos casos. Na Rose e na Daiane, a perda da fratura vira
@@ -1207,7 +1227,7 @@ somam 21 min; com a formação das equipes, as personas e o placar final, o jogo
 ocupa 30 dos 60 min. A apresentação entra entre as rodadas, em blocos curtos de
 dados (2 min cada), com os números da realidade brasileira que explicam o
 bimestre que acabou ou o que vem. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-09-30-v3-rascunho`; rascunho, seção 7).
+(versão `2026-10-05-v3.1`; rascunho, seção 7).
 
 **Cada rodada tem 3:30:** 90 s de decisão (o mínimo de conversa é 45 s), o
 sorteio e uns 1:30 de resultado. Não há folga: com seis rodadas, 30 s a mais em

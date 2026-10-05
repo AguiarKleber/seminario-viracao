@@ -1269,36 +1269,38 @@ Ainda em (h), duas conferências da D-059:
   troca da página "O pior que podia acontecer". Avisa quando nenhuma opção que
   protege melhora o pior caso de alguma persona.
 
-**O que (g), (h), (i) e (j) dizem do config de 12 meses** (`2026-09-30-v3-rascunho`,
-hash `fccc2a93` de 05/10, com o limite, estimado; as decisões pendentes estão no
-rascunho, seção 8). Os números abaixo são de uma execução: **compare com a saída
-do `npm run validar` do dia**, e não com o hash escrito aqui. Uma troca só de
-texto muda o hash e, com ele, a amostra: da `886da7f5` para a `fccc2a93` (só
-dois textos de `fonte`), o melhor caminho do Jonas foi de −R$ 591 para −R$ 770,
-e os avisos de padrão de maior saldo trocaram de bimestre. Diferenças de
-dezenas de reais entre opções estão dentro do ruído da simulação:
+**O que (g), (h), (i) e (j) dizem do config de 12 meses** (`2026-10-05-v3.1`,
+hash `472f94a0` de 05/10, com o limite e as propostas 3(a) e 1(b), aguardando
+o Kleber, estimado; as decisões pendentes estão no rascunho, seção 8). Os
+números abaixo são de uma execução: **compare com a saída do `npm run validar`
+do dia**, e não com o hash escrito aqui. Uma troca só de texto muda o hash e,
+com ele, a amostra: da `0c67f01e` para a `472f94a0` (só a `versao` e um texto
+de `fonte`), o melhor caminho do Jonas foi de −R$ 591 para −R$ 1.524, e o
+esgotamento passou a ser o melhor plano em 6 dos 6 bimestres (eram 5).
+Diferenças de dezenas de reais entre opções estão dentro do ruído da simulação:
 - (g): **nenhuma persona fecha o básico**, em nenhum caminho que a simulação
-  achou; o melhor caminho vai de −R$ 770 (Jonas, com a carta de promoção nos
-  seis bimestres) a −R$ 21.549 (Rose). Só o padrão fecha em 0% nas 6. Avisos:
+  achou; o melhor caminho vai de −R$ 1.524 (Jonas, com a carta de promoção nos
+  seis bimestres) a −R$ 20.238 (Rose). Só o padrão fecha em 0% nas 6. Avisos:
   os seis "nenhum caminho fecha" e "só 0 persona(s) entre 5% e 10%".
 - (c) e (d): a opção A de Jan–fev vence em saldo com mais de 70% de
-  probabilidade na Rose e na Daiane, e o padrão é a opção de maior saldo para a
-  Rose em Mai–jun e para a Daiane de Mar–abr a Jul–ago. São diferenças de
-  dezenas de reais nas casas que passam do limite: o que muda de uma opção para
-  outra vira comida cortada, que fica fora do placar (rascunho, seção 8, item
-  18).
+  probabilidade na Rose e na Daiane, e a C de Mar–abr (o crédito pessoal), na
+  Bruna; a A de Mar–abr da Daiane é dominante, e o padrão é a opção de maior
+  saldo para a Rose em Jul–ago. Só os dois últimos são diferenças de dezenas de
+  reais; os três primeiros vão de R$ 330 a R$ 1.113 (rascunho, seção 6.3 e
+  seção 8, item 18).
 - (h), esgotamento: a opção mais cansativa é a de maior saldo esperado para 3
-  personas em Jan–fev e em Mar–abr, e para 5 em Set–out e em Nov–dez (quatro
-  avisos).
-- (h), proteção: no plano padrão, o MEI melhora o pior caso estimado de 4
-  personas (de R$ 124, Jonas, a R$ 635, Marcos), não muda o da Rose e piora o da
-  Daiane em R$ 423; no esperado, perde de R$ 183 (Daiane) a R$ 868 (Marcos).
+  personas em Jan–fev, Mar–abr e Jul–ago, e para 5 em Mai–jun, Set–out e
+  Nov–dez (seis avisos).
+- (h), proteção: no plano padrão, o MEI só melhora o pior caso estimado do Kauã
+  (R$ 27), não muda o da Rose e piora o do Jonas (R$ 457), o da Daiane
+  (R$ 427), o do Marcos (R$ 186) e o da Bruna (R$ 24); no esperado, perde de
+  R$ 180 (Rose) a R$ 726 (Jonas).
 - (i): o trabalho nunca fica negativo; o "entrou" só fica negativo na Daiane
-  (pior −R$ 456, Jul–ago com a opção D e a fratura; ao acaso, até 2,6% dos casos,
+  (pior −R$ 456, Jul–ago com a opção D e a fratura; ao acaso, até 3,2% dos casos,
   em Set–out), com aviso.
 - (j): o banco termina em R$ 2.000 nas 6 personas; no plano padrão, as contas
-  atrasadas no fim vão de R$ 10.376 (Jonas) a R$ 24.040 (Rose), em média, e o
-  que faltou na mesa no ano, de R$ 582 (Jonas) a R$ 9.107 (Daiane).
+  atrasadas no fim vão de R$ 9.946 (Jonas) a R$ 20.923 (Rose), em média, e o
+  que faltou na mesa no ano, de R$ 486 (Jonas) a R$ 9.258 (Daiane).
 
 **O que (g) e (h) diziam do config de 29/09 à noite** (conteúdo v2.2, 3 meses,
 exato; hoje em `test/fixtures/config-real-v22.json`):
