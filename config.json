@@ -3403,7 +3403,7 @@
           "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (o autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes do acidente: quem abre o MEI em jan–fev paga o primeiro DAS na hora); 45 dias de 1 salário mínimo (R$ 1.621 por mês desde 01/01/2026, Decreto 12.797/2025, art. 1º; o auxílio por incapacidade nunca é menor que 1 salário mínimo, Lei 8.213/1991, art. 33): 1,5 × R$ 1.621 = R$ 2.431,50, R$ 2.431 no jogo. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no bimestre seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo bimestre (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
-      "fonte": "Estimativa sem fonte, a contrapartida do desgaste: de jul–ago em diante o peso cai de 40 para 32 (−20%), porque as cartas de desgaste ganham peso e um bimestre \"sem nada\" fica menos comum. Conta: a chance é o peso sobre a soma dos pesos possíveis; no plano padrão, \"Normal\" sai de 38% a 47% em jan–fev para 13% a 18% em nov–dez (o padrão de jul–ago adia a manutenção, que multiplica \"Quebrou\" por 4 nos veículos)"
+      "fonte": "Estimativa sem fonte, a contrapartida do desgaste: de jul–ago em diante o peso cai de 40 para 32 (−20%), porque as cartas de desgaste ganham peso e um bimestre \"sem nada\" fica menos comum. Conta: a chance é o peso sobre a soma dos pesos possíveis; no plano padrão, \"Normal\" sai de 38% a 47% em jan–fev para 3% a 15% em nov–dez (o padrão de jul–ago adia a manutenção, que multiplica \"Quebrou\" por 4 nos veículos; e, pela proposta de 05/10, na casa muito atrasada o despejo e o corte de luz chegam a ~30% cada, e um bimestre \"sem nada\" cai para 3% a 5%; só o Jonas, que nesse caminho não passa dos limiares, fica em 15%)"
     },
     {
       "id": "promocao",
@@ -3906,7 +3906,7 @@
       "peso": 6,
       "diasParado": 3,
       "narrativa": "Quebrou o que eu uso para trabalhar. Três dias sem ele, e o conserto sai do meu bolso.",
-      "fonte": "Desgaste do veículo. O quando tem fonte, e o quanto é estimativa. A moto roda 6.760 km por bimestre (130 km/dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025), revisão a cada 6.000 km, relação de 20 a 30 mil km e pneu traseiro de 15 a 20 mil km; o carro, 8.800 km (TST, via Agência Brasil, 23/06/2026); a bicicleta, ~2.000 km (corrente a cada 1.500 a 2.500 km, Velodrome, B). A peça chega ao fim: na moto, o pneu traseiro (15 a 20 mil km) e a relação (20 a 30 mil km) do 3º ao 5º bimestre (20.280 km no fim de mai–jun) e o 2º pneu no 5º e 6º (lojas, B); no carro, os pneus de 40 a 60 mil km no 5º e 6º bimestre (44 a 53 mil km; lojas, B), e a embreagem não tem km com fonte (\"trânsito intenso\" gasta mais rápido, Karhub); na bicicleta, a corrente acaba todo bimestre, desde o começo. Conta (estimativa; D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev. Nas partidas sorteadas (média de 20 mil, no padrão), a tendência é a mesma, mas a média recua um pouco em alguns bimestres (a moto de 7,2% para 6,4% em set–out; a bicicleta de 7,9% para 6,9% e o celular da Bruna de 8,3% para 7,9% em mai–jun), porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio: o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev para 76% a 82% em nov–dez. Como a doença, o temporal e as cartas de atraso também entram no sorteio, o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"): no padrão com a carta \"Normal\", a moto vai de 5,7% em jan–fev a 8,2% em nov–dez, o carro de 6,5% a 8,5%, a bicicleta de 5,9% a 21,1% (o salto de jul–ago nos veículos é a manutenção adiada), a autoclave da Rose de 6,7% a 9,8% e o celular da Bruna e da Daiane de 6,6% e 7,1% a 8,8% e 9,1%. A queda de mai–jun no Jonas e no Marcos é a revisão de mai–jun, que corta pela metade. A autoclave e o celular não têm desgaste com fonte; no carro de mai–ago e na bicicleta, o aumento não tem apoio na quilometragem. Moto: relação R$ 294 + pneu R$ 228 (lojas, B). Carro: embreagem de R$ 1.600 a 2.550 em carro popular (Karhub, 13/03/2026, B), usada a ponta de baixo; um motorista ficou com dívida de R$ 2,5 mil no mecânico (TST). Bicicleta: roda completa a partir de R$ 280 (Revista Oeste, 19/02/2026). Autoclave: exigida no RS (Portaria SES-RS 500/2010); tela e conserto da autoclave: estimativa",
+      "fonte": "Desgaste do veículo. O quando tem fonte, e o quanto é estimativa. A moto roda 6.760 km por bimestre (130 km/dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025), revisão a cada 6.000 km, relação de 20 a 30 mil km e pneu traseiro de 15 a 20 mil km; o carro, 8.800 km (TST, via Agência Brasil, 23/06/2026); a bicicleta, ~2.000 km (corrente a cada 1.500 a 2.500 km, Velodrome, B). A peça chega ao fim: na moto, o pneu traseiro (15 a 20 mil km) e a relação (20 a 30 mil km) do 3º ao 5º bimestre (20.280 km no fim de mai–jun) e o 2º pneu no 5º e 6º (lojas, B); no carro, os pneus de 40 a 60 mil km no 5º e 6º bimestre (44 a 53 mil km; lojas, B), e a embreagem não tem km com fonte (\"trânsito intenso\" gasta mais rápido, Karhub); na bicicleta, a corrente acaba todo bimestre, desde o começo. Conta (estimativa; D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev. Nas partidas sorteadas (média de 20 mil, no padrão), a tendência é a mesma, mas a média recua um pouco em mai–jun (a bicicleta de 7,9% para 7,2% e o celular da Bruna de 8,3% para 7,7%), porque o atraso começa a puxar o corte de luz e o despejo antes das faixas em que o peso do desgaste é multiplicado; o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev (como antes) para 91% a 96% em nov–dez (era de 76% a 82%). Como a doença, o temporal e as cartas de atraso também entram no sorteio, o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"), e, com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber): no padrão com a carta \"Normal\", a moto vai de 5,7% em jan–fev a 8,2% em nov–dez, o carro de 6,5% a 10,5%, a bicicleta de 5,9% a 23,3% (o salto de jul–ago nos veículos é a manutenção adiada), a autoclave da Rose de 6,7% a 12,6% e o celular da Bruna e da Daiane de 6,6% e 7,1% a 9,6% e 10,2%. A queda de mai–jun no Jonas e no Marcos é a revisão de mai–jun, que corta pela metade. A autoclave e o celular não têm desgaste com fonte; no carro de mai–ago e na bicicleta, o aumento não tem apoio na quilometragem. Moto: relação R$ 294 + pneu R$ 228 (lojas, B). Carro: embreagem de R$ 1.600 a 2.550 em carro popular (Karhub, 13/03/2026, B), usada a ponta de baixo; um motorista ficou com dívida de R$ 2,5 mil no mecânico (TST). Bicicleta: roda completa a partir de R$ 280 (Revista Oeste, 19/02/2026). Autoclave: exigida no RS (Portaria SES-RS 500/2010); tela e conserto da autoclave: estimativa",
       "efeitos": [
         {
           "se": {
@@ -4315,6 +4315,126 @@
             ]
           },
           "multiplica": 4
+        },
+        {
+          "se": {
+            "persona": [
+              "motoboy",
+              "manicure",
+              "motorista"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": [
+              "influenciadora",
+              "vendedora"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4080
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.5
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 7008
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "multiplica": 3.5
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5504
+              }
+            }
+          },
+          "multiplica": 3.25
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "multiplica": 3
+        },
+        {
+          "se": {
+            "rodada": "r6",
+            "persona": "influenciadora"
+          },
+          "soma": 0.75
+        },
+        {
+          "se": {
+            "rodada": "r3",
+            "persona": "bike"
+          },
+          "soma": 0.5
         }
       ]
     },
@@ -4612,7 +4732,7 @@
       "peso": 2,
       "diasParado": 7,
       "narrativa": "A dor nas costas travou de vez. Uma semana parado e fisioterapia paga, porque a fila do SUS não tem data.",
-      "fonte": "Desgaste do corpo. Kinote et al. (RBPS, 2013), manicures de Fortaleza: 76,7% com dor, 46,7% com dor crônica; Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Iwami et al. (RBMT, 2023): lombalgia crônica em 20,6% das domésticas, maior com a idade. As fontes medem a dor de quem tem anos de ofício (Kinote: 12,3 anos em média; dor crônica é a que passa de 6 meses) e que ela cresce com a idade (Iwami: razão de prevalência 1,74), e não quanto cresce dentro de um ano. Conta (estimativa; D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,5 vez a de jan–fev, e a da Rose a 2 vezes, porque a manicure tem a maior prevalência das fontes (76,7%, contra 20,6% das domésticas); o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"). Nas partidas sorteadas (média de 20 mil, no padrão), a da Rose e a da Daiane também nunca caem; nas outras, a média recua até 0,2 ponto num bimestre (a do Jonas, de 2,4% para 2,2% em set–out), porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio, e nov–dez fica de 1,46 a 2 vezes jan–fev. Com a carta \"Normal\", de ~2% em jan–fev a ~3% a 3,5% em nov–dez (a Rose, de 2,2% a 4,6%). Fisioterapia: Doctoralia, Porto Alegre, R$ 120 a R$ 320 a sessão (4 × R$ 150); fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)",
+      "fonte": "Desgaste do corpo. Kinote et al. (RBPS, 2013), manicures de Fortaleza: 76,7% com dor, 46,7% com dor crônica; Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Iwami et al. (RBMT, 2023): lombalgia crônica em 20,6% das domésticas, maior com a idade. As fontes medem a dor de quem tem anos de ofício (Kinote: 12,3 anos em média; dor crônica é a que passa de 6 meses) e que ela cresce com a idade (Iwami: razão de prevalência 1,74), e não quanto cresce dentro de um ano. Conta (estimativa; D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,5 vez a de jan–fev, e a da Rose a 2 vezes, porque a manicure tem a maior prevalência das fontes (76,7%, contra 20,6% das domésticas); o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"). Nas partidas sorteadas (média de 20 mil, no padrão), a da Rose, a do Marcos e a da Daiane também nunca caem; nas outras, a média recua até 0,2 ponto em mai–jun (a da Bruna, de 2,6% para 2,4%), porque o atraso começa a puxar o corte de luz e o despejo antes das faixas em que o peso do desgaste é multiplicado, e nov–dez fica de 2 a 3,3 vezes jan–fev. Com a carta \"Normal\", de ~2% em jan–fev a ~3% a 4% em nov–dez (a Rose, de 2,2% a 5,8%); com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). Fisioterapia: Doctoralia, Porto Alegre, R$ 120 a R$ 320 a sessão (4 × R$ 150); fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)",
       "efeitos": [
         {
           "se": {
@@ -4978,6 +5098,112 @@
             "persona": "manicure"
           },
           "multiplica": 2
+        },
+        {
+          "se": {
+            "persona": [
+              "motoboy",
+              "manicure",
+              "motorista"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": [
+              "influenciadora",
+              "vendedora"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4080
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.5
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 7008
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "multiplica": 3.5
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5504
+              }
+            }
+          },
+          "multiplica": 3.25
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "multiplica": 3
         }
       ]
     },
@@ -6054,7 +6280,7 @@
       "diasParado": 45,
       "tom": "grave",
       "narrativa": "Bloquearam minha conta sem explicação. Veio uma mensagem genérica, sem prazo e sem jeito de me defender, e sem advogado ninguém responde o recurso.",
-      "fonte": "Abílio (2021), p. 941 e 950: bloqueios sumários e o \"bloqueio branco\" por recusar. 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. O Povo (01/12/2025), pesquisa GigU (fintech do setor): 15,5% dos motoristas já foram bloqueados sem explicação. Uber (13/09/2026): 90 dias para pedir revisão, conta bloqueada enquanto isso. Perfil de Instagram: onda de banimentos em 2026 (TecMundo; O Antagonista). CUT (23/07/2026): com o Simtrapli-RS e advogado, liminar em ~36 dias; sem advogado, um caso passou de 8 meses. No jogo: 45 dias sem a conta no bimestre (estimativa: depois, a volta por outra conta); com a associação, 36; com dois apps, metade da perda. No máximo uma vez por partida. O peso sobe com os meses, por estimativa: as fontes mostram castigo que cresce com a repetição (99: 5, 10 e 15 dias fora; Uber: três avisos e a média das últimas 500 avaliações), e não com o calendário. Conta (D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte (fora mar–abr, em que aceitar tudo multiplica por 0,4) e chega em nov–dez a pelo menos 1,25 vez a de jan–fev; o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"). Nas partidas sorteadas (média de 20 mil, no padrão), a média sobe menos e recua em alguns bimestres (a do Jonas, de 2,0% para 1,7% em set–out; a da Bruna, de 2,3% para 2,1% em mai–jun; a da Daiane, de 2,61% para 2,55% em set–out), e nov–dez fica em 1,13 a 1,15 vez jan–fev: quem já foi bloqueado não é de novo (uma vez por partida), e na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio. Para quem ainda não foi bloqueado, nov–dez fica em 1,23 a 1,29 vez jan–fev. No padrão, a chance de ser bloqueado em algum bimestre do ano fica de 11% a 15%, perto dos 15,5% da GigU, que mede quem já foi bloqueado alguma vez, e não num ano",
+      "fonte": "Abílio (2021), p. 941 e 950: bloqueios sumários e o \"bloqueio branco\" por recusar. 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. O Povo (01/12/2025), pesquisa GigU (fintech do setor): 15,5% dos motoristas já foram bloqueados sem explicação. Uber (13/09/2026): 90 dias para pedir revisão, conta bloqueada enquanto isso. Perfil de Instagram: onda de banimentos em 2026 (TecMundo; O Antagonista). CUT (23/07/2026): com o Simtrapli-RS e advogado, liminar em ~36 dias; sem advogado, um caso passou de 8 meses. No jogo: 45 dias sem a conta no bimestre (estimativa: depois, a volta por outra conta); com a associação, 36; com dois apps, metade da perda. No máximo uma vez por partida. O peso sobe com os meses, por estimativa: as fontes mostram castigo que cresce com a repetição (99: 5, 10 e 15 dias fora; Uber: três avisos e a média das últimas 500 avaliações), e não com o calendário. Conta (D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte (fora mar–abr, em que aceitar tudo multiplica por 0,4) e chega em nov–dez a pelo menos 1,25 vez a de jan–fev; o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"). Nas partidas sorteadas (média de 20 mil, no padrão), a média recua um pouco em alguns bimestres (a da Bruna, de 2,3% para 2,1% em mai–jun; a do Jonas, de 2,02% para 2,00% em set–out), e nov–dez fica em 1,5 a 1,8 vez jan–fev: quem já foi bloqueado não é de novo (uma vez por partida), e o atraso puxa o corte de luz e o despejo; com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). No padrão, a chance de ser bloqueado em algum bimestre do ano fica de 12% a 18%, perto dos 15,5% da GigU, que mede quem já foi bloqueado alguma vez, e não num ano",
       "efeitos": [
         {
           "se": {
@@ -7041,6 +7267,112 @@
             ]
           },
           "multiplica": 3
+        },
+        {
+          "se": {
+            "persona": [
+              "motoboy",
+              "manicure",
+              "motorista"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": [
+              "influenciadora",
+              "vendedora"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4080
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "multiplica": 2.5
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 7008
+              }
+            }
+          },
+          "multiplica": 2.25
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "multiplica": 3.5
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5504
+              }
+            }
+          },
+          "multiplica": 3.25
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "multiplica": 3
         }
       ]
     },
@@ -7773,7 +8105,7 @@
       "peso": 2,
       "diasParado": 15,
       "narrativa": "Travei: não conseguia gravar nem abrir o app. Quinze dias sem postar, e o algoritmo não espera ninguém melhorar.",
-      "fonte": "YouPix, Creators & Negócios 2025 (via Jornal de Brasília, 19/11/2025): 53% dos criadores já tiveram burnout, mais ainda entre quem ganha até R$ 2 mil; 41% fazem tratamento. \"Exaustão algorítmica\" (Karhawi e Prazeres, 2022) e \"o momento em que você está exausto é o ponto em que o algoritmo mais gosta de você\" (Guardian, 2018), em Silva (tese UFMG, 2023, p. 159). Chance: estimativa (× 3 com a energia abaixo de 4 e nos bimestres de postar todo dia); pela D-063, o peso também sobe com os meses (os ajustes \"+x no peso\"), e no padrão a chance vai de 2,2% em jan–fev a 4,6% em nov–dez. Consulta: estimativa sem fonte",
+      "fonte": "YouPix, Creators & Negócios 2025 (via Jornal de Brasília, 19/11/2025): 53% dos criadores já tiveram burnout, mais ainda entre quem ganha até R$ 2 mil; 41% fazem tratamento. \"Exaustão algorítmica\" (Karhawi e Prazeres, 2022) e \"o momento em que você está exausto é o ponto em que o algoritmo mais gosta de você\" (Guardian, 2018), em Silva (tese UFMG, 2023, p. 159). Chance: estimativa (× 3 com a energia abaixo de 4 e nos bimestres de postar todo dia); pela D-063, o peso também sobe com os meses (os ajustes \"+x no peso\"), e no padrão a chance vai de 2,2% em jan–fev a 5,0% em nov–dez; com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). Consulta: estimativa sem fonte",
       "somenteSe": {
         "persona": "influenciadora"
       },
@@ -7948,6 +8280,35 @@
             "opcao": "b"
           },
           "multiplica": 3
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "multiplica": 3.5
+        },
+        {
+          "se": {
+            "rodada": "r6",
+            "persona": "influenciadora"
+          },
+          "soma": 0.5
         }
       ]
     },
@@ -7957,7 +8318,7 @@
       "curto": "Alcance",
       "peso": 6,
       "narrativa": "O alcance caiu pela metade, sem aviso e sem explicação. Postei igual e vendi menos.",
-      "fonte": "Socialinsider (2025): engajamento no Instagram de 0,48%, 24% menor que no ano anterior. Silva (tese UFMG, 2023, p. 166): \"um algoritmo que muda a todo o instante\". O peso sobe com os meses porque a queda se acumula no ano (−24% em 12 meses); o tamanho é estimativa. Conta (D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a 1,33 vez a de jan–fev (a queda de 24% em 12 meses); o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"): de 6,6% a 8,8% na Bruna e de 7,1% a 9,6% na Daiane. Nas partidas sorteadas (média de 20 mil, no padrão), as pontas são as mesmas e a da Daiane nunca cai; a da Bruna recua de 6,99% para 6,94% em mai–jun, porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz, o despejo e o burnout ganham espaço no sorteio. Valores: −30% do bimestre da Bruna, −15% do da Daiane (estimativa)",
+      "fonte": "Socialinsider (2025): engajamento no Instagram de 0,48%, 24% menor que no ano anterior. Silva (tese UFMG, 2023, p. 166): \"um algoritmo que muda a todo o instante\". O peso sobe com os meses porque a queda se acumula no ano (−24% em 12 meses); o tamanho é estimativa. Conta (D-063): no plano padrão, com a carta \"Normal\" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a 1,33 vez a de jan–fev (a queda de 24% em 12 meses); o peso sobe por persona e por bimestre (os ajustes \"+x no peso\"), e, com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber): de 6,6% a 9,6% na Bruna e de 7,1% a 10,8% na Daiane. Nas partidas sorteadas (média de 20 mil, no padrão), a da Daiane nunca cai e chega a 13,8% em nov–dez; a da Bruna recua de 7,0% para 6,8% em mai–jun (o atraso puxa o corte de luz e o despejo antes da faixa em que o peso é multiplicado) e chega a 11,8%. Valores: −30% do bimestre da Bruna, −15% do da Daiane (estimativa)",
       "somenteSe": {
         "persona": [
           "influenciadora",
@@ -8135,6 +8496,42 @@
             "persona": "vendedora"
           },
           "soma": 13
+        },
+        {
+          "se": {
+            "persona": [
+              "influenciadora",
+              "vendedora"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "multiplica": 3.5
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "multiplica": 3
         }
       ]
     },
@@ -8168,13 +8565,109 @@
         },
         {
           "se": {
+            "persona": [
+              "motoboy",
+              "manicure",
+              "motorista"
+            ],
             "indicador": {
               "contas_atrasadas": {
-                "acimaDe": 10000
+                "acimaDe": 5200
               }
             }
           },
-          "soma": 5
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": [
+              "influenciadora",
+              "vendedora"
+            ],
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4080
+              }
+            }
+          },
+          "multiplica": 1.75
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "soma": 152
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "soma": 163
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 7008
+              }
+            }
+          },
+          "soma": 172
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "soma": 337
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5504
+              }
+            }
+          },
+          "soma": 349
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "soma": 254
         }
       ],
       "efeitos": [
@@ -8306,7 +8799,7 @@
           "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (o autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes do acidente: quem abre o MEI em jan–fev paga o primeiro DAS na hora); 45 dias de 1 salário mínimo (R$ 1.621 por mês desde 01/01/2026, Decreto 12.797/2025, art. 1º; o auxílio por incapacidade nunca é menor que 1 salário mínimo, Lei 8.213/1991, art. 33): 1,5 × R$ 1.621 = R$ 2.431,50, R$ 2.431 no jogo. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no bimestre seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo bimestre (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
-      "fonte": "ANEEL, REN 1.000/2021: a distribuidora pode cortar a luz por falta de pagamento com aviso de 15 dias, até 90 dias depois do vencimento, nunca de sexta a domingo nem em feriado; a religação na cidade sai em até 24 h depois do pagamento (ANEEL, \"Como resolver\"; Proteste). Instituto Pólis/Ipec (publ. 31/05/2024): 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz. Chance: estimativa sem fonte (não achei a fração de cortes entre os inadimplentes): a carta só sai com contas atrasadas, e mais quanto maior o atraso"
+      "fonte": "ANEEL, REN 1.000/2021: a distribuidora pode cortar a luz por falta de pagamento com aviso de 15 dias, até 90 dias depois do vencimento, nunca de sexta a domingo nem em feriado; a religação na cidade sai em até 24 h depois do pagamento (ANEEL, \"Como resolver\"; Proteste). Instituto Pólis/Ipec (publ. 31/05/2024): 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz. Chance: estimativa sem fonte (não achei a fração de cortes entre os inadimplentes). A regra (proposta de 05/10, aguardando o Kleber): a chance cresce com as contas atrasadas no começo do bimestre (um pouco acima de R$ 1.000 e de R$ 5.000) e chega a cerca de 30% por bimestre quando elas passam de 2 bimestres das contas que atrasam naquela casa (aluguel, luz, água e celular: de R$ 5.036 na Daiane a R$ 7.008 no Marcos), quando a luz já passou dos 90 dias da REN 1.000; pode sair mais de uma vez"
     },
     {
       "id": "despejo",
@@ -8316,6 +8809,148 @@
       "narrativa": "O dono entrou na Justiça pelo aluguel atrasado. Se a gente não pagar tudo em até 15 dias depois da citação, com multa, juros e o advogado dele, o juiz manda sair.",
       "tom": "grave",
       "ajustesDePeso": [
+        {
+          "se": {
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 3000
+              }
+            }
+          },
+          "soma": 4
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "soma": 72
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "soma": 71
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5200
+              }
+            }
+          },
+          "soma": 80
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "soma": 94
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4080
+              }
+            }
+          },
+          "soma": 107
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 4000
+              }
+            }
+          },
+          "soma": 84
+        },
+        {
+          "se": {
+            "persona": "motoboy",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "soma": 86
+        },
+        {
+          "se": {
+            "persona": "manicure",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 6624
+              }
+            }
+          },
+          "soma": 98
+        },
+        {
+          "se": {
+            "persona": "motorista",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 7008
+              }
+            }
+          },
+          "soma": 99
+        },
+        {
+          "se": {
+            "persona": "influenciadora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5404
+              }
+            }
+          },
+          "soma": 248
+        },
+        {
+          "se": {
+            "persona": "bike",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5504
+              }
+            }
+          },
+          "soma": 249
+        },
+        {
+          "se": {
+            "persona": "vendedora",
+            "indicador": {
+              "contas_atrasadas": {
+                "acimaDe": 5036
+              }
+            }
+          },
+          "soma": 176
+        },
         {
           "se": {
             "sorteou": {
@@ -8355,26 +8990,6 @@
             }
           },
           "multiplica": 0
-        },
-        {
-          "se": {
-            "indicador": {
-              "contas_atrasadas": {
-                "acimaDe": 3000
-              }
-            }
-          },
-          "soma": 4
-        },
-        {
-          "se": {
-            "indicador": {
-              "contas_atrasadas": {
-                "acimaDe": 8000
-              }
-            }
-          },
-          "soma": 4
         }
       ],
       "efeitos": [
@@ -8470,7 +9085,7 @@
           "fonte": "Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (o autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes do acidente: quem abre o MEI em jan–fev paga o primeiro DAS na hora); 45 dias de 1 salário mínimo (R$ 1.621 por mês desde 01/01/2026, Decreto 12.797/2025, art. 1º; o auxílio por incapacidade nunca é menor que 1 salário mínimo, Lei 8.213/1991, art. 33): 1,5 × R$ 1.621 = R$ 2.431,50, R$ 2.431 no jogo. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no bimestre seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta \"A perícia do INSS negou\" é do mesmo bimestre (D-059: a tela só diz \"a proteção pagou\" quando pagou)"
         }
       ],
-      "fonte": "Lei 8.245/1991 (Lei do Inquilinato): art. 9º III (a locação pode ser desfeita por falta de pagamento), art. 62 II (o inquilino evita o despejo pagando, em até 15 dias depois da citação, os aluguéis, as multas, os juros, as custas e os honorários do advogado do dono) e art. 59 § 1º IX (sem garantia, o juiz pode dar 15 dias para sair, com caução de 3 aluguéis). O aluguel das personas é do mercado formal, com fiador ou análise de crédito (QuintoAndar), e por isso a ação não é a liminar: a carta é o começo do processo, e o custo é o medo. Chance: estimativa sem fonte (não achei com quantos meses de atraso o dono entra na Justiça): a carta só sai com contas atrasadas grandes, no máximo uma vez por partida"
+      "fonte": "Lei 8.245/1991 (Lei do Inquilinato): art. 9º III (a locação pode ser desfeita por falta de pagamento), art. 62 II (o inquilino evita o despejo pagando, em até 15 dias depois da citação, os aluguéis, as multas, os juros, as custas e os honorários do advogado do dono) e art. 59 § 1º IX (sem garantia, o juiz pode dar 15 dias para sair, com caução de 3 aluguéis). O aluguel das personas é do mercado formal, com fiador ou análise de crédito (QuintoAndar), e por isso a ação não é a liminar: a carta é o começo do processo, e o custo é o medo. Chance: estimativa sem fonte (não achei com quantos meses de atraso o dono entra na Justiça). A regra (proposta de 05/10, aguardando o Kleber): a chance cresce com as contas atrasadas no começo do bimestre (um pouco acima de R$ 3.000) e chega a cerca de 30% por bimestre quando elas passam de 4 aluguéis daquela casa (R$ 4.000 na Bruna e na Daiane, R$ 4.080 no Kauã, R$ 5.200 no Jonas, na Rose e no Marcos); no máximo uma vez por partida"
     }
   ],
   "enquetes": [

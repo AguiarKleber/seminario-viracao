@@ -138,7 +138,9 @@ do site e as regras v4).** O que muda para quem conduz:
   atrasadas R$ Y · faltou na mesa R$ Z". A "dívida" da faixa é só a do banco e
   do empréstimo; as contas atrasadas têm número próprio;
 - **duas cartas graves novas**, que só saem com contas atrasadas: "Cortaram a
-  luz" e "O dono entrou com o despejo";
+  luz" e "O dono entrou com o despejo" (pela proposta 1(b) de 05/10, aguardando
+  o Kleber, a chance delas cresce com o atraso e chega a ~30% cada por bimestre
+  na casa muito atrasada);
 - **o placar final mede o que a família ficou devendo** ("Quanto sobrou, e
   quanto ficou devendo"): a barra desconta o banco, o empréstimo e as contas
   atrasadas, e a comida que faltou vem embaixo, à parte, em "Faltou na mesa no
@@ -712,12 +714,13 @@ slides.
     escolha do padrão causa: o "Bloqueio" em Mar–abr, porque aceitar tudo o
     reduz, e o "Quebrou" do Jonas e do Marcos em Mai–jun, porque a revisão o
     corta pela metade) e chegue em Nov–dez a pelo menos 1,25 vez a de Jan–fev.
-    Exemplos nesse caminho: a quebra vai de 5,9% a 21,1% no Kauã, de 6,5% a
-    8,5% no Marcos e de 6,7% a 9,8% na Rose; a dor da Rose, de 2,2% a 4,6%; o
-    alcance da Daiane, de 7,1% a 9,6%. Nas partidas sorteadas, a tendência do
-    ano é a mesma, mas a média recua até 1 ponto em alguns bimestres (na casa
-    que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo
-    ganham espaço no sorteio). Por isso, diga "a moto, o carro e a bicicleta se
+    Exemplos nesse caminho: a quebra vai de 5,9% a 23,3% no Kauã, de 6,5% a
+    10,5% no Marcos e de 6,7% a 12,6% na Rose; a dor da Rose, de 2,2% a 5,8%; o
+    alcance da Daiane, de 7,1% a 10,8% (na casa muito atrasada, o peso do
+    desgaste é multiplicado para o despejo e o corte de luz não o diluírem:
+    proposta 1(b) de 05/10). Nas partidas sorteadas, a tendência do ano é a
+    mesma, mas a média recua até 0,7 ponto em Mai–jun (o atraso começa a puxar
+    o corte de luz e o despejo). Por isso, diga "a moto, o carro e a bicicleta se
     gastam", "o corpo cobra" e "o algoritmo esquece", e não "a cada bimestre
     tudo fica mais perigoso". Quem **adia a manutenção e o remédio** em
     Jul–ago (C) multiplica a quebra por 4, a queda por 1,5 e a doença por 2 até
@@ -752,8 +755,8 @@ explicar quando aparecer)
   contas atrasadas.
 - **Quanto, no config atual** (validador, conferência j, estimado): o banco
   termina o ano em R$ 2.000 nas seis casas. As contas atrasadas no fim, no
-  plano padrão, vão de R$ 10.448 (Jonas) a R$ 20.954 (Rose), em média; o que
-  faltou na mesa no ano vai de R$ 542 (Jonas) a R$ 9.116 (Daiane). A Daiane
+  plano padrão, vão de R$ 10.075 (Jonas) a R$ 20.936 (Rose), em média; o que
+  faltou na mesa no ano vai de R$ 502 (Jonas) a R$ 9.259 (Daiane). A Daiane
   corta comida em quase todo bimestre; a Rose fica na beira, e qualquer carta
   ruim vira comida cortada (rascunho, seção 5.1).
 - **No telão**, a faixa da equipe diz "dívida R$ D" (o banco e o empréstimo) e,
@@ -766,12 +769,15 @@ explicar quando aparecer)
   deixou de comer. Por isso aparece sempre à parte, no resultado, no celular e
   no placar final.
 - **As cartas que o atraso puxa:** "Cortaram a luz" (só com mais de R$ 1.000 de
-  contas atrasadas no começo do bimestre, e mais provável acima de R$ 5.000 e
-  de R$ 10.000: dois dias no escuro, a religação e a comida da geladeira) e "O
-  dono entrou com o despejo" (acima de R$ 3.000 e de R$ 8.000, no máximo uma
-  vez por partida: é o começo do processo, e o custo é o medo, energia −2). As
-  regras e os custos têm fonte; a chance é estimativa (rascunho, seção 8, item
-  20).
+  contas atrasadas no começo do bimestre; dois dias no escuro, a religação e a
+  comida da geladeira) e "O dono entrou com o despejo" (acima de R$ 3.000, no
+  máximo uma vez por partida: é o começo do processo, e o custo é o medo,
+  energia −2). **A chance cresce com o atraso** (proposta 1(b) de 05/10,
+  aguardando o Kleber): o despejo chega a ~30% por bimestre quando a casa deve
+  mais de 4 aluguéis, e o corte de luz, quando deve mais de 2 bimestres das
+  contas (a luz já passou dos 90 dias da ANEEL). No padrão, de 37% (Jonas) a
+  76% (Daiane) das partidas tiram o despejo. As regras e os custos têm fonte;
+  **a chance é estimativa** (rascunho, seção 8, item 20).
 - **O que dizer:**
   - Na primeira equipe que passar do limite: "O banco emprestou até R$ 2.000.
     Daí em diante, ninguém empresta mais. A família escolhe o que deixa de
@@ -787,11 +793,13 @@ explicar quando aparecer)
     validar** (D-066). As duas coisas acontecem de verdade; "comida primeiro"
     zeraria a comida das casas mais pobres em todo bimestre antes de atrasar
     um real de conta.
-  - Se alguém notar que o aluguel ficou meses sem pagar e não houve despejo:
-    "O jogo só tira a carta do despejo de vez em quando. Na vida, depende do
-    dono: a lei não exige um número mínimo de aluguéis atrasados para ele
-    entrar na Justiça." (Lei 8.245/1991, art. 9º, III. A chance do despejo é
-    estimativa sem fonte e está para decisão.)
+  - Quando sair o despejo ou o corte de luz: "Com meses de aluguel atrasado, o
+    dono entra na Justiça; com meses de luz atrasada, a distribuidora corta. No
+    jogo, a chance cresce com o atraso e chega a mais ou menos uma em três por
+    bimestre. É estimativa: a lei diz o que pode acontecer, e não com que
+    frequência." (Lei 8.245/1991, arts. 9º, III, e 62; ANEEL, REN 1.000/2021.
+    A chance é estimativa sem fonte e está para decisão: rascunho, seção 8,
+    item 20.)
   - **No placar final, a Daiane e a Rose quase não separam as escolhas:** o que
     muda de uma opção para outra vira comida cortada, fora do saldo. Se uma
     equipe dessas reclamar que "tanto faz", aponte o "Faltou na mesa no ano":
@@ -850,10 +858,10 @@ explicar quando aparecer)
     (Set–out, D), e não carta.
 - **O que os picos fazem:** melhoram o bimestre, e não o ano. No config atual,
   **ninguém fecha o básico em 12 meses**, em nenhum caminho que a simulação
-  achou: o mais perto é o Jonas, com −R$ 770 no fim (estimado: confira na
+  achou: o mais perto é o Jonas, com −R$ 591 no fim (estimado: confira na
   conferência g do validador do dia), e só com a carta de promoção nos seis
   bimestres. Até um bimestre no azul é raro (o Jonas, em 17,9% das partidas ao
-  acaso, e o Marcos, em 15,9%; as outras casas, quase nunca; rascunho, seção
+  acaso, e o Marcos, em 15,2%; as outras casas, quase nunca; rascunho, seção
   6.2). A D-050 e a meta da
   D-058 não estão cumpridas (rascunho, seção 8, item 1).
 - **Diga**, quando sair um pico: "Esse dinheiro existe, mas não dá para contar
@@ -1032,14 +1040,14 @@ básico")
     carta."
   - No config atual, é quase certo que **nenhuma equipe feche as contas**:
     nenhum caminho que a simulação achou termina com saldo ≥ R$ 0, e o mais
-    perto é o Jonas, com −R$ 770 (estimado), só com a carta de promoção nos seis
+    perto é o Jonas, com −R$ 591 (estimado), só com a carta de promoção nos seis
     bimestres. A D-050 ("quase ninguém") e a meta da D-058 não estão cumpridas
     (rascunho, seção 8, item 1). Diga: "Nenhuma família fechou. Não foi falta de
     esforço: o básico custa mais do que o trabalho paga, e a dívida de um mês
     vira juros, conta atrasada e comida que falta no seguinte." Se uma equipe fechar: "Fechou, com boas escolhas e
     muita sorte. Foi a exceção."
-  - **A linha de carteira assinada ficou abaixo do Jonas de app em 90% das
-    partidas no plano padrão** (−R$ 14.939 contra a mediana de −R$ 12.134;
+  - **A linha de carteira assinada ficou abaixo do Jonas de app em 93% das
+    partidas no plano padrão** (−R$ 14.939 contra a mediana de −R$ 11.803;
     rascunho, seção 8, item 2, ainda sem decisão). O mais
     provável é a barra do Jonas ficar à direita dela. **Não diga "o app paga
     mais"** nem "com carteira faltaria menos". Diga o que o número não mede: "O
@@ -1092,15 +1100,19 @@ básico")
 - **No celular,** o placar final e o Fim mostram o mesmo, em "O pior que podia
   acontecer".
 - **Os números do config atual** (conferência h do validador, plano padrão,
-  estimado): o MEI melhora o pior caso do Marcos (R$ 635), do Kauã (R$ 601), da
-  Bruna (R$ 487) e do Jonas (R$ 124), não muda o da Rose e piora o da Daiane
-  em R$ 423; no esperado, perde de R$ 183 (Daiane) a R$ 868 (Marcos). São 12
+  estimado, com a proposta 1(b) de 05/10): o MEI só melhora o pior caso do
+  Kauã (R$ 27, dentro do ruído), não muda o da Rose e piora o do Jonas
+  (R$ 457), o da Daiane (R$ 423), o do Marcos (R$ 186) e o da Bruna (R$ 29);
+  no esperado, perde de R$ 152 (Daiane) a R$ 808 (Marcos). Antes da 1(b),
+  melhorava o pior caso de todas menos Rose e Daiane. São 12
   meses de DAS contra um auxílio que só vem com a fratura, e que a perícia
   nega em metade dos casos. Na Rose e na Daiane, a perda da fratura vira
   comida cortada, que fica fora do saldo (rascunho, seção 8, item 18): para
   essas equipes, o mais provável é a página dizer "a proteção não melhorou o
   pior caso". Diga então: "Nesta casa, o pior já é faltar comida, e isso o
-  placar não conta como dívida."
+  placar não conta como dívida." Com a proposta 1(b), a página pode dizer isso
+  para quase todas as equipes; diga também: "O MEI cobre o acidente, e não o
+  despejo nem a luz cortada."
   A associação continua sem a marca de proteção (provisório de 29/09): quem
   entrou nela aparece como "não escolheram proteção".
 - **Diga:**

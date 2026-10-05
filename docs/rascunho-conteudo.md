@@ -6,13 +6,14 @@
 > está na **seção 8, "Para validar com o Kleber"**.
 >
 > **Em destaque, sem suavizar:**
-> 1. **Em 12 meses, ninguém fecha o básico.** Nenhuma das 6 personas termina com saldo ≥ R$ 0 em nenhum caminho que a simulação achou: nem ao acaso, nem no melhor plano, nem com a melhor sorte. O mais perto é o Jonas, com −R$ 770 no fim, e só tirando a carta de promoção nos 6 bimestres seguidos. A D-050 ("quase ninguém") e a meta da D-058 (5% a 10% em 2 personas) **não** estão cumpridas (seção 8, item 1).
-> 2. **Com o limite do cheque especial (D-066), o placar da Daiane e o da Rose quase não separam as escolhas.** Passado o limite, o que falta vira comida não comprada ("faltou na mesa"), e ela fica fora do placar porque não é dívida (D-066). Na Daiane, em 4 dos 6 bimestres, as 4 opções terminam a menos de R$ 40 umas das outras no placar, e ela deixa de comprar, em média, R$ 8.953 de comida no ano. Por isso o validador voltou a avisar que o padrão é a opção de maior saldo (Rose em mai–jun; Daiane de mar–abr a jul–ago) e que há opção dominante ou que vence em renda em mais de 70% das partidas (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 72% a 88% das partidas) e Daiane em jan–fev ("A" termina com mais saldo que cada uma das outras em 75% a 82% das partidas)). Contados com o que faltou na mesa (refiz a conta), o padrão nunca é a melhor opção, e a opção A de jan–fev só continua na frente na Daiane, por menos de R$ 100 (seção 8, item 18). **Precisa de decisão sua.**
-> 3. **A referência "com carteira assinada" fica abaixo do Jonas de app em 90% das partidas no piloto automático** (−R$ 14.939 contra a mediana de −R$ 12.134). Refiz a linha com o limite (D-066; antes, −R$ 18.846) e, em 05/10, com a multa e a mora da proposta 3(a) (era −R$ 14.750), e ela continua abaixo: a comparação inverte a leitura do placar (seção 8, item 2).
-> 4. **O esgotamento ainda é o melhor plano em 4 dos 6 bimestres** para 3 ou mais personas (a D-059 pede o contrário), e em set–out a melhor opção é a mesma para 5 das 6 (a D-051 pede que mude com a persona). Seção 8, itens 3 e 4.
+> 1. **Em 12 meses, ninguém fecha o básico.** Nenhuma das 6 personas termina com saldo ≥ R$ 0 em nenhum caminho que a simulação achou: nem ao acaso, nem no melhor plano, nem com a melhor sorte. O mais perto é o Jonas, com −R$ 591 no fim, e só tirando a carta de promoção nos 6 bimestres seguidos. A D-050 ("quase ninguém") e a meta da D-058 (5% a 10% em 2 personas) **não** estão cumpridas (seção 8, item 1).
+> 2. **Com o limite do cheque especial (D-066), o placar da Daiane e o da Rose quase não separam as escolhas.** Passado o limite, o que falta vira comida não comprada ("faltou na mesa"), e ela fica fora do placar porque não é dívida (D-066). Na Daiane, em 4 dos 6 bimestres, as 4 opções terminam a menos de R$ 50 umas das outras no placar, e ela deixa de comprar, em média, R$ 9.201 de comida no ano. Por isso o validador voltou a avisar que o padrão é a opção de maior saldo (Rose em mai–jun e set–out; Daiane em jul–ago) e que há opção dominante ou que vence em renda em mais de 70% das partidas (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 90% a 94% das partidas), Bruna em mar–abr ("C", 73% a 82%) e Daiane em jan–fev ("A", 73% a 80%)). Contados com o que faltou na mesa (refiz a conta em 01/10, antes das propostas de 05/10), o padrão nunca é a melhor opção, e a opção A de jan–fev só continua na frente na Daiane, por menos de R$ 100 (seção 8, item 18). **Precisa de decisão sua.**
+> 3. **A referência "com carteira assinada" fica abaixo do Jonas de app em 93% das partidas no piloto automático** (−R$ 14.939 contra a mediana de −R$ 11.803). Refiz a linha com o limite (D-066; antes, −R$ 18.846) e, em 05/10, com a multa e a mora da proposta 3(a) (era −R$ 14.750), e ela continua abaixo: a comparação inverte a leitura do placar (seção 8, item 2).
+> 4. **O esgotamento ainda é o melhor plano em 5 dos 6 bimestres** para 3 ou mais personas (a D-059 pede o contrário), e em set–out a melhor opção é a mesma para 5 das 6 (a D-051 pede que mude com a persona). Seção 8, itens 3 e 4.
+> 5. **Proposta 1(b) (05/10, aguardando o Kleber): na casa muito atrasada, o despejo e o corte de luz chegam a ~30% cada por bimestre, e um bimestre "sem nada" quase acaba.** No padrão com a carta "Normal", a carta "Normal" cai para 3% a 5% em nov–dez nas casas que passam dos limiares, e a doença, que tem fonte, perde de 3 a 6 vezes a chance (a da Rose, de 40% para 12%). De 37% (Jonas) a 76% (Daiane) das partidas no padrão tiram o despejo. No plano padrão, o MEI quase deixa de melhorar o pior caso estimado. Seção 8, item 20.
 
 - **Data:** 30/09/2026; revisto duas vezes em 01/10/2026: de manhã, os achados de conteúdo da revisão da F6b; à tarde, a D-066 (o cheque especial com limite), a D-067 (o auxílio acima do trabalho) e a D-063 (o risco que cresce, agora na chance). O que mudou está logo abaixo.
-- **Arquivo do conteúdo:** [`config.json`](../config.json), `versao` `2026-09-30-v3-rascunho` (não mudei a `versao`, que o README e o roteiro citam; o hash é o que diferencia), hash `f66e3797` (era `fccc2a93` até a tarde de 05/10, e `886da7f5` até a manhã de 05/10). Os conteúdos anteriores ficaram congelados para os testes: o v2.2 (3 rodadas mensais, hash `fc0c3c35`, o do teste de 30/09) em `test/fixtures/config-real-v22.json`, e o v3 sem o limite (hash `19b12a5d`, o desta manhã) em `test/fixtures/config-real-v3.json`. Os textos de `fonte` do config resumem as tabelas deste rascunho e nunca aparecem no telão.
+- **Arquivo do conteúdo:** [`config.json`](../config.json), `versao` `2026-09-30-v3-rascunho` (não mudei a `versao`, que o README e o roteiro citam; o hash é o que diferencia), hash `0c67f01e` (era `fccc2a93` até a tarde de 05/10, e `886da7f5` até a manhã de 05/10; só com a proposta 3(a), `f66e3797`). Os conteúdos anteriores ficaram congelados para os testes: o v2.2 (3 rodadas mensais, hash `fc0c3c35`, o do teste de 30/09) em `test/fixtures/config-real-v22.json`, e o v3 sem o limite (hash `19b12a5d`, o desta manhã) em `test/fixtures/config-real-v3.json`. Os textos de `fonte` do config resumem as tabelas deste rascunho e nunca aparecem no telão.
 - **Esquema:** v3.1 (contratos, seções 1, 3, 7 e 8). Por cima do v2.2:
   - `regras.mesesPorRodada: 2`: cada rodada é um **bimestre**. O trabalho do mês (`todoMes`), o básico, a outra renda e a parcela do empréstimo contam 2 vezes por rodada; os juros do cheque especial compõem 2 meses sobre a dívida de antes ((1 + 7,43%)² − 1 = 15,41% no bimestre); efeitos de opção e de carta contam uma vez (são eventos). As telas dizem "no bimestre" e usam o título da rodada ("Jan–fev: …").
   - **v3.1 (D-066):** `regras.limiteChequeEspecial` (R$ 2.000), `multaAtraso` (8%), `moraMes` (1% ao mês), `cortarPrimeiro` (`"contas"`), o item da comida marcado no básico (e, desde a tarde de 05/10, o gás, o ônibus e o remédio marcados como `semAtraso`) e os indicadores `contas_atrasadas` e `faltou_na_mesa`, que só o motor mexe (seção 5.1).
@@ -29,7 +30,16 @@ Numa branch separada (`claude/decisoes-0510`), para o Kleber aprovar ou não. Ne
 3. **Efeito:** no padrão, as contas atrasadas no fim caem (de R$ 10.376 a R$ 24.040 para R$ 10.448 a R$ 20.954, saída (j) do validador) e aparece o que a casa ficou sem no ano (de R$ 163, Jonas, a R$ 3.153, Rose, em média; seção 5.1). A Rose é a que mais muda: deixa de dever R$ 3 mil de passagem, gás e remédio, que agora são falta de verdade.
 4. **A referência "Jonas com carteira assinada" foi refeita com as mesmas regras:** −R$ 14.939 (era −R$ 14.750). A conta é a do motor (mora sobre o principal desde a revisão da F6c; a de antes punha a mora sobre o atrasado inteiro), com 8% e 1%; o gás, o ônibus e o remédio nunca chegam a faltar nesse caminho (o que passa do limite cabe nas contas que atrasam). A linha passa a ficar abaixo do Jonas de app em 90% das partidas do padrão (eram 87%; seção 6.5).
 5. **Fora dos documentos:** `test/propriedades.test.mjs` não somava o `ficouSem` na conta do mês (o contrato, seção 3, já soma); passou a somar. O motor e o validador não mudaram.
-6. **Ainda não refeitas neste passo:** as seções 0 (fora a linha da D-066), 6.1 a 6.4 e os destaques do topo. Elas saem do validador e do placar estimado, que mudam de novo com a proposta 1(b); são refeitas junto com ela.
+6. **Refeitas com a proposta 1(b), logo abaixo:** as seções 0, 4, 5, 6.1 a 6.4 e os destaques do topo, com o config `0c67f01e`.
+7. **Proposta 1(b): o despejo e o corte de luz ficam prováveis com o atraso** (seção 8, item 20, opção b). Antes, a chance do despejo travava em ~4% por bimestre e a do corte em ~8%, mesmo com 10 aluguéis atrasados: no padrão, ~85% das Roses nunca recebiam o despejo. Agora, por casa, com as contas atrasadas no começo do bimestre:
+   - **despejo:** +4 acima de R$ 3.000 (como antes) e, acima de 4 aluguéis da casa (R$ 4.000 na Bruna e na Daiane, R$ 4.080 no Kauã, R$ 5.200 no Jonas, na Rose e no Marcos), um peso que leva a chance a ~30% por bimestre; acima de 2 bimestres das contas que atrasam, mais um tanto, para o corte não o diluir. No máximo uma vez por partida;
+   - **corte de luz:** +5 acima de R$ 1.000 e de R$ 5.000 (como antes) e, acima de 2 bimestres das contas que atrasam (aluguel, luz, água e celular × 4: R$ 5.036 na Daiane, R$ 5.404 na Bruna, R$ 5.504 no Kauã, R$ 6.624 no Jonas e na Rose, R$ 7.008 no Marcos; a luz já passou dos 90 dias da REN 1.000), um peso que leva a chance a ~30% por bimestre. Pode repetir;
+   - os pesos são grandes (de +71 a +337) porque a chance é o peso dividido pela soma do baralho, e na faixa de atraso o desgaste também é multiplicado (item 8). Os limiares em R$ por casa usam a condição de persona dos ajustes de peso, que o validador já aceita: o motor e o validador não mudaram;
+   - no padrão com a carta "Normal", o despejo fica de 26% a 32% e o corte de 28% a 33% nos bimestres em que o atraso passa dos limiares (seção 4); em 20 mil partidas no padrão, de 37% (Jonas) a 76% (Daiane) tiram o despejo, e de 35% a 84% tiram o corte (antes, só com a 3(a), de 6% a 16% e de 12% a 30%).
+8. **Para não diluir o desgaste (D-063).** Com o despejo e o corte a ~30% cada, o resto do baralho cai para ~40%. Para a chance das cartas de desgaste não cair, o peso delas é multiplicado nas mesmas faixas: × 1,75 acima de 4 aluguéis (todas as casas) e mais × 2,25 (Jonas e Marcos), × 2,5 (Rose), × 3 (Daiane), × 3,25 (Kauã) ou × 3,5 (Bruna) acima de 2 bimestres das contas que atrasam; na faixa do despejo, o corte de luz de antes também é multiplicado por 1,75, para a chance dele não cair quando o despejo entra. O fator é o que mantém a fatia que o desgaste tinha no bimestre (s1 = (1 − d) / (0,7 − d) e s1 × s2 = (1 − d) / (0,4 − d), com d a fatia do desgaste antes; a mediana de jul–ago a nov–dez, arredondada para cima em passos de 0,25). O que sobrou foi resolvido com o método da F6d (o menor aumento, em passos de 0,25): +0,75 no "Quebrou" e +0,5 no "Burnout" da Bruna em nov–dez, e +0,5 no "Quebrou" do Kauã em mai–jun (esse corrige uma queda que a proposta 3(a) criou: com a multa de 8%, as contas do Kauã passam de R$ 3.000 em mai–jun, e o +4 do despejo entra um bimestre antes). A tabela da D-063 (seção 4) não tem nenhuma queda fora das duas do próprio padrão, e nov–dez fica de 1,26 a 3,9 vezes jan–fev.
+9. **O efeito colateral, sem suavizar:** na casa muito atrasada, um bimestre "sem nada" quase acaba, e a doença perde espaço. No padrão com a carta "Normal", a carta "Normal" cai em nov–dez para 2,6% (Kauã) a 5,2% (Rose) (era de 13% a 18%), e a doença, que tem fonte (Prather et al., 2015), perde de 3 a 6 vezes a chance (a da Rose, de 39,7% para 11,7%; a da Bruna, de 33,7% para 6,0%). Nas partidas sorteadas, o risco de alguma carta ruim em nov–dez sobe para 91% a 96% (era de 76% a 82%), e de 71% a 98% das partidas tiram pelo menos uma carta grave (eram de 45% a 64%). No plano padrão, o MEI quase deixa de melhorar o pior caso estimado (seção 6.4). O Jonas, que nesse caminho não passa dos limiares, fica como antes; nas partidas sorteadas, 37% dos Jonas tiram o despejo.
+10. **Um defeito antigo corrigido:** os "× 0" que impedem o despejo de sair duas vezes vinham antes das somas, e o despejo podia sair de novo (com +8 no peso). Agora eles estão no fim da lista. O mesmo defeito, menor, existe no "Bloqueio" (o +3 de mar–abr na opção B vem depois do × 0 de quem foi bloqueado em jan–fev): não mexi, porque não fazia parte do pedido.
+11. **Os textos de `fonte`** das duas cartas descrevem a regra nova e continuam dizendo que a chance é estimativa sem fonte; os de "Quebrou", "Dor", "Bloqueio", "Alcance", "Burnout" e "Normal" trazem os números novos.
 
 ### O que mudou em 05/10/2026 (dois achados de conteúdo da revisão)
 
@@ -76,20 +86,20 @@ Cada troca tem a fonte no `config.json` e, aqui, na seção indicada. O config d
 | D-060: 6 rodadas bimestrais, com título, texto, contexto por persona e 4 dilemas ligados ao calendário | "Jan–fev: quanto trabalhar no calor?"; "Mar–abr: a lei que saiu de pauta"; "Mai–jun: água, frio e Dia das Mães"; "Jul–ago: a regra nova do app"; "Set–out: breque geral"; "Nov–dez: Black Friday, Natal e nenhum 13º" (seção 3) | **Sim** |
 | D-061: 6 personagens, um por equipe, cada um num trabalho | e1 Jonas, e2 Rose, e3 Marcos, e4 Bruna, e5 Kauã, e6 Daiane; a influenciadora nova é a **Bruna** (seção 1) | **Sim** (a ordem e as obrigatórias, **a validar**) |
 | D-062: ninguém com carteira na casa; outra renda informal com fonte; 13º e abono fora dos picos | Outras rendas: faxinas e revenda da companheira do Jonas (R$ 1.500), bicos de obra do filho da Rose (R$ 480), cuidados da esposa do Marcos com uma idosa (R$ 1.482), faxinas da mãe da Bruna (R$ 1.335, a média do DIEESE) e diárias de cozinha da mãe do Kauã (R$ 1.320); a Daiane não tem outra renda. O 13º só aparece como contexto ("ninguém destas casas tem") | **Sim** (a referência com carteira, **a validar**: seção 8, item 2) |
-| D-063: o risco cresce com os meses | No plano padrão com a carta "Normal" em todos os bimestres, a chance de "Quebrou", "Dor", "Bloqueio", "Alcance" e "Burnout" nunca cai de um bimestre para o seguinte (fora as duas quedas que a própria escolha do padrão causa) e chega em nov–dez a 1,25 vez a de jan–fev ou mais; nas partidas sorteadas, a tendência é a mesma, mas a média recua um pouco em alguns bimestres (até 1 ponto), e a do "Bloqueio" chega a só 1,13 a 1,15 vez (seção 4); a carta "Normal" perde 8 pontos de peso de jul–ago em diante; adiar a manutenção multiplica "Quebrou" por 4 e a queda por 1,5; adiar o remédio dobra a doença. Bloqueio em algum bimestre do ano: 11% a 15% (seção 4) | **Sim** na tendência do ano; **em parte** no "nunca cai", que só vale no caminho da carta "Normal" (o quando tem fonte na quilometragem; o tamanho dos aumentos é estimativa, com a conta na seção 4) |
-| D-066: o cheque especial com limite; passado ele, contas atrasadas (com multa e mora) e comida cortada; sem juros compostos sem fim | Limite de R$ 2.000 (Banco Central, EE 84/2020, corrigido); multa de 8% e mora de 1% ao mês (média ponderada de aluguel, luz, água e celular; gás, ônibus e remédio não atrasam, a casa fica sem: proposta de 05/10, aguardando o Kleber); as contas atrasam primeiro (a validar); cartas "Cortaram a luz" e "O dono entrou com o despejo". No fim, no padrão, de R$ 10.448 a R$ 20.954 de contas atrasadas, e o banco nunca passa de R$ 2.000 (seção 5.1) | **Sim**, com um efeito colateral no placar (8, item 18) |
+| D-063: o risco cresce com os meses | No plano padrão com a carta "Normal" em todos os bimestres, a chance de "Quebrou", "Dor", "Bloqueio", "Alcance" e "Burnout" nunca cai de um bimestre para o seguinte (fora as duas quedas que a própria escolha do padrão causa) e chega em nov–dez a 1,26 vez a de jan–fev ou mais; pela proposta 1(b) de 05/10, aguardando o Kleber, o peso delas é multiplicado na faixa de atraso que puxa o despejo e o corte de luz, para não serem diluídas; nas partidas sorteadas, a tendência é a mesma, mas a média recua um pouco em mai–jun (até 0,7 ponto) (seção 4); a carta "Normal" perde 8 pontos de peso de jul–ago em diante; adiar a manutenção multiplica "Quebrou" por 4 e a queda por 1,5; adiar o remédio dobra a doença. Bloqueio em algum bimestre do ano: 12% a 18% (seção 4) | **Sim** na tendência do ano; **em parte** no "nunca cai", que só vale no caminho da carta "Normal" (o quando tem fonte na quilometragem; o tamanho dos aumentos é estimativa, com a conta na seção 4) |
+| D-066: o cheque especial com limite; passado ele, contas atrasadas (com multa e mora) e comida cortada; sem juros compostos sem fim | Limite de R$ 2.000 (Banco Central, EE 84/2020, corrigido); multa de 8% e mora de 1% ao mês (média ponderada de aluguel, luz, água e celular; gás, ônibus e remédio não atrasam, a casa fica sem: proposta de 05/10, aguardando o Kleber); as contas atrasam primeiro (a validar); cartas "Cortaram a luz" e "O dono entrou com o despejo", que chegam a ~30% por bimestre cada na casa muito atrasada (proposta 1(b) de 05/10, aguardando o Kleber). No fim, no padrão, de R$ 10.075 a R$ 20.936 de contas atrasadas, e o banco nunca passa de R$ 2.000 (seção 5.1) | **Sim**, com um efeito colateral no placar (8, item 18) |
 | D-067: a tela diz quando o auxílio passa do que a pessoa ganhava trabalhando | O rótulo diz "1 salário mínimo"; o motor detecta Bruna e Daiane (seção 5.2), e a frase aparece no resultado do telão e do celular e na história | **Sim** (o texto da frase, a confirmar: 8, item 16) |
 | Básico com fonte, juros de 7,43% a.m. até o limite, empréstimo como dívida, a conta que vence vira efeito (D-053) | Sem mudança de fonte; o empréstimo de mar–abr (R$ 1.500 em 12 parcelas) entra como dívida, 2 parcelas por bimestre de mai–jun em diante (8 no jogo, 4 depois, que o placar conta). A multa do aluguel por bimestre no vermelho saiu: o atraso, com multa e mora, é do motor (D-066) | **Sim** |
-| D-059: a proteção vale pelo pior caso | O MEI (jan–fev, B), no plano padrão, melhora o pior caso estimado de −R$ 423 (Daiane) a R$ 635 (Marcos) e perde de R$ 183 (Daiane) a R$ 868 (Marcos) no esperado; o auxílio do INSS (R$ 2.431) chega no bimestre seguinte à fratura, e a perícia nega em ~50% (seção 6.4) | **Em parte:** no pior caso, o MEI não melhora Rose e Daiane (a perda da fratura vira comida cortada, fora do placar; 8, item 18); a associação continua sem `protege` |
+| D-059: a proteção vale pelo pior caso | O MEI (jan–fev, B), no plano padrão, muda o pior caso estimado de −R$ 457 (Jonas) a +R$ 27 (Kauã) e perde de R$ 152 (Daiane) a R$ 808 (Marcos) no esperado; o auxílio do INSS (R$ 2.431) chega no bimestre seguinte à fratura, e a perícia nega em ~50% (seção 6.4) | **Não, no plano padrão:** com a proposta 1(b), o MEI só melhora o pior caso estimado do Kauã (+R$ 27, dentro do ruído); na média das combinações, ainda melhora 5 das 6 (seção 6.4). Antes da 1(b), melhorava todas menos Rose e Daiane. A associação continua sem `protege` |
 | D-058: picos reais com fonte | Páscoa (Daiane), Dia das Mães (Rose, Daiane), dezembro (todos menos a Bruna), a publi da Black Friday que só paga em mar–abr (Bruna), as cartas "Promoções e desafios" (as 6), "Temporal" (promoção de chuva), "Viralizou" (Bruna) e "Reajuste" (Jonas, Kauã), e a Farroupilha como opção | **Sim** |
-| D-058: de 5% a 10% das partidas de 2 personas fecham; D-050: "quase ninguém", e não "ninguém" | **0% nas 6 personas**, ao acaso e no melhor plano; nenhum caminho fecha (o melhor: Jonas, −R$ 770). Até **um bimestre** no azul é raro: partidas ao acaso com pelo menos um, Jonas 17,86%, Rose 0,00%, Marcos 15,89%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% (seção 6.2) | **Não: precisa de decisão** (8, item 1) |
+| D-058: de 5% a 10% das partidas de 2 personas fecham; D-050: "quase ninguém", e não "ninguém" | **0% nas 6 personas**, ao acaso e no melhor plano; nenhum caminho fecha (o melhor: Jonas, −R$ 591). Até **um bimestre** no azul é raro: partidas ao acaso com pelo menos um, Jonas 17,90%, Rose 0,00%, Marcos 15,23%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% (seção 6.2) | **Não: precisa de decisão** (8, item 1) |
 | D-058: quem fica só no padrão nunca fecha | 0% nas 6 personas | **Sim** |
-| Nenhuma opção dominante; o padrão nunca é a de maior saldo | Avisos do validador: opção que domina ou ganha em renda: Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 72% a 88% das partidas) e Daiane em jan–fev ("A" termina com mais saldo que cada uma das outras em 75% a 82% das partidas); o padrão é a de maior saldo: Rose em mai–jun e Daiane de mar–abr a jul–ago. São diferenças de dezenas de reais nas casas que passam do limite; com o que faltou na mesa na conta, o padrão nunca é o melhor (seção 8, item 18) | **Não, pelo placar** (8, item 18) |
-| D-051: a melhor opção muda com a persona; a letra do esforço muda com o bimestre | A melhor muda com a persona nos 6 bimestres, mas em set–out é D para 5 das 6 (a Daiane fica com B, por R$ 39); a letra do esforço é A, B, C, A, D, B | **Em parte** (8, item 4) |
-| D-059: o esgotamento deixa de ser o melhor plano para a maioria | A opção mais cansativa é a de maior saldo esperado para 3 ou mais personas em jan–fev (3), mar–abr (3), set–out (5) e nov–dez (5) | **Não: precisa de decisão** (8, item 3) |
+| Nenhuma opção dominante; o padrão nunca é a de maior saldo | Avisos do validador: opção que domina ou ganha em renda: Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 90% a 94% das partidas), Bruna em mar–abr ("C", 73% a 82%) e Daiane em jan–fev ("A", 73% a 80%); o padrão é a de maior saldo: Rose em mai–jun e set–out e Daiane em jul–ago. São diferenças de dezenas de reais nas casas que passam do limite; com o que faltou na mesa na conta, o padrão nunca é o melhor (conta de 01/10; seção 8, item 18) | **Não, pelo placar** (8, item 18) |
+| D-051: a melhor opção muda com a persona; a letra do esforço muda com o bimestre | A melhor muda com a persona nos 6 bimestres, mas em set–out é D para 5 das 6 (a Rose fica com A, por menos de R$ 50); a letra do esforço é A, B, C, A, D, B | **Em parte** (8, item 4) |
+| D-059: o esgotamento deixa de ser o melhor plano para a maioria | A opção mais cansativa é a de maior saldo esperado para 3 ou mais personas em jan–fev (3), mar–abr (3), mai–jun (4), set–out (5) e nov–dez (4) | **Não: precisa de decisão** (8, item 3) |
 | Rótulos curtos (≤ 10 letras), tom "grave", sem setas, D-031, D-032 | Todas as 21 cartas com `curto`; graves: enchente, fratura, INSS negou, bloqueio, assalto, sem luz e despejo; afirmações e termômetros sem mudança | **Sim** |
 | Roteiros de 60 e 120 min centrados no jogo, com entrevistas opcionais de até 20 min e decisão de 90 a 120 s | Somas de 3.600 s e 7.200 s; 6 rodadas intercaladas com blocos curtos de dados; "Entrevistas" opcional de 4 min (60) e 20 min (120); decisão de 90 s, mínimo de 45 (seção 7) | **Sim** |
-| (i) o "entrou" nunca negativo | Só a Daiane: pior −R$ 456 em jul–ago (opção D com a fratura); ao acaso, até 2,7% dos casos (set–out) | **Quase** (8, item 13) |
+| (i) o "entrou" nunca negativo | Só a Daiane: pior −R$ 456 em jul–ago (opção D com a fratura); ao acaso, até 3,2% dos casos (set–out) | **Quase** (8, item 13) |
 
 ---
 
@@ -105,7 +115,7 @@ Cada troca tem a fonte no `config.json` e, aqui, na seção indicada. O config d
 | e6 | Roxo-rosado (#CC79A7), cruz | **Daiane** | Vende doces e marmitas pelo Instagram, 29 anos. Paga um curso de marketing digital em 12 vezes. | não |
 
 **A ordem (a validar).** É a ordem em que o "me coloque" preenche as equipes e em que elas somem quando há menos de 6 (D-027). As cores e formas seguem a posição, na paleta Okabe-Ito (D-016). O critério que usei:
-1. **e1 Jonas, motoboy do iFood.** É o caso com o dado mais firme (PNAD 2025, confiança A), o personagem dos breques e do +Entregas, e o único que chega perto de fechar (o melhor caminho termina em −R$ 770). Com poucas equipes, é ele que mostra o "quase".
+1. **e1 Jonas, motoboy do iFood.** É o caso com o dado mais firme (PNAD 2025, confiança A), o personagem dos breques e do +Entregas, e o único que chega perto de fechar (o melhor caminho termina em −R$ 591). Com poucas equipes, é ele que mostra o "quase".
 2. **e2 Rose, manicure por app.** O outro extremo: mulher, sustenta a casa, trabalho sem veículo, e a segunda maior falta do jogo (−R$ 1.932 por mês no mês comum, atrás só da Daiane). Com só 2 equipes, a sala vê os dois extremos. Contra: a renda dela é de confiança baixa (D-028).
 3. **e3 Marcos, motorista de app.** Dado firme (PNAD 2025, confiança A) e a história do ex-metalúrgico demitido.
 4. **e4 Bruna, influenciadora.** A personagem nova, a mais perto da idade da turma e do discurso do empreendedorismo digital.
@@ -863,69 +873,64 @@ Uma carta por equipe e por bimestre (D-013). O peso é relativo: a chance é o p
 | Cortaram a luz | Sem luz | 0 | todo bimestre | todos | — | grave |
 | O dono entrou com o despejo | Despejo | 0 | todo bimestre | todos | — | grave |
 
-**O risco que cresce com os meses (D-063): a conta.** A regra (01/10, à tarde): no plano padrão, com a carta "Normal" em todos os bimestres, a **chance** de cada carta de desgaste ("Quebrou", "Dor", "Bloqueio", "Alcance" e "Burnout") nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev ("Alcance", 1,33 vez, a queda de 24% do engajamento em 12 meses; "Dor", 1,5 vez, e a da Rose, 2 vezes, porque a manicure tem a maior prevalência de dor das fontes). Os pesos sobem por persona e por bimestre, o mínimo que cumpre a regra, porque o resto do baralho também sobe (a doença com a energia baixa e o remédio adiado, o temporal, as cartas de atraso). As duas quedas da tabela vêm da própria escolha do padrão, e ficam: "Bloqueio" em mar–abr (aceitar tudo multiplica por 0,4) e "Quebrou" do Jonas e do Marcos em mai–jun (a revisão corta pela metade dali em diante). O *quando* vem da pesquisa de desgaste (30/09): a moto roda 6.760 km por bimestre e passa dos 20 mil km no fim de mai–jun, onde acabam o pneu traseiro (15 a 20 mil km) e começa a acabar a relação (20 a 30 mil km); o 2º pneu acaba em set–dez; o carro roda 8.800 km e chega aos 40 a 60 mil km dos pneus só em set–dez. O *quanto* é estimativa nossa: as fontes dizem quando a peça chega ao fim, e não com que chance quebra antes da troca; a dor das fontes é a de quem tem anos de ofício, e não o aumento em 12 meses; o bloqueio das fontes cresce com a repetição (5, 10 e 15 dias na 99), e não com o calendário. A tabela traz também a carta "Normal" e as duas cartas de atraso:
+**O risco que cresce com os meses (D-063): a conta.** A regra (01/10, à tarde): no plano padrão, com a carta "Normal" em todos os bimestres, a **chance** de cada carta de desgaste ("Quebrou", "Dor", "Bloqueio", "Alcance" e "Burnout") nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev ("Alcance", 1,33 vez, a queda de 24% do engajamento em 12 meses; "Dor", 1,5 vez, e a da Rose, 2 vezes, porque a manicure tem a maior prevalência de dor das fontes). Os pesos sobem por persona e por bimestre, o mínimo que cumpre a regra, porque o resto do baralho também sobe (a doença com a energia baixa e o remédio adiado, o temporal, as cartas de atraso). Pela proposta 1(b) de 05/10, aguardando o Kleber, as cartas de atraso chegam a ~30% cada na casa muito atrasada, e o peso do desgaste passa a ser multiplicado nas mesmas faixas de atraso (× 1,75 acima de 4 aluguéis; mais × 2,25 a × 3,5 acima de 2 bimestres das contas que atrasam), o que mantém a fatia que ele tinha; o resto, o método da F6d resolveu (+0,75 e +0,5 na Bruna em nov–dez, +0,5 no Kauã em mai–jun). As duas quedas da tabela vêm da própria escolha do padrão, e ficam: "Bloqueio" em mar–abr (aceitar tudo multiplica por 0,4) e "Quebrou" do Jonas e do Marcos em mai–jun (a revisão corta pela metade dali em diante). O *quando* vem da pesquisa de desgaste (30/09): a moto roda 6.760 km por bimestre e passa dos 20 mil km no fim de mai–jun, onde acabam o pneu traseiro (15 a 20 mil km) e começa a acabar a relação (20 a 30 mil km); o 2º pneu acaba em set–dez; o carro roda 8.800 km e chega aos 40 a 60 mil km dos pneus só em set–dez. O *quanto* é estimativa nossa: as fontes dizem quando a peça chega ao fim, e não com que chance quebra antes da troca; a dor das fontes é a de quem tem anos de ofício, e não o aumento em 12 meses; o bloqueio das fontes cresce com a repetição (5, 10 e 15 dias na 99), e não com o calendário. A tabela traz também a carta "Normal" e as duas cartas de atraso (05/10, à tarde, com as duas propostas; a última coluna é nov–dez ÷ jan–fev):
 
-| Personagem | Carta | Jan–fev | Mar–abr | Mai–jun | Jul–ago | Set–out | Nov–dez |
-|---|---|---|---|---|---|---|---|
-| Jonas | Um bimestre como os outros | 38,1% | 38,4% | 35,9% | 19,5% | 18,6% | 14,7% |
-| Jonas | O instrumento de trabalho quebrou | 5,7% | 7,7% | 2,7% | 7,9% | 8,2% | 8,2% |
-| Jonas | A dor nas costas travou | 1,9% | 2,2% | 2,5% | 2,6% | 2,8% | 2,9% |
-| Jonas | Conta bloqueada sem explicação | 1,9% | 0,8% | 2,2% | 2,3% | 2,3% | 2,4% |
-| Jonas | Cortaram a luz | 0,0% | 0,0% | 0,0% | 3,1% | 2,9% | 2,3% |
-| Jonas | O dono entrou com o despejo | 0,0% | 0,0% | 0,0% | 0,0% | 0,0% | 1,8% |
-| Rose | Um bimestre como os outros | 44,9% | 45,8% | 27,8% | 17,5% | 17,0% | 17,7% |
-| Rose | O instrumento de trabalho quebrou | 6,7% | 9,2% | 9,2% | 9,3% | 9,4% | 9,8% |
-| Rose | A dor nas costas travou | 2,2% | 2,9% | 3,3% | 3,7% | 4,1% | 4,6% |
-| Rose | Conta bloqueada sem explicação | 2,2% | 0,9% | 2,6% | 2,7% | 2,8% | 2,9% |
-| Rose | Cortaram a luz | 0,0% | 5,7% | 7,0% | 8,2% | 7,9% | 8,3% |
-| Rose | O dono entrou com o despejo | 0,0% | 0,0% | 2,8% | 4,4% | 4,2% | 4,4% |
-| Marcos | Um bimestre como os outros | 43,5% | 39,1% | 27,9% | 20,7% | 15,3% | 16,1% |
-| Marcos | O instrumento de trabalho quebrou | 6,5% | 7,8% | 2,1% | 8,1% | 8,1% | 8,5% |
-| Marcos | A dor nas costas travou | 2,2% | 2,4% | 2,6% | 2,9% | 3,1% | 3,3% |
-| Marcos | Conta bloqueada sem explicação | 2,2% | 0,8% | 2,4% | 2,6% | 2,6% | 2,8% |
-| Marcos | Cortaram a luz | 0,0% | 0,0% | 3,5% | 3,2% | 4,8% | 5,0% |
-| Marcos | O dono entrou com o despejo | 0,0% | 0,0% | 0,0% | 2,6% | 1,9% | 4,0% |
-| Bruna | Um bimestre como os outros | 44,0% | 42,2% | 32,8% | 15,9% | 14,8% | 15,0% |
-| Bruna | O instrumento de trabalho quebrou | 6,6% | 8,4% | 8,6% | 8,7% | 8,7% | 8,8% |
-| Bruna | A dor nas costas travou | 2,2% | 2,6% | 2,7% | 3,0% | 3,1% | 3,4% |
-| Bruna | Conta bloqueada sem explicação | 2,2% | 2,4% | 2,5% | 2,6% | 2,7% | 2,8% |
-| Bruna | O algoritmo derrubou o alcance | 6,6% | 7,1% | 7,6% | 7,9% | 8,3% | 8,8% |
-| Bruna | Esgotei: burnout | 2,2% | 2,4% | 2,5% | 4,5% | 4,5% | 4,6% |
-| Bruna | Cortaram a luz | 0,0% | 0,0% | 4,1% | 5,0% | 6,9% | 7,0% |
-| Bruna | O dono entrou com o despejo | 0,0% | 0,0% | 3,3% | 2,0% | 3,7% | 3,7% |
-| Kauã | Um bimestre como os outros | 39,6% | 40,0% | 33,8% | 17,0% | 12,8% | 13,3% |
-| Kauã | O instrumento de trabalho quebrou | 5,9% | 8,0% | 8,0% | 20,2% | 20,4% | 21,1% |
-| Kauã | A dor nas costas travou | 2,0% | 2,2% | 2,5% | 2,7% | 2,8% | 3,0% |
-| Kauã | Conta bloqueada sem explicação | 2,0% | 0,8% | 2,3% | 2,4% | 2,4% | 2,5% |
-| Kauã | Cortaram a luz | 0,0% | 0,0% | 4,2% | 5,3% | 4,0% | 6,2% |
-| Kauã | O dono entrou com o despejo | 0,0% | 0,0% | 0,0% | 2,1% | 3,2% | 3,3% |
-| Daiane | Um bimestre como os outros | 47,1% | 39,6% | 25,7% | 16,4% | 15,1% | 16,2% |
-| Daiane | O instrumento de trabalho quebrou | 7,1% | 7,9% | 8,0% | 8,2% | 8,5% | 9,1% |
-| Daiane | A dor nas costas travou | 2,4% | 2,7% | 2,9% | 3,1% | 3,3% | 3,5% |
-| Daiane | Conta bloqueada sem explicação | 2,4% | 2,5% | 2,7% | 2,8% | 2,8% | 3,0% |
-| Daiane | O algoritmo derrubou o alcance | 7,1% | 7,7% | 8,0% | 8,5% | 9,0% | 9,6% |
-| Daiane | Cortaram a luz | 0,0% | 5,0% | 6,4% | 5,1% | 7,1% | 7,6% |
-| Daiane | O dono entrou com o despejo | 0,0% | 0,0% | 2,6% | 4,1% | 3,8% | 4,0% |
+| Personagem | Carta | Jan–fev | Mar–abr | Mai–jun | Jul–ago | Set–out | Nov–dez | Nov–dez ÷ jan–fev |
+|---|---|---|---|---|---|---|---|---|
+| Jonas | O instrumento de trabalho quebrou | 5,7% | 7,7% | 2,7% | 7,9% | 8,2% | 8,2% | 1,44 |
+| Jonas | A dor nas costas travou | 1,9% | 2,2% | 2,5% | 2,6% | 2,8% | 2,9% | 1,50 |
+| Jonas | Conta bloqueada sem explicação | 1,9% | 0,8% | 2,2% | 2,3% | 2,3% | 2,4% | 1,26 |
+| Jonas | Um bimestre como os outros | 38,1% | 38,4% | 35,9% | 19,5% | 18,6% | 14,7% | — |
+| Jonas | Cortaram a luz | 0,0% | 0,0% | 0,0% | 3,1% | 2,9% | 2,3% | — |
+| Jonas | O dono entrou com o despejo | 0,0% | 0,0% | 0,0% | 0,0% | 0,0% | 1,8% | — |
+| Rose | O instrumento de trabalho quebrou | 6,7% | 9,2% | 9,7% | 12,2% | 12,5% | 12,6% | 1,87 |
+| Rose | A dor nas costas travou | 2,2% | 2,9% | 3,5% | 4,8% | 5,4% | 5,8% | 2,60 |
+| Rose | Conta bloqueada sem explicação | 2,2% | 0,9% | 2,8% | 3,6% | 3,7% | 3,7% | 1,66 |
+| Rose | Um bimestre como os outros | 44,9% | 45,8% | 16,8% | 5,2% | 5,1% | 5,2% | — |
+| Rose | Cortaram a luz | 0,0% | 5,7% | 7,3% | 29,6% | 29,0% | 29,2% | — |
+| Rose | O dono entrou com o despejo | 0,0% | 0,0% | 31,4% | 28,4% | 27,8% | 28,0% | — |
+| Marcos | O instrumento de trabalho quebrou | 6,5% | 7,8% | 2,1% | 8,1% | 9,3% | 10,5% | 1,61 |
+| Marcos | A dor nas costas travou | 2,2% | 2,4% | 2,6% | 2,9% | 3,6% | 4,0% | 1,84 |
+| Marcos | Conta bloqueada sem explicação | 2,2% | 0,8% | 2,4% | 2,6% | 3,0% | 3,4% | 1,56 |
+| Marcos | Um bimestre como os outros | 43,5% | 39,1% | 27,9% | 20,7% | 10,1% | 5,0% | — |
+| Marcos | Cortaram a luz | 0,0% | 0,0% | 3,5% | 3,2% | 5,5% | 29,7% | — |
+| Marcos | O dono entrou com o despejo | 0,0% | 0,0% | 0,0% | 2,6% | 26,4% | 28,7% | — |
+| Bruna | O instrumento de trabalho quebrou | 6,6% | 8,4% | 8,6% | 9,2% | 9,6% | 9,6% | 1,46 |
+| Bruna | A dor nas costas travou | 2,2% | 2,6% | 2,7% | 3,2% | 3,5% | 3,7% | 1,68 |
+| Bruna | Conta bloqueada sem explicação | 2,2% | 2,4% | 2,5% | 2,8% | 2,9% | 3,1% | 1,39 |
+| Bruna | O algoritmo derrubou o alcance | 6,6% | 7,1% | 7,6% | 8,4% | 9,2% | 9,6% | 1,45 |
+| Bruna | Esgotei: burnout | 2,2% | 2,4% | 2,5% | 4,7% | 5,0% | 5,0% | 2,28 |
+| Bruna | Um bimestre como os outros | 44,0% | 42,2% | 32,8% | 2,8% | 2,7% | 2,7% | — |
+| Bruna | Cortaram a luz | 0,0% | 0,0% | 4,1% | 30,5% | 29,6% | 29,5% | — |
+| Bruna | O dono entrou com o despejo | 0,0% | 0,0% | 3,3% | 29,7% | 28,9% | 28,8% | — |
+| Kauã | O instrumento de trabalho quebrou | 5,9% | 8,0% | 8,1% | 19,2% | 23,0% | 23,3% | 3,92 |
+| Kauã | A dor nas costas travou | 2,0% | 2,2% | 2,4% | 2,5% | 3,2% | 3,3% | 1,67 |
+| Kauã | Conta bloqueada sem explicação | 2,0% | 0,8% | 2,2% | 2,3% | 2,7% | 2,7% | 1,38 |
+| Kauã | Um bimestre como os outros | 39,6% | 40,0% | 32,6% | 2,8% | 2,5% | 2,6% | — |
+| Kauã | Cortaram a luz | 0,0% | 0,0% | 4,1% | 32,6% | 29,1% | 29,4% | — |
+| Kauã | O dono entrou com o despejo | 0,0% | 0,0% | 3,3% | 32,1% | 28,6% | 28,9% | — |
+| Daiane | O instrumento de trabalho quebrou | 7,1% | 7,9% | 8,0% | 9,3% | 10,1% | 10,2% | 1,45 |
+| Daiane | A dor nas costas travou | 2,4% | 2,7% | 2,9% | 3,5% | 3,9% | 4,0% | 1,69 |
+| Daiane | Conta bloqueada sem explicação | 2,4% | 2,5% | 2,7% | 3,2% | 3,4% | 3,4% | 1,45 |
+| Daiane | O algoritmo derrubou o alcance | 7,1% | 7,7% | 8,0% | 9,6% | 10,6% | 10,8% | 1,53 |
+| Daiane | Um bimestre como os outros | 47,1% | 39,6% | 4,9% | 3,6% | 3,4% | 3,5% | — |
+| Daiane | Cortaram a luz | 0,0% | 5,0% | 33,1% | 30,2% | 29,0% | 29,4% | — |
+| Daiane | O dono entrou com o despejo | 0,0% | 0,0% | 32,2% | 29,3% | 28,2% | 28,6% | — |
 
-O salto de jul–ago em diante no "Quebrou" de moto, carro e bicicleta vem também do padrão de jul–ago (adiar a manutenção multiplica a carta por 4 até dezembro). Com esses pesos, a chance de ser bloqueado em algum bimestre do ano, no padrão, fica de 11% (Jonas) a 15% (Daiane), perto dos 15,5% da GigU, que é de quem já foi bloqueado alguma vez, e não num ano. Os aumentos de cada persona estão em cada carta, abaixo ("+x no peso (persona), em bimestre"); a fonte de cada carta explica de onde vem o *quando*.
+O salto de jul–ago em diante no "Quebrou" de moto, carro e bicicleta vem também do padrão de jul–ago (adiar a manutenção multiplica a carta por 4 até dezembro). Com esses pesos, a chance de ser bloqueado em algum bimestre do ano, no padrão, fica de 12% (Jonas) a 18% (Daiane) (de 11% a 15% antes da proposta 1(b)), perto dos 15,5% da GigU, que é de quem já foi bloqueado alguma vez, e não num ano. Os aumentos de cada persona estão em cada carta, abaixo ("+x no peso (persona), em bimestre"; e, na faixa de atraso, "peso × s (persona), com mais de R$ X de contas atrasadas no começo do bimestre"); a fonte de cada carta explica de onde vem o *quando*.
 
-**A mesma conta nas partidas sorteadas (05/10, achado da revisão).** A tabela acima é o caminho em que sai a carta "Normal" em todos os bimestres, e o "nunca cai" vale só nele. Medi também a chance média em 20 mil partidas sorteadas por persona, no plano padrão (o mesmo motor, cartas pelas chances, semente fixa; outra semente dá as mesmas quedas, a menos de 0,01 ponto). A tendência do ano é a mesma (nov–dez acima de jan–fev em todas as cartas), mas a média recua um pouco em alguns bimestres, porque na casa que já atrasou contas ou se cansou a doença (com a energia baixa), o corte de luz e o despejo ganham espaço no sorteio e diluem o resto; o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev para 76% a 82% em nov–dez. Fora as duas quedas do próprio padrão (as da tabela), as que passam de 0,05 ponto:
+**A mesma conta nas partidas sorteadas (05/10, achado da revisão).** A tabela acima é o caminho em que sai a carta "Normal" em todos os bimestres, e o "nunca cai" vale só nele. Medi também a chance média em 20 mil partidas sorteadas por persona, no plano padrão (o mesmo motor, cartas pelas chances, semente fixa; refeito em 05/10, à tarde, com as duas propostas). A tendência do ano é a mesma (nov–dez acima de jan–fev em todas as cartas, de 1,5 a 4,8 vezes), mas a média recua um pouco em mai–jun, onde o atraso já puxa o corte de luz e o despejo (+5, +4) e ainda não chegou às faixas em que o peso do desgaste é multiplicado; o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev para 91% a 96% em nov–dez (de 76% a 82% antes da proposta 1(b)). Fora as duas quedas do próprio padrão (as da tabela), as que passam de 0,05 ponto:
 
 | Personagem | Carta | De | Para | Bimestre |
 |---|---|---|---|---|
-| Jonas | O instrumento de trabalho quebrou | 7,2% | 6,4% | set–out |
-| Kauã | O instrumento de trabalho quebrou | 7,9% | 6,9% | mai–jun |
-| Bruna | O instrumento de trabalho quebrou | 8,3% | 7,9% | mai–jun |
-| Jonas | A dor nas costas travou | 2,36% | 2,16% | set–out |
-| Marcos | A dor nas costas travou | 2,54% | 2,48% | jul–ago |
-| Bruna | A dor nas costas travou | 2,59% | 2,44% | mai–jun |
-| Jonas | Conta bloqueada sem explicação | 1,98% | 1,71% | set–out |
-| Marcos | Conta bloqueada sem explicação | 2,30% | 2,09% | jul–ago |
-| Bruna | Conta bloqueada sem explicação | 2,28% | 2,14% | mai–jun |
-| Daiane | Conta bloqueada sem explicação | 2,61% | 2,55% | set–out |
-| Bruna | O algoritmo derrubou o alcance | 6,99% | 6,94% | mai–jun |
+| Kauã | O instrumento de trabalho quebrou | 7,9% | 7,2% | mai–jun |
+| Bruna | O instrumento de trabalho quebrou | 8,3% | 7,7% | mai–jun |
+| Bruna | A dor nas costas travou | 2,59% | 2,39% | mai–jun |
+| Kauã | A dor nas costas travou | 2,22% | 2,16% | mai–jun |
+| Bruna | Conta bloqueada sem explicação | 2,28% | 2,11% | mai–jun |
+| Bruna | O algoritmo derrubou o alcance | 6,99% | 6,81% | mai–jun |
 
-O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra na média com chance zero: nas partidas sorteadas, nov–dez fica em 1,13 a 1,15 vez jan–fev (e não 1,25); para quem ainda não foi bloqueado, em 1,23 a 1,29 vez. A "Dor" da Rose e da Daiane, o "Alcance" e o "Quebrou" da Daiane e o "Burnout" da Bruna nunca caem também nas partidas sorteadas. Não subi os pesos para apagar essas quedas: elas vêm do resto do risco, que cresce mais depressa na casa que já se deu mal, e não do desgaste, e apagá-las mudaria o equilíbrio do jogo inteiro (a conferência do validador). As fontes das quatro cartas dizem agora que o "nunca cai" é do caminho da carta "Normal" e trazem as quedas das partidas sorteadas.
+O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra na média com chance zero; mesmo assim, nas partidas sorteadas, nov–dez fica em 1,5 a 1,8 vez jan–fev, porque, depois que o despejo sai (uma vez por partida), ele some do baralho e o peso do desgaste continua multiplicado na faixa de atraso. Nunca caem também nas partidas sorteadas: as cartas de desgaste da Rose e da Daiane, a "Dor" e o "Bloqueio" do Marcos e o "Burnout" da Bruna; no Jonas, a "Dor" (mai–jun) e o "Bloqueio" (set–out) recuam 0,02 ponto. Não subi os pesos para apagar essas quedas: elas vêm do resto do risco, que cresce mais depressa na casa que já se deu mal, e não do desgaste, e apagá-las mudaria o equilíbrio do jogo inteiro (a conferência do validador). As fontes das quatro cartas dizem agora que o "nunca cai" é do caminho da carta "Normal" e trazem as quedas das partidas sorteadas.
 
 **Em quase todas as cartas, o auxílio do INSS pelo MEI:** quem abriu o MEI em jan–fev e tirou "Acidente: fratura" num bimestre recebe **+R$ 2.431** (categoria proteção, "a proteção pagou") no bimestre seguinte, com qualquer carta menos "A perícia do INSS negou o auxílio", que ganha +100 no peso nesse bimestre (~50% de chance, D-059). Fonte: Lei 8.213/1991: art. 59 (só acima de 15 dias parado), art. 60 (o autônomo recebe desde o 1º dia se pedir em até 30 dias), art. 26 II (acidente dispensa carência), art. 27 II (só vale o DAS pago em dia antes do acidente: quem abre o MEI em jan–fev paga o primeiro DAS na hora); 45 dias de 1 salário mínimo (R$ 1.621 por mês desde 01/01/2026, Decreto 12.797/2025, art. 1º; o auxílio por incapacidade nunca é menor que 1 salário mínimo, Lei 8.213/1991, art. 33): 1,5 × R$ 1.621 = R$ 2.431,50, R$ 2.431 no jogo. Decisão média de 34 dias (Agência Brasil, 03/09/2026): o dinheiro chega no bimestre seguinte. Vai em cada carta, e não nos efeitos gerais, porque a carta "A perícia do INSS negou" é do mesmo bimestre (D-059: a tela só diz "a proteção pagou" quando pagou).
 
@@ -939,7 +944,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
 
   - nenhum além do auxílio do INSS, quando vale.
 
-- **Fonte da carta:** Estimativa sem fonte, a contrapartida do desgaste: de jul–ago em diante o peso cai de 40 para 32 (−20%), porque as cartas de desgaste ganham peso e um bimestre "sem nada" fica menos comum. Conta: a chance é o peso sobre a soma dos pesos possíveis; no plano padrão, "Normal" sai de 38% a 47% em jan–fev para 13% a 18% em nov–dez (o padrão de jul–ago adia a manutenção, que multiplica "Quebrou" por 4 nos veículos)
+- **Fonte da carta:** Estimativa sem fonte, a contrapartida do desgaste: de jul–ago em diante o peso cai de 40 para 32 (−20%), porque as cartas de desgaste ganham peso e um bimestre "sem nada" fica menos comum. Conta: a chance é o peso sobre a soma dos pesos possíveis; no plano padrão, "Normal" sai de 38% a 47% em jan–fev para 3% a 15% em nov–dez (o padrão de jul–ago adia a manutenção, que multiplica "Quebrou" por 4 nos veículos; e, pela proposta de 05/10, na casa muito atrasada o despejo e o corte de luz chegam a ~30% cada, e um bimestre "sem nada" cai para 3% a 5%; só o Jonas, que nesse caminho não passa dos limiares, fica em 15%)
 
 ### Promoções e desafios do bimestre (`promocao`, "Promoção")
 
@@ -1041,6 +1046,17 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - peso × 0,5 (Jonas e Marcos), quem escolheu B em mai–jun
   - peso × 4 (Jonas, Kauã e Marcos), em jul–ago, na opção C
   - peso × 4 (Jonas, Kauã e Marcos), quem escolheu C em jul–ago
+  - peso × 1,75 (Jonas, Rose e Marcos), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Bruna e Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Kauã), com mais de R$ 4.080 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Jonas), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,5 (Rose), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Marcos), com mais de R$ 7.008 de contas atrasadas no começo do bimestre
+  - peso × 3,5 (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - peso × 3,25 (Kauã), com mais de R$ 5.504 de contas atrasadas no começo do bimestre
+  - peso × 3 (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
+  - +0,75 no peso (Bruna), em nov–dez
+  - +0,5 no peso (Kauã), em mai–jun
 - **Efeitos:**
 
   - **Jonas**: −R$ 268 · 3 dias sem o instrumento de trabalho
@@ -1057,7 +1073,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - **Bruna**: −R$ 400, gasto · tela do celular (a câmera dela)
   - *Fonte [1]:* Os dias parados × a renda líquida da Daiane (R$ 25 por dia: R$ 750 × 2 ÷ 60)
 
-- **Fonte da carta:** Desgaste do veículo. O quando tem fonte, e o quanto é estimativa. A moto roda 6.760 km por bimestre (130 km/dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025), revisão a cada 6.000 km, relação de 20 a 30 mil km e pneu traseiro de 15 a 20 mil km; o carro, 8.800 km (TST, via Agência Brasil, 23/06/2026); a bicicleta, ~2.000 km (corrente a cada 1.500 a 2.500 km, Velodrome, B). A peça chega ao fim: na moto, o pneu traseiro (15 a 20 mil km) e a relação (20 a 30 mil km) do 3º ao 5º bimestre (20.280 km no fim de mai–jun) e o 2º pneu no 5º e 6º (lojas, B); no carro, os pneus de 40 a 60 mil km no 5º e 6º bimestre (44 a 53 mil km; lojas, B), e a embreagem não tem km com fonte ("trânsito intenso" gasta mais rápido, Karhub); na bicicleta, a corrente acaba todo bimestre, desde o começo. Conta (estimativa; D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev. Nas partidas sorteadas (média de 20 mil, no padrão), a tendência é a mesma, mas a média recua um pouco em alguns bimestres (a moto de 7,2% para 6,4% em set–out; a bicicleta de 7,9% para 6,9% e o celular da Bruna de 8,3% para 7,9% em mai–jun), porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio: o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev para 76% a 82% em nov–dez. Como a doença, o temporal e as cartas de atraso também entram no sorteio, o peso sobe por persona e por bimestre (os ajustes "+x no peso"): no padrão com a carta "Normal", a moto vai de 5,7% em jan–fev a 8,2% em nov–dez, o carro de 6,5% a 8,5%, a bicicleta de 5,9% a 21,1% (o salto de jul–ago nos veículos é a manutenção adiada), a autoclave da Rose de 6,7% a 9,8% e o celular da Bruna e da Daiane de 6,6% e 7,1% a 8,8% e 9,1%. A queda de mai–jun no Jonas e no Marcos é a revisão de mai–jun, que corta pela metade. A autoclave e o celular não têm desgaste com fonte; no carro de mai–ago e na bicicleta, o aumento não tem apoio na quilometragem. Moto: relação R$ 294 + pneu R$ 228 (lojas, B). Carro: embreagem de R$ 1.600 a 2.550 em carro popular (Karhub, 13/03/2026, B), usada a ponta de baixo; um motorista ficou com dívida de R$ 2,5 mil no mecânico (TST). Bicicleta: roda completa a partir de R$ 280 (Revista Oeste, 19/02/2026). Autoclave: exigida no RS (Portaria SES-RS 500/2010); tela e conserto da autoclave: estimativa
+- **Fonte da carta:** Desgaste do veículo. O quando tem fonte, e o quanto é estimativa. A moto roda 6.760 km por bimestre (130 km/dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025), revisão a cada 6.000 km, relação de 20 a 30 mil km e pneu traseiro de 15 a 20 mil km; o carro, 8.800 km (TST, via Agência Brasil, 23/06/2026); a bicicleta, ~2.000 km (corrente a cada 1.500 a 2.500 km, Velodrome, B). A peça chega ao fim: na moto, o pneu traseiro (15 a 20 mil km) e a relação (20 a 30 mil km) do 3º ao 5º bimestre (20.280 km no fim de mai–jun) e o 2º pneu no 5º e 6º (lojas, B); no carro, os pneus de 40 a 60 mil km no 5º e 6º bimestre (44 a 53 mil km; lojas, B), e a embreagem não tem km com fonte ("trânsito intenso" gasta mais rápido, Karhub); na bicicleta, a corrente acaba todo bimestre, desde o começo. Conta (estimativa; D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,25 vez a de jan–fev. Nas partidas sorteadas (média de 20 mil, no padrão), a tendência é a mesma, mas a média recua um pouco em mai–jun (a bicicleta de 7,9% para 7,2% e o celular da Bruna de 8,3% para 7,7%), porque o atraso começa a puxar o corte de luz e o despejo antes das faixas em que o peso do desgaste é multiplicado; o risco de alguma carta ruim, somado, sobe de 38% a 50% em jan–fev (como antes) para 91% a 96% em nov–dez (era de 76% a 82%). Como a doença, o temporal e as cartas de atraso também entram no sorteio, o peso sobe por persona e por bimestre (os ajustes "+x no peso"), e, com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber): no padrão com a carta "Normal", a moto vai de 5,7% em jan–fev a 8,2% em nov–dez, o carro de 6,5% a 10,5%, a bicicleta de 5,9% a 23,3% (o salto de jul–ago nos veículos é a manutenção adiada), a autoclave da Rose de 6,7% a 12,6% e o celular da Bruna e da Daiane de 6,6% e 7,1% a 9,6% e 10,2%. A queda de mai–jun no Jonas e no Marcos é a revisão de mai–jun, que corta pela metade. A autoclave e o celular não têm desgaste com fonte; no carro de mai–ago e na bicicleta, o aumento não tem apoio na quilometragem. Moto: relação R$ 294 + pneu R$ 228 (lojas, B). Carro: embreagem de R$ 1.600 a 2.550 em carro popular (Karhub, 13/03/2026, B), usada a ponta de baixo; um motorista ficou com dívida de R$ 2,5 mil no mecânico (TST). Bicicleta: roda completa a partir de R$ 280 (Revista Oeste, 19/02/2026). Autoclave: exigida no RS (Portaria SES-RS 500/2010); tela e conserto da autoclave: estimativa
 
 ### Adoeci: uma semana parado (`doenca`, "Doença")
 
@@ -1121,6 +1137,15 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - +4 no peso (Daiane), em jul–ago
   - +5 no peso (Daiane), em set–out ou nov–dez
   - peso × 2 (Rose), em nov–dez, na opção B
+  - peso × 1,75 (Jonas, Rose e Marcos), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Bruna e Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Kauã), com mais de R$ 4.080 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Jonas), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,5 (Rose), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Marcos), com mais de R$ 7.008 de contas atrasadas no começo do bimestre
+  - peso × 3,5 (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - peso × 3,25 (Kauã), com mais de R$ 5.504 de contas atrasadas no começo do bimestre
+  - peso × 3 (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
 - **Efeitos:**
 
   - **Jonas**: −R$ 625 · sete dias sem trabalhar
@@ -1133,7 +1158,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - **Todos**: energia −1 · dor
   - *Fonte [1]:* Os dias parados × a renda líquida da Daiane (R$ 25 por dia: R$ 750 × 2 ÷ 60)
 
-- **Fonte da carta:** Desgaste do corpo. Kinote et al. (RBPS, 2013), manicures de Fortaleza: 76,7% com dor, 46,7% com dor crônica; Souza et al. (Physis, 2024), entregadores: "minha coluna é arrebentada"; Iwami et al. (RBMT, 2023): lombalgia crônica em 20,6% das domésticas, maior com a idade. As fontes medem a dor de quem tem anos de ofício (Kinote: 12,3 anos em média; dor crônica é a que passa de 6 meses) e que ela cresce com a idade (Iwami: razão de prevalência 1,74), e não quanto cresce dentro de um ano. Conta (estimativa; D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,5 vez a de jan–fev, e a da Rose a 2 vezes, porque a manicure tem a maior prevalência das fontes (76,7%, contra 20,6% das domésticas); o peso sobe por persona e por bimestre (os ajustes "+x no peso"). Nas partidas sorteadas (média de 20 mil, no padrão), a da Rose e a da Daiane também nunca caem; nas outras, a média recua até 0,2 ponto num bimestre (a do Jonas, de 2,4% para 2,2% em set–out), porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio, e nov–dez fica de 1,46 a 2 vezes jan–fev. Com a carta "Normal", de ~2% em jan–fev a ~3% a 3,5% em nov–dez (a Rose, de 2,2% a 4,6%). Fisioterapia: Doctoralia, Porto Alegre, R$ 120 a R$ 320 a sessão (4 × R$ 150); fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)
+- **Fonte da carta:** Desgaste do corpo. Kinote et al. (RBPS, 2013), manicures de Fortaleza: 76,7% com dor, 46,7% com dor crônica; Souza et al. (Physis, 2024), entregadores: "minha coluna é arrebentada"; Iwami et al. (RBMT, 2023): lombalgia crônica em 20,6% das domésticas, maior com a idade. As fontes medem a dor de quem tem anos de ofício (Kinote: 12,3 anos em média; dor crônica é a que passa de 6 meses) e que ela cresce com a idade (Iwami: razão de prevalência 1,74), e não quanto cresce dentro de um ano. Conta (estimativa; D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a pelo menos 1,5 vez a de jan–fev, e a da Rose a 2 vezes, porque a manicure tem a maior prevalência das fontes (76,7%, contra 20,6% das domésticas); o peso sobe por persona e por bimestre (os ajustes "+x no peso"). Nas partidas sorteadas (média de 20 mil, no padrão), a da Rose, a do Marcos e a da Daiane também nunca caem; nas outras, a média recua até 0,2 ponto em mai–jun (a da Bruna, de 2,6% para 2,4%), porque o atraso começa a puxar o corte de luz e o despejo antes das faixas em que o peso do desgaste é multiplicado, e nov–dez fica de 2 a 3,3 vezes jan–fev. Com a carta "Normal", de ~2% em jan–fev a ~3% a 4% em nov–dez (a Rose, de 2,2% a 5,8%); com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). Fisioterapia: Doctoralia, Porto Alegre, R$ 120 a R$ 320 a sessão (4 × R$ 150); fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)
 
 ### Queda leve: 5 dias parado (`queda`, "Queda")
 
@@ -1291,6 +1316,15 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - peso × 0,4 (Jonas, Kauã, Marcos e Rose), em jul–ago, na opção A
   - peso × 3 (Bruna), em jul–ago, na opção A
   - peso × 3 (Jonas, Kauã, Marcos e Rose), em set–out, na opção B
+  - peso × 1,75 (Jonas, Rose e Marcos), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Bruna e Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Kauã), com mais de R$ 4.080 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Jonas), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,5 (Rose), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - peso × 2,25 (Marcos), com mais de R$ 7.008 de contas atrasadas no começo do bimestre
+  - peso × 3,5 (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - peso × 3,25 (Kauã), com mais de R$ 5.504 de contas atrasadas no começo do bimestre
+  - peso × 3 (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
 - **Efeitos:**
 
   - **Jonas**: −R$ 4.020 · 45 dias sem a conta
@@ -1354,7 +1388,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - *Fonte [1]:* Os dias parados × a renda líquida da Daiane (R$ 25 por dia: R$ 750 × 2 ÷ 60)
   - *Fonte [2]:* Estimativa: com a renda dividida entre dois apps (ou dois canais de venda), o bloqueio num deles tira metade. Não achei dado da divisão
 
-- **Fonte da carta:** Abílio (2021), p. 941 e 950: bloqueios sumários e o "bloqueio branco" por recusar. 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. O Povo (01/12/2025), pesquisa GigU (fintech do setor): 15,5% dos motoristas já foram bloqueados sem explicação. Uber (13/09/2026): 90 dias para pedir revisão, conta bloqueada enquanto isso. Perfil de Instagram: onda de banimentos em 2026 (TecMundo; O Antagonista). CUT (23/07/2026): com o Simtrapli-RS e advogado, liminar em ~36 dias; sem advogado, um caso passou de 8 meses. No jogo: 45 dias sem a conta no bimestre (estimativa: depois, a volta por outra conta); com a associação, 36; com dois apps, metade da perda. No máximo uma vez por partida. O peso sobe com os meses, por estimativa: as fontes mostram castigo que cresce com a repetição (99: 5, 10 e 15 dias fora; Uber: três avisos e a média das últimas 500 avaliações), e não com o calendário. Conta (D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte (fora mar–abr, em que aceitar tudo multiplica por 0,4) e chega em nov–dez a pelo menos 1,25 vez a de jan–fev; o peso sobe por persona e por bimestre (os ajustes "+x no peso"). Nas partidas sorteadas (média de 20 mil, no padrão), a média sobe menos e recua em alguns bimestres (a do Jonas, de 2,0% para 1,7% em set–out; a da Bruna, de 2,3% para 2,1% em mai–jun; a da Daiane, de 2,61% para 2,55% em set–out), e nov–dez fica em 1,13 a 1,15 vez jan–fev: quem já foi bloqueado não é de novo (uma vez por partida), e na casa que já atrasou contas ou se cansou, a doença, o corte de luz e o despejo ganham espaço no sorteio. Para quem ainda não foi bloqueado, nov–dez fica em 1,23 a 1,29 vez jan–fev. No padrão, a chance de ser bloqueado em algum bimestre do ano fica de 11% a 15%, perto dos 15,5% da GigU, que mede quem já foi bloqueado alguma vez, e não num ano
+- **Fonte da carta:** Abílio (2021), p. 941 e 950: bloqueios sumários e o "bloqueio branco" por recusar. 99 (página oficial): finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. O Povo (01/12/2025), pesquisa GigU (fintech do setor): 15,5% dos motoristas já foram bloqueados sem explicação. Uber (13/09/2026): 90 dias para pedir revisão, conta bloqueada enquanto isso. Perfil de Instagram: onda de banimentos em 2026 (TecMundo; O Antagonista). CUT (23/07/2026): com o Simtrapli-RS e advogado, liminar em ~36 dias; sem advogado, um caso passou de 8 meses. No jogo: 45 dias sem a conta no bimestre (estimativa: depois, a volta por outra conta); com a associação, 36; com dois apps, metade da perda. No máximo uma vez por partida. O peso sobe com os meses, por estimativa: as fontes mostram castigo que cresce com a repetição (99: 5, 10 e 15 dias fora; Uber: três avisos e a média das últimas 500 avaliações), e não com o calendário. Conta (D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte (fora mar–abr, em que aceitar tudo multiplica por 0,4) e chega em nov–dez a pelo menos 1,25 vez a de jan–fev; o peso sobe por persona e por bimestre (os ajustes "+x no peso"). Nas partidas sorteadas (média de 20 mil, no padrão), a média recua um pouco em alguns bimestres (a da Bruna, de 2,3% para 2,1% em mai–jun; a do Jonas, de 2,02% para 2,00% em set–out), e nov–dez fica em 1,5 a 1,8 vez jan–fev: quem já foi bloqueado não é de novo (uma vez por partida), e o atraso puxa o corte de luz e o despejo; com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). No padrão, a chance de ser bloqueado em algum bimestre do ano fica de 12% a 18%, perto dos 15,5% da GigU, que mede quem já foi bloqueado alguma vez, e não num ano
 
 ### Fui assaltado (`assalto`, "Assalto")
 
@@ -1450,13 +1484,16 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - peso × 3, em mai–jun, na opção C
   - peso × 3, em set–out, na opção D
   - peso × 3, em nov–dez, na opção B
+  - peso × 1,75 (Bruna), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 3,5 (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - +0,5 no peso (Bruna), em nov–dez
 - **Efeitos:**
 
   - **Bruna**: −R$ 350 · quinze dias sem postar
   - **Todos**: −R$ 150, gasto · consulta particular
   - **Todos**: energia −1 · o corpo cobrou
 
-- **Fonte da carta:** YouPix, Creators & Negócios 2025 (via Jornal de Brasília, 19/11/2025): 53% dos criadores já tiveram burnout, mais ainda entre quem ganha até R$ 2 mil; 41% fazem tratamento. "Exaustão algorítmica" (Karhawi e Prazeres, 2022) e "o momento em que você está exausto é o ponto em que o algoritmo mais gosta de você" (Guardian, 2018), em Silva (tese UFMG, 2023, p. 159). Chance: estimativa (× 3 com a energia abaixo de 4 e nos bimestres de postar todo dia); pela D-063, o peso também sobe com os meses (os ajustes "+x no peso"), e no padrão a chance vai de 2,2% em jan–fev a 4,6% em nov–dez. Consulta: estimativa sem fonte
+- **Fonte da carta:** YouPix, Creators & Negócios 2025 (via Jornal de Brasília, 19/11/2025): 53% dos criadores já tiveram burnout, mais ainda entre quem ganha até R$ 2 mil; 41% fazem tratamento. "Exaustão algorítmica" (Karhawi e Prazeres, 2022) e "o momento em que você está exausto é o ponto em que o algoritmo mais gosta de você" (Guardian, 2018), em Silva (tese UFMG, 2023, p. 159). Chance: estimativa (× 3 com a energia abaixo de 4 e nos bimestres de postar todo dia); pela D-063, o peso também sobe com os meses (os ajustes "+x no peso"), e no padrão a chance vai de 2,2% em jan–fev a 5,0% em nov–dez; com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber). Consulta: estimativa sem fonte
 
 ### O algoritmo derrubou o alcance (`alcance`, "Alcance")
 
@@ -1472,12 +1509,15 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - +6,5 no peso (Daiane), em mai–jun
   - +10,5 no peso (Daiane), em jul–ago
   - +13 no peso (Daiane), em set–out ou nov–dez
+  - peso × 1,75 (Bruna e Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 3,5 (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - peso × 3 (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
 - **Efeitos:**
 
   - **Bruna**: −R$ 420 · o alcance caiu: vendi menos
   - **Daiane**: −R$ 225 · o alcance caiu: vendi menos
 
-- **Fonte da carta:** Socialinsider (2025): engajamento no Instagram de 0,48%, 24% menor que no ano anterior. Silva (tese UFMG, 2023, p. 166): "um algoritmo que muda a todo o instante". O peso sobe com os meses porque a queda se acumula no ano (−24% em 12 meses); o tamanho é estimativa. Conta (D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a 1,33 vez a de jan–fev (a queda de 24% em 12 meses); o peso sobe por persona e por bimestre (os ajustes "+x no peso"): de 6,6% a 8,8% na Bruna e de 7,1% a 9,6% na Daiane. Nas partidas sorteadas (média de 20 mil, no padrão), as pontas são as mesmas e a da Daiane nunca cai; a da Bruna recua de 6,99% para 6,94% em mai–jun, porque na casa que já atrasou contas ou se cansou, a doença, o corte de luz, o despejo e o burnout ganham espaço no sorteio. Valores: −30% do bimestre da Bruna, −15% do da Daiane (estimativa)
+- **Fonte da carta:** Socialinsider (2025): engajamento no Instagram de 0,48%, 24% menor que no ano anterior. Silva (tese UFMG, 2023, p. 166): "um algoritmo que muda a todo o instante". O peso sobe com os meses porque a queda se acumula no ano (−24% em 12 meses); o tamanho é estimativa. Conta (D-063): no plano padrão, com a carta "Normal" em todos os bimestres, a chance nunca cai de um bimestre para o seguinte e chega em nov–dez a 1,33 vez a de jan–fev (a queda de 24% em 12 meses); o peso sobe por persona e por bimestre (os ajustes "+x no peso"), e, com contas atrasadas acima de 4 aluguéis e de 2 bimestres das contas que atrasam, o peso é multiplicado (× 1,75 e mais × 2,25 a × 3,5, conforme a casa) para o despejo e o corte de luz, que ali chegam a ~30% cada, não o diluírem (proposta de 05/10, aguardando o Kleber): de 6,6% a 9,6% na Bruna e de 7,1% a 10,8% na Daiane. Nas partidas sorteadas (média de 20 mil, no padrão), a da Daiane nunca cai e chega a 13,8% em nov–dez; a da Bruna recua de 7,0% para 6,8% em mai–jun (o atraso puxa o corte de luz e o despejo antes da faixa em que o peso é multiplicado) e chega a 11,8%. Valores: −30% do bimestre da Bruna, −15% do da Daiane (estimativa)
 
 ### Cortaram a luz (`corte_luz`, "Sem luz")
 
@@ -1486,7 +1526,15 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
 - **Ajustes de peso:**
   - +5 no peso, com mais de R$ 1.000 de contas atrasadas no começo do bimestre
   - +5 no peso, com mais de R$ 5.000 de contas atrasadas no começo do bimestre
-  - +5 no peso, com mais de R$ 10.000 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Jonas, Rose e Marcos), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Bruna e Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - peso × 1,75 (Kauã), com mais de R$ 4.080 de contas atrasadas no começo do bimestre
+  - +152 no peso (Jonas), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - +163 no peso (Rose), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - +172 no peso (Marcos), com mais de R$ 7.008 de contas atrasadas no começo do bimestre
+  - +337 no peso (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - +349 no peso (Kauã), com mais de R$ 5.504 de contas atrasadas no começo do bimestre
+  - +254 no peso (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
 - **Efeitos:**
 
   - **Todos**: −R$ 11, gasto · taxa de religação da luz [1]
@@ -1499,25 +1547,36 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
   - *Fonte [3]:* Os dias parados × a renda dela (R$ 700 × 2 ÷ 60 × 2 dias), como na carta "Temporal"
   - *Fonte [4]:* Os dias parados × a renda líquida da Daiane (R$ 25 por dia: R$ 750 × 2 ÷ 60)
 
-- **Fonte da carta:** ANEEL, REN 1.000/2021: a distribuidora pode cortar a luz por falta de pagamento com aviso de 15 dias, até 90 dias depois do vencimento, nunca de sexta a domingo nem em feriado; a religação na cidade sai em até 24 h depois do pagamento (ANEEL, "Como resolver"; Proteste). Instituto Pólis/Ipec (publ. 31/05/2024): 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz. Chance: estimativa sem fonte (não achei a fração de cortes entre os inadimplentes): a carta só sai com contas atrasadas, e mais quanto maior o atraso
+- **Fonte da carta:** ANEEL, REN 1.000/2021: a distribuidora pode cortar a luz por falta de pagamento com aviso de 15 dias, até 90 dias depois do vencimento, nunca de sexta a domingo nem em feriado; a religação na cidade sai em até 24 h depois do pagamento (ANEEL, "Como resolver"; Proteste). Instituto Pólis/Ipec (publ. 31/05/2024): 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz. Chance: estimativa sem fonte (não achei a fração de cortes entre os inadimplentes). A regra (proposta de 05/10, aguardando o Kleber): a chance cresce com as contas atrasadas no começo do bimestre (um pouco acima de R$ 1.000 e de R$ 5.000) e chega a cerca de 30% por bimestre quando elas passam de 2 bimestres das contas que atrasam naquela casa (aluguel, luz, água e celular: de R$ 5.036 na Daiane a R$ 7.008 no Marcos), quando a luz já passou dos 90 dias da REN 1.000; pode sair mais de uma vez
 
 ### O dono entrou com o despejo (`despejo`, "Despejo")
 
 - **Narrativa:** O dono entrou na Justiça pelo aluguel atrasado. Se a gente não pagar tudo em até 15 dias depois da citação, com multa, juros e o advogado dele, o juiz manda sair.
 - **Peso base:** 0; tom grave.
 - **Ajustes de peso:**
+  - +4 no peso, com mais de R$ 3.000 de contas atrasadas no começo do bimestre
+  - +72 no peso (Jonas), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - +71 no peso (Rose), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - +80 no peso (Marcos), com mais de R$ 5.200 de contas atrasadas no começo do bimestre
+  - +94 no peso (Bruna), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - +107 no peso (Kauã), com mais de R$ 4.080 de contas atrasadas no começo do bimestre
+  - +84 no peso (Daiane), com mais de R$ 4.000 de contas atrasadas no começo do bimestre
+  - +86 no peso (Jonas), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - +98 no peso (Rose), com mais de R$ 6.624 de contas atrasadas no começo do bimestre
+  - +99 no peso (Marcos), com mais de R$ 7.008 de contas atrasadas no começo do bimestre
+  - +248 no peso (Bruna), com mais de R$ 5.404 de contas atrasadas no começo do bimestre
+  - +249 no peso (Kauã), com mais de R$ 5.504 de contas atrasadas no começo do bimestre
+  - +176 no peso (Daiane), com mais de R$ 5.036 de contas atrasadas no começo do bimestre
   - peso × 0, quem tirou “O dono entrou com o despejo” em jan–fev
   - peso × 0, quem tirou “O dono entrou com o despejo” em mar–abr
   - peso × 0, quem tirou “O dono entrou com o despejo” em mai–jun
   - peso × 0, quem tirou “O dono entrou com o despejo” em jul–ago
   - peso × 0, quem tirou “O dono entrou com o despejo” em set–out
-  - +4 no peso, com mais de R$ 3.000 de contas atrasadas no começo do bimestre
-  - +4 no peso, com mais de R$ 8.000 de contas atrasadas no começo do bimestre
 - **Efeitos:**
 
   - **Todos**: energia −2 · noites sem dormir com medo de perder a casa
 
-- **Fonte da carta:** Lei 8.245/1991 (Lei do Inquilinato): art. 9º III (a locação pode ser desfeita por falta de pagamento), art. 62 II (o inquilino evita o despejo pagando, em até 15 dias depois da citação, os aluguéis, as multas, os juros, as custas e os honorários do advogado do dono) e art. 59 § 1º IX (sem garantia, o juiz pode dar 15 dias para sair, com caução de 3 aluguéis). O aluguel das personas é do mercado formal, com fiador ou análise de crédito (QuintoAndar), e por isso a ação não é a liminar: a carta é o começo do processo, e o custo é o medo. Chance: estimativa sem fonte (não achei com quantos meses de atraso o dono entra na Justiça): a carta só sai com contas atrasadas grandes, no máximo uma vez por partida
+- **Fonte da carta:** Lei 8.245/1991 (Lei do Inquilinato): art. 9º III (a locação pode ser desfeita por falta de pagamento), art. 62 II (o inquilino evita o despejo pagando, em até 15 dias depois da citação, os aluguéis, as multas, os juros, as custas e os honorários do advogado do dono) e art. 59 § 1º IX (sem garantia, o juiz pode dar 15 dias para sair, com caução de 3 aluguéis). O aluguel das personas é do mercado formal, com fiador ou análise de crédito (QuintoAndar), e por isso a ação não é a liminar: a carta é o começo do processo, e o custo é o medo. Chance: estimativa sem fonte (não achei com quantos meses de atraso o dono entra na Justiça). A regra (proposta de 05/10, aguardando o Kleber): a chance cresce com as contas atrasadas no começo do bimestre (um pouco acima de R$ 3.000) e chega a cerca de 30% por bimestre quando elas passam de 4 aluguéis daquela casa (R$ 4.000 na Bruna e na Daiane, R$ 4.080 no Kauã, R$ 5.200 no Jonas, na Rose e no Marcos); no máximo uma vez por partida
 
 ---
 
@@ -1530,7 +1589,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
 - **Associação (mai–jun, A):** mensalidade de jul–ago em diante; com o bloqueio, o advogado consegue a liminar no 36º dia e devolve parte da renda. Não paga nada em acidente (não achei fundo de nenhuma em Porto Alegre). Sem `protege` (provisório de 29/09).
 - **Adiar a manutenção e o remédio (jul–ago, C):** "Quebrou" × 4 e a queda × 1,5 para os veículos, e a doença × 2 para quem adiou o remédio, até dezembro (estimativas).
 - **Mobilização (greve de 14/04, protesto de 27/07, breque de 01/09):** cada uma dá +1 de proteção (sem efeito em dinheiro) e, para o Jonas e o Kauã, aumenta a chance da carta "Reajuste" nos bimestres seguintes (+4 no peso; estimativa).
-- **Fratura, bloqueio e despejo:** no máximo uma vez por partida cada.
+- **Fratura, bloqueio e despejo:** no máximo uma vez por partida cada (no despejo, de fato só desde 05/10: os "× 0" vinham antes das somas, e ele podia sair de novo).
 - **Contas atrasadas (D-066):** o que atrasou num bimestre fica atrasado nos seguintes, com mora, até um bimestre bom pagar (a folga até o limite paga o atrasado primeiro); enquanto isso, puxa as cartas de corte de luz e de despejo (seção 5.1).
 - **Energia:** o que uma opção tira hoje pesa nos bimestres seguintes (exausto −10% abaixo de 3; doença, queda e fratura mais prováveis com energia baixa).
 
@@ -1541,7 +1600,7 @@ O "Bloqueio" sai no máximo uma vez por partida, e quem já foi bloqueado entra 
 - **Gás, ônibus e remédio ficam sem (`semAtraso`, proposta de 05/10, aguardando o Kleber):** os três itens estão marcados no básico das 6 casas. Quando o limite acaba, eles não viram dívida nem pagam multa ou mora: a casa fica sem eles ("ficou sem", no mês e na tela). Antes da marca, entravam nas contas atrasadas com o aluguel, pagavam multa e mora, e um dia eram "pagos": ninguém fica devendo passagem de ônibus.
 - **A ordem do mês (contratos, seção 3, passos 8 a 11):** primeiro a mora; num bimestre bom, a folga até o limite paga as contas atrasadas; se o caixa passaria de −R$ 2.000, o banco para no limite e o que passaria vira, nesta ordem (`cortarPrimeiro: "contas"`), conta atrasada (até as contas do bimestre que podem atrasar: aluguel, luz, água e celular), o que a casa fica sem (o gás, o ônibus e o remédio do bimestre, que não viram dívida), comida não comprada (até a comida do bimestre) e, o que passar disso, conta atrasada de novo; por último a multa. A multa e a mora vão para as contas atrasadas, e não para o caixa.
 - **O placar:** o patrimônio é o caixa menos o empréstimo a pagar menos as contas atrasadas. O que faltou na mesa fica à parte, porque não é dívida (D-066). É esse "à parte" que achata o placar das casas mais pobres (seção 8, item 18).
-- **As cartas que o atraso puxa** (seção 4): "Cortaram a luz" (peso 0; +5 com mais de R$ 1.000 de contas atrasadas no começo do bimestre, +5 com mais de R$ 5.000 e +5 com mais de R$ 10.000) e "O dono entrou com o despejo" (peso 0; +4 com mais de R$ 3.000 e +4 com mais de R$ 8.000; uma vez por partida). As regras e os custos têm fonte; a chance é estimativa.
+- **As cartas que o atraso puxa** (seção 4; proposta 1(b) de 05/10, aguardando o Kleber): "Cortaram a luz" (peso 0; +5 com mais de R$ 1.000 de contas atrasadas no começo do bimestre e +5 com mais de R$ 5.000; com mais de 2 bimestres das contas que atrasam, de R$ 5.036 na Daiane a R$ 7.008 no Marcos, um peso que leva a chance a ~30% por bimestre; pode repetir) e "O dono entrou com o despejo" (peso 0; +4 com mais de R$ 3.000; com mais de 4 aluguéis, de R$ 4.000 a R$ 5.200, um peso que leva a chance a ~30% por bimestre; uma vez por partida). Na faixa de atraso, o peso do desgaste é multiplicado para não ser diluído (D-063). No padrão, de 37% (Jonas) a 76% (Daiane) das partidas tiram o despejo, e de 35% a 84% tiram o corte de luz (20 mil partidas; só com a proposta 3(a), de 6% a 16% e de 12% a 30%). As regras e os custos têm fonte; a chance é estimativa.
 
 **O piloto automático com a carta "Normal" em todos os bimestres** (no fim de cada bimestre: dívida no banco · contas atrasadas · comida que faltou no bimestre · o que a casa ficou sem no bimestre):
 
@@ -1563,38 +1622,38 @@ Antes do limite (o config desta manhã), no mesmo caminho, a Rose terminava deve
 Limite do cheque especial: R$ 2.000 (Banco Central, Estudo Especial nº 84/2020 (microdados do SCR, dez/2019): limite médio de cheque especial de R$ 1.693 na faixa de renda abaixo de R$ 1,5 mil (R$ 21.422 acima de R$ 10 mil). Corrigido pelo IPCA de jan/2020 a ago/2026 (× 1,4347, BCB SGS 433): R$ 2.429. O próprio estudo avisa que o método superestima o limite (o do cheque especial é achado por resíduo) e que só entra quem teve carteira em 24 dos 36 meses; as personas não têm carteira (D-062). Usado R$ 2.000, o teto da faixa da D-066 (R$ 1.000 a R$ 2.000), abaixo dos R$ 2.429. Passado o limite, o banco não empresta mais). Corta primeiro: contas; multa 8%, mora 1% ao mês.
 Critério: E = esperado; pior = o maior valor achado. "Ao acaso": todas as combinações de decisões igualmente prováveis;
 "padrão": o plano c-d-b-c-a-d. "Faltou na mesa" é comida que não foi comprada (acumulada), e não entra na dívida.
-  Jonas (motoboy): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 9.223 (pior R$ 20.139) · faltou na mesa E R$ 616 (pior R$ 6.490) · dívida total E R$ 11.382 (pior R$ 22.764)
-                   padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 10.448 (pior R$ 19.558) · faltou na mesa E R$ 542 (pior R$ 5.518) · dívida total E R$ 12.448 (pior R$ 21.558)
-  Rose (manicure): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 20.620 (pior R$ 22.812) · faltou na mesa E R$ 3.486 (pior R$ 11.299) · dívida total E R$ 22.780 (pior R$ 25.437)
-                   padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 20.954 (pior R$ 22.455) · faltou na mesa E R$ 3.323 (pior R$ 9.083) · dívida total E R$ 22.954 (pior R$ 24.455)
-  Marcos (motorista): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 12.429 (pior R$ 23.362) · faltou na mesa E R$ 832 (pior R$ 8.040) · dívida total E R$ 14.605 (pior R$ 26.050)
-                      padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 14.259 (pior R$ 22.725) · faltou na mesa E R$ 866 (pior R$ 6.842) · dívida total E R$ 16.259 (pior R$ 24.725)
-  Bruna (influenciadora): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.101 (pior R$ 17.553) · faltou na mesa E R$ 775 (pior R$ 5.135) · dívida total E R$ 17.260 (pior R$ 19.553)
-                          padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.756 (pior R$ 17.505) · faltou na mesa E R$ 1.036 (pior R$ 3.127) · dívida total E R$ 17.756 (pior R$ 19.505)
-  Kauã (bike): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.166 (pior R$ 18.657) · faltou na mesa E R$ 737 (pior R$ 6.784) · dívida total E R$ 17.325 (pior R$ 21.217)
-               padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.847 (pior R$ 18.654) · faltou na mesa E R$ 749 (pior R$ 4.642) · dívida total E R$ 17.847 (pior R$ 20.654)
-  Daiane (vendedora): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 16.893 (pior R$ 19.085) · faltou na mesa E R$ 8.894 (pior R$ 11.927) · dívida total E R$ 19.052 (pior R$ 21.710)
-                      padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 16.880 (pior R$ 18.037) · faltou na mesa E R$ 9.116 (pior R$ 11.515) · dívida total E R$ 18.880 (pior R$ 20.037)
+  Jonas (motoboy): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 9.189 (pior R$ 19.313) · faltou na mesa E R$ 584 (pior R$ 6.382) · dívida total E R$ 11.339 (pior R$ 21.313)
+                   padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 10.075 (pior R$ 17.306) · faltou na mesa E R$ 502 (pior R$ 4.984) · dívida total E R$ 12.075 (pior R$ 19.306)
+  Rose (manicure): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 20.588 (pior R$ 22.455) · faltou na mesa E R$ 3.669 (pior R$ 10.858) · dívida total E R$ 22.738 (pior R$ 25.080)
+                   padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 20.936 (pior R$ 22.455) · faltou na mesa E R$ 3.188 (pior R$ 9.577) · dívida total E R$ 22.936 (pior R$ 24.455)
+  Marcos (motorista): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 12.172 (pior R$ 22.348) · faltou na mesa E R$ 747 (pior R$ 7.514) · dívida total E R$ 14.338 (pior R$ 24.754)
+                      padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 13.658 (pior R$ 22.700) · faltou na mesa E R$ 670 (pior R$ 6.842) · dívida total E R$ 15.658 (pior R$ 24.700)
+  Bruna (influenciadora): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.217 (pior R$ 17.553) · faltou na mesa E R$ 866 (pior R$ 4.948) · dívida total E R$ 17.367 (pior R$ 19.553)
+                          padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.809 (pior R$ 17.505) · faltou na mesa E R$ 1.106 (pior R$ 3.420) · dívida total E R$ 17.809 (pior R$ 19.505)
+  Kauã (bike): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.231 (pior R$ 18.657) · faltou na mesa E R$ 582 (pior R$ 5.620) · dívida total E R$ 17.381 (pior R$ 21.217)
+               padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 15.764 (pior R$ 18.654) · faltou na mesa E R$ 581 (pior R$ 4.475) · dívida total E R$ 17.764 (pior R$ 20.654)
+  Daiane (vendedora): ao acaso banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 16.899 (pior R$ 19.134) · faltou na mesa E R$ 9.201 (pior R$ 12.381) · dívida total E R$ 19.049 (pior R$ 21.759)
+                      padrão   banco E R$ 2.000 (pior R$ 2.000) · contas atrasadas E R$ 16.912 (pior R$ 17.785) · faltou na mesa E R$ 9.259 (pior R$ 11.437) · dívida total E R$ 18.912 (pior R$ 19.785)
 ```
 
 | Personagem | Plano | Contas atrasadas no fim (esperado) | Faltou na mesa no ano (esperado) | Partidas com comida cortada | Ficou sem no ano (gás, ônibus, remédio; esperado) |
 |---|---|---|---|---|---|
-| Jonas | padrão | R$ 10.321 | R$ 548 | 23% | R$ 163 |
-| Jonas | ao acaso | R$ 9.399 | R$ 604 | 26% | R$ 205 |
-| Rose | padrão | R$ 20.942 | R$ 3.323 | 100% | R$ 3.153 |
-| Rose | ao acaso | R$ 20.592 | R$ 3.616 | 100% | R$ 2.913 |
-| Marcos | padrão | R$ 14.176 | R$ 821 | 36% | R$ 541 |
-| Marcos | ao acaso | R$ 12.588 | R$ 861 | 35% | R$ 491 |
-| Bruna | padrão | R$ 15.776 | R$ 1.043 | 100% | R$ 1.751 |
-| Bruna | ao acaso | R$ 15.125 | R$ 838 | 92% | R$ 1.442 |
-| Kauã | padrão | R$ 15.784 | R$ 736 | 92% | R$ 2.066 |
-| Kauã | ao acaso | R$ 15.193 | R$ 778 | 69% | R$ 1.563 |
-| Daiane | padrão | R$ 16.892 | R$ 9.088 | 100% | R$ 2.416 |
-| Daiane | ao acaso | R$ 16.893 | R$ 8.987 | 100% | R$ 2.400 |
+| Jonas | padrão | R$ 9.978 | R$ 487 | 22% | R$ 155 |
+| Jonas | ao acaso | R$ 9.170 | R$ 561 | 25% | R$ 198 |
+| Rose | padrão | R$ 20.944 | R$ 3.219 | 100% | R$ 3.170 |
+| Rose | ao acaso | R$ 20.603 | R$ 3.663 | 100% | R$ 2.932 |
+| Marcos | padrão | R$ 13.662 | R$ 661 | 33% | R$ 504 |
+| Marcos | ao acaso | R$ 12.214 | R$ 734 | 33% | R$ 464 |
+| Bruna | padrão | R$ 15.832 | R$ 1.115 | 100% | R$ 1.818 |
+| Bruna | ao acaso | R$ 15.212 | R$ 888 | 94% | R$ 1.519 |
+| Kauã | padrão | R$ 15.795 | R$ 524 | 74% | R$ 2.003 |
+| Kauã | ao acaso | R$ 15.236 | R$ 594 | 62% | R$ 1.496 |
+| Daiane | padrão | R$ 16.893 | R$ 9.248 | 100% | R$ 2.416 |
+| Daiane | ao acaso | R$ 16.901 | R$ 9.179 | 100% | R$ 2.400 |
 
 - **A Daiane corta comida em quase todo bimestre:** a falta dela (−R$ 4.292 por bimestre) passa das contas do bimestre que podem atrasar (R$ 2.518) e do gás, do ônibus e do remédio (R$ 474), e o resto sai da comida (de R$ 2.518 no bimestre). A Rose fica na beira: a falta dela (−R$ 3.864) passa das contas que podem atrasar (R$ 3.312), a casa fica sem quase todo o gás, o ônibus e o remédio (até R$ 676 no bimestre), e qualquer carta ruim vira comida cortada.
-- **Nas outras casas, a comida cortada é pouca, mas aparece:** no padrão, de R$ 548 a R$ 1.043 no ano, em média, quase sempre no bimestre de uma carta ruim, quando o que falta passa das contas do bimestre. Bruna e Kauã cortam alguma comida na maioria das partidas.
-- **O que a casa ficou sem** (gás, ônibus e remédio; proposta de 05/10): no padrão, de R$ 163 (Jonas) a R$ 3.153 (Rose) no ano, em média. É dinheiro que faltou e não virou dívida: como o que faltou na mesa, fica fora do placar.
+- **Nas outras casas, a comida cortada é pouca, mas aparece:** no padrão, de R$ 487 a R$ 1.115 no ano, em média, quase sempre no bimestre de uma carta ruim, quando o que falta passa das contas do bimestre. Bruna e Kauã cortam alguma comida na maioria das partidas.
+- **O que a casa ficou sem** (gás, ônibus e remédio; proposta de 05/10): no padrão, de R$ 155 (Jonas) a R$ 3.170 (Rose) no ano, em média. É dinheiro que faltou e não virou dívida: como o que faltou na mesa, fica fora do placar.
 
 ### 5.2 O auxílio do INSS acima do trabalho (D-067)
 
@@ -1622,12 +1681,12 @@ O plano padrão (quem nunca vota) é **C-D-B-C-A-D** (Jan–fev C, Mar–abr D, 
 
 | Personagem | Jan–fev | Mar–abr | Mai–jun | Jul–ago | Set–out | Nov–dez | Juros no ano |
 |---|---|---|---|---|---|---|---|
-| Jonas | −R$ 812 (e6) | −R$ 1.963 (e4) | −R$ 3.710 (e3) | −R$ 4.920 (e2) | −R$ 6.709 (e1) | −R$ 8.109 (e0) | R$ 1.352 |
-| Rose | −R$ 3.994 (e5) | −R$ 8.293 (e3) | −R$ 12.661 (e2) | −R$ 17.099 (e1) | −R$ 21.570 (e0) | −R$ 25.704 (e0) | R$ 1.540 |
-| Marcos | −R$ 1.118 (e5) | −R$ 3.760 (e3) | −R$ 6.773 (e2) | −R$ 8.428 (e1) | −R$ 10.309 (e0) | −R$ 11.960 (e0) | R$ 1.404 |
-| Bruna | −R$ 2.924 (e6) | −R$ 5.477 (e4) | −R$ 8.855 (e3) | −R$ 12.159 (e2) | −R$ 15.720 (e1) | −R$ 19.338 (e0) | R$ 1.540 |
-| Kauã | −R$ 2.261 (e6) | −R$ 4.996 (e4) | −R$ 8.256 (e2) | −R$ 11.706 (e0) | −R$ 15.275 (e0) | −R$ 18.513 (e0) | R$ 1.540 |
-| Daiane | −R$ 4.452 (e5) | −R$ 7.692 (e1) | −R$ 10.984 (e0) | −R$ 14.329 (e0) | −R$ 17.727 (e0) | −R$ 21.180 (e0) | R$ 1.540 |
+| Jonas | −R$ 812 (e6) | −R$ 1.963 (e4) | −R$ 3.726 (e3) | −R$ 4.952 (e2) | −R$ 6.764 (e1) | −R$ 8.188 (e0) | R$ 1.352 |
+| Rose | −R$ 4.013 (e5) | −R$ 7.627 (e3) | −R$ 11.308 (e2) | −R$ 15.055 (e1) | −R$ 18.868 (e0) | −R$ 22.747 (e0) | R$ 1.540 |
+| Marcos | −R$ 1.118 (e5) | −R$ 3.777 (e3) | −R$ 6.823 (e2) | −R$ 8.506 (e1) | −R$ 10.419 (e0) | −R$ 12.103 (e0) | R$ 1.404 |
+| Bruna | −R$ 2.933 (e6) | −R$ 5.512 (e4) | −R$ 8.495 (e3) | −R$ 11.532 (e2) | −R$ 14.623 (e1) | −R$ 17.768 (e0) | R$ 1.540 |
+| Kauã | −R$ 2.264 (e6) | −R$ 5.025 (e4) | −R$ 8.053 (e2) | −R$ 11.136 (e0) | −R$ 14.274 (e0) | −R$ 17.467 (e0) | R$ 1.540 |
+| Daiane | −R$ 4.475 (e5) | −R$ 7.240 (e1) | −R$ 10.055 (e0) | −R$ 12.921 (e0) | −R$ 15.837 (e0) | −R$ 18.803 (e0) | R$ 1.540 |
 
 Patrimônio no fim de cada bimestre (o caixa menos o empréstimo e as contas atrasadas, o número do placar), com a energia entre parênteses. Os juros do ano são o que o cheque especial custou, até o limite de R$ 2.000. A dívida no banco, as contas atrasadas e a comida cortada do mesmo caminho estão na seção 5.1.
 
@@ -1637,22 +1696,23 @@ Patrimônio no fim de cada bimestre (o caixa menos o empréstimo e as contas atr
 
 | Personagem | Plano | Esperado | Mediana | 10% piores até | 10% melhores a partir de | Pior | Melhor | Fecha o básico | Partidas com um bimestre no azul | Energia chega a 0 | Tirou carta grave |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| Jonas | padrão | −R$ 12.365 | −R$ 12.123 | −R$ 15.146 | −R$ 9.845 | −R$ 22.615 | −R$ 6.605 | 0,00% | 0,0% | 100% | 50% |
-| Jonas | ao acaso | −R$ 11.656 | −R$ 11.489 | −R$ 14.885 | −R$ 8.610 | −R$ 22.435 | −R$ 4.138 | 0,00% | 17,9% | 86% | 54% |
-| Rose | padrão | −R$ 26.136 | −R$ 26.133 | −R$ 26.824 | −R$ 25.443 | −R$ 28.648 | −R$ 24.105 | 0,00% | 0,0% | 100% | 60% |
-| Rose | ao acaso | −R$ 25.674 | −R$ 25.680 | −R$ 26.651 | −R$ 24.653 | −R$ 29.273 | −R$ 22.427 | 0,00% | 0,0% | 88% | 64% |
-| Marcos | padrão | −R$ 16.578 | −R$ 16.390 | −R$ 19.711 | −R$ 13.644 | −R$ 27.661 | −R$ 9.832 | 0,00% | 0,0% | 100% | 59% |
-| Marcos | ao acaso | −R$ 15.128 | −R$ 15.004 | −R$ 18.828 | −R$ 11.584 | −R$ 26.611 | −R$ 5.112 | 0,00% | 15,9% | 89% | 62% |
-| Bruna | padrão | −R$ 19.477 | −R$ 19.610 | −R$ 20.455 | −R$ 18.224 | −R$ 21.874 | −R$ 15.079 | 0,00% | 0,0% | 100% | 45% |
-| Bruna | ao acaso | −R$ 18.652 | −R$ 18.739 | −R$ 19.958 | −R$ 17.221 | −R$ 21.902 | −R$ 12.833 | 0,00% | 0,0% | 77% | 49% |
-| Kauã | padrão | −R$ 19.839 | −R$ 19.718 | −R$ 20.919 | −R$ 18.876 | −R$ 23.882 | −R$ 17.297 | 0,00% | 0,0% | 100% | 58% |
-| Kauã | ao acaso | −R$ 18.859 | −R$ 18.839 | −R$ 20.371 | −R$ 17.315 | −R$ 24.631 | −R$ 15.059 | 0,00% | 0,0% | 88% | 64% |
-| Daiane | padrão | −R$ 21.322 | −R$ 21.180 | −R$ 21.730 | −R$ 20.798 | −R$ 22.825 | −R$ 20.798 | 0,00% | 0,0% | 100% | 52% |
-| Daiane | ao acaso | −R$ 21.460 | −R$ 21.388 | −R$ 22.088 | −R$ 20.798 | −R$ 24.133 | −R$ 19.831 | 0,00% | 0,0% | 99% | 55% |
+| Jonas | padrão | −R$ 11.978 | −R$ 11.803 | −R$ 14.397 | −R$ 9.763 | −R$ 20.865 | −R$ 6.664 | 0,00% | 0,0% | 100% | 74% |
+| Jonas | ao acaso | −R$ 11.325 | −R$ 11.206 | −R$ 14.171 | −R$ 8.593 | −R$ 21.767 | −R$ 4.164 | 0,00% | 17,9% | 88% | 71% |
+| Rose | padrão | −R$ 22.944 | −R$ 22.747 | −R$ 23.407 | −R$ 22.370 | −R$ 24.455 | −R$ 22.304 | 0,00% | 0,0% | 100% | 97% |
+| Rose | ao acaso | −R$ 22.760 | −R$ 22.830 | −R$ 23.599 | −R$ 21.755 | −R$ 25.080 | −R$ 19.981 | 0,00% | 0,0% | 93% | 98% |
+| Marcos | padrão | −R$ 15.662 | −R$ 15.474 | −R$ 18.206 | −R$ 13.285 | −R$ 24.646 | −R$ 9.746 | 0,00% | 0,0% | 100% | 93% |
+| Marcos | ao acaso | −R$ 14.385 | −R$ 14.300 | −R$ 17.491 | −R$ 11.322 | −R$ 25.410 | −R$ 5.161 | 0,00% | 15,2% | 92% | 90% |
+| Bruna | padrão | −R$ 17.832 | −R$ 17.858 | −R$ 18.620 | −R$ 16.832 | −R$ 19.505 | −R$ 13.674 | 0,00% | 0,0% | 100% | 96% |
+| Bruna | ao acaso | −R$ 17.367 | −R$ 17.440 | −R$ 18.404 | −R$ 16.181 | −R$ 19.553 | −R$ 11.922 | 0,00% | 0,0% | 86% | 95% |
+| Kauã | padrão | −R$ 17.795 | −R$ 17.699 | −R$ 18.550 | −R$ 17.108 | −R$ 20.654 | −R$ 16.476 | 0,00% | 0,0% | 100% | 96% |
+| Kauã | ao acaso | −R$ 17.393 | −R$ 17.361 | −R$ 18.319 | −R$ 16.421 | −R$ 21.282 | −R$ 13.335 | 0,00% | 0,0% | 93% | 98% |
+| Daiane | padrão | −R$ 18.893 | −R$ 18.815 | −R$ 19.086 | −R$ 18.414 | −R$ 19.916 | −R$ 18.414 | 0,00% | 0,0% | 100% | 98% |
+| Daiane | ao acaso | −R$ 19.057 | −R$ 19.028 | −R$ 19.694 | −R$ 18.449 | −R$ 21.253 | −R$ 17.435 | 0,00% | 0,0% | 100% | 98% |
 
-- **Ninguém fecha.** O "melhor" de 20 mil partidas ao acaso vai de −R$ 4.138 (Jonas) a −R$ 22.427 (Rose). O validador, que procura também o melhor caminho de propósito, acha o Jonas em −R$ 770 (seção 6.3, g).
-- **Até um bimestre no azul é raro:** Jonas 17,86%, Rose 0,00%, Marcos 15,89%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% das partidas ao acaso têm pelo menos um. O "quase" que a sala pode ver é o de Jonas e Marcos; nas outras casas, nem isso.
-- **A distância entre as casas é maior que a distância entre as escolhas:** ao acaso, o esperado da Rose fica de R$ 4.213 a R$ 14.018 abaixo do das outras casas.
+- **Ninguém fecha.** O "melhor" de 20 mil partidas ao acaso vai de −R$ 4.164 (Jonas) a −R$ 19.981 (Rose). O validador, que procura também o melhor caminho de propósito, acha o Jonas em −R$ 591 (seção 6.3, g).
+- **Até um bimestre no azul é raro:** Jonas 17,90%, Rose 0,00%, Marcos 15,23%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% das partidas ao acaso têm pelo menos um. O "quase" que a sala pode ver é o de Jonas e Marcos; nas outras casas, nem isso.
+- **A distância entre as casas é maior que a distância entre as escolhas:** ao acaso, o esperado da Rose fica de R$ 3.703 a R$ 11.435 abaixo do das outras casas.
+- **Tirou carta grave** passou a 71% a 98% das partidas (eram de 45% a 64%): o despejo e o corte de luz, graves, ficam prováveis na casa muito atrasada (proposta 1(b)).
 
 ### 6.3 O que o validador disse (saída de `npm run validar`, trechos)
 
@@ -1662,7 +1722,7 @@ Patrimônio no fim de cada bimestre (o caixa menos o empréstimo e as contas atr
 > node bin/validar-config.mjs
 
 Config: config.json
-Sem erros. Hash do config: fccc2a93
+Sem erros. Hash do config: 0c67f01e
 
 Modo: SIMULAÇÃO determinística. Até 9.784.320 caminhos de cartas por equipe,
 acima do limite de 200.000 da enumeração exata. Os números de (a) a (i) são ESTIMADOS: 2000 estados antes de cada rodada,
@@ -1670,7 +1730,7 @@ acima do limite de 200.000 da enumeração exata. Os números de (a) a (i) são 
 semente derivada do hash do config (a mesma saída a cada execução). Pior e melhor caso: o achado na simulação mais uma busca dirigida.
 ```
 
-**(c) e (d) Opção dominante e piloto automático.** Os avisos (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 72% a 88% das partidas) e Daiane em jan–fev ("A" termina com mais saldo que cada uma das outras em 75% a 82% das partidas); padrão de maior saldo: Rose em mai–jun e Daiane de mar–abr a jul–ago) são de diferenças de dezenas de reais nas casas que passam do limite: o que muda de uma opção para outra vira comida cortada, fora do placar (seção 8, item 18). Na Daiane, em 4 dos 6 bimestres, as 4 opções ficam a menos de R$ 40 umas das outras.
+**(c) e (d) Opção dominante e piloto automático.** Os avisos (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 90% a 94% das partidas), Bruna em mar–abr ("C", 73% a 82%) e Daiane em jan–fev ("A", 73% a 80%); padrão de maior saldo: Rose em mai–jun e set–out e Daiane em jul–ago) são de diferenças de dezenas de reais nas casas que passam do limite: o que muda de uma opção para outra vira comida cortada, fora do placar (seção 8, item 18). Na Daiane, em 4 dos 6 bimestres, as 4 opções ficam a menos de R$ 50 umas das outras.
 
 ```
 == (c) e (d) Opção dominante e piloto automático ==
@@ -1679,77 +1739,78 @@ Critério: indicadores no FIM do jogo, escolhendo a opção naquela rodada e as 
 Dominante: vence as outras em todos os indicadores (esperado), ou vence em renda com mais de 70% de probabilidade.
 
 Jonas (motoboy) · equipe e1
-  r1  a renda E -12.263,3 · b renda E -12.441,3 · c* renda E -11.417 · d renda E -10.568,1   (* = padrão)
-  r2  a renda E -11.595,5 · b renda E -11.376,1 · c renda E -11.843 · d* renda E -11.711,5   (* = padrão)
-  r3  a renda E -11.752,5 · b* renda E -11.973,9 · c renda E -11.396,8 · d renda E -11.364,8   (* = padrão)
-  r4  a renda E -11.407,9 · b renda E -11.642,6 · c* renda E -11.821,1 · d renda E -11.679,1   (* = padrão)
-  r5  a* renda E -11.808,7 · b renda E -12.089,2 · c renda E -11.893,8 · d renda E -11.229,4   (* = padrão)
-  r6  a renda E -11.733,1 · b renda E -10.963,4 · c renda E -12.496,4 · d* renda E -11.918,6   (* = padrão)
+  r1  a renda E -11.862,8 · b renda E -11.980,7 · c* renda E -11.062,1 · d renda E -10.202,8   (* = padrão)
+  r2  a renda E -11.181,8 · b renda E -10.838,1 · c renda E -11.752,3 · d* renda E -11.288,4   (* = padrão)
+  r3  a renda E -11.557,7 · b* renda E -11.745,2 · c renda E -11.080,5 · d renda E -11.082,2   (* = padrão)
+  r4  a renda E -11.049,3 · b renda E -11.333,3 · c* renda E -11.467,3 · d renda E -11.301,2   (* = padrão)
+  r5  a* renda E -11.391,8 · b renda E -11.562,2 · c renda E -11.445,5 · d renda E -10.770,5   (* = padrão)
+  r6  a renda E -11.228,7 · b renda E -10.434,4 · c renda E -12.085,9 · d* renda E -11.418,3   (* = padrão)
 
 Rose (manicure) · equipe e2
-  r1  a renda E -25.045 · b renda E -26.083,9 · c* renda E -25.746,2 · d renda E -25.604,7   (* = padrão)
-  AVISO: Rose (manicure), r1: a opção "a" vence em renda com probabilidade 87,6% / 76,2% / 72,1% contra b / c / d.
-  r2  a renda E -25.692,8 · b renda E -25.560,9 · c renda E -25.558,2 · d* renda E -25.714,3   (* = padrão)
-  r3  a renda E -25.750,1 · b* renda E -25.366,9 · c renda E -25.438,8 · d renda E -25.700,6   (* = padrão)
+  r1  a renda E -22.014,9 · b renda E -23.154,4 · c* renda E -22.958,5 · d renda E -23.005,9   (* = padrão)
+  AVISO: Rose (manicure), r1: a opção "a" vence em renda com probabilidade 94% / 90,4% / 91% contra b / c / d.
+  r2  a renda E -22.735,9 · b renda E -22.672 · c renda E -22.886,2 · d* renda E -22.705,6   (* = padrão)
+  r3  a renda E -22.843,6 · b* renda E -22.754,5 · c renda E -22.795 · d renda E -22.863,1   (* = padrão)
   AVISO: Rose (manicure), r3: o padrão "b" é a opção de maior renda esperada; o piloto automático premia quem não votou.
-  r4  a renda E -25.603,5 · b renda E -25.641 · c* renda E -25.665,9 · d renda E -25.583,1   (* = padrão)
-  r5  a* renda E -25.694,4 · b renda E -25.668,6 · c renda E -25.664,8 · d renda E -25.612,3   (* = padrão)
-  r6  a renda E -25.734,7 · b renda E -25.306 · c renda E -25.842,7 · d* renda E -25.791   (* = padrão)
+  r4  a renda E -22.822,1 · b renda E -22.834,1 · c* renda E -22.833,6 · d renda E -22.843,5   (* = padrão)
+  r5  a* renda E -22.821,6 · b renda E -22.837,9 · c renda E -22.845,4 · d renda E -22.864,8   (* = padrão)
+  AVISO: Rose (manicure), r5: o padrão "a" é a opção de maior renda esperada; o piloto automático premia quem não votou.
+  r6  a renda E -22.839,6 · b renda E -22.720,6 · c renda E -22.824,6 · d* renda E -22.846,4   (* = padrão)
 
 Marcos (motorista) · equipe e3
-  r1  a renda E -15.447,9 · b renda E -15.878,8 · c* renda E -15.219 · d renda E -13.708,2   (* = padrão)
-  r2  a renda E -14.956,9 · b renda E -14.548,7 · c renda E -15.674,4 · d* renda E -14.915,9   (* = padrão)
-  r3  a renda E -15.076,3 · b* renda E -16.141,7 · c renda E -14.630,4 · d renda E -14.603,2   (* = padrão)
-  r4  a renda E -15.035,2 · b renda E -15.117,1 · c* renda E -15.272,2 · d renda E -14.875,1   (* = padrão)
-  r5  a* renda E -15.172 · b renda E -15.531,2 · c renda E -15.314,2 · d renda E -14.747   (* = padrão)
-  r6  a renda E -15.074,2 · b renda E -14.176 · c renda E -15.997 · d* renda E -15.330,6   (* = padrão)
+  r1  a renda E -14.616,5 · b renda E -15.141,8 · c* renda E -14.292 · d renda E -13.393,2   (* = padrão)
+  r2  a renda E -14.163,1 · b renda E -14.108,3 · c renda E -14.808,1 · d* renda E -14.359,5   (* = padrão)
+  r3  a renda E -14.389,4 · b* renda E -15.246,2 · c renda E -13.802,2 · d renda E -14.127,6   (* = padrão)
+  r4  a renda E -14.388,3 · b renda E -14.299,9 · c* renda E -14.501,7 · d renda E -14.370,9   (* = padrão)
+  r5  a* renda E -14.470,7 · b renda E -14.701,4 · c renda E -14.523,1 · d renda E -13.807,2   (* = padrão)
+  r6  a renda E -14.443,2 · b renda E -13.325,2 · c renda E -15.255,6 · d* renda E -14.567,5   (* = padrão)
 
 Bruna (influenciadora) · equipe e4
-  r1  a renda E -18.267,1 · b renda E -19.154,7 · c* renda E -18.566,3 · d renda E -18.398,5   (* = padrão)
-  r2  a renda E -18.756,8 · b renda E -18.498,2 · c renda E -18.245,7 · d* renda E -18.768,5   (* = padrão)
-  r3  a renda E -18.592,6 · b* renda E -18.956,6 · c renda E -18.432,3 · d renda E -18.468   (* = padrão)
-  r4  a renda E -18.131,8 · b renda E -18.742,2 · c* renda E -18.689,7 · d renda E -18.711,6   (* = padrão)
-  r5  a* renda E -18.582,5 · b renda E -18.594,5 · c renda E -18.642,9 · d renda E -18.408,2   (* = padrão)
-  r6  a renda E -18.468,7 · b renda E -18.563,4 · c renda E -18.570,6 · d* renda E -18.484,1   (* = padrão)
+  r1  a renda E -16.935,7 · b renda E -17.755,6 · c* renda E -17.379,7 · d renda E -17.355,1   (* = padrão)
+  r2  a renda E -17.697,6 · b renda E -17.379,9 · c renda E -16.687 · d* renda E -17.656,1   (* = padrão)
+  AVISO: Bruna (influenciadora), r2: a opção "c" vence em renda com probabilidade 82,2% / 73,4% / 80,9% contra a / b / d.
+  r3  a renda E -17.322,6 · b* renda E -17.449,5 · c renda E -17.252,2 · d renda E -17.305,3   (* = padrão)
+  r4  a renda E -17.213,8 · b renda E -17.415,7 · c* renda E -17.420,6 · d renda E -17.369,5   (* = padrão)
+  r5  a* renda E -17.327,5 · b renda E -17.320,4 · c renda E -17.299,3 · d renda E -17.288,7   (* = padrão)
+  r6  a renda E -17.359,6 · b renda E -17.362,4 · c renda E -17.398,8 · d* renda E -17.382,3   (* = padrão)
 
 Kauã (bike) · equipe e5
-  r1  a renda E -19.244,5 · b renda E -19.200,1 · c* renda E -18.629,9 · d renda E -18.330   (* = padrão)
-  r2  a renda E -18.900,3 · b renda E -18.653,4 · c renda E -18.927,3 · d* renda E -18.865,9   (* = padrão)
-  r3  a renda E -18.757 · b* renda E -19.674,6 · c renda E -18.348,4 · d renda E -18.512,4   (* = padrão)
-  r4  a renda E -18.737,2 · b renda E -18.892,3 · c* renda E -18.921,9 · d renda E -18.821,5   (* = padrão)
-  r5  a* renda E -18.893,9 · b renda E -18.931,2 · c renda E -18.910,7 · d renda E -18.588,6   (* = padrão)
-  r6  a renda E -18.693,8 · b renda E -18.660,9 · c renda E -19.072,9 · d* renda E -18.827,7   (* = padrão)
+  r1  a renda E -17.460,9 · b renda E -17.619,6 · c* renda E -17.252,8 · d renda E -17.204,5   (* = padrão)
+  r2  a renda E -17.559 · b renda E -17.323,9 · c renda E -16.955,9 · d* renda E -17.588,3   (* = padrão)
+  r3  a renda E -17.425,1 · b* renda E -17.530,7 · c renda E -17.223,9 · d renda E -17.308,2   (* = padrão)
+  r4  a renda E -17.359,4 · b renda E -17.405,7 · c* renda E -17.401 · d renda E -17.336,5   (* = padrão)
+  r5  a* renda E -17.402,5 · b renda E -17.424,1 · c renda E -17.385,1 · d renda E -17.290,6   (* = padrão)
+  r6  a renda E -17.364,3 · b renda E -17.359,9 · c renda E -17.427,7 · d* renda E -17.398,6   (* = padrão)
 
 Daiane (vendedora) · equipe e6
-  r1  a renda E -21.050,2 · b renda E -21.659,1 · c* renda E -21.410,7 · d renda E -21.450,7   (* = padrão)
-  AVISO: Daiane (vendedora), r1: a opção "a" vence em renda com probabilidade 82,2% / 75,2% / 76,3% contra b / c / d.
-  r2  a renda E -21.249,2 · b renda E -21.256,6 · c renda E -21.900,8 · d* renda E -21.236,8   (* = padrão)
-  AVISO: Daiane (vendedora), r2: o padrão "d" é a opção de maior renda esperada; o piloto automático premia quem não votou.
-  r3  a renda E -21.417,4 · b* renda E -21.406 · c renda E -21.421,5 · d renda E -21.420,2   (* = padrão)
-  AVISO: Daiane (vendedora), r3: o padrão "b" é a opção de maior renda esperada; o piloto automático premia quem não votou.
-  r4  a renda E -21.422,2 · b renda E -21.422,6 · c* renda E -21.402,5 · d renda E -21.436,5   (* = padrão)
+  r1  a renda E -18.755,5 · b renda E -19.288,6 · c* renda E -19.081,2 · d renda E -19.096   (* = padrão)
+  AVISO: Daiane (vendedora), r1: a opção "a" vence em renda com probabilidade 80,1% / 73% / 73,5% contra b / c / d.
+  r2  a renda E -18.844,3 · b renda E -18.871,8 · c renda E -19.631,1 · d* renda E -18.853,1   (* = padrão)
+  r3  a renda E -19.016,1 · b* renda E -19.066,5 · c renda E -19.047,2 · d renda E -19.047   (* = padrão)
+  r4  a renda E -19.046 · b renda E -19.055,8 · c* renda E -19.027,5 · d renda E -19.076,3   (* = padrão)
   AVISO: Daiane (vendedora), r4: o padrão "c" é a opção de maior renda esperada; o piloto automático premia quem não votou.
-  r5  a* renda E -21.451 · b renda E -21.416,8 · c renda E -21.455,5 · d renda E -21.418,5   (* = padrão)
-  r6  a renda E -21.406,7 · b renda E -21.435,2 · c renda E -21.437,8 · d* renda E -21.436,7   (* = padrão)
+  r5  a* renda E -19.036,9 · b renda E -19.046,5 · c renda E -19.034,2 · d renda E -19.019,5   (* = padrão)
+  r6  a renda E -19.021,7 · b renda E -19.027,2 · c renda E -19.055,3 · d* renda E -19.043,1   (* = padrão)
 ```
 
-**(e) Quanto as decisões explicam.** De 20,6% (Jonas) a 44% (Daiane). Os avisos da faixa de 30% a 60% são esperados (D-024): a sorte pesa mais que a escolha, e em 12 meses pesa ainda mais.
+**(e) Quanto as decisões explicam.** De 19,3% (Kauã) a 63,1% (Daiane). Os avisos da faixa de 30% a 60% são esperados (D-024): a sorte pesa mais que a escolha, e em 12 meses pesa ainda mais.
 
 ```
 == (e) Variância da renda final: decisões × cartas ==
 Critério: todas as combinações de decisões, igualmente prováveis; cartas pelas chances.
 Var total = Var(esperado dado as decisões) + E(Var dado as decisões).
 Faixa sugerida para as decisões: 30% a 60%.
-Estimado: 240 planos (200 sorteados de 4.096, mais o padrão e as trocas da proteção), 400 caminhos cada; a parte das decisões desconta o ruído da amostra.
-  Jonas (motoboy): decisões 20,6% · cartas 79,4%  (200 combinações sorteadas, estimado)
-  AVISO: Jonas (motoboy): as decisões explicam 20,6% da variância da renda, fora da faixa sugerida.
-  Rose (manicure): decisões 40,5% · cartas 59,5%  (200 combinações sorteadas, estimado)
-  Marcos (motorista): decisões 23% · cartas 77%  (200 combinações sorteadas, estimado)
-  AVISO: Marcos (motorista): as decisões explicam 23% da variância da renda, fora da faixa sugerida.
-  Bruna (influenciadora): decisões 29,2% · cartas 70,8%  (200 combinações sorteadas, estimado)
-  AVISO: Bruna (influenciadora): as decisões explicam 29,2% da variância da renda, fora da faixa sugerida.
-  Kauã (bike): decisões 34% · cartas 66%  (200 combinações sorteadas, estimado)
-  Daiane (vendedora): decisões 44% · cartas 56%  (200 combinações sorteadas, estimado)
+Estimado: 258 planos (200 sorteados de 4.096, mais o padrão e as trocas da proteção), 400 caminhos cada; a parte das decisões desconta o ruído da amostra.
+  Jonas (motoboy): decisões 23,3% · cartas 76,7%  (200 combinações sorteadas, estimado)
+  AVISO: Jonas (motoboy): as decisões explicam 23,3% da variância da renda, fora da faixa sugerida.
+  Rose (manicure): decisões 45,4% · cartas 54,6%  (200 combinações sorteadas, estimado)
+  Marcos (motorista): decisões 24% · cartas 76%  (200 combinações sorteadas, estimado)
+  AVISO: Marcos (motorista): as decisões explicam 24% da variância da renda, fora da faixa sugerida.
+  Bruna (influenciadora): decisões 34% · cartas 66%  (200 combinações sorteadas, estimado)
+  Kauã (bike): decisões 19,3% · cartas 80,7%  (200 combinações sorteadas, estimado)
+  AVISO: Kauã (bike): as decisões explicam 19,3% da variância da renda, fora da faixa sugerida.
+  Daiane (vendedora): decisões 63,1% · cartas 36,9%  (200 combinações sorteadas, estimado)
+  AVISO: Daiane (vendedora): as decisões explicam 63,1% da variância da renda, fora da faixa sugerida.
 ```
 
 ```
@@ -1757,10 +1818,10 @@ Estimado: 240 planos (200 sorteados de 4.096, mais o padrão e as trocas da prot
 Critério: fração das partidas (cada equipe, decisões ao acaso) em que o indicador estava acima do
 mínimo e caiu até ele em algum mês. "Com consequência": alguma condição do config lê o indicador.
   renda: 0% das partidas (SEM consequência)
-  energia: 88,4% das partidas (com consequência)
+  energia: 92,4% das partidas (com consequência)
   protecao: 0% das partidas (SEM consequência)
   emprestimo: 0% das partidas (SEM consequência)
-  contas_atrasadas: 0,1% das partidas (com consequência)
+  contas_atrasadas: 0% das partidas (com consequência)
   faltou_na_mesa: 0% das partidas (SEM consequência)
 ```
 
@@ -1773,18 +1834,18 @@ igualmente prováveis, cartas pelas chances. "Melhor plano": a combinação com 
 "Melhor caminho": a maior renda final possível (decisões e cartas), com chance acima de 0.
 "Só o padrão": o plano c-d-b-c-a-d, o de quem nunca vota.
 Meta da D-058: de 5% a 10% ao acaso, em pelo menos 2 personas; só o padrão, nunca.
-  Jonas (motoboy): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 770 (r1 a/promocao → r2 b/promocao → r3 c/promocao → r4 a/promocao → r5 d/promocao → r6 d/promocao) · só o padrão fecha em 0%
-  AVISO: Jonas (motoboy): nenhum caminho fecha o básico (o melhor termina com −R$ 770); a D-050 pede "quase ninguém", e não "ninguém".
-  Rose (manicure): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 21.549 (r1 a/promocao → r2 b/promocao → r3 b/normal → r4 d/normal → r5 a/promocao → r6 b/promocao) · só o padrão fecha em 0%
-  AVISO: Rose (manicure): nenhum caminho fecha o básico (o melhor termina com −R$ 21.549); a D-050 pede "quase ninguém", e não "ninguém".
-  Marcos (motorista): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 2.663 (r1 a/promocao → r2 b/promocao → r3 d/promocao → r4 c/promocao → r5 d/promocao → r6 b/promocao) · só o padrão fecha em 0%
-  AVISO: Marcos (motorista): nenhum caminho fecha o básico (o melhor termina com −R$ 2.663); a D-050 pede "quase ninguém", e não "ninguém".
-  Bruna (influenciadora): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 7.172 (r1 a/viralizou → r2 b/viralizou → r3 c/viralizou → r4 a/viralizou → r5 d/viralizou → r6 d/viralizou) · só o padrão fecha em 0%
-  AVISO: Bruna (influenciadora): nenhum caminho fecha o básico (o melhor termina com −R$ 7.172); a D-050 pede "quase ninguém", e não "ninguém".
-  Kauã (bike): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 13.397 (r1 c/promocao → r2 b/promocao → r3 c/promocao → r4 a/promocao → r5 d/promocao → r6 a/promocao) · só o padrão fecha em 0%
-  AVISO: Kauã (bike): nenhum caminho fecha o básico (o melhor termina com −R$ 13.397); a D-050 pede "quase ninguém", e não "ninguém".
-  Daiane (vendedora): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 20.069 (r1 b/fratura → r2 c/doenca → r3 d/alcance → r4 a/normal → r5 b/promocao → r6 a/normal) · só o padrão fecha em 0%
-  AVISO: Daiane (vendedora): nenhum caminho fecha o básico (o melhor termina com −R$ 20.069); a D-050 pede "quase ninguém", e não "ninguém".
+  Jonas (motoboy): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 591 (r1 c/promocao → r2 b/promocao → r3 c/promocao → r4 a/promocao → r5 d/promocao → r6 b/promocao) · só o padrão fecha em 0%
+  AVISO: Jonas (motoboy): nenhum caminho fecha o básico (o melhor termina com −R$ 591); a D-050 pede "quase ninguém", e não "ninguém".
+  Rose (manicure): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 19.979 (r1 a/promocao → r2 a/normal → r3 b/normal → r4 a/normal → r5 d/promocao → r6 b/promocao) · só o padrão fecha em 0%
+  AVISO: Rose (manicure): nenhum caminho fecha o básico (o melhor termina com −R$ 19.979); a D-050 pede "quase ninguém", e não "ninguém".
+  Marcos (motorista): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 2.769 (r1 c/promocao → r2 b/promocao → r3 c/promocao → r4 c/promocao → r5 d/promocao → r6 b/promocao) · só o padrão fecha em 0%
+  AVISO: Marcos (motorista): nenhum caminho fecha o básico (o melhor termina com −R$ 2.769); a D-050 pede "quase ninguém", e não "ninguém".
+  Bruna (influenciadora): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 7.709 (r1 a/viralizou → r2 b/viralizou → r3 c/viralizou → r4 a/viralizou → r5 c/viralizou → r6 b/viralizou) · só o padrão fecha em 0%
+  AVISO: Bruna (influenciadora): nenhum caminho fecha o básico (o melhor termina com −R$ 7.709); a D-050 pede "quase ninguém", e não "ninguém".
+  Kauã (bike): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 13.533 (r1 c/promocao → r2 b/promocao → r3 c/promocao → r4 a/promocao → r5 d/promocao → r6 b/promocao) · só o padrão fecha em 0%
+  AVISO: Kauã (bike): nenhum caminho fecha o básico (o melhor termina com −R$ 13.533); a D-050 pede "quase ninguém", e não "ninguém".
+  Daiane (vendedora): fecha em 0% ao acaso · nenhum plano fecha · melhor caminho termina com −R$ 17.129 (r1 b/fratura → r2 c/promocao → r3 a/quebrou → r4 c/despejo → r5 d/alcance → r6 b/corte_luz) · só o padrão fecha em 0%
+  AVISO: Daiane (vendedora): nenhum caminho fecha o básico (o melhor termina com −R$ 17.129); a D-050 pede "quase ninguém", e não "ninguém".
   AVISO: só 0 persona(s) fecham o básico entre 5% e 10% das partidas ao acaso; a D-058 pede pelo menos 2.
 ```
 
@@ -1796,28 +1857,29 @@ Melhor opção: a de maior renda final esperada, escolhendo-a naquele mês e as 
 Maior esforço/renda: a opção de maior renda esperada no próprio mês (a variação de (b)), na média das personas;
 a letra é a posição dela na rodada (A, B, C, D), como no telão.
   r1 melhor opção: Jonas (motoboy) d · Rose (manicure) a · Marcos (motorista) d · Bruna (influenciadora) a · Kauã (bike) d · Daiane (vendedora) a
-  r2 melhor opção: Jonas (motoboy) b · Rose (manicure) c · Marcos (motorista) b · Bruna (influenciadora) c · Kauã (bike) b · Daiane (vendedora) d
-  r3 melhor opção: Jonas (motoboy) d · Rose (manicure) b · Marcos (motorista) d · Bruna (influenciadora) c · Kauã (bike) c · Daiane (vendedora) b
-  r4 melhor opção: Jonas (motoboy) a · Rose (manicure) d · Marcos (motorista) d · Bruna (influenciadora) a · Kauã (bike) a · Daiane (vendedora) c
-  r5 melhor opção: Jonas (motoboy) d · Rose (manicure) d · Marcos (motorista) d · Bruna (influenciadora) d · Kauã (bike) d · Daiane (vendedora) b
+  r2 melhor opção: Jonas (motoboy) b · Rose (manicure) b · Marcos (motorista) b · Bruna (influenciadora) c · Kauã (bike) c · Daiane (vendedora) a
+  r3 melhor opção: Jonas (motoboy) c · Rose (manicure) b · Marcos (motorista) c · Bruna (influenciadora) c · Kauã (bike) c · Daiane (vendedora) a
+  r4 melhor opção: Jonas (motoboy) a · Rose (manicure) a · Marcos (motorista) b · Bruna (influenciadora) a · Kauã (bike) d · Daiane (vendedora) c
+  r5 melhor opção: Jonas (motoboy) d · Rose (manicure) a · Marcos (motorista) d · Bruna (influenciadora) d · Kauã (bike) d · Daiane (vendedora) d
   r6 melhor opção: Jonas (motoboy) b · Rose (manicure) b · Marcos (motorista) b · Bruna (influenciadora) a · Kauã (bike) b · Daiane (vendedora) a
-  r1 maior esforço/renda no mês: A ("a", renda E −R$ 2.180 no mês)
-  r2 maior esforço/renda no mês: B ("b", renda E −R$ 2.726 no mês)
-  r3 maior esforço/renda no mês: C ("c", renda E −R$ 2.727 no mês)
-  r4 maior esforço/renda no mês: A ("a", renda E −R$ 3.004 no mês)
-  r5 maior esforço/renda no mês: D ("d", renda E −R$ 2.930 no mês)
-  r6 maior esforço/renda no mês: B ("b", renda E −R$ 2.752 no mês)
+  r1 maior esforço/renda no mês: A ("a", renda E −R$ 2.174 no mês)
+  r2 maior esforço/renda no mês: B ("b", renda E −R$ 2.555 no mês)
+  r3 maior esforço/renda no mês: C ("c", renda E −R$ 2.520 no mês)
+  r4 maior esforço/renda no mês: A ("a", renda E −R$ 2.757 no mês)
+  r5 maior esforço/renda no mês: D ("d", renda E −R$ 2.651 no mês)
+  r6 maior esforço/renda no mês: B ("b", renda E −R$ 2.471 no mês)
 Esgotamento (D-059): a opção mais cansativa do mês (maior perda de energia esperada; empate pela renda do mês), por persona, contra a melhor opção dela; aviso com 3 ou mais personas no mesmo mês.
   r1 mais cansativa: Jonas (motoboy) a (energia E -5,5), a melhor é d · Rose (manicure) a (energia E -5,3) é a melhor · Marcos (motorista) a (energia E -5,3), a melhor é d · Bruna (influenciadora) a (energia E -5,3) é a melhor · Kauã (bike) a (energia E -5,4), a melhor é d · Daiane (vendedora) a (energia E -5,2) é a melhor
   AVISO: r1: a opção mais cansativa do mês é a de maior saldo esperado para 3 personas (Rose (manicure), Bruna (influenciadora), Daiane (vendedora)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
-  r2 mais cansativa: Jonas (motoboy) b (energia E -2,9) é a melhor · Rose (manicure) b (energia E -2,6), a melhor é c · Marcos (motorista) b (energia E -2,7) é a melhor · Bruna (influenciadora) b (energia E -2,9), a melhor é c · Kauã (bike) b (energia E -2,9) é a melhor · Daiane (vendedora) b (energia E -3,9), a melhor é d
-  AVISO: r2: a opção mais cansativa do mês é a de maior saldo esperado para 3 personas (Jonas (motoboy), Marcos (motorista), Kauã (bike)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
-  r3 mais cansativa: Jonas (motoboy) c (energia E -2,9), a melhor é d · Rose (manicure) c (energia E -2,4), a melhor é b · Marcos (motorista) c (energia E -2,4), a melhor é d · Bruna (influenciadora) c (energia E -2,9) é a melhor · Kauã (bike) c (energia E -2,9) é a melhor · Daiane (vendedora) c (energia E -1,5), a melhor é b
-  r4 mais cansativa: Jonas (motoboy) a (energia E -1,7) é a melhor · Rose (manicure) a (energia E -1,3), a melhor é d · Marcos (motorista) a (energia E -1,2), a melhor é d · Bruna (influenciadora) b (energia E -0,8), a melhor é a · Kauã (bike) a (energia E -1,6) é a melhor · Daiane (vendedora) a (energia E -0,2), a melhor é c
-  r5 mais cansativa: Jonas (motoboy) d (energia E -1,4) é a melhor · Rose (manicure) d (energia E -1,3) é a melhor · Marcos (motorista) d (energia E -1,2) é a melhor · Bruna (influenciadora) d (energia E -2) é a melhor · Kauã (bike) d (energia E -1,2) é a melhor · Daiane (vendedora) d (energia E -0,7), a melhor é b
-  AVISO: r5: a opção mais cansativa do mês é a de maior saldo esperado para 5 personas (Jonas (motoboy), Rose (manicure), Marcos (motorista), Bruna (influenciadora), Kauã (bike)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
-  r6 mais cansativa: Jonas (motoboy) b (energia E -0,8) é a melhor · Rose (manicure) b (energia E -0,8) é a melhor · Marcos (motorista) b (energia E -0,7) é a melhor · Bruna (influenciadora) b (energia E -1,2), a melhor é a · Kauã (bike) b (energia E -0,7) é a melhor · Daiane (vendedora) a (energia E -0,4) é a melhor
-  AVISO: r6: a opção mais cansativa do mês é a de maior saldo esperado para 5 personas (Jonas (motoboy), Rose (manicure), Marcos (motorista), Kauã (bike), Daiane (vendedora)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
+  r2 mais cansativa: Jonas (motoboy) b (energia E -2,9) é a melhor · Rose (manicure) b (energia E -2,6) é a melhor · Marcos (motorista) b (energia E -2,7) é a melhor · Bruna (influenciadora) b (energia E -2,9), a melhor é c · Kauã (bike) b (energia E -2,9), a melhor é c · Daiane (vendedora) b (energia E -3,9), a melhor é a
+  AVISO: r2: a opção mais cansativa do mês é a de maior saldo esperado para 3 personas (Jonas (motoboy), Rose (manicure), Marcos (motorista)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
+  r3 mais cansativa: Jonas (motoboy) c (energia E -2,9) é a melhor · Rose (manicure) c (energia E -2,6), a melhor é b · Marcos (motorista) c (energia E -2,4) é a melhor · Bruna (influenciadora) c (energia E -2,9) é a melhor · Kauã (bike) c (energia E -3) é a melhor · Daiane (vendedora) c (energia E -1,4), a melhor é a
+  AVISO: r3: a opção mais cansativa do mês é a de maior saldo esperado para 4 personas (Jonas (motoboy), Marcos (motorista), Bruna (influenciadora), Kauã (bike)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
+  r4 mais cansativa: Jonas (motoboy) a (energia E -1,8) é a melhor · Rose (manicure) a (energia E -1,2) é a melhor · Marcos (motorista) a (energia E -1,2), a melhor é b · Bruna (influenciadora) b (energia E -1), a melhor é a · Kauã (bike) a (energia E -1,6), a melhor é d · Daiane (vendedora) a (energia E -0,1), a melhor é c
+  r5 mais cansativa: Jonas (motoboy) d (energia E -1,5) é a melhor · Rose (manicure) d (energia E -1), a melhor é a · Marcos (motorista) d (energia E -1,2) é a melhor · Bruna (influenciadora) d (energia E -1,5) é a melhor · Kauã (bike) d (energia E -1,1) é a melhor · Daiane (vendedora) d (energia E -0,5) é a melhor
+  AVISO: r5: a opção mais cansativa do mês é a de maior saldo esperado para 5 personas (Jonas (motoboy), Marcos (motorista), Bruna (influenciadora), Kauã (bike), Daiane (vendedora)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
+  r6 mais cansativa: Jonas (motoboy) b (energia E -0,8) é a melhor · Rose (manicure) b (energia E -0,4) é a melhor · Marcos (motorista) b (energia E -0,5) é a melhor · Bruna (influenciadora) b (energia E -0,7), a melhor é a · Kauã (bike) b (energia E -0,5) é a melhor · Daiane (vendedora) b (energia E -0,2), a melhor é a
+  AVISO: r6: a opção mais cansativa do mês é a de maior saldo esperado para 4 personas (Jonas (motoboy), Rose (manicure), Marcos (motorista), Kauã (bike)); a D-059 pede que o esgotamento deixe de ser o melhor plano para a maioria.
 ```
 
 **(i) Conta do mês.**
@@ -1837,9 +1899,9 @@ Piso do trabalho variável (regras.pisoTrabalho): ligado.
   Kauã (bike): trabalho ≥ R$ 0 em todos os caminhos; renda perdida nunca maior que a renda sem a carta
   Kauã (bike): "entrou" ≥ R$ 0 em todos os caminhos (pior R$ 2.468)
   Daiane (vendedora): trabalho ≥ R$ 0 em todos os caminhos; renda perdida nunca maior que a renda sem a carta
-  AVISO: Daiane (vendedora): o "entrou" fica negativo (pior −R$ 456, r4 d/fratura); ao acaso, em r1 0,88% · r2 0% · r3 0,72% · r4 2,4% · r5 2,6% · r6 0,31% dos casos
+  AVISO: Daiane (vendedora): o "entrou" fica negativo (pior −R$ 456, r4 d/fratura); ao acaso, em r1 0,88% · r2 0% · r3 0,58% · r4 2,3% · r5 3,2% · r6 0,35% dos casos
 
-21 aviso(s) de equilíbrio. Avisos não bloqueiam a sala; são para calibrar o jogo.
+23 aviso(s) de equilíbrio. Avisos não bloqueiam a sala; são para calibrar o jogo.
 ```
 
 ### 6.4 A proteção (D-059)
@@ -1848,21 +1910,21 @@ Piso do trabalho variável (regras.pisoTrabalho): ligado.
 == (h) Proteção: o pior caso com e sem as opções que protegem (D-059) ==
 Critério: renda final (cartas pelas chances). "Plano padrão": todas as rodadas no padrão, só a proteção trocada.
 "Média": sobre todas as combinações que usam a proteção, com ela e com o padrão no lugar dela.
-  Jonas (motoboy), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 24.214 com, −R$ 24.338 sem · esperado −R$ 12.920 com, −R$ 12.376 sem · média: pior +642,5, esperado -890
-  Rose (manicure), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 28.559 com, −R$ 28.559 sem · esperado −R$ 26.364 com, −R$ 26.040 sem · média: pior +64,5, esperado -321,8
-  Marcos (motorista), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 28.788 com, −R$ 29.423 sem · esperado −R$ 17.262 com, −R$ 16.394 sem · média: pior +670,4, esperado -792,4
-  Bruna (influenciadora), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 21.327 com, −R$ 21.814 sem · esperado −R$ 19.613 com, −R$ 19.407 sem · média: pior +367,1, esperado -621,9
-  Kauã (bike), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 23.449 com, −R$ 24.050 sem · esperado −R$ 20.311 com, −R$ 19.771 sem · média: pior +800,5, esperado -643,2
-  Daiane (vendedora), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 23.042 com, −R$ 22.619 sem · esperado −R$ 21.429 com, −R$ 21.246 sem · média: pior -380,3, esperado -209,5
+  Jonas (motoboy), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 23.395 com, −R$ 22.938 sem · esperado −R$ 12.723 com, −R$ 12.075 sem · média: pior +751,7, esperado -791
+  Rose (manicure), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 24.455 com, −R$ 24.455 sem · esperado −R$ 23.300 com, −R$ 22.936 sem · média: pior +9,3, esperado -198,5
+  Marcos (motorista), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 25.726 com, −R$ 25.540 sem · esperado −R$ 16.466 com, −R$ 15.658 sem · média: pior +586, esperado -709,3
+  Bruna (influenciadora), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 19.534 com, −R$ 19.505 sem · esperado −R$ 18.266 com, −R$ 17.809 sem · média: pior +90,5, esperado -429
+  Kauã (bike), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 20.627 com, −R$ 20.654 sem · esperado −R$ 18.008 com, −R$ 17.764 sem · média: pior +399,8, esperado -349,8
+  Daiane (vendedora), r1 b ("Jornada de sempre e abrir o MEI"): plano padrão pior estimado −R$ 20.208 com, −R$ 19.785 sem · esperado −R$ 19.064 com, −R$ 18.912 sem · média: pior -232,1, esperado -160,7
 ```
 
-- **O MEI perde no esperado** em todas as personas (o DAS de 12 meses contra o auxílio que só vem com a fratura, ~2% por bimestre para quem está na rua, e que a perícia nega em ~50%) e **melhora o pior caso** de todas menos Rose e Daiane: nelas, a perda da fratura vira comida cortada, que fica fora do placar, e o DAS continua saindo (seção 8, item 18). Nas outras, é o comportamento de seguro que a D-059 pede.
-- **Na Bruna, o ganho no pior caso é pequeno** (+R$ 487 no plano padrão): a fratura dela custa pouco (a renda é baixa), e o MEI de criador de conteúdo ainda está a conferir (seção 8, item 6). Na Rose, +R$ 0; na Daiane, −R$ 423.
+- **O MEI perde no esperado** em todas as personas (o DAS de 12 meses contra o auxílio que só vem com a fratura, ~2% por bimestre para quem está na rua, e que a perícia nega em ~50%): de R$ 152 (Daiane) a R$ 808 (Marcos) no plano padrão. **No pior caso estimado do plano padrão, quase não protege mais (efeito da proposta 1(b)):** só o Kauã melhora (+R$ 27, dentro do ruído); a Rose fica igual; o Jonas (−R$ 457), a Daiane (−R$ 423), o Marcos (−R$ 186) e a Bruna (−R$ 29) pioram. Na média de todas as combinações, o MEI ainda melhora o pior caso em 5 das 6 (de +R$ 9, Rose, a +R$ 752, Jonas; a Daiane, −R$ 232). Antes da 1(b), melhorava o pior caso de todas menos Rose e Daiane. O pior caso é estimado e muda com a semente; não investiguei a causa (a hipótese, sem conferência, é que o despejo e o corte, que o MEI não cobre, passaram a pesar no pior caso).
+- **O MEI de criador de conteúdo (Bruna) ainda está a conferir** (seção 8, item 6).
 
 ### 6.5 A referência "com carteira assinada" (D-056, D-062)
 
 - **A conta** (no config, em `referencias[0].fonte`): CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026): líquido R$ 2.110,48; IR isento (Lei 15.270/2025). A mesma casa do Jonas de app (D-056): + as faxinas e a revenda da companheira (R$ 1.500, informal, D-062), − básico de R$ 4.092, parcela da moto (R$ 480) e manutenção (R$ 261, que com carteira sai do salário) = −R$ 1.223 por mês; como no jogo (D-066): o cheque especial vai até o limite de R$ 2.000, com juros de 7,43% ao mês compostos no bimestre; o que passa dele vira conta atrasada, com multa de 8% uma vez e mora de 1% ao mês, simples, sobre o principal atrasado (gás, ônibus e remédio não atrasam, a casa fica sem: proposta de 05/10; neste caminho, o que passa do limite nunca chega a eles); + 13º (R$ 2.110) e o terço de férias (~R$ 672) de 12 meses no último bimestre, que pagam R$ 29 do atrasado. Patrimônio por bimestre (o caixa menos as contas atrasadas): −2.481 → −5.463 → −8.500 → −11.592 → −14.739 → −14.939 (no fim, R$ 2.000 no banco e R$ 12.939 de contas atrasadas; a comida não chega a ser cortada). Até 05/10, −R$ 14.750, com 7% e 0,8% e a mora sobre o atrasado inteiro. Conta nossa; a validar (D-062). Não leva o FGTS (R$ 183 por mês) nem o INSS desde o 1º dia.
-- **O placar mostra −R$ 14.939** (−R$ 14.750 até a proposta 3(a) de 05/10). O Jonas de app no piloto automático termina com o esperado de −R$ 12.321 e a mediana de −R$ 12.134; só **10%** das partidas do padrão terminam abaixo da referência (ao acaso, 8%). Com a carta "Normal" em todos os bimestres, o Jonas de app termina com −R$ 8.188.
+- **O placar mostra −R$ 14.939** (−R$ 14.750 até a proposta 3(a) de 05/10). O Jonas de app no piloto automático termina com o esperado de −R$ 11.978 e a mediana de −R$ 11.803; só **7%** das partidas do padrão terminam abaixo da referência (ao acaso, 6%). Com a carta "Normal" em todos os bimestres, o Jonas de app termina com −R$ 8.188.
 - **Por quê:** a renda de app da PNAD 2025 (R$ 2.221 já sem o combustível, 44,9 h por semana) passa do líquido do motoboy com carteira (R$ 2.110), e a conta da carteira ainda paga a parcela da moto e a manutenção. O que a carteira dá e o placar não mede (INSS desde o 1º dia, FGTS, férias, o auxílio-doença que a doença do jogo não paga) fica fora do número.
 - Ver a seção 8, item 2.
 
@@ -1943,28 +2005,28 @@ Total: **7200 s**. As 6 rodadas somam 1620 s (27 min, 23% do tempo); com a forma
 Cada item traz a pergunta, por que importa e as opções. A recomendação é minha; a decisão é sua.
 
 1. **Ninguém fecha o básico em 12 meses (D-050, D-058).**
-   - *Por que importa:* A D-050 diz que o final não pode estar decidido antes de jogar. Com a renda real, o básico real de Porto Alegre e nenhuma carteira em casa, a falta é estrutural: de −R$ 390 (Marcos) a −R$ 2.146 (Daiane) **por mês** antes de qualquer carta, e, passado o limite de R$ 2.000 do cheque especial, o que falta vira conta atrasada, com multa e mora. O melhor caminho possível do Jonas termina em −R$ 770, e exige a carta de promoção nos 6 bimestres. Nem um bimestre no azul é comum: Jonas 17,86%, Rose 0,00%, Marcos 15,89%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% das partidas ao acaso têm pelo menos um.
+   - *Por que importa:* A D-050 diz que o final não pode estar decidido antes de jogar. Com a renda real, o básico real de Porto Alegre e nenhuma carteira em casa, a falta é estrutural: de −R$ 390 (Marcos) a −R$ 2.146 (Daiane) **por mês** antes de qualquer carta, e, passado o limite de R$ 2.000 do cheque especial, o que falta vira conta atrasada, com multa e mora. O melhor caminho possível do Jonas termina em −R$ 591, e exige a carta de promoção nos 6 bimestres. Nem um bimestre no azul é comum: Jonas 17,90%, Rose 0,00%, Marcos 15,23%, Bruna 0,03%, Kauã 0,04% e Daiane 0,00% das partidas ao acaso têm pelo menos um.
    - *Opções:*
-     - (a) **Aceitar e dizer em sala** que, em 12 meses, ninguém fechou, e mostrar o "quase" do Jonas (o melhor caminho a −R$ 770). Muda a D-050 (precisa de decisão nova). **Minha recomendação:** é o que os dados dizem.
+     - (a) **Aceitar e dizer em sala** que, em 12 meses, ninguém fechou, e mostrar o "quase" do Jonas (o melhor caminho a −R$ 591). Muda a D-050 (precisa de decisão nova). **Minha recomendação:** é o que os dados dizem.
      - (b) Medir "fechar" por bimestre no placar (quantos bimestres cada equipe fechou). É mudança de código, não de conteúdo.
      - (c) Pôr uma renda que não depende de escolha (por exemplo, um pico certo maior). Com ela, quem fica só no padrão também passa a chegar perto, o que a D-058 proíbe.
      - (d) Voltar a 3 rodadas mensais, onde o Jonas e o Marcos chegavam a 0,01% e 0,1%. Desfaz a D-060.
 
 2. **A referência "com carteira assinada" ficou abaixo do Jonas de app (D-056, D-062).**
-   - *Por que importa:* No placar, a linha da carteira (−R$ 14.939) fica abaixo de 90% das partidas do Jonas de app no padrão. A leitura da sala pode virar "o app paga melhor que a carteira", o contrário do que o seminário discute. A causa está nos dados: a PNAD dá ao motociclista de app mais caixa por mês que o salário médio de motoboy com carteira no CAGED, com mais horas e nenhum direito. Em 01/10, à tarde, refiz a linha com as regras da D-066 (o limite, as contas atrasadas, a multa e a mora): era −R$ 18.846, com os juros sem teto; ficou −R$ 14.750; em 05/10, com a multa e a mora da proposta 3(a), −R$ 14.939. *Pendência fora destes dois arquivos:* o `docs/roteiro-do-apresentador.md` ainda diz −R$ 18.846.
+   - *Por que importa:* No placar, a linha da carteira (−R$ 14.939) fica abaixo de 93% das partidas do Jonas de app no padrão. A leitura da sala pode virar "o app paga melhor que a carteira", o contrário do que o seminário discute. A causa está nos dados: a PNAD dá ao motociclista de app mais caixa por mês que o salário médio de motoboy com carteira no CAGED, com mais horas e nenhum direito. Em 01/10, à tarde, refiz a linha com as regras da D-066 (o limite, as contas atrasadas, a multa e a mora): era −R$ 18.846, com os juros sem teto; ficou −R$ 14.750; em 05/10, com a multa e a mora da proposta 3(a), −R$ 14.939. *Pendência fora destes dois arquivos:* o `docs/roteiro-do-apresentador.md` ainda diz −R$ 18.846.
    - *Opções:*
      - (a) Manter e explicar em sala: o app dá mais caixa com mais horas e sem rede; a carteira dá INSS, FGTS, férias e auxílio-doença, que o placar não mede.
      - (b) Somar à carteira o FGTS (R$ 183 por mês, ~R$ 2.200 no ano) e, se a convenção do Sindimoto-RS previr, o aluguel da moto, que muitas convenções pagam (a pesquisar: não tenho a fonte). A linha sobe, mas não sei se passa o app.
      - (c) Tirar a linha do placar e levar a comparação para um slide, com as horas trabalhadas lado a lado. **Minha recomendação:** (c) ou (a), porque (b) depende de uma fonte que ainda não tenho.
 
 3. **O esgotamento ainda é o melhor plano (D-059).**
-   - *Por que importa:* A opção mais cansativa é a de maior saldo esperado para a maioria das personas em jan–fev (3), mar–abr (3), set–out (5) e nov–dez (5). As multiplicações de risco com fonte (doença × 4,24 e × 4,5 com pouco sono, Prather et al., 2015; acidente × 1,3 a × 4,3, AAA Foundation, 2016) não pagam a renda a mais. Testei deixar a energia voltar mais (+1 em todas as opções) para o cansaço não ficar "saturado" em 0: no estimador rápido que usei para calibrar, a mais cansativa continuou a melhor em 24 dos 36 casos (eram 25); com a jornada de sempre em −2, em 22 (teste do rascunho de 30/09, antes das correções de 01/10).
+   - *Por que importa:* A opção mais cansativa é a de maior saldo esperado para a maioria das personas em jan–fev (3), mar–abr (3), mai–jun (4), set–out (5) e nov–dez (4). As multiplicações de risco com fonte (doença × 4,24 e × 4,5 com pouco sono, Prather et al., 2015; acidente × 1,3 a × 4,3, AAA Foundation, 2016) não pagam a renda a mais. Testei deixar a energia voltar mais (+1 em todas as opções) para o cansaço não ficar "saturado" em 0: no estimador rápido que usei para calibrar, a mais cansativa continuou a melhor em 24 dos 36 casos (eram 25); com a jornada de sempre em −2, em 22 (teste do rascunho de 30/09, antes das correções de 01/10).
    - *Opções:*
      - (a) **Aceitar** e mostrar o custo onde ele aparece: no pior caso e nas cartas graves (50% a 64% das partidas do Jonas, do Marcos e do Kauã tiram pelo menos uma). **Minha recomendação.**
      - (b) Subir o custo além da fonte (por exemplo, o exausto de −10% para −20%): cumpre a D-059 com número inventado.
      - (c) Deixar a jornada de sempre tirar menos energia (−2 em vez de −3), para o cansaço separar as escolhas no fim do ano. Sozinha, não resolve (o teste acima).
 
-4. **Em set–out, a melhor opção é a mesma para 5 das 6 personas (D-051).** (A da Daiane é B, por R$ 39 no esperado: dentro do ruído da simulação.)
+4. **Em set–out, a melhor opção é a mesma para 5 das 6 personas (D-051).** (A da Rose é A, por menos de R$ 50 no esperado: dentro do ruído da simulação.)
    - *Por que importa:* Furar o breque e rodar a Farroupilha (D) é a única opção de set–out que traz dinheiro; aderir ao breque e recusar o que não paga só custam. É o que aconteceu no dia: o concorrente pagou até R$ 9 a mais por entrega a quem furou (Metrópoles, 01/09/2026).
    - *Opções:*
      - (a) **Aceitar:** o dilema é justamente esse, dinheiro agora contra a pauta coletiva. **Minha recomendação.**
@@ -2029,13 +2091,13 @@ Cada item traz a pergunta, por que importa e as opções. A recomendação é mi
      - (b) Suspender a parcela do curso no bimestre parado (sem fonte).
 
 14. **As cartas graves continuam "dramatizadas"?**
-   - *Por que importa:* Em 3 meses, a D-030 avisava que as cartas graves eram exageradas para caber no jogo. Em 12 meses, a fratura (~2% por bimestre na rua, UFBA 2025) e o bloqueio (de 11% a 15% de chance no ano, no padrão) estão perto da frequência real, e 50% a 64% das partidas de quem está na rua tiram pelo menos uma carta grave.
+   - *Por que importa:* Em 3 meses, a D-030 avisava que as cartas graves eram exageradas para caber no jogo. Em 12 meses, a fratura (~2% por bimestre na rua, UFBA 2025) e o bloqueio (de 12% a 18% de chance no ano, no padrão) estão perto da frequência real, e 71% a 98% das partidas de quem está na rua tiram pelo menos uma carta grave (com a proposta 1(b), o despejo e o corte de luz pesam nessa conta; antes, 50% a 64%).
    - *Opções:*
      - (a) Tirar o aviso de exagero da fala do apresentador.
      - (b) Manter o aviso.
 
 15. **O limite do cheque especial, a multa e a ordem do corte (D-066; apliquei, a confirmar).**
-   - *Por que importa:* Usei R$ 2.000, o teto da faixa da D-066. O único dado oficial que achei é o do Banco Central: limite médio de R$ 1.693 na faixa de renda abaixo de R$ 1,5 mil em dez/2019 (Estudo Especial 84/2020), R$ 2.429 corrigido pelo IPCA; o próprio estudo diz que o método superestima o limite e só olha quem tem carteira. A multa (8%) e a mora (1% ao mês) são a média das contas que podem atrasar, pesada pelo valor de cada uma (aluguel 10% + 1%; luz, água e celular 2% + 1%). Gás, ônibus e remédio não atrasam: a casa fica sem (proposta de 05/10, aguardando o Kleber; até ela, 7% e 0,8%, com os três a 0%). A ordem do corte ficou "as contas primeiro": as contas do bimestre atrasam e a comida só é cortada no que passar delas (22% trocaram a conta de luz por comida, Ipec/iCS 2021; 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz, Pólis/Ipec 2024). No fim, no padrão, as contas atrasadas vão de R$ 10.448 a R$ 20.954, e o banco nunca passa do limite.
+   - *Por que importa:* Usei R$ 2.000, o teto da faixa da D-066. O único dado oficial que achei é o do Banco Central: limite médio de R$ 1.693 na faixa de renda abaixo de R$ 1,5 mil em dez/2019 (Estudo Especial 84/2020), R$ 2.429 corrigido pelo IPCA; o próprio estudo diz que o método superestima o limite e só olha quem tem carteira. A multa (8%) e a mora (1% ao mês) são a média das contas que podem atrasar, pesada pelo valor de cada uma (aluguel 10% + 1%; luz, água e celular 2% + 1%). Gás, ônibus e remédio não atrasam: a casa fica sem (proposta de 05/10, aguardando o Kleber; até ela, 7% e 0,8%, com os três a 0%). A ordem do corte ficou "as contas primeiro": as contas do bimestre atrasam e a comida só é cortada no que passar delas (22% trocaram a conta de luz por comida, Ipec/iCS 2021; 30% dos que ganham até 1 salário mínimo deixam de comprar comida para pagar a luz, Pólis/Ipec 2024). No fim, no padrão, as contas atrasadas vão de R$ 10.075 a R$ 20.936, e o banco nunca passa do limite.
    - *Opções:*
      - (a) **Manter R$ 2.000, 8% + 1% e "as contas primeiro".** **Minha recomendação:** é o que as fontes sustentam, e o limite mexe pouco no fim (só a parte que fica no banco, a 7,43%).
      - (b) Usar R$ 1.693, o valor de 2019 sem correção (as personas, sem carteira, devem ter limite menor que a média), ou R$ 1.000, o piso da D-066.
@@ -2057,23 +2119,24 @@ Cada item traz a pergunta, por que importa e as opções. A recomendação é mi
      - (c) Usar a margem de 55% do ovo (R$ 825): a fonte é de um produto de Páscoa, mais caro que doce do dia a dia e que marmita.
 
 18. **Com o limite, o placar da Daiane e o da Rose quase não separam as escolhas (efeito da D-066; precisa de decisão).**
-   - *Por que importa:* Passado o limite, o que falta além das contas do bimestre vira comida não comprada, e a D-066 deixa o "faltou na mesa" fora do placar (não é dívida). Para quem vive passando do limite, o dinheiro a mais ou a menos de uma opção vira mais ou menos comida, e não mais ou menos patrimônio: na Daiane, em 4 dos 6 bimestres, as 4 opções terminam a menos de R$ 40 umas das outras no placar, enquanto ela deixa de comprar, em média, R$ 8.953 de comida no ano. Com diferenças desse tamanho, o validador acusa o padrão como a opção de maior saldo (Rose em mai–jun; Daiane de mar–abr a jul–ago) e opção que domina ou vence em renda em mais de 70% das partidas (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 72% a 88% das partidas) e Daiane em jan–fev ("A" termina com mais saldo que cada uma das outras em 75% a 82% das partidas)). Refiz a conta (c) com o patrimônio menos o que faltou na mesa (3 mil partidas por opção, mesma regra: a opção naquele bimestre, as outras ao acaso): com essa medida, o padrão não é a melhor opção em nenhum bimestre da Rose, da Bruna e da Daiane, e a opção A da Rose em jan–fev (12 horas) deixa de ser a melhor (a da Daiane continua a melhor, por menos de R$ 100). A causa é do modelo, e não de um número: mexer no conteúdo para calar o aviso seria calibrar ruído. Também por isso, no pior caso, o MEI quase não melhora a Rose e a Daiane (a perda da fratura vira comida cortada).
+   - *Por que importa:* Passado o limite, o que falta além das contas do bimestre vira comida não comprada, e a D-066 deixa o "faltou na mesa" fora do placar (não é dívida). Para quem vive passando do limite, o dinheiro a mais ou a menos de uma opção vira mais ou menos comida, e não mais ou menos patrimônio: na Daiane, em 4 dos 6 bimestres, as 4 opções terminam a menos de R$ 50 umas das outras no placar, enquanto ela deixa de comprar, em média, R$ 9.201 de comida no ano. Com diferenças desse tamanho, o validador acusa o padrão como a opção de maior saldo (Rose em mai–jun e set–out; Daiane em jul–ago) e opção que domina ou vence em renda em mais de 70% das partidas (Rose em jan–fev ("A" termina com mais saldo que cada uma das outras em 90% a 94% das partidas), Bruna em mar–abr ("C", 73% a 82%) e Daiane em jan–fev ("A", 73% a 80%)). Refiz a conta (c) com o patrimônio menos o que faltou na mesa (3 mil partidas por opção, mesma regra: a opção naquele bimestre, as outras ao acaso): com essa medida, o padrão não é a melhor opção em nenhum bimestre da Rose, da Bruna e da Daiane, e a opção A da Rose em jan–fev (12 horas) deixa de ser a melhor (a da Daiane continua a melhor, por menos de R$ 100). A causa é do modelo, e não de um número: mexer no conteúdo para calar o aviso seria calibrar ruído. Também por isso, no pior caso, o MEI quase não melhora a Rose e a Daiane (a perda da fratura vira comida cortada).
    - *Opções:*
      - (a) **Mostrar o "faltou na mesa" ao lado do patrimônio no placar e contar, no validador, o patrimônio menos o que faltou na mesa** (a comida não comprada é dinheiro que faltou, mesmo não sendo dívida). **Minha recomendação:** mantém a D-066 ("não é dívida") e devolve ao placar a diferença entre as escolhas. É código (validador e placar), fora destes dois arquivos.
      - (b) Pôr o "faltou na mesa" dentro do patrimônio do placar: o mais simples, e muda a D-066.
      - (c) Aceitar: a sala vê que, para a Daiane, escolher quase não muda nada no saldo, e muda o que tem no prato. É um ponto de debate, mas o placar perde o sentido para essa equipe.
 
 19. **Os pesos de desgaste agora sobem por persona e bimestre (D-063; apliquei, a confirmar).**
-   - *Por que importa:* Para a chance crescer no plano padrão, o peso de cada carta de desgaste tem de subir mais que o resto do baralho, e o resto sobe muito: a doença com a energia baixa (× 4,24, Prather et al., 2015) e o remédio adiado (× 2), o temporal de mai–out e as cartas de atraso. Por isso os aumentos são por persona e por bimestre (o menor que faz a chance não cair, em passos de 0,25 no peso) e chegam a +12,75 no peso do "Quebrou" da Bruna e a +13 no "Alcance" da Daiane em nov–dez. A chance resultante continua modesta: o bloqueio em algum bimestre do ano fica de 11% a 15% (a GigU mede 15,5% de quem já foi bloqueado alguma vez), e o "Quebrou" do celular e da autoclave, de ~7% a ~9% por bimestre.
+   - *Por que importa:* Para a chance crescer no plano padrão, o peso de cada carta de desgaste tem de subir mais que o resto do baralho, e o resto sobe muito: a doença com a energia baixa (× 4,24, Prather et al., 2015) e o remédio adiado (× 2), o temporal de mai–out e as cartas de atraso. Por isso os aumentos são por persona e por bimestre (o menor que faz a chance não cair, em passos de 0,25 no peso) e chegam a +12,75 no peso do "Quebrou" da Bruna e a +13 no "Alcance" da Daiane em nov–dez. A chance resultante continua modesta: o bloqueio em algum bimestre do ano fica de 12% a 18% (a GigU mede 15,5% de quem já foi bloqueado alguma vez), e o "Quebrou" do celular e da autoclave, de ~7% a ~13% por bimestre. Com a proposta 1(b), o peso também é multiplicado na faixa de atraso (× 1,75 e mais × 2,25 a × 3,5), para o despejo e o corte de luz não o diluírem (item 20).
    - *Opções:*
      - (a) **Manter.** **Minha recomendação:** cumpre a D-063 na chance, que é o que a sala vê no sorteio, e os tamanhos estão escritos.
      - (b) Crescer só no peso, como antes (+2, +4…), e aceitar que a chance caia onde a doença dispara: mais simples, e contradiz a D-063 no que a sala vê.
      - (c) Diminuir a explosão da doença (o × 2 do remédio adiado, que é estimativa) para o baralho não inchar.
 
-20. **As duas cartas de atraso: "Cortaram a luz" e "O dono entrou com o despejo" (D-066; a chance é estimativa).**
-   - *Por que importa:* As regras têm fonte: a luz pode ser cortada com aviso de 15 dias, até 90 dias depois do vencimento, e a religação custa R$ 11,36 (ANEEL, REN 1.000/2021; CEEE, REH 3.547/2025); o despejo por falta de pagamento é uma ação na Justiça, e o inquilino evita a saída pagando tudo em 15 dias depois da citação, com multa, juros, custas e 10% de honorários (Lei 8.245/1991, arts. 9º e 62). A chance não tem fonte (não achei quantos inadimplentes têm a luz cortada, nem com quantos meses de atraso o dono entra na Justiça). No padrão, com a carta "Normal", a Rose tira o corte de luz com ~8% de chance por bimestre no fim do ano e o despejo com ~4%. O despejo só custa energia (−2): o dinheiro do processo e da mudança não entrou.
+20. **As duas cartas de atraso: "Cortaram a luz" e "O dono entrou com o despejo" (D-066; a chance é estimativa). (b) aplicado em 05/10 numa branch separada, aguardando o Kleber.**
+   - *Por que importa:* As regras têm fonte: a luz pode ser cortada com aviso de 15 dias, até 90 dias depois do vencimento, e a religação custa R$ 11,36 (ANEEL, REN 1.000/2021; CEEE, REH 3.547/2025); o despejo por falta de pagamento é uma ação na Justiça, e o inquilino evita a saída pagando tudo em 15 dias depois da citação, com multa, juros, custas e 10% de honorários (Lei 8.245/1991, arts. 9º e 62). A chance não tem fonte (não achei quantos inadimplentes têm a luz cortada, nem com quantos meses de atraso o dono entra na Justiça). Até 05/10, no padrão com a carta "Normal", a Rose tirava o corte de luz com ~8% de chance por bimestre no fim do ano e o despejo com ~4%, e ~85% das Roses nunca recebiam o despejo, com ~10 aluguéis atrasados. O despejo só custa energia (−2): o dinheiro do processo e da mudança não entrou.
+   - *O que foi aplicado (proposta de 05/10, aguardando o Kleber):* o despejo chega a ~30% por bimestre acima de 4 aluguéis atrasados da casa, e o corte de luz, acima de 2 bimestres das contas que atrasam (seção 4 e seção 5.1). No padrão, de 37% (Jonas) a 76% (Daiane) das partidas tiram o despejo, e de 35% a 84% tiram o corte. Para a D-063, o peso do desgaste é multiplicado nas mesmas faixas. **Efeito colateral:** na casa muito atrasada, a carta "Normal" cai para 3% a 5% no fim do ano, a doença (com fonte, Prather et al.) perde de 3 a 6 vezes a chance (a da Rose, de ~40% para ~12% em nov–dez, com a carta "Normal"), e o MEI quase deixa de melhorar o pior caso estimado (seção 6.4).
    - *Opções:*
-     - (a) **Manter.** **Minha recomendação**, dizendo em sala que a chance é estimativa.
-     - (b) Subir a chance do corte de luz para quem atrasa muito (com R$ 10 mil atrasados, na vida real o corte é quase certo).
+     - (a) Voltar ao que era (~4% e ~8%), dizendo em sala que a chance é estimativa.
+     - (b) **A aplicada na branch:** a chance cresce com o atraso até ~30% cada.
      - (c) Dar ao despejo um custo (frete da mudança, caução do novo aluguel), sem fonte de valor.
-
+     - (d) Um meio-termo: o despejo e o corte, somados, chegam a ~1 em 3 na casa muito atrasada (~15% cada), o que deixa espaço para a doença e para o bimestre "sem nada". É conta, não fonte, e pede mais uma rodada de calibragem.
