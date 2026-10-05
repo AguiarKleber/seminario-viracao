@@ -657,30 +657,38 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .placar-fim { margin-top: auto; }
 
 /* ---------- Barra do apresentador ----------
- * Sobreposta ao que está projetado. Só aparece com H ou com o mouse na faixa de
- * 48 px da borda de baixo (D-038; BORDA_BARRA_PX no telao.js), e some 3 s depois
- * do último movimento do mouse na faixa ou sobre ela. */
+ * Sobreposta ao que está projetado. Só aparece com H ou com o mouse PARADO
+ * ~400 ms na faixa fina do pé da tela (D-038; pedido 8 do Kleber, 05/10;
+ * BORDA_BARRA_PX e PARAR_NA_BORDA_MS no telao.js). Some 3 s depois do último
+ * movimento do mouse sobre ela, ou ~0,7 s depois de o mouse sair dela.
+ *
+ * Compacta (pedido 8): a informação do passo numa linha corrida em cima (o
+ * passo, o título, o salvamento, os ativos e o selo), a dica do passo embaixo
+ * dela e os botões menores. Antes, a informação vinha numa coluna de cinco
+ * linhas e os botões tinham 40 px de altura: aberta, a barra cobria um terço
+ * da tela em 1024×768. Os botões ficam com pelo menos 28 px (alvo de toque
+ * acima dos 24 px da WCAG 2.2). */
 
 .barra {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
-  padding: 10px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 4px 10px 6px;
   background: rgba(17, 17, 17, .97);
   border-top: 1px solid var(--linha-forte);
-  font-size: 18px;
+  font-size: 15px; line-height: 1.25;
 }
-.barra-info { display: flex; flex-direction: column; gap: 2px; min-width: 14em; }
+.barra-info { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; }
 .barra-passo { font-weight: 700; }
 .barra-titulo { color: var(--texto-2); max-width: 22em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .barra-salvo { color: var(--texto-2); }
 .barra-salvo:empty { display: none; }
 .barra-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .barra-ativos:empty { display: none; }
-.barra-dica { color: var(--texto); max-width: 40em; }
+.barra-dica { color: var(--texto); flex-basis: 100%; order: 1; }
 .barra-dica:empty { display: none; }
-.barra-info .selo { align-self: flex-start; margin-top: 4px; }
-.barra-botoes { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-.botao-barra { min-height: 40px; padding: .25em .7em; font-size: 17px; }
+.barra-info .selo { padding: 0 .6em; font-size: 14px; }
+.barra-botoes { display: flex; flex-wrap: wrap; gap: 4px; }
+.botao-barra { min-height: 28px; padding: .1em .55em; font-size: 14px; }
 
 /* ---------- Aviso e modal ---------- */
 

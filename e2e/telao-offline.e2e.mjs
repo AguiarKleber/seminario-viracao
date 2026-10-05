@@ -798,9 +798,12 @@ async function avancarAte(teste, descricao, { maximo = 8, aoPassar } = {}) {
 }
 
 // D-038: a barra só aparece com o mouse encostado na borda de baixo (ou com H).
+// Pedido 8 do Kleber (05/10): a faixa é fina (10 px) e a barra só abre com o
+// mouse parado nela ~400 ms; o ajudante encosta o mouse a 4 px do pé da tela e
+// espera.
 async function mostrarBarra() {
   const { height } = page.viewportSize();
-  await page.mouse.move(200 + Math.random() * 50, height - 12);
+  await page.mouse.move(200 + Math.random() * 50, height - 4);
   await page.waitForFunction(() => !document.getElementById('barra').hidden);
 }
 
@@ -1259,26 +1262,43 @@ await page.click('[data-acao="comecar-offline"]');
 await esperarTela('lobby');
 await conferirTela('lobby-offline');
 
-// D-038: a barra do apresentador só aparece com H ou com o mouse na borda de
-// baixo, e some sozinha 3 s depois de o mouse sair dela.
+// D-038: a barra do apresentador só aparece com H ou com o mouse parado na
+// faixa fina do pé da tela (pedido 8 do Kleber, 05/10), some sozinha 3 s depois
+// do último movimento sobre ela e ~0,7 s depois de o mouse sair dela.
 {
   assert.equal(await barraVisivel(), false, 'a barra não aparece sozinha ao começar a sessão');
   await page.mouse.move(400, 300);
   await page.mouse.move(520, 420);
   await page.waitForTimeout(400);
   assert.equal(await barraVisivel(), false, 'mouse no meio da tela não mostra a barra');
-  await page.mouse.move(520, 768 - 70); // perto, mas fora da faixa de 48 px
+  await page.mouse.move(520, 768 - 70); // perto, mas fora da faixa
   await page.waitForTimeout(300);
   assert.equal(await barraVisivel(), false, 'fora da faixa da borda, a barra continua escondida');
-  await page.mouse.move(520, 768 - 10);
+  // Pedido 8 do Kleber (05/10): a barra aparecia sem querer quando o mouse
+  // passava perto do pé da tela. A faixa que a revela é fina (10 px), e ela só
+  // abre com o mouse parado ali ~400 ms.
+  await page.mouse.move(520, 768 - 30); // dentro da faixa antiga de 48 px, fora da nova
+  await page.waitForTimeout(700);
+  assert.equal(await barraVisivel(), false, 'a 30 px do pé da tela (dentro da faixa antiga de 48 px), a barra continua escondida');
+  await page.mouse.move(530, 768 - 3);
+  await page.mouse.move(530, 400);
+  await page.waitForTimeout(700);
+  assert.equal(await barraVisivel(), false, 'o mouse que só passa pela faixa não abre a barra');
+  await page.mouse.move(520, 768 - 3);
+  const parouNaFaixa = Date.now();
   await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 2000 });
+  const espera = Date.now() - parouNaFaixa;
+  assert.ok(espera >= 300, `a barra abre só depois de o mouse parar na faixa (${espera} ms)`);
+  // Compacta: aberta, ela cobre no máximo um quarto da altura de 1024×768
+  // (antes, com a informação em coluna e botões de 40 px, cobria um terço).
+  const alturaBarra = await page.evaluate(() => document.getElementById('barra').getBoundingClientRect().height);
+  assert.ok(alturaBarra <= 768 / 4, `a barra compacta (${Math.round(alturaBarra)} px de altura em 1024×768)`);
+  // Ao sair dela, some com um atraso curto (~0,7 s; antes, 3 s).
   await page.mouse.move(520, 300);
   const saiu = Date.now();
-  await page.waitForTimeout(1500);
-  assert.equal(await barraVisivel(), true, 'a barra não some antes de 3 s');
   await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3000 });
   const durou = Date.now() - saiu;
-  assert.ok(durou >= 2800 && durou <= 4200, `a barra some cerca de 3 s depois de o mouse sair da borda (${durou} ms)`);
+  assert.ok(durou >= 400 && durou <= 1800, `a barra some pouco depois de o mouse sair dela (${durou} ms)`);
   // H mostra a barra, e ela também some sozinha em 3 s (D-038: "some sozinha
   // depois de 3 s" vale para os dois jeitos de abrir). H com ela aberta esconde.
   await page.mouse.move(520, 300);

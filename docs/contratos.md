@@ -905,12 +905,18 @@ com `viewBox` igual ao tamanho real, para o texto ter o tamanho do corpo.
 | `salvarEstado(motivo?)` | baixa o estado da sala (formato abaixo). O `'manual'` avisa na tela; o automático (fim de rodada) só registra "estado salvo às HH:MM (r2)" na barra do apresentador (`[data-barra-salvo]`), para o aviso não cobrir o sorteio projetado |
 | `estado()`, `sala()`, `modo()`, `chaveSessao(sala)`, `versaoApp` | leitura (e2e). Os dois e2e leem a versão daqui (e não de um `?v=1` escrito no teste), para não reprovar quando o `bin/versao.mjs` subir a versão |
 
-**Barra do apresentador (D-038):** escondida por padrão, e começar a sessão não a mostra. Aparece
-com H (liga e desliga; aberta pelo H, não some sozinha) ou com o mouse na faixa de 48 px da borda de
-baixo (`BORDA_BARRA_PX`); aberta pela borda, some 3 s depois do último movimento do mouse na faixa
-ou sobre ela, também com o mouse parado ali (só um modal aberto a segura). Movimento do mouse fora da faixa não a mostra. Os atalhos
-de teclado valem com ela escondida, e os registros discretos (salvamento automático, ativos/membros)
-continuam só nela.
+**Barra do apresentador (D-038; pedido 8 do Kleber, 05/10):** escondida por padrão, e começar a sessão não a
+mostra. Aparece com H (liga e desliga) ou com o mouse **parado** na faixa fina do pé da tela: `BORDA_BARRA_PX` = 10
+px (antes, 48) e `PARAR_NA_BORDA_MS` = 400 ms; cada movimento dentro da faixa recomeça a espera, e sair dela antes
+cancela, então o mouse que só passa por ali não a abre (no teste de 05/10, ela aparecia sem querer). 10 px, e não os
+~6 px pedidos: o e2e:online e o e2e:votos encostam o mouse em 800 − 10 numa tela de 800 px, e o que evita a abertura
+sem querer é a espera. Aberta, cada movimento sobre ela (ou na faixa) recomeça os 3 s (`ESCONDER_BARRA_MS`), e ela
+some também com o mouse parado em cima; ao sair dela, some depois de `SAIR_DA_BARRA_MS` = 700 ms (antes, 3 s). Um
+modal aberto ou o foco do teclado dentro dela a seguram. Aberta pelo H, movimento fora dela não a esconde: some nos 3
+s. **Compacta:** a informação do passo numa linha corrida (passo, título, salvamento, ativos, selo), a dica do passo
+numa linha embaixo dela, e os botões com 28 px de altura e letra de 14 px (antes, coluna de cinco linhas e botões de 40
+px: aberta, cobria um terço de 1024×768; o e2e exige no máximo um quarto). Os atalhos de teclado valem com ela
+escondida, e os registros discretos (salvamento automático, ativos/membros) continuam só nela.
 
 **Controle de operador fora da projeção (D-047):** tudo o que só o apresentador usa fica na barra, e
 nunca no `#palco` nem na faixa de entrada (a abertura, antes de projetar, é a exceção):

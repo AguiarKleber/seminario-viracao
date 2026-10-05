@@ -36,7 +36,17 @@
   const ESCONDER_BARRA_MS = 3000;
   // D-038: a barra só aparece com o mouse encostado nesta faixa de baixo (ou com
   // H). A qualquer movimento, ela cobria o que estava projetado.
-  const BORDA_BARRA_PX = 48;
+  // Teste do Kleber de 05/10 (pedido 8): com a faixa de 48 px, ela ainda
+  // aparecia sem querer quando o mouse passava perto do pé da tela. Agora a
+  // faixa é fina, colada ao pé da tela, e a barra só abre com o mouse PARADO
+  // nela por PARAR_NA_BORDA_MS (passar não abre). 10 px, e não os ~6 px
+  // pedidos: os e2e com celulares (e2e:online, e2e:votos) encostam o mouse em
+  // 800 − 10 numa tela de 800 px, e o que impede a abertura sem querer é a
+  // espera, não a largura. Ao sair dela, a barra some depois de
+  // SAIR_DA_BARRA_MS (antes, 3 s).
+  const BORDA_BARRA_PX = 10;
+  const PARAR_NA_BORDA_MS = 400;
+  const SAIR_DA_BARRA_MS = 700;
   const ATIVO_MS = 60000;
   const RODAPE_ENQUETE = 'Retrato desta turma, não pesquisa.';
   const LETRAS = 'ABCDEFGHIJ';
@@ -58,9 +68,11 @@
     depoisDeMedir: [],
     ultimoAvanco: -Infinity, inicioPasso: null,
     selo: null, wake: null, barraTimer: 0, barraVisivel: false,
-    // mouseNaBorda: o último movimento do mouse foi na faixa de baixo (sair dela
-    // recomeça os 3 s da barra).
-    mouseNaBorda: false,
+    // mouseNaBorda: o último movimento do mouse foi na faixa de baixo.
+    // mouseSobreBarra: o mouse esteve sobre a barra aberta (ou na faixa); sair
+    // dela arma o sumiço curto (SAIR_DA_BARRA_MS). bordaTimer: a espera do
+    // mouse parado na faixa; saidaTimer: o sumiço depois de sair.
+    mouseNaBorda: false, mouseSobreBarra: false, bordaTimer: 0, saidaTimer: 0,
     // Só online: a conexão (undefined = ainda não se sabe, e não recusa nada), a
     // hora da última reconexão forçada pelo próprio telão, a releitura adiada
     // para quando a rede voltar e o modo passivo (outra máquina assumiu).
@@ -3347,20 +3359,62 @@
     }, ESCONDER_BARRA_MS);
   }
 
-  // Movimento fora da borda não mostra a barra. Ao sair da borda com ela aberta,
-  // os 3 s recomeçam: contam a partir de quando o mouse saiu, e não de quando
-  // ele entrou na faixa. Movimento sobre a barra aberta também recomeça.
+  // Pedido 8 do Kleber (05/10):
+  // - escondida, a barra só abre com o mouse parado na faixa fina do pé da tela:
+  //   cada movimento dentro dela recomeça a espera de PARAR_NA_BORDA_MS, e sair
+  //   dela antes cancela. O mouse que só passa pela faixa (indo de um canto ao
+  //   outro, por exemplo) não abre nada. O mouse que fica parado na faixa
+  //   depois de a barra sumir também não: sem movimento, não há evento;
+  // - aberta, cada movimento sobre ela (ou na faixa) recomeça os 3 s
+  //   (mostrarBarra); ao sair dela, ela some depois de SAIR_DA_BARRA_MS, com o
+  //   mesmo critério do mostrarBarra para segurar (um modal aberto, o foco do
+  //   teclado dentro dela). Movimento fora dela, sem ter passado por ela (a
+  //   barra aberta pelo H), não a esconde: ela some nos 3 s, como antes.
   function aoMoverMouse(ev) {
     if (!app.anf) return;
     const naBorda = ev.clientY >= raiz.innerHeight - BORDA_BARRA_PX;
-    const saiu = app.mouseNaBorda && !naBorda;
-    const sobreABarra = app.barraVisivel && app.el.barra.contains(ev.target);
     app.mouseNaBorda = naBorda;
-    if (naBorda || sobreABarra || (saiu && app.barraVisivel)) mostrarBarra();
+    if (app.barraVisivel) {
+      if (naBorda || app.el.barra.contains(ev.target)) {
+        app.mouseSobreBarra = true;
+        clearTimeout(app.saidaTimer);
+        app.saidaTimer = 0;
+        mostrarBarra();
+      } else if (app.mouseSobreBarra) {
+        app.mouseSobreBarra = false;
+        clearTimeout(app.saidaTimer);
+        app.saidaTimer = setTimeout(() => {
+          app.saidaTimer = 0;
+          if (app.el.modal.open || app.el.barra.contains(document.activeElement)) return;
+          esconderBarra();
+        }, SAIR_DA_BARRA_MS);
+      }
+      return;
+    }
+    clearTimeout(app.bordaTimer);
+    app.bordaTimer = naBorda ? setTimeout(() => {
+      app.bordaTimer = 0;
+      if (!app.mouseNaBorda || app.barraVisivel) return;
+      // O mouse está na faixa, embaixo da barra que abre: sair dela (sem outro
+      // movimento antes) já arma o sumiço curto.
+      app.mouseSobreBarra = true;
+      mostrarBarra();
+    }, PARAR_NA_BORDA_MS) : 0;
+  }
+
+  // O mouse que sai da janela pela borda de baixo não fica "na borda" para
+  // sempre, nem abre a barra depois da espera.
+  function aoSairDaJanela() {
+    app.mouseNaBorda = false;
+    clearTimeout(app.bordaTimer);
+    app.bordaTimer = 0;
   }
 
   function esconderBarra(tambemDesligar = false) {
     clearTimeout(app.barraTimer);
+    clearTimeout(app.saidaTimer);
+    app.saidaTimer = 0;
+    app.mouseSobreBarra = false;
     app.el.barra.hidden = true;
     app.barraVisivel = false;
     document.body.classList.remove('barra-visivel');
@@ -3720,8 +3774,7 @@
     ligarArrastar();
     document.addEventListener('keydown', aoTeclar);
     document.addEventListener('mousemove', aoMoverMouse);
-    // O mouse que sai da janela pela borda de baixo não fica "na borda" para sempre.
-    document.documentElement.addEventListener('mouseleave', () => { app.mouseNaBorda = false; });
+    document.documentElement.addEventListener('mouseleave', aoSairDaJanela);
     raiz.addEventListener('resize', () => agendarDesenho());
     N().conexao.aoVoltarAVista(() => sincronizar());
     setInterval(tique, 250);
