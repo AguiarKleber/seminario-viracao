@@ -62,6 +62,15 @@
 // 13. Pedidos do Kleber de 05/10: o rótulo "saldo do bimestre" logo acima de
 //    cada saldo do resultado; a equipe pelo personagem ("Jonas, motoboy") em
 //    toda tela, menos na formação (a cor, com o personagem ao lado).
+// 14. Pedido 6 do Kleber de 05/10, o modo revendo: ← (ou PageUp) revê o passo
+//    anterior só no telão, com o selo "Revendo: <passo> · … no passo atual · →
+//    volta"; repetir volta mais, até a entrada na sala; cada tela revista é a
+//    de quando o passo estava no telão (o resultado de cada bimestre igual ao
+//    lido na hora, o placar resumido de então); → e Esc voltam ao passo atual;
+//    Espaço (também o duplo do passador), Enter (também mantido apertado), P,
+//    números e Ctrl+Z só saem do modo, sem rodar; o clique num comando da barra
+//    sai e roda. Offline e com celulares, nada é gravado: o estado, a geracao,
+//    o localStorage e a sala inteira no canal ficam iguais.
 // 9. esquema v2.1, com as seis equipes e a carta mais cara que cada uma podia
 //    tirar em cada mês (parte 4): o resultado enxuto cabendo em 1024×768, com
 //    um vão entre as faixas, e a história com o custo real da carta ("N dias
@@ -1219,6 +1228,69 @@ async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
   }
 }
 
+// ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
+// Teste do Kleber de 05/10: o apresentador precisa rever a tela anterior sem
+// afetar os celulares. ← (ou PageUp) mostra o passo anterior só no telão,
+// repetir volta mais, → ou Esc volta ao atual, e as outras teclas de comando
+// só saem do modo, sem rodar. Nada vai ao canal, ao banco nem à fila.
+
+// A tela que o telão refaz para o passo revisto (js/telao.js, telaRevista): a
+// que dá para refazer a partir da sala guardada; o resto, o cartão com o
+// título do passo.
+function telaRevistaEsperada(p, sala) {
+  switch (p.tipo) {
+    case 'lobby': return 'lobby';
+    case 'bloco': return 'bloco';
+    case 'personas': return 'personas';
+    case 'rodada': return sala?.resultados?.[p.rodada] ? 'rodada-resultado' : 'revista-cartao';
+    case 'enquete': return sala?.enquetes?.[p.enquete]?.[p.momento] ? 'enquete-apurada' : 'revista-cartao';
+    case 'placarFinal': return 'placar-final';
+    case 'comparativo': return 'comparativo';
+    default: return 'revista-cartao';
+  }
+}
+
+// O selo em cima do palco. Offline não há celular: "a sessão continua".
+const seloEsperado = (p, online) => `Revendo: ${descreverPasso(p)} · ${online ? 'os celulares continuam' : 'a sessão continua'} no passo atual · → volta`;
+
+const lerRevendo = () => page.evaluate(() => {
+  const selo = document.getElementById('revendo');
+  const s = document.querySelector('#palco > .tela');
+  const classes = Array.from(s?.classList || []);
+  return {
+    tela: document.body.dataset.tela,
+    revendo: s?.dataset.revendo ?? null,
+    revista: classes.includes('tela-revista'),
+    id: classes.find((c) => c.startsWith('tela-') && c !== 'tela-revista')?.slice('tela-'.length) ?? null,
+    pagina: s?.dataset.pagina ?? null,
+    selo: selo && !selo.hidden ? selo.textContent : null,
+    kicker: document.querySelector('#palco .tela-cabecalho .kicker')?.textContent ?? null,
+    h1: document.querySelector('#palco h1')?.textContent ?? null,
+  };
+});
+
+// Tudo o que o telão guarda no navegador (o canal local do offline, que é o
+// banco da sessão, e as chaves do próprio telão): o modo revendo não muda nem
+// um byte.
+const lerArmazenado = () => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)])));
+// A sala guardada pelo canal local da sessão offline.
+const lerSalaLocal = () => page.evaluate(() => {
+  const T = globalThis.Viracao.telao;
+  return JSON.parse(localStorage.getItem(T.chaveSessao(T.sala())) || 'null')?.salas?.[T.sala()] ?? null;
+});
+
+// ← (ou PageUp) e espera a tela revista do passo k.
+async function recuarRevendo(k, tecla = 'ArrowLeft') {
+  await page.keyboard.press(tecla);
+  await page.waitForFunction((i) => document.querySelector('#palco > .tela')?.dataset.revendo === String(i), k);
+  return lerRevendo();
+}
+
+// Espera a tela do passo atual de volta, sem o selo.
+async function esperarFimDoRevendo(idTela) {
+  await page.waitForFunction((t) => document.body.dataset.tela === t && document.getElementById('revendo').hidden, idTela);
+}
+
 // ---------- Parte 1: sessão inteira sem celulares ----------
 
 console.log(`Parte 1: sessão inteira do roteiro ${ROTEIRO}, sem celulares`);
@@ -1362,11 +1434,13 @@ assert.equal(await page.locator('#barra [data-acao="semVencedor"]').count(), 0, 
   await aba2.close();
 }
 
-// ← e PageUp (o "voltar" do passador) não fazem nada.
+// ← e PageUp (o "voltar" do passador) entram no modo revendo (pedido 6 do
+// Kleber, 05/10); no passo 0 não há o que rever, e nada muda.
 await page.keyboard.press('ArrowLeft');
 await page.keyboard.press('PageUp');
 await page.waitForTimeout(200);
 assert.equal((await estado()).indice, 0);
+assert.deepEqual([(await lerRevendo()).selo, (await lerRevendo()).tela], [null, 'lobby'], 'no passo 0, ← não entra no modo revendo');
 
 // Enquete "antes" (revelada só no comparativo)
 await avancarAte((e) => e.indice === I_ANTES, 'enquete antes');
@@ -1602,6 +1676,73 @@ await page.waitForTimeout(500);
 const automaticos = downloads.slice(downloadsAntesR).filter((d) => new RegExp(`viracao-estado-.*-(${RODADAS.join('|')})-`).test(d.suggestedFilename()));
 assert.equal(automaticos.length, RODADAS.length + 1, `um JSON automático por apuração de rodada (vieram ${automaticos.length})`);
 
+// Pedido 6 do Kleber (05/10), modo revendo, no resultado do último bimestre
+// (onde o Espaço avançaria e o Ctrl+Z abriria a confirmação do desfazer): ←
+// mostra o passo anterior só no telão, e as teclas de comando só saem do
+// modo. Nenhuma roda o comando, abre confirmação ou grava alguma coisa.
+{
+  const atual = await estado();
+  assert.deepEqual([atual.tipo, atual.subfase], ['rodada', 'resultado']);
+  const guardado = await lerArmazenado();
+  const k = atual.indice - 1;
+  const anterior = PASSOS[k];
+  const mesmoEstado = async (onde) => assert.deepEqual(await estado(), atual, `${onde}: o estado (passo, subfase, geracao) não muda`);
+  let r = await recuarRevendo(k);
+  assert.deepEqual([r.tela, r.revista, r.selo, r.id], ['revendo', true, seloEsperado(anterior, false), telaRevistaEsperada(anterior, await lerSalaLocal())], 'revendo o passo anterior');
+  // A barra diz que é o modo revendo; o passo dela continua o atual. H (a
+  // barra) não sai do modo.
+  await mostrarBarra();
+  assert.match(await page.textContent('#barra [data-barra-dica]'), new RegExp(`^Revendo o passo ${k + 1} \\(só no telão; a sessão continua no passo atual\\) · ← volta mais · → ou Esc volta ao passo atual`));
+  assert.match(await page.textContent('[data-barra-passo]'), new RegExp(`^passo ${atual.indice + 1} de ${PASSOS.length}`));
+  await page.mouse.move(520, 300);
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3000 });
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => !document.getElementById('barra').hidden);
+  assert.equal((await lerRevendo()).revendo, String(k), 'H não sai do modo revendo');
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => document.getElementById('barra').hidden);
+  // O Espaço (o "avançar" do passador) só sai do modo; o segundo Espaço logo
+  // depois (o passador manda dois) também não avança: a saída conta para a
+  // trava de 1,5 s.
+  await page.keyboard.press('Space');
+  await page.keyboard.press('Space');
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(300);
+  await mesmoEstado('Espaço duplo no modo revendo');
+  // As outras: → e Esc voltam ao passo atual; Enter, P, um número e Ctrl+Z,
+  // que fora do modo rodariam, só saem dele.
+  await page.evaluate(() => { document.getElementById('aviso').textContent = ''; });
+  for (const tecla of ['ArrowRight', 'Escape', 'Enter', 'p', 'Digit1', 'Control+z']) {
+    r = await recuarRevendo(k, tecla === 'Escape' ? 'PageUp' : 'ArrowLeft');
+    assert.equal(r.selo, seloEsperado(anterior, false));
+    await page.keyboard.press(tecla);
+    await esperarFimDoRevendo('rodada-resultado');
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => document.getElementById('modal').open), false, `${tecla} no modo revendo não abre confirmação`);
+    await mesmoEstado(`${tecla} no modo revendo`);
+  }
+  // A tecla mantida apertada repete (keyboard.down de novo: repeat = true): a
+  // repetição que chega depois da saída também não roda o comando.
+  await recuarRevendo(k);
+  await page.keyboard.down('Enter');
+  await page.keyboard.down('Enter');
+  await page.keyboard.down('Enter');
+  await page.keyboard.up('Enter');
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(200);
+  assert.ok(!/votação aberta/.test(await page.textContent('#aviso')), 'o Enter mantido apertado, saindo do modo revendo, não roda o "encerrar"');
+  await mesmoEstado('Enter mantido apertado');
+  assert.deepEqual(await lerArmazenado(), guardado, 'o modo revendo não grava nada no navegador (canal local e chaves do telão)');
+  // O clique num comando da barra é de propósito: sai do modo e roda o comando.
+  await page.waitForTimeout(1600); // a trava da última saída por tecla
+  await recuarRevendo(k);
+  await clicarBarra('avancar');
+  await esperarEstado((e) => e.indice === atual.indice + 1, 'o "Avançar" da barra, no modo revendo, sai dele e avança');
+  ultimoAvanco = Date.now();
+  await page.waitForFunction(() => document.getElementById('revendo').hidden && document.body.dataset.tela !== 'revendo');
+  await page.mouse.move(520, 300);
+}
+
 // Placar final em páginas (D-041): o saldo contra o básico, "escolha ou sorte?"
 // e a história de cada equipe (D-045). O Espaço pagina dentro do passo; na
 // última página, avança o roteiro.
@@ -1776,6 +1917,93 @@ for (let n = 2; n <= AFIRM_ANTES.length; n += 1) {
 await avancarAte((e) => e.tipo === 'fim', 'fim', { aoPassar: (e) => conferirBloco(e, '-final') });
 await esperarTela('fim');
 await conferirTela('fim');
+
+// Pedido 6 do Kleber (05/10), modo revendo: do fim, ← (e PageUp) volta passo a
+// passo até a entrada na sala, e cada tela revista é a de quando o passo
+// estava no telão: o resultado de cada bimestre igual ao lido na hora, o
+// placar resumido dos blocos de então (e não o de agora), o "você está aqui"
+// no passo revisto, a enquete apurada, a primeira página do placar final e do
+// comparativo; a formação das equipes, que não dá para refazer, é um cartão
+// com o título. Cabe em 1024×768 com o selo. Esc volta ao fim, e nada foi
+// gravado: o estado, a geracao e o localStorage ficam iguais.
+{
+  const atual = await estado();
+  const guardado = await lerArmazenado();
+  const sala = await lerSalaLocal();
+  const renda = configNode.indicadores.renda;
+  const vistas = new Set();
+  // Na primeira vez que cada tipo de tela revista aparece, os critérios do
+  // visual, com o selo em cima.
+  const conferirUmaVez = async (nome, opcoes) => {
+    if (vistas.has(nome)) return;
+    vistas.add(nome);
+    await conferirTela(nome, opcoes);
+  };
+  for (let k = atual.indice - 1; k >= 0; k -= 1) {
+    const p = PASSOS[k];
+    const onde = `revendo o passo ${k} (${descreverPasso(p)})`;
+    const r = await recuarRevendo(k, k % 2 ? 'ArrowLeft' : 'PageUp');
+    assert.deepEqual([r.tela, r.revista, r.selo], ['revendo', true, seloEsperado(p, false)], `${onde}: o selo`);
+    assert.equal(r.id, telaRevistaEsperada(p, sala), `${onde}: a tela revista`);
+    if (p.tipo === 'rodada') {
+      assert.deepEqual(await lerFaixas(), contasNaTela[p.rodada], `${onde}: o resultado igual ao projetado na hora`);
+      await conferirUmaVez('revendo-rodada-resultado', { aoMedir: conferirVisualDoResultado });
+    } else if (p.tipo === 'bloco') {
+      const mapa = RE_MAPA.test(p.titulo || '');
+      const lido = await page.evaluate(() => ({
+        seguir: document.querySelector('#palco .linha-tempo-seguir')?.textContent ?? '',
+        aqui: Array.from(document.querySelectorAll('#palco .linha-tempo [aria-current="step"]'), (n) => n.dataset.passos),
+        resumido: Object.fromEntries(Array.from(document.querySelectorAll('#palco .resumido-linha'), (n) => [n.dataset.equipe, n.querySelector('.resumido-valor').textContent])),
+      }));
+      assert.equal(r.h1, p.titulo, `${onde}: o título do bloco`);
+      if (mapa) assert.ok(lido.seguir.startsWith(`Você está aqui: ${descreverPasso(p)}`), `${onde}: "Você está aqui" no mapa revisto ("${lido.seguir}")`);
+      else assert.ok(lido.aqui.length === 1 && lido.aqui[0].split(',').map(Number).includes(k), `${onde}: "você está aqui" no passo revisto (${lido.aqui})`);
+      // O placar resumido de quando o bloco estava na tela: o "depois" da
+      // última rodada antes dele (o estado inicial antes da primeira).
+      const esperado = mapa || k < I_FORMAR ? {} : Object.fromEntries(ATIVAS.map((eq) => {
+        let valores = V.motor.estadoInicial(configNode, eq);
+        for (const q of PASSOS.slice(0, k)) if (q.tipo === 'rodada' && sala.resultados?.[q.rodada]?.[eq]) valores = sala.resultados[q.rodada][eq].depois;
+        return [eq, F.indicador(renda, V.historia.patrimonioDe(valores) ?? 0)];
+      }));
+      assert.deepEqual(lido.resumido, esperado, `${onde}: o placar resumido de então`);
+      await conferirUmaVez(mapa ? 'revendo-bloco-mapa' : 'revendo-bloco-com-placar');
+    } else if (p.tipo === 'enquete') {
+      const enq = configNode.enquetes[p.enquete];
+      assert.equal(r.h1, enq.revelar === 'so_no_comparativo' ? 'Respostas registradas' : enq.titulo, `${onde}: a enquete apurada`);
+      await conferirUmaVez(`revendo-enquete-${enq.revelar === 'so_no_comparativo' ? 'escondida' : 'apurada'}`);
+    } else if (p.tipo === 'placarFinal') {
+      assert.deepEqual([r.pagina, r.h1], ['saldo', saldoNaTela.titulo], `${onde}: a primeira página do placar final`);
+      const valores = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.valor-saldo'), (n) => [n.dataset.equipe, n.textContent])));
+      assert.deepEqual(valores, saldoNaTela.valores, `${onde}: os saldos do placar final`);
+      await conferirUmaVez('revendo-placar-saldo');
+    } else if (p.tipo === 'comparativo') {
+      const enq = configNode.enquetes[p.enquete];
+      const ordem = lista(enq.ordemAfirmacoes);
+      assert.deepEqual([r.kicker, r.h1], [`Comparativo · afirmação 1 de ${ordem.length}`, enq.afirmacoes[ordem[0]].texto], `${onde}: a primeira afirmação do comparativo`);
+      await conferirUmaVez('revendo-comparativo');
+    } else if (p.tipo === 'personas') {
+      const personas = new Set(ATIVAS.map((eq) => configNode.equipes[eq].persona));
+      assert.equal(await page.locator('#palco .persona-linha').count(), personas.size, `${onde}: uma linha por persona das equipes que jogam`);
+      await conferirUmaVez('revendo-personas', { aoMedir: conferirVisualDasPersonas });
+    } else if (r.id === 'revista-cartao') {
+      assert.deepEqual([r.kicker, r.h1], [`Passo ${k + 1} de ${PASSOS.length}`, descreverPasso(p)], `${onde}: o cartão com o título do passo`);
+      await conferirUmaVez('revendo-cartao');
+    }
+  }
+  // No passo 0 não há o que rever: ← não muda nada.
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(200);
+  assert.equal((await lerRevendo()).revendo, '0', 'no passo 0, ← fica no passo 0');
+  for (const tipo of ['lobby', 'enquete', 'bloco', 'formarEquipes', 'personas', 'rodada', 'placarFinal', 'comparativo']) {
+    assert.ok(PASSOS.slice(0, atual.indice).some((p) => p.tipo === tipo), `o roteiro passa por um passo "${tipo}" antes do fim (o teste reviu cada tipo)`);
+  }
+  // Esc volta ao passo atual (o fim).
+  await page.keyboard.press('Escape');
+  ultimoAvanco = Date.now(); // a saída por tecla arma a trava do avançar
+  await esperarFimDoRevendo('fim');
+  assert.deepEqual(await estado(), atual, 'o modo revendo não muda o estado nem a geracao');
+  assert.deepEqual(await lerArmazenado(), guardado, 'o modo revendo não grava nada no navegador (canal local e chaves do telão)');
+}
 
 // Exportar totais (na barra, D-047): só agregados, sem nenhum uid
 let esperaDownload = page.waitForEvent('download');
@@ -2023,6 +2251,49 @@ assert.equal(origemE2, 'moeda', 'empate que continua na prorrogação vai para a
 await avancarPara((e) => e.subfase === 'resultado', 'resultado (celulares)');
 await esperarTela('rodada-resultado');
 await conferirTela('rodada-resultado-celulares', { esperarMs: 900, aoMedir: conferirVisualDoResultado });
+// Para o modo revendo, logo abaixo: o resultado como foi projetado.
+const contasNaTelaCelulares = await lerFaixas();
+
+// Pedido 6 do Kleber (05/10), modo revendo com celulares: o selo diz que os
+// celulares continuam no passo atual, as telas revistas cabem em 1024×768 com
+// o selo em cima e a faixa de entrada embaixo (as seis personas são o caso
+// mais apertado), e nada é gravado no canal: a sala inteira (estado, membros,
+// presença, votos, resultados) fica igual, e a tela dos celulares é função
+// dela.
+{
+  const atual = await estado();
+  const lerSala = () => page.evaluate(() => globalThis.__canalTeste.ler('salas/K7Q2'));
+  const antes = await lerSala();
+  for (let k = atual.indice - 1; k >= 0; k -= 1) {
+    const p = PASSOS[k];
+    const r = await recuarRevendo(k);
+    assert.deepEqual([r.tela, r.selo, r.id], ['revendo', seloEsperado(p, true), telaRevistaEsperada(p, antes)], `revendo o passo ${k} com celulares`);
+    if (p.tipo === 'personas') {
+      assert.equal(await page.locator('#faixa').isVisible(), true, 'com a faixa de entrada');
+      await conferirTela('revendo-personas-celulares', { aoMedir: conferirVisualDasPersonas });
+    }
+  }
+  await page.keyboard.press('ArrowRight');
+  // A saída por tecla conta para a trava de 1,5 s do avançar (o telão
+  // ignora o Espaço logo depois): o próximo avancar() do teste espera.
+  ultimoAvanco = Date.now();
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(200);
+  assert.deepEqual(await estado(), atual, 'com celulares, o modo revendo não muda o estado nem a geracao');
+  assert.deepEqual(await lerSala(), antes, 'com celulares, o modo revendo não grava nada no canal');
+  // O resultado das seis equipes com a faixa de entrada, o caso mais apertado
+  // do telão, revisto do passo seguinte: cabe também com o selo em cima.
+  const lido = contasNaTelaCelulares;
+  await avancarPara((e) => e.indice === atual.indice + 1, 'o passo depois do resultado (celulares)');
+  const r = await recuarRevendo(atual.indice);
+  assert.deepEqual([r.id, r.selo], ['rodada-resultado', seloEsperado(PASSOS[atual.indice], true)], 'revendo o resultado com celulares');
+  assert.deepEqual(await lerFaixas(), lido, 'o resultado revisto igual ao projetado na hora (celulares)');
+  await conferirTela('revendo-rodada-resultado-celulares', { aoMedir: conferirVisualDoResultado });
+  await page.keyboard.press('Escape');
+  ultimoAvanco = Date.now();
+  await page.waitForFunction(() => document.getElementById('revendo').hidden && document.body.dataset.tela !== 'revendo');
+  assert.equal((await estado()).indice, atual.indice + 1, 'Esc volta ao passo atual, sem mexer nele');
+}
 
 // ---------- Parte 3: seguir sem celulares no meio de uma enquete ----------
 
