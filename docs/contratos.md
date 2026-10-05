@@ -1523,7 +1523,8 @@ anfitrião: quem decide é o telão.
       rótulo é o título da rodada até os dois-pontos, "Mês 1", por `historia.rotuloDaRodada`).
       **Esquema v3 (D-060):** com `regras.mesesPorRodada` = 2, "Bimestre · Saldo do bimestre · Ficou com",
       uma linha por bimestre ("Jan–fev" … "Nov–dez", 6 no jogo de 12 meses), `aria-label` "Resumo por
-      bimestre", inteiro em 360×740 no placar final. O período sai de `historia.periodo` (a regra do telão),
+      bimestre", inteiro em 360×740 nos blocos (no placar final, desde 05/10, o topo são as escolhas do ano; ver
+      "Placar final" abaixo). O período sai de `historia.periodo` (a regra do telão),
       e as outras telas dizem o mesmo: "Saldo do bimestre" e "A conta do bimestre em detalhe" no resultado,
       "o básico da família custa R$ X no bimestre" na conta (o `mes.basico` já é o do bimestre), "(… no
       bimestre)" na variação dos indicadores, "A história bimestre a bimestre" e, na persona e na situação
@@ -1562,7 +1563,7 @@ anfitrião: quem decide é o telão.
       `data-atrasadas` e `data-limite` repetem os valores (só com o limite). Com empréstimo, o "Dinheiro em
       caixa" do resumo é o patrimônio mais o empréstimo **e** as contas atrasadas.
     - **O que faltou na mesa** (`p.faltou-mesa`, `data-faltou-na-mesa` = o acumulado): à parte da dívida (não
-      é dívida e não entra no "ficou com"). No resumo (situação, placar final e fim), dentro do cartão, embaixo
+      é dívida e não entra no "ficou com"). No resumo (situação dos blocos e fim), dentro do cartão, embaixo
       da dívida: "Faltou na mesa: R$ X de comida que não deu para comprar, até agora." (o acumulado da última
       linha); no resultado, à vista depois da dívida, com `data-no-periodo` = o do bimestre: "Faltou na mesa:
       R$ Y de comida que não deu para comprar neste bimestre (R$ X até agora)." (sem o parêntese quando Y = X;
@@ -1588,13 +1589,39 @@ anfitrião: quem decide é o telão.
     apresentador.
   - **Antes do primeiro mês**, a situação mostra o básico, a família e os
     indicadores, sem resumo nem conta do mês.
-  - **Placar final:** o resumo mês a mês e a dívida no topo; "Escolha ou
-    sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte ·
-    = Terminaram com", as variações sempre com + ou −, o total do fim em
-    `.placar-total`, igual ao último "Ficou com"), sem "piloto automático" nem
-    "efeito das decisões" (D-041); o pior caso; e a história recolhida ("A
-    história mês a mês", `data-recolhido="historia"`). A decisão sem voto aparece
-    como "ninguém votou: ficou o de sempre".
+  - **Placar final** (o mesmo em todas as páginas do placar do telão, que o celular não distingue; aluno e
+    espectador, este com a equipe que está vendo). **Pedido do Kleber de 05/10 (item 4):** o topo são as escolhas
+    do ano, para a turma ver que, mesmo podendo escolher, faltou muito dinheiro. Título "As escolhas de vocês"
+    (kicker "Placar final") e, de cima para baixo:
+    - a frase `p.escolhas-frase` ("Vocês escolheram em todos os 6 bimestres, e ainda faltou R$ X."): X é o
+      patrimônio do placar da equipe (`historia.patrimonioDe(placar/{eq})`, o "faltou R$ X" da barra do telão e o
+      "Terminaram com" do "Escolha ou sorte?"; sem placar, o "ficou com" do último bimestre). "Escolheram" conta as
+      rodadas com origem diferente de `piloto` (o "ninguém votou" não é escolha): com uma delas, "em 5 dos 6
+      bimestres"; sem nenhuma, "A equipe não votou em nenhum bimestre, e faltou R$ X."; uma rodada só, "no bimestre
+      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X.". `data-resultado` =
+      `faltou`|`fechou`, `data-valor` (o patrimônio arredondado), `data-escolheram` e `data-total`; no `faltou`,
+      a borda grossa (nunca só cor, D-016);
+    - o cartão `section.escolhas-ano`: o cabeçalho `.escolhas-cabecalho` ("Bimestre · escolha · carta" e "Saldo do
+      bimestre": o número colorido é o saldo do bimestre) e uma `li.escolha` por rodada jogada, na ordem
+      (`data-rodada`, `data-saldo-mes`, `data-opcao` = o id da decisão, `data-letra`, `data-origem`, `data-carta`
+      = o id da carta): na primeira linha, o nome curto (`.escolha-mes`, `historia.rotuloDaRodada`) e o saldo
+      (`.valor-saldo.saldo-mes`, com o sinal e a cor, como no resumo); embaixo, de ponta a ponta, "B · rótulo"
+      (`.escolha-opcao`: a letra pela `ordemOpcoes` da rodada e o rótulo do jeito da persona, D-054, com a origem
+      entre parênteses quando não foi o voto simples, os mesmos textos do `descreverDecisao`: "ninguém votou: ficou
+      o de sempre", "empate decidido na moeda", "decidida na prorrogação", "registrada pelo apresentador") e
+      "Carta: título" (`.escolha-carta`). A letra, a origem e a carta saem de `resultados/{r}/{eq}`, que o celular
+      já ouve; nenhuma leitura nova (as regras v4 ficam como estão). No fim do cartão,
+      `p.faltou-mesa.faltou-mesa-ano` ("Faltou na mesa no ano: R$ M de comida que não deu para comprar (fora do
+      saldo)."), M = `historia.faltouNaMesaDe(placar/{eq})`, inclusive R$ 0, com o "no ano" do telão (12 meses
+      jogados; 1, "no mês"; senão "em N meses"); sala sem o limite, sem a linha;
+    - a dívida de hoje (`div.divida`, a do último bimestre: "Dívida total R$ D" e as partes);
+    - "Escolha ou sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte · = Terminaram com",
+      as variações sempre com + ou −, o total do fim em `.placar-total`), sem "piloto automático" nem "efeito das
+      decisões" (D-041); o pior caso; a história recolhida ("A história mês a mês", `data-recolhido="historia"`);
+      a família e os indicadores sem dinheiro.
+    Em 360×740, o título e as duas primeiras linhas aparecem sem rolar (com o config real, as seis não cabem
+    juntas: os rótulos vão a duas linhas). O resumo "Saldo · Ficou com" saiu do placar final (de 29/09 a 05/10 era
+    o topo dele); continua nos blocos e no fim.
   - **Fim:** o resumo mês a mês e a dívida (no lugar do "Saldo acumulado" do
     placar, que era o caixa), o pior caso e a história da própria equipe,
     recolhida, mês a mês (`.historia-mes`, com

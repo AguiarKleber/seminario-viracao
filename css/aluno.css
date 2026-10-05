@@ -351,6 +351,42 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
    360×740 (o e2e:online confere). */
 .resumo-meses .faltou-mesa { padding-left: 0; border-left: 0; }
 
+/* ---------- As escolhas do ano, no placar final (pedido de 05/10, item 4) ----------
+   A frase de cima ("Vocês escolheram em todos os 6 bimestres, e ainda faltou
+   R$ X") com a borda grossa do "faltou" (nunca só cor, D-016) e, num cartão,
+   uma linha por bimestre: o nome curto e o saldo do bimestre na primeira
+   linha, a opção e a carta embaixo, de ponta a ponta. A opção ocupa a largura
+   inteira de propósito: ao lado do valor, os rótulos de até 50 letras ("Aceitar
+   toda encomenda de Páscoa, até a sem margem") iam a três linhas em 360 px, e
+   as duas primeiras linhas da lista não cabiam sem rolar. */
+.escolhas-frase {
+  padding: 10px 14px;
+  font-size: 18px; font-weight: 600; line-height: 1.35;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.escolhas-frase[data-resultado="faltou"] { border: 2px solid var(--texto); border-left-width: 8px; }
+.escolhas-ano {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 14px 12px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.escolhas-cabecalho {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--linha-forte);
+  font-size: 14px; font-weight: 600; color: var(--texto-2);
+}
+.escolha {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px;
+  padding: 8px 0;
+}
+.escolha + .escolha { border-top: 1px solid var(--linha); }
+.escolha-mes { font-size: 16px; font-weight: 700; }
+.escolha .valor-saldo { font-size: 17px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.escolha-opcao, .escolha-carta { grid-column: 1 / -1; line-height: 1.3; }
+.escolha-opcao { font-size: 16px; }
+.escolha-carta { font-size: 15px; color: var(--texto-2); }
+.escolhas-ano .faltou-mesa { padding: 8px 0 0; border-left: 0; border-top: 1px solid var(--linha-forte); }
+
 .valor-saldo { font-weight: 700; }
 /* Verde se positivo, vermelho se negativo, a pedido do Kleber depois do
    teste de 30/09, com os mesmos tokens e nomes do telão (base.css: --positivo e
