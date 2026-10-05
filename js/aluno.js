@@ -2011,10 +2011,11 @@
 
   // ----- A dívida da família (D-046; esquema v2.2, D-065)
   //
-  // Duas dívidas: o cheque especial (o saldo acumulado negativo, com os juros do
-  // config) e o empréstimo a pagar. A "dívida" das telas é a soma
-  // (historia.dividaTotal). No teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e
-  // o celular disse "Dívida R$ 1", porque olhava só o cheque especial.
+  // Três dívidas: o cheque especial (o saldo acumulado negativo, com os juros do
+  // config), o empréstimo a pagar e, com o limite (D-066), as contas atrasadas.
+  // A "dívida" das telas é a soma das três (totalDaDivida, pedido de 05/10). No
+  // teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e o celular disse "Dívida
+  // R$ 1", porque olhava só o cheque especial.
 
   const valoresDe = (indicadores) => Object.fromEntries(lista(indicadores).map((i) => [i.id, i.valor]));
 
@@ -2035,28 +2036,33 @@
     return { jurosMes: r.jurosDividaMes, limite: r.limiteChequeEspecial, multaAtraso: r.multaAtraso, moraMes: r.moraMes };
   }
 
-  // Na decisão, uma linha só (a dobra de 360×740 não tem espaço): "Dívida R$ D ·
-  // juros de J% ao mês" quando é só o cheque especial, e "Dívida R$ D, com R$ E
-  // de empréstimo" quando há empréstimo (os juros dele são outros).
-  // Com o limite (D-066), o D é o do telão: o banco e o empréstimo, sem as
-  // contas atrasadas (revisão da F6c: o telão escrevia "dívida R$ 3.000" e o
-  // celular, "Dívida R$ 7.811", para a mesma equipe). As contas atrasadas
-  // ficam na situação, logo abaixo das opções (blocoDivida): na mesma linha,
-  // "· contas atrasadas R$ 4.811" quebrava em duas em 360 px e empurrava a
-  // confirmação do voto para baixo da dobra (matriz de votos, r4).
-  const temAtrasadas = (divida) => divida?.contasAtrasadas > 0;
+  // Pedido do Kleber depois do teste de 05/10 (item 3): a dívida das telas é uma
+  // só, a "dívida total" = cheque especial + empréstimo + contas atrasadas, o
+  // mesmo número da linha única do telão. Antes (revisão da F6c), o total era só
+  // o banco e o empréstimo, e as contas atrasadas vinham numa linha à parte: no
+  // telão, "dívida R$ 2.000" e "contas atrasadas R$ 5.880" lado a lado, e a sala
+  // não somava. A soma é feita aqui, pelas partes, e não pelo total do núcleo
+  // (historia.dividaTotal ainda deixa as contas atrasadas fora do total): assim
+  // o celular dá o mesmo número com qualquer uma das duas definições lá.
+  const totalDaDivida = (d) => (Number(d?.chequeEspecial) || 0) + (Number(d?.emprestimo) || 0) + (Number(d?.contasAtrasadas) || 0);
+
+  // Na decisão, uma linha só, "Dívida total R$ D" (a dobra de 360×740 não tem
+  // espaço). No teste de 05/10, a linha curta saía quebrada em cinco ("Dívida" /
+  // "R$ 2.625" / ", com" / "R$ 625" / "de empréstimo"), porque o <p> herdava o
+  // flex em coluna da caixa .divida; e nem sem isso ela cabia: "Dívida R$ 2.625,
+  // com R$ 625 de empréstimo" mede 312 px para os 300 px da linha em 360 px, e
+  // com o "total" e as contas atrasadas, até 357 px. As partes (cheque especial,
+  // empréstimo, contas atrasadas, com as taxas) ficam na situação recolhida,
+  // depois das opções (blocoDivida), e no resultado.
   function linhaDivida(divida) {
-    if (!divida || !(divida.total > 0)) return null;
+    const total = totalDaDivida(divida);
+    if (!(total > 0)) return null;
     const { el } = D();
-    const moeda = (v) => el('b', { texto: F().moeda(v) });
-    let resto = [];
-    if (divida.emprestimo > 0) resto = [', com ', moeda(divida.emprestimo), ' de empréstimo'];
-    else if (Number.isFinite(divida.jurosMes)) resto = [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'];
-    return el('p', { classe: 'divida', dados: { divida: String(divida.total) } }, ['Dívida ', moeda(divida.total), ...resto]);
+    return el('p', { classe: 'divida divida-curta', dados: { divida: String(total) } }, ['Dívida total ', el('b', { texto: F().moeda(total) })]);
   }
 
   // Nas telas de situação, resultado e fim, a dívida por partes, debaixo do
-  // saldo: "Dívida hoje R$ 1.501", "Cheque especial R$ 1 · juros de 7,43% ao
+  // saldo: "Dívida total R$ 1.501", "Cheque especial R$ 1 · juros de 7,43% ao
   // mês", "Empréstimo a 6,39% ao mês: fica devendo R$ 1.500 em 12 parcelas" e "a
   // próxima: R$ 183 · R$ 2.192 no total, com os juros" (11 × 183 + 179). A taxa
   // do empréstimo vem do mês gravado (taxaEmprestimo): sem ela, só a taxa do
@@ -2064,11 +2070,13 @@
   // mês dos indicadores). Com empréstimo e caixa positivo, o caixa aparece: sem
   // ele, "ficou com −R$ 1.000" ao lado de "dívida R$ 1.500" não fechava.
   // Sem dívida, sem o bloco.
-  // Com o limite (D-066; revisão da F6c), o total é "Dívida no banco" (o
-  // cheque especial e o empréstimo, o mesmo número que o telão chama de
-  // dívida), e as contas atrasadas vêm numa linha com nome próprio, fora dele.
+  // Pedido de 05/10 (item 3): o número de cima é a "Dívida total" (o cheque
+  // especial, o empréstimo e as contas atrasadas, totalDaDivida), o mesmo da
+  // linha única do telão, e as partes ficam embaixo, como já estavam. Antes era
+  // "Dívida no banco" (revisão da F6c), sem as contas atrasadas.
   function blocoDivida(divida, mes) {
-    if (!divida || !(divida.total > 0 || temAtrasadas(divida))) return null;
+    const total = totalDaDivida(divida);
+    if (!divida || !(total > 0)) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
     const partes = [];
@@ -2103,13 +2111,15 @@
       if (divida.caixa > 0) partes.push(el('p', { classe: 'divida-nota', texto: `Dinheiro em caixa: ${F().moeda(divida.caixa)}` }));
     }
     // data-atrasadas e data-limite só com o limite: a sala sem ele fica igual.
+    // data-divida é a dívida total; data-banco, o cheque especial e o
+    // empréstimo (o total de antes de 05/10), para a conferência do e2e.
     const doLimite = {
       ...(divida.contasAtrasadas !== undefined ? { atrasadas: divida.contasAtrasadas } : {}),
       ...(Number.isFinite(divida.limite) ? { limite: divida.limite } : {}),
     };
     return el('div', {
-      classe: 'divida', dados: { divida: divida.total, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo, ...doLimite },
-    }, [el('p', { classe: 'divida-total' }, [divida.contasAtrasadas !== undefined ? 'Dívida no banco ' : 'Dívida hoje ', moeda(divida.total)]), ...partes]);
+      classe: 'divida', dados: { divida: total, banco: divida.chequeEspecial + divida.emprestimo, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo, ...doLimite },
+    }, [el('p', { classe: 'divida-total' }, ['Dívida total ', moeda(total)]), ...partes]);
   }
 
   // ----- O resumo mês a mês (D-065)
@@ -2415,10 +2425,12 @@
     // as opções. O texto da rodada fica no telão: no celular, ele empurrava as
     // opções para baixo da dobra (revisão de 29/09). A situação completa fica fechada depois das opções,
     // para os botões de voto subirem na tela.
-    // A dívida é a soma do cheque especial com o empréstimo (esquema v2.2): no
-    // teste de 30/09, o Jonas decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500
-    // emprestados. Só a linha muda; o voto não.
-    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(s ? dividaDe(valoresDe(s.indicadores)) : null)].filter(Boolean);
+    // A dívida é a soma do cheque especial, do empréstimo e das contas
+    // atrasadas (esquema v2.2; pedido de 05/10): no teste de 30/09, o Jonas
+    // decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500 emprestados. Só a linha
+    // muda; o voto não. As partes vão na situação recolhida, embaixo.
+    const divida = s ? dividaDe(valoresDe(s.indicadores)) : null;
+    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(divida)].filter(Boolean);
     const aviso = botao('Mais opções abaixo ↓', () => rolarAteUltimaOpcao(), { classe: 'aviso-rolagem', dados: { avisoRolagem: '1' } });
     aviso.hidden = true;
     // Movido de equipe depois de votar (avisarSeMovido): a nota fica acima das
@@ -2448,7 +2460,10 @@
       el('p', { classe: 'texto-2', texto: `Toque numa opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome || 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
       s ? el('details', { classe: 'situacao-resumo' }, [
         el('summary', { texto: `Situação de ${persona || 'sua persona'}` }),
-        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), contaDoMes(s.mes, s.persona)]),
+        // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
+        // total, e o cheque especial, o empréstimo e as contas atrasadas, com
+        // as taxas, ficam aqui, fora da dobra.
+        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), blocoDivida(divida, s.mes), contaDoMes(s.mes, s.persona)]),
         listaIndicadores(s.indicadores),
       ]) : null,
       aviso,

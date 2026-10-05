@@ -1442,8 +1442,8 @@ anfitrião: quem decide é o telão.
     a frase inteira, depois das opções, ficava abaixo da dobra em 360×740, e uma
     linha a mais antes das opções empurrava a letra D para fora da primeira tela).
     Depois das opções, a dica inteira ("Toque numa opção para ler a explicação; o
-    voto só vale no “Votar nesta”") e a situação completa (família, conta do
-    último mês e indicadores), fechada.
+    voto só vale no “Votar nesta”") e a situação completa (família, a dívida por
+    partes, conta do último mês e indicadores), fechada.
   - **Tocar para ler, votar no botão (D-055):** tocar numa opção
     (`.botao-opcao-aluno[data-opcao]`, com `aria-expanded`) abre a explicação
     dela **sem votar**; tocar de novo fecha, e tocar noutra troca a aberta (uma por
@@ -1490,15 +1490,20 @@ anfitrião: quem decide é o telão.
     quando é maior que 0, e nenhuma linha se as três forem 0 ou sem `cartaCusto`.
     `data-dias-parado`, `data-renda-perdida` e `data-gastos` repetem os valores.
     Mesma forma para toda carta: a grave não ganha destaque.
-  - **Dívida (esquema v2.2):** é o cheque especial (o saldo acumulado negativo)
-    **mais** o empréstimo a pagar, por `historia.dividaTotal` a partir dos
-    indicadores do fim do mês. No teste de 30/09, o Jonas pegou R$ 1.500 e a tela
+  - **Dívida (esquema v2.2; pedido do Kleber de 05/10, item 3):** a "dívida total" é o cheque especial (o saldo
+    acumulado negativo) **mais** o empréstimo a pagar **mais**, com o limite (D-066), as contas atrasadas, a partir
+    das partes de `historia.dividaTotal` nos indicadores do fim do mês. A soma é feita no celular
+    (`totalDaDivida`), pelas partes, e não pelo `total` do núcleo (que ainda deixa as contas atrasadas fora): o
+    número é o mesmo da linha única "dívida total" do telão. No teste de 30/09, o Jonas pegou R$ 1.500 e a tela
     disse "Dívida R$ 1". Sem dívida, sem a linha nem o bloco.
-    - Na decisão (`.pressao .divida`, uma linha): "Dívida R$ D · juros de J% ao
-      mês" só com cheque especial; com empréstimo, "Dívida R$ D, com R$ E de
-      empréstimo".
-    - Nas telas de situação, resultado e fim (`div.divida`, com `data-divida`,
-      `data-cheque` e `data-emprestimo`): "Dívida hoje R$ D", "Cheque especial R$ C ·
+    - Na decisão (`p.divida.divida-curta` em `.pressao`, `data-divida` = o total): só "Dívida total R$ D", numa
+      linha em 360 px (texto corrido, `display: block`). No teste do Kleber de 05/10, a linha herdava o flex em
+      coluna da caixa `.divida` e saía empilhada em cinco; e as versões com o resto ("…, com R$ E de
+      empréstimo", "· juros de J% ao mês") medem de 312 a 357 px para os 300 px da linha. As partes, com as
+      taxas, ficam no bloco da dívida dentro da situação recolhida (`details.situacao-resumo`), depois das opções.
+    - Nas telas de situação, resultado e fim, e na situação recolhida da decisão (`div.divida`, com
+      `data-divida` = a dívida total, `data-banco` = cheque especial + empréstimo, `data-cheque` e
+      `data-emprestimo`): "Dívida total R$ D", "Cheque especial R$ C ·
       juros de J% ao mês", "Empréstimo a T% ao mês: fica devendo R$ E em N parcelas" (T de
       `mes.taxaEmprestimo`; sem ela, "Empréstimo: fica devendo…") e "a
       próxima: R$ P · R$ T no total, com os juros" (do `mes` gravado:
@@ -1548,9 +1553,10 @@ anfitrião: quem decide é o telão.
       "Como ficou" (energia e proteção, com a variação do mês).
   - **Limite do cheque especial (D-066, esquema v3.1).** Tudo isto só aparece com `regras.limiteChequeEspecial`
     no config (o `mes` gravado tem `contasAtrasadas`); sem ele, as telas ficam iguais, atributo por atributo.
-    - **Dívida** (`div.divida`, nas telas de situação, resultado e fim): o total de `historia.dividaTotal` é o banco e
-      o empréstimo, escrito "Dívida no banco R$ D" (revisão da F6c: o mesmo número que o telão chama de dívida; antes,
-      "Dívida hoje" somava as contas atrasadas). Na decisão, a linha curta "Dívida R$ D" usa o mesmo D, e as contas atrasadas ficam na situação (numa linha só, elas quebravam em 360 px e empurravam a confirmação do voto para baixo da dobra). "Cheque especial R$ C de R$ L do limite · juros de J% ao mês" (L de
+    - **Dívida** (`div.divida`, nas telas de situação, resultado e fim): "Dívida total R$ D", com as contas
+      atrasadas dentro do D (pedido de 05/10, item 3; de 30/09 a 05/10, pela revisão da F6c, era "Dívida no banco",
+      sem elas, e as contas atrasadas vinham só como parte). Na decisão, a linha curta "Dívida total R$ D" usa o
+      mesmo D. Embaixo, as partes: "Cheque especial R$ C de R$ L do limite · juros de J% ao mês" (L de
       `regras.limiteChequeEspecial`) e uma parte nova, `.divida-parte[data-parte="atrasadas"]`: "Contas
       atrasadas R$ A · multa de M% e mora de R% ao mês" (`regras.multaAtraso` e `regras.moraMes`), só com A > 0.
       `data-atrasadas` e `data-limite` repetem os valores (só com o limite). Com empréstimo, o "Dinheiro em

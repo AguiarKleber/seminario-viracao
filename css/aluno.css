@@ -397,6 +397,11 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .contexto-texto { font-weight: 600; }
 .pressao { display: flex; flex-direction: column; gap: 4px; }
 .pressao .divida { padding: 4px 12px; }
+/* A linha curta da decisão é um <p> de texto corrido, e não a caixa em coluna
+   do .divida: no teste do Kleber de 05/10, o flex em coluna herdado empilhava
+   cada pedaço numa linha ("Dívida" / "R$ 2.625" / ", com"…) e empurrava as
+   opções para baixo da dobra. */
+.divida-curta { display: block; }
 
 .opcoes-aluno { display: flex; flex-direction: column; gap: 8px; }
 .botao-opcao-aluno { align-items: center; gap: 12px; }

@@ -704,14 +704,16 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   }
   assert.equal(esperada.at(-1).saldoAcumulado, ultimo.depois.renda - ultimo.depois.contas_atrasadas - (ultimo.depois.emprestimo || 0), 'o último "ficou com" desconta as contas atrasadas');
   assert.ok(lido.divida, 'a dívida de hoje aparece');
-  assert.deepEqual([Number(lido.divida.divida), Number(lido.divida.cheque), Number(lido.divida.atrasadas), Number(lido.divida.limite)], [d.total, d.chequeEspecial, d.contasAtrasadas, 1500], 'a dívida é a do banco; as contas atrasadas, num atributo próprio');
-  // Revisão da F6c: "Dívida no banco" é o mesmo número que o telão chama de
-  // dívida (o banco e o empréstimo); as contas atrasadas vêm à parte, com nome
-  // próprio, e não somadas num "Dívida hoje".
-  assert.equal(d.total, d.chequeEspecial + d.emprestimo, 'o total é o banco e o empréstimo');
-  assert.ok(!lido.divida.texto.includes('Dívida hoje'), `com o limite, nenhum total chamado "Dívida hoje" (${lido.divida.texto})`);
+  // Pedido do Kleber de 05/10 (item 3): a "Dívida total" soma o banco, o
+  // empréstimo e as contas atrasadas, o mesmo número da linha única do telão;
+  // as partes continuam embaixo, cada uma com o seu nome. Antes (revisão da
+  // F6c), o total era "Dívida no banco", sem as contas atrasadas.
+  const totalDaTela = d.chequeEspecial + d.emprestimo + d.contasAtrasadas;
+  assert.deepEqual([Number(lido.divida.divida), Number(lido.divida.banco), Number(lido.divida.cheque), Number(lido.divida.atrasadas), Number(lido.divida.limite)],
+    [totalDaTela, d.chequeEspecial + d.emprestimo, d.chequeEspecial, d.contasAtrasadas, 1500], 'a dívida total soma o banco, o empréstimo e as contas atrasadas; as partes, nos atributos próprios');
+  assert.ok(!/Dívida hoje|Dívida no banco/.test(lido.divida.texto), `nenhum total com o nome de antes (${lido.divida.texto})`);
   for (const x of [
-    `Dívida no banco ${await moeda(d.total)}`,
+    `Dívida total ${await moeda(totalDaTela)}`,
     `Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite · juros de 8% ao mês`,
     `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e mora de 1% ao mês`,
   ]) assert.ok(lido.divida.texto.includes(x), `placar final: "${x}" em "${lido.divida.texto}"`);
@@ -785,6 +787,9 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   const d4 = H.dividaTotal(res('r4').depois);
   assert.ok(t.divida.visivel && !t.divida.noRecolhido, 'Jul–ago: a dívida à vista');
   assert.equal(Number(t.divida.dados.atrasadas), d4.contasAtrasadas);
+  // Pedido de 05/10 (item 3): o número de cima é a dívida total, com as contas atrasadas.
+  assert.equal(Number(t.divida.dados.divida), d4.chequeEspecial + d4.emprestimo + d4.contasAtrasadas);
+  assert.ok(t.divida.texto.startsWith(`Dívida total ${await moeda(d4.chequeEspecial + d4.emprestimo + d4.contasAtrasadas)}`), t.divida.texto);
   assert.ok(t.divida.texto.includes(`Contas atrasadas ${await moeda(d4.contasAtrasadas)}`), t.divida.texto);
   assert.ok(t.divida.texto.includes(`Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite`), t.divida.texto);
   assert.ok(t.mesa && t.mesa.visivel && !t.mesa.noRecolhido, 'Jul–ago: o que faltou na mesa à vista');
@@ -1176,21 +1181,27 @@ async function jogar({ site, navegador, vigiar }) {
   // 30/09, o Jonas pegou R$ 1.500 no mês 2 e o celular disse "Dívida R$ 1": a
   // soma é refeita aqui (historia.dividaTotal, a mesma função pura do núcleo),
   // e o texto é conferido parte por parte. Sem dívida, sem o bloco.
+  // Pedido do Kleber de 05/10 (item 3): o número de cima é a "Dívida total", o
+  // cheque especial, o empréstimo E as contas atrasadas, o mesmo da linha única
+  // do telão; as partes continuam embaixo. Antes era "Dívida no banco", sem as
+  // contas atrasadas (revisão da F6c). A soma é pelas partes, como no celular.
   async function conferirDivida(c, res, onde) {
     const lido = await c.p.evaluate(() => {
-      const n = document.querySelector('.divida');
+      const n = document.querySelector('div.divida');
       return n ? { ...n.dataset, texto: n.textContent } : null;
     });
     const d = C.historia.dividaTotal(res.depois);
     assert.ok(d, `${onde}: o telão gravou o "depois" do mês`);
-    if (!(d.total > 0) && !(d.contasAtrasadas > 0)) {
+    const total = d.chequeEspecial + d.emprestimo + (d.contasAtrasadas || 0);
+    if (!(total > 0)) {
       assert.equal(lido, null, `${onde}: sem dívida, sem o bloco da dívida`);
       return d;
     }
     assert.ok(lido, `${onde}: a dívida aparece`);
-    assert.deepEqual([Number(lido.divida), Number(lido.cheque), Number(lido.emprestimo)], [d.total, d.chequeEspecial, d.emprestimo], `${onde}: a dívida é o cheque especial mais o empréstimo`);
-    // Com o limite (revisão da F6c), "Dívida no banco" e as contas atrasadas à parte.
-    const trechos = [`${d.contasAtrasadas !== undefined ? 'dívida no banco' : 'dívida hoje'} ${await moedaNa(c, d.total)}`];
+    assert.deepEqual([Number(lido.divida), Number(lido.banco), Number(lido.cheque), Number(lido.emprestimo)], [total, d.chequeEspecial + d.emprestimo, d.chequeEspecial, d.emprestimo],
+      `${onde}: a dívida total é o cheque especial, o empréstimo e as contas atrasadas`);
+    assert.ok(!/dívida no banco|dívida hoje/i.test(lido.texto), `${onde}: nenhum total com o nome de antes (${lido.texto})`);
+    const trechos = [`dívida total ${await moedaNa(c, total)}`];
     if (d.contasAtrasadas > 0) trechos.push(`contas atrasadas ${await moedaNa(c, d.contasAtrasadas)}`);
     // Com as casas da fonte (7,43%), refeito aqui, e não pelo formatador da página.
     const juros = `${(C.cfg.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
@@ -2204,13 +2215,38 @@ async function jogar({ site, navegador, vigiar }) {
       const [Q1] = C.opcoesDe(R3);
       await esperarTela(cel[0], 'decisao');
       await esperarTela(caio, 'decisao');
-      // Na decisão, a dívida numa linha: a soma, com a parte do empréstimo.
+      // Na decisão, a dívida numa linha só: "Dívida total R$ D" (pedido de
+      // 05/10, item 3: o cheque especial, o empréstimo e as contas atrasadas).
+      // No teste do Kleber de 05/10, a linha saía empilhada em cinco ("Dívida" /
+      // "R$ 2.625" / ", com" / "R$ 625" / "de empréstimo"), pelo flex em coluna
+      // da caixa .divida: a altura dela tem de ser a de uma linha de texto.
       {
         const d = C.historia.dividaTotal(res2[E1].depois);
-        const linha = await cel[0].p.textContent('.pressao .divida');
-        // Com o limite, o total é o banco e o empréstimo, o mesmo "dívida" do telão (revisão da F6c).
-        const esperado = `dívida ${await moedaNa(cel[0], d.total)}, com ${await moedaNa(cel[0], d.emprestimo)} de empréstimo`;
-        assert.ok(inclui(linha, esperado), `decisão do mês 3: "${esperado}" em "${linha}"`);
+        const total = d.chequeEspecial + d.emprestimo + (d.contasAtrasadas || 0);
+        const linha = await cel[0].p.evaluate(() => {
+          const n = document.querySelector('.pressao .divida');
+          const s = getComputedStyle(n);
+          const umaLinha = parseFloat(s.lineHeight) + parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) + parseFloat(s.borderTopWidth) + parseFloat(s.borderBottomWidth);
+          return { texto: n.textContent, divida: Number(n.dataset.divida), altura: n.getBoundingClientRect().height, umaLinha, direita: n.getBoundingClientRect().right };
+        });
+        assert.equal(linha.texto, `Dívida total ${await moedaNa(cel[0], total)}`, 'decisão do mês 3: a linha curta é a dívida total');
+        assert.equal(linha.divida, total);
+        assert.ok(linha.altura <= linha.umaLinha + 1, `decisão do mês 3: a linha da dívida não quebra em 360 px (altura ${linha.altura}, uma linha ${linha.umaLinha})`);
+        assert.ok(linha.direita <= 360, `decisão do mês 3: a linha da dívida cabe na largura (${linha.direita} px)`);
+        // As partes ficam na situação recolhida, depois das opções.
+        const partes = await cel[0].p.evaluate(() => {
+          const caixa = document.querySelector('details.situacao-resumo');
+          const aberta = caixa.open;
+          caixa.open = true;
+          const n = caixa.querySelector('div.divida');
+          const lido = n ? { ...n.dataset, texto: n.textContent } : null;
+          caixa.open = aberta;
+          return lido;
+        });
+        assert.ok(partes, 'decisão do mês 3: a dívida por partes na situação recolhida');
+        assert.equal(Number(partes.divida), total);
+        if (d.emprestimo > 0) assert.ok(inclui(partes.texto, `fica devendo ${await moedaNa(cel[0], d.emprestimo)}`), `decisão do mês 3: o empréstimo nas partes ("${partes.texto}")`);
+        if (d.chequeEspecial > 0) assert.ok(inclui(partes.texto, `cheque especial ${await moedaNa(cel[0], d.chequeEspecial)}`), `decisão do mês 3: o cheque especial nas partes ("${partes.texto}")`);
       }
       await votarNa(cel[0], Q1);
       await temNota(cel[0], /registrado/);
