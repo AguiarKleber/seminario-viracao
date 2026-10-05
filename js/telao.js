@@ -429,10 +429,28 @@
   const usaEmulador = () => parametro('emulador') === '1' && ehMaquinaLocal();
   const usaLongPolling = () => parametro('lp') === '1';
 
+  // O limite conta só o tempo em que o telão ficou livre, esperando o serviço.
+  // Revisão da F6d: no fechamento da 6ª rodada, o placar (a simulação das 6
+  // equipes) trava a página de 4 a 8 s dentro da janela de 10 s; a gravação
+  // chegava, mas o telão já tinha dito "o serviço não respondeu" diante da
+  // turma, e um Enter repetido fechava a rodada de novo. Um tique a cada 250 ms
+  // mede o atraso do próprio relógio: a página ocupada calculando não é espera.
+  const TIQUE_LIMITE_MS = 250;
   function comLimite(promessa, ms, texto) {
+    const inicio = Date.now();
+    let ultimo = inicio;
+    let ocupado = 0;
     let timer = 0;
-    const limite = new Promise((_, rejeitar) => { timer = setTimeout(() => rejeitar(new Error(texto)), ms); });
-    return Promise.race([promessa, limite]).finally(() => clearTimeout(timer));
+    const limite = new Promise((_, rejeitar) => {
+      timer = setInterval(() => {
+        const agora = Date.now();
+        const atraso = agora - ultimo - TIQUE_LIMITE_MS;
+        if (atraso > 50) ocupado += atraso;
+        ultimo = agora;
+        if (agora - inicio - ocupado >= ms) rejeitar(new Error(texto));
+      }, TIQUE_LIMITE_MS);
+    });
+    return Promise.race([promessa, limite]).finally(() => clearInterval(timer));
   }
 
   const recusado = (erro) => /PERMISSION_DENIED/.test(String(erro?.message || erro));

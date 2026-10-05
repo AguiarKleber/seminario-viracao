@@ -878,7 +878,13 @@
         // aparece nela, para o aluno saber que a resposta chegou.
         app.ui.nota = `Resposta registrada: ${rotuloVoto(pendente.valor)}.`;
         marcarRecusasVistas(envio);
-      } else app.ui.nota = null;
+      } else {
+        app.ui.nota = null;
+        // Revisão da F6d: "Seu voto está nesta." aparecia 15 px abaixo da borda
+        // de 360×740 (matriz de votos, r4, celular 4), porque o "✓ seu voto" na
+        // opção a deixa mais alta. Como na recusa, a opção aberta rola para a vista.
+        if (app.ui.aberta === pendente.opcao) app.ui.rolarAte = pendente.opcao;
+      }
     }, async (erro) => {
       if (app.envios.get(caminho) !== envio) return;
       if (recusado(erro)) {
