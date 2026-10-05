@@ -665,17 +665,22 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
  * que sobra. No amarelo que nenhuma equipe usa (--foco), com o texto escuro
  * (14,3:1): não se confunde com nada da tela revista. A letra é a do aviso de
  * operação (~20 px em 1024×768), para o selo caber numa linha e a tela revista
- * continuar cabendo. */
+ * continuar cabendo.
+ * O resultado de seis equipes com a faixa de entrada embaixo, o caso mais
+ * apertado do telão, passava 12 px de 1024×768 com o selo de 36 px em cima (o
+ * e2e, parte 2). O selo fica com ~31 px, e o palco, que já tem o selo como
+ * borda de cima, perde a maior parte do respiro de cima (18 → 6 px). */
 .selo-revendo {
   flex: none;
-  padding: .3em var(--lateral);
+  padding: .2em var(--lateral);
   background: var(--foco);
   color: var(--texto-sobre-claro);
   font-size: clamp(18px, min(1.95vw, 2.8vh), 40px);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 .selo-revendo b { font-weight: 800; }
+body.revendo #palco { padding-top: calc(var(--espaco) * .4); }
 /* O resultado revisto não repete a entrada animada das cartas: rever é para
    comentar, e a animação já mostrou, na hora, quais cartas pesaram. */
 .tela-revista .cartao-resultado.animada { animation: none; }
