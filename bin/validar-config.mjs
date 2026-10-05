@@ -9,6 +9,18 @@
 // Tudo é calculado por ENUMERAÇÃO exata (estados alcançáveis × cartas), e não por
 // simulação: o número é o mesmo a cada execução, e uma mudança de 1 no peso de
 // uma carta aparece aqui sem ruído de amostragem.
+//
+// Esquema v3 (D-060: 12 meses em 6 rodadas): quando os caminhos de cartas de
+// alguma equipe passam de motor.LIMITE_CAMINHOS (200 mil), a enumeração levaria
+// horas (4 opções × ~15 cartas por rodada, 6 rodadas), e as conferências que
+// enumeram (a a i) passam a uma SIMULAÇÃO determinística: os estados antes de
+// cada rodada são amostras (sorteadas pelas chances, com a semente derivada do
+// hash do config, e por isso iguais a cada execução), os planos de (e), (g) e
+// (h) são uma amostra dos planos possíveis (mais o padrão e as trocas da
+// proteção), e o pior e o melhor caso juntam o que a simulação achou com uma
+// busca dirigida (a pior ou a melhor carta de cada rodada pelo efeito
+// imediato), como o pior caso estimado do placar (motor.decompor). A saída diz
+// "estimado". Abaixo do limite, tudo continua exato e a saída não muda.
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { carregarNucleo, RAIZ } from '../test/carregar-nucleo.mjs';
@@ -30,6 +42,17 @@ const MIN_PERSONAS_NA_FAIXA = 2;
 // o esgotamento naquele mês.
 const MIN_PERSONAS_ESGOTAMENTO = 3;
 const LETRAS = 'ABCDEFGH';
+// O tamanho das amostras da simulação (esquema v3), escolhido pelo tempo: com a
+// fixture de 6 rodadas × 20 cartas e 5 personas, o validador inteiro fica bem
+// abaixo de 2 minutos. Os estados antes de cada rodada levam 2.000 caminhos (a
+// conta do mês de (b) e (i) passa por todas as opções × cartas de cada um); o
+// fim do jogo em (c), 4.000; cada plano sorteado de (e), (g) e (h), 400; o
+// plano só do padrão, que decide o "nunca fecha" da D-058, 4.000.
+const AMOSTRA_ESTADOS = 2000;
+const AMOSTRA_FIM = 4000;
+const AMOSTRA_PLANO = 400;
+const AMOSTRA_PADRAO = 4000;
+const PLANOS_SORTEADOS = 200;
 
 const V = await carregarNucleo();
 const M = V.motor;
@@ -39,6 +62,10 @@ const M = V.motor;
 // as personas (R$ 1.500 que ainda não tinham sido pagos). "patrimonio" é um
 // indicador virtual: vale em qualquer lugar que lê um indicador do estado.
 const PATRIMONIO = 'patrimonio';
+// Esquema v3.1 (D-066): os dois acumulados que o motor calcula quando o limite
+// do cheque especial acaba.
+const IND_ATRASADAS = 'contas_atrasadas';
+const IND_MESA = 'faltou_na_mesa';
 const valorDe = (estado, ind) => (ind === PATRIMONIO ? M.patrimonio(estado) : estado[ind]);
 const numero = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 const reais = (x) => (x < 0 ? '−R$ ' : 'R$ ') + numero.format(Math.abs(Math.round(x)));
@@ -72,8 +99,9 @@ function principal() {
     console.log(`\n${r.erros.length} erro(s): o telão recusa criar a sala com este config.`);
     return 1;
   }
-  console.log(`Sem erros. Hash do config: ${V.validarConfig.hash(r.config)}`);
-  const { avisos, falhas } = analisar(r.config);
+  const hash = V.validarConfig.hash(r.config);
+  console.log(`Sem erros. Hash do config: ${hash}`);
+  const { avisos, falhas } = analisar(r.config, hash);
   console.log(`\n${avisos} aviso(s) de equilíbrio. Avisos não bloqueiam a sala; são para calibrar o jogo.`);
   if (falhas > 0) {
     console.log(`${falhas} falha(s) na conta do mês (conferência i): o motor deixou o trabalho negativo com o piso ligado.`);
@@ -90,9 +118,20 @@ function imprimirProblemas(titulo, lista) {
 
 // ------------------------------------------------------------------ análise
 
-function analisar(cfg) {
+function analisar(cfg, hash) {
   const inds = cfg.ordem.indicadores;
   const rodadas = cfg.ordem.rodadas;
+  // Esquema v3: a mesma regra do placar (motor.decompor) decide se as contas
+  // são exatas ou estimadas, pela equipe com mais caminhos.
+  const caminhos = Math.max(...cfg.ordem.equipes.map((eq) => M.caminhosDeCartas(cfg, eq, rodadas)));
+  const estimado = caminhos > M.LIMITE_CAMINHOS;
+  const aleatorio = estimado ? V.sorte.gerador(V.sorte.derivar(parseInt(hash, 16) >>> 0, 'validador')) : null;
+  if (estimado) {
+    console.log(`\nModo: SIMULAÇÃO determinística. Até ${Number.isFinite(caminhos) ? numero.format(caminhos) : 'mais de 9 quatrilhões de'} caminhos de cartas por equipe,`);
+    console.log(`acima do limite de ${numero.format(M.LIMITE_CAMINHOS)} da enumeração exata. Os números de (a) a (i) são ESTIMADOS: ${AMOSTRA_ESTADOS} estados antes de cada rodada,`);
+    console.log(`${AMOSTRA_FIM} caminhos até o fim, ${PLANOS_SORTEADOS} planos sorteados com ${AMOSTRA_PLANO} caminhos cada (o plano do padrão com ${AMOSTRA_PADRAO}),`);
+    console.log('semente derivada do hash do config (a mesma saída a cada execução). Pior e melhor caso: o achado na simulação mais uma busca dirigida.');
+  }
   let totalAvisos = 0;
   const avisar = (texto) => {
     totalAvisos += 1;
@@ -123,40 +162,114 @@ function analisar(cfg) {
     const ids = cfg.rodadas[rodadaId].ordemOpcoes;
     return ids.map((id) => [id, 1 / ids.length]);
   };
+  // O passo de um mês a partir de um estado, com a carta: o estado depois, o
+  // "bateu" de (f), o histórico e o caminho (quando a distribuição leva um).
+  const passo = (x, equipeId, rodadaId, opcaoId, carta, p) => {
+    const depois = M.aplicar(cfg, { ...ctx(x, equipeId, rodadaId, opcaoId), cartaId: carta }).depois;
+    let bateu = x.bateu;
+    inds.forEach((ind, k) => {
+      const { min } = cfg.indicadores[ind];
+      if (x.estado[ind] > min && depois[ind] === min) bateu |= 1 << k;
+    });
+    const historico = { ...x.historico, [rodadaId]: { decisao: opcaoId, carta } };
+    const caminho = x.caminho && [...x.caminho, `${rodadaId} ${opcaoId}/${carta}`];
+    return { estado: depois, historico, p, bateu, caminho };
+  };
   // Um mês: cada estado × cada opção (com o peso dela) × cada carta possível.
   // O caminho (opção e carta de cada mês) só é levado quando a distribuição
   // começa com caminho: [], porque só a conferência (g) precisa dele.
-  const avancar = (dist, equipeId, rodadaId, opcoes) => {
+  const avancarExato = (dist, equipeId, rodadaId, opcoes) => {
     const saida = [];
     for (const x of dist) {
       for (const [opcaoId, pOpcao] of opcoes) {
         for (const c of M.chances(cfg, ctx(x, equipeId, rodadaId, opcaoId))) {
-          const depois = M.aplicar(cfg, { ...ctx(x, equipeId, rodadaId, opcaoId), cartaId: c.carta }).depois;
-          let bateu = x.bateu;
-          inds.forEach((ind, k) => {
-            const { min } = cfg.indicadores[ind];
-            if (x.estado[ind] > min && depois[ind] === min) bateu |= 1 << k;
-          });
-          const historico = { ...x.historico, [rodadaId]: { decisao: opcaoId, carta: c.carta } };
-          const caminho = x.caminho && [...x.caminho, `${rodadaId} ${opcaoId}/${c.carta}`];
-          saida.push({ estado: depois, historico, p: x.p * pOpcao * c.chance, bateu, caminho });
+          saida.push(passo(x, equipeId, rodadaId, opcaoId, c.carta, x.p * pOpcao * c.chance));
         }
       }
     }
     return juntar(saida);
   };
-  // Antes da rodada k, com as rodadas anteriores decididas ao acaso.
+  // Esquema v3: n caminhos sorteados, cada um de um estado da distribuição
+  // (pela probabilidade dele), com a opção (pelo peso) e a carta (pelas
+  // chances). O baralho e o estado depois de cada opção × carta ficam
+  // guardados no estado de origem: o (c) parte quatro vezes (uma por opção) da
+  // mesma distribuição, e o motor não refaz o que já fez.
+  const amostrar = (dist, equipeId, rodadaId, opcoes, n) => {
+    const acumulada = [];
+    let total = 0;
+    for (const x of dist) acumulada.push((total += x.p));
+    const itensOpcao = opcoes.map(([id, peso]) => ({ id, peso }));
+    const saida = [];
+    for (let i = 0; i < n; i += 1) {
+      const alvo = aleatorio() * total;
+      let lo = 0;
+      let hi = acumulada.length - 1;
+      while (lo < hi) {
+        const meio = (lo + hi) >> 1;
+        if (acumulada[meio] > alvo) hi = meio;
+        else lo = meio + 1;
+      }
+      const x = dist[lo];
+      const opcaoId = itensOpcao.length === 1 ? itensOpcao[0].id : V.sorte.sortearPonderado(itensOpcao, aleatorio);
+      x.guardado ||= new Map();
+      let daOpcao = x.guardado.get(`${rodadaId}|${opcaoId}`);
+      if (!daOpcao) {
+        const baralho = M.chances(cfg, ctx(x, equipeId, rodadaId, opcaoId));
+        if (baralho.length === 0) throw new Error(`Nenhuma carta possível para ${equipeId} em ${rodadaId}/${opcaoId}.`);
+        daOpcao = { itens: baralho.map((c) => ({ id: c.carta, peso: c.peso })), filhos: new Map() };
+        x.guardado.set(`${rodadaId}|${opcaoId}`, daOpcao);
+      }
+      const carta = V.sorte.sortearPonderado(daOpcao.itens, aleatorio);
+      let filho = daOpcao.filhos.get(carta);
+      if (!filho) {
+        filho = passo(x, equipeId, rodadaId, opcaoId, carta, 0);
+        daOpcao.filhos.set(carta, filho);
+      }
+      saida.push({ ...filho, p: 1 / n });
+    }
+    return juntar(saida);
+  };
+  // Um mês de uma distribuição: exato abaixo do limite, amostrado acima (n
+  // caminhos; ignorado no exato).
+  const avancar = (dist, equipeId, rodadaId, opcoes, n = AMOSTRA_ESTADOS) => (estimado
+    ? amostrar(dist, equipeId, rodadaId, opcoes, n)
+    : avancarExato(dist, equipeId, rodadaId, opcoes));
+  // Antes da rodada k, com as rodadas anteriores decididas ao acaso. Guardado
+  // por equipe: (f) passa de novo pelas equipes, e na simulação a segunda
+  // passada daria outra amostra (e gastaria o dobro).
+  const antesGuardado = new Map();
   const distribuicoesAntes = (equipeId) => {
+    if (antesGuardado.has(equipeId)) return antesGuardado.get(equipeId);
     const lista = [[{ estado: M.estadoInicial(cfg, equipeId), historico: {}, p: 1, bateu: 0 }]];
     for (const rodadaId of rodadas) lista.push(avancar(lista[lista.length - 1], equipeId, rodadaId, uniforme(rodadaId)));
+    antesGuardado.set(equipeId, lista);
     return lista;
+  };
+  // A busca dirigida (esquema v3, só na simulação): o caminho de um plano com a
+  // pior (sentido −1) ou a melhor (+1) carta de cada rodada pelo patrimônio
+  // logo depois dela. Tem chance acima de 0, e por isso conta como caminho
+  // possível no pior e no melhor caso estimados.
+  const dirigido = (equipeId, combo, sentido) => {
+    let x = { estado: M.estadoInicial(cfg, equipeId), historico: {}, p: 1, bateu: 0, caminho: [] };
+    rodadas.forEach((rodadaId, k) => {
+      let escolhido = null;
+      for (const c of M.chances(cfg, ctx(x, equipeId, rodadaId, combo[k]))) {
+        const y = passo(x, equipeId, rodadaId, combo[k], c.carta, 1);
+        if (!escolhido || sentido * (M.patrimonio(y.estado) - M.patrimonio(escolhido.estado)) > 0) escolhido = y;
+      }
+      x = escolhido;
+    });
+    return { renda: M.patrimonio(x.estado), caminho: x.caminho };
   };
   const esperado = (dist, ind) => dist.reduce((s, x) => s + x.p * valorDe(x.estado, ind), 0);
   // Com o empréstimo, a renda (o caixa) e o saldo devedor andam juntos; o que
   // se compara entre as opções é o patrimônio. Os outros indicadores seguem
   // como são (mais é melhor).
   const temEmprestimo = inds.includes('emprestimo');
-  const indsComparados = [PATRIMONIO, ...inds.filter((i) => i !== 'renda' && i !== 'emprestimo')];
+  // D-066: as contas atrasadas já estão no patrimônio, e o que faltou na mesa
+  // é "menos é melhor"; comparados como os outros ("mais é melhor"), a opção
+  // que mais atrasa conta e mais corta comida pareceria a dominante.
+  const indsComparados = [PATRIMONIO, ...inds.filter((i) => !['renda', 'emprestimo', IND_ATRASADAS, IND_MESA].includes(i))];
 
   const perfis = montarPerfis(cfg);
   const antesPorPerfil = new Map(perfis.map((pf) => [pf, distribuicoesAntes(pf.equipeId)]));
@@ -197,6 +310,10 @@ function analisar(cfg) {
   console.log('Contas da casa: "entrou" = trabalho − custos fixos + outra renda; "saldo do mês" = entrou − gastos − básico − juros.');
   console.log('"gastos" = o que um evento custou (conserto, remédio, multa), fora do "entrou" (esquema v2.1).');
   console.log(`Dívida: juros de ${pct(cfg.regras.jurosDividaMes)} ao mês sobre a dívida que vinha de antes do mês (fonte: ${cfg.regras.jurosFonte}).`);
+  // Esquema v3: com rodadas de mais de um mês, "o mês" de (b) e (i) é a rodada
+  // inteira (o todoMes, o básico e a outra renda contam m vezes; os juros compõem).
+  const meses = M.mesesPorRodada(cfg);
+  if (meses > 1) console.log(`Cada rodada vale ${meses} meses (regras.mesesPorRodada): aqui, "mês" é a rodada inteira, e os juros compõem ${meses} meses.`);
   // A renda esperada do próprio mês, por perfil × rodada × opção: é o que a
   // conferência (h) usa para achar a opção "de maior esforço/renda" do mês.
   const rendaDoMes = new Map(perfis.map((pf) => [pf, {}]));
@@ -262,8 +379,8 @@ function analisar(cfg) {
       const rodada = cfg.rodadas[rodadaId];
       const fim = {};
       for (const opcaoId of rodada.ordemOpcoes) {
-        let dist = avancar(antesPorPerfil.get(pf)[k], pf.equipeId, rodadaId, [[opcaoId, 1]]);
-        for (const seguinte of rodadas.slice(k + 1)) dist = avancar(dist, pf.equipeId, seguinte, uniforme(seguinte));
+        let dist = avancar(antesPorPerfil.get(pf)[k], pf.equipeId, rodadaId, [[opcaoId, 1]], AMOSTRA_FIM);
+        for (const seguinte of rodadas.slice(k + 1)) dist = avancar(dist, pf.equipeId, seguinte, uniforme(seguinte), AMOSTRA_FIM);
         fim[opcaoId] = { dist, e: Object.fromEntries([...inds, PATRIMONIO].map((i) => [i, esperado(dist, i)])) };
       }
       console.log(`  ${rodadaId}  ` + rodada.ordemOpcoes.map((o) => `${o}${o === rodada.padrao ? '*' : ''} renda E ${numero.format(fim[o].e[PATRIMONIO])}`).join(' · ') + '   (* = padrão)');
@@ -291,7 +408,13 @@ function analisar(cfg) {
   console.log('Critério: todas as combinações de decisões, igualmente prováveis; cartas pelas chances.');
   console.log('Var total = Var(esperado dado as decisões) + E(Var dado as decisões).');
   console.log(`Faixa sugerida para as decisões: ${pct(FAIXA_DECISOES[0])} a ${pct(FAIXA_DECISOES[1])}.`);
-  const combinacoes = produto(rodadas.map((r) => cfg.rodadas[r].ordemOpcoes));
+  const todasCombinacoes = rodadas.reduce((n, r) => n * cfg.rodadas[r].ordemOpcoes.length, 1);
+  const amostraDePlanos = estimado ? sortearPlanos(cfg, aleatorio) : null;
+  const combinacoes = estimado ? amostraDePlanos.planos : produto(rodadas.map((r) => cfg.rodadas[r].ordemOpcoes));
+  // No exato, todo plano conta nas médias "ao acaso"; na simulação, só os sorteados.
+  const aoAcaso = (combo) => !estimado || amostraDePlanos.sorteados.has(JSON.stringify(combo));
+  const padraoCombo = JSON.stringify(rodadas.map((r) => cfg.rodadas[r].padrao));
+  if (estimado) console.log(`Estimado: ${combinacoes.length} planos (${PLANOS_SORTEADOS} sorteados de ${numero.format(todasCombinacoes)}, mais o padrão e as trocas da proteção), ${AMOSTRA_PLANO} caminhos cada; a parte das decisões desconta o ruído da amostra.`);
   // A distribuição final de cada combinação fica guardada para a conferência
   // (g): é a conta mais cara do validador, e a (g) usa exatamente a mesma.
   const finaisPorPerfil = new Map();
@@ -300,16 +423,26 @@ function analisar(cfg) {
     const variancias = [];
     const finais = [];
     finaisPorPerfil.set(pf, finais);
+    let ruido = 0;
     for (const combo of combinacoes) {
+      const n = JSON.stringify(combo) === padraoCombo ? AMOSTRA_PADRAO : AMOSTRA_PLANO;
       let dist = [{ estado: M.estadoInicial(cfg, pf.equipeId), historico: {}, p: 1, bateu: 0, caminho: [] }];
-      rodadas.forEach((rodadaId, k) => { dist = avancar(dist, pf.equipeId, rodadaId, [[combo[k], 1]]); });
-      finais.push({ combo, dist });
+      rodadas.forEach((rodadaId, k) => { dist = avancar(dist, pf.equipeId, rodadaId, [[combo[k], 1]], n); });
+      // Na simulação, o pior e o melhor caminho de cada plano também pela
+      // busca dirigida: a amostra quase nunca acha os extremos.
+      const extremos = estimado ? { pior: dirigido(pf.equipeId, combo, -1), melhor: dirigido(pf.equipeId, combo, 1) } : null;
+      finais.push({ combo, dist, extremos, aoAcaso: aoAcaso(combo) });
+      if (!aoAcaso(combo)) continue;
       const m = esperado(dist, PATRIMONIO);
       medias.push(m);
-      variancias.push(dist.reduce((s, x) => s + x.p * (M.patrimonio(x.estado) - m) ** 2, 0));
+      const v = dist.reduce((s, x) => s + x.p * (M.patrimonio(x.estado) - m) ** 2, 0);
+      variancias.push(v);
+      // A média de n caminhos erra, em variância, v/n: somado entre os planos,
+      // esse ruído inflaria a parte das decisões.
+      if (estimado) ruido += v / n;
     }
     const mediaGeral = medias.reduce((s, x) => s + x, 0) / medias.length;
-    const entre = medias.reduce((s, x) => s + (x - mediaGeral) ** 2, 0) / medias.length;
+    const entre = Math.max(0, medias.reduce((s, x) => s + (x - mediaGeral) ** 2, 0) / medias.length - ruido / medias.length);
     const dentro = variancias.reduce((s, x) => s + x, 0) / variancias.length;
     const total = entre + dentro;
     if (total === 0) {
@@ -317,7 +450,7 @@ function analisar(cfg) {
       continue;
     }
     const fracao = entre / total;
-    console.log(`  ${pf.nome}: decisões ${pct(fracao)} · cartas ${pct(dentro / total)}  (${combinacoes.length} combinações)`);
+    console.log(`  ${pf.nome}: decisões ${pct(fracao)} · cartas ${pct(dentro / total)}  (${medias.length} combinações${estimado ? ' sorteadas, estimado' : ''})`);
     if (fracao < FAIXA_DECISOES[0] || fracao > FAIXA_DECISOES[1]) {
       avisar(`${pf.nome}: as decisões explicam ${pct(fracao)} da variância da renda, fora da faixa sugerida.`);
     }
@@ -342,20 +475,27 @@ function analisar(cfg) {
     }
   });
 
-  conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar);
+  conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar, estimado);
   conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, energiaDoMes, avisar);
-  conferirProtecao(cfg, perfis, finaisPorPerfil, avisar);
+  conferirProtecao(cfg, perfis, finaisPorPerfil, avisar, estimado);
+  conferirDivida(cfg, perfis, finaisPorPerfil, avisar, estimado);
   const falhas = conferirContaDoMes(cfg, perfis, antesPorPerfil, ctx, avisar);
   return { avisos: totalAvisos, falhas };
 }
 
-// (g) D-050 e D-058: quem fecha o básico no fim dos 3 meses. "Fechar" é
+// (g) D-050 e D-058: quem fecha o básico no fim do jogo. "Fechar" é
 // terminar com o patrimônio (o saldo acumulado menos o empréstimo a pagar,
 // esquema v2.2) em 0 ou mais: o básico já foi cobrado mês a mês, e fechar com
 // dinheiro emprestado não é fechar. A D-058 pede também que quem fica só no padrão nunca feche.
-function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
+// Esquema v3: na simulação, "melhor plano" é o melhor entre os planos
+// sorteados, o melhor caminho junta o achado com a busca dirigida de cada
+// plano, e "só o padrão nunca fecha" falha também quando a busca dirigida do
+// padrão acha um caminho que fecha (ele tem chance acima de 0, mesmo que a
+// amostra não o tenha sorteado).
+function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar, estimado = false) {
   const padrao = cfg.ordem.rodadas.map((r) => cfg.rodadas[r].padrao).join('-');
-  console.log('\n== (g) Quem fecha o básico no fim dos 3 meses (D-050, D-058) ==');
+  const meses = cfg.ordem.rodadas.length * M.mesesPorRodada(cfg);
+  console.log(`\n== (g) Quem fecha o básico no fim dos ${meses} meses (D-050, D-058)${estimado ? ', estimado' : ''} ==`);
   console.log('Critério: fecha quem termina com o saldo acumulado menos o empréstimo a pagar ≥ R$ 0. "Ao acaso": todas as combinações de decisões');
   console.log('igualmente prováveis, cartas pelas chances. "Melhor plano": a combinação com a maior chance de fechar.');
   console.log('"Melhor caminho": a maior renda final possível (decisões e cartas), com chance acima de 0.');
@@ -368,14 +508,20 @@ function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
     let melhorPlano = null;
     let melhorCaminho = null;
     let soPadrao = 0;
-    for (const { combo, dist } of finais) {
+    let padraoPodeFechar = false;
+    const nAoAcaso = finais.filter((f) => f.aoAcaso).length;
+    for (const { combo, dist, extremos, aoAcaso: sorteado } of finais) {
       const fecha = dist.reduce((s, x) => s + (M.patrimonio(x.estado) >= 0 ? x.p : 0), 0);
-      aoAcaso += fecha / finais.length;
-      if (combo.join('-') === padrao) soPadrao = fecha;
+      if (sorteado) aoAcaso += fecha / nAoAcaso;
+      if (combo.join('-') === padrao) {
+        soPadrao = fecha;
+        padraoPodeFechar = Boolean(extremos) && extremos.melhor.renda >= 0;
+      }
       if (!melhorPlano || fecha > melhorPlano.fecha) melhorPlano = { combo, fecha };
       for (const x of dist) {
         if (x.p > 0 && (!melhorCaminho || M.patrimonio(x.estado) > melhorCaminho.renda)) melhorCaminho = { renda: M.patrimonio(x.estado), caminho: x.caminho };
       }
+      if (extremos && extremos.melhor.renda > melhorCaminho.renda) melhorCaminho = extremos.melhor;
     }
     // Sem nenhum plano que feche, o "melhor" seria só o primeiro da lista.
     const plano = melhorPlano.fecha > 0 ? `melhor plano ${melhorPlano.combo.join('-')} fecha em ${pctFino(melhorPlano.fecha)}` : 'nenhum plano fecha';
@@ -389,11 +535,74 @@ function conferirQuemFecha(cfg, perfis, finaisPorPerfil, avisar) {
     }
     if (soPadrao > 0) {
       avisar(`${pf.nome}: só com o padrão (${padrao}) fecha o básico em ${pctFino(soPadrao)} das partidas; a D-058 pede que quem fica só no padrão nunca feche.`);
+    } else if (padraoPodeFechar) {
+      avisar(`${pf.nome}: só com o padrão (${padrao}) a amostra não fechou, mas a busca dirigida achou um caminho que fecha; a D-058 pede que quem fica só no padrão nunca feche.`);
     }
     if (aoAcaso >= FAIXA_FECHAR[0] && aoAcaso <= FAIXA_FECHAR[1]) naFaixa += 1;
   }
   if (naFaixa < Math.min(MIN_PERSONAS_NA_FAIXA, perfis.length)) {
     avisar(`só ${naFaixa} persona(s) fecham o básico entre ${pct(FAIXA_FECHAR[0])} e ${pct(FAIXA_FECHAR[1])} das partidas ao acaso; a D-058 pede pelo menos ${MIN_PERSONAS_NA_FAIXA}.`);
+  }
+}
+
+// (j) D-066: a dívida no fim do jogo, por persona, separada em dívida no
+// banco (o cheque especial, que com o limite nunca passa dele), empréstimo,
+// contas atrasadas e o que faltou na mesa (custo humano, à parte da dívida).
+// Antes do limite, a Rose terminava o ano devendo R$ 35.112 ao banco no piloto
+// automático: o aviso pega a volta desse absurdo. O teto: o limite, mais todos
+// os empréstimos que o config permite, mais o básico do ano inteiro sem pagar
+// (já seria uma casa que não pagou nada em 12 meses). Passar dele só acontece
+// com juros compostos sem fim.
+function conferirDivida(cfg, perfis, finaisPorPerfil, avisar, estimado = false) {
+  const limite = M.limiteDe(cfg);
+  const meses = cfg.ordem.rodadas.length * M.mesesPorRodada(cfg);
+  const padrao = cfg.ordem.rodadas.map((r) => cfg.rodadas[r].padrao).join('-');
+  console.log(`\n== (j) Dívida no fim dos ${meses} meses (D-066)${estimado ? ', estimado' : ''} ==`);
+  console.log(limite === null
+    ? 'Sem regras.limiteChequeEspecial: o cheque especial não tem limite, e os juros compõem sobre a dívida inteira.'
+    : `Limite do cheque especial: ${reais(limite)} (${cfg.regras.limiteFonte}). Corta primeiro: ${cfg.regras.cortarPrimeiro}; multa ${pct(cfg.regras.multaAtraso)}, mora ${pct(cfg.regras.moraMes)} ao mês.`);
+  console.log('Critério: E = esperado; pior = o maior valor achado. "Ao acaso": todas as combinações de decisões igualmente prováveis;');
+  console.log(`"padrão": o plano ${padrao}. "Faltou na mesa" é comida que não foi comprada (acumulada), e não entra na dívida.`);
+  // O maior empréstimo que o config permite, somado por rodada.
+  let emprestimos = 0;
+  for (const r of cfg.ordem.rodadas) {
+    const rodada = cfg.rodadas[r];
+    emprestimos += Math.max(0, ...rodada.ordemOpcoes.map((o) => (rodada.opcoes[o].efeitos || [])
+      .reduce((t, e) => t + (e && e.emprestimo ? e.emprestimo.valor : 0), 0)));
+  }
+  const banco = (e) => Math.max(0, -e.renda);
+  const valor = (e, id) => Math.max(0, Number(e[id]) || 0);
+  const total = (e) => banco(e) + valor(e, 'emprestimo') + valor(e, IND_ATRASADAS);
+  const medir = (finais) => {
+    const m = { banco: [0, 0], atrasadas: [0, 0], mesa: [0, 0], total: [0, 0] };
+    const n = finais.length;
+    for (const { dist } of finais) {
+      for (const x of dist) {
+        for (const [k, v] of [['banco', banco(x.estado)], ['atrasadas', valor(x.estado, IND_ATRASADAS)], ['mesa', valor(x.estado, IND_MESA)], ['total', total(x.estado)]]) {
+          m[k][0] += (x.p * v) / n;
+          if (x.p > 0 && v > m[k][1]) m[k][1] = v;
+        }
+      }
+    }
+    return m;
+  };
+  const texto = (m) => `banco E ${reais(m.banco[0])} (pior ${reais(m.banco[1])}) · contas atrasadas E ${reais(m.atrasadas[0])} (pior ${reais(m.atrasadas[1])})`
+    + ` · faltou na mesa E ${reais(m.mesa[0])} (pior ${reais(m.mesa[1])}) · dívida total E ${reais(m.total[0])} (pior ${reais(m.total[1])})`;
+  for (const pf of perfis) {
+    const finais = finaisPorPerfil.get(pf);
+    const persona = cfg.personas[cfg.equipes[pf.equipeId].persona];
+    const teto = (limite || 0) + emprestimos + M.totalBasico(persona) * meses;
+    const aoAcaso = medir(finais.filter((f) => f.aoAcaso));
+    const doPadrao = medir(finais.filter((f) => f.combo.join('-') === padrao));
+    console.log(`  ${pf.nome}: ao acaso ${texto(aoAcaso)}`);
+    console.log(`  ${' '.repeat(pf.nome.length)}  padrão   ${texto(doPadrao)}`);
+    if (limite !== null && Math.max(aoAcaso.banco[1], doPadrao.banco[1]) > limite) {
+      avisar(`${pf.nome}: a dívida no banco passou do limite do cheque especial (${reais(Math.max(aoAcaso.banco[1], doPadrao.banco[1]))} > ${reais(limite)}).`);
+    }
+    const pior = Math.max(aoAcaso.total[1], doPadrao.total[1]);
+    if (pior > teto) {
+      avisar(`${pf.nome}: a dívida total chega a ${reais(pior)}, acima do teto de ${reais(teto)} (limite + empréstimos + o básico de ${meses} meses sem pagar): juros compostos sem fim, a D-066 pede o limite.`);
+    }
   }
 }
 
@@ -472,7 +681,10 @@ function conferirMelhorOpcao(cfg, perfis, melhorOpcao, rendaDoMes, energiaDoMes,
 // a média, sobre todas as combinações que a usam, do que muda no pior caso e no
 // esperado quando ela vira o padrão do mês. É a mesma troca do
 // piorCasoSemProtecao do placar. Aviso: nenhuma persona com o pior caso melhor.
-function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar) {
+// Esquema v3: na simulação, o pior de cada plano junta o achado com a busca
+// dirigida, e a média é sobre os planos sorteados que usam a proteção (cada um
+// vem com a troca pelo padrão, sortearPlanos).
+function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar, estimado = false) {
   const rodadas = cfg.ordem.rodadas;
   console.log('\n== (h) Proteção: o pior caso com e sem as opções que protegem (D-059) ==');
   const protegem = rodadas.flatMap((r) => cfg.rodadas[r].ordemOpcoes.filter((o) => cfg.rodadas[r].opcoes[o].protege === true && o !== cfg.rodadas[r].padrao).map((o) => [r, o]));
@@ -486,8 +698,8 @@ function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar) {
   let algumaMelhora = false;
   for (const pf of perfis) {
     // Chave em JSON, e não com um separador: um id de opção pode ter hífen.
-    const porCombo = new Map(finaisPorPerfil.get(pf).map(({ combo, dist }) => [JSON.stringify(combo), {
-      pior: dist.reduce((m, x) => Math.min(m, M.patrimonio(x.estado)), Infinity),
+    const porCombo = new Map(finaisPorPerfil.get(pf).map(({ combo, dist, extremos }) => [JSON.stringify(combo), {
+      pior: Math.min(dist.reduce((m, x) => Math.min(m, M.patrimonio(x.estado)), Infinity), extremos ? extremos.pior.renda : Infinity),
       esperado: dist.reduce((t, x) => t + x.p * M.patrimonio(x.estado), 0),
     }]));
     for (const [r, o] of protegem) {
@@ -501,14 +713,15 @@ function conferirProtecao(cfg, perfis, finaisPorPerfil, avisar) {
         const combo = JSON.parse(chave);
         if (combo[k] !== o) continue;
         const semEla = porCombo.get(JSON.stringify(combo.map((x, i) => (i === k ? padrao[k] : x))));
+        if (!semEla) continue;
         n += 1;
         difPior += v.pior - semEla.pior;
         difEsperado += v.esperado - semEla.esperado;
       }
-      difPior /= n;
-      difEsperado /= n;
+      difPior /= Math.max(n, 1);
+      difEsperado /= Math.max(n, 1);
       if (difPior > 1e-9) algumaMelhora = true;
-      console.log(`  ${pf.nome}, ${r} ${o} ("${cfg.rodadas[r].opcoes[o].rotulo}"): plano padrão pior ${reais(com.pior)} com, ${reais(sem.pior)} sem`
+      console.log(`  ${pf.nome}, ${r} ${o} ("${cfg.rodadas[r].opcoes[o].rotulo}"): plano padrão pior${estimado ? ' estimado' : ''} ${reais(com.pior)} com, ${reais(sem.pior)} sem`
         + ` · esperado ${reais(com.esperado)} com, ${reais(sem.esperado)} sem · média: pior ${sinal(difPior)}, esperado ${sinal(difEsperado)}`);
     }
   }
@@ -655,6 +868,35 @@ function probabilidadeMaior(distX, distY, ind) {
     if (lo > 0) resultado += x.p * acumulada[lo - 1];
   }
   return resultado;
+}
+
+// Esquema v3: os planos da simulação. PLANOS_SORTEADOS planos ao acaso (cada
+// opção igualmente provável, como o "ao acaso" do exato), sem repetir; mais o
+// plano só do padrão (o "nunca fecha" da D-058) e, para cada opção que protege,
+// o padrão com ela e a troca pelo padrão de todo plano sorteado que a usa: a
+// conferência da proteção compara cada plano com o mesmo plano sem ela.
+function sortearPlanos(cfg, aleatorio) {
+  const rodadas = cfg.ordem.rodadas;
+  const opcoes = rodadas.map((r) => cfg.rodadas[r].ordemOpcoes);
+  const padrao = rodadas.map((r) => cfg.rodadas[r].padrao);
+  const total = opcoes.reduce((n, o) => n * o.length, 1);
+  const vistos = new Map();
+  // Só os sorteados entram nas médias "ao acaso" ((e) e (g)): o padrão e as
+  // trocas da proteção não são uma amostra uniforme dos planos.
+  const sorteados = new Set();
+  const juntar = (combo) => { if (!vistos.has(JSON.stringify(combo))) vistos.set(JSON.stringify(combo), combo); };
+  for (let tentativas = 0; sorteados.size < Math.min(PLANOS_SORTEADOS, total) && tentativas < PLANOS_SORTEADOS * 20; tentativas += 1) {
+    const combo = opcoes.map((o) => o[Math.floor(aleatorio() * o.length)]);
+    juntar(combo);
+    sorteados.add(JSON.stringify(combo));
+  }
+  juntar(padrao);
+  const protegem = rodadas.flatMap((r, k) => opcoes[k].filter((o) => cfg.rodadas[r].opcoes[o].protege === true && o !== padrao[k]).map((o) => [k, o]));
+  for (const [k, o] of protegem) {
+    juntar(padrao.map((p, i) => (i === k ? o : p)));
+    for (const combo of [...vistos.values()]) if (combo[k] === o) juntar(combo.map((x, i) => (i === k ? padrao[k] : x)));
+  }
+  return { planos: [...vistos.values()], sorteados };
 }
 
 function produto(listas) {

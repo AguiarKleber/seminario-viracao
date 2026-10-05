@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '6';
+  const VERSAO_APP = '7';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -306,6 +306,19 @@
     return { n: rodadas.indexOf(rodadaId) + 1, total: rodadas.length };
   }
 
+  // Esquema v3 (D-060): quantos meses cada rodada cobre e como a tela chama o
+  // período ("bimestre" com 6 rodadas de 2 meses). Com rodadas mensais, "mês",
+  // e as telas dizem o que diziam. A regra mora no historia.js, que o celular
+  // também carrega: as duas telas falam o mesmo período.
+  const periodo = () => N().historia.periodo(app.config);
+
+  // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
+  // regra da história e do resumo do celular (historia.rotuloDaRodada).
+  function rotuloDaRodada(rodadaId) {
+    const ordem = lista(app.config.ordem.rodadas);
+    return N().historia.rotuloDaRodada(app.config.rodadas[rodadaId]?.titulo, Math.max(0, ordem.indexOf(rodadaId)));
+  }
+
   // O estado da equipe antes de uma rodada: o "depois" da última rodada já
   // apurada, na ordem do roteiro. É a mesma conta do anfitrião; aqui serve só
   // para mostrar o efeito real da carta no resultado.
@@ -392,7 +405,7 @@
   const CONEXAO_LENTA_MS = 8000;
   // Tem de ser o mesmo valor que firebase/regras.json aceita em regrasVersao
   // (test/regras.test.mjs confere, e prende a versão ao conteúdo das regras).
-  const REGRAS_VERSAO = 'v3';
+  const REGRAS_VERSAO = 'v4';
   const CHAVE_ULTIMA_ONLINE = PREFIXO + 'ultimaOnline';
   const CAMPOS_CONEXAO = ['apiKey', 'authDomain', 'databaseURL', 'projectId', 'appId'];
   // O emulador (arquitetura, seção A, item 9) não precisa de chave de verdade:
@@ -1334,6 +1347,11 @@
   function desenhar() {
     if (!app.anf || !app.estado || !app.config) return;
     const e = app.estado;
+    // A faixa de entrada antes da tela: as medidas feitas depois do desenho (o
+    // aperto do resultado, das personas e do mapa) precisam da altura que sobra
+    // com a faixa. Desenhada depois, a primeira tela depois do lobby (e toda
+    // troca de tamanho, que muda a altura do QR) era medida sem ela.
+    desenharFaixa();
     const tela = escolherTela(e);
     const chave = JSON.stringify([
       tela.id, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
@@ -1350,7 +1368,6 @@
       preencherGraficos();
       for (const ajustar of app.depoisDeMedir.splice(0)) ajustar();
     }
-    desenharFaixa();
     atualizarBarra();
     tique();
   }
@@ -1755,11 +1772,22 @@
     if (mapa) {
       // No "Mapa do seminário", a linha é o conteúdo: todos os itens por
       // extenso, em duas colunas quando passam de seis (cabe em 1024×768).
+      // Esquema v3 (D-060): com 6 rodadas e os blocos de dados entre elas, o
+      // roteiro de 60 min dá 19 itens, e vários títulos quebram em duas linhas.
+      // As colunas são de texto corrido (CSS columns), e não linhas de grade: na
+      // grade, cada linha tinha a altura do item mais alto do par, e a lista
+      // passava da faixa de entrada em 1024×768. Se ainda transbordar (medido
+      // depois do desenho), os itens se aproximam (data-aperto), sem baixar a
+      // letra dos 28 px.
       const colunas = itens.length > 6 ? 2 : 1;
+      app.depoisDeMedir.push(() => {
+        const nav = app.el.palco.querySelector('.linha-tempo-mapa');
+        if (nav && nav.scrollHeight > nav.clientHeight + 1) nav.dataset.aperto = '1';
+      });
       return el('nav', { classe: 'linha-tempo linha-tempo-mapa', 'aria-label': 'Mapa do seminário' }, [
         el('ol', {
           classe: 'linha-tempo-lista',
-          estilo: { '--linhas': String(Math.ceil(itens.length / colunas)), '--colunas': String(colunas) },
+          estilo: { '--colunas': String(colunas) },
         }, itens.map((item) => {
           const c = comum(item);
           return el('li', { ...c, classe: ['trecho-mapa', ...c.classe] }, [
@@ -1774,17 +1802,45 @@
       ]);
     }
     // Nos outros blocos, discreta: uma trilha de marcas (o mês do jogo escrito
-    // dentro da dele) e uma linha de texto.
-    return el('nav', { classe: 'linha-tempo', 'aria-label': 'Linha do tempo do seminário' }, [
-      el('ol', { classe: 'linha-tempo-trilha' }, itens.map((item) => {
-        const c = comum(item);
-        const passo = app.passos[item.indices[0]];
-        return el('li', {
-          ...c, classe: ['trecho', ...c.classe], 'aria-label': descreverItem(item), title: descreverItem(item),
-        }, item.tipo === 'rodada' ? [`mês ${posicaoRodada(passo.rodada).n}`] : []);
-      })),
-      seguir,
-    ]);
+    // dentro da dele) e uma linha de texto. Esquema v3: com rodadas de mais de
+    // um mês, a marca leva o nome curto do período ("Jan–fev"), e não "mês 1"
+    // (o jogo tem 12 meses em 6 rodadas, e "mês 2" seria o bimestre mar–abr).
+    const mensal = periodo().meses === 1;
+    const trilha = el('ol', { classe: 'linha-tempo-trilha' }, itens.map((item) => {
+      const c = comum(item);
+      const passo = app.passos[item.indices[0]];
+      if (item.tipo !== 'rodada') {
+        return el('li', { ...c, classe: ['trecho', ...c.classe], 'aria-label': descreverItem(item), title: descreverItem(item) }, []);
+      }
+      const n = posicaoRodada(passo.rodada).n;
+      const nome = rotuloDaRodada(passo.rodada);
+      // O começo do período ("Jan" de "Jan–fev"), para a trilha apertada. Sem
+      // o traço (um título que não é período), o número.
+      const curto = /[–-]/.test(nome) ? nome.split(/[–-]/)[0].trim() : String(n);
+      return el('li', {
+        ...c, classe: ['trecho', ...c.classe], 'aria-label': descreverItem(item), title: descreverItem(item),
+        dados: { ...c.dados, numero: String(n), curto },
+      }, [mensal ? `mês ${n}` : nome]);
+    }));
+    // Seis nomes de bimestre e os blocos entre eles não cabem na largura de
+    // 1024×768 com a letra de 28 px: medida a trilha, se ela transborda, as
+    // marcas das rodadas ficam com o começo do período ("Jan", "Mar", "Mai":
+    // data-compacta="curto") e, só se nem assim couberem, com o número
+    // ("numero"). O nome inteiro continua na dica e no "a seguir". Em 1920×1080
+    // os nomes cabem. Revisão da F7 (achado 13 da revisão de conteúdo e
+    // legibilidade): ia direto para o número, e em 1024×768 as marcas saíam
+    // "1"…"6", sem o vínculo com o calendário que é o ponto da D-060.
+    if (!mensal) {
+      app.depoisDeMedir.push(() => {
+        const marcas = trilha.querySelectorAll('.trecho-rodada');
+        for (const nivel of ['curto', 'numero']) {
+          if (trilha.scrollWidth <= trilha.clientWidth + 1) return;
+          trilha.dataset.compacta = nivel;
+          for (const li of marcas) li.textContent = li.dataset[nivel];
+        }
+      });
+    }
+    return el('nav', { classe: 'linha-tempo', 'aria-label': 'Linha do tempo do seminário' }, [trilha, seguir]);
   }
 
   function telaBloco(s, e) {
@@ -1935,6 +1991,15 @@
       ]));
     }
     s.appendChild(linhas);
+    // D-061: seis personagens, um por equipe, são seis entradas de três linhas;
+    // com a faixa de entrada embaixo, em 1024×768, a sexta passava 84 px da
+    // borda. Só quando a lista transborda (medida depois do desenho), as
+    // entradas se aproximam (entrelinha e vãos menores, o fio entre elas fica):
+    // a letra continua nos 28 px e cada linha continua sem quebrar. Sem a faixa,
+    // ou com cinco personas, nada muda.
+    app.depoisDeMedir.push(() => {
+      if (linhas.scrollHeight > linhas.clientHeight + 1) linhas.dataset.aperto = '1';
+    });
   }
 
   // ---------- Tela: rodada ----------
@@ -2163,35 +2228,13 @@
   }
 
   // O que a linha do mês nomeia (revisão de 29/09, 2ª rodada, achados 10 e 13),
-  // cabendo seis equipes em 1024×768 (três linhas cada):
-  // - o que veio de antes e mexeu no trabalho (a fratura que continua, o INSS,
-  //   o bloqueio) aparece sempre, com sinal;
-  // - os gastos saem por origem dentro das próprias contas, somando à vista:
-  //   "gastos R$ 1.650 + multa do aluguel R$ 130" (a primeira parcela, sem
-  //   nome, é a da carta, logo atrás dela na frase), ou só "multa do aluguel
-  //   R$ 130" quando ela é o único gasto. Antes, a frase dizia "gastos R$ 1.650"
-  //   no custo da carta e "gastos R$ 1.780" nas contas, e a diferença (a multa)
-  //   não tinha nome. Um pedaço à parte para cada gasto não cabia.
-  // Se as parcelas conhecidas não somam os gastos do mês (um gasto de opção,
-  // por exemplo), fica o jeito antigo: "gastos da carta" no custo e os gastos
-  // de antes nomeados como pedaços.
-  function nomesDoMes(custo, mes, deAntes) {
-    const trabalho = deAntes.filter((x) => !x.gasto);
-    const deAntesGastos = deAntes.filter((x) => x.gasto);
-    const partes = [];
-    if (custo?.gastos > 0) partes.push({ rotulo: null, valor: custo.gastos });
-    for (const x of deAntesGastos) partes.push({ rotulo: x.rotulo, valor: -x.valor });
-    const soma = partes.reduce((t, p) => t + p.valor, 0);
-    if (partes.length === 0 || Math.abs(soma - (mes?.gastos || 0)) > 0.5) {
-      return { antes: [...trabalho, ...deAntesGastos], gastos: null, cartaNosGastos: false };
-    }
-    const gastos = partes.map((p, i) => {
-      if (i > 0) return p;
-      if (!p.rotulo) return { rotulo: 'gastos', valor: p.valor };
-      return { rotulo: partes.length > 1 ? `gastos: ${p.rotulo}` : p.rotulo, valor: p.valor };
-    });
-    return { antes: trabalho, gastos, cartaNosGastos: true };
-  }
+  // cabendo seis equipes em 1024×768: o que veio de antes e mexeu no trabalho,
+  // com sinal, e os gastos por origem dentro das próprias contas, somando à
+  // vista ("gastos R$ 1.079 + curso de alongamento em gel, com kit R$ 1.500 +
+  // multa do aluguel atrasado R$ 130"). A regra mora no núcleo
+  // (historia.nomesDosGastos), com teste: aqui, com um gasto de opção, a multa
+  // saía com sinal trocado e contada duas vezes (revisão da F7, achado 9).
+  const nomesDoMes = (quem, custo, mes, deAntes) => N().historia.nomesDosGastos(app.config, quem, custo, mes, deAntes);
 
   // Um pedaço da conta: o rótulo e o valor sempre juntos (a linha só quebra
   // entre pedaços).
@@ -2221,10 +2264,40 @@
       const partes = gastos || [{ rotulo: 'gastos', valor: mes.gastos }];
       pedacos.push(partes.flatMap((p, i) => [i > 0 ? ' + ' : null, pedacoConta(p.rotulo, p.valor)]));
     }
-    pedacos.push(pedacoConta('básico', mes.basico));
+    // D-066 (sala com o limite do cheque especial): a comida que não deu para
+    // comprar não saiu do caixa, então o básico da conta é o que a casa de
+    // fato consumiu, e o que faltou na mesa vem logo ao lado, entre
+    // parênteses: "básico R$ 2.400 (faltou na mesa R$ 800)". A multa e os
+    // juros do atraso (a mora) entram depois dos juros do banco: são dívida
+    // nova (vão para as contas atrasadas) e, sem eles, a conta lida não
+    // fecharia no saldo do motor. As contas que atrasaram ou foram pagas não
+    // entram: trocam dinheiro por dívida, e o saldo não muda.
+    // Revisão da F6c: os itens que não atrasam (gás, ônibus, remédio) e que a
+    // casa ficou sem também não saíram do caixa; saem do básico, como a
+    // comida, e vêm ao lado ("ficou sem R$ Z"). Só num config que os marca.
+    const mesa = reaisInteiros(mes.faltouNaMesa);
+    const semComprar = reaisInteiros(mes.ficouSem);
+    const consumido = mes.basico - mesa - semComprar;
+    pedacos.push(mesa > 0 ? [pedacoConta('básico', consumido), ' ', mesaEntreParenteses(mesa)] : pedacoConta('básico', consumido));
+    if (semComprar > 0) pedacos.push(rotuloEValor('ficou sem', F().moeda(semComprar), ['conta-ficou-sem'], { ficouSem: String(semComprar) }));
     if (mes.juros > 0) pedacos.push(pedacoConta('juros', mes.juros));
+    const multa = reaisInteiros(mes.multa);
+    const mora = reaisInteiros(mes.mora);
+    if (multa + mora > 0) {
+      const rotulo = multa > 0 && mora > 0 ? 'multa e juros do atraso' : multa > 0 ? 'multa do atraso' : 'juros do atraso';
+      pedacos.push(rotuloEValor(rotulo, F().moeda(multa + mora), ['conta-atraso'], { atraso: String(multa + mora) }));
+    }
     pedacos.push(mes.saldoMes < 0 ? pedacoConta('faltou', -mes.saldoMes) : pedacoConta('sobrou', mes.saldoMes));
     return D().el(tag, { classe: ['contas', classe] }, juntarPedacos(pedacos));
+  }
+
+  // "(faltou na mesa R$ 800)": o parêntese de fechar fica colado ao valor; solto,
+  // podia cair sozinho no começo da linha de baixo.
+  function mesaEntreParenteses(valor) {
+    const { el } = D();
+    return el('span', { classe: ['conta-quebra', 'historia-mesa'], dados: { faltouNaMesa: String(valor) } }, [
+      '(faltou na ', el('span', { classe: 'conta-fim' }, ['mesa ', el('b', { texto: F().moeda(valor) }), ')']),
+    ]);
   }
 
   // O custo real da carta (D-052): "20 dias parado · renda perdida R$ X ·
@@ -2265,8 +2338,50 @@
   // 30/09, o Jonas pegou R$ 1.500 no mês 2 e a tela mostrou "dívida R$ 1": o
   // empréstimo tinha entrado como renda, e a dívida dele não aparecia.
   const patrimonioDe = (valores) => N().historia.patrimonioDe(valores) ?? 0;
-  const dividaDe = (valores) => N().historia.dividaTotal(valores)?.total ?? 0;
   const patrimonioNoPlacar = (eq) => patrimonioDe(app.dados.placar?.[eq]);
+
+  // A dívida da tela é sempre a total (cheque especial + empréstimo), e o caixa
+  // positivo, quando há, aparece ao lado como "caixa R$ X" (revisão da F6a):
+  // com o empréstimo, a família pode ter R$ 800 no bolso e dever R$ 1.500 ao
+  // banco, e "dívida R$ 1.500" sozinha escondia o dinheiro que ela ainda tinha
+  // (e, sem dívida, "sem dívida" não dizia quanto sobrava). Os dois em reais
+  // inteiros, como a tela os escreve: "caixa R$ 0" seria um número sem nada.
+  // D-066 (esquema v3.1, sala com o limite do cheque especial): as contas
+  // atrasadas saem da "dívida" e ganham um número próprio. A dívida passa a ser
+  // a do banco (o cheque especial, que nunca passa do limite) mais o
+  // empréstimo; somadas numa coisa só, "dívida R$ 19.316" escondia que R$ 1.500
+  // eram do banco e o resto era aluguel e luz atrasados, com risco de despejo e
+  // corte, que é a escolha que a D-066 quer mostrar. contasAtrasadas é null em
+  // sala sem o limite (os valores não têm o indicador), e a tela fica como antes.
+  // O total de historia.dividaTotal já é o banco e o empréstimo (revisão da
+  // F6c): é a mesma "dívida" que o celular da equipe escreve.
+  function dividaECaixa(valores) {
+    const renda = Number(valores?.renda);
+    const d = N().historia.dividaTotal(valores);
+    const atrasadas = Number.isFinite(d?.contasAtrasadas) ? Math.round(d.contasAtrasadas) + 0 : null;
+    return {
+      divida: Math.round(d?.total ?? 0) + 0,
+      contasAtrasadas: atrasadas,
+      caixa: Number.isFinite(renda) && Math.round(renda) > 0 ? Math.round(renda) : 0,
+    };
+  }
+
+  // D-066: o "faltou na mesa" é a comida que a casa deixou de comprar. Não é
+  // dívida (ninguém cobra depois) e fica fora do saldo, mas é o custo humano
+  // que a sala precisa ver; por isso vem sempre com o nome inteiro, à parte do
+  // dinheiro. Em reais inteiros; 0 em sala sem o limite.
+  const reaisInteiros = (v) => (Number.isFinite(v) ? Math.round(v) + 0 : 0);
+  const pedacoMesa = (valor, classe) => rotuloEValor('faltou na mesa', F().moeda(valor), [classe], { faltouNaMesa: String(valor) });
+
+  // D-067: a frase de quando a proteção pagou mais do que o trabalho daria num
+  // período comum ("Auxílio do INSS (MEI): R$ 2.431, mais do que Bruna ganhava
+  // trabalhando num bimestre comum (R$ 1.400)."). A regra e o texto moram no
+  // núcleo (historia.fraseAcimaDoTrabalho), com teste; o celular usa a mesma.
+  // null quando não é o caso, ou em sala de antes da D-067 (sem o campo).
+  function fraseAcimaDoTrabalho(eq, r) {
+    const protecao = N().historia.protecaoDoResultado(r);
+    return N().historia.fraseAcimaDoTrabalho(protecao, personaDaEquipe(eq)?.nome, F().moeda, periodo());
+  }
 
   // No resultado, a origem vai curta e discreta, ao lado do custo da carta. O
   // celular da equipe traz a frase inteira ("ninguém votou: ficou o de
@@ -2285,19 +2400,25 @@
   // o calote) já aparece no saldo do mês, e o detalhe fica no celular e na
   // história. "perdeu", e não "renda perdida": a linha tem de caber ao lado do
   // saldo, numa linha só, com seis equipes em 1024×768.
+  // Revisão da F7 (achado 11): "perdeu" é o prejuízo inteiro da carta, a renda
+  // perdida mais os gastos dela. Em sala, "perdeu" se lê como tudo o que a carta
+  // tirou, e só com a renda o Marcos "perdeu R$ 287" numa quebra que custou
+  // R$ 1.887 com a embreagem: o telão suavizava justo as cartas de desgaste
+  // (D-063).
   function linhaDaParada(custo) {
     if (!(custo?.diasParado > 0)) return null;
     const { el } = D();
+    const perdeu = (custo.rendaPerdida || 0) + (custo.gastos || 0);
     return el('span', { classe: ['custo-carta', 'resultado-custo'] }, [
       el('span', { classe: 'conta', dados: { custo: 'dias' } }, [el('b', { texto: F().inteiro(custo.diasParado) }), custo.diasParado === 1 ? ' dia parado' : ' dias parado']),
-      custo.rendaPerdida > 0 ? [' · ', rotuloEValor('perdeu', F().moeda(custo.rendaPerdida), [], { custo: 'renda' })] : null,
+      perdeu > 0 ? [' · ', rotuloEValor('perdeu', F().moeda(perdeu), [], { custo: 'perdeu' })] : null,
     ]);
   }
 
   // D-065 (teste de 30/09): o resultado projetado mostra só o essencial, com
   // espaço entre as equipes. Antes, cada equipe era uma frase de três linhas
   // (letra, carta, custo, o que veio de antes, entrou, gastos, multa, básico,
-  // juros, faltou, dívida), e o Kleberson achou a tela difícil de explicar em
+  // juros, faltou, dívida), e o Kleber achou a tela difícil de explicar em
   // aula. Agora, uma faixa por equipe, em três colunas alinhadas entre as
   // faixas (subgrid):
   // - a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão;
@@ -2326,29 +2447,56 @@
     const destacadas = new Set(efeitos.filter((x) => x.efeito !== 0)
       .sort((a, b) => Math.abs(b.efeito) - Math.abs(a.efeito) || numeroEquipe(a.eq) - numeroEquipe(b.eq))
       .slice(0, n).map((x) => x.eq));
+    // "saldo do bimestre" com rodadas de 2 meses (esquema v3): o número grande
+    // é o saldo da rodada inteira, e "do mês" diria metade do que ele é.
+    const { doPeriodo } = periodo();
     s.appendChild(cabecalho(null, rodada.titulo, {
-      extra: el('p', { classe: 'resultado-legenda', texto: 'saldo do mês' }),
+      extra: el('p', { classe: 'resultado-legenda', texto: `saldo ${doPeriodo}` }),
     }));
-    const grade = el('div', { classe: 'grade-resultados', role: 'list', 'aria-label': 'Resultado do mês por equipe' });
+    const grade = el('div', { classe: 'grade-resultados', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
     for (const { eq, r } of itens) {
       const carta = app.config.cartas[r.carta] || {};
       const grave = carta.tom === 'grave';
       const mes = mesDoResultado(e.rodada, eq, r);
       const saldo = Math.round(mes.saldoMes) + 0;
-      // A dívida de depois do mês (cheque especial + empréstimo). Resultado de
-      // sala antiga sem o "depois" não tem de onde tirá-la, e fica em 0.
-      const divida = dividaDe(r.depois);
+      // A dívida de depois do mês (cheque especial + empréstimo) e o caixa, se
+      // positivo. Resultado de sala antiga sem o "depois" não tem de onde
+      // tirá-los, e fica em 0.
+      const { divida, contasAtrasadas, caixa } = dividaECaixa(r.depois);
+      const mesa = reaisInteiros(mes.faltouNaMesa);
+      const acima = fraseAcimaDoTrabalho(eq, r);
       // Offline, toda decisão é do apresentador: dizer isso em cada faixa é ruído.
       const origem = r.origem === 'apresentador' && app.modo === 'offline' ? null : ORIGENS[r.origem];
       const rotuloDaOpcao = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo;
       const detalhes = [
         mes.emprestimo > 0 ? el('span', { classe: ['conta', 'resultado-emprestimo'], dados: { emprestimo: String(mes.emprestimo) } }, ['empréstimo ', el('b', { texto: F().moeda(mes.emprestimo) })]) : null,
         linhaDaParada(custoDoResultado(e.rodada, eq, r)),
-        mes.protecao > 0 ? rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }) : null,
+        // D-067: com a frase embaixo da faixa, "a proteção pagou" sairia com o
+        // mesmo valor duas vezes; a frase já diz quanto ela pagou.
+        mes.protecao > 0 && !acima ? rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }) : null,
       ].filter(Boolean);
+      // D-066: as contas atrasadas (o que a casa deve de aluguel, luz e água,
+      // no fim do período) e a comida que não deu para comprar NESTE período,
+      // numa linha própria embaixo do dinheiro, alinhada à direita como ele.
+      // Na coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna
+      // em ~120 px, a parada da carta quebrava em duas linhas, e seis equipes
+      // passavam de 1024×768; ao lado da parada, a linha de detalhe ia a três.
+      // Aqui, a linha cabe inteira na largura da faixa. Com contas atrasadas, o
+      // caixa está no limite do cheque especial (o banco cortou o crédito):
+      // a linha do caixa nunca aparece junto, e a faixa fica com três linhas.
+      const limite = [
+        contasAtrasadas > 0 ? el('span', { classe: ['conta', 'resultado-atrasadas'] }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })]) : null,
+        mesa > 0 ? pedacoMesa(mesa, 'resultado-mesa') : null,
+      ].filter(Boolean);
+      const dados = { equipe: eq, carta: r.carta, origem: r.origem, saldoMes: String(saldo), divida: String(divida), caixa: String(caixa) };
+      if (contasAtrasadas !== null) dados.contasAtrasadas = String(contasAtrasadas);
+      if (mesa > 0) dados.faltouNaMesa = String(mesa);
+      // As cartas mais extremas só entram animadas; sem contorno de destaque
+      // (revisão da F6a): um contorno mais grosso em duas faixas, sem legenda,
+      // a turma lia como "as equipes que ganharam".
       grade.appendChild(el('article', {
-        classe: ['cartao-resultado', grave ? 'grave' : null, destacadas.has(eq) ? 'destaque' : null, destacadas.has(eq) && !grave ? 'animada' : null],
-        dados: { equipe: eq, carta: r.carta, origem: r.origem, saldoMes: String(saldo), divida: String(divida) }, role: 'listitem',
+        classe: ['cartao-resultado', grave ? 'grave' : null, destacadas.has(eq) && !grave ? 'animada' : null],
+        dados, role: 'listitem',
       }, [
         el('div', { classe: 'resultado-quem' }, [
           rotuloEquipe(eq),
@@ -2376,8 +2524,19 @@
             classe: 'resultado-saldo', title: textoSaldo(saldo),
             dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }),
           }),
-          el('p', { classe: 'resultado-divida' }, divida > 0 ? ['dívida ', el('b', { texto: F().moeda(divida) })] : ['sem dívida']),
+          // Sem dívida, o caixa no lugar do "sem dívida"; com os dois, o caixa
+          // numa linha própria (na mesma, a coluna do dinheiro apertava a carta).
+          divida > 0 || (caixa === 0 && !(contasAtrasadas > 0))
+            ? el('p', { classe: 'resultado-divida' }, divida > 0 ? ['dívida ', el('b', { texto: F().moeda(divida) })] : ['sem dívida'])
+            : null,
+          caixa > 0 ? el('p', { classe: 'resultado-caixa' }, ['caixa ', el('b', { texto: F().moeda(caixa) })]) : null,
         ]),
+        limite.length > 0 ? el('p', { classe: 'resultado-limite' }, juntarPedacos(limite)) : null,
+        // D-067: a faixa inteira, embaixo das três colunas. É dado real e
+        // ponto de debate (o auxílio tem o piso de um salário mínimo, e a renda
+        // do app fica abaixo dele); sem a frase, a sala lia "o acidente
+        // compensou". Só quando acontece, e raramente em mais de uma equipe.
+        acima ? el('p', { classe: 'resultado-acima', texto: acima }) : null,
       ]));
     }
     s.appendChild(grade);
@@ -2418,6 +2577,18 @@
       return Number.isFinite(linha) && p.getBoundingClientRect().height > linha * 1.5;
     });
     if (quebrou || grade.scrollHeight > grade.clientHeight + 1) grade.dataset.aperto = '1';
+    // D-066 e D-067: com o limite do cheque especial, a faixa de quem estourou
+    // ganha a linha das contas atrasadas, e a frase da proteção acima do
+    // trabalho ocupa duas linhas na largura da faixa. Seis faixas assim, uma
+    // delas com o empréstimo e a parada quebrando a linha de detalhe, ainda
+    // passavam ~35 px de 1024×768 depois do primeiro aperto. Só então, um
+    // segundo: o saldo e a carta um pouco menores (ainda acima do corpo), o
+    // título do mês menor e o vão entre as faixas no mínimo de 8 px. A letra do
+    // corpo continua nos 28 px.
+    if (grade.dataset.aperto && grade.scrollHeight > grade.clientHeight + 1) {
+      grade.dataset.aperto = '2';
+      grade.closest('.tela')?.setAttribute('data-aperto', '2');
+    }
   }
 
   // ---------- Tela: placar final (D-041) ----------
@@ -2451,11 +2622,24 @@
   // equipe, e sem a proteção. Não cabia numa das duas: com seis equipes, a
   // conta do "Escolha ou sorte?" já ocupa três linhas por equipe em 1024×768,
   // e a página 1 é o gráfico. Config sem proteção fica com as páginas de antes.
+  // Esquema v3 (D-060): com 6 bimestres, a história de uma equipe vai em
+  // páginas de até 3 rodadas (jan–jun, jul–dez). Três rodadas, com a linha
+  // curta de duas linhas, as contas e o que veio de antes, é o que já cabia em
+  // 1024×768 com a letra de 28 px; seis numa página só passavam da altura, e
+  // tirar a narrativa ou as contas apagaria a D-045 e a D-052. Com 3 rodadas,
+  // uma página por equipe, como antes.
+  const RODADAS_POR_PAGINA_HISTORIA = 3;
+
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
     const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
-    return [{ tipo: 'saldo' }, { tipo: 'escolhas' }, ...pior, ...equipes.map((eq) => ({ tipo: 'historia', eq }))];
+    const historias = equipes.flatMap((eq) => {
+      const n = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados).length;
+      const partes = Math.max(1, Math.ceil(n / RODADAS_POR_PAGINA_HISTORIA));
+      return Array.from({ length: partes }, (_, parte) => ({ tipo: 'historia', eq, parte, partes }));
+    });
+    return [{ tipo: 'saldo' }, { tipo: 'escolhas' }, ...pior, ...historias];
   }
 
   const configTemProtecao = () => N().historia.temProtecao(app.config);
@@ -2472,14 +2656,48 @@
     const pagina = paginas[i];
     s.dataset.pagina = pagina.tipo;
     if (pagina.eq) s.dataset.equipe = pagina.eq;
+    if (pagina.tipo === 'historia') {
+      s.dataset.parte = String(pagina.parte + 1);
+      s.dataset.partes = String(pagina.partes);
+    }
     const lado = paginas.length > 1 ? el('p', { classe: 'pagina-placar', texto: `${i + 1} de ${paginas.length}` }) : null;
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
     else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
-    else if (pagina.tipo === 'historia') paginaHistoria(s, pagina.eq, lado);
+    else if (pagina.tipo === 'historia') paginaHistoria(s, pagina, lado);
     else {
       s.appendChild(cabecalho('Placar final', 'Nenhuma rodada foi jogada nesta sessão.'));
     }
+    // Esquema v3: com 12 meses, os valores passam de R$ 10 mil e as contas
+    // crescem; seis equipes de nome comprido ("Verde-azulado") no "Escolha ou
+    // sorte?" passavam 6 px da altura de 1024×768. Só quando a lista transborda
+    // (medida depois do desenho), as linhas se aproximam (data-aperto), com a
+    // letra nos 28 px.
+    app.depoisDeMedir.push(() => {
+      for (const lista of s.querySelectorAll('.historias-escolha, .historia-meses')) {
+        if (lista.scrollHeight > lista.clientHeight + 1) lista.dataset.aperto = '1';
+        // D-066: com o limite do cheque especial, as contas de cada bimestre da
+        // história ganham a comida que faltou e a multa e os juros do atraso, e
+        // três bimestres com o que veio de antes passavam ~60 px de 1024×768
+        // mesmo apertados. Só então, a linha curta de cada bimestre fica em uma
+        // linha (com reticências no fim, como já ficava na segunda): as contas
+        // fecham no saldo e não podem ser cortadas.
+        if (lista.dataset.aperto && lista.classList.contains('historia-meses') && lista.scrollHeight > lista.clientHeight + 1) lista.dataset.aperto = '2';
+      }
+    });
+  }
+
+  // O título da página do saldo (D-041). Com o limite do cheque especial
+  // (D-066), a barra é o patrimônio (caixa menos o banco, o empréstimo e as
+  // contas atrasadas), e a comida que faltou fica de fora, numa linha própria:
+  // "quanto faltou para o básico" lia-se como tudo o que faltou, e o número
+  // grande ficava menor justamente porque a família comeu menos (revisão da
+  // F6c). O título diz o que a barra mede: o que ficou devendo. Sem o limite,
+  // o de sempre.
+  function tituloDaPaginaSaldo() {
+    return Number.isInteger(app.config?.regras?.limiteChequeEspecial)
+      ? 'Quanto sobrou, e quanto ficou devendo'
+      : 'Quanto sobrou, e quanto faltou para o básico';
   }
 
   // Página 1: uma barra por equipe com o saldo dos três meses, "faltou R$ X" ao
@@ -2489,7 +2707,7 @@
     const { el } = D();
     const ordenadas = equipesPorSaldo();
     const naoFecharam = ordenadas.filter((id) => patrimonioNoPlacar(id) < 0).length;
-    s.appendChild(cabecalho('Quanto sobrou, e quanto faltou para o básico', tituloSaldo(naoFecharam, ordenadas.length), { extra: lado }));
+    s.appendChild(cabecalho(tituloDaPaginaSaldo(), tituloSaldo(naoFecharam, ordenadas.length), { extra: lado }));
     const referencias = lista(app.config.ordem.referencias).map((id) => app.config.referencias[id]).filter(Boolean);
     const dominio = dominioCom(ordenadas.map(patrimonioNoPlacar).concat(referencias.map((r) => r.renda)));
     const estiloLinhas = { '--linhas': String(ordenadas.length) };
@@ -2515,6 +2733,35 @@
         el('span', { classe: 'marca-referencia', 'aria-hidden': 'true', texto: '┊' }), ` ${r.nome}: `, el('b', { texto: F().moeda(r.renda) }),
       ]))));
     }
+    const mesa = linhaDaMesaNoAno(ordenadas);
+    if (mesa) s.appendChild(mesa);
+  }
+
+  // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
+  // É o custo humano, à parte do dinheiro: a comida que a casa deixou de
+  // comprar quando o cheque especial acabou. Não entra no saldo nem na barra
+  // (não é dívida), e por isso não vira uma segunda barra nem um segundo número
+  // ao lado do "faltou R$ X", onde se leria como parte dele. Todas as equipes
+  // que jogaram, na ordem do gráfico, inclusive as de R$ 0 (quem comeu todos os
+  // meses também é informação). Só em sala com o limite (o placar tem o
+  // indicador); sem ele, null.
+  function linhaDaMesaNoAno(ordenadas) {
+    const { el } = D();
+    const valores = ordenadas.map((id) => [id, N().historia.faltouNaMesaDe(app.dados.placar?.[id])]);
+    if (valores.length === 0 || valores.every(([, v]) => v === null)) return null;
+    const meses = Math.max(...ordenadas.map((id) => N().historia.mesesJogados(app.config, N().historia.historiaDaEquipe(app.config, id, app.dados.resultados))));
+    const quando = meses === 12 ? 'no ano' : meses === 1 ? 'no mês' : `em ${meses} meses`;
+    // O título e as equipes correm na mesma lista: com o título numa linha
+    // própria (e a explicação da comida), o bloco ia a quatro linhas em
+    // 1024×768 e espremia as barras. "Faltou na mesa" se explica sozinho; o
+    // "fora do saldo" fica, para ninguém somar os dois números.
+    return el('ul', { classe: 'mesa-no-ano', 'aria-label': `Faltou na mesa ${quando}` }, [
+      el('li', { classe: 'mesa-titulo' }, [el('b', { texto: `Faltou na mesa ${quando}` }), ' (fora do saldo):']),
+      ...valores.map(([id, v]) => {
+        const valor = reaisInteiros(v);
+        return el('li', { classe: 'mesa-equipe', dados: { equipe: id, faltouNaMesa: String(valor) } }, [rotuloEquipe(id), ' ', el('b', { texto: F().moeda(valor) })]);
+      }),
+    ]);
   }
 
   // Página 2: a decomposição do motor (placar: piloto, efeitoDecisoes, sorte,
@@ -2530,10 +2777,20 @@
     const { el } = D();
     const placar = app.dados.placar;
     const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
-    s.appendChild(cabecalho('Placar final', 'Escolha ou sorte?', { extra: lado }));
-    s.appendChild(el('ol', { classe: 'historias-escolha' }, equipesPorSaldo().map((id) => {
+    const ordenadas = equipesPorSaldo();
+    // Esquema v3: com 6 rodadas, o "se não mudassem nada" e as escolhas vêm da
+    // simulação do motor (placar.estimado), e não da conta exata. A tela diz
+    // isso uma vez, no kicker, em vez de repetir em cada linha.
+    const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
+    s.appendChild(cabecalho(estimado ? 'Placar final · valores estimados por simulação' : 'Placar final', 'Escolha ou sorte?', { extra: lado }));
+    // Em grade fixa (escolhas-em-grade, css/telao.css): três linhas por
+    // equipe, os mesmos passos em cada uma e as colunas alinhadas entre as
+    // equipes. Corrida como texto, cada equipe quebrava a conta num ponto
+    // diferente, e na projeção não dava para comparar (revisão da F7, achado 13
+    // da revisão de conteúdo e legibilidade).
+    s.appendChild(el('ol', { classe: ['historias-escolha', 'escolhas-em-grade'] }, ordenadas.map((id) => {
       const c = N().historia.escolhaOuSorte(placar[id]);
-      return el('li', { classe: 'historia-escolha', dados: { equipe: id } }, [
+      return el('li', { classe: 'historia-escolha', dados: { equipe: id, ...(c?.estimado ? { estimado: '1' } : {}) } }, [
         rotuloEquipe(id),
         c ? el('span', { classe: 'historia-conta' }, [
           passo('se não mudassem nada: ', F().moeda(c.piloto), 'passo-total'), ' ',
@@ -2562,14 +2819,25 @@
   //   3, a associação), embaixo da nota "ela evita o pior" (achado 1);
   // - "semEscolha": "não escolheram proteção"; "semDado" (sala anterior à
   //   D-059): só o primeiro número.
+  // Revisão da F6a (os textos da proteção coerentes entre si): a nota dizia
+  // "ela evita o pior" como regra, e a linha logo abaixo podia dizer "a
+  // proteção não melhorou o pior caso", uma contradizendo a outra. Agora a nota
+  // não promete: diz o que a proteção PODE fazer ("pode evitar o pior"), a
+  // linha diz o que ela fez neste jogo ("a proteção evitou R$ X" ou "a proteção
+  // não melhorou o pior caso", as mesmas palavras do celular), e o resultado e
+  // a história dizem quanto ela pagou ("a proteção pagou R$ X").
+  // Esquema v3: com o placar estimado (6 rodadas), o kicker diz "pior caso
+  // estimado", e cada linha leva data-estimado.
   function paginaPiorCaso(s, lado) {
     const { el } = D();
     const placar = app.dados.placar;
     const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
     const nota = (texto) => el('span', { classe: ['passo-conta', 'pior-sem-escolha'], texto });
-    s.appendChild(cabecalho('Placar final', 'O pior que podia acontecer', { extra: lado }));
-    s.appendChild(el('p', { classe: 'pior-nota', texto: 'A proteção não rende mais na média: ela evita o pior.' }));
-    s.appendChild(el('ol', { classe: ['historias-escolha', 'piores-casos'] }, equipesPorSaldo().map((id) => {
+    const ordenadas = equipesPorSaldo();
+    const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
+    s.appendChild(cabecalho(estimado ? 'Placar final · pior caso estimado' : 'Placar final', 'O pior que podia acontecer', { extra: lado }));
+    s.appendChild(el('p', { classe: 'pior-nota', texto: 'Na média, a proteção custa dinheiro. O que ela pode fazer é evitar o pior.' }));
+    s.appendChild(el('ol', { classe: ['historias-escolha', 'piores-casos'] }, ordenadas.map((id) => {
       const p = N().historia.piorCasoDoPlacar(placar[id], N().historia.escolheuProtecao(app.config, app.dados.resultados, id));
       // dataset grava "null" como texto: só entra o que existe.
       const dados = { equipe: id };
@@ -2579,6 +2847,7 @@
         dados.evitou = String(p.evitou);
       }
       if (p) dados.situacao = p.situacao;
+      if (p?.estimado) dados.estimado = '1';
       let depois = null;
       if (p?.situacao === 'evitou') {
         depois = [
@@ -2596,29 +2865,41 @@
     })));
   }
 
-  // Página 3 (uma por equipe): os três meses, cada um com uma linha curta em
-  // primeira pessoa (a primeira frase da narrativa da opção e a da carta,
-  // historia.linhaDoMes) e as contas (D-045; rascunho, seção 7, item 12). Antes,
-  // o telão mostrava só os rótulos ("escolheram: … · aconteceu: …"), e a
-  // história ficava no celular. A linha tem no máximo duas linhas na tela e,
-  // se não couber, termina em reticências (CSS), sem baixar dos 28 px. Sem
-  // narrativa no config, volta aos rótulos. O texto da opção é o do ofício da
-  // equipe (historiaDaEquipe já traz rotuloPor/narrativaPor, D-054).
+  // Página 3 (uma por equipe; com 6 bimestres, duas, de até 3 rodadas cada):
+  // cada rodada com uma linha curta em primeira pessoa (a primeira frase da
+  // narrativa da opção e a da carta, historia.linhaDoMes) e as contas (D-045;
+  // rascunho, seção 7, item 12). Antes, o telão mostrava só os rótulos
+  // ("escolheram: … · aconteceu: …"), e a história ficava no celular. A linha
+  // tem no máximo duas linhas na tela e, se não couber, termina em reticências
+  // (CSS), sem baixar dos 28 px. Sem narrativa no config, volta aos rótulos. O
+  // texto da opção é o do ofício da equipe (historiaDaEquipe já traz
+  // rotuloPor/narrativaPor, D-054).
   // O custo real da carta (D-052) abre a linha das contas, na mesma frase: numa
   // linha própria, três meses com narrativa de duas linhas, custo e contas
   // passavam da altura de 1024×768.
-  function paginaHistoria(s, eq, lado) {
+  // Esquema v3: o kicker diz o trecho do ano da página ("Jan–fev a Mai–jun"),
+  // e a última linha de uma página que não é a última diz como a família
+  // chegou ao fim dela ("Depois de 6 meses: faltou R$ X"); a da última, "No fim
+  // dos 12 meses".
+  function paginaHistoria(s, pagina, lado) {
     const { el } = D();
+    const { eq, parte, partes } = pagina;
     const persona = personaDaEquipe(eq);
     const historia = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados);
-    s.appendChild(cabecalho('A história da equipe', [rotuloEquipe(eq), persona ? ` · ${persona.nome}` : null], { extra: lado }));
-    s.appendChild(el('ol', { classe: 'historia-meses' }, historia.map((h) => {
+    const inicio = parte * RODADAS_POR_PAGINA_HISTORIA;
+    const trecho = historia.slice(inicio, inicio + RODADAS_POR_PAGINA_HISTORIA);
+    const kicker = partes > 1 && trecho.length > 0
+      ? `A história da equipe · ${trecho[0].rotulo}${trecho.length > 1 ? ` a ${trecho.at(-1).rotulo}` : ''}`
+      : 'A história da equipe';
+    s.appendChild(cabecalho(kicker, [rotuloEquipe(eq), persona ? ` · ${persona.nome}` : null], { extra: lado }));
+    s.appendChild(el('ol', { classe: 'historia-meses' }, trecho.map((h) => {
       const r = app.dados.resultados?.[h.rodadaId]?.[eq] || {};
       const linha = N().historia.linhaDoMes(h);
       const mes = h.mes || mesDoResultado(h.rodadaId, eq, r);
       const custoGravado = h.cartaCusto || custoDoResultado(h.rodadaId, eq, r);
-      const nomes = nomesDoMes(custoGravado, mes, h.deAntes?.length ? h.deAntes : deAntesDoResultado(h.rodadaId, eq, r));
+      const nomes = nomesDoMes({ equipeId: eq, rodadaId: h.rodadaId, decisao: r.decisao }, custoGravado, mes, h.deAntes?.length ? h.deAntes : deAntesDoResultado(h.rodadaId, eq, r));
       const custo = custoDaCarta(custoGravado, mes, 'historia-custo', nomes.cartaNosGastos);
+      const acima = fraseAcimaDoTrabalho(eq, r);
       return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
         el('p', { classe: 'historia-titulo', texto: h.titulo || h.rodadaId }),
         linha ? el('p', { classe: 'historia-narrativa', texto: linha }) : el('p', { classe: 'historia-fatos' }, [
@@ -2634,26 +2915,50 @@
           // no "faltou", e a sala vê que o dinheiro entrou devendo.
           mes.emprestimo > 0 ? [' · ', rotuloEValor('pegou empréstimo de', F().moeda(mes.emprestimo), ['historia-emprestimo'], { emprestimo: String(mes.emprestimo) })] : null,
         ]),
+        // D-067: a mesma frase do resultado da rodada, no mês em que a
+        // proteção pagou mais do que o trabalho daria.
+        acima ? el('p', { classe: 'historia-acima', texto: acima }) : null,
       ]);
     })));
-    const meses = historia.length === 1 ? 'do mês' : `dos ${historia.length} meses`;
-    s.appendChild(el('p', { classe: 'historia-final' }, [`No fim ${meses}: `, el('b', { texto: textoSaldo(patrimonioNoPlacar(eq)) }), ...pedacosDaDividaFinal(eq, historia)]));
+    const { meses } = periodo();
+    if (parte < partes - 1 && trecho.length > 0) {
+      // Uma página do meio: como a família chegou ao fim do trecho, pelo "depois"
+      // gravado da última rodada dele (o patrimônio, a dívida e o caixa).
+      const ultimo = trecho.at(-1);
+      const depois = app.dados.resultados?.[ultimo.rodadaId]?.[eq]?.depois;
+      const jogados = (inicio + trecho.length) * meses;
+      s.appendChild(el('p', { classe: ['historia-final', 'historia-parcial'] }, [
+        `Depois de ${jogados === 1 ? '1 mês' : `${jogados} meses`}: `, el('b', { texto: textoSaldo(ultimo.saldoAcumulado ?? 0) }), ...pedacosDaDivida(depois),
+      ]));
+      return;
+    }
+    const total = N().historia.mesesJogados(app.config, historia);
+    s.appendChild(el('p', { classe: 'historia-final' }, [
+      `No fim ${total === 1 ? 'do mês' : `dos ${total} meses`}: `, el('b', { texto: textoSaldo(patrimonioNoPlacar(eq)) }), ...pedacosDaDivida(app.dados.placar?.[eq]),
+    ]));
   }
 
-  // A dívida com que a equipe termina (cheque especial + empréstimo) e, quando
-  // o empréstimo continua, quanto dele e em quantas parcelas: as parcelas
-  // seguem depois do fim do jogo (esquema v2.2), e a história que só dizia
-  // "faltou R$ X" escondia que a conta continua chegando.
-  function pedacosDaDividaFinal(eq, historia) {
+  // A dívida com que a equipe termina (cheque especial + empréstimo, sempre a
+  // total) e o caixa, quando positivo (revisão da F6a). Antes, vinha também
+  // "(R$ S do empréstimo, em N parcelas)": a parcela detalhada fica só no
+  // celular da equipe (revisão da F6a), onde cabe a frase inteira, e o telão
+  // diz só quanto a família deve e quanto tem. Aqui o caixa só vem junto de
+  // uma dívida (o empréstimo): sem dívida, o "sobrou R$ X" já é o caixa, e
+  // "sobrou R$ 8.252 · caixa R$ 8.252" repetia o número.
+  // D-066: com o limite, a dívida é a do banco mais o empréstimo, e as contas
+  // atrasadas e o que faltou na mesa até ali vêm em seguida, cada um com o
+  // próprio nome (o "faltou na mesa" não é dívida: é a comida que não deu para
+  // comprar, acumulada). Sala sem o limite: como antes.
+  function pedacosDaDivida(valores) {
     const { el } = D();
-    const divida = N().historia.dividaTotal(app.dados.placar?.[eq]);
-    if (!divida || divida.total <= 0) return [];
-    const ultimo = historia.at(-1)?.mes;
-    const parcelas = Number(ultimo?.parcelasRestantes) || 0;
-    const doEmprestimo = divida.emprestimo > 0
-      ? [' (', el('b', { texto: F().moeda(divida.emprestimo) }), ' do empréstimo', parcelas > 0 ? `, em ${parcelas === 1 ? '1 parcela' : `${parcelas} parcelas`}` : null, ')']
-      : [];
-    return [' · ', el('span', { classe: 'historia-divida', dados: { divida: String(divida.total) } }, ['dívida ', el('b', { texto: F().moeda(divida.total) }), ...doEmprestimo])];
+    const { divida, contasAtrasadas, caixa } = dividaECaixa(valores);
+    const mesa = reaisInteiros(N().historia.faltouNaMesaDe(valores));
+    return [
+      divida > 0 ? [' · ', el('span', { classe: 'historia-divida', dados: { divida: String(divida) } }, ['dívida ', el('b', { texto: F().moeda(divida) })])] : null,
+      divida > 0 && caixa > 0 ? [' · ', el('span', { classe: 'historia-caixa', dados: { caixa: String(caixa) } }, ['caixa ', el('b', { texto: F().moeda(caixa) })])] : null,
+      contasAtrasadas > 0 ? [' · ', el('span', { classe: 'historia-atrasadas', dados: { contasAtrasadas: String(contasAtrasadas) } }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })])] : null,
+      mesa > 0 ? [' · ', pedacoMesa(mesa, 'historia-mesa-total')] : null,
+    ];
   }
 
   // ---------- Tela: comparativo ----------
@@ -3073,14 +3378,21 @@
   // entrada aberta), mas sem voto na decisão já aberta: por isso a barra pede
   // segurar 2 s. O aviso diz só quantos saíram, sem uid nem crachá (a tela é
   // projetada).
+  // Revisão da F6a: com uma votação aberta, quem já votou nela fica, mesmo sem
+  // sinal (quem confere é o anfitrião, contratos, seção 7): o voto confirmado
+  // nunca some. O aviso diz isso, para o "ativos / membros" não surpreender.
   const REMOVER_INATIVOS_MS = 120000;
   function removerInativos() {
     if (app.modo !== 'online' || !app.anf) return;
+    const e = app.estado;
+    const comVotacao = (e?.tipo === 'rodada' && ['decidindo', 'prorrogacao', 'fechando', 'sorteio', 'resultado'].includes(e.subfase))
+      || (e?.tipo === 'enquete' && ['votando', 'fechando'].includes(e.subfase));
+    const fica = comVotacao ? ' Quem já votou nesta votação continua na sala.' : '';
     executar(async () => {
       const n = await app.anf.removerInativos(REMOVER_INATIVOS_MS);
       avisar(n === 0
-        ? 'Nenhum membro sem sinal há mais de 2 min: ninguém saiu.'
-        : `${n === 1 ? '1 membro inativo removido' : `${F().inteiro(n)} membros inativos removidos`} (sem sinal há mais de 2 min).`);
+        ? `Nenhum membro sem sinal há mais de 2 min: ninguém saiu.${fica}`
+        : `${n === 1 ? '1 membro inativo removido' : `${F().inteiro(n)} membros inativos removidos`} (sem sinal há mais de 2 min).${fica}`);
     });
   }
 

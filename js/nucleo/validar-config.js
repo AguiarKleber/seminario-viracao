@@ -63,6 +63,23 @@
   // histórico (a opção decidida), sem o estado daquele mês: uma condição de
   // indicador valeria no mês do empréstimo e poderia não valer na parcela.
   const CONDICAO_EMPRESTIMO = new Set(['opcao', 'persona', 'equipe', 'rodada']);
+  // Esquema v3.1 (D-066: o cheque especial tem limite). Os dois indicadores
+  // que o motor calcula quando a conta passaria do limite (motor,
+  // INDICADOR_ATRASADAS e INDICADOR_MESA): as contas atrasadas (dívida, entram
+  // no patrimônio) e o que faltou na mesa (custo humano acumulado, não é
+  // dívida). Minúsculas com "_": o id de indicador segue [a-z0-9_].
+  const IND_ATRASADAS = 'contas_atrasadas';
+  const IND_MESA = 'faltou_na_mesa';
+  // Revisão da F6c: o principal das contas atrasadas (sem a multa e a mora), a
+  // base da mora. O motor o guarda no "depois", fora dos indicadores; um
+  // indicador com o mesmo id seria sobrescrito pela conta dele.
+  const IND_PRINCIPAL = 'contas_atrasadas_principal';
+  // A ordem do corte quando o dinheiro e o limite acabam: "contas" atrasa
+  // primeiro as contas do período (aluguel, luz, água…) e só corta a comida
+  // do que passar delas; "comida" corta primeiro a comida. O padrão é "contas"
+  // (a validar com o Kleber; contratos, seção 1, esquema v3.1).
+  const CORTES = new Set(['contas', 'comida']);
+  const CORTAR_PADRAO = 'contas';
 
   const TIPOS_PASSO = new Set([
     'lobby', 'enquete', 'bloco', 'formarEquipes', 'personas', 'rodada', 'placarFinal', 'comparativo', 'fim',
@@ -90,13 +107,14 @@
       'cartas', 'enquetes', 'referencias', 'roteiros'],
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
     regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
-      'jurosDividaMes', 'jurosFonte', 'pisoTrabalho'],
+      'jurosDividaMes', 'jurosFonte', 'pisoTrabalho', 'mesesPorRodada',
+      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
     persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
     familia: ['descricao', 'pessoas'],
     basico: ['itens'],
-    itemBasico: ['rotulo', 'valor', 'fonte'],
+    itemBasico: ['rotulo', 'valor', 'fonte', 'comida', 'semAtraso'],
     outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
@@ -439,6 +457,9 @@
     // empréstimo (conferirEmprestimos).
     for (const chave of ['soma', 'multiplica']) {
       if (n[chave] && Object.hasOwn(n[chave], IND_EMPRESTIMO)) idx.mexemNoEmprestimo.push(junta(junta(caminho, chave), IND_EMPRESTIMO));
+      for (const ind of [IND_ATRASADAS, IND_MESA]) {
+        if (n[chave] && Object.hasOwn(n[chave], ind)) idx.mexemNaDivida.push(junta(junta(caminho, chave), ind));
+      }
     }
     return n;
   }
@@ -584,6 +605,16 @@
     // ausente num config v2: ali o "trabalho" ainda leva custos e perdas, e o
     // piso mudaria as contas que o v2 promete manter.
     if (tem(g, 'pisoTrabalho')) n.pisoTrabalho = booleano(r, g, 'pisoTrabalho', 'regras', false);
+    // Esquema v3 (D-060: 12 meses em 6 rodadas bimestrais): quantos meses cada
+    // rodada representa. O motor conta o todoMes, o básico, a outra renda e as
+    // parcelas do empréstimo esse número de vezes, e compõe os juros do cheque
+    // especial. Ausente vale 1 e não entra no normalizado: o config de 3
+    // rodadas mensais continua com o mesmo hash e as mesmas contas.
+    if (tem(g, 'mesesPorRodada')) {
+      const m = numero(r, g, 'mesesPorRodada', 'regras', { inteiro: true, positivo: true });
+      if (m !== undefined) n.mesesPorRodada = m;
+    }
+    divida(r, g, n);
     // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
     // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
     if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
@@ -591,6 +622,39 @@
       n.jurosDividaMes = undefined;
     }
     return n;
+  }
+
+  // Esquema v3.1 (D-066): o limite do cheque especial e o que acontece quando
+  // a conta passaria dele. Tudo opcional e ausente num config v3: sem o limite,
+  // nada entra no normalizado (o hash e as contas não mudam). Com ele, a fonte,
+  // a multa e a mora (com fonte) são obrigatórias: sem elas, a conta atrasada
+  // não teria preço, e passar do limite sairia de graça.
+  const CHAVES_DIVIDA = ['limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro'];
+  function divida(r, g, n) {
+    if (!tem(g, 'limiteChequeEspecial')) {
+      for (const chave of CHAVES_DIVIDA) {
+        if (tem(g, chave)) r.erro(`regras.${chave}`, 'sem "limiteChequeEspecial", isto não tem efeito: o motor só corta e atrasa contas quando há limite');
+      }
+      return;
+    }
+    const limite = numero(r, g, 'limiteChequeEspecial', 'regras', { inteiro: true, positivo: true });
+    if (limite !== undefined) n.limiteChequeEspecial = limite;
+    const fonte = texto(r, g, 'limiteFonte', 'regras');
+    if (fonte !== undefined) n.limiteFonte = fonte;
+    // Frações, como os juros: 0,10 = 10% de multa, 0,01 = 1% ao mês. O 0 é
+    // aceito (uma conta sem multa existe); 1 ou mais é quase certo "10" no
+    // lugar de 0,10, e a conta atrasada dobraria de uma vez.
+    for (const chave of ['multaAtraso', 'moraMes']) {
+      const v = numero(r, g, chave, 'regras', { naoNegativo: true });
+      if (v === undefined) continue;
+      if (v >= 1) r.erro(`regras.${chave}`, `${v} inválido: precisa ser uma fração de 0 a 1, sem incluir o 1 (0,10 = 10%)`);
+      else n[chave] = v;
+    }
+    const atraso = texto(r, g, 'atrasoFonte', 'regras');
+    if (atraso !== undefined) n.atrasoFonte = atraso;
+    // Ausente vale o padrão, escrito no normalizado: o celular lê a regra do
+    // conteúdo da sala, e não do código.
+    n.cortarPrimeiro = escolha(r, g, 'cortarPrimeiro', 'regras', CORTES, CORTAR_PADRAO);
   }
 
   function escala(r, bruto) {
@@ -699,7 +763,27 @@
     bas.itens.forEach((item, i) => {
       const cit = `${ci}[${i}]`;
       if (!ehObjeto(item)) r.erro(cit, 'precisa ser um objeto { rotulo, valor, fonte }');
-      else itens.push(valorComFonte(r, item, cit, CHAVES.itemBasico));
+      else {
+        const n = valorComFonte(r, item, cit, CHAVES.itemBasico);
+        // D-066: o item da comida, o único que a casa pode deixar de comprar
+        // quando o dinheiro e o limite acabam ("o que faltou na mesa"). false
+        // é aceito e some, para o hash de um config sem a marca não mudar.
+        if (tem(item, 'comida')) {
+          if (item.comida === true) n.comida = true;
+          else if (item.comida !== false) r.erro(junta(cit, 'comida'), 'precisa ser true ou false');
+        }
+        // Revisão da F6c: o item que não atrasa (gás, ônibus, remédio: "quem
+        // não paga fica sem", na fonte do atraso). Quando o limite acaba, ele
+        // fica sem comprar, e não vira conta atrasada com multa. false some,
+        // como o da comida, para o hash não mudar.
+        if (tem(item, 'semAtraso')) {
+          if (item.semAtraso === true) {
+            if (n.comida === true) r.erro(junta(cit, 'semAtraso'), 'a comida já fica de fora das contas atrasadas: marque só "comida"');
+            else n.semAtraso = true;
+          } else if (item.semAtraso !== false) r.erro(junta(cit, 'semAtraso'), 'precisa ser true ou false');
+        }
+        itens.push(n);
+      }
     });
     n.basico = { itens };
   }
@@ -848,7 +932,11 @@
     n.peso = numero(r, b, 'peso', c, { inteiro: true, naoNegativo: true });
     const dias = numero(r, b, 'diasParado', c, { opcional: true, inteiro: true, naoNegativo: true });
     if (dias !== undefined) {
-      if (dias > MAX_DIAS_PARADO) r.erro(junta(c, 'diasParado'), `${dias} dias parado: um mês tem ${MAX_DIAS_PARADO}`);
+      // Esquema v3: numa rodada de m meses cabem 30 × m dias parados (a fratura
+      // de 45 dias cabe no bimestre, e não num mês).
+      const meses = idx.mesesPorRodada;
+      const teto = MAX_DIAS_PARADO * meses;
+      if (dias > teto) r.erro(junta(c, 'diasParado'), `${dias} dias parado: ${meses === 1 ? `um mês tem ${MAX_DIAS_PARADO}` : `uma rodada de ${meses} meses tem ${teto}`}`);
       else n.diasParado = dias;
     }
     if (tem(b, 'tom')) {
@@ -1126,6 +1214,60 @@
     }
   }
 
+  // Esquema v3.1 (D-066): o que o limite do cheque especial precisa para a
+  // conta andar certa.
+  // - os indicadores "contas_atrasadas" e "faltou_na_mesa" em moeda, começando
+  //   em 0 e com mínimo 0 (são acumulados que só o motor mexe), e com o máximo
+  //   folgado (pelo menos a faixa inteira da renda, max − min): o limite do
+  //   indicador cortaria a dívida, e ela sumiria do patrimônio sem ser paga;
+  // - o limite cabe na renda: com o mínimo da renda acima de −limite, o clamp
+  //   cortaria o cheque especial antes do limite do banco;
+  // - toda persona marca o item da comida no básico: sem ele, o "faltou na
+  //   mesa" seria sempre 0, e a escolha entre comer e pagar sumiria do jogo;
+  // - nenhuma soma/multiplica mexe nos dois indicadores, com ou sem limite;
+  // - sem o limite, os dois ids ficam reservados (erro): o motor nunca os
+  //   moveria, e o placar descontaria uma dívida que nunca anda.
+  function conferirDivida(r, cfg, idx) {
+    const limite = cfg.regras.limiteChequeEspecial;
+    if (Object.hasOwn(cfg.indicadores, IND_PRINCIPAL)) r.erro(`indicadores.${IND_PRINCIPAL}`, 'id reservado: é o principal das contas atrasadas, que o motor guarda sozinho (a base da mora)');
+    for (const caminho of idx.mexemNaDivida) {
+      r.erro(caminho, `"${IND_ATRASADAS}" e "${IND_MESA}" só mudam pela conta do motor quando o limite do cheque especial acaba (D-066); uma soma aqui desencontraria a dívida da tela`);
+    }
+    if (limite === undefined) {
+      for (const id of [IND_ATRASADAS, IND_MESA]) {
+        if (Object.hasOwn(cfg.indicadores, id)) r.erro(`indicadores.${id}`, `id reservado para a D-066: sem "regras.limiteChequeEspecial" o motor nunca o calcula`);
+      }
+      return;
+    }
+    const renda = Object.hasOwn(cfg.indicadores, 'renda') ? cfg.indicadores.renda : null;
+    if (renda && renda.min !== undefined && renda.min > -limite) {
+      r.erro('regras.limiteChequeEspecial', `${limite}: o mínimo da renda (${renda.min}) corta o cheque especial antes do limite; use "min" ≤ −${limite}`);
+    }
+    const faixa = renda && renda.min !== undefined && renda.max !== undefined ? renda.max - renda.min : 0;
+    for (const id of [IND_ATRASADAS, IND_MESA]) {
+      const ind = Object.hasOwn(cfg.indicadores, id) ? cfg.indicadores[id] : null;
+      const c = `indicadores.${id}`;
+      if (!ind) {
+        r.erro('indicadores', `com "regras.limiteChequeEspecial" falta o indicador "${id}" (moeda, inicial 0, min 0), que o motor acumula`);
+        continue;
+      }
+      if (ind.formato !== undefined && ind.formato !== 'moeda') r.erro(junta(c, 'formato'), 'é dinheiro: use "moeda"');
+      if (ind.min !== undefined && ind.min !== 0) r.erro(junta(c, 'min'), `${ind.min}: o acumulado nunca fica negativo, e o mínimo precisa ser 0`);
+      if (ind.inicial !== undefined && ind.inicial !== 0) r.erro(junta(c, 'inicial'), `${ind.inicial}: começa em 0 (ninguém começa o jogo com conta atrasada nem com a mesa contada)`);
+      if (ind.max !== undefined && ind.max < faixa) r.erro(junta(c, 'max'), `${ind.max} é menor que a faixa da renda (${faixa}): o limite do indicador cortaria a dívida, e ela sumiria do placar`);
+      for (const pid of cfg.ordem.personas) {
+        const inicial = cfg.personas[pid].inicial || {};
+        if (Object.hasOwn(inicial, id) && inicial[id] !== 0) r.erro(`personas.${pid}.inicial.${id}`, 'começa em 0');
+      }
+    }
+    for (const pid of cfg.ordem.personas) {
+      const itens = (cfg.personas[pid].basico && cfg.personas[pid].basico.itens) || [];
+      if (!itens.some((i) => i.comida === true)) {
+        r.erro(`personas.${pid}.basico.itens`, 'com o limite do cheque especial, marque o item da comida com "comida": true: é dele que sai o que faltou na mesa (D-066)');
+      }
+    }
+  }
+
   function conferirEquipes(r, cfg) {
     const { equipes, personas, ordem } = cfg;
     if (ordem.equipes.length > MAX_EQUIPES) {
@@ -1188,6 +1330,11 @@
       const seq = passos.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
       sequencias.set(seq.join('|'), seq);
     }
+    // Esquema v3 (6 rodadas): com uma carta que sai em qualquer estado em toda
+    // persona × rodada × opção (a "normal" do baralho), a garantia já existe sem
+    // enumerar. Enumerar 6 rodadas passa de 20.000 estados já na 3ª, e a sala
+    // de 12 meses nunca nasceria. Só quando falta essa carta a enumeração roda.
+    if (garantidaSemEnumerar(cfg, M, sequencias)) return;
     const jaAvisado = new Set();
     // Só as rodadas citadas por algum decidiu/sorteou entram na chave do nó: as
     // outras não mudam nenhuma chance, e contá-las multiplicaria os estados à toa.
@@ -1199,6 +1346,42 @@
         if (!explorarSequencia(r, cfg, M, equipeId, seq, jaAvisado, citadas)) return;
       }
     }
+  }
+
+  // Há, em cada equipe × rodada de algum roteiro × opção, uma carta que sai em
+  // QUALQUER estado e com qualquer histórico? É o caso quando o somenteSe dela
+  // é fixo (só persona, equipe, rodada ou opção) e vale, e o peso ajustado tem
+  // um piso acima de 0: os ajustes fixos entram pelo valor exato; um ajuste que
+  // lê o estado só é aceito se não pode baixar o peso (soma ≥ 0, ou
+  // multiplica ≥ 1 com o piso ≥ 0), porque aí o peso real fica sempre acima do
+  // piso. Um ajuste que pode baixar (a "normal" × 0 na exaustão) tira a carta
+  // da garantia, e a enumeração decide.
+  function garantidaSemEnumerar(cfg, M, sequencias) {
+    const rodadas = new Set([...sequencias.values()].flat());
+    const cartaSempre = (equipeId, rodadaId, opcaoId, carta) => {
+      const ctx = { equipeId, personaId: cfg.equipes[equipeId].persona, rodadaId, opcaoId, estado: {}, historico: {} };
+      if (Array.isArray(carta.rodadas) && !carta.rodadas.includes(rodadaId)) return false;
+      if (carta.somenteSe && (!M.condicaoFixa(carta.somenteSe) || !M.condicaoVale(cfg, carta.somenteSe, ctx))) return false;
+      let piso = carta.peso;
+      for (const a of carta.ajustesDePeso || []) {
+        if (M.condicaoFixa(a.se)) {
+          if (!M.condicaoVale(cfg, a.se, ctx)) continue;
+          if (a.soma !== undefined) piso += a.soma;
+          if (a.multiplica !== undefined) piso *= a.multiplica;
+        } else if (!((a.soma !== undefined && a.soma >= 0) || (a.multiplica !== undefined && a.multiplica >= 1 && piso >= 0))) {
+          return false;
+        }
+      }
+      return piso > 0;
+    };
+    for (const equipeId of cfg.ordem.equipes) {
+      for (const rodadaId of rodadas) {
+        for (const opcaoId of cfg.rodadas[rodadaId].ordemOpcoes) {
+          if (!cfg.ordem.cartas.some((id) => cartaSempre(equipeId, rodadaId, opcaoId, cfg.cartas[id]))) return false;
+        }
+      }
+    }
+    return true;
   }
 
   // Devolve false quando passa de MAX_ESTADOS. Isso é erro, e não aviso: sem a
@@ -1275,6 +1458,9 @@
       indicadores: {}, personas: {}, equipes: {}, rodadas: {}, cartas: {}, enquetes: {}, opcoes: new Set(), historicos: [],
       // Esquema v2.2: cada empréstimo, e cada soma/multiplica no indicador dele.
       emprestimos: [], mexemNoEmprestimo: [],
+      // Esquema v3.1 (D-066): cada soma/multiplica nas contas atrasadas ou no
+      // que faltou na mesa.
+      mexemNaDivida: [],
     };
     const cfg = {
       versao: texto(r, bruto, 'versao', ''),
@@ -1283,6 +1469,8 @@
       regras: regras(r, bruto),
       escala: escala(r, bruto),
     };
+    // Os dias parados de uma carta cabem na rodada inteira (esquema v3).
+    idx.mesesPorRodada = cfg.regras.mesesPorRodada || 1;
     const ordem = {};
     const montar = (chave, normalizar, opcoes) => {
       const { mapa, ordem: o } = colecao(r, bruto, chave, '', normalizar, opcoes);
@@ -1305,6 +1493,7 @@
     cfg.ordem = ordem;
     conferirHistorico(r, cfg, idx);
     conferirEmprestimos(r, cfg, idx);
+    conferirDivida(r, cfg, idx);
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.

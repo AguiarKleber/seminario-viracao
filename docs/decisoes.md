@@ -1,7 +1,7 @@
 # Registro de decisões
 
 Numerado e **nunca reescrito**. Uma decisão nova que substitui outra ganha número
-novo e cita a antiga. Tudo o que está aqui foi alinhado com o Kleberson. Mudar
+novo e cita a antiga. Tudo o que está aqui foi alinhado com o Kleber. Mudar
 qualquer item exige perguntar antes.
 
 A arquitetura detalhada está em [arquitetura.md](arquitetura.md).
@@ -18,7 +18,7 @@ A proposta de arquitetura, modelo de dados e riscos foi feita em quatro etapas:
 - dois revisores adversariais, que acharam 21 falhas, todas corrigidas antes da
   aprovação.
 
-## 28/09/2026: respostas do Kleberson
+## 28/09/2026: respostas do Kleber
 
 **D-001. Pilha: Firebase Realtime Database (plano Spark) + login anônimo + GitHub Pages.**
 - HTML, CSS e JavaScript em scripts clássicos, sem framework e sem build.
@@ -30,7 +30,7 @@ A proposta de arquitetura, modelo de dados e riscos foi feita em quatro etapas:
 - Mora na pasta de projetos pessoais (`Pessoal-Dev/seminario-viracao`).
 - Repositório **público** `AguiarKleber/seminario-viracao`. O GitHub Pages grátis
   exige repositório público; cartas e pesos ficam visíveis, e isso foi aceito.
-- O Firebase fica na conta Google **pessoal** do Kleberson.
+- O Firebase fica na conta Google **pessoal** do Kleber.
 
 **D-003. Vale o protocolo de dois agentes (Claude Code e Codex).** Ver o
 `AGENTS.md` do Pessoal-Dev.
@@ -89,7 +89,7 @@ momento, e texto livre nunca aparece no telão.
 **D-016. Visual neutro e acadêmico.** Fundo escuro, paleta Okabe-Ito, cada equipe
 com forma, nome e número. Nenhuma marca de empresa.
 
-**D-017. Quem opera o notebook é o Kleberson, e as telas dizem "apresentador".**
+**D-017. Quem opera o notebook é o Kleber, e as telas dizem "apresentador".**
 Onde a proposta dizia "professor", vale "apresentador". Não há passador: tudo é
 feito pelo teclado do notebook.
 
@@ -116,7 +116,7 @@ Com ele, as regras e o simulador são testados sem gastar a cota de contas anôn
 
 ## 28/09/2026: validação do conteúdo (rascunho de 28/09)
 
-O Kleberson escolheu o pacote B de calibragem e aceitou em bloco as recomendações
+O Kleber escolheu o pacote B de calibragem e aceitou em bloco as recomendações
 dos itens 1 a 17. Os números vêm de `docs/rascunho-conteudo.md`.
 
 **D-024. Calibragem: pacote B.** As horas a mais do mês 1 ("trabalhar o máximo")
@@ -168,7 +168,7 @@ cabe nele. O motor não muda.
 min. Implementação: uma enquete `termometro_curto` com t1 ("O aplicativo é o
 patrão.") e t3 ("Quem não prospera por conta própria é porque não se esforçou o
 suficiente."). **A escolha de t1 e t3 foi do Claude:** t1 fecha com o título do
-seminário e t3 mede a crença meritocrática. O Kleberson pode trocar.
+seminário e t3 mede a crença meritocrática. O Kleber pode trocar.
 
 **D-033. Raça e gênero ficam fora das personas.** O dado vai para o slide.
 
@@ -212,12 +212,12 @@ enquanto o apresentador conta as mãos, como está hoje. Fica marcado como
 **D-040. Nome da carta nas fatias do sorteio.**
 - Cada carta ganha no config um rótulo curto opcional, `curto`, com até cerca de
   10 letras, escrito dentro da fatia.
-- Os rótulos são rascunhados pelo Claude e validados junto com o Kleberson.
+- Os rótulos são rascunhados pelo Claude e validados junto com o Kleber.
 - Fica marcado como "vamos testar".
 
-## 29/09/2026: redesenho depois do primeiro ensaio do Kleberson no telão
+## 29/09/2026: redesenho depois do primeiro ensaio do Kleber no telão
 
-Com base nos prints do ensaio, o Kleberson aprovou as propostas abaixo e pediu
+Com base nos prints do ensaio, o Kleber aprovou as propostas abaixo e pediu
 que elas entrem **hoje**, para que o teste de 30/09 já use a versão nova.
 
 **D-041. Placar final em páginas** (substitui a tela decomposta, que confundia).
@@ -276,11 +276,11 @@ celular de cada equipe.
 - A abertura (config, roteiro, PIN) é exceção: acontece antes de projetar.
 
 **D-048. Calendário do redesenho:** os ajustes entram em 29/09, e o teste de 30/09
-usa a versão nova. A decisão foi do Kleberson; o Claude tinha recomendado não
+usa a versão nova. A decisão foi do Kleber; o Claude tinha recomendado não
 mudar nada antes do teste.
 
 **D-049. Autonomia operacional do Claude neste projeto** (29/09).
-- O Kleberson deu autonomia total nas ações operacionais: fundir PR, publicar no
+- O Kleber deu autonomia total nas ações operacionais: fundir PR, publicar no
   GitHub Pages, operar o Firebase, apagar salas de teste e rodar ensaios.
 - Decisão de **produto e conteúdo** continua sendo alinhada antes.
 - Três limites que o Claude mantém por conta própria:
@@ -290,7 +290,7 @@ mudar nada antes do teste.
 
 ## 29/09/2026: perguntas da revisão do conteúdo v2 (seção 7 do rascunho)
 
-O Kleberson aprovou as 8 recomendações. O item 7 fica marcado como "vamos
+O Kleber aprovou as 8 recomendações. O item 7 fica marcado como "vamos
 validar".
 
 **D-050. "Quase ninguém", e não "ninguém", fecha as contas.** Existe um caminho
@@ -355,7 +355,7 @@ Segunda rodada da revisão (29/09), também correções de conta:
 A calibragem da F4 não conseguiu cumprir as duas decisões. A causa estava nos
 próprios dados, não em falta de ajuste: com o básico real de Porto Alegre e as
 rendas reais, ninguém fecha as contas; e a proteção se comporta como seguro,
-que perde em valor esperado e ganha no pior caso. O Kleberson decidiu:
+que perde em valor esperado e ganha no pior caso. O Kleber decidiu:
 
 **D-058. Picos reais tornam o fechamento possível** (detalha a D-050).
 - Entram cartas de pico que existem de verdade, cada uma com fonte: fim de ano,
@@ -373,13 +373,13 @@ que perde em valor esperado e ganha no pior caso. O Kleberson decidiu:
   maioria das personas.
 
 **Provisório (29/09, noite): a associação deixa de ser marcada como proteção** (`protege`)
-até o Kleberson decidir o item 2 da seção 0.8 do rascunho. Com a calibragem
+até o Kleber decidir o item 2 da seção 0.8 do rascunho. Com a calibragem
 atual, ela não melhora o pior caso. Marcada como proteção, a página "O pior que
 podia acontecer" diria "ela evita o pior" ao lado de "a proteção não melhorou o
 pior caso". Só o MEI aparece como proteção nessa página. Desfazer é pôr
 `"protege": true` de volta na opção r3/0.
 
-## 30/09/2026: depois do teste do Kleberson no site publicado
+## 30/09/2026: depois do teste do Kleber no site publicado
 
 **D-060. O jogo dura 12 meses, em 6 rodadas bimestrais** (substitui as 3 rodadas
 da D-006). A sessão gira em torno do jogo: a apresentação acontece em cima dele,
@@ -401,7 +401,15 @@ trabalho subordinado a plataformas. Quando a casa tem outra renda, ela também �
 informal (diária, bico). O 13º e o abono deixam de ser picos.
 
 **D-063. O risco cresce com os meses:** desgaste do veículo, do corpo e do
-algoritmo. Foi sugestão do Kleberson.
+algoritmo. Foi sugestão do Kleber.
+- **Como se mede (05/10, achado da revisão):** no plano padrão com a carta
+  "Normal" em todos os bimestres, a chance de cada carta de desgaste nunca cai de
+  um bimestre para o seguinte (fora as quedas da própria escolha do padrão). Nas
+  partidas sorteadas, a tendência do ano é a mesma, mas a média recua até 1 ponto
+  em alguns bimestres: na casa que já atrasou contas ou se cansou, a doença, o
+  corte de luz e o despejo ganham espaço no sorteio. As fontes das cartas dizem
+  as duas coisas (rascunho, seção 4). Os pesos não subiram para apagar as quedas,
+  porque isso mexeria no equilíbrio do jogo inteiro.
 
 **D-064. Modo espectador do apresentador no celular.**
 - Com o PIN, o celular do apresentador vê a tela de qualquer equipe, exatamente
@@ -418,3 +426,33 @@ algoritmo. Foi sugestão do Kleberson.
 **Defeito crítico registrado:** no teste de 30/09, um toque em "Votar nesta" não
 registrou o voto no mês 3. A correção é prioridade máxima e vem com uma matriz de
 votos: todas as equipes, todas as rodadas e as situações difíceis.
+
+## 01/10/2026: decisões da revisão da versão de 12 meses
+
+**D-066. O cheque especial tem um limite realista** (de R$ 1.000 a R$ 2.000, com
+fonte).
+- Passado o limite, o banco corta o crédito.
+- O que falta vira **conta atrasada** (aluguel, luz), com multa e risco de corte
+  ou despejo, e **comida cortada** ("o que faltou na mesa").
+- Acabam os juros compostos infinitos, que levavam a dívida a dezenas de milhares
+  de reais em 12 meses.
+- O jogo passa a mostrar a escolha entre comer e pagar.
+- **No núcleo (01/10, esquema v3.1; contratos, seções 1 e 3):** `regras.limiteChequeEspecial`,
+  multa uma vez e mora mensal simples (`multaAtraso`, `moraMes`, com fonte), indicadores
+  `contas_atrasadas` (entra no patrimônio) e `faltou_na_mesa` (custo humano, fora dele), e o
+  item da comida marcado no básico. Num mês bom, a folga até o limite paga as contas atrasadas.
+  **A validar:** o padrão de `regras.cortarPrimeiro` é `"contas"` (atrasa as contas do período e
+  só corta a comida do que passar delas). As duas coisas acontecem: 22% trocaram a conta de luz
+  por comida (Ipec/iCS, nov/2021) e 30% dos que ganham até 1 salário mínimo deixam de comprar
+  comida para pagar a luz (Pólis/Ipec, mai/2024); 21% das dívidas atrasadas são contas básicas
+  (Serasa, mar/2026). "Comida primeiro" zeraria a comida das personas mais pobres em todo
+  bimestre antes de atrasar uma conta. O valor do limite e da multa no `config.json` ainda
+  falta (conteúdo).
+
+**D-067. A fratura com MEI pode render mais que um bimestre de trabalho, e a tela
+diz isso.**
+- O auxílio do INSS para quem paga o MEI é de 1 salário mínimo, mais do que a
+  Bruna (e quase o Kauã e a Daiane) ganha trabalhando.
+- É um dado real e vira ponto de debate sobre renda abaixo do mínimo.
+- A tela mostra algo como "o auxílio é de 1 salário mínimo, mais do que ela
+  ganhava trabalhando".

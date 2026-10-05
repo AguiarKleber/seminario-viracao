@@ -9,10 +9,11 @@ O app de um **seminário universitário** sobre empreendedorismo e trabalho em
 plataformas, com até 20 alunos, cada um no próprio celular, e um telão. Tem dois
 módulos:
 - **enquetes de 1 a 5**, com comparação antes e depois;
-- o **Jogo da Viração**: 6 equipes sobre 5 personas, 3 rodadas intercaladas com a
-  apresentação, e cartas de evento sorteadas por probabilidade.
+- o **Jogo da Viração**: 6 equipes, cada uma com um personagem (D-061), 12 meses
+  em 6 rodadas bimestrais intercaladas com a apresentação (D-060), e cartas de
+  evento sorteadas por probabilidade.
 
-É um projeto pessoal do Kleberson, **sem vínculo com nenhum empregador**.
+É um projeto pessoal do Kleber, **sem vínculo com nenhum empregador**.
 
 - **O que foi decidido e por quê:** [docs/decisoes.md](docs/decisoes.md). Decisão
   registrada não se muda sem perguntar.
@@ -97,4 +98,4 @@ Vale o protocolo do `AGENTS.md` do Pessoal-Dev:
 - branch `claude/<assunto>` ou `codex/<assunto>`;
 - nunca commit direto na `main`;
 - commit assinado com o rodapé de coautoria;
-- quem publica (GitHub Pages, regras do Firebase) é o Kleberson.
+- quem publica (GitHub Pages, regras do Firebase) é o Kleber.

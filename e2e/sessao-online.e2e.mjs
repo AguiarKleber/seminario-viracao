@@ -27,7 +27,18 @@
 //    o "Votar nesta" confirma e muda o voto (D-055); o texto da opção do jeito
 //    da persona da equipe (D-054); o custo real da carta (dias parado, renda
 //    perdida, gastos) e a linha "entrou · gastos · básico · juros · faltou"
-//    (D-052).
+//    (D-052);
+// 12. o modo espectador (D-064, regras v4): o celular do apresentador entra com
+//    o PIN (o errado é recusado), vê a tela e a contagem ao vivo de cada equipe
+//    como o aluno dela, não vota, não vira membro, não muda o "N de M" nem assume
+//    a sala; recarregar pede o PIN de novo, e sair apaga o pedido;
+// 13. o esquema v3 (D-060): numa sala de 6 bimestres montada pelo núcleo, o
+//    resumo por bimestre, "no bimestre" nas telas, o placar estimado e o
+//    espectador com a tela igual à do aluno;
+// 14. o limite do cheque especial (D-066) e a proteção acima do trabalho
+//    (D-067), numa sala de 6 bimestres com a fixture v3.1: a dívida com o
+//    limite e as contas atrasadas, o que faltou na mesa à parte, a multa e a
+//    mora na conta, e a frase da proteção acima do trabalho.
 // Capturas do celular em e2e/capturas/celular-*.png (as antigas são apagadas no
 // começo: uma captura nova muda a numeração das seguintes).
 //
@@ -44,6 +55,8 @@ import { join } from 'node:path';
 import { administrador, PIN_EMULADOR, RAIZ, rodarNoEmulador } from '../bin/emulador.mjs';
 import { servir } from '../bin/servir.mjs';
 import { carregarNucleo } from '../test/carregar-nucleo.mjs';
+import { lerConfigTesteV3, lerConfigTesteV31, normalizar } from '../test/fixtures/configs.mjs';
+import { montarSessao, SALA } from '../test/fixtures/sessao.mjs';
 
 const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const SDK_CDN = 'https://www.gstatic.com/firebasejs/12.19.0/';
@@ -142,13 +155,29 @@ function fixtureV21ParaE2e() {
 
 // O config real com o mês 1 só com as cartas de parada (diasParado > 0), que
 // o próprio config diz quais são.
+// A carta tirada do mês 1 não pode mais ter saído nele: uma condição
+// "sorteou no mês 1 essa carta" (a do despejo, que não se repete: D-066) nunca
+// valeria, e o validador recusa condição que nunca vale. Ela sai junto, em
+// qualquer lista do config: não mudava nada, porque nunca valeria.
 function soCartasDeParadaNoMes1(texto) {
   const cfg = JSON.parse(texto);
   const todas = cfg.rodadas.map((r) => r.id);
   const mes1 = todas[0];
+  const tiradas = new Set();
   for (const carta of cfg.cartas) {
-    if (!(carta.diasParado > 0)) carta.rodadas = (carta.rodadas ?? todas).filter((r) => r !== mes1);
+    if (!(carta.diasParado > 0) && (carta.rodadas ?? todas).includes(mes1)) {
+      carta.rodadas = (carta.rodadas ?? todas).filter((r) => r !== mes1);
+      tiradas.add(carta.id);
+    }
   }
+  const nuncaVale = (x) => tiradas.has(x?.se?.sorteou?.[mes1]);
+  const limpar = (no) => {
+    if (Array.isArray(no)) {
+      for (let i = no.length - 1; i >= 0; i -= 1) if (nuncaVale(no[i])) no.splice(i, 1);
+      no.forEach(limpar);
+    } else if (no && typeof no === 'object') Object.values(no).forEach(limpar);
+  };
+  limpar(cfg);
   return JSON.stringify(cfg, null, 2);
 }
 
@@ -232,6 +261,594 @@ async function sessao() {
 
 // O que o telão grava logo depois de a tela mudar (o apagamento do pedido, por
 // exemplo) chega um instante depois: espera até 5 s pelo valor.
+// ---------- Esquema v3: os 12 meses em 6 bimestres no celular (D-060, D-065) ----------
+// O config.json ainda tem 3 rodadas mensais. A sala de 6 bimestres é montada
+// pelo próprio núcleo (o anfitrião sobre o canal-local, com a fixture v3 e as
+// decisões pelo apresentador, como em test/anfitriao-v3.test.mjs) e copiada
+// para o emulador pelo administrador. O celular entra nela como em qualquer
+// sala: aqui se confere a tela dele (o resumo por bimestre, "no bimestre", o
+// placar estimado e o espectador numa sala dessas). O jogo pelo telão, com
+// toques nas 6 rodadas, é o da matriz de votos.
+async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela, entrarComoEspectador, corDoToken }) {
+  const V = await carregarNucleo();
+  const config = normalizar(V, lerConfigTesteV3());
+  const { anf, canal, relogio, indiceDe } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
+  // A equipe 1 paga o MEI no bimestre 1 e pega o empréstimo no 2 (a dívida e a
+  // proteção aparecem); as outras variam.
+  const ativas = ['e1', 'e3', 'e5'];
+  const plano = {
+    r1: { e1: 'b', e3: 'a', e5: 'c' }, r2: { e1: 'd', e3: 'a', e5: 'b' }, r3: { e1: 'a', e3: 'c', e5: 'd' },
+    r4: { e1: 'b', e3: 'a', e5: 'd' }, r5: { e1: 'c', e3: 'b', e5: 'a' }, r6: { e1: 'a', e3: 'd', e5: 'c' },
+  };
+  await anf.criarSala();
+  await anf.pularPara(indiceDe('formarEquipes'));
+  await anf.definirEquipesAbertas(ativas);
+  await anf.avancar();
+  relogio.passar(1000);
+  await anf.avancar();
+  for (const r of config.ordem.rodadas) {
+    if (r !== 'r1') await anf.pularPara(indiceDe('rodada', { rodada: r }));
+    for (const eq of ativas) await anf.decidirPorEquipe(eq, plano[r][eq]);
+    await anf.encerrar();
+  }
+  await anf.pularPara(indiceDe('placarFinal'));
+  const arvore = canal.exportar().salas[SALA];
+  // A sala do e2e, com a hora de agora (a do canal-local é a de um relógio de
+  // teste, e a regra de membros confere now < expiraEm) e a versão do celular.
+  const codigo = 'B6V3';
+  const agora = Date.now();
+  arvore.meta = { ...arvore.meta, hostUid: 'anfitriao-do-e2e', criadaEm: agora, expiraEm: agora + 3_600_000, entradaAberta: true, versaoApp };
+  arvore.pulso = agora;
+  await administrador('DELETE', `salas/${codigo}`);
+  await administrador('PUT', `salas/${codigo}`, arvore);
+  const resultados = await administrador('GET', `salas/${codigo}/resultados`);
+  const placar = await administrador('GET', `salas/${codigo}/placar`);
+  assert.equal(placar.e1.estimado, true, 'com 6 bimestres, o placar da equipe 1 é estimado');
+
+  const url = `${site.url}aluno/?sala=${codigo}&emulador=1`;
+  async function novo(nome, { segurarApague = false } = {}) {
+    const ctx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
+    await servirSdk(ctx);
+    // A reconexão em que a sala some antes de o servidor confirmar o "apague
+    // ao cair" do pedido (revisão do voto, achado 2). O SDK reenvia as escutas
+    // antes de avisar .info/connected, e a ordem real não se força no
+    // emulador: com globalThis.__segurarApague, a confirmação do "apague ao
+    // cair" do pedido só volta quando o teste solta. __canalDoTeste dá ao
+    // teste o reconectar (goOffline + goOnline) do próprio canal.
+    if (segurarApague) {
+      await ctx.addInitScript(() => {
+        const V = (globalThis.Viracao ||= {});
+        let fabrica;
+        Object.defineProperty(V, 'canalFirebase', {
+          configurable: true,
+          enumerable: true,
+          get: () => fabrica,
+          set: (f) => {
+            fabrica = {
+              ...f,
+              criar: (opcoes) => {
+                const canal = f.criar(opcoes);
+                const apagar = canal.apagarAoDesconectar;
+                canal.apagarAoDesconectar = (caminho) => {
+                  const promessa = apagar.call(canal, caminho);
+                  if (!globalThis.__segurarApague || !String(caminho).includes('pedidosAnfitriao')) return promessa;
+                  globalThis.__apagueSegurado = true;
+                  return promessa.then(async (v) => {
+                    while (globalThis.__segurarApague) await new Promise((r) => setTimeout(r, 50));
+                    return v;
+                  });
+                };
+                globalThis.__canalDoTeste = canal;
+                return canal;
+              },
+            };
+          },
+        });
+      });
+    }
+    const p = await ctx.newPage();
+    vigiar(p, nome);
+    await p.goto(url);
+    return { nome, ctx, p };
+  }
+  const aluno = await novo('bimestres');
+  await esperarTela(aluno, 'entrada');
+  await aluno.p.click('[data-acao="entrar"]');
+  // As equipes já travaram: a equipe vem do administrador, como o telão faria
+  // ao distribuir quem chegou depois.
+  let uid = null;
+  for (let i = 0; i < 100 && !uid; i += 1) {
+    const u = await aluno.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    if (u && await administrador('GET', `salas/${codigo}/membros/${u}`)) uid = u;
+    else await aluno.p.waitForTimeout(150);
+  }
+  assert.ok(uid, 'o celular entrou na sala de 6 bimestres');
+  await administrador('PUT', `salas/${codigo}/membros/${uid}/equipe`, 'e1');
+  await esperarTela(aluno, 'situacao');
+
+  // O resumo por bimestre (D-065): "Bimestre · Saldo do bimestre · Ficou com",
+  // 6 linhas com o nome curto de cada uma ("Jan–fev"), o valor com o sinal e a
+  // cor dele, inteiro na primeira tela de 360×740.
+  const esperada = V.historia.historiaDaEquipe(config, 'e1', resultados);
+  assert.equal(esperada.length, 6);
+  const lido = await aluno.p.evaluate(() => {
+    const r = document.querySelector('.resumo-meses');
+    const valor = (n) => ({ texto: n.textContent, sinal: n.dataset.sinal, cor: getComputedStyle(n).color });
+    return r ? {
+      baixo: r.getBoundingClientRect().bottom,
+      rotulo: r.getAttribute('aria-label'),
+      cabecalho: Array.from(r.querySelectorAll('thead th'), (n) => n.textContent),
+      linhas: Array.from(r.querySelectorAll('tbody tr'), (tr) => ({ rodada: tr.dataset.rodada, nome: tr.querySelector('th').textContent, saldo: valor(tr.querySelector('.saldo-mes')), ficou: valor(tr.querySelector('.saldo-ficou')) })),
+    } : null;
+  });
+  assert.ok(lido, 'o resumo por bimestre aparece');
+  assert.deepEqual(lido.cabecalho, ['Bimestre', 'Saldo do bimestre', 'Ficou com'], 'as colunas falam em bimestre');
+  assert.equal(lido.rotulo, 'Resumo por bimestre');
+  assert.deepEqual(lido.linhas.map((l) => l.nome), ['Jan–fev', 'Mar–abr', 'Mai–jun', 'Jul–ago', 'Set–out', 'Nov–dez'], 'uma linha por bimestre, com o nome curto');
+  assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId));
+  const cor = { positivo: await corDoToken(aluno, '--positivo'), negativo: await corDoToken(aluno, '--negativo') };
+  for (const [i, h] of esperada.entries()) {
+    for (const [campo, valor] of [['saldo', h.mes.saldoMes], ['ficou', h.saldoAcumulado]]) {
+      const l = lido.linhas[i][campo];
+      const r = Math.round(valor);
+      const sinal = r > 0 ? 'positivo' : r < 0 ? 'negativo' : 'zero';
+      assert.equal(l.texto, await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), valor), `${h.rodadaId}, ${campo}: o valor com o sinal`);
+      assert.equal(l.sinal, sinal, `${h.rodadaId}, ${campo}: data-sinal`);
+      if (r !== 0) assert.equal(l.cor, cor[sinal], `${h.rodadaId}, ${campo}: verde se positivo, vermelho se negativo`);
+    }
+  }
+  assert.ok(lido.baixo <= 740, `o resumo dos 6 bimestres cabe em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+  // O placar de 6 bimestres é estimado (simulação do motor): a tela diz.
+  assert.ok(await aluno.p.locator('.nota-estimado').count() >= 1, 'a nota de estimado no "Escolha ou sorte?"');
+  assert.ok((await aluno.p.$$eval('h2.subtitulo', (ns) => ns.map((n) => n.textContent))).includes('Escolha ou sorte? (estimado)'));
+  if (V.historia.temProtecao(config)) {
+    assert.equal(await aluno.p.getAttribute('.pior-caso', 'data-estimado'), '1');
+    assert.match(await aluno.p.textContent('.pior-caso h2'), /pior caso estimado/);
+  }
+  // A história, recolhida, com os 6 bimestres.
+  assert.equal(await aluno.p.textContent('details[data-recolhido="historia"] > summary'), 'A história bimestre a bimestre');
+  assert.deepEqual(await aluno.p.$$eval('.historia-mes', (ns) => ns.map((n) => n.dataset.rodada)), esperada.map((h) => h.rodadaId));
+  await conferirCelular(aluno, 'bimestres-placar-final');
+
+  // O espectador numa sala de 6 bimestres: a mesma tela da equipe 1, letra por
+  // letra, e a de outra equipe no seletor (as fechadas, apagadas).
+  const esp = await novo('bimestres-espectador');
+  await esperarTela(esp, 'entrada');
+  await entrarComoEspectador(esp, PIN_EMULADOR);
+  await esperarTela(esp, 'situacao');
+  await esp.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe === 'e1');
+  const textoDaTela = (c) => c.p.evaluate(() => document.querySelector('#tela > .bloco').textContent);
+  assert.equal(await textoDaTela(esp), await textoDaTela(aluno), 'o espectador vê exatamente a tela do aluno da equipe');
+  assert.deepEqual(await esp.p.$$eval('#barra-espectador [data-ver-equipe]:disabled', (bs) => bs.map((b) => b.dataset.verEquipe)), ['e2', 'e4', 'e6'], 'as equipes fechadas ficam apagadas no seletor');
+  await esp.p.click('[data-ver-equipe="e3"]');
+  await esp.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe === 'e3');
+  await esp.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6);
+  const linhasE3 = await esp.p.$$eval('.resumo-meses tbody tr', (ts) => ts.map((t) => Number(t.dataset.saldoMes)));
+  assert.deepEqual(linhasE3, V.historia.historiaDaEquipe(config, 'e3', resultados).map((h) => h.mes.saldoMes), 'a equipe 3, no seletor');
+  await conferirCelular(esp, 'bimestres-espectador');
+  assert.equal((await administrador('GET', `salas/${codigo}/membros`))[await esp.p.evaluate(() => globalThis.Viracao.aluno.uid())], undefined, 'o espectador não é membro');
+  // Revisão do voto (achado 3): o apresentador fecha a equipe que o espectador
+  // está vendo. Antes, ele ficava nela, com "Aguardando uma equipe" e o botão
+  // dela apagado no seletor; agora passa sozinho para a primeira aberta.
+  const abertasAntes = await administrador('GET', `salas/${codigo}/estado/equipesAbertas`);
+  await administrador('PUT', `salas/${codigo}/estado/equipesAbertas`, { e1: true, e5: true });
+  await esp.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe === 'e1', null, { timeout: 10000 })
+    .catch(async () => { throw new Error(`equipe vista fechada: o espectador ficou em ${JSON.stringify(await esp.p.evaluate(() => globalThis.Viracao.aluno.espectador()))}, na tela "${await esp.p.evaluate(() => document.body.dataset.tela)}"`); });
+  await esperarTela(esp, 'situacao');
+  assert.equal(await textoDaTela(esp), await textoDaTela(aluno), 'equipe vista fechada: o espectador passa à primeira aberta, com a tela do aluno dela');
+  await administrador('PUT', `salas/${codigo}/estado/equipesAbertas`, abertasAntes);
+  await esp.ctx.close();
+
+  // A decisão do bimestre: o básico do período (2 meses) na linha da pressão.
+  const estado = await administrador('GET', `salas/${codigo}/estado`);
+  const r6 = indiceDe('rodada', { rodada: 'r6' });
+  const basicoMes = Object.values(config.personas[config.equipes.e1.persona].basico.itens).reduce((s, x) => s + x.valor, 0);
+  await administrador('PUT', `salas/${codigo}/estado`, {
+    ...estado, geracao: estado.geracao + 1, indice: r6, tipo: 'rodada', rodada: 'r6', subfase: 'decidindo',
+    abertoEm: Date.now(), prazo: Date.now() + 120_000 + V.alunoLogica.FOLGA_DA_REGRA_MS,
+  });
+  await esperarTela(aluno, 'decisao');
+  assert.equal(await aluno.p.textContent('.pressao .basico-linha'), `O básico da família custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), 2 * basicoMes)} no bimestre`, 'na decisão, o básico do bimestre');
+  await conferirCelular(aluno, 'bimestres-decisao');
+  // O resultado do bimestre: "Saldo do bimestre", "a conta do bimestre" e o
+  // básico com "no bimestre" (o dobro do "por mês" da persona).
+  await administrador('PUT', `salas/${codigo}/estado`, { ...estado, geracao: estado.geracao + 2, indice: r6, tipo: 'rodada', rodada: 'r6', subfase: 'resultado' });
+  await esperarTela(aluno, 'resultado');
+  const mes = resultados.r6.e1.mes;
+  assert.equal(mes.basico, 2 * basicoMes, 'o básico do bimestre é o dobro do do mês');
+  assert.equal(await aluno.p.textContent('.saldo-rotulo'), 'Saldo do bimestre');
+  assert.equal(await aluno.p.textContent('details[data-recolhido="resultado:r6"] > summary'), 'A conta do bimestre em detalhe');
+  const conta = await aluno.p.textContent('.conta-mes .conta-linha');
+  assert.ok(conta.includes(`o básico da família custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), mes.basico)} no bimestre`), `a conta diz "no bimestre" (${conta})`);
+  await conferirCelular(aluno, 'bimestres-resultado');
+  await aluno.ctx.close();
+  // Revisão do voto (achado 2): o espectador reconecta e, antes de o servidor
+  // confirmar o "apague ao cair" do pedido, a sala é encerrada (a meta nula
+  // chega primeiro). O pedido apagado pela sala encerrada não pode voltar
+  // quando a confirmação chega: antes, o PIN_OK era gravado de novo e ficava
+  // no banco com o celular na tela "sala encerrada" (contratos, seção 10).
+  const encerrada = await novo('bimestres-espectador-encerrada', { segurarApague: true });
+  await esperarTela(encerrada, 'entrada');
+  await entrarComoEspectador(encerrada, PIN_EMULADOR);
+  await encerrada.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe, null, { timeout: 20000 });
+  const uidEncerrada = await encerrada.p.evaluate(() => globalThis.Viracao.aluno.uid());
+  assert.equal(await administrador('GET', `pedidosAnfitriao/${uidEncerrada}`), PIN_EMULADOR, 'o pedido do espectador está no banco');
+  await encerrada.p.evaluate(() => {
+    globalThis.__segurarApague = true;
+    globalThis.__canalDoTeste.reconectar();
+  });
+  await encerrada.p.waitForFunction(() => globalThis.__apagueSegurado === true, null, { timeout: 20000 });
+  await administrador('DELETE', `salas/${codigo}`);
+  await esperarTela(encerrada, 'salaEncerrada');
+  assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidEncerrada}`, null), null, 'sala encerrada: o pedido sai do banco');
+  await encerrada.p.evaluate(() => { globalThis.__segurarApague = false; });
+  await encerrada.p.waitForTimeout(2500);
+  assert.equal(await administrador('GET', `pedidosAnfitriao/${uidEncerrada}`), null, 'sala encerrada: a reconexão atrasada não grava o PIN de novo');
+  await encerrada.ctx.close();
+  console.log('Esquema v3 no celular: o resumo dos 6 bimestres (verde/vermelho, com o sinal) na primeira tela, "no bimestre", o placar estimado e o espectador numa sala de 6 bimestres.');
+}
+
+// O mesmo resumo de 6 bimestres, agora com o config.json real (revisão da F7,
+// achado 12 da revisão de conteúdo e legibilidade). As capturas de cima são da
+// fixture v3 (a personagem "Rafa", juros de 8%); com o config real só se via o
+// resumo de 2 bimestres, e o de 6 linhas com os valores de 12 meses (colunas
+// de cinco dígitos, como "−R$ 51.297") nunca tinha sido visto em 360×740. A
+// sala é montada pelo núcleo, como a da fixture, com as seis equipes jogando as
+// 6 rodadas; o celular entra na equipe que termina mais no vermelho (os
+// valores mais largos). Sem um config.json válido de 6 bimestres, pula.
+async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela }) {
+  const V = await carregarNucleo();
+  const lido = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
+  if (!lido.ok || lista(lido.config.ordem.rodadas).length !== 6 || lido.config.regras.mesesPorRodada !== 2) {
+    console.log('Resumo de 6 bimestres com o config.json real: pulado (o config.json não tem 6 rodadas de 2 meses ou não passa no validador).');
+    return;
+  }
+  const config = lido.config;
+  const { anf, canal, relogio, indiceDe } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
+  const equipes = lista(config.ordem.equipes);
+  await anf.criarSala();
+  await anf.pularPara(indiceDe('formarEquipes'));
+  await anf.definirEquipesAbertas(equipes);
+  await anf.avancar();
+  relogio.passar(1000);
+  for (const [k, r] of lista(config.ordem.rodadas).entries()) {
+    // Pula para cada rodada, a primeira também: no roteiro real há blocos entre
+    // as personas e o primeiro bimestre.
+    await anf.pularPara(indiceDe('rodada', { rodada: r }));
+    const opcoes = lista(config.rodadas[r].ordemOpcoes);
+    for (const [i, eq] of equipes.entries()) await anf.decidirPorEquipe(eq, opcoes[(i + k) % opcoes.length]);
+    await anf.encerrar();
+  }
+  await anf.pularPara(indiceDe('placarFinal'));
+  const arvore = canal.exportar().salas[SALA];
+  const codigo = 'B6RL';
+  const agora = Date.now();
+  arvore.meta = { ...arvore.meta, hostUid: 'anfitriao-do-e2e', criadaEm: agora, expiraEm: agora + 3_600_000, entradaAberta: true, versaoApp };
+  arvore.pulso = agora;
+  await administrador('DELETE', `salas/${codigo}`);
+  await administrador('PUT', `salas/${codigo}`, arvore);
+  const resultados = await administrador('GET', `salas/${codigo}/resultados`);
+  const placar = await administrador('GET', `salas/${codigo}/placar`);
+  // A equipe que termina mais no vermelho: a dos valores mais largos.
+  const equipe = [...equipes].sort((a, b) => V.historia.patrimonioDe(placar[a]) - V.historia.patrimonioDe(placar[b]))[0];
+  const esperada = V.historia.historiaDaEquipe(config, equipe, resultados);
+  assert.equal(esperada.length, 6, `${equipe}: 6 bimestres na história`);
+  const largura = (v) => String(Math.abs(Math.round(v))).length;
+  assert.ok(esperada.some((h) => largura(h.saldoAcumulado) >= 5), `com o config real, a equipe ${equipe} chega a valores de cinco dígitos`);
+
+  const ctx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
+  await servirSdk(ctx);
+  const aluno = { nome: 'bimestres-real', ctx, p: await ctx.newPage() };
+  vigiar(aluno.p, aluno.nome);
+  await aluno.p.goto(`${site.url}aluno/?sala=${codigo}&emulador=1`);
+  await esperarTela(aluno, 'entrada');
+  await aluno.p.click('[data-acao="entrar"]');
+  let uid = null;
+  for (let i = 0; i < 100 && !uid; i += 1) {
+    const u = await aluno.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    if (u && await administrador('GET', `salas/${codigo}/membros/${u}`)) uid = u;
+    else await aluno.p.waitForTimeout(150);
+  }
+  assert.ok(uid, 'o celular entrou na sala de 6 bimestres do config real');
+  await administrador('PUT', `salas/${codigo}/membros/${uid}/equipe`, equipe);
+  await esperarTela(aluno, 'situacao');
+  await aluno.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6);
+  const tela = await aluno.p.evaluate(() => {
+    const r = document.querySelector('.resumo-meses');
+    return {
+      baixo: r.getBoundingClientRect().bottom,
+      direita: Math.max(...Array.from(r.querySelectorAll('th, td'), (n) => n.getBoundingClientRect().right)),
+      larguraPagina: document.documentElement.scrollWidth,
+      linhas: Array.from(r.querySelectorAll('tbody tr'), (tr) => ({
+        nome: tr.querySelector('th').textContent,
+        saldo: tr.querySelector('.saldo-mes').textContent,
+        ficou: tr.querySelector('.saldo-ficou').textContent,
+        // Cada valor numa linha só: "−R$" de um lado e "51.297" do outro não se lê.
+        quebrados: Array.from(tr.querySelectorAll('.saldo-mes, .saldo-ficou'), (n) => n.getClientRects().length > 1 || n.scrollWidth > n.clientWidth + 1).filter(Boolean).length,
+      })),
+    };
+  });
+  const moeda = (v) => aluno.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x, { sinal: true }), v);
+  for (const [i, h] of esperada.entries()) {
+    const l = tela.linhas[i];
+    assert.equal(l.nome, h.rotulo, `${h.rodadaId}: o nome curto do bimestre`);
+    assert.equal(l.saldo, await moeda(h.mes.saldoMes), `${h.rodadaId}: o saldo do bimestre`);
+    assert.equal(l.ficou, await moeda(h.saldoAcumulado), `${h.rodadaId}: o "ficou com"`);
+    assert.equal(l.quebrados, 0, `${h.rodadaId}: um valor quebrou ou foi cortado em 360 px (${l.saldo} · ${l.ficou})`);
+  }
+  assert.ok(tela.direita <= 360 && tela.larguraPagina <= 360, `o resumo cabe na largura de 360 px (direita ${Math.round(tela.direita)}, página ${tela.larguraPagina})`);
+  assert.ok(tela.baixo <= 740, `o resumo dos 6 bimestres do config real cabe em 360×740 sem rolar (termina em ${Math.round(tela.baixo)} px)`);
+  await conferirCelular(aluno, 'bimestres-real-placar-final');
+  await ctx.close();
+  await administrador('DELETE', `salas/${codigo}`);
+  console.log(`Resumo de 6 bimestres com o config.json real (equipe ${equipe}, até ${tela.linhas.at(-1).ficou}): cabe em 360×740.`);
+}
+
+// ---------- D-066 e D-067 no celular: o limite do cheque especial e a proteção acima do trabalho ----------
+// O config.json ainda não tem o limite (falta o valor com fonte), e a matriz de
+// votos joga com ele: a sala daqui é montada pelo núcleo com a fixture v3.1
+// (limite de R$ 1.500, multa de 10%, mora de 1% ao mês, valores de teste), com
+// as mesmas decisões e sementes da sala de 6 bimestres. Só no e2e, o auxílio
+// do INSS do bimestre 2 sobe de R$ 900 para R$ 6.000, acima dos R$ 5.200 que o
+// trabalho do Rafa deixa num bimestre comum: é o caso da D-067 (a Bruna e a
+// Daiane do config real), que a fixture sozinha não alcança. Com isso, a
+// equipe 1 passa por tudo: a proteção acima do trabalho e as contas atrasadas
+// pagas (Mar–abr), o limite estourado com multa e comida cortada (Jul–ago), a
+// mora e mais contas pagas (Set–out) e o fim no limite (Nov–dez).
+async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela, entrarComoEspectador }) {
+  const V = await carregarNucleo();
+  const H = V.historia;
+  const bruto = lerConfigTesteV31();
+  const inss = bruto.rodadas.find((r) => r.id === 'r2').efeitosGerais.find((e) => e.categoria === 'protecao');
+  inss.soma.renda = 6000;
+  const config = normalizar(V, bruto);
+  const { anf, canal, relogio, indiceDe, passos } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
+  const ativas = ['e1', 'e3', 'e5'];
+  const plano = {
+    r1: { e1: 'b', e3: 'a', e5: 'c' }, r2: { e1: 'd', e3: 'a', e5: 'b' }, r3: { e1: 'a', e3: 'c', e5: 'd' },
+    r4: { e1: 'b', e3: 'a', e5: 'd' }, r5: { e1: 'c', e3: 'b', e5: 'a' }, r6: { e1: 'a', e3: 'd', e5: 'c' },
+  };
+  await anf.criarSala();
+  await anf.pularPara(indiceDe('formarEquipes'));
+  await anf.definirEquipesAbertas(ativas);
+  await anf.avancar();
+  relogio.passar(1000);
+  await anf.avancar();
+  for (const r of config.ordem.rodadas) {
+    if (r !== 'r1') await anf.pularPara(indiceDe('rodada', { rodada: r }));
+    for (const eq of ativas) await anf.decidirPorEquipe(eq, plano[r][eq]);
+    await anf.encerrar();
+  }
+  await anf.pularPara(indiceDe('placarFinal'));
+  const arvore = canal.exportar().salas[SALA];
+  const codigo = 'B6LM';
+  const agora = Date.now();
+  arvore.meta = { ...arvore.meta, hostUid: 'anfitriao-do-e2e', criadaEm: agora, expiraEm: agora + 3_600_000, entradaAberta: true, versaoApp };
+  arvore.pulso = agora;
+  await administrador('DELETE', `salas/${codigo}`);
+  await administrador('PUT', `salas/${codigo}`, arvore);
+  const resultados = await administrador('GET', `salas/${codigo}/resultados`);
+  const res = (r) => resultados[r].e1;
+  // A sala passa pelos casos que a tela tem de mostrar: se a fixture mudar e
+  // um deles sumir, o teste diz qual, em vez de passar calado.
+  assert.ok(res('r2').protecaoAcimaDoTrabalho, `Mar–abr: a proteção passou do trabalho (${JSON.stringify(res('r2').mes)})`);
+  assert.ok(res('r2').mes.contasPagas > 0, 'Mar–abr: pagou contas atrasadas');
+  assert.ok(res('r4').mes.atrasou > 0 && res('r4').mes.multa > 0 && res('r4').mes.faltouNaMesa > 0, `Jul–ago: estourou o limite (${JSON.stringify(res('r4').mes)})`);
+  assert.ok(res('r5').mes.mora > 0 && res('r5').mes.contasPagas > 0, 'Set–out: mora e contas pagas');
+  assert.equal(res('r6').mes.dividaBanco, 1500, 'Nov–dez: o banco para no limite');
+
+  const ctx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
+  await servirSdk(ctx);
+  const aluno = { nome: 'limite', ctx, p: await ctx.newPage() };
+  vigiar(aluno.p, aluno.nome);
+  await aluno.p.goto(`${site.url}aluno/?sala=${codigo}&emulador=1`);
+  await esperarTela(aluno, 'entrada');
+  await aluno.p.click('[data-acao="entrar"]');
+  let uid = null;
+  for (let i = 0; i < 100 && !uid; i += 1) {
+    const u = await aluno.p.evaluate(() => globalThis.Viracao.aluno.uid());
+    if (u && await administrador('GET', `salas/${codigo}/membros/${u}`)) uid = u;
+    else await aluno.p.waitForTimeout(150);
+  }
+  assert.ok(uid, 'o celular entrou na sala do limite');
+  await administrador('PUT', `salas/${codigo}/membros/${uid}/equipe`, 'e1');
+  await esperarTela(aluno, 'situacao');
+
+  const moeda = (v) => aluno.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x), v);
+  const nome = config.personas[config.equipes.e1.persona].nome;
+  const per = H.periodo(config);
+  // A conta de um bimestre com o limite: "o básico custa R$ Y no bimestre (R$ F
+  // de comida não foi comprada)" e "multa e mora das contas atrasadas R$ M". E
+  // ela fecha: entrou + proteção − gastos − (básico − comida não comprada) −
+  // juros − multa − mora = saldo do bimestre (contratos, seção 3).
+  async function trechosDaConta(m) {
+    const t = [];
+    if (m.faltouNaMesa > 0) t.push(`(${await moeda(m.faltouNaMesa)} de comida não foi comprada)`);
+    if (m.multa + m.mora > 0) t.push(`multa e mora das contas atrasadas ${await moeda(m.multa + m.mora)}`);
+    return t;
+  }
+  const fecha = (m) => m.entrou + (m.protecao || 0) - (m.gastos || 0) - m.basico + m.faltouNaMesa - m.juros - m.multa - m.mora;
+  for (const r of config.ordem.rodadas) assert.equal(fecha(res(r).mes), res(r).mes.saldoMes, `${r}: a conta com o limite fecha`);
+  // A frase do limite (historia.fraseDoLimite, com o formatador da página: o
+  // núcleo em Node não carrega o formatar.js) e, da tela, a da mora.
+  async function fraseDoLimite(m) {
+    const partes = [await aluno.p.evaluate((x) => globalThis.Viracao.historia.fraseDoLimite(x, (v) => globalThis.Viracao.formatar.moeda(v)), m)];
+    if (m.mora > 0) partes.push(`Mora de ${await moeda(m.mora)} sobre as contas que já estavam atrasadas.`);
+    return partes.filter(Boolean).join(' ') || null;
+  }
+
+  // 1. Placar final: o resumo por bimestre e a dívida de hoje com o limite (o
+  // banco parado em R$ 1.500 "de R$ 1.500 do limite", as contas atrasadas com a
+  // multa e a mora do config) e, à parte, o que faltou na mesa até agora (não é
+  // dívida). Tudo na primeira tela de 360×740.
+  const esperada = H.historiaDaEquipe(config, 'e1', resultados);
+  const ultimo = res('r6');
+  const d = H.dividaTotal(ultimo.depois);
+  assert.ok(d.contasAtrasadas > 0 && d.chequeEspecial === 1500, `a dívida de hoje tem o banco e as contas atrasadas (${JSON.stringify(d)})`);
+  const lido = await aluno.p.evaluate(() => {
+    const r = document.querySelector('.resumo-meses');
+    const div = r?.querySelector('.divida');
+    const mesa = r?.querySelector('.faltou-mesa');
+    return r ? {
+      baixo: r.getBoundingClientRect().bottom,
+      direita: document.documentElement.scrollWidth,
+      ficou: Array.from(r.querySelectorAll('tbody tr'), (tr) => tr.querySelector('.saldo-ficou').textContent),
+      divida: div ? { ...div.dataset, texto: div.textContent } : null,
+      mesa: mesa ? { ...mesa.dataset, texto: mesa.textContent } : null,
+    } : null;
+  });
+  assert.ok(lido, 'o resumo por bimestre aparece');
+  for (const [i, h] of esperada.entries()) {
+    assert.equal(lido.ficou[i], await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), h.saldoAcumulado), `${h.rodadaId}: "ficou com" é o patrimônio, com as contas atrasadas descontadas`);
+  }
+  assert.equal(esperada.at(-1).saldoAcumulado, ultimo.depois.renda - ultimo.depois.contas_atrasadas - (ultimo.depois.emprestimo || 0), 'o último "ficou com" desconta as contas atrasadas');
+  assert.ok(lido.divida, 'a dívida de hoje aparece');
+  assert.deepEqual([Number(lido.divida.divida), Number(lido.divida.cheque), Number(lido.divida.atrasadas), Number(lido.divida.limite)], [d.total, d.chequeEspecial, d.contasAtrasadas, 1500], 'a dívida é a do banco; as contas atrasadas, num atributo próprio');
+  // Revisão da F6c: "Dívida no banco" é o mesmo número que o telão chama de
+  // dívida (o banco e o empréstimo); as contas atrasadas vêm à parte, com nome
+  // próprio, e não somadas num "Dívida hoje".
+  assert.equal(d.total, d.chequeEspecial + d.emprestimo, 'o total é o banco e o empréstimo');
+  assert.ok(!lido.divida.texto.includes('Dívida hoje'), `com o limite, nenhum total chamado "Dívida hoje" (${lido.divida.texto})`);
+  for (const x of [
+    `Dívida no banco ${await moeda(d.total)}`,
+    `Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite · juros de 8% ao mês`,
+    `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e mora de 1% ao mês`,
+  ]) assert.ok(lido.divida.texto.includes(x), `placar final: "${x}" em "${lido.divida.texto}"`);
+  const mesaFim = H.faltouNaMesaDe(ultimo.depois);
+  assert.ok(mesaFim > 0, 'a equipe 1 terminou com comida cortada');
+  assert.ok(lido.mesa, 'o que faltou na mesa aparece no resumo, à parte da dívida');
+  assert.equal(Number(lido.mesa.faltouNaMesa), mesaFim);
+  assert.equal(lido.mesa.texto, `Faltou na mesa: ${await moeda(mesaFim)} de comida que não deu para comprar, até agora.`);
+  assert.ok(!lido.divida.texto.includes('Faltou na mesa'), 'o que faltou na mesa não entra na dívida');
+  assert.ok(lido.direita <= 360, `sem rolagem lateral (${lido.direita} px)`);
+  assert.ok(lido.baixo <= 740, `o resumo, a dívida com o limite e o que faltou na mesa cabem em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+  await conferirCelular(aluno, 'limite-placar-final');
+
+  // 2. A história bimestre a bimestre: a conta com a comida cortada, a multa e
+  // a mora; a frase do limite e a da proteção acima do trabalho (D-067).
+  const historia = await aluno.p.$$eval('.historia-mes', (ns) => ns.map((n) => ({
+    rodada: n.dataset.rodada, texto: n.textContent,
+    limite: n.querySelector('.conta-limite')?.textContent ?? null,
+    acima: n.querySelector('.conta-acima-trabalho')?.textContent ?? null,
+  })));
+  assert.deepEqual(historia.map((x) => x.rodada), esperada.map((h) => h.rodadaId));
+  for (const [i, h] of esperada.entries()) {
+    for (const x of await trechosDaConta(h.mes)) assert.ok(historia[i].texto.includes(x), `história, ${h.rodadaId}: "${x}"`);
+    assert.equal(historia[i].limite, await fraseDoLimite(h.mes), `história, ${h.rodadaId}: a frase do limite`);
+    const acima = await aluno.p.evaluate(([p, n, r]) => globalThis.Viracao.historia.fraseAcimaDoTrabalho(p, n, (v) => globalThis.Viracao.formatar.moeda(v), r), [h.protecaoDoMes, nome, per]);
+    assert.equal(historia[i].acima, acima, `história, ${h.rodadaId}: a frase da D-067`);
+  }
+  const acimaR2 = `Auxílio do INSS (MEI): ${await moeda(6000)}, mais do que ${nome} ganhava trabalhando num bimestre comum (${await moeda(5200)}).`;
+  assert.equal(historia[1].acima, acimaR2, 'Mar–abr: a frase da D-067, com o nome da persona e o bimestre comum');
+  assert.equal(historia[3].limite, `O limite do cheque especial acabou: ${await moeda(res('r4').mes.atrasou)} de contas ficaram atrasadas (multa de ${await moeda(res('r4').mes.multa)}) e ${await moeda(res('r4').mes.faltouNaMesa)} de comida não deu para comprar.`);
+
+  // 3. O resultado de cada bimestre que mostra uma das partes novas.
+  const estado = await administrador('GET', `salas/${codigo}/estado`);
+  let geracao = estado.geracao;
+  async function irParaResultado(r) {
+    geracao += 1;
+    await administrador('PUT', `salas/${codigo}/estado`, { ...estado, geracao, indice: indiceDe('rodada', { rodada: r }), tipo: 'rodada', rodada: r, subfase: 'resultado' });
+    await aluno.p.waitForFunction((x) => document.body.dataset.tela === 'resultado' && document.querySelector(`[data-recolhido="resultado:${x}"]`), r, { timeout: 20000 });
+  }
+  // Lê as partes da tela; a conta recolhida é aberta antes, para o texto dela
+  // contar como visível.
+  const lerResultado = (c, r) => c.p.evaluate((x) => {
+    const caixa = document.querySelector(`details[data-recolhido="resultado:${x}"]`);
+    const ler = (s) => {
+      const n = document.querySelector(s);
+      return n ? { texto: n.textContent, visivel: n.checkVisibility(), dados: { ...n.dataset }, noRecolhido: Boolean(n.closest('details')) } : null;
+    };
+    const fora = { acima: ler('.acima-trabalho'), mesa: ler('.faltou-mesa'), divida: ler('.divida') };
+    caixa.open = true;
+    return { ...fora, conta: ler('.conta-mes'), limite: ler('.conta-limite'), acimaNaConta: ler('.conta-acima-trabalho') };
+  }, r);
+
+  // Mar–abr (D-067): a frase à vista, logo abaixo do saldo, sem abrir nada; a
+  // conta recolhida não a repete. E as contas atrasadas pagas, na conta.
+  await irParaResultado('r2');
+  let t = await lerResultado(aluno, 'r2');
+  assert.ok(t.acima && t.acima.visivel && !t.acima.noRecolhido, 'Mar–abr: a frase da D-067 à vista no resultado');
+  assert.equal(t.acima.texto, acimaR2);
+  assert.equal(t.acimaNaConta, null, 'Mar–abr: a conta recolhida não repete a frase da D-067');
+  assert.equal(t.limite.texto, await fraseDoLimite(res('r2').mes), 'Mar–abr: "Pagou R$ X de contas atrasadas." e a mora, na conta');
+  assert.match(t.limite.texto, /^Pagou R\$/);
+  assert.equal(Number(t.conta.dados.saldoMes), res('r2').mes.saldoMes);
+  await conferirCelular(aluno, 'limite-resultado-protecao-acima');
+
+  // Jul–ago: o limite estourou. A dívida com o banco no limite e as contas
+  // atrasadas, e o que faltou na mesa no bimestre e até agora, à vista; a conta
+  // recolhida com a comida cortada, a multa e a frase do limite.
+  await irParaResultado('r4');
+  t = await lerResultado(aluno, 'r4');
+  const m4 = res('r4').mes;
+  const d4 = H.dividaTotal(res('r4').depois);
+  assert.ok(t.divida.visivel && !t.divida.noRecolhido, 'Jul–ago: a dívida à vista');
+  assert.equal(Number(t.divida.dados.atrasadas), d4.contasAtrasadas);
+  assert.ok(t.divida.texto.includes(`Contas atrasadas ${await moeda(d4.contasAtrasadas)}`), t.divida.texto);
+  assert.ok(t.divida.texto.includes(`Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite`), t.divida.texto);
+  assert.ok(t.mesa && t.mesa.visivel && !t.mesa.noRecolhido, 'Jul–ago: o que faltou na mesa à vista');
+  assert.deepEqual([Number(t.mesa.dados.faltouNaMesa), Number(t.mesa.dados.noPeriodo)], [m4.faltouNaMesaAcumulado, m4.faltouNaMesa]);
+  const mesa4 = m4.faltouNaMesaAcumulado > m4.faltouNaMesa
+    ? `Faltou na mesa: ${await moeda(m4.faltouNaMesa)} de comida que não deu para comprar neste bimestre (${await moeda(m4.faltouNaMesaAcumulado)} até agora).`
+    : `Faltou na mesa: ${await moeda(m4.faltouNaMesa)} de comida que não deu para comprar neste bimestre.`;
+  assert.equal(t.mesa.texto, mesa4);
+  assert.equal(t.acima, null, 'Jul–ago: sem proteção acima do trabalho, sem a frase');
+  for (const x of await trechosDaConta(m4)) assert.ok(t.conta.texto.includes(x), `Jul–ago: "${x}" em "${t.conta.texto}"`);
+  assert.deepEqual([Number(t.conta.dados.faltouNaMesa), Number(t.conta.dados.multa), Number(t.conta.dados.mora)], [m4.faltouNaMesa, m4.multa, m4.mora]);
+  assert.equal(t.limite.texto, await fraseDoLimite(m4));
+  assert.deepEqual([Number(t.limite.dados.atrasou), Number(t.limite.dados.contasAtrasadas), Number(t.limite.dados.dividaBanco)], [m4.atrasou, m4.contasAtrasadas, m4.dividaBanco]);
+  await conferirCelular(aluno, 'limite-resultado-estourou');
+
+  // O espectador vê o mesmo resultado, letra por letra (D-064).
+  const espCtx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
+  await servirSdk(espCtx);
+  const esp = { nome: 'limite-espectador', ctx: espCtx, p: await espCtx.newPage() };
+  vigiar(esp.p, esp.nome);
+  await esp.p.goto(`${site.url}aluno/?sala=${codigo}&emulador=1`);
+  await esperarTela(esp, 'entrada');
+  await entrarComoEspectador(esp, PIN_EMULADOR);
+  await esperarTela(esp, 'resultado');
+  await esp.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe === 'e1');
+  // A conta do aluno ficou aberta na leitura, e a do espectador, fechada: o
+  // textContent não depende disso.
+  const textoDaTela = (c) => c.p.evaluate(() => document.querySelector('#tela > .bloco').textContent);
+  assert.equal(await textoDaTela(esp), await textoDaTela(aluno), 'o espectador vê o resultado com o limite igual ao do aluno');
+  await espCtx.close();
+
+  // Set–out: a mora sobre as contas atrasadas e mais contas pagas.
+  await irParaResultado('r5');
+  t = await lerResultado(aluno, 'r5');
+  assert.equal(t.limite.texto, await fraseDoLimite(res('r5').mes));
+  assert.match(t.limite.texto, /Mora de R\$\s[\d.]+ sobre as contas que já estavam atrasadas\.$/);
+
+  // 4. A situação num bloco: o último bimestre recolhido traz a mesma conta. O
+  // roteiro de 60 min não tem bloco depois do último bimestre; a situação
+  // mostra o último resultado gravado, qualquer que seja o bloco, e por isso
+  // serve o primeiro bloco depois do primeiro bimestre.
+  const umBloco = passos.findIndex((p, i) => i > indiceDe('rodada', { rodada: 'r1' }) && p.tipo === 'bloco');
+  assert.ok(umBloco >= 0, 'o roteiro tem um bloco depois do primeiro bimestre');
+  {
+    geracao += 1;
+    await administrador('PUT', `salas/${codigo}/estado`, { ...estado, geracao, indice: umBloco, tipo: 'bloco', rodada: null, subfase: null });
+    await aluno.p.waitForFunction(() => document.body.dataset.tela === 'situacao' && document.querySelector('[data-recolhido="mes:r6"]'), null, { timeout: 20000 });
+    const s = await aluno.p.evaluate(() => {
+      const r = document.querySelector('.resumo-meses');
+      const fora = { mesa: r.querySelector('.faltou-mesa')?.textContent ?? null, baixo: r.getBoundingClientRect().bottom };
+      const caixa = document.querySelector('details[data-recolhido="mes:r6"]');
+      caixa.open = true;
+      return { ...fora, limite: caixa.querySelector('.conta-limite')?.textContent ?? null };
+    });
+    assert.equal(s.limite, await fraseDoLimite(res('r6').mes), 'situação: o último bimestre recolhido, com a frase do limite');
+    assert.ok(s.mesa, 'situação: o que faltou na mesa no resumo');
+    assert.ok(s.baixo <= 740, `situação: o resumo com o limite cabe em 360×740 (termina em ${Math.round(s.baixo)} px)`);
+    await conferirCelular(aluno, 'limite-situacao');
+  }
+  await ctx.close();
+  await administrador('DELETE', `salas/${codigo}`);
+  console.log(`D-066 e D-067 no celular: a dívida com o limite (banco em R$ 1.500, R$ ${d.contasAtrasadas} em contas atrasadas), o que faltou na mesa à parte (R$ ${mesaFim}), a multa e a mora na conta e a proteção acima do trabalho, em 360×740.`);
+}
+
 async function esperarNoBanco(caminho, esperado, esperaMs = 5000) {
   let valor;
   for (let i = 0; i < esperaMs / 100; i += 1) {
@@ -315,6 +932,17 @@ async function jogar({ site, navegador, vigiar }) {
     await p.waitForFunction(() => /regras v[0-9]+ conferidas/.test(document.getElementById('status-online')?.textContent || ''), null, { timeout: 30000 });
     falhar = true;
     const cel = await ctx.newPage();
+    // Revisão da F6c: na carga que volta da recarga, o início dava return antes
+    // de registrar o tique do cronômetro, a volta à vista (reler o estado ao
+    // desbloquear a tela), o pagehide e a dobra do "Votar nesta". Cada
+    // documento novo (a recarga também) anota o que a página registrou.
+    await cel.addInitScript(() => {
+      const anotados = (globalThis.__registrados = []);
+      const ouvirJanela = globalThis.addEventListener.bind(globalThis);
+      globalThis.addEventListener = (tipo, f, o) => { anotados.push(tipo); return ouvirJanela(tipo, f, o); };
+      const intervalo = globalThis.setInterval.bind(globalThis);
+      globalThis.setInterval = (f, ms, ...resto) => { anotados.push(`intervalo:${ms}`); return intervalo(f, ms, ...resto); };
+    });
     await cel.setViewportSize({ width: 360, height: 740 });
     await cel.goto(`${site.url}aluno/?sala=ABCD&emulador=1`);
     await cel.click('[data-acao="entrar"]');
@@ -323,6 +951,10 @@ async function jogar({ site, navegador, vigiar }) {
     falhar = false;
     // Recarrega, entra direto na sala que tentava e descobre que ela não existe.
     await cel.waitForFunction(() => document.body.dataset.tela === 'entrada' && /Não há sala com o código ABCD/.test(document.querySelector('.nota')?.textContent || ''), null, { timeout: 30000 });
+    const registrados = await cel.evaluate(() => globalThis.__registrados);
+    for (const tipo of ['intervalo:1000', 'pageshow', 'online', 'pagehide', 'scroll', 'resize']) {
+      assert.ok(registrados.includes(tipo), `depois da recarga da CDN, o celular registra "${tipo}" (registrou: ${registrados.join(', ')})`);
+    }
     await ctx.close();
   }
 
@@ -463,7 +1095,16 @@ async function jogar({ site, navegador, vigiar }) {
     if (mes.custosFixos > 0) trechos.push(`custos fixos do trabalho: ${await moedaNa(c, -mes.custosFixos)}`);
     for (const x of trechos) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
     // A conta fecha na tela: entrou + proteção − gastos − básico − juros = saldo do mês.
-    assert.equal(mes.entrou + (mes.protecao ?? 0) - (mes.gastos ?? 0) - mes.basico - mes.juros, mes.saldoMes, `${onde}: a conta do mês fecha`);
+    // Com o limite do cheque especial (D-066), a comida não comprada volta e a
+    // multa e a mora saem; a tela os diz na mesma linha.
+    if (Number.isFinite(mes.contasAtrasadas)) {
+      const doMes = [];
+      if (mes.faltouNaMesa > 0) doMes.push(`(${await moedaNa(c, mes.faltouNaMesa)} de comida não foi comprada)`);
+      if (mes.multa + mes.mora > 0) doMes.push(`multa e mora das contas atrasadas ${await moedaNa(c, mes.multa + mes.mora)}`);
+      for (const x of doMes) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
+    }
+    const doLimite = (mes.faltouNaMesa ?? 0) - (mes.multa ?? 0) - (mes.mora ?? 0);
+    assert.equal(mes.entrou + (mes.protecao ?? 0) - (mes.gastos ?? 0) - mes.basico - mes.juros + doLimite, mes.saldoMes, `${onde}: a conta do mês fecha`);
   }
   // D-059: "A proteção pagou R$ X: <rótulo>. Sem ela, teria faltado R$ Y a
   // mais.", a partir do resultado gravado pelo telão; sem proteção no mês, sem
@@ -538,13 +1179,15 @@ async function jogar({ site, navegador, vigiar }) {
     });
     const d = C.historia.dividaTotal(res.depois);
     assert.ok(d, `${onde}: o telão gravou o "depois" do mês`);
-    if (!(d.total > 0)) {
+    if (!(d.total > 0) && !(d.contasAtrasadas > 0)) {
       assert.equal(lido, null, `${onde}: sem dívida, sem o bloco da dívida`);
       return d;
     }
     assert.ok(lido, `${onde}: a dívida aparece`);
     assert.deepEqual([Number(lido.divida), Number(lido.cheque), Number(lido.emprestimo)], [d.total, d.chequeEspecial, d.emprestimo], `${onde}: a dívida é o cheque especial mais o empréstimo`);
-    const trechos = [`dívida hoje ${await moedaNa(c, d.total)}`];
+    // Com o limite (revisão da F6c), "Dívida no banco" e as contas atrasadas à parte.
+    const trechos = [`${d.contasAtrasadas !== undefined ? 'dívida no banco' : 'dívida hoje'} ${await moedaNa(c, d.total)}`];
+    if (d.contasAtrasadas > 0) trechos.push(`contas atrasadas ${await moedaNa(c, d.contasAtrasadas)}`);
     // Com as casas da fonte (7,43%), refeito aqui, e não pelo formatador da página.
     const juros = `${(C.cfg.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
     if (d.chequeEspecial > 0) trechos.push(`cheque especial ${await moedaNa(c, d.chequeEspecial)}`, `juros de ${juros} ao mês`);
@@ -606,7 +1249,10 @@ async function jogar({ site, navegador, vigiar }) {
       };
     });
     assert.ok(lido, `${onde}: o resumo mês a mês aparece`);
-    assert.deepEqual(lido.cabecalho, ['Mês', 'Saldo do mês', 'Ficou com'], `${onde}: as colunas do resumo`);
+    // Esquema v3: com rodadas de 2 meses (o config.json de 12 meses), as colunas falam em bimestre.
+    const per = C.historia.periodo(C.cfg);
+    const colunas = per.meses === 1 ? ['Mês', 'Saldo do mês', 'Ficou com'] : [per.nome.charAt(0).toUpperCase() + per.nome.slice(1), `Saldo ${per.doPeriodo}`, 'Ficou com'];
+    assert.deepEqual(lido.cabecalho, colunas, `${onde}: as colunas do resumo`);
     assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId), `${onde}: uma linha por mês jogado, na ordem`);
     for (const [i, h] of esperada.entries()) {
       assert.equal(lido.linhas[i].mes, h.titulo.split(':')[0].trim(), `${onde}: o rótulo curto do mês ${h.rodadaId}`);
@@ -621,7 +1267,8 @@ async function jogar({ site, navegador, vigiar }) {
     const ultimo = esperada.at(-1);
     const res = resultadosDaSala[ultimo.rodadaId][eq];
     const d = await conferirDivida(c, res, `${onde}, a dívida de hoje`);
-    if (res.depois.renda <= 0) assert.equal(d.total, Math.max(0, -ultimo.saldoAcumulado), `${onde}: a dívida fecha com o último "ficou com"`);
+    // Com o limite, o "ficou com" desconta também as contas atrasadas (à parte da dívida no banco).
+    if (res.depois.renda <= 0) assert.equal(d.total + (d.contasAtrasadas || 0), Math.max(0, -ultimo.saldoAcumulado), `${onde}: a dívida fecha com o último "ficou com"`);
     if (naDobra) assert.ok(lido.baixo <= 740, `${onde}: o resumo mês a mês cabe em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
     return { esperada, resultadosDaSala };
   }
@@ -1065,6 +1712,70 @@ async function jogar({ site, navegador, vigiar }) {
   await conferirCelular(cel[0], 'decisao-contagem');
   await telao.waitForFunction((eq) => /2 de 2/.test(document.querySelector(`.equipe-status[data-equipe="${eq}"]`)?.textContent || ''), E1, { timeout: 15000 });
 
+  // ---------- Modo espectador (D-064): o celular do apresentador ----------
+  // Com o PIN, ele vê a tela de qualquer equipe exatamente como o aluno dela
+  // vê, com a contagem ao vivo (as regras v4 dão a leitura da decisão de uma
+  // equipe a quem tem o PIN), e não vira membro, não vota, não entra no "N de M"
+  // e não assume a sala.
+  const contagemNaTela = (c) => c.p.$$eval('.botao-opcao-aluno', (bs) => bs.map((b) => [b.dataset.opcao, b.querySelector('.opcao-votos')?.textContent]));
+  async function espectadorIgualA(esp, aluno, onde) {
+    const esperado = JSON.stringify(await contagemNaTela(aluno));
+    await esp.p.waitForFunction((x) => JSON.stringify([...document.querySelectorAll('.botao-opcao-aluno')].map((b) => [b.dataset.opcao, b.querySelector('.opcao-votos')?.textContent])) === x, esperado, { timeout: 15000 })
+      .catch(async () => { throw new Error(`${onde}: o espectador mostra ${JSON.stringify(await contagemNaTela(esp))}, e o aluno da equipe, ${esperado}`); });
+  }
+  async function entrarComoEspectador(esp, pin) {
+    if (await esp.p.locator('#pin-espectador').count() === 0) await esp.p.click('[data-acao="sou-apresentador"]');
+    await esp.p.waitForSelector('#pin-espectador');
+    await esp.p.fill('#pin-espectador', pin);
+    await esp.p.click('[data-acao="entrar-espectador"]');
+  }
+  const esp = await novoCelular('espectador');
+  await esperarTela(esp, 'entrada');
+  await esp.p.click('[data-acao="sou-apresentador"]');
+  await esp.p.waitForSelector('#pin-espectador');
+  assert.equal(await esp.p.getAttribute('#pin-espectador', 'type'), 'password', 'o PIN vai num campo de senha');
+  assert.equal(await esp.p.inputValue('#codigo-sala'), sala, 'o código da sala vem do link');
+  await conferirCelular(esp, 'espectador-pin');
+  // PIN errado: o servidor recusa a leitura da decisão, e o pedido sai do banco.
+  await entrarComoEspectador(esp, 'pin-errado-123');
+  await esp.p.waitForFunction(() => /PIN não confere/.test(document.querySelector('.nota')?.textContent || ''), null, { timeout: 15000 });
+  const uidEsp = await esp.p.evaluate(() => globalThis.Viracao.aluno.uid());
+  assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidEsp}`, null), null, 'PIN errado: o pedido não fica no banco');
+  assert.equal(await esp.p.inputValue('#pin-espectador'), '', 'o PIN digitado não fica no campo');
+  await entrarComoEspectador(esp, PIN_EMULADOR);
+  await esperarTela(esp, 'decisao');
+  assert.equal(await esp.p.textContent('#cracha .selo-espectador'), 'modo espectador', 'o selo no lugar do crachá');
+  assert.deepEqual(await esp.p.evaluate(() => globalThis.Viracao.aluno.espectador()), { equipe: E1 }, 'começa na primeira equipe aberta');
+  assert.deepEqual(await esp.p.$$eval('#barra-espectador [data-ver-equipe]', (bs) => bs.map((b) => b.dataset.verEquipe)), C.equipes, 'o seletor tem um botão por equipe, na ordem');
+  // A tela da equipe 1, como a Ana vê: as mesmas opções, rótulos e contagem.
+  await espectadorIgualA(esp, cel[0], 'equipe 1');
+  const rotulosNa = (c) => c.p.$$eval('.botao-opcao-aluno .opcao-rotulo', (ns) => ns.map((n) => n.textContent));
+  assert.deepEqual(await rotulosNa(esp), await rotulosNa(cel[0]), 'os rótulos do jeito da persona da equipe');
+  // Não vota: o "Votar nesta" apagado, com o motivo junto dele; nem forçando o toque.
+  await esp.p.click(opcao(OC));
+  await esp.p.waitForSelector(`[data-detalhe="${OC}"]`);
+  assert.equal(await esp.p.isDisabled(botaoVotar(OC)), true, 'o espectador não vota');
+  assert.equal(await esp.p.textContent(`[data-detalhe="${OC}"] .opcao-aviso`), 'Modo espectador: não vota.');
+  await esp.p.click(botaoVotar(OC), { force: true });
+  await esp.p.waitForTimeout(800);
+  assert.deepEqual(await esp.p.evaluate(() => globalThis.Viracao.aluno.envios()), [], 'nenhum envio de voto');
+  assert.equal(await administrador('GET', `salas/${sala}/decisoes/${R}/${E1}/${uidEsp}`), null, 'nada gravado nas decisões');
+  // Não vira membro e não entra em nenhuma contagem do telão.
+  assert.equal((await administrador('GET', `salas/${sala}/membros`))[uidEsp], undefined, 'o espectador não é membro');
+  assert.equal(await administrador('GET', `salas/${sala}/presenca/${uidEsp}`), null, 'nem manda presença');
+  await ativosNaBarra('3 ativos / 3 membros', 5000);
+  assert.match(await telao.textContent(`.equipe-status[data-equipe="${E1}"]`), /2 de 2/, 'o "N de M" da equipe continua o dos alunos');
+  assert.equal(await administrador('GET', `salas/${sala}/meta/hostUid`), meta.hostUid, 'o espectador não assume a sala');
+  assert.equal(await administrador('GET', `pedidosAnfitriao/${uidEsp}`), PIN_EMULADOR, 'o pedido vive enquanto o espectador está ligado');
+  await conferirCelular(esp, 'espectador-decisao');
+  // Troca de equipe: a tela da equipe 2, a da Bia (que ainda não votou).
+  await esp.p.click(`[data-ver-equipe="${E2}"]`);
+  await esp.p.waitForFunction((e) => globalThis.Viracao.aluno.espectador()?.equipe === e, E2);
+  await esperarTela(esp, 'decisao');
+  assert.equal(await esp.p.getAttribute(`[data-ver-equipe="${E2}"]`, 'aria-pressed'), 'true', 'a equipe vista fica marcada');
+  await espectadorIgualA(esp, cel[1], 'equipe 2');
+  console.log('Espectador: PIN errado recusado; com o PIN, a tela e a contagem de cada equipe, sem votar, sem virar membro e sem mudar o "N de M".');
+
   // Caio perde a rede e muda de opção: o voto fica guardado no aparelho.
   const caio = cel[2];
   await caio.ctx.setOffline(true);
@@ -1105,6 +1816,9 @@ async function jogar({ site, navegador, vigiar }) {
   assert.equal(await administrador('GET', `salas/${sala}/decisoes/${R}/${E2}/${uids[1]}`), OC, 'o pendente foi reenviado depois de recarregar');
   await votada(bia, OC);
   console.log('Recarga com voto pendente: reenviado pela página nova.');
+  // A contagem ao vivo da equipe 2 chega ao espectador (a Bia votou em C).
+  await espectadorIgualA(esp, bia, 'equipe 2, depois do voto da Bia');
+  assert.equal(await esp.p.textContent(`${opcao(OC)} .opcao-votos`), '1 voto', 'o espectador vê o voto da Bia na contagem');
 
   // D-015: o seguro do fim da rodada. No teste de 30/09 os três arquivos saíram
   // com a rodada ainda "fechando" e sem o resultado (o telão salvava antes de o
@@ -1137,6 +1851,32 @@ async function jogar({ site, navegador, vigiar }) {
   for (const c of cel) await esperarTela(c, 'resultado');
   const cartaAna = await cel[0].p.getAttribute('.bloco[data-carta]', 'data-carta');
   assert.equal(cartaAna, resultados[E1].carta, 'o celular mostra a carta que o telão sorteou');
+  // O espectador, na equipe 2: o resultado dela, como a Bia vê. Recarregar a
+  // página volta ao campo do PIN (o PIN só vivia em memória), sem entrar como
+  // aluno, e o servidor apaga o pedido quando a página velha cai.
+  await esperarTela(esp, 'resultado');
+  assert.equal(await esp.p.getAttribute('.bloco[data-carta]', 'data-carta'), resultados[E2].carta, 'o espectador vê a carta da equipe 2');
+  assert.equal(await esp.p.textContent('#tela .equipe-linha'), await bia.p.textContent('#tela .equipe-linha'), 'a linha da equipe, como a Bia vê');
+  await conferirCelular(esp, 'espectador-resultado');
+  await esp.p.reload();
+  await esperarTela(esp, 'entrada');
+  await esp.p.waitForSelector('#pin-espectador');
+  assert.equal(await esp.p.inputValue('#codigo-sala'), sala, 'depois de recarregar, o campo do PIN desta sala');
+  assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidEsp}`, null, 20000), null, 'a página velha caiu: o servidor apagou o pedido');
+  await esp.p.waitForTimeout(1500);
+  assert.equal((await administrador('GET', `salas/${sala}/membros`))[uidEsp], undefined, 'recarregar não fez do espectador um aluno');
+  await entrarComoEspectador(esp, PIN_EMULADOR);
+  await esperarTela(esp, 'resultado');
+  assert.equal(await esp.p.evaluate(() => globalThis.Viracao.aluno.uid()), uidEsp, 'o mesmo aparelho');
+  // Sair: o pedido sai do banco, e o aparelho volta à entrada sem sala guardada.
+  await esp.p.click('[data-acao="sair-espectador"]');
+  await esperarTela(esp, 'entrada');
+  assert.equal(await esperarNoBanco(`pedidosAnfitriao/${uidEsp}`, null), null, 'ao sair, o espectador apaga o próprio pedido');
+  assert.equal(await esp.p.evaluate(() => localStorage.getItem('viracao:aluno:sala')), null, 'o espectador não guarda a sala no aparelho');
+  assert.equal(await esp.p.locator('#barra-espectador').isHidden(), true, 'fora do modo, sem o seletor');
+  assert.equal((await administrador('GET', `salas/${sala}/membros`))[uidEsp], undefined, 'nunca foi membro');
+  await esp.ctx.close();
+  console.log('Espectador: o resultado da equipe vista; recarregar pede o PIN de novo; sair apaga o pedido.');
   if (C.usandoFixture) assert.ok(resultados[E1].mes.saldoMes < 0 && resultados[E1].depois.renda < 0, 'com a fixture, o mês 1 da equipe 1 não fecha');
   await conferirContaDoMes(cel[0], resultados[E1].mes, 'resultado');
   await conferirDivida(cel[0], resultados[E1], 'resultado');
@@ -1464,6 +2204,7 @@ async function jogar({ site, navegador, vigiar }) {
       {
         const d = C.historia.dividaTotal(res2[E1].depois);
         const linha = await cel[0].p.textContent('.pressao .divida');
+        // Com o limite, o total é o banco e o empréstimo, o mesmo "dívida" do telão (revisão da F6c).
         const esperado = `dívida ${await moedaNa(cel[0], d.total)}, com ${await moedaNa(cel[0], d.emprestimo)} de empréstimo`;
         assert.ok(inclui(linha, esperado), `decisão do mês 3: "${esperado}" em "${linha}"`);
       }
@@ -1607,6 +2348,10 @@ async function jogar({ site, navegador, vigiar }) {
   await conferirCelular(cel[0], 'sala-encerrada');
   assert.equal(await administrador('GET', `salas/${sala}`), null, 'a sala foi apagada (e os votos individuais com ela)');
   console.log('Comparativo pessoal, fim, entrada fechada e reaberta, sala apagada.');
+
+  await bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela, entrarComoEspectador, corDoToken });
+  await bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela });
+  await limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela, entrarComoEspectador });
 
   // Nenhum script do celular usa innerHTML nem type="module" (AGENTS.md, regras 3 e 4).
   for (const arquivo of ['js/aluno.js', 'aluno/index.html']) {

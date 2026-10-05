@@ -258,15 +258,17 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .linha-tempo-seguir { color: var(--texto-2); }
 .linha-tempo-seguir b { color: var(--texto); }
 /* No "Mapa do seminário", a linha é o conteúdo: todos os trechos por extenso,
-   em duas colunas quando passam de seis. */
-.bloco-mapa .linha-tempo { flex: 1 1 auto; min-height: 0; justify-content: center; gap: var(--espaco); }
-.linha-tempo-lista {
-  display: grid; grid-auto-flow: column;
-  grid-template-rows: repeat(var(--linhas), auto);
-  grid-template-columns: repeat(var(--colunas), minmax(0, 1fr));
-  gap: .3em 2.5vw;
-}
-.trecho-mapa { display: flex; align-items: baseline; gap: .5em; line-height: 1.15; color: var(--texto-2); }
+   em duas colunas quando passam de seis. Colunas de texto corrido (esquema v3):
+   com 6 rodadas e 19 itens, as linhas de uma grade tinham a altura do item mais
+   alto do par, e a lista passava da faixa de entrada em 1024×768. "safe
+   center": se transbordar, a lista não sobe por cima do título. */
+.bloco-mapa .linha-tempo { flex: 1 1 auto; min-height: 0; justify-content: safe center; gap: var(--espaco); }
+.linha-tempo-lista { columns: var(--colunas); column-gap: 2.5vw; }
+.trecho-mapa { display: flex; align-items: baseline; gap: .5em; line-height: 1.15; color: var(--texto-2); break-inside: avoid; }
+.trecho-mapa + .trecho-mapa { margin-top: .3em; }
+/* O aperto (telao.js, linhaDoTempo): só quando o mapa ainda transborda. */
+.linha-tempo-mapa[data-aperto] .trecho-mapa { line-height: 1.06; }
+.linha-tempo-mapa[data-aperto] .trecho-mapa + .trecho-mapa { margin-top: .08em; }
 .trecho-marca { flex: none; align-self: center; width: .8em; height: .4em; border-radius: 3px; background: var(--linha-forte); }
 .trecho-mapa.trecho-rodada .trecho-marca { height: .8em; background: transparent; border: 3px solid var(--texto-2); border-radius: 50%; }
 .trecho-mapa.trecho-atual { color: var(--texto); font-weight: 700; }
@@ -334,6 +336,11 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .persona-mes { font-weight: 600; }
 .persona-mes[data-sinal="negativo"] { color: var(--negativo); }
 .persona-mes[data-sinal="positivo"] { color: var(--positivo); }
+/* O aperto (telao.js, telaPersonas): só quando a lista transborda, como seis
+   personas com a faixa de entrada embaixo em 1024×768 (D-061). Entrelinha e
+   vãos menores; a letra não encolhe e o fio entre as personas fica. */
+.personas[data-aperto] { gap: 2px; }
+.personas[data-aperto] .persona-linha { gap: 0; line-height: 1.04; padding-bottom: 3px; }
 
 /* ---------- Rodada ---------- */
 
@@ -405,6 +412,21 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    da decisão sai (o celular de cada equipe a mostra). */
 .grade-resultados[data-aperto] { row-gap: calc(var(--espaco) * .7); }
 .grade-resultados[data-aperto] .resultado-origem { display: none; }
+/* D-066: com o limite do cheque especial, a faixa de quem estourou tem três
+   linhas (a dívida e, embaixo, as contas atrasadas e o que faltou na mesa), e
+   seis delas com a entrelinha de 1,08 passavam ~60 px de 1024×768. No aperto,
+   a entrelinha fecha em 1 e o respiro de dentro da faixa diminui; a letra fica
+   nos 28 px. */
+.grade-resultados[data-aperto] .cartao-resultado { line-height: 1; padding-top: .1em; padding-bottom: .1em; }
+.grade-resultados[data-aperto] .resultado-carta { line-height: 1; }
+/* O segundo aperto (telao.js, apertarResultado): só se o primeiro não bastou. */
+.grade-resultados[data-aperto="2"] { row-gap: 8px; }
+/* Sem o respiro de dentro da faixa: com a faixa de entrada embaixo (online), seis
+   faixas de três linhas passavam 11 px de 1024×768 no teste da parte 2. */
+.grade-resultados[data-aperto="2"] .cartao-resultado { padding-top: 0; padding-bottom: 0; }
+.grade-resultados[data-aperto="2"] .resultado-saldo { font-size: 1.15em; }
+.grade-resultados[data-aperto="2"] .resultado-carta { font-size: 1.05em; }
+.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.15); }
 .cartao-resultado {
   grid-column: 1 / -1;
   display: grid; grid-template-columns: subgrid; align-items: center;
@@ -427,14 +449,32 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O separador " · " da origem fica fora do nowrap: dentro, não sobrava onde
    quebrar, e a origem invadia a coluna do saldo. */
 .resultado-detalhe > span:not(.resultado-origem), .resultado-decisao { white-space: nowrap; }
+/* A parada pode quebrar entre "20 dias parado" e "perdeu R$ X" (cada um
+   inteiro): inteira e sem quebra, numa coluna da carta mais estreita, ela
+   passava por cima da coluna do dinheiro. */
+.resultado-detalhe > .resultado-custo { white-space: normal; }
+.resultado-custo > .conta, .resultado-custo > .conta-quebra { white-space: nowrap; }
 .resultado-detalhe b { color: var(--texto); }
 .resultado-decisao { color: var(--texto-2); }
 .resultado-dinheiro { align-items: flex-end; text-align: right; }
 .resultado-saldo { font-size: 1.3em; font-weight: 800; white-space: nowrap; }
 .resultado-saldo[data-sinal="negativo"] { color: var(--negativo); }
 .resultado-saldo[data-sinal="positivo"] { color: var(--positivo); }
-.resultado-divida { color: var(--texto-2); white-space: nowrap; }
-.resultado-divida b { color: var(--texto); }
+.resultado-divida, .resultado-caixa { color: var(--texto-2); white-space: nowrap; }
+.resultado-divida b, .resultado-caixa b { color: var(--texto); }
+/* D-066: as contas atrasadas e o que faltou na mesa, numa linha embaixo do
+   dinheiro, alinhada à direita como ele, da coluna da carta até a borda. Na
+   coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna e a parada
+   da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só quebra
+   entre eles. */
+.resultado-limite { grid-column: 2 / -1; justify-self: end; text-align: right; color: var(--texto-2); }
+.resultado-limite > span { white-space: nowrap; }
+.resultado-limite b { color: var(--texto); }
+/* D-067: a frase de quando a proteção pagou mais do que o trabalho, na largura
+   da faixa inteira, embaixo das três colunas (numa coluna só, ela ocupava três
+   ou quatro linhas). No tom do texto, e não no secundário: é o dado que a sala
+   precisa ler, e não um detalhe. */
+.resultado-acima { grid-column: 1 / -1; line-height: 1.12; padding-top: .1em; }
 /* As contas do mês (D-044) e o custo real da carta (D-052), no resultado e na
    história: cada pedaço inteiro, o rótulo discreto e o valor em destaque. */
 .contas, .custo-carta, .historia-dinheiro { color: var(--texto-2); }
@@ -442,12 +482,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .conta { white-space: nowrap; }
 /* Rótulo que quebra, com a última palavra colada ao valor (telao.js, rotuloEValor). */
 .conta-fim { white-space: nowrap; }
-/* O destaque engrossa o contorno por dentro (sombra), e não pela borda: 1 px a
-   mais de borda desalinhava as colunas da faixa destacada das outras. */
-.cartao-resultado.destaque { border-color: var(--texto); box-shadow: inset 0 0 0 1px var(--texto); }
-/* Carta grave: só o texto da consequência, em cor neutra, sem animação e sem
-   destaque (seção 8, "tema sensível"). */
-.cartao-resultado.grave, .cartao-resultado.grave.destaque { border-color: var(--linha-forte); box-shadow: none; }
+/* Sem contorno de destaque (revisão da F6a): as cartas mais extremas só entram
+   animadas. Um contorno mais grosso em duas faixas, sem legenda, a turma lia
+   como "as equipes que ganharam". */
+/* Carta grave: só o texto da consequência, em cor neutra e sem animação (seção
+   8, "tema sensível"). */
+.cartao-resultado.grave { border-color: var(--linha-forte); }
 /* O deslocamento cabe na margem que sobra do palco (o resultado usa parte
    dela): com −1,5vw, o cartão animado saía pela esquerda da tela. */
 @keyframes destacar { from { opacity: .15; transform: translateX(-1vw); } to { opacity: 1; transform: none; } }
@@ -473,7 +513,7 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .linha-persona { color: var(--texto-2); }
 .valor-saldo { justify-content: flex-end; white-space: nowrap; }
 /* Escolha ou sorte: uma linha por equipe, contada como história. */
-.historias-escolha { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.historias-escolha { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
 .historia-escolha {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: .05em .6em;
   padding-bottom: calc(var(--espaco) * .5); border-bottom: 1px solid var(--linha);
@@ -485,6 +525,43 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .historia-conta { display: contents; color: var(--texto-2); }
 .historia-conta b { color: var(--texto); }
 .passo-conta { white-space: nowrap; }
+/* O aperto (telao.js, telaPlacarFinal): só quando a lista transborda (12 meses,
+   valores de cinco dígitos e seis nomes compridos em 1024×768). */
+.historias-escolha[data-aperto] { gap: 3px; }
+.historias-escolha[data-aperto] .historia-escolha { line-height: 1.08; padding-bottom: 3px; }
+.historia-meses[data-aperto] { gap: calc(var(--espaco) * .4); }
+.historia-meses[data-aperto] .historia-mes { line-height: 1.08; gap: 0; }
+/* O segundo aperto (telao.js, telaPlacarFinal): só se o primeiro não bastou. */
+.historia-meses[data-aperto="2"] .historia-narrativa { -webkit-line-clamp: 1; line-clamp: 1; }
+/* "Escolha ou sorte?" em grade fixa (revisão da F7, achado 13 da revisão de
+   conteúdo e legibilidade). Corrida como texto, a conta de cada equipe quebrava
+   num ponto diferente ("= terminaram com" na linha 2 de umas e na 3 de outras),
+   e os números não ficavam em coluna. Agora são três linhas por equipe, as
+   mesmas em todas, em duas colunas alinhadas entre as equipes (subgrid):
+     equipe              | se não mudassem nada: R$ a
+     → as escolhas: ±R$ b | → a sorte: ±R$ c
+     = terminaram com R$ d
+   Duas linhas não cabem: com valores de cinco dígitos, escolhas, sorte e total
+   lado a lado passam da largura de 1024×768 com a letra de 28 px. Em cada
+   passo, o rótulo à esquerda e o valor à direita da coluna: os valores ficam
+   alinhados entre as equipes. A página do pior caso (.piores-casos) continua
+   corrida: a conta dela tem outro formato.
+   As duas colunas na largura do conteúdo (max-content), e não a segunda em
+   1fr: esticada até a borda, em 1920×1080 o rótulo "→ a sorte:" ficava a
+   ~1.200 px do valor, e a conta se lia em diagonal (revisão do voto da F6b,
+   achado 7). A grade, mais estreita que a tela em 1920×1080, fica no meio. */
+.historias-escolha.escolhas-em-grade {
+  display: grid; grid-template-columns: max-content max-content;
+  align-content: safe center; row-gap: calc(var(--espaco) * .8); column-gap: 1.2em;
+}
+.escolhas-em-grade > .historia-escolha { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; row-gap: .05em; }
+.escolhas-em-grade > .historia-escolha > .equipe { grid-column: 1; grid-row: 1; }
+.escolhas-em-grade .passo-conta { display: flex; justify-content: space-between; gap: .3em; }
+.escolhas-em-grade .historia-conta > :nth-child(1) { grid-column: 2; grid-row: 1; }
+.escolhas-em-grade .historia-conta > :nth-child(2) { grid-column: 1; grid-row: 2; }
+.escolhas-em-grade .historia-conta > :nth-child(3) { grid-column: 2; grid-row: 2; }
+.escolhas-em-grade .historia-conta > :nth-child(4) { grid-column: 1; grid-row: 3; }
+.historias-escolha.escolhas-em-grade[data-aperto] { row-gap: 3px; column-gap: 1.2em; }
 /* O total do fim, depois do "=", em destaque: é o resultado da conta. */
 .passo-final { color: var(--texto); font-weight: 700; }
 /* O pior que podia acontecer (D-059): a mesma lista do "Escolha ou sorte?",
@@ -493,7 +570,7 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .pior-nota { color: var(--texto-2); }
 .pior-sem-escolha { color: var(--texto-2); }
 /* A história de uma equipe: um mês por item. */
-.historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: center; }
+.historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
 .historia-mes { display: flex; flex-direction: column; gap: .05em; padding-left: .6em; border-left: 4px solid var(--linha-forte); line-height: 1.2; }
 .historia-titulo { font-weight: 700; }
 .historia-fatos { color: var(--texto-2); }
@@ -509,8 +586,17 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O empréstimo como dívida (esquema v2.2): "pegou empréstimo de R$ 1.500" depois
    das contas do mês, e a dívida com que a equipe termina no fim da história. */
 .historia-emprestimo b { color: var(--texto); }
-.historia-divida { color: var(--texto-2); }
-.historia-divida b { color: var(--texto); }
+.historia-divida, .historia-caixa, .historia-atrasadas { color: var(--texto-2); white-space: nowrap; }
+.historia-divida b, .historia-caixa b, .historia-atrasadas b, .historia-mesa b, .historia-mesa-total b, .conta-atraso b { color: var(--texto); }
+/* D-067: a mesma frase do resultado, no mês da história em que aconteceu. */
+.historia-acima { color: var(--texto); }
+/* D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
+   Fora do gráfico e longe do "faltou R$ X": não é dívida nem parte do saldo. */
+.mesa-no-ano { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1em 1.2em; color: var(--texto-2); line-height: 1.15; }
+.mesa-titulo { white-space: nowrap; }
+.mesa-titulo b { color: var(--texto); }
+.mesa-equipe { white-space: nowrap; }
+.mesa-equipe b { color: var(--texto); }
 
 /* ---------- Fim ---------- */
 

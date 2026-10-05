@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '6';
+  const VERSAO_APP = '7';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -88,6 +88,15 @@
     // para um redesenho (a contagem das equipes, um voto) não fechá-los na mão dele.
     ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, recolhidos: new Set() },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
+    // D-064: o modo espectador, o celular do apresentador. null fora dele;
+    // dentro, { equipe, pin }: a equipe cuja tela ele vê e o PIN, só em memória
+    // (nunca no aparelho), para gravar o pedido de novo depois de uma queda (o
+    // servidor apaga o pedido quando a conexão cai: apagarAoDesconectar).
+    // pedindoPin: a tela de entrada com o campo do PIN aberto.
+    // pedidoGravado: o PIN pode estar em pedidosAnfitriao/{uid} (marcado antes
+    // da gravação, e não depois da prova): é ele, e não o app.espectador, que
+    // diz se há o que apagar ao sair, ao fechar a aba e quando a prova falha.
+    espectador: null, pedindoPin: false, pedidoGravado: false,
   };
 
   // ---------- Utilidades ----------
@@ -102,6 +111,11 @@
   const normalizarSala = (x) => String(x || '').toUpperCase().replace(FORA_DO_ALFABETO, '').slice(0, 4);
   const recusado = (erro) => /PERMISSION_DENIED/.test(String(erro?.message || erro));
   const cam = (...partes) => ['salas', app.sala, ...partes].join('/');
+  const caminhoDoPedido = () => `pedidosAnfitriao/${app.uid}`;
+  // A sala foi encerrada: a meta já chegou uma vez e sumiu.
+  const salaSumiu = () => app.recebido.meta && !app.dados.meta;
+  // O PIN tem o tamanho que a regra aceita em pedidosAnfitriao (8 a 32).
+  const pinNoFormato = (pin) => typeof pin === 'string' && pin.length >= 8 && pin.length <= 32;
   const agoraServidor = () => (app.canal ? app.canal.agora() : Date.now());
 
   // localStorage pode lançar (aba anônima, dado bloqueado) ou voltar vazio: o
@@ -142,6 +156,13 @@
   }
   const letraDe = (rodadaId, opcao) => LETRAS[ordemOpcoes(rodadaId).indexOf(opcao)] || '?';
   const escalaCurta = () => lista(app.dados.conteudo?.escala?.curtos);
+  // Esquema v3 (D-060): quantos meses cada rodada cobre, e como a tela chama o
+  // período. Com 6 rodadas bimestrais, "o saldo do mês" vira "o saldo do
+  // bimestre", e o resumo, "por bimestre". A regra é a do historia.js (a mesma
+  // do telão); sem ele, o mês de sempre.
+  const PERIODO_MES = { meses: 1, nome: 'mês', noPeriodo: 'no mês', doPeriodo: 'do mês' };
+  const periodo = () => N().historia?.periodo?.(app.dados.conteudo) || PERIODO_MES;
+  const maiuscula = (texto) => texto.charAt(0).toLocaleUpperCase('pt-BR') + texto.slice(1);
   const rotuloVoto = (v) => `${v} · ${escalaCurta()[v - 1] || ''}`;
 
   // ---------- Serviço (conexao.json + SDK) ----------
@@ -191,16 +212,19 @@
   // Recarrega a página para uma tentativa nova do import(), com a sala na URL e a
   // marca de "entrar direto" no sessionStorage: o aluno volta à sala sem tocar
   // em nada. No máximo uma recarga a cada RECARGA_MIN_MS.
-  function agendarRecarga(sala) {
+  function agendarRecarga(sala, entrar = true) {
     const ultima = Number(lerSessao('recarregouEm')) || 0;
     const espera = Math.max(1500, ultima + RECARGA_MIN_MS - Date.now());
     clearTimeout(app.repetirTimer);
-    app.repetirTimer = setTimeout(() => recarregarPara(sala), espera);
+    app.repetirTimer = setTimeout(() => recarregarPara(sala, entrar), espera);
   }
 
-  function recarregarPara(sala) {
+  // entrar = false: a página volta à tela de entrada, e não à sala. É o caso do
+  // espectador (D-064): entrar direto o registraria como aluno (membro), e o
+  // PIN, que só existe em memória, não sobrevive à recarga.
+  function recarregarPara(sala, entrar = true) {
     if (RE_SALA.test(String(sala))) {
-      gravarSessao('entrarAposRecarga', sala);
+      if (entrar) gravarSessao('entrarAposRecarga', sala);
       const busca = new URLSearchParams(raiz.location.search);
       busca.set('sala', sala);
       try { raiz.history.replaceState(null, '', `${raiz.location.pathname}?${busca}`); } catch { /* só conveniência */ }
@@ -253,6 +277,12 @@
           registrarDesconexao();
           enviarPresenca();
         }
+        if (app.espectador) reafirmarPedido();
+        // Caiu no meio da entrada do espectador, entre o "apague ao cair" e a
+        // prova: o servidor executou o apagamento e o esqueceu, e o SDK reenvia
+        // a gravação do pedido nesta conexão nova. Sem registrar de novo, o
+        // pedido ficaria sem quem o apague se a aba fechasse em seguida.
+        else if (app.pedidoGravado) app.canal.apagarAoDesconectar(caminhoDoPedido()).catch(() => {});
       } else {
         app.selo.definir('reconectando', app.jaConectou ? 'Reconectando…' : 'Conectando…');
         app.timerQueda = setTimeout(() => {
@@ -305,6 +335,9 @@
   // pedido de novo pelo próprio conexao.criarWakeLock.
   function aoVoltarAVista() {
     if (!app.canal || app.fase !== 'sala') return;
+    // A página voltou do cache do navegador depois de um pagehide, que apagou
+    // o pedido do espectador: sem ele, a contagem da equipe não chega.
+    if (app.espectador && !app.pedidoGravado) reafirmarPedido();
     reconectar();
     reler();
   }
@@ -323,7 +356,14 @@
   // ---------- Entrar na sala ----------
 
   async function entrarNaSala(sala) {
-    if (app.embutido || !RE_SALA.test(sala)) return;
+    // O cinto do achado 1 (revisão da F7): com o campo do PIN aberto, ou no
+    // modo espectador, nada entra como aluno. Só o "Voltar" da tela do
+    // espectador (e o "Sair do modo espectador") leva à entrada comum.
+    if (app.embutido || app.pedindoPin || app.espectador || !RE_SALA.test(sala)) return;
+    // Quem entra como aluno deixa de ser o espectador desta aba: com a marca,
+    // toda recarga caía no campo do PIN e não voltava à sala (I6), e o voto
+    // guardado no aparelho não era reenviado (revisão do voto da F6b).
+    gravarSessao('espectador', '');
     clearTimeout(app.repetirTimer);
     app.sala = sala;
     app.fase = 'conectando';
@@ -355,7 +395,7 @@
     desenhar();
   }
 
-  function mostrarErroServico(erro, repetir) {
+  function mostrarErroServico(erro, repetir, { espectador = false } = {}) {
     const texto = String(erro?.code || '') + ' ' + String(erro?.message || erro);
     let titulo = 'Sem acesso ao serviço';
     let explicacao = `Não foi possível falar com o servidor (${String(erro?.message || erro)}). Tentando de novo a cada 10 s.`;
@@ -372,9 +412,12 @@
     if (erro?.recarregar && repetir) {
       // A falha do import() fica guardada nesta página: tentar de novo é recarregar.
       const sala = app.sala;
+      // O espectador volta ao campo do PIN desta sala, e não à entrada comum,
+      // onde uma sala de aluno guardada no aparelho entraria direto como aluno.
+      if (espectador) gravarSessao('espectador', sala);
       explicacao = `Não foi possível baixar o app do servidor (${String(erro?.message || erro)}). A página recarrega sozinha em instantes para tentar de novo.`;
-      app.erro = { titulo, texto: explicacao, repetir: () => recarregarPara(sala) };
-      agendarRecarga(sala);
+      app.erro = { titulo, texto: explicacao, repetir: () => recarregarPara(sala, !espectador) };
+      agendarRecarga(sala, !espectador);
     } else {
       app.erro = { titulo, texto: explicacao, repetir };
       if (repetir) app.repetirTimer = setTimeout(repetir, REPETIR_SERVICO_MS);
@@ -382,10 +425,181 @@
     desenhar();
   }
 
+  // ---------- Modo espectador (D-064) ----------
+  //
+  // O celular do apresentador vê a tela de qualquer equipe, exatamente como o
+  // aluno daquela equipe vê (a mesma telaDoAluno, com um membro virtual), e
+  // nunca vira membro: não grava membros/{uid} nem presença, não vota, não
+  // entra no "N de M" e nunca grava meta/hostUid (não assume a sala). O PIN vai
+  // para pedidosAnfitriao/{uid}, e as regras v4 dão a quem tem o PIN certo a
+  // leitura de decisoes/{r}/{equipe} (a contagem ao vivo, que nas regras v3 só
+  // a própria equipe lia). O resto que o celular lê já é aberto a quem tem login.
+  async function entrarComoEspectador(sala, pin) {
+    if (app.embutido || !RE_SALA.test(sala)) return;
+    if (!pinNoFormato(pin)) {
+      app.aviso = 'O PIN do apresentador tem de 8 a 32 caracteres.';
+      desenhar();
+      return;
+    }
+    clearTimeout(app.repetirTimer);
+    app.sala = sala;
+    app.fase = 'conectando';
+    app.aviso = null;
+    desenhar();
+    let meta;
+    let jaMembro = false;
+    try {
+      const canal = await obterCanal();
+      app.uid = await comLimite(canal.entrar(), ESPERA_SERVICO_MS, 'sem resposta do login');
+      meta = await canal.ler(cam('meta'));
+      // Revisão da F6b (achado 16): um aparelho que já é membro desta sala não
+      // vira espectador. O registro dele continuaria contando no "N de M" da
+      // equipe (o espectador nunca manda presença nem vota), e o celular não
+      // apaga o próprio membro: depois da trava das equipes, a regra nem
+      // deixaria, e quem tira um aluno da sala é o apresentador, pelo telão.
+      jaMembro = Boolean(meta) && (await comLimite(canal.ler(cam('membros', app.uid)), ESPERA_SERVICO_MS, 'sem resposta do serviço')) != null;
+      if (meta && !jaMembro) {
+        // O "apague ao cair" vem ANTES da gravação, e espera a confirmação: o
+        // servidor trata os pedidos de uma conexão em ordem, então não há
+        // instante em que o pedido esteja no banco sem ele. Registrado depois
+        // da prova, um pedido gravado sobrevivia a uma prova sem resposta e
+        // dava ao uid anônimo deste navegador um PIN_OK permanente (revisão da
+        // F7, achado 2; revisão da F6b, achado 15).
+        await comLimite(canal.apagarAoDesconectar(caminhoDoPedido()), ESPERA_SERVICO_MS, 'sem resposta do serviço');
+        app.pedidoGravado = true;
+        await comLimite(canal.gravar({ [caminhoDoPedido()]: pin }), ESPERA_SERVICO_MS, 'sem resposta do serviço');
+        // A prova do PIN: a decisão de uma equipe só se lê com ele (para quem
+        // não é da equipe, e nenhum aparelho é da equipe "_pin"). A gravação do
+        // pedido passa com qualquer texto de 8 a 32 caracteres.
+        await comLimite(canal.ler(cam('decisoes', '_pin', '_pin')), ESPERA_SERVICO_MS, 'sem resposta do serviço');
+      }
+    } catch (erro) {
+      // Recusa ou não, o pedido não fica no banco. Falha que não é recusa
+      // (rede, tempo-limite expirado): ele pode ter sido gravado, e sai já. A
+      // tela de erro tenta de novo sozinha, e a nova tentativa grava outra vez.
+      apagarPedido();
+      if (recusado(erro)) {
+        // PIN errado: a tela volta ao campo do PIN.
+        Object.assign(app, { fase: 'entrada', pedindoPin: true, sala: null, aviso: 'O PIN não confere com o cadastrado no console. Confira e tente de novo.' });
+        desenhar();
+        return;
+      }
+      mostrarErroServico(erro, () => entrarComoEspectador(sala, pin), { espectador: true });
+      return;
+    }
+    if (!meta) {
+      Object.assign(app, { fase: 'entrada', sala: null, aviso: `Não há sala com o código ${sala}. Confira o código no telão.` });
+      desenhar();
+      return;
+    }
+    if (jaMembro) {
+      Object.assign(app, { fase: 'entrada', pedindoPin: true, sala: null, aviso: 'Este aparelho já entrou como aluno nesta sala e conta na equipe dele. Use outro aparelho para espiar as equipes.' });
+      desenhar();
+      return;
+    }
+    // A equipe vem com o conteúdo, que chega pelos ouvintes ligados logo
+    // abaixo (equipeInicial, em aoMudarDados).
+    app.espectador = { equipe: null, pin };
+    app.pedindoPin = false;
+    // O "apague ao cair" já está registrado (acima, antes da gravação): se o
+    // aparelho cair ou a aba fechar, o servidor apaga o pedido. Na volta da
+    // conexão, reafirmarPedido o registra e grava de novo.
+    // Recarregar a página volta ao campo do PIN desta sala, e nunca entra como
+    // aluno: a sala guardada no aparelho (a de aluno) sai, e a marca fica só na
+    // aba (sessionStorage), sem o PIN.
+    apagarLocal('sala');
+    gravarSessao('espectador', sala);
+    const busca = new URLSearchParams(raiz.location.search);
+    busca.set('sala', sala);
+    try { raiz.history.replaceState(null, '', `${raiz.location.pathname}?${busca}`); } catch { /* só conveniência */ }
+    app.fase = 'sala';
+    ligarOuvintes();
+    desenhar();
+  }
+
+  // Depois de uma queda, o pedido foi apagado pelo servidor (apagarAoDesconectar):
+  // sem ele, a contagem da equipe deixa de chegar (o ouvinte recusado religa
+  // sozinho, com espera, e passa assim que o pedido volta). A mesma ordem da
+  // entrada: o "apague ao cair" antes da gravação. Com a sala encerrada (a meta
+  // sumiu), o pedido não volta: não há mais o que espiar.
+  function reafirmarPedido() {
+    if (!app.espectador || !app.canal || !app.uid || salaSumiu()) return;
+    const caminho = caminhoDoPedido();
+    const espectador = app.espectador;
+    app.canal.apagarAoDesconectar(caminho)
+      .then(() => {
+        // Saiu do modo enquanto o servidor confirmava: nada a gravar. Nem com
+        // a sala encerrada nesse meio-tempo: na reconexão, o SDK reenvia as
+        // escutas antes de avisar .info/connected, a meta nula chega antes
+        // desta confirmação, e aoMudarDados já apagou o pedido. Sem esta
+        // conferência, o PIN_OK voltava ao banco com o celular na tela "sala
+        // encerrada" (revisão do voto da F6b, achado 2).
+        if (app.espectador !== espectador || salaSumiu()) return undefined;
+        app.pedidoGravado = true;
+        return app.canal.gravar({ [caminho]: espectador.pin });
+      })
+      .catch(() => {});
+  }
+
+  // Apaga o próprio pedido, se ele pode estar no banco: ao sair do modo
+  // espectador, quando a prova do PIN falha ou o tempo-limite dela expira, ao
+  // fechar a aba (pagehide) e quando a sala é encerrada. Sem rede, a escrita
+  // fica na fila do SDK e sai quando a conexão volta; se a aba fechar antes
+  // disso, quem apaga é o servidor, pelo "apague ao cair" registrado antes da
+  // gravação (o risco que sobra está no docs/contratos.md, seção 10).
+  function apagarPedido() {
+    if (!app.pedidoGravado) return;
+    app.pedidoGravado = false;
+    if (app.canal && app.uid) app.canal.gravar({ [caminhoDoPedido()]: null }).catch(() => {});
+  }
+
+  // A equipe que o espectador vê ao entrar: a primeira aberta, na ordem do
+  // conteúdo (antes de o apresentador abrir e fechar equipes, a primeira).
+  // E quando o apresentador fecha a equipe vista, a primeira aberta de novo:
+  // o espectador que entrou no lobby (equipesAbertas ainda não existe) ficava
+  // na e1 fechada, com "Aguardando uma equipe" e o botão dela apagado no
+  // seletor, até alguém notar (revisão do voto da F6b, achado 3). Sem equipe
+  // aberta nenhuma, fica onde está.
+  function equipeInicial() {
+    if (!app.espectador || !app.dados.conteudo) return;
+    const abertas = app.dados.estado?.equipesAbertas;
+    const aberta = (id) => !abertas || abertas[id] === true;
+    const atual = app.espectador.equipe;
+    if (atual && aberta(atual)) return;
+    const ordem = ordemDe(app.dados.conteudo, 'equipes');
+    const primeira = ordem.find(aberta);
+    if (atual) {
+      if (!primeira) return;
+      Object.assign(app.ui, { aberta: null, rolarAte: null, nota: null });
+      app.ui.recolhidos.clear();
+    }
+    app.espectador.equipe = primeira ?? ordem[0] ?? null;
+  }
+
+  // O seletor de equipe do espectador: a tela passa a ser a de um aluno da
+  // equipe escolhida, e o ouvinte da decisão troca de equipe (religarEquipe).
+  function verEquipe(equipeId) {
+    if (!app.espectador || app.espectador.equipe === equipeId) return;
+    app.espectador.equipe = equipeId;
+    Object.assign(app.ui, { aberta: null, rolarAte: null, nota: null });
+    app.ui.recolhidos.clear();
+    aoMudarDados();
+  }
+
+  // O registro de membro que a tela usa: o do servidor, ou, no modo espectador,
+  // um membro virtual da equipe escolhida, que nunca vai para o banco. O
+  // entrouEm não conta: a telaDoAluno dá o motivo "espectador" antes de olhar.
+  function membroDaTela() {
+    if (app.espectador) return app.espectador.equipe ? { equipe: app.espectador.equipe, entrouEm: 0 } : null;
+    return tem(app.dados.membros, app.uid) ? app.dados.membros[app.uid] : null;
+  }
+
   // O registro de membro: grava membros/{uid} (sem equipe) com a hora do
   // servidor. Nunca regrava um membro que já existe: um entrouEm novo tiraria o
   // voto da decisão aberta (a regra só aceita quem entrou antes da abertura).
   async function garantirMembro() {
+    // O espectador nunca vira membro (D-064): não aparece no "N de M" do telão.
+    if (app.espectador) return;
     const d = app.dados;
     if (app.fase !== 'sala' || !app.recebido.membros || !app.recebido.meta || !d.meta) return;
     if (tem(d.membros, app.uid)) {
@@ -414,7 +628,8 @@
 
   // Ouvinte cancelado por permissão (o aluno foi movido de equipe, a regra
   // mudou no meio) é religado sozinho, com espera crescente até 10 s.
-  function ouvinteResistente(caminho, cb) {
+  // aoRecusar: chamado a cada recusa, antes da nova tentativa.
+  function ouvinteResistente(caminho, cb, aoRecusar = null) {
     let atual = null;
     let parado = false;
     let timer = 0;
@@ -426,6 +641,7 @@
         cb(v);
       }, () => {
         if (parado) return;
+        if (aoRecusar) aoRecusar();
         tentativas += 1;
         timer = setTimeout(ligar, Math.min(10000, 1000 * 2 ** (tentativas - 1)));
       });
@@ -452,7 +668,11 @@
   }
 
   function aoMudarDados() {
+    // O apresentador apagou a sala: o espectador não tem mais o que ver, e o
+    // PIN_OK não fica no banco à espera de ele tocar em "Entrar em outra sala".
+    if (app.espectador && salaSumiu()) apagarPedido();
     garantirMembro();
+    equipeInicial();
     const e = app.dados.estado;
     const chavePasso = e ? `${e.indice}|${e.subfase}|${e.afirmacao || ''}` : null;
     if (chavePasso !== app.ui.chavePasso) {
@@ -478,7 +698,7 @@
   // aluno ou a rodada muda (arquitetura, seção 10).
   function religarEquipe() {
     const e = app.dados.estado;
-    const membro = app.membroConfirmado ? app.dados.membros?.[app.uid] : null;
+    const membro = app.espectador ? membroDaTela() : app.membroConfirmado ? app.dados.membros?.[app.uid] : null;
     const chave = e?.tipo === 'rodada' && membro?.equipe ? `${e.rodada}|${membro.equipe}` : null;
     if (chave === app.chaveEquipe) return;
     avisarSeMovido(app.chaveEquipe, chave, e);
@@ -487,10 +707,13 @@
     app.desligarEquipe = null;
     app.dados.decisoes = null;
     if (!chave) return;
+    // O espectador lê a decisão pelo PIN (regras v4): recusada, o pedido pode
+    // ter sido apagado por um apagarAoDesconectar atrasado (a página recarregada
+    // e religada depressa), e ele é gravado de novo antes de a leitura religar.
     app.desligarEquipe = ouvinteResistente(cam('decisoes', e.rodada, membro.equipe), (v) => {
       app.dados.decisoes = v;
       desenhar();
-    });
+    }, app.espectador ? reafirmarPedido : null);
   }
 
   // Revisão de 30/09 (achado P1): o apresentador moveu o aparelho de equipe com
@@ -500,13 +723,21 @@
   // palavra: só o crachá mudava. Chamado antes de trocar o ouvinte, com as
   // decisões da equipe anterior ainda em app.dados.decisoes.
   function avisarSeMovido(chaveAntiga, chaveNova, e) {
+    // O espectador troca de equipe pelo seletor, e não tem voto a perder.
+    if (app.espectador) return;
     if (!chaveAntiga || !chaveNova || !['decidindo', 'prorrogacao'].includes(e?.subfase)) return;
     const [rodadaAntiga, equipeAntiga] = chaveAntiga.split('|');
     const [rodadaNova, equipeNova] = chaveNova.split('|');
     if (rodadaAntiga !== rodadaNova || equipeAntiga === equipeNova) return;
     const envio = app.envios.get(cam('decisoes', rodadaAntiga, equipeAntiga, app.uid));
     const votou = typeof app.dados.decisoes?.[app.uid] === 'string' || emVoo(envio) || guardadoNoAparelho(envio) || envio?.estagio === 'registrado';
-    if (votou) app.ui.movido = { rodada: rodadaNova, de: equipeAntiga, para: equipeNova };
+    if (!votou) return;
+    app.ui.movido = { rodada: rodadaNova, de: equipeAntiga, para: equipeNova };
+    // O aviso "Vote de novo" vai dentro da opção aberta, junto do botão, e tem
+    // de ficar à vista: com um contexto da família mais longo no topo (a
+    // fixture de 6 rodadas da matriz de votos, esquema v3), ele caía 5 px abaixo
+    // da tela de 360×740, e a tela não rolava, porque só abrir uma opção rola.
+    if (app.ui.aberta) app.ui.rolarAte = app.ui.aberta;
   }
 
   // Os próprios votos, lidos do servidor (a regra deixa cada um ler só a
@@ -591,6 +822,8 @@
   }
 
   function votar(escolha) {
+    // O espectador não vota (D-064): o botão já vem apagado, e isto é o cinto.
+    if (app.espectador) return;
     // A janela em que o voto foi dado: depois de recarregar, o reenvio só vale
     // nela (pendenteAindaVale), e não numa reabertura da mesma etapa (D-037).
     const pendente = { ...escolha, abertoEm: app.dados.estado?.abertoEm };
@@ -679,6 +912,10 @@
         // não repete a escrita que falhou). O botão volta a valer, e a tela diz
         // para tocar de novo. O pendente fica no aparelho: recarregar reenvia.
         envio.estagio = 'falhou';
+        // O aviso cresce junto do botão e podia passar da borda de baixo de
+        // 360×740 (16 px fora, no mês 1 da matriz de votos de 01/10, depois de
+        // uma recarga): como na recusa, a opção aberta rola para a vista.
+        if (pendente.tipo === 'decisao' && app.ui.aberta === pendente.opcao) app.ui.rolarAte = pendente.opcao;
       }
     }).finally(() => {
       for (const t of envio.timers) clearTimeout(t);
@@ -718,7 +955,7 @@
   // apresentador retomar (esperaRetomar).
   function talvezReenviar() {
     const e = app.dados.estado;
-    if (!app.membroConfirmado || !e) return;
+    if (app.espectador || !app.membroConfirmado || !e) return;
     for (const [caminho, p] of Object.entries(lerPendentes())) {
       const atual = app.envios.get(caminho);
       const esperando = atual?.estagio === 'esperaRetomar';
@@ -822,9 +1059,9 @@
     const d = app.dados;
     if (app.recebido.meta && d.meta === null) return { tipo: 'salaEncerrada', dados: {} };
     if (!app.recebido.membros || !app.recebido.meta) return { tipo: 'aguardando', dados: { motivo: 'entrando' } };
-    const membro = tem(d.membros, app.uid) ? d.membros[app.uid] : null;
+    const membro = membroDaTela();
     return L().telaDoAluno({
-      conteudo: d.conteudo, estado: d.estado, membro, membros: d.membros,
+      conteudo: d.conteudo, estado: d.estado, membro, membros: d.membros, espectador: Boolean(app.espectador),
       meusVotos: votosParaTela(), decisoesDaEquipe: decisoesParaTela(),
       resultados: d.resultados, placar: d.placar, uid: app.uid, agora: agoraServidor(), meta: d.meta,
     });
@@ -855,8 +1092,10 @@
       // comparativo só vira "sem resposta" com um redesenho, e a chegada de um
       // voto vazio não muda nenhum outro dado da tela (a tela ficava presa).
       [...(app.votosLendo || [])].sort(),
+      app.espectador?.equipe ?? null, app.pedindoPin,
     ]);
     desenharCracha();
+    desenharBarraEspectador();
     desenharFaixas();
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
@@ -867,6 +1106,11 @@
       else if (app.fase === 'conectando') tipo = telaSimples(alvo, 'conectando', `Sala ${app.sala}`, 'Entrando na sala…', 'Conectando ao servidor. Na primeira vez pode levar alguns segundos.');
       else if (app.fase === 'erro') tipo = telaErro(alvo);
       else tipo = desenharTela(alvo, tela);
+      // O espectador sai por aqui, no fim de toda tela: o seletor de equipe,
+      // no topo, fica só com as equipes (cabe em 360 px sem apertar o toque).
+      if (app.fase === 'sala' && app.espectador) {
+        D().acrescentar(alvo, D().botao('Sair do modo espectador', () => voltarParaEntrada(), { classe: 'botao-largo botao-sair-espectador', dados: { acao: 'sair-espectador' } }));
+      }
       document.body.dataset.tela = tipo;
       aplicarWakeLock(TELAS_ACESAS.has(tipo));
       // De novo depois do layout: a altura das opções só existe quando o
@@ -894,12 +1138,18 @@
     const alvo = app.el.cracha;
     const membro = app.uid ? app.dados.membros?.[app.uid] : null;
     const equipe = membro && tem(app.dados.conteudo?.equipes, membro.equipe) ? app.dados.conteudo.equipes[membro.equipe] : null;
-    const chave = app.fase === 'sala' && app.uid ? `${app.uid}|${equipe?.id || ''}` : '';
+    const chave = app.fase === 'sala' && app.uid ? `${app.uid}|${equipe?.id || ''}|${app.espectador ? 'espectador' : ''}` : '';
     if (alvo.dataset.chave === chave) return;
     alvo.dataset.chave = chave;
     const { limpar, acrescentar, el } = D();
     limpar(alvo);
     if (!chave) return;
+    // D-064: no lugar do crachá, o selo do modo espectador (o espectador não é
+    // aluno: não tem crachá, e o apresentador não o acha no "Mover aluno").
+    if (app.espectador) {
+      acrescentar(alvo, el('b', { classe: 'selo-espectador', dados: { espectador: '1' }, texto: 'modo espectador' }));
+      return;
+    }
     const codigo = L().codigoCracha(app.uid);
     // Crachá curto e não pessoal (arquitetura, seção 10): é por ele que o
     // apresentador acha o aparelho no "Mover aluno".
@@ -911,7 +1161,7 @@
 
   function pulsoVelho() {
     const d = app.dados;
-    if (app.fase !== 'sala' || !app.membroConfirmado || !d.estado || typeof d.pulso !== 'number') return false;
+    if (app.fase !== 'sala' || !(app.membroConfirmado || app.espectador) || !d.estado || typeof d.pulso !== 'number') return false;
     // Durante o bloco, o telão fica escondido atrás dos slides e o navegador
     // estrangula os timers dele: pulso velho ali é o normal (seção A, item 2).
     if (d.estado.tipo === 'bloco') return false;
@@ -1013,7 +1263,18 @@
       entrar.disabled = app.embutido || !RE_SALA.test(limpo);
     });
     campo.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter' && !entrar.disabled) entrarNaSala(normalizarSala(campo.value));
+      if (ev.key !== 'Enter') return;
+      // Na tela do modo espectador, o mesmo campo serve ao apresentador, e o
+      // Enter (o "Ir" do teclado do celular) é o gesto de passar ao PIN. Antes
+      // ele chamava entrarNaSala: o celular do apresentador virava membro,
+      // entrava no "N de M" de uma equipe na trava e, recarregado, voltava
+      // direto como aluno (revisão da F7, achado 1).
+      if (app.pedindoPin) {
+        ev.preventDefault();
+        document.getElementById('pin-espectador')?.focus();
+        return;
+      }
+      if (!entrar.disabled) entrarNaSala(normalizarSala(campo.value));
     });
     const filhos = [
       cabecalho('Seminário da Viração', 'Entrar na sala'),
@@ -1022,10 +1283,89 @@
       el('p', { id: 'dica-codigo', classe: 'texto-2', texto: 'As 4 letras e números que aparecem no telão.' }),
     ];
     if (app.embutido) filhos.push(blocoNavegadorEmbutido());
+    if (app.pedindoPin && !app.embutido) {
+      acrescentar(alvo, el('section', { classe: 'bloco', dados: { espectador: '1' } }, [
+        cabecalho('Seminário da Viração', 'Modo espectador'),
+        el('p', { classe: 'texto-2', texto: 'Para o apresentador: com o PIN, este celular mostra a tela de qualquer equipe, como o aluno vê. Ele não vota e não entra na contagem.' }),
+        ...filhos.slice(1),
+        ...camposDoEspectador(campo),
+      ]));
+      return 'entrada';
+    }
     filhos.push(nota(app.aviso, 'erro'), entrar,
       el('p', { classe: 'privacidade', texto: 'Sem nome e sem cadastro: o celular recebe só um crachá curto, como "Laranja · K7Q".' }));
+    // D-064: discreto, depois de tudo: o aluno não tem o que fazer aqui.
+    if (!app.embutido) {
+      filhos.push(botao('Sou apresentador', () => {
+        app.pedindoPin = true;
+        app.aviso = null;
+        desenhar();
+      }, { classe: 'botao-discreto', dados: { acao: 'sou-apresentador' } }));
+    }
     acrescentar(alvo, el('section', { classe: 'bloco' }, filhos));
     return 'entrada';
+  }
+
+  // O campo do PIN (de senha; o valor vai direto para a entrada, e dali só para
+  // a memória: nunca para o aparelho) e os botões do modo espectador.
+  function camposDoEspectador(campoSala) {
+    const { el, botao } = D();
+    const pin = el('input', {
+      id: 'pin-espectador', classe: 'campo-pin', type: 'password', autocomplete: 'off', autocapitalize: 'off',
+      spellcheck: 'false', maxlength: '32', 'aria-describedby': 'dica-pin',
+    });
+    const ver = () => {
+      const valor = pin.value;
+      pin.value = '';
+      entrarComoEspectador(normalizarSala(campoSala.value), valor);
+    };
+    pin.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ver(); });
+    return [
+      el('label', { for: 'pin-espectador', classe: 'rotulo', texto: 'PIN do apresentador' }),
+      pin,
+      el('p', { id: 'dica-pin', classe: 'texto-2', texto: 'O mesmo PIN do telão.' }),
+      nota(app.aviso, 'erro'),
+      botao('Ver as equipes', ver, { classe: 'botao-primario botao-largo', dados: { acao: 'entrar-espectador' } }),
+      botao('Voltar', () => {
+        // A marca da aba sai junto: deixada aqui, ela fazia a próxima recarga
+        // voltar ao campo do PIN mesmo depois de o aparelho entrar como aluno.
+        gravarSessao('espectador', '');
+        app.pedindoPin = false;
+        app.aviso = null;
+        desenhar();
+      }, { classe: 'botao-discreto', dados: { acao: 'voltar-entrada' } }),
+    ];
+  }
+
+  // O seletor de equipe do espectador, sempre visível no topo (D-064): um botão
+  // por equipe, com a forma e o número (o nome inteiro não cabe seis vezes em
+  // 360 px; está no aria-label e na linha da equipe, na tela). Equipe fechada
+  // pelo apresentador fica apagada: não tem tela de aluno.
+  function desenharBarraEspectador() {
+    const barra = app.el.barraEspectador;
+    const ligado = app.fase === 'sala' && Boolean(app.espectador);
+    document.body.classList.toggle('espectador', ligado);
+    const c = app.dados.conteudo;
+    const abertas = app.dados.estado?.equipesAbertas;
+    const ordem = ligado ? ordemDe(c, 'equipes') : [];
+    const chave = ligado ? JSON.stringify([app.espectador.equipe, ordem, abertas || null]) : '';
+    if (barra.dataset.chave === chave) return;
+    barra.dataset.chave = chave;
+    const { limpar, acrescentar, botao } = D();
+    limpar(barra);
+    barra.hidden = !ligado;
+    if (!ligado) return;
+    acrescentar(barra, ordem.map((id, i) => {
+      const eq = c.equipes[id];
+      const b = botao('', () => verEquipe(id), {
+        classe: 'botao-ver-equipe', pressionado: app.espectador.equipe === id,
+        desabilitado: Boolean(abertas) && abertas[id] !== true, dados: { verEquipe: id },
+      });
+      b.setAttribute('aria-label', `Ver a tela da equipe ${i + 1} ${eq?.nome || ''}`.trim());
+      limpar(b);
+      acrescentar(b, [G().forma(eq?.forma, eq?.cor, '1.1em'), D().el('b', { texto: String(i + 1) })]);
+      return b;
+    }));
   }
 
   // Detectado na tela de entrada, que bloqueia o "Entrar" (arquitetura, seção
@@ -1071,6 +1411,16 @@
     for (const f of app.desligarVotos.splice(0)) f();
     if (app.desligarEquipe) app.desligarEquipe();
     clearInterval(app.intervaloPresenca);
+    // O espectador sai (D-064): os ouvintes já foram desligados (sem o pedido,
+    // o da decisão seria recusado e religaria), e o próprio pedido sai do banco.
+    // Sem rede, quem apaga é o servidor, quando a conexão cair
+    // (apagarAoDesconectar). O PIN some da memória. Vale também para quem
+    // nem chegou a espectador: a prova do PIN que falhou depois de o pedido
+    // ser gravado (revisão da F6b, achado 15).
+    apagarPedido();
+    gravarSessao('espectador', '');
+    app.espectador = null;
+    app.pedindoPin = false;
     Object.assign(app, {
       fase: 'entrada', erro: null, aviso: null, sala: null, desligarEquipe: null, chaveEquipe: null, chaveVotos: null,
       membroConfirmado: false, intervaloPresenca: 0, votosServidor: {},
@@ -1096,6 +1446,7 @@
   const MOTIVOS_SEM_VOTO = {
     entrouDepois: 'Você entrou depois de esta decisão abrir: acompanhe a conversa. O seu voto vale na próxima.',
     pausado: 'Pausado pelo apresentador: o voto volta a valer quando ele retomar.',
+    espectador: 'Modo espectador: não vota.',
   };
 
   function desenharTela(alvo, tela) {
@@ -1277,7 +1628,7 @@
         votar({ ...pendente, valor });
       }, {
         classe: ['botao-escala', enviando && escolhido === valor ? 'enviando' : null],
-        pressionado: escolhido === valor, desabilitado: enviando, dados: { valor: String(valor) },
+        pressionado: escolhido === valor, desabilitado: enviando || Boolean(app.espectador), dados: { valor: String(valor) },
       });
       D().limpar(b);
       acrescentar(b, [el('b', { classe: 'escala-numero', texto: String(valor) }), el('span', { classe: 'escala-rotulo', texto: rotulo })]);
@@ -1297,6 +1648,8 @@
       cabecalho(kicker, a.texto, { classeTitulo: 'afirmacao', lado: cronometro(d) }),
       el('p', { classe: 'progresso', texto: `${d.posicao} de ${d.total}` }),
       el('div', { classe: 'escala', role: 'group', 'aria-label': 'Sua resposta, de 1 a 5' }, botoes),
+      // D-064: o espectador vê a afirmação da vez com os números apagados.
+      app.espectador ? nota(MOTIVOS_SEM_VOTO.espectador) : null,
       notaDoEnvio(envio, `Registrado: ${escolhido ? rotuloVoto(escolhido) : ''}`) || notaDaRecusaDaEtapa({ excetoAfirmacao: a.id }) || nota(app.ui.nota),
       navegar.length > 0 ? el('div', { classe: 'navegar' }, navegar) : null,
       privacidade(),
@@ -1340,7 +1693,7 @@
     const minha = d.minha;
     const botoes = d.equipes.map((eq) => {
       const b = botao('', () => escolherEquipe(eq.id), {
-        classe: 'botao-equipe', pressionado: minha === eq.id, desabilitado: app.trocandoEquipe, dados: { equipe: eq.id },
+        classe: 'botao-equipe', pressionado: minha === eq.id, desabilitado: app.trocandoEquipe || Boolean(app.espectador), dados: { equipe: eq.id },
       });
       D().limpar(b);
       const n = conta[eq.id] || 0;
@@ -1350,11 +1703,12 @@
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       cabecalho('Formação das equipes', minha ? 'Você está numa equipe' : 'Escolha a sua equipe'),
       botao(minha ? 'Me coloque em outra equipe' : 'Me coloque numa equipe', () => colocarNumaEquipe(), {
-        classe: [minha ? null : 'botao-primario', 'botao-largo'], desabilitado: app.trocandoEquipe, dados: { acao: 'me-coloque' },
+        classe: [minha ? null : 'botao-primario', 'botao-largo'], desabilitado: app.trocandoEquipe || Boolean(app.espectador), dados: { acao: 'me-coloque' },
       }),
       el('p', { classe: 'texto-2', texto: 'Ou escolha uma (sente-se com ela). Dá para trocar até o apresentador travar as equipes.' }),
       el('div', { classe: 'lista-equipes', role: 'group', 'aria-label': 'Equipes' }, botoes),
-      nota(app.ui.nota),
+      // D-064: o espectador não escolhe equipe (gravaria membros/{uid}).
+      nota(app.espectador ? 'Modo espectador: não escolhe equipe. Use os números no topo para ver cada uma.' : app.ui.nota),
     ]));
     return 'escolherEquipe';
   }
@@ -1377,7 +1731,7 @@
         el('dt', { texto: ind.nome }),
         el('dd', { dados: { indicador: ind.id } }, [
           F().indicador(ind, ind.valor),
-          typeof delta === 'number' && delta !== 0 ? el('span', { classe: 'delta', texto: ` (${F().indicador(ind, delta, { sinal: true })} no mês)` }) : null,
+          typeof delta === 'number' && delta !== 0 ? el('span', { classe: 'delta', texto: ` (${F().indicador(ind, delta, { sinal: true })} ${periodo().noPeriodo})` }) : null,
         ]),
       ];
     }));
@@ -1409,13 +1763,19 @@
   }
 
   // Antes do primeiro mês (persona e situação) e na decisão: o custo que vem aí.
-  function linhaBasico(persona) {
+  // Esquema v3: com rodadas de 2 meses, o básico da rodada é o dobro. Na
+  // persona e na situação, os dois ("R$ Y por mês, R$ 2Y no bimestre"); na
+  // decisão (curta), só o do período, que é o que a decisão tem de pagar: uma
+  // linha a mais ali empurraria as letras das opções para baixo da dobra.
+  function linhaBasico(persona, { curta = false } = {}) {
     const total = persona?.basico?.total;
     if (!Number.isFinite(total) || total <= 0) return null;
     const { el } = D();
-    return el('p', { classe: 'basico-linha', dados: { basicoTotal: String(total) } }, [
-      'O básico da família custa ', el('b', { texto: F().moeda(total) }), ' por mês',
-    ]);
+    const p = periodo();
+    let texto = ['O básico da família custa ', el('b', { texto: F().moeda(total) }), ' por mês'];
+    if (p.meses > 1 && curta) texto = ['O básico da família custa ', el('b', { texto: F().moeda(total * p.meses) }), ` ${p.noPeriodo}`];
+    else if (p.meses > 1) texto.push(', ', el('b', { texto: F().moeda(total * p.meses) }), ` ${p.noPeriodo}`);
+    return el('p', { classe: 'basico-linha', dados: { basicoTotal: String(total), meses: String(p.meses) } }, texto);
   }
 
   // Na tela da persona, o básico item a item, com a fonte de cada valor: o
@@ -1450,7 +1810,13 @@
   // D-059: "a proteção pagou R$ X" entra logo depois do "Entrou" (ela fica fora
   // dele no motor, e sem ela a conta da linha não fecharia), e a frase inteira
   // da proteção vem numa linha própria (linhaProtecao).
-  function contaDoMes(mes, persona, deAntes = mes?.deAntes, protecaoDoMes = mes?.protecaoDoMes) {
+  // D-066: com o limite do cheque especial, a comida que não foi comprada volta
+  // para a conta (o básico saiu inteiro, mas ela não foi paga), e a multa e a
+  // mora das contas atrasadas saem dela: sem as duas partes, a linha não
+  // fecharia com o "faltou" de baixo (contratos, seção 3). D-067: a frase da
+  // proteção acima do trabalho fica na conta, menos no resultado, que a mostra
+  // à vista (comAcima: false), para não repetir.
+  function contaDoMes(mes, persona, deAntes = mes?.deAntes, protecaoDoMes = mes?.protecaoDoMes, { comAcima = true } = {}) {
     if (!mes || !Number.isFinite(mes.saldoMes)) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
@@ -1461,11 +1827,22 @@
     const gastos = Number(mes.gastos) || 0;
     const custosFixos = Number(mes.custosFixos) || 0;
     const protecao = Number(mes.protecao) || 0;
+    // Sala sem o limite (ou de antes da D-066) não tem os campos: nada muda.
+    const limite = camposDoLimite(mes);
     const linha = ['Entrou ', moeda(mes.entrou)];
     if (protecao > 0) linha.push(' · a proteção pagou ', moeda(protecao));
     if (gastos > 0) linha.push(' · gastos ', moeda(gastos));
+    // Com rodadas de 2 meses, o básico (e o trabalho) da conta são os do
+    // bimestre: sem o "no bimestre", o dobro do "por mês" da persona parecia erro.
     linha.push(' · o básico da família custa ', moeda(mes.basico));
+    if (periodo().meses > 1) linha.push(` ${periodo().noPeriodo}`);
+    if (limite?.faltouNaMesa > 0) linha.push(' (', moeda(limite.faltouNaMesa), ' de comida não foi comprada)');
+    // Revisão da F6c: os itens que não atrasam (gás, ônibus, remédio) e que a
+    // casa ficou sem. Também não saíram do caixa: sem a linha, a conta lida não
+    // fechava no saldo.
+    if (limite?.ficouSem > 0) linha.push(' (a casa ficou sem ', moeda(limite.ficouSem), ' do que não se paga depois)');
     if (mes.juros > 0) linha.push(' · juros da dívida ', moeda(mes.juros));
+    if (limite && limite.multa + limite.mora > 0) linha.push(' · multa e mora das contas atrasadas ', moeda(limite.multa + limite.mora));
     // De onde veio o "entrou", quando ele não é só o trabalho: a parcela da
     // moto sai antes (custo fixo do trabalho), e a outra renda da casa soma. A
     // turma vê que o trabalho sozinho não pagava a conta. As parcelas somam o
@@ -1481,15 +1858,82 @@
     if (mes.outraRenda > 0) origem.push(`${persona?.outraRenda?.rotulo || 'outra renda da casa'}: ${F().moeda(mes.outraRenda)}`);
     return el('div', {
       classe: 'conta-mes',
-      dados: { entrou: mes.entrou, protecao, gastos, basico: mes.basico, juros: mes.juros || 0, saldoMes: mes.saldoMes, resultado: faltou ? 'faltou' : 'sobrou' },
+      dados: {
+        entrou: mes.entrou, protecao, gastos, basico: mes.basico, juros: mes.juros || 0, saldoMes: mes.saldoMes, resultado: faltou ? 'faltou' : 'sobrou',
+        ...(limite ? { faltouNaMesa: limite.faltouNaMesa, multa: limite.multa, mora: limite.mora } : {}),
+        ...(limite?.ficouSem > 0 ? { ficouSem: limite.ficouSem } : {}),
+      },
     }, [
       el('p', { classe: 'conta-linha' }, linha),
       origem.length > 0 ? el('p', { classe: 'conta-origem', texto: origem.join(' · ') }) : null,
       linhaDeAntes(deAntes),
       linhaProtecao(protecaoDoMes),
+      comAcima ? linhaAcimaDoTrabalho(protecaoDoMes, persona?.nome) : null,
       linhaEmprestimo(mes),
+      linhaLimite(mes),
       el('p', { classe: 'conta-saldo' }, [faltou ? 'Faltou ' : 'Sobrou ', moeda(Math.abs(mes.saldoMes))]),
     ]);
+  }
+
+  // D-066: os campos do limite no mês gravado, em números (0 quando faltam), ou
+  // null em sala sem o limite (o contasAtrasadas só existe com ele).
+  function camposDoLimite(mes) {
+    if (!mes || !Number.isFinite(mes.contasAtrasadas)) return null;
+    const n = (k) => Number(mes[k]) || 0;
+    return {
+      dividaBanco: n('dividaBanco'), mora: n('mora'), contasPagas: n('contasPagas'), atrasou: n('atrasou'), multa: n('multa'),
+      contasAtrasadas: n('contasAtrasadas'), faltouNaMesa: n('faltouNaMesa'), faltouNaMesaAcumulado: n('faltouNaMesaAcumulado'),
+      ficouSem: n('ficouSem'),
+    };
+  }
+
+  // D-066: o bimestre em que o dinheiro e o limite do cheque especial acabaram.
+  // "O limite do cheque especial acabou: R$ X de contas ficaram atrasadas
+  // (multa de R$ M) e R$ Y de comida não deu para comprar." e "Pagou R$ Z de
+  // contas atrasadas." vêm do núcleo (historia.fraseDoLimite). A mora, que a
+  // frase do núcleo não diz, vem depois: é a parte da dívida que cresce
+  // sozinha, e sem ela a conta atrasada parecia subir do nada de um bimestre
+  // para o outro. Nada disso no mês (ou sala sem o limite): sem a linha.
+  function linhaLimite(mes) {
+    const limite = camposDoLimite(mes);
+    if (!limite) return null;
+    const frase = N().historia?.fraseDoLimite?.(mes, (v) => F().moeda(v)) ?? null;
+    const partes = [frase, limite.mora > 0 ? `Mora de ${F().moeda(limite.mora)} sobre as contas que já estavam atrasadas.` : null].filter(Boolean);
+    if (partes.length === 0) return null;
+    const { atrasou, multa, mora, contasPagas, contasAtrasadas, dividaBanco } = limite;
+    return D().el('p', { classe: 'conta-limite', dados: { atrasou, multa, mora, contasPagas, contasAtrasadas, dividaBanco }, texto: partes.join(' ') });
+  }
+
+  // D-067: "Auxílio do INSS (MEI): R$ 2.431, mais do que Bruna ganhava
+  // trabalhando num bimestre comum (R$ 1.400)." A frase é do núcleo
+  // (historia.fraseAcimaDoTrabalho); sem ela, a sala lia "o acidente
+  // compensa", quando o dado é que o piso do INSS passa da renda do app. Só no
+  // mês em que o anfitrião gravou o caso. classe: "acima-trabalho" à vista no
+  // resultado, "conta-acima-trabalho" dentro da conta e da história.
+  function linhaAcimaDoTrabalho(protecaoDoMes, nome, classe = 'conta-acima-trabalho') {
+    const frase = N().historia?.fraseAcimaDoTrabalho?.(protecaoDoMes, nome, (v) => F().moeda(v), periodo()) ?? null;
+    if (!frase) return null;
+    return D().el('p', { classe, dados: { trabalhoComum: protecaoDoMes.acimaDoTrabalho.trabalhoComum }, texto: frase });
+  }
+
+  // D-066: o que faltou na mesa, à parte da dívida. É a comida que a casa
+  // deixou de comprar quando o limite acabou: não se paga depois e não entra no
+  // "ficou com" (contratos, seção 3), mas é o custo que a sala precisa ver ao
+  // lado do dinheiro. acumulado é o do jogo até ali; noPeriodo (no resultado)
+  // é o do bimestre. Nada faltou (ou sala sem o limite, com null): sem a linha.
+  function linhaMesa(acumulado, noPeriodo = null) {
+    const total = Number(acumulado) || 0;
+    const doPeriodo = Number(noPeriodo) || 0;
+    if (total <= 0 && doPeriodo <= 0) return null;
+    const { el } = D();
+    const moeda = (v) => el('b', { texto: F().moeda(v) });
+    let texto = ['Faltou na mesa: ', moeda(total), ' de comida que não deu para comprar, até agora.'];
+    if (doPeriodo > 0) {
+      texto = ['Faltou na mesa: ', moeda(doPeriodo), ` de comida que não deu para comprar neste ${periodo().nome}`];
+      if (total > doPeriodo) texto.push(' (', moeda(total), ' até agora)');
+      texto.push('.');
+    }
+    return el('p', { classe: 'faltou-mesa', dados: { faltouNaMesa: total, ...(noPeriodo === null ? {} : { noPeriodo: doPeriodo }) } }, texto);
   }
 
   // Esquema v2.2: o empréstimo é dívida, e não renda. O dinheiro entra no caixa,
@@ -1573,12 +2017,28 @@
   function dividaDe(valores) {
     const d = N().historia?.dividaTotal(valores);
     if (!d) return null;
-    return { ...d, caixa: Number(valores.renda), jurosMes: app.dados.conteudo?.regras?.jurosDividaMes };
+    return { ...d, caixa: Number(valores.renda), ...regrasDaDivida() };
+  }
+
+  // As regras que a dívida da tela escreve: os juros do banco e, com o limite do
+  // cheque especial (D-066), o limite, a multa e a mora das contas atrasadas.
+  // Sem o limite no config, só os juros, como antes.
+  function regrasDaDivida() {
+    const r = app.dados.conteudo?.regras || {};
+    if (!Number.isInteger(r.limiteChequeEspecial)) return { jurosMes: r.jurosDividaMes };
+    return { jurosMes: r.jurosDividaMes, limite: r.limiteChequeEspecial, multaAtraso: r.multaAtraso, moraMes: r.moraMes };
   }
 
   // Na decisão, uma linha só (a dobra de 360×740 não tem espaço): "Dívida R$ D ·
   // juros de J% ao mês" quando é só o cheque especial, e "Dívida R$ D, com R$ E
   // de empréstimo" quando há empréstimo (os juros dele são outros).
+  // Com o limite (D-066), o D é o do telão: o banco e o empréstimo, sem as
+  // contas atrasadas (revisão da F6c: o telão escrevia "dívida R$ 3.000" e o
+  // celular, "Dívida R$ 7.811", para a mesma equipe). As contas atrasadas
+  // ficam na situação, logo abaixo das opções (blocoDivida): na mesma linha,
+  // "· contas atrasadas R$ 4.811" quebrava em duas em 360 px e empurrava a
+  // confirmação do voto para baixo da dobra (matriz de votos, r4).
+  const temAtrasadas = (divida) => divida?.contasAtrasadas > 0;
   function linhaDivida(divida) {
     if (!divida || !(divida.total > 0)) return null;
     const { el } = D();
@@ -1598,15 +2058,29 @@
   // mês dos indicadores). Com empréstimo e caixa positivo, o caixa aparece: sem
   // ele, "ficou com −R$ 1.000" ao lado de "dívida R$ 1.500" não fechava.
   // Sem dívida, sem o bloco.
+  // Com o limite (D-066; revisão da F6c), o total é "Dívida no banco" (o
+  // cheque especial e o empréstimo, o mesmo número que o telão chama de
+  // dívida), e as contas atrasadas vêm numa linha com nome próprio, fora dele.
   function blocoDivida(divida, mes) {
-    if (!divida || !(divida.total > 0)) return null;
+    if (!divida || !(divida.total > 0 || temAtrasadas(divida))) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
     const partes = [];
+    // D-066: com o limite, "Cheque especial R$ 1.500 de R$ 1.500 do limite": a
+    // sala vê que o banco parou ali, e que o resto da falta foi para as contas
+    // atrasadas, logo embaixo (com a multa e a mora do config).
     if (divida.chequeEspecial > 0) {
       partes.push(el('p', { classe: 'divida-parte', dados: { parte: 'cheque' } }, [
         'Cheque especial ', moeda(divida.chequeEspecial),
+        Number.isFinite(divida.limite) ? [' de ', moeda(divida.limite), ' do limite'] : null,
         Number.isFinite(divida.jurosMes) ? [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'] : null,
+      ]));
+    }
+    if (divida.contasAtrasadas > 0) {
+      const taxas = Number.isFinite(divida.multaAtraso) && Number.isFinite(divida.moraMes);
+      partes.push(el('p', { classe: 'divida-parte', dados: { parte: 'atrasadas' } }, [
+        'Contas atrasadas ', moeda(divida.contasAtrasadas),
+        taxas ? [' · multa de ', el('b', { texto: F().taxa(divida.multaAtraso) }), ' e mora de ', el('b', { texto: F().taxa(divida.moraMes) }), ' ao mês'] : null,
       ]));
     }
     if (divida.emprestimo > 0) {
@@ -1622,9 +2096,14 @@
       }
       if (divida.caixa > 0) partes.push(el('p', { classe: 'divida-nota', texto: `Dinheiro em caixa: ${F().moeda(divida.caixa)}` }));
     }
+    // data-atrasadas e data-limite só com o limite: a sala sem ele fica igual.
+    const doLimite = {
+      ...(divida.contasAtrasadas !== undefined ? { atrasadas: divida.contasAtrasadas } : {}),
+      ...(Number.isFinite(divida.limite) ? { limite: divida.limite } : {}),
+    };
     return el('div', {
-      classe: 'divida', dados: { divida: divida.total, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo },
-    }, [el('p', { classe: 'divida-total' }, ['Dívida hoje ', moeda(divida.total)]), ...partes]);
+      classe: 'divida', dados: { divida: divida.total, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo, ...doLimite },
+    }, [el('p', { classe: 'divida-total' }, [divida.contasAtrasadas !== undefined ? 'Dívida no banco ' : 'Dívida hoje ', moeda(divida.total)]), ...partes]);
   }
 
   // ----- O resumo mês a mês (D-065)
@@ -1648,9 +2127,12 @@
     return D().el('b', { classe: ['valor-saldo', classe], dados: { sinal: ok ? sinalDe(v) : 'zero' }, texto: ok ? F().moeda(v, { sinal: true }) : '—' });
   }
 
-  // "Mês 1: quanto trabalhar?" vira "Mês 1": o título inteiro não cabe na
-  // coluna em 360 px. Sem os dois-pontos, o título inteiro.
+  // "Mês 1: quanto trabalhar?" vira "Mês 1", e "Jan–fev: …", "Jan–fev": o
+  // título inteiro não cabe na coluna em 360 px. A regra é a do historia.js
+  // (rotuloDaRodada, a mesma do telão); sem os dois-pontos, o título inteiro.
   function rotuloDoMes(titulo, i) {
+    const H = N().historia;
+    if (H?.rotuloDaRodada) return H.rotuloDaRodada(titulo, i);
     const t = typeof titulo === 'string' ? titulo.split(':')[0].trim() : '';
     return t || `Rodada ${i + 1}`;
   }
@@ -1672,23 +2154,32 @@
     const meses = lista(historia).filter((h) => Number.isFinite(h?.mes?.saldoMes));
     if (meses.length === 0) return null;
     const { el } = D();
-    const linhas = meses.map((h, i) => el('tr', { dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, ficouCom: h.saldoAcumulado ?? '' } }, [
-      el('th', { scope: 'row', texto: rotuloDoMes(h.titulo, i) }),
+    const linhas = meses.map((h, i) => el('tr', { dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, ficouCom: h.saldoAcumulado ?? '', ...(h.faltouNaMesa !== undefined ? { faltouNaMesa: h.faltouNaMesa } : {}) } }, [
+      // O nome curto pela posição da rodada no config (historia), e não pela
+      // posição na lista: uma rodada pulada não muda o nome das seguintes.
+      el('th', { scope: 'row', texto: h.rotulo || rotuloDoMes(h.titulo, i) }),
       el('td', {}, [valorSaldo(h.mes.saldoMes, 'saldo-mes')]),
       el('td', {}, [valorSaldo(h.saldoAcumulado, 'saldo-ficou')]),
     ]));
     const ultimo = meses.at(-1);
+    // O caixa é o patrimônio mais o que ele desconta: o empréstimo e, com o
+    // limite (D-066), as contas atrasadas.
     const divida = ultimo.divida && Number.isFinite(ultimo.saldoAcumulado)
-      ? { ...ultimo.divida, caixa: ultimo.saldoAcumulado + ultimo.divida.emprestimo, jurosMes: app.dados.conteudo?.regras?.jurosDividaMes }
+      ? { ...ultimo.divida, caixa: ultimo.saldoAcumulado + ultimo.divida.emprestimo + (ultimo.divida.contasAtrasadas || 0), ...regrasDaDivida() }
       : null;
-    return el('section', { classe: 'resumo-meses', 'aria-label': 'Resumo mês a mês' }, [
+    // Esquema v3: "Bimestre · Saldo do bimestre · Ficou com", uma linha por
+    // bimestre (6 no jogo de 12 meses); com rodadas mensais, como antes.
+    const p = periodo();
+    return el('section', { classe: 'resumo-meses', 'aria-label': p.meses === 1 ? 'Resumo mês a mês' : `Resumo por ${p.nome}`, dados: { linhas: String(meses.length) } }, [
       el('table', { classe: 'tabela-meses' }, [
         el('thead', {}, [el('tr', {}, [
-          el('th', { scope: 'col', texto: 'Mês' }), el('th', { scope: 'col', texto: 'Saldo do mês' }), el('th', { scope: 'col', texto: 'Ficou com' }),
+          el('th', { scope: 'col', texto: maiuscula(p.nome) }), el('th', { scope: 'col', texto: `Saldo ${p.doPeriodo}` }), el('th', { scope: 'col', texto: 'Ficou com' }),
         ])]),
         el('tbody', {}, linhas),
       ]),
       blocoDivida(divida, ultimo.mes),
+      // D-066: o que faltou na mesa até aqui, embaixo da dívida e fora dela.
+      linhaMesa(ultimo.faltouNaMesa),
     ]);
   }
 
@@ -1715,22 +2206,30 @@
   // mês. Carta grave aparece como as outras, sem destaque (arquitetura, seção 8).
   // Fica recolhida debaixo do resumo mês a mês (D-065): aberta, eram de 8 a 10
   // linhas por mês, e o placar final virava uma rolagem sem fim.
-  function blocoHistoria(historia) {
+  // nome: o da persona da equipe, para a frase da proteção acima do trabalho
+  // (D-067).
+  function blocoHistoria(historia, nome) {
     const meses = lista(historia);
     if (meses.length === 0) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
-    return recolhido('historia', 'A história mês a mês', el('ol', { classe: 'historia' }, meses.map((h) => {
+    const p = periodo();
+    const titulo = p.meses === 1 ? 'A história mês a mês' : `A história ${p.nome} a ${p.nome}`;
+    return recolhido('historia', titulo, el('ol', { classe: 'historia' }, meses.map((h) => {
       const m = h.mes;
       // A mesma ordem da conta do mês: entrou · gastos · básico · juros ·
-      // faltou (D-052), com gastos e juros só quando existem.
+      // faltou (D-052), com gastos e juros só quando existem. Com o limite
+      // (D-066), a comida não comprada e a multa e a mora, como na conta do mês.
+      const limite = camposDoLimite(m);
       const conta = m && Number.isFinite(m.saldoMes)
         ? el('p', { classe: 'historia-conta' }, [
           'Entrou ', moeda(m.entrou),
           m.protecao > 0 ? [' · a proteção pagou ', moeda(m.protecao)] : null,
           m.gastos > 0 ? [' · gastos ', moeda(m.gastos)] : null,
           ' · básico ', moeda(m.basico),
+          limite?.faltouNaMesa > 0 ? [' (', moeda(limite.faltouNaMesa), ' de comida não foi comprada)'] : null,
           m.juros > 0 ? [' · juros ', moeda(m.juros)] : null,
+          limite && limite.multa + limite.mora > 0 ? [' · multa e mora das contas atrasadas ', moeda(limite.multa + limite.mora)] : null,
           m.saldoMes < 0 ? ' · faltou ' : ' · sobrou ', moeda(Math.abs(m.saldoMes)),
         ])
         : null;
@@ -1746,7 +2245,9 @@
         linhaDeAntes(h.deAntes),
         conta,
         linhaEmprestimo(m),
+        linhaLimite(m),
         linhaProtecao(h.protecaoDoMes),
+        linhaAcimaDoTrabalho(h.protecaoDoMes, nome),
       ]);
     })));
   }
@@ -1801,7 +2302,8 @@
     if (d.final) {
       // "Escolha ou sorte?" e o pior caso logo depois do resumo: são o fecho da
       // aula. A história inteira fica recolhida (D-045, D-065).
-      filhos.push(blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso), blocoHistoria(historia));
+      const jaEstimado = N().historia.escolhaOuSorte(d.placar)?.estimado === true;
+      filhos.push(blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
     } else if (d.mes) {
       // O último mês, recolhido: a conta (D-044, D-052), a decisão e a carta, com
       // a narrativa em primeira pessoa (D-006). Carta grave: só o texto, sem
@@ -1843,8 +2345,9 @@
       ['= Terminaram com', F().moeda(c.total), 'placar-total'],
     ];
     return [
-      el('h2', { classe: 'subtitulo', texto: 'Escolha ou sorte?' }),
+      el('h2', { classe: 'subtitulo', texto: c.estimado ? 'Escolha ou sorte? (estimado)' : 'Escolha ou sorte?' }),
       el('dl', { classe: 'indicadores placar-historia' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])),
+      c.estimado ? notaEstimado() : null,
     ];
   }
 
@@ -1852,7 +2355,7 @@
 
   function telaDecisao(alvo, tipo, d) {
     const { el, botao, acrescentar } = D();
-    const membro = app.dados.membros?.[app.uid] || {};
+    const membro = membroDaTela() || {};
     const pendenteBase = { tipo: 'decisao', rodada: d.rodada.id, equipe: membro.equipe };
     const envio = app.envios.get(caminhoDe(pendenteBase));
     const enviando = emVoo(envio);
@@ -1909,7 +2412,7 @@
     // A dívida é a soma do cheque especial com o empréstimo (esquema v2.2): no
     // teste de 30/09, o Jonas decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500
     // emprestados. Só a linha muda; o voto não.
-    const pressao = [linhaBasico(s?.persona), linhaDivida(s ? dividaDe(valoresDe(s.indicadores)) : null)].filter(Boolean);
+    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(s ? dividaDe(valoresDe(s.indicadores)) : null)].filter(Boolean);
     const aviso = botao('Mais opções abaixo ↓', () => rolarAteUltimaOpcao(), { classe: 'aviso-rolagem', dados: { avisoRolagem: '1' } });
     aviso.hidden = true;
     // Movido de equipe depois de votar (avisarSeMovido): a nota fica acima das
@@ -2077,6 +2580,7 @@
     const { el, acrescentar } = D();
     const grave = d.carta?.tom === 'grave';
     const mes = d.mes;
+    const persona = personaDaEquipe(d.equipe?.id);
     const indicadores = listaIndicadores(d.indicadores, d.delta, { semDinheiro: true });
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { tom: grave ? 'grave' : 'normal', carta: d.carta?.id || '' } }, [
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
@@ -2088,15 +2592,21 @@
       el('p', { classe: 'decisao-linha' }, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
       Number.isFinite(mes?.saldoMes)
         ? el('p', { classe: 'saldo-destaque', dados: { saldoMes: mes.saldoMes, sinal: sinalDe(mes.saldoMes) } }, [
-          el('span', { classe: 'saldo-rotulo', texto: 'Saldo do mês' }),
+          el('span', { classe: 'saldo-rotulo', texto: `Saldo ${periodo().doPeriodo}` }),
           valorSaldo(mes.saldoMes),
         ])
         : null,
+      // D-067: a proteção que passou do trabalho é ponto de debate da aula, e
+      // fica à vista, logo abaixo do saldo; a conta recolhida não a repete.
+      linhaAcimaDoTrabalho(d.protecaoDoMes, persona?.nome, 'acima-trabalho'),
       blocoDivida(dividaDe(valoresDe(d.indicadores)), mes),
-      recolhido(`resultado:${d.rodada?.id}`, 'A conta do mês em detalhe', [
+      // D-066: o que faltou na mesa no bimestre e até agora, à vista e fora da
+      // dívida. O acumulado vem do mês gravado; sem ele, do indicador.
+      camposDoLimite(mes) ? linhaMesa(Number.isFinite(mes.faltouNaMesaAcumulado) ? mes.faltouNaMesaAcumulado : valoresDe(d.indicadores).faltou_na_mesa, mes.faltouNaMesa) : null,
+      recolhido(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
         linhaCustoCarta(d.cartaCusto),
         d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
-        contaDoMes(mes, personaDaEquipe(d.equipe?.id), d.deAntes, d.protecaoDoMes),
+        contaDoMes(mes, persona, d.deAntes, d.protecaoDoMes, { comAcima: false }),
       ]),
       indicadores ? [el('h2', { classe: 'subtitulo', texto: 'Como ficou' }), indicadores] : null,
     ]));
@@ -2127,7 +2637,9 @@
   // (historia.piorCasoDoPlacar): o "sem" nunca sai melhor que o "com". Antes,
   // o pior caso só existia no telão (revisão da F5, achado 10). Sem pior caso
   // (config sem proteção, sala antiga), sem o bloco.
-  function blocoPiorCaso(p) {
+  // comNota: false quando a mesma tela já explicou o estimado (o "Escolha ou
+  // sorte?" logo acima, no placar final): a nota repetida era ruído.
+  function blocoPiorCaso(p, { comNota = true } = {}) {
     if (!p) return null;
     const { el } = D();
     const linhas = [['Com as escolhas de vocês', F().moeda(p.comEscolhas)]];
@@ -2136,11 +2648,19 @@
       linhas.push(['Sem a proteção', F().moeda(p.semProtecao)], ['A proteção evitou', F().moeda(p.evitou), 'placar-total']);
     } else if (p.situacao === 'naoMelhorou') nota = 'Nos meses jogados, a proteção não melhorou o pior caso.';
     else if (p.situacao === 'semEscolha') nota = 'Vocês não escolheram proteção.';
-    return el('div', { classe: 'pior-caso', dados: { situacao: p.situacao } }, [
-      el('h2', { classe: 'subtitulo', texto: 'O pior que podia acontecer' }),
+    return el('div', { classe: 'pior-caso', dados: { situacao: p.situacao, estimado: p.estimado ? '1' : '0' } }, [
+      el('h2', { classe: 'subtitulo', texto: p.estimado ? 'O pior que podia acontecer (pior caso estimado)' : 'O pior que podia acontecer' }),
       el('dl', { classe: 'indicadores pior-caso-lista' }, linhas.flatMap(([k, v, classe]) => [el('dt', { classe, texto: k }), el('dd', { classe, texto: v })])),
       nota ? el('p', { classe: 'texto-2', texto: nota }) : null,
+      p.estimado && comNota ? notaEstimado() : null,
     ]);
+  }
+
+  // Esquema v3: com 6 rodadas, os caminhos de cartas passam do limite do motor,
+  // e o telão estima por simulação (a mesma semente em toda tela): a tela diz,
+  // para ninguém tomar o número por exato.
+  function notaEstimado() {
+    return D().el('p', { classe: 'texto-2 nota-estimado', texto: 'Estimado: são caminhos de cartas demais para contar um por um, e o telão simulou milhares deles.' });
   }
 
   // O fim (D-065): o resumo mês a mês e a dívida no topo, o pior caso e a
@@ -2154,7 +2674,7 @@
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
       resumoMesAMes(d.historia),
       blocoPiorCaso(d.piorCaso),
-      blocoHistoria(d.historia),
+      blocoHistoria(d.historia, personaDaEquipe(d.equipe?.id)?.nome),
       el('p', { classe: 'texto-2', texto: 'Pode fechar esta página. Os votos individuais são apagados com a sala.' }),
     ]));
     return 'fim';
@@ -2164,7 +2684,10 @@
 
   function iniciar() {
     const $ = (sel) => document.querySelector(sel);
-    app.el = { tela: $('#tela'), cracha: $('#cracha'), faixaVersao: $('#faixa-versao'), faixaTelao: $('#faixa-telao'), selo: $('#lugar-selo') };
+    app.el = {
+      tela: $('#tela'), cracha: $('#cracha'), faixaVersao: $('#faixa-versao'), faixaTelao: $('#faixa-telao'), selo: $('#lugar-selo'),
+      barraEspectador: $('#barra-espectador'),
+    };
     app.selo = N().conexao.criarSelo();
     app.selo.definir('reconectando', 'Conectando…');
     // Escondido até existir um canal: na tela de entrada não há conexão ainda,
@@ -2186,21 +2709,40 @@
     app.codigo = RE_SALA.test(daUrl) ? daUrl : RE_SALA.test(guardada) ? guardada : '';
     // Voltou de uma recarga pedida pela falha da CDN: entra direto na sala que
     // estava tentando, sem o aluno tocar em "Entrar" de novo.
-    const aposRecarga = lerSessao('entrarAposRecarga');
-    if (aposRecarga) gravarSessao('entrarAposRecarga', '');
-    if (!app.embutido && RE_SALA.test(daUrl) && aposRecarga === daUrl) {
-      entrarNaSala(daUrl);
-      return;
+    // Voltou de uma recarga no modo espectador (D-064): o campo do PIN desta
+    // sala (o PIN só existia em memória), e nunca a entrada automática como
+    // aluno, que gravaria membros/{uid}.
+    const espectadorDe = normalizarSala(lerSessao('espectador'));
+    if (!app.embutido && RE_SALA.test(espectadorDe)) {
+      app.pedindoPin = true;
+      app.codigo = espectadorDe;
     }
-
+    // Os ouvintes vêm antes de qualquer desvio de entrada (revisão da F6c): o
+    // return da volta pela recarga da CDN, abaixo, ficava antes deles, e o
+    // celular entrava na sala sem o tique do cronômetro (o tempo do voto
+    // parado na tela), sem reler o estado ao desbloquear a tela e sem conferir
+    // a dobra do "Votar nesta".
     N().conexao.aoVoltarAVista(aoVoltarAVista);
+    // A aba que fecha (ou sai para outra página) apaga o próprio pedido, sem
+    // esperar o servidor notar a queda (revisão da F6b, achado 15). É o melhor
+    // esforço: o pagehide não espera a escrita, e o "apague ao cair" cobre o
+    // resto. O beforeunload fica de fora: ele tira a página do cache do
+    // navegador, e o pagehide dispara nos mesmos casos.
+    raiz.addEventListener('pagehide', apagarPedido);
     setInterval(tique, 1000);
     raiz.addEventListener('scroll', conferirDobra, { passive: true });
     raiz.addEventListener('resize', conferirDobra);
 
+    const aposRecarga = lerSessao('entrarAposRecarga');
+    if (aposRecarga) gravarSessao('entrarAposRecarga', '');
+    if (!app.embutido && !app.pedindoPin && RE_SALA.test(daUrl) && aposRecarga === daUrl) {
+      entrarNaSala(daUrl);
+      return;
+    }
+
     // Recarregar volta direto à sala (I6). Um QR novo, de outra sala, passa pela
     // tela de entrada: um toque em "Entrar".
-    if (!app.embutido && RE_SALA.test(guardada) && (!RE_SALA.test(daUrl) || daUrl === guardada)) {
+    if (!app.embutido && !app.pedindoPin && RE_SALA.test(guardada) && (!RE_SALA.test(daUrl) || daUrl === guardada)) {
       entrarNaSala(guardada);
     } else {
       desenhar();
@@ -2217,6 +2759,8 @@
     tela: () => (app.fase === 'sala' ? calcularTela() : { tipo: app.fase, dados: {} }),
     pendentes: () => (app.sala && app.uid ? lerPendentes() : {}),
     envios: () => resumoEnvios(),
+    // D-064: a equipe que o espectador vê, ou null fora do modo espectador.
+    espectador: () => (app.espectador ? { equipe: app.espectador.equipe } : null),
   };
 
   if (typeof document !== 'undefined') {

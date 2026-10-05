@@ -311,7 +311,9 @@ test('carta possível é conferida na ordem das rodadas de cada roteiro, e não 
 
 test('estados demais para conferir a carta possível é erro, e não aviso: a sala não pode nascer sem a garantia', () => {
   // Arrange: 160 caminhos distintos por rodada (4 opções, o máximo da D-043, × 40
-  // cartas), 3 rodadas: depois da r2 já passam de 20.000 estados.
+  // cartas), 3 rodadas: depois da r2 já passam de 20.000 estados. Toda carta lê
+  // o estado (somenteSe de energia, que sempre vale): sem uma carta que saia em
+  // qualquer estado, a garantia só vem da enumeração (esquema v3).
   const b = configMinimo();
   Object.assign(b.indicadores[0], { min: -1e12, max: 1e12 });
   b.rodadas = [];
@@ -321,7 +323,7 @@ test('estados demais para conferir a carta possível é erro, e não aviso: a sa
     const opcoes = {};
     for (let i = 0; i < 4; i++) opcoes[`o${i}`] = { rotulo: `O${i}`, efeitos: [{ soma: { renda: i * escala } }] };
     b.rodadas.push({ id, titulo: id, texto: 'Texto', padrao: 'o0', opcoes });
-    for (let j = 0; j < 40; j++) b.cartas.push({ id: `c${k}_${j}`, titulo: 'C', peso: 1, rodadas: [id], efeitos: [{ soma: { renda: j * 10 * escala } }] });
+    for (let j = 0; j < 40; j++) b.cartas.push({ id: `c${k}_${j}`, titulo: 'C', peso: 1, rodadas: [id], somenteSe: { indicador: { energia: { acimaDe: -1 } } }, efeitos: [{ soma: { renda: j * 10 * escala } }] });
   }
   b.roteiros['60min'] = [{ tipo: 'lobby' }, ...['r1', 'r2', 'r3'].map((rodada) => ({ tipo: 'rodada', rodada })), { tipo: 'fim' }];
 

@@ -5,8 +5,9 @@ trabalho em plataformas. Até 20 alunos usam o próprio celular, e um telão
 acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 
 - **Enquetes de 1 a 5**, com comparação antes e depois.
-- **Jogo da Viração**: 6 equipes sobre 5 personas, 3 rodadas intercaladas com a
-  apresentação e cartas de evento sorteadas por probabilidade.
+- **Jogo da Viração**: 6 equipes, cada uma com um personagem num trabalho de
+  plataforma, vivendo 12 meses em 6 rodadas bimestrais intercaladas com a
+  apresentação, e cartas de evento sorteadas por probabilidade.
 
 | Documento | Para quê |
 | --- | --- |
@@ -18,7 +19,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo, cada um com a fonte |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (30/09)
+## Onde estamos (05/10)
 
 | Já feito | Situação |
 | --- | --- |
@@ -27,30 +28,44 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 3. Login anônimo | Ativado |
 | 4. `conexao.json` | Preenchido com as chaves do projeto |
 | 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #5, versão 5 do site) está no ar, e o teste de 30/09 foi feito nela |
-| Correções do teste de 30/09 | Branch `claude/correcoes-teste`, versão 6 do site (D-065, esquema v2.2): o voto vale até o apresentador encerrar, o empréstimo é dívida, o resultado do telão enxuto, o resumo mês a mês no celular e as personas do telão em três linhas. As regras não mudaram (v3) |
-| Conteúdo | Calibragem de 29/09 à noite (D-058 e D-059, PR #5): `config.json` versão `2026-09-29-v2.2-rascunho`, com as cartas de pico, o dinheiro da proteção (`categoria: "protecao"`) e as opções que protegem (`protege`), sobre a revisão de 29/09 (D-050 a D-057), no esquema v2.1 (custos fixos e gastos separados, o custo real da carta na tela, o texto da opção do jeito de cada ofício), sobre o esquema v2 do redesenho (família, básico da casa, juros da dívida, 4 opções por mês). As perguntas de conteúdo ainda em aberto estão no [rascunho](docs/rascunho-conteudo.md), seções 0.8 e 8 |
+| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #6, versão 6 do site, com as correções do teste de 30/09) está no ar |
+| Doze meses | Branch `claude/doze-meses`, **ainda não fundida nem publicada**: versão 7 do site e **regras v4** (D-060 a D-067, esquemas v3 e v3.1): 12 meses em 6 rodadas bimestrais, seis personagens (um por equipe), ninguém de carteira assinada, o risco que cresce com os meses, o modo espectador do apresentador no celular, o limite do cheque especial com as contas atrasadas e o que faltou na mesa (D-066) e a frase do auxílio acima do trabalho (D-067) |
+| Conteúdo | `config.json` versão `2026-09-30-v3-rascunho` (o hash é o que `npm run validar` imprimir no dia; em 05/10, `fccc2a93`), **rascunho a validar** (D-005). O de 3 meses (v2.2, o do teste de 30/09) ficou em `test/fixtures/config-real-v22.json`, e o de 12 meses sem o limite, em `test/fixtures/config-real-v3.json`. As perguntas em aberto estão no [rascunho](docs/rascunho-conteudo.md), seção 8 |
 
-**As correções do teste de 30/09** (branch `claude/correcoes-teste`, versão 6 do
-site) vêm depois da calibragem (PR #5, já no ar). O que muda está no
-[roteiro do apresentador](docs/roteiro-do-apresentador.md), no começo: o voto que
-não contava no mês 3 (o servidor cortava 5 s depois do fim do cronômetro, com a
-votação ainda aberta), o empréstimo que entrava como renda, o resultado do telão
-e a situação no celular, que estavam poluídos, e a tela das personas.
-- **As regras do Firebase não mudaram**: continuam v3, iguais às publicadas, e
-  nada precisa ser publicado de novo no console. A correção do voto está no
-  código do telão (o prazo que ele grava), e não nas regras.
-- Depois de fundir o PR, recarregue o telão em toda máquina onde ele estiver
-  aberto e repita o passo 8. O `config.json` mudou (o empréstimo virou
-  `emprestimo`), e por isso o hash do bloco 1 é outro, mas o nome da versão
-  continua `2026-09-29-v2.2-rascunho`. Os celulares que ainda tiverem a versão
-  5 em cache veem a faixa "Há uma versão nova do app: atualize a página".
-- As decisões D-060 a D-064 (12 meses, seis personagens em seis trabalhos,
-  ninguém de carteira assinada, o risco que cresce, o modo espectador) já estão
-  em [decisoes.md](docs/decisoes.md), mas ficam para a próxima rodada.
+**Os doze meses** (branch `claude/doze-meses`, versão 7 do site) vêm depois das
+correções do teste de 30/09 (PR #6, já no ar). O que muda para quem conduz está
+no [roteiro do apresentador](docs/roteiro-do-apresentador.md), no começo; o que
+muda no código, na [arquitetura](docs/arquitetura.md), itens 43 a 52.
 
-Em seguida vêm o resto das correções (01 a 05/10), o congelamento (06/10) e o
-seminário (07/10).
+**Publicar o site v7 e as regras v4 juntos.** O site no ar (versão 6) grava
+`regrasVersao = "v3"`, e as regras publicadas hoje só aceitam `"v3"`. O site
+v7 grava `"v4"`, e as regras v4 só aceitam `"v4"` (é a amarração que prova que
+as regras certas estão no ar). Por isso **as duas coisas sobem na mesma sessão,
+uma logo depois da outra**: o telão v6 com as regras v4, ou o v7 com as v3,
+mostra `REGRAS ABERTAS ou DESATUALIZADAS` e não cria a sala (e, com as v3, o
+modo espectador recusa o PIN certo). A ordem, sem nenhuma sala aberta e nunca
+no dia da aula:
+1. Funda o PR na `main` (o GitHub Pages leva de 1 a 3 minutos para publicar).
+2. Na mesma hora, publique as regras v4 (passo 6), copiando o
+   `firebase/regras.json` da `main`. Confira a linha com `'v4'`.
+3. Espere a aba Actions mostrar "pages build and deployment" em verde.
+4. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
+   repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, e o hash do
+   bloco 1 tem de ser o mesmo que `npm run validar` imprime na `main`
+   publicada (não um hash copiado daqui: qualquer troca de texto no config muda
+   o hash).
+5. Com a sala de teste do passo 8 aberta, entre pelo **Sou apresentador** num
+   celular (roteiro, seção 4): ele tem de mostrar as equipes. "O PIN não
+   confere" com o PIN certo quer dizer regras v3 ainda no ar: volte ao item 2.
+
+Entre os itens 1 e 3, o site no ar ainda pode ser o v6 com as regras v4 já
+publicadas: nesse intervalo de minutos, ninguém deve criar sala. Os celulares
+com a versão 6 em cache veem a faixa "Há uma versão nova do app: atualize a
+página".
+
+Em seguida vêm o congelamento (06/10) e o seminário (07/10). O conteúdo de 12
+meses ainda tem perguntas em aberto (rascunho, seção 8), e o roteiro lista as
+que mudam o que dizer na aula.
 
 ## Como funciona
 
@@ -123,7 +138,7 @@ terminais abaixo ficam na pasta do projeto.
    ```
    Tem de aparecer `PIN do emulador semeado`.
 3. Abra `http://127.0.0.1:8080/telao/?emulador=1`. O bloco **3. Com celulares**
-   tem de dizer `Emulador local · regras v3 conferidas.`
+   tem de dizer `Emulador local · regras v4 conferidas.`
 4. No campo do PIN, digite o valor de `PIN_EMULADOR`, que está em
    `bin/emulador.mjs` e só vale no emulador. Clique em **Criar sala com
    celulares**.
@@ -136,9 +151,9 @@ terminais abaixo ficam na pasta do projeto.
    ferramentas do desenvolvedor (F12) mostram a página no tamanho de um celular.
 6. Para parar, aperte Ctrl+C no terminal 1. O site e o emulador caem juntos.
 
-O `npm run e2e:online` faz esse mesmo ensaio sozinho, com 3 celulares simulados
-e um quarto que entra e some, para conferir os inativos. Ele nunca fala com o
-projeto real.
+O `npm run e2e:online` faz esse mesmo ensaio sozinho, com 3 celulares simulados,
+um quarto que entra e some, para conferir os inativos, e o celular do
+apresentador no modo espectador. Ele nunca fala com o projeto real.
 
 ---
 
@@ -148,7 +163,7 @@ Este passo a passo é para quem não é desenvolvedor. Cada passo termina com um
 **Confira**. Se o que está escrito ali não aparecer, pare e resolva antes de
 seguir.
 
-**Os passos 1 a 5 já foram feitos** (veja [Onde estamos](#onde-estamos-2809)).
+**Os passos 1 a 5 já foram feitos** (veja [Onde estamos](#onde-estamos-0510)).
 Eles ficam aqui como referência, para conferir ou refazer um dia. O que falta
 começa no passo 6.
 
@@ -285,9 +300,11 @@ com o P maiúsculo no meio.
    cole e clique em **Publicar** (Publish).
 
 **Confira:** o editor começa com `{ "rules": {`, a publicação não mostra erro, e
-perto do topo há uma linha com `'v3'` (é o `regrasVersao`). Toda vez que o
-`regras.json` mudar, repita este passo: a versão sobe junto (v4, v5…). Se as
-regras publicadas forem de outra versão, o telão avisa e não cria a sala.
+perto do topo há uma linha com `'v4'` (é o `regrasVersao`). Toda vez que o
+`regras.json` mudar, repita este passo: a versão sobe junto (v5, v6…). Se as
+regras publicadas forem de outra versão, o telão avisa e não cria a sala. Na
+passagem do site v6 para o v7, este passo vai junto com o merge (veja "Publicar
+o site v7 e as regras v4 juntos", em [Onde estamos](#onde-estamos-0510)).
 
 ### 7. Ligar o GitHub Pages
 
@@ -307,7 +324,7 @@ Actions mostra "pages build and deployment" em verde.
 1. Abra `https://aguiarkleber.github.io/seminario-viracao/telao/` no Chrome ou no
    Edge.
 2. O bloco **1. config.json** mostra "✓ Válido", a versão e o hash. Anote o hash.
-3. No bloco **3. Com celulares**, espere `Serviço conectado · regras v3
+3. No bloco **3. Com celulares**, espere `Serviço conectado · regras v4
    conferidas.`
 4. Digite o PIN no campo **PIN do apresentador** e clique em **Criar sala com
    celulares**.
@@ -360,7 +377,7 @@ Faça em casa, antes do teste no eduroam. Um dos celulares pode ficar no 4G.
    abertas. Nos celulares, toque em **Me coloque numa equipe**. Espaço trava as
    equipes.
 5. Espaço até a rodada 1. Nos celulares aparecem o contexto da família e as 4
-   opções; a decisão tem 120 s. Vote e veja a contagem da equipe mudar ao
+   opções; a decisão tem 90 s. Vote e veja a contagem da equipe mudar ao
    vivo. No meio, bloqueie a tela de um celular por 1 minuto e desbloqueie. Enter
    encerra. Antes do tempo mínimo de conversa, ele pede confirmação com o foco em
    **Cancelar**: para confirmar, Tab e Enter, ou clique. Confira o sorteio, o
@@ -373,11 +390,15 @@ Faça em casa, antes do teste no eduroam. Um dos celulares pode ficar no 4G.
      (seção 2) e repita na rodada 2.
 6. Recarregue o telão (F5) e clique em **Retomar sala**: ele volta ao mesmo passo
    sem pedir o PIN.
-7. **Pular para…** → Placar final. O Espaço passa as páginas (quanto faltou para
-   o básico, "Escolha ou sorte?", "O pior que podia acontecer" e a história de
+7. **Pular para…** → Placar final. O Espaço passa as páginas (quanto sobrou e
+   quanto ficou devendo, com o que faltou na mesa embaixo, "Escolha ou sorte?", "O pior que podia acontecer" e a história de
    cada equipe) e, da última, segue
    o roteiro. No Fim, na barra, clique em **Exportar totais** e segure **Apagar a
    sala**.
+8. Antes de apagar, num quarto celular (ou numa janela anônima), abra o
+   endereço do aluno, toque em **Sou apresentador**, digite o código e o PIN:
+   ele mostra a tela de cada equipe, sem votar e sem entrar no "N conectados"
+   (modo espectador, roteiro, seção 4).
 
 **Confira:** nada travou. O roteiro completo do dia está em
 [docs/roteiro-do-apresentador.md](docs/roteiro-do-apresentador.md), e o checklist
@@ -438,16 +459,16 @@ deixa o pendrive carregar o estado salvo pelo telão online.
 | `npm run check` | Validador do config + ESLint + testes sem rede. Rode antes de cada commit |
 | `npm test` | Só os testes sem rede |
 | `npm run lint` | Só o ESLint |
-| `npm run validar` | Validador do `config.json` e as conferências de equilíbrio do jogo |
+| `npm run validar` | Validador do `config.json` e as conferências de equilíbrio do jogo, de (a) a (j). Com 6 rodadas, as conferências são estimadas por simulação determinística (a mesma saída a cada execução) e levam cerca de 2 minutos e meio |
 | `npm run servir` | Site em `http://127.0.0.1:8080/` (outra porta: `npm run servir -- 8181`) |
 | `node bin/emulador.mjs "node bin/servir.mjs"` | Emulador + site, para ensaiar à mão (JDK 21) |
 | `npm run emulador` | Testes contra o emulador: regras reais, `canal-firebase` e simulador (JDK 21) |
 | `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados |
 | `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador; nunca fala com o projeto real |
 | `npm run e2e:online:fixture` | O mesmo, com a fixture de teste no lugar do `config.json`: é o que passa sempre por "a proteção pagou" no celular (D-059). Rode junto com o anterior |
-| `npm run e2e:votos` | A matriz de votos: a sessão inteira com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, contra o emulador. Demora alguns minutos (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
+| `npm run e2e:votos` | A matriz de votos: a sessão inteira, com as 6 rodadas do `config.json` e depois com a fixture de 6 bimestres, com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, e um celular no modo espectador, contra o emulador. Demora bastante (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
 | `npm run simular -- --memoria` | 20 alunos simulados, sem rede |
-| `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador |
+| `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador (acrescente `--rajada --quedas --recargas` para as perturbações) |
 | `npm run versao` | Sobe o `?v=` e a versão do app juntos |
 | `npm run versao -- --conferir` | Só confere se o `?v=` e a versão do app estão iguais |
 

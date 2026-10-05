@@ -20,6 +20,39 @@
   // devendo R$ 1.501; se o mês 3 fosse pulado, o empréstimo virava dinheiro de
   // graça no placar.
   const INDICADOR_EMPRESTIMO = 'emprestimo';
+  // Esquema v3.1 (D-066: o cheque especial tem limite). Na revisão de 01/10,
+  // os juros de 7,43% ao mês compunham sobre a dívida inteira, e em 12 meses a
+  // Rose terminava devendo R$ 35.112 ao banco e a Daiane R$ 38.782: nenhum
+  // banco dá esse crédito a essa renda. Com regras.limiteChequeEspecial, o
+  // caixa nunca passa de −limite; o que passaria vira conta atrasada (dívida,
+  // com multa e mora, e entra no patrimônio) e comida que não foi comprada
+  // (o que faltou na mesa: custo humano, acumulado, que não é dívida).
+  const INDICADOR_ATRASADAS = 'contas_atrasadas';
+  const INDICADOR_MESA = 'faltou_na_mesa';
+  // Revisão da F6c: o principal das contas atrasadas (o que atrasou, sem a
+  // multa e a mora), a base da mora. Fica no "depois", fora dos indicadores
+  // do config: é contabilidade do motor, e a tela não o mostra. Estado sem
+  // ele (sala de antes, estado inicial) conta todo o atrasado como principal.
+  const PRINCIPAL_ATRASADO = 'contas_atrasadas_principal';
+
+  // Esquema v3 (D-060: 12 meses em 6 rodadas bimestrais). Acima deste número de
+  // caminhos de cartas, o decompor deixa de enumerar a árvore e passa a uma
+  // simulação determinística: com 6 rodadas e ~20 cartas por rodada são 64
+  // milhões de caminhos, e o telão ficaria minutos parado no fechamento da
+  // rodada (o comando online desiste em 10 s). Abaixo do limite, continua
+  // exato; o config de 3 rodadas (1.836 caminhos) nunca chega perto.
+  const LIMITE_CAMINHOS = 200000;
+  // Sorteios da simulação. Com 20 mil, o erro padrão do esperado fica perto de
+  // 0,7% do desvio da renda final (1/√20000), bem abaixo do R$ 1 que a tela
+  // arredonda na maior parte das equipes, e a conta cabe em ~1 s no telão.
+  const AMOSTRAS = 20000;
+
+  // Quantos meses cada rodada representa (esquema v3). Ausente vale 1: o config
+  // de 3 rodadas mensais continua dando exatamente as mesmas contas.
+  function mesesPorRodada(config) {
+    const m = config && config.regras && config.regras.mesesPorRodada;
+    return Number.isInteger(m) && m >= 1 ? m : 1;
+  }
 
   // O motor também lê o conteúdo que volta do Realtime Database, e o RTDB some com
   // lista vazia e pode devolver lista como objeto { "0": …, "1": … }. Sem isto, um
@@ -143,9 +176,19 @@
   // empréstimo. Pelo caixa, quem pegou R$ 1.500 no mês 2 e não pagou nada
   // ainda (a 1ª parcela vence no mês seguinte) ficaria R$ 1.500 mais rico. Sem
   // o indicador do empréstimo (config antigo), é a própria renda.
+  // Esquema v3.1 (D-066): as contas atrasadas também contam contra (são
+  // dívida com o dono da casa, a companhia de luz, o DMAE). O que faltou na
+  // mesa não: é comida que não se comeu, e não dinheiro devido.
   function patrimonio(estado) {
     const saldoDevedor = Number(estado && estado[INDICADOR_EMPRESTIMO]) || 0;
-    return estado[INDICADOR_PLACAR] - saldoDevedor + 0;
+    const atrasadas = Number(estado && estado[INDICADOR_ATRASADAS]) || 0;
+    return estado[INDICADOR_PLACAR] - saldoDevedor - atrasadas + 0;
+  }
+
+  // O limite do cheque especial (esquema v3.1), ou null sem ele.
+  function limiteDe(config) {
+    const l = config && config.regras && config.regras.limiteChequeEspecial;
+    return Number.isInteger(l) && l > 0 ? l : null;
   }
 
   // A tabela Price em reais inteiros, parcela a parcela: a parcela fixa é o
@@ -194,12 +237,20 @@
   // validador exige que todo roteiro siga a ordem do config quando há
   // empréstimo). As parcelas continuam depois do fim do jogo: restantes,
   // proxima e aPagar dizem quanto fica ("fica devendo R$ X em N parcelas").
-  function emprestimoDoMes(config, ctx, opcao) {
+  // Esquema v3: com mesesPorRodada m, cada rodada jogada depois do empréstimo
+  // paga m parcelas da tabela (a amortização continua mês a mês, e a rodada
+  // bimestral paga as duas do bimestre): a rodada k depois dele paga as
+  // parcelas (k − 1)·m + 1 até k·m. A 1ª continua vencendo na rodada seguinte à
+  // do empréstimo, como no jogo mês a mês. restantes, proxima e aPagar são por
+  // empréstimo (emAberto), e não por parcela: somados por parcela, contariam a
+  // mesma dívida duas vezes no bimestre.
+  function emprestimoDoMes(config, ctx, opcao, meses = 1) {
     const entradas = emprestimosDaOpcao(config, opcao, ctx).map((e) => {
       const tabela = cronograma(e.valor, e.parcelas, e.taxaMes);
       return { ...e, restantes: e.parcelas, proxima: tabela[0].parcela, aPagar: tabela.reduce((s, p) => s + p.parcela, 0) };
     });
     const parcelas = [];
+    const emAberto = [];
     const ordem = ids(config, 'rodadas');
     const atual = ordem.indexOf(ctx.rodadaId);
     for (let pos = 0; pos < atual; pos += 1) {
@@ -209,21 +260,30 @@
       const opcaoDela = obter(obter(config.rodadas, rodadaId)?.opcoes, feito.decisao);
       const doMes = emprestimosDaOpcao(config, opcaoDela, { ...ctx, rodadaId, opcaoId: feito.decisao });
       if (doMes.length === 0) continue;
-      const pagas = ordem.slice(pos + 1, atual).filter((id) => obter(ctx.historico, id)).length;
+      const rodadasPagas = ordem.slice(pos + 1, atual).filter((id) => obter(ctx.historico, id)).length;
+      const inicio = rodadasPagas * meses;
       for (const e of doMes) {
         const tabela = cronograma(e.valor, e.parcelas, e.taxaMes);
-        const item = tabela[pagas];
-        if (!item || item.parcela === 0) continue;
-        const depois = tabela.slice(pagas + 1).filter((p) => p.parcela > 0);
-        parcelas.push({
-          rotulo: e.rotulo, taxaMes: e.taxaMes, numero: pagas + 1, de: e.parcelas, parcela: item.parcela, juros: item.juros,
-          amortizacao: item.amortizacao, restantes: depois.length, proxima: depois.length > 0 ? depois[0].parcela : 0,
+        let venceu = false;
+        for (let j = 0; j < meses; j += 1) {
+          const item = tabela[inicio + j];
+          if (!item || item.parcela === 0) continue;
+          venceu = true;
+          parcelas.push({
+            rotulo: e.rotulo, taxaMes: e.taxaMes, numero: inicio + j + 1, de: e.parcelas, parcela: item.parcela, juros: item.juros,
+            amortizacao: item.amortizacao,
+          });
+        }
+        if (!venceu) continue;
+        const depois = tabela.slice(inicio + meses).filter((p) => p.parcela > 0);
+        emAberto.push({
+          taxaMes: e.taxaMes, restantes: depois.length, proxima: depois.length > 0 ? depois[0].parcela : 0,
           aPagar: depois.reduce((s, p) => s + p.parcela, 0),
         });
       }
     }
     const soma = (itens, campo) => itens.reduce((s, x) => s + x[campo], 0);
-    const todos = [...entradas, ...parcelas];
+    const todos = [...entradas, ...emAberto];
     return {
       entradas, parcelas,
       entrada: soma(entradas, 'valor'), parcela: soma(parcelas, 'parcela'), juros: soma(parcelas, 'juros'),
@@ -294,15 +354,20 @@
       && !!se && (se.decidiu !== undefined || se.sorteou !== undefined || se.indicador !== undefined);
   }
 
+  // vezes (esquema v3): quantas vezes a soma do grupo conta na rodada. O
+  // todoMes é por mês e conta mesesPorRodada vezes; os efeitos gerais, da opção
+  // e da carta são por evento e contam uma vez. O multiplica não se repete: ele
+  // age sobre o delta já acumulado (o "exausto" tira 10% do bimestre inteiro, e
+  // não 19%).
   function efeitosDoMes(config, ctx, grupos, delta, linhas) {
     const ind = INDICADOR_PLACAR;
     const valem = [];
-    for (const [origem, efeitos, rotuloPadrao] of grupos) {
+    for (const [origem, efeitos, rotuloPadrao, vezes = 1] of grupos) {
       for (const efeito of lista(efeitos)) {
         // O empréstimo não é soma nem multiplica: é dívida, e entra à parte
         // (emprestimoDoMes), fora do trabalho, do piso e de qualquer multiplica.
         if (efeito.emprestimo) continue;
-        if (condicaoVale(config, efeito.se, ctx)) valem.push({ origem, efeito, rotulo: efeito.rotulo || rotuloPadrao });
+        if (condicaoVale(config, efeito.se, ctx)) valem.push({ origem, efeito, rotulo: efeito.rotulo || rotuloPadrao, vezes });
       }
     }
     // Só na renda: é ela que a tela nomeia, e o placar é decomposto nela.
@@ -311,10 +376,11 @@
       linhas.push(linha);
     };
     let trabalhoSemCarta = null;
-    for (const { origem, efeito, rotulo } of valem) {
+    for (const { origem, efeito, rotulo, vezes } of valem) {
       if (tipoDoEfeito(efeito) !== 'trabalho') continue;
       if (origem === 'carta' && trabalhoSemCarta === null) trabalhoSemCarta = delta[ind];
-      for (const [i, valor] of Object.entries(efeito.soma || {})) {
+      for (const [i, bruto] of Object.entries(efeito.soma || {})) {
+        const valor = bruto * vezes;
         delta[i] += valor;
         marcar({ origem, rotulo, indicador: i, valor }, origem, efeito);
       }
@@ -347,9 +413,10 @@
     const somados = { custoFixo: 0, gasto: 0, gastoDaCarta: 0, protecao: 0 };
     const protecaoItens = [];
     for (const tipo of ['custoFixo', 'gasto', 'protecao']) {
-      for (const { origem, efeito, rotulo } of valem) {
+      for (const { origem, efeito, rotulo, vezes } of valem) {
         if (tipoDoEfeito(efeito) !== tipo) continue;
-        for (const [i, valor] of Object.entries(efeito.soma || {})) {
+        for (const [i, bruto] of Object.entries(efeito.soma || {})) {
+          const valor = bruto * vezes;
           delta[i] += valor;
           marcar({ origem: tipo, rotulo, indicador: i, valor }, origem, efeito);
           if (i !== ind) continue;
@@ -385,8 +452,9 @@
   // (informativo, do config), a renda do trabalho que ela tirou e os gastos
   // que ela trouxe.
   // protecaoEvitou (D-059) é quanto o saldo do mês seria menor sem os efeitos
-  // de proteção daquele mês, e é o mes.protecao: os juros do mês são cobrados
-  // sobre a dívida que vinha de ANTES, e a proteção deste mês não os muda. O
+  // de proteção daquele mês. Sem o limite do cheque especial, é o mes.protecao:
+  // os juros do mês são cobrados sobre a dívida que vinha de ANTES, e a
+  // proteção deste mês não os muda (com o limite, ver o cálculo abaixo). O
   // que ela evita de juros nos meses seguintes aparece nas contas deles e no
   // piorCasoSemProtecao do placar. protecaoItens nomeia o que pagou ("auxílio
   // do INSS (45 dias)"), para a frase do celular.
@@ -403,24 +471,59 @@
     const delta = {};
     for (const ind of indicadores) delta[ind] = 0;
     const linhas = [];
+    // Esquema v3: o todoMes conta mesesPorRodada vezes; o resto é por evento.
+    const meses = mesesPorRodada(config);
     const grupos = [
-      ['persona', persona.todoMes, persona.nome],
+      ['persona', persona.todoMes, persona.nome, meses],
       ['geral', rodada.efeitosGerais, rodada.titulo],
       ['opcao', opcao.efeitos, opcao.rotulo],
       ['carta', carta ? carta.efeitos : [], carta ? carta.titulo : ''],
     ];
     const efeitos = efeitosDoMes(config, ctx, grupos, delta, linhas);
-    const mes = contasDoMes(config, persona, estado, delta, linhas, efeitos, emprestimoDoMes(config, ctx, opcao));
+    const emp = emprestimoDoMes(config, ctx, opcao, meses);
+    const limite = limiteDe(config);
+    // A conta sem a proteção (revisão da F6c) precisa do delta de antes das
+    // contas da casa. Só quando há proteção e limite: é raro, e a enumeração
+    // do placar chama o aplicar centenas de milhares de vezes.
+    const refazerSemProtecao = limite !== null && efeitos.protecao > 0;
+    const deltaSemProtecao = refazerSemProtecao ? { ...delta, [INDICADOR_PLACAR]: delta[INDICADOR_PLACAR] - efeitos.protecao } : null;
+    const mes = contasDoMes(config, persona, estado, delta, linhas, efeitos, emp, meses);
+    // protecaoEvitou (D-059): quanto o saldo do mês seria menor sem a
+    // proteção. Sem o limite, é o pago (os juros do mês são sobre a dívida de
+    // antes). Com o limite (revisão da F6c), não: sem ela, parte da falta vira
+    // comida cortada (que não sai do saldo) e a multa do atraso entra nele. Na
+    // Daiane depois da fratura com MEI, o INSS pagou R$ 2.431, e o saldo sem
+    // ele seria só R$ 826 menor, com R$ 1.659 de comida a menos na mesa; a
+    // frase dizia "teria faltado R$ 2.431 a mais". A conta é refeita sem os
+    // efeitos de proteção (o mesmo estado, o mesmo empréstimo), e a comida que
+    // ela evitou cortar vai em protecaoEvitouMesa, só quando há.
+    let protecaoEvitou = mes.protecao;
+    let protecaoEvitouMesa = 0;
+    if (refazerSemProtecao) {
+      const sem = contasDoMes(config, persona, estado, deltaSemProtecao, [], { ...efeitos, protecao: 0 }, emp, meses);
+      protecaoEvitou = Math.round(mes.saldoMes - sem.saldoMes) + 0;
+      protecaoEvitouMesa = Math.round(sem.faltouNaMesa - mes.faltouNaMesa) + 0;
+    }
     const cartaCusto = {
       diasParado: carta && Number.isInteger(carta.diasParado) ? carta.diasParado : 0,
       rendaPerdida: efeitos.rendaPerdida,
       gastos: efeitos.gastosDaCarta,
     };
     const depois = {};
+    // D-066: com o limite, o caixa para em −limite exato. O corte já leva a
+    // conta até lá, mas com a renda fracionária (o exausto × 0,9) a soma em
+    // ponto flutuante parava em −1500,0000000002, e a dívida no banco
+    // "passava" do limite.
     for (const ind of indicadores) {
       const { inicial, min, max } = config.indicadores[ind];
       const base = Object.hasOwn(estado, ind) ? estado[ind] : inicial;
-      depois[ind] = Math.min(max, Math.max(min, base + delta[ind]));
+      const piso = ind === INDICADOR_PLACAR && limite !== null ? Math.max(min, -limite) : min;
+      depois[ind] = Math.min(max, Math.max(piso, base + delta[ind]));
+    }
+    // O principal das contas atrasadas segue para a próxima rodada no
+    // "depois" (é o estado de antes dela), nunca acima do atrasado.
+    if (Object.hasOwn(mes, 'contasAtrasadasPrincipal') && Object.hasOwn(depois, INDICADOR_ATRASADAS)) {
+      depois[PRINCIPAL_ATRASADO] = Math.max(0, Math.min(depois[INDICADOR_ATRASADAS], mes.contasAtrasadasPrincipal));
     }
     // O que veio dos meses anteriores, nomeado para a tela (deAntes, acima). O
     // anfitrião grava junto do resultado: o celular não carrega o motor. O
@@ -429,7 +532,10 @@
     // uma origem.
     const antes = linhas.filter((l) => l.deAntes)
       .map((l) => (l.origem === 'gasto' ? { rotulo: l.rotulo, valor: l.valor, gasto: true } : { rotulo: l.rotulo, valor: l.valor }));
-    return { delta, depois, linhas, mes, cartaCusto, deAntes: antes, protecaoEvitou: mes.protecao, protecaoItens: efeitos.protecaoItens };
+    return {
+      delta, depois, linhas, mes, cartaCusto, deAntes: antes, protecaoEvitou, protecaoItens: efeitos.protecaoItens,
+      ...(protecaoEvitouMesa > 0 ? { protecaoEvitouMesa } : {}),
+    };
   }
 
   // Outra renda, básico, juros e o empréstimo entram no delta da renda e nas
@@ -449,7 +555,14 @@
   // − juros = saldoMes), e "dívida antes + faltou = dívida depois", somando o
   // cheque especial e o empréstimo. O caixa anda saldoMes + emprestimo −
   // amortizacao.
-  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos, protecao }, emp = SEM_EMPRESTIMO) {
+  // Esquema v3: numa rodada de m meses, a outra renda e o básico da casa contam
+  // m vezes, e os juros do cheque especial compõem m meses sobre a dívida de
+  // antes da rodada ((1 + j)^m − 1): no bimestre, R$ 1.000 de dívida a 7,43%
+  // custam R$ 154, e não R$ 149 (juros simples) nem R$ 74 (um mês só). Com m = 1
+  // a taxa é a própria jurosDividaMes, sem passar pela potência: (1 + j) − 1 em
+  // ponto flutuante não é exatamente j, e o arredondamento de um caso de meio
+  // real mudaria o placar de um config que não mudou.
+  function contasDoMes(config, persona, estado, delta, linhas, { trabalho, custosFixos, gastos, protecao }, emp = SEM_EMPRESTIMO, meses = 1, comLimite = true) {
     const ind = INDICADOR_PLACAR;
     for (const e of emp.entradas) {
       delta[ind] += e.valor;
@@ -459,21 +572,25 @@
         linhas.push({ origem: 'emprestimo', rotulo: e.rotulo, indicador: INDICADOR_EMPRESTIMO, valor: e.valor });
       }
     }
-    const outra = persona.outraRenda && Number(persona.outraRenda.valor) > 0 ? persona.outraRenda.valor : 0;
+    const outra = persona.outraRenda && Number(persona.outraRenda.valor) > 0 ? persona.outraRenda.valor * meses : 0;
     if (outra > 0) {
       delta[ind] += outra;
       linhas.push({ origem: 'outraRenda', rotulo: persona.outraRenda.rotulo, indicador: ind, valor: outra });
     }
     for (const item of lista(persona.basico && persona.basico.itens)) {
       if (!item || !(item.valor > 0)) continue;
-      delta[ind] -= item.valor;
-      linhas.push({ origem: 'basico', rotulo: item.rotulo, indicador: ind, valor: -item.valor });
+      delta[ind] -= item.valor * meses;
+      linhas.push({ origem: 'basico', rotulo: item.rotulo, indicador: ind, valor: -item.valor * meses });
     }
     // Juros sobre a dívida que vinha do mês anterior (D-046), e não sobre a do
     // fim deste mês: é o cheque especial que já estava em uso.
     const antes = estado && Object.hasOwn(estado, ind) ? estado[ind] : config.indicadores[ind].inicial;
-    const dividaAntes = antes < 0 ? -antes : 0;
-    const taxa = Number(config.regras && config.regras.jurosDividaMes) || 0;
+    // Com o limite (D-066), os juros só incidem até ele: o caixa nunca fica
+    // abaixo de −limite, e o min é só a trava de um estado que viesse de fora.
+    const limite = comLimite ? limiteDe(config) : null;
+    const dividaAntes = antes < 0 ? (limite === null ? -antes : Math.min(-antes, limite)) : 0;
+    const taxaMes = Number(config.regras && config.regras.jurosDividaMes) || 0;
+    const taxa = meses === 1 ? taxaMes : (1 + taxaMes) ** meses - 1;
     const jurosCheque = Math.round(dividaAntes * taxa);
     if (jurosCheque > 0) {
       delta[ind] -= jurosCheque;
@@ -496,25 +613,156 @@
     }
     const juros = jurosCheque + emp.juros;
     const devedorAntes = estado && Object.hasOwn(estado, INDICADOR_EMPRESTIMO) ? Number(estado[INDICADOR_EMPRESTIMO]) || 0 : 0;
-    const basico = totalBasico(persona);
+    const basico = totalBasico(persona) * meses;
     // O "entrou" é o que o trabalho deixou (já sem os custos fixos) mais a outra
     // renda da casa; os gastos do problema e o que a proteção pagou (D-059)
     // ficam cada um numa linha própria.
     const entrou = trabalho - custosFixos + outra;
+    // D-066: o limite do cheque especial, depois de tudo (é o fim do mês que
+    // passaria dele). Sem o limite, nada muda.
+    const corte = limite === null ? null : cortarNoLimite(config, persona, estado, antes, delta, linhas, limite, meses);
     // juros é o total (cheque especial + os juros da parcela); jurosEmprestimo,
     // a parte do empréstimo. dividaAntes continua sendo o cheque especial de
     // antes (a base dos juros dele); saldoDevedor é o do empréstimo no fim do
     // mês, e dividaTotal (cheque especial + empréstimo) é o que a tela chama de
     // "dívida" (historia.dividaTotal, a partir do "depois").
+    const saldoSemLimite = entrou + protecao - gastos - basico - juros;
     return {
       trabalho, custosFixos, gastos, protecao, outraRenda: outra, entrou, basico, juros,
-      saldoMes: entrou + protecao - gastos - basico - juros, dividaAntes,
+      // Com o limite, a comida que não foi comprada e o que a casa ficou sem
+      // (os itens semAtraso) não saíram do caixa (somam), e a multa e a mora
+      // entram na dívida (subtraem): saldoMes continua sendo a variação do
+      // patrimônio.
+      saldoMes: corte === null ? saldoSemLimite : saldoSemLimite + corte.faltouNaMesa + (corte.ficouSem || 0) - corte.multa - corte.mora, dividaAntes,
       emprestimo: emp.entrada, parcela: emp.parcela, jurosEmprestimo: emp.juros, amortizacao: emp.amortizacao,
       saldoDevedor: devedorAntes + emp.entrada - emp.amortizacao, parcelasRestantes: emp.restantes,
       proximaParcela: emp.proxima, aPagar: emp.aPagar,
       // Só com empréstimo em aberto: o RTDB apaga o campo null, e o mês lido do
       // banco tem de ser igual ao do motor.
       ...(emp.taxaMes === null ? {} : { taxaEmprestimo: emp.taxaMes }),
+      // Só com o limite (esquema v3.1): num config sem ele, o mês fica igual
+      // ao de antes, campo a campo (o simulador compara o gravado com o motor).
+      ...(corte === null ? {} : corte),
+    };
+  }
+
+  // A soma dos itens do básico marcados como comida (D-066): o único gasto da
+  // casa que se pode deixar de fazer sem virar dívida.
+  function comidaDoBasico(persona) {
+    return lista(persona && persona.basico && persona.basico.itens)
+      .reduce((s, item) => s + (item && item.comida === true ? Number(item.valor) || 0 : 0), 0);
+  }
+
+  // A soma dos itens do básico que não atrasam (revisão da F6c): gás, ônibus e
+  // remédio não têm multa nem mora, "quem não paga fica sem" (a fonte do
+  // atraso no config). Antes, entravam nas contas atrasadas, pagavam a multa e
+  // a mora, e um dia eram "pagos": ninguém fica devendo passagem de ônibus.
+  function semAtrasoDoBasico(persona) {
+    return lista(persona && persona.basico && persona.basico.itens)
+      .reduce((s, item) => s + (item && item.semAtraso === true ? Number(item.valor) || 0 : 0), 0);
+  }
+
+  // Esquema v3.1 (D-066), no fim do mês, depois do empréstimo:
+  // (8) mora: o principal atrasado de antes da rodada (o que atrasou, sem a
+  //     multa e a mora já lançadas) paga moraMes ao mês, juros simples
+  //     (round(principal × moraMes × m)): é como a lei e as concessionárias
+  //     cobram (1% ao mês sobre o débito), e não compõe como o banco. Antes
+  //     (revisão da F6c), a base era o atrasado inteiro, e a mora incidia
+  //     sobre a multa e sobre a mora de antes, contra a própria fonte;
+  // (9) quitar o atrasado: se o caixa do fim do mês está acima de −limite, a
+  //     folga até o limite paga as contas atrasadas (com a mora). A casa usa o
+  //     cheque especial para não ter a luz cortada nem ser despejada: é para
+  //     isso que ele existe, e é o que deixa o atrasado diminuir num mês bom.
+  //     O pagamento abate primeiro a multa e a mora, depois o principal
+  //     (Código Civil, art. 354: havendo capital e juros, o pagamento
+  //     imputa-se primeiro nos juros);
+  // (10) o corte: se o caixa ficaria abaixo de −limite, o excedente não vira
+  //     dívida no banco (o banco corta o crédito). Ele se divide entre:
+  //     - contas atrasadas: as contas do período que podem atrasar (o básico
+  //       menos a comida e menos os itens semAtraso: aluguel, luz, água) e o
+  //       que passar do básico (um conserto que não se pagou);
+  //     - "ficou sem" (revisão da F6c): os itens semAtraso do período (gás,
+  //       ônibus, remédio), que não se pagam depois: quem não paga fica sem.
+  //       Não viram dívida nem pagam multa. Só faltam quando já não há o que
+  //       atrasar: a casa atrasa o que pode atrasar antes de ficar sem o
+  //       ônibus do trabalho (a validar, como o cortarPrimeiro);
+  //     - "faltou na mesa": a comida do básico do período que não foi
+  //       comprada, no máximo o item de comida × m.
+  //     regras.cortarPrimeiro decide a ordem: "contas" atrasa primeiro as
+  //     contas, depois fica sem os itens semAtraso, e só corta a comida do que
+  //     passar deles; "comida" corta primeiro a comida, depois atrasa as
+  //     contas e depois fica sem os itens semAtraso;
+  // (11) multa: o que atrasou neste período paga multaAtraso uma vez só.
+  // A multa e a mora entram nas contas atrasadas, e não no caixa: no caixa,
+  // elas poderiam passar do limite de novo, e a conta não fecharia.
+  // Linhas (as de cada indicador somam o delta dele): "mora" e "multa" (só nas
+  // contas atrasadas), "contasPagas" (− caixa, − atrasadas), "atraso" (+ caixa,
+  // + atrasadas: o básico já tinha saído inteiro do caixa), "ficouSem" (+
+  // caixa) e "faltouNaMesa" (+ caixa, + faltou na mesa).
+  // O mês leva contasAtrasadasPrincipal (o principal no fim), que o aplicar
+  // guarda no "depois"; ficouSem, só quando a persona tem item semAtraso (o
+  // mês de um config sem a marca fica igual ao de antes, campo a campo).
+  function cortarNoLimite(config, persona, estado, antes, delta, linhas, limite, meses) {
+    const ind = INDICADOR_PLACAR;
+    const g = config.regras;
+    const ler = (id) => (estado && Object.hasOwn(estado, id) ? Number(estado[id]) || 0 : 0);
+    const mexer = (id, valor, origem, rotulo) => {
+      if (valor === 0) return;
+      if (Object.hasOwn(delta, id)) delta[id] += valor;
+      linhas.push({ origem, rotulo, indicador: id, valor });
+    };
+    const atrasadasAntes = ler(INDICADOR_ATRASADAS);
+    const mesaAntes = ler(INDICADOR_MESA);
+    const principalAntes = estado && Object.hasOwn(estado, PRINCIPAL_ATRASADO)
+      ? Math.min(atrasadasAntes, Math.max(0, Number(estado[PRINCIPAL_ATRASADO]) || 0))
+      : atrasadasAntes;
+    const mora = Math.round(principalAntes * (Number(g.moraMes) || 0) * meses);
+    mexer(INDICADOR_ATRASADAS, mora, 'mora', 'juros de mora das contas atrasadas');
+    let caixa = antes + delta[ind];
+    const contasPagas = Math.max(0, Math.min(atrasadasAntes + mora, caixa + limite));
+    caixa -= contasPagas;
+    mexer(ind, -contasPagas, 'contasPagas', 'contas atrasadas pagas');
+    mexer(INDICADOR_ATRASADAS, -contasPagas, 'contasPagas', 'contas atrasadas pagas');
+    const encargosAntes = atrasadasAntes - principalAntes + mora;
+    const principalPago = Math.max(0, contasPagas - encargosAntes);
+    const excedente = caixa < -limite ? -limite - caixa : 0;
+    const comida = comidaDoBasico(persona) * meses;
+    const naoAtrasa = semAtrasoDoBasico(persona) * meses;
+    const contasDoPeriodo = Math.max(0, totalBasico(persona) * meses - comida - naoAtrasa);
+    let resto = excedente;
+    const tirar = (teto) => {
+      const v = Math.min(resto, teto);
+      resto -= v;
+      return v;
+    };
+    let faltouNaMesa = 0;
+    let ficouSem = 0;
+    if (g.cortarPrimeiro === 'comida') {
+      faltouNaMesa = tirar(comida);
+      tirar(contasDoPeriodo);
+      ficouSem = tirar(naoAtrasa);
+    } else {
+      tirar(contasDoPeriodo);
+      ficouSem = tirar(naoAtrasa);
+      faltouNaMesa = tirar(comida);
+    }
+    const atrasou = excedente - faltouNaMesa - ficouSem;
+    mexer(ind, faltouNaMesa, 'faltouNaMesa', 'comida que não deu para comprar');
+    mexer(INDICADOR_MESA, faltouNaMesa, 'faltouNaMesa', 'comida que não deu para comprar');
+    mexer(ind, ficouSem, 'ficouSem', 'o que não se paga depois e a casa ficou sem');
+    mexer(ind, atrasou, 'atraso', 'contas que ficaram sem pagar');
+    mexer(INDICADOR_ATRASADAS, atrasou, 'atraso', 'contas que ficaram sem pagar');
+    const multa = Math.round(atrasou * (Number(g.multaAtraso) || 0));
+    mexer(INDICADOR_ATRASADAS, multa, 'multa', 'multa das contas atrasadas');
+    const contasAtrasadas = atrasadasAntes + mora - contasPagas + atrasou + multa;
+    // −limite exato quando cortou (o mesmo piso do "depois", em aplicar).
+    const caixaFinal = excedente > 0 ? -limite : caixa;
+    return {
+      dividaBanco: caixaFinal < 0 ? -caixaFinal : 0,
+      contasAtrasadasAntes: atrasadasAntes, mora, contasPagas, atrasou, multa, contasAtrasadas,
+      contasAtrasadasPrincipal: principalAntes - principalPago + atrasou,
+      faltouNaMesa, faltouNaMesaAcumulado: mesaAntes + faltouNaMesa,
+      ...(naoAtrasa > 0 ? { ficouSem } : {}),
     };
   }
 
@@ -523,6 +771,9 @@
   // dívida. É a coluna "Falta num mês comum" do rascunho do conteúdo. Efeito do
   // todoMes com condição de rodada, opção ou histórico não vale aqui (não há
   // rodada); condição de indicador lê o estado inicial da equipe.
+  // É sempre UM mês, mesmo com rodadas bimestrais (esquema v3): a tela de
+  // personas diz "a conta do mês não fecha", que é o que a turma compara com
+  // o próprio salário; o bimestre aparece nas contas de cada rodada.
   function mesComum(config, equipeId) {
     const estado = estadoInicial(config, equipeId);
     const ctx = contexto(config, equipeId, null, null, estado, {});
@@ -532,7 +783,32 @@
     // A mesma ordem do mês de verdade: o custo fixo do todoMes (a parcela da
     // moto) entra num mês comum, e o multiplica não o atinge.
     const efeitos = efeitosDoMes(config, ctx, [['persona', persona.todoMes, persona.nome]], delta, []);
-    return contasDoMes(config, persona, estado, delta, [], efeitos);
+    // Sem o limite do cheque especial (D-066): é o furo de um mês, sem dívida,
+    // e a coluna "Falta num mês comum" mostra quanto falta, e não o corte.
+    return contasDoMes(config, persona, estado, delta, [], efeitos, SEM_EMPRESTIMO, 1, false);
+  }
+
+  // D-067: o trabalho de um período comum da persona (a rodada inteira, com
+  // mesesPorRodada), o que o trabalho deixa depois dos custos fixos, sem a
+  // outra renda da casa: (trabalho − custos fixos) do mesComum × m.
+  function trabalhoComum(config, equipeId) {
+    const m = mesComum(config, equipeId);
+    return (m.trabalho - m.custosFixos) * mesesPorRodada(config);
+  }
+
+  // D-067 (revisão de 01/10, achado 2): o auxílio do INSS do MEI é de um
+  // salário mínimo, fixo pela lei, e a perda da fratura é proporcional à
+  // renda. Para a Bruna e a Daiane, o que a proteção paga num período passa do
+  // que elas ganhavam trabalhando num período comum, e a sala pode ler "o
+  // acidente compensa". A tela tem de dizer por quê (historia.fraseAcimaDoTrabalho).
+  // Devolve { pagou, trabalhoComum } quando a proteção do mês (mes.protecao)
+  // passa do trabalho de um período comum; null quando não passa ou quando
+  // ela não pagou nada.
+  function protecaoAcimaDoTrabalho(config, equipeId, mes) {
+    const pagou = Number(mes && mes.protecao) || 0;
+    if (!(pagou > 0)) return null;
+    const trabalho = trabalhoComum(config, equipeId);
+    return pagou > trabalho ? { pagou, trabalhoComum: trabalho } : null;
   }
 
   function resolverRodada(config, { equipeId, rodadaId, opcaoId, estado, semente, historico }) {
@@ -546,9 +822,15 @@
     const aleatorio = S.gerador(S.derivar(semente, 'carta:' + equipeId));
     const carta = S.sortearPonderado(baralho.map((c) => ({ id: c.carta, peso: c.peso })), aleatorio);
     const a = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico });
+    // D-067: só aqui, e não no aplicar: a enumeração do placar chama o aplicar
+    // centenas de milhares de vezes, e a tela só precisa disto da carta que
+    // saiu. Só quando acontece (o anfitrião grava só então).
+    const acima = protecaoAcimaDoTrabalho(config, equipeId, a.mes);
     return {
       carta, chances: baralho, delta: a.delta, depois: a.depois, linhas: a.linhas, mes: a.mes, cartaCusto: a.cartaCusto,
       deAntes: a.deAntes, protecaoEvitou: a.protecaoEvitou, protecaoItens: a.protecaoItens,
+      ...(a.protecaoEvitouMesa > 0 ? { protecaoEvitouMesa: a.protecaoEvitouMesa } : {}),
+      ...(acima ? { protecaoAcimaDoTrabalho: acima } : {}),
     };
   }
 
@@ -640,7 +922,139 @@
   // piorCasoSemProtecao (D-059): a proteção funciona como seguro, que perde em
   // valor esperado e ganha no pior caso. O esperado nunca mostraria o que ela
   // vale; o pior caso com e sem ela mostra.
-  function decompor(config, { equipeId, rodadas }) {
+  // Uma condição "fixa" só lê o que não muda com o jogo (a equipe, a persona,
+  // a rodada, a opção): vale igual em qualquer estado e com qualquer histórico.
+  const CHAVES_FIXAS = new Set(['opcao', 'persona', 'equipe', 'rodada']);
+  function condicaoFixa(cond) {
+    return !cond || Object.keys(cond).every((k) => CHAVES_FIXAS.has(k));
+  }
+
+  // Quantas cartas PODEM sair para a equipe na rodada, sem olhar o estado: a
+  // carta fica de fora só quando as rodadas dela não incluem esta, quando a
+  // parte fixa do somenteSe (persona, equipe, rodada) não vale, ou quando o
+  // peso é 0 sem nenhum ajuste que o suba. É um teto (a parte que lê o estado
+  // e o histórico conta como "pode"), e não depende da opção: assim o exato ou
+  // o estimado é o mesmo para as três contas do decompor.
+  function cartasPossiveisNaRodada(config, equipeId, rodadaId) {
+    const personaId = exigir(config.equipes, equipeId, 'Equipe').persona;
+    let n = 0;
+    for (const id of ids(config, 'cartas')) {
+      const carta = config.cartas[id];
+      if (carta.rodadas !== undefined && !contem(carta.rodadas, rodadaId)) continue;
+      const se = carta.somenteSe;
+      if (se) {
+        const fixa = {};
+        for (const k of ['persona', 'equipe', 'rodada']) if (se[k] !== undefined) fixa[k] = se[k];
+        if (!condicaoVale(config, fixa, { equipeId, personaId, rodadaId, estado: {}, historico: {} })) continue;
+      }
+      if (!(carta.peso > 0) && !lista(carta.ajustesDePeso).some((a) => a.soma > 0)) continue;
+      n += 1;
+    }
+    return n;
+  }
+
+  // O número de caminhos de cartas das rodadas (o produto do teto de cada uma).
+  // Para em Infinity quando passa do inteiro seguro: só importa se passa do
+  // limite.
+  function caminhosDeCartas(config, equipeId, rodadaIds) {
+    let total = 1;
+    for (const rodadaId of lista(rodadaIds)) {
+      total *= cartasPossiveisNaRodada(config, equipeId, rodadaId);
+      if (total > Number.MAX_SAFE_INTEGER) return Infinity;
+    }
+    return total;
+  }
+
+  // A semente da simulação: do hash do config (o mesmo do telão e do pendrive,
+  // validarConfig.hash), da equipe e das rodadas jogadas. O telão, o simulador
+  // e os testes chegam ao MESMO número: é isso que deixa o simulador conferir o
+  // placar gravado e o teste repetir a conta. As três contas do decompor (com
+  // as decisões, o piloto e o sem proteção) usam a mesma semente de propósito
+  // (números aleatórios comuns): a diferença entre elas, o "efeito das
+  // decisões", sai com bem menos ruído do que com sorteios independentes.
+  function sementeDoDecompor(config, equipeId, rodadaIds) {
+    const VC = raiz.Viracao.validarConfig;
+    if (!VC) throw new Error('decompor estimado precisa do validar-config.js carregado (o hash do config é a semente).');
+    const base = parseInt(VC.hash(config), 16) >>> 0;
+    return raiz.Viracao.sorte.derivar(base, `decompor:${equipeId}:${lista(rodadaIds).join(',')}`);
+  }
+
+  // A simulação determinística (esquema v3): AMOSTRAS caminhos sorteados pelas
+  // chances, rodada a rodada, todos do mesmo gerador, na mesma ordem. Os
+  // caminhos que coincidem até uma rodada compartilham o nó da árvore (o
+  // estado e o baralho ficam guardados nele): as três primeiras rodadas têm
+  // no máximo algumas milhares de variações, e o motor só refaz o mês de um nó
+  // novo. Devolve o esperado (a média) e o menor patrimônio achado.
+  function simular(config, equipeId, plano, inicial, semente) {
+    const S = raiz.Viracao.sorte;
+    const aleatorio = S.gerador(semente);
+    const raizDaArvore = { estado: inicial, historico: {}, itens: null, filhos: null };
+    let nivel = new Array(AMOSTRAS).fill(raizDaArvore);
+    for (const { rodadaId, opcaoId } of plano) {
+      const seguinte = new Array(nivel.length);
+      for (let i = 0; i < nivel.length; i += 1) {
+        const no = nivel[i];
+        if (!no.itens) {
+          const baralho = chances(config, { equipeId, rodadaId, opcaoId, estado: no.estado, historico: no.historico });
+          if (baralho.length === 0) throw new Error(`Nenhuma carta possível para a equipe "${equipeId}" na rodada "${rodadaId}".`);
+          no.itens = baralho.map((c) => ({ id: c.carta, peso: c.peso }));
+          no.filhos = new Map();
+        }
+        const carta = S.sortearPonderado(no.itens, aleatorio);
+        let filho = no.filhos.get(carta);
+        if (!filho) {
+          const depois = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado: no.estado, historico: no.historico }).depois;
+          filho = { estado: depois, historico: { ...no.historico, [rodadaId]: { decisao: opcaoId, carta } }, itens: null, filhos: null };
+          no.filhos.set(carta, filho);
+        }
+        seguinte[i] = filho;
+      }
+      nivel = seguinte;
+    }
+    let soma = 0;
+    let pior = Infinity;
+    for (const no of nivel) {
+      const v = patrimonio(no.estado);
+      soma += v;
+      if (v < pior) pior = v;
+    }
+    return { esperado: soma / nivel.length, pior };
+  }
+
+  // A busca dirigida do pior caso estimado: em cada rodada, a carta que deixa
+  // o menor patrimônio logo depois dela (o efeito imediato; empate fica com a
+  // primeira na ordem do config). A simulação sozinha quase nunca acha o pior
+  // de verdade (dois acidentes seguidos saem em 1 de 10 mil partidas), e o
+  // pior caso é justamente o que mostra o valor da proteção (D-059).
+  function piorDirigido(config, equipeId, plano, inicial) {
+    let estado = inicial;
+    let historico = {};
+    for (const { rodadaId, opcaoId } of plano) {
+      let escolhido = null;
+      for (const c of chances(config, { equipeId, rodadaId, opcaoId, estado, historico })) {
+        const depois = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: c.carta, estado, historico }).depois;
+        const v = patrimonio(depois);
+        if (!escolhido || v < escolhido.v) escolhido = { v, depois, carta: c.carta };
+      }
+      if (!escolhido) throw new Error(`Nenhuma carta possível para a equipe "${equipeId}" na rodada "${rodadaId}".`);
+      estado = escolhido.depois;
+      historico = { ...historico, [rodadaId]: { decisao: opcaoId, carta: escolhido.carta } };
+    }
+    return patrimonio(estado);
+  }
+
+  function estimar(config, equipeId, plano, inicial, semente) {
+    const s = simular(config, equipeId, plano, inicial, semente);
+    return { esperado: s.esperado, pior: Math.min(s.pior, piorDirigido(config, equipeId, plano, inicial)) };
+  }
+
+  // estimado (esquema v3): false quando a conta é a enumeração exata; true
+  // quando os caminhos de cartas passam de LIMITE_CAMINHOS e a conta é a
+  // simulação determinística. A tela diz então "pior caso estimado".
+  // modo ('exato' | 'estimado', opcional) força uma das duas contas: é só para
+  // os testes compararem a simulação com a enumeração num config pequeno. O
+  // anfitrião e o simulador nunca o passam (o limite decide).
+  function decompor(config, { equipeId, rodadas, modo }) {
     const inicial = estadoInicial(config, equipeId);
     let estado = inicial;
     const historico = {};
@@ -654,8 +1068,14 @@
       rodadaId: r.rodadaId,
       opcaoId: exigir(config.rodadas, r.rodadaId, 'Rodada').padrao,
     }));
-    const comDecisoes = explorar(config, equipeId, planoDecidido, inicial, 0, {});
-    const piloto = explorar(config, equipeId, planoPiloto, inicial, 0, {});
+    const rodadaIds = rodadas.map((r) => r.rodadaId);
+    const estimado = modo === 'estimado' || (modo !== 'exato' && caminhosDeCartas(config, equipeId, rodadaIds) > LIMITE_CAMINHOS);
+    const semente = estimado ? sementeDoDecompor(config, equipeId, rodadaIds) : 0;
+    const avaliar = estimado
+      ? (plano) => estimar(config, equipeId, plano, inicial, semente)
+      : (plano) => explorar(config, equipeId, plano, inicial, 0, {});
+    const comDecisoes = avaliar(planoDecidido);
+    const piloto = avaliar(planoPiloto);
     const semProtecao = planoSemProtecao(config, planoDecidido);
     return {
       realizado,
@@ -664,13 +1084,15 @@
       efeitoDecisoes: comDecisoes.esperado - piloto.esperado,
       sorte: realizado - comDecisoes.esperado,
       piorCaso: comDecisoes.pior,
-      piorCasoSemProtecao: semProtecao ? explorar(config, equipeId, semProtecao, inicial, 0, {}).pior : comDecisoes.pior,
+      piorCasoSemProtecao: semProtecao ? avaliar(semProtecao).pior : comDecisoes.pior,
+      estimado,
     };
   }
 
   V.motor = {
     estadoInicial, condicaoVale, chances, resolverRodada, aplicar, consolidarDecisao, decompor, historicoDe, totalBasico, mesComum,
-    patrimonio,
+    patrimonio, mesesPorRodada, caminhosDeCartas, condicaoFixa, LIMITE_CAMINHOS, AMOSTRAS,
+    trabalhoComum, protecaoAcimaDoTrabalho, limiteDe, comidaDoBasico, semAtrasoDoBasico,
     // Cópia: a tabela do cache não pode ser alterada por quem chama.
     cronograma: (valor, parcelas, taxaMes) => cronograma(valor, parcelas, taxaMes).map((p) => ({ ...p })),
   };

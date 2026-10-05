@@ -15,7 +15,7 @@
     "regrasVersao": {
       "$uid": {
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.isString() && newData.val() === 'v3' && newData.getPriority() === null"
+        ".validate": "newData.isString() && newData.val() === 'v4' && newData.getPriority() === null"
       }
     },
     "autoteste": {
@@ -204,7 +204,7 @@
         "decisoes": {
           "$r": {
             "$eq": {
-              ".read": "auth != null && root.child('salas/'+$s+'/membros/'+auth.uid+'/equipe').val() === $eq",
+              ".read": "auth != null && (root.child('salas/'+$s+'/membros/'+auth.uid+'/equipe').val() === $eq || (root.child('privado/pinApresentador').exists() && root.child('pedidosAnfitriao/'+auth.uid).val() === root.child('privado/pinApresentador').val()))",
               "$uid": {
                 ".write": "auth != null && auth.uid === $uid && root.child('salas/'+$s+'/membros/'+$uid+'/equipe').val() === $eq && root.child('salas/'+$s+'/estado/tipo').val() === 'rodada' && root.child('salas/'+$s+'/estado/rodada').val() === $r && (root.child('salas/'+$s+'/estado/subfase').val() === 'decidindo' || (root.child('salas/'+$s+'/estado/subfase').val() === 'prorrogacao' && root.child('salas/'+$s+'/estado/empatadas/'+$eq).exists())) && root.child('salas/'+$s+'/membros/'+$uid+'/entrouEm').isNumber() && root.child('salas/'+$s+'/estado/abertoEm').isNumber() && root.child('salas/'+$s+'/membros/'+$uid+'/entrouEm').val() <= root.child('salas/'+$s+'/estado/abertoEm').val() && root.child('salas/'+$s+'/estado/prazo').isNumber() && root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').isNumber() && now <= root.child('salas/'+$s+'/estado/prazo').val() + root.child('salas/'+$s+'/conteudo/tempos/gracaSeg').val() * 1000",
                 ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,24}$/) && root.child('salas/'+$s+'/conteudo/rodadas/'+$r+'/opcoes/'+newData.val()).exists() && (root.child('salas/'+$s+'/estado/subfase').val() !== 'prorrogacao' || root.child('salas/'+$s+'/estado/empatadas/'+$eq+'/'+newData.val()).val() === true) && newData.getPriority() === null"

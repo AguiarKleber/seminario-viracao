@@ -8,13 +8,22 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { carregarNucleo, RAIZ } from './carregar-nucleo.mjs';
-import { configMinimo, normalizar } from './fixtures/configs.mjs';
+import { configMinimo, normalizar, textoConfigRealV22 } from './fixtures/configs.mjs';
 
 const V = await carregarNucleo();
 const M = V.motor;
 const H = V.historia;
 
+// O conteúdo do dia do teste (v2.2, 3 rodadas mensais), congelado na fixture:
+// o config.json de 12 meses (D-060) não tem mais o empréstimo no mês 2 nem o
+// caminho de −R$ 467 do Jonas.
 function configReal() {
+  const r = V.validarConfig.validarTexto(textoConfigRealV22());
+  assert.deepEqual(r.erros, [], 'o config do teste de 30/09 é válido');
+  return r.config;
+}
+
+function configJsonDaRaiz() {
   const r = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
   assert.deepEqual(r.erros, [], 'o config.json real é válido');
   return r.config;
@@ -130,7 +139,7 @@ test('Marcos pega pelo app da 99: 9,36% ao mês, parcela de R$ 213 e saldo de R$
 });
 
 // Revisão de 30/09 (achado 17): o celular mostrava "Cheque especial R$ 1 ·
-// juros de 7,43% ao mês" e o empréstimo sem taxa nenhuma, e o Kleberson
+// juros de 7,43% ao mês" e o empréstimo sem taxa nenhuma, e o Kleber
 // perguntou justamente pela taxa. A taxa vai no mês gravado, do mês em que o
 // empréstimo entra até a última parcela; sem empréstimo, sem o campo.
 test('a taxa do empréstimo vai no mês gravado (6,39% do crédito pessoal do Jonas), e some sem empréstimo', () => {
@@ -228,6 +237,7 @@ test('validador: o empréstimo válido é normalizado, e o config.json real pass
   assert.deepEqual(r.erros, []);
   assert.deepEqual(r.config.rodadas.r1.opcoes.a.efeitos, [{ rotulo: 'empréstimo', emprestimo: { valor: 1000, parcelas: 4, taxaMes: 0.1, fonte: 'teste' } }]);
   configReal();
+  configJsonDaRaiz();
 });
 
 test('validador: empréstimo só numa opção, sem soma e com condição que não lê estado nem histórico', () => {

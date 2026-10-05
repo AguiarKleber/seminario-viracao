@@ -170,7 +170,7 @@ test('decompor carrega o histórico no caminho: caso feito à mão', () => {
   });
 
   // Assert
-  assert.deepEqual(d, { realizado: -1100, esperadoComDecisoes: -350, esperadoPiloto: -250, efeitoDecisoes: -100, sorte: -750, piorCaso: -1100, piorCasoSemProtecao: -1100 });
+  assert.deepEqual(d, { realizado: -1100, esperadoComDecisoes: -350, esperadoPiloto: -250, efeitoDecisoes: -100, sorte: -750, piorCaso: -1100, piorCasoSemProtecao: -1100, estimado: false });
 });
 
 test('decompor confere com 10.000 simulações, com histórico, básico e juros', () => {

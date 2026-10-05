@@ -262,9 +262,12 @@ test('temProtecao e escolheuProtecao: lidos do conteúdo e dos resultados gravad
 // do mês 2 (o mês 3 pulado) com o MEI no mês 1 dava um pior caso "sem a
 // proteção" MELHOR que o "com" (e1: −R$ 6.210 com, −R$ 6.032 sem): o INSS só
 // chega no mês 3. O dado do motor está certo; a trava é da tela.
-test('config.json: sessão sem o mês 3 e com o MEI, o "sem a proteção" nunca aparece melhor que o "com"', () => {
+// Usa o config real congelado do teste de 30/09 (v2.2), o que reproduz o caso:
+// com o limite do cheque especial no config.json (D-066, 01/10), a mesma
+// sessão já não dá o "sem" melhor, e o teste deixaria de exercitar a trava.
+test('config real v2.2: sessão sem o mês 3 e com o MEI, o "sem a proteção" nunca aparece melhor que o "com"', () => {
   // Arrange
-  const r = V.validarConfig.validarTexto(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
+  const r = V.validarConfig.validarTexto(readFileSync(new URL('./fixtures/config-real-v22.json', import.meta.url), 'utf8'));
   assert.ok(r.ok, JSON.stringify(r.erros.slice(0, 3)));
   const config = r.config;
   const [r1, r2] = config.ordem.rodadas;

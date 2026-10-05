@@ -182,6 +182,25 @@ test('decisão: quem entrou depois da abertura acompanha sem votar; decisão do 
   assert.deepEqual([pausada.dados.podeVotar, pausada.dados.motivo, pausada.dados.pausado], [false, 'pausado', true]);
 });
 
+test('decisão no modo espectador (D-064): a mesma tela da equipe, com a contagem filtrada, sem voto', () => {
+  // Arrange: o membro virtual da equipe e1 (nunca gravado no banco) e os
+  // membros de verdade; "fora" foi movido para a e2 e não conta.
+  const decisoes = { a: 'a', b: 'a', fora: 'b' };
+  const membros = { a: { entrouEm: 100, equipe: 'e1' }, b: { entrouEm: 100, equipe: 'e1' }, fora: { entrouEm: 100, equipe: 'e2' } };
+  const virtual = { equipe: 'e1', entrouEm: 0 };
+  // Act
+  const esp = telaDoAluno(entrada(rodada('decidindo'), { membro: virtual, membros, decisoesDaEquipe: decisoes, uid: 'espectador', espectador: true }));
+  const aluno = telaDoAluno(entrada(rodada('decidindo'), { membro: membros.a, membros, decisoesDaEquipe: decisoes, uid: 'a' }));
+  const pausada = telaDoAluno(entrada(rodada('decidindo', { prazo: undefined, restanteMs: 5000 }), { membro: virtual, membros, espectador: true }));
+  // Assert
+  assert.equal(esp.tipo, 'decisao');
+  assert.deepEqual(esp.dados.opcoes, aluno.dados.opcoes, 'as mesmas opções e a mesma contagem do aluno da equipe');
+  assert.deepEqual(esp.dados.opcoes.map((o) => [o.id, o.votos]), [['a', 2], ['b', 0], ['c', 0]]);
+  assert.deepEqual([esp.dados.podeVotar, esp.dados.motivo, esp.dados.meuVoto], [false, 'espectador', null]);
+  assert.deepEqual([pausada.dados.podeVotar, pausada.dados.motivo], [false, 'espectador'], 'o motivo do espectador vem antes da pausa');
+  assert.equal(aluno.dados.podeVotar, true, 'o aluno continua votando');
+});
+
 test('prorrogação: a equipe empatada vê só as opções empatadas; as outras aguardam', () => {
   // Arrange
   const estado = rodada('prorrogacao', { empatadas: { e1: { a: true, c: true } } });
