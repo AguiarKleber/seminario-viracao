@@ -9172,11 +9172,6 @@
         "opcional": true
       },
       {
-        "tipo": "bloco",
-        "titulo": "Gancho: o lançamento",
-        "alvoSeg": 150
-      },
-      {
         "tipo": "formarEquipes",
         "alvoSeg": 120
       },
@@ -9187,7 +9182,7 @@
       {
         "tipo": "bloco",
         "titulo": "A conta de cada casa: 12 meses em 6 bimestres",
-        "alvoSeg": 120
+        "alvoSeg": 270
       },
       {
         "tipo": "rodada",
@@ -9294,13 +9289,8 @@
       },
       {
         "tipo": "bloco",
-        "titulo": "Gancho: o lançamento",
-        "alvoSeg": 240
-      },
-      {
-        "tipo": "bloco",
         "titulo": "Mapa do seminário",
-        "alvoSeg": 150
+        "alvoSeg": 390
       },
       {
         "tipo": "formarEquipes",
