@@ -1602,9 +1602,13 @@ const escolhasNaTela = await page.evaluate(() => ({
     };
   }),
   legendas: document.querySelectorAll('#palco .legenda').length,
+  nota: document.querySelector('#palco .escolhas-nota')?.textContent ?? null,
   texto: document.getElementById('palco').textContent,
 }));
 assert.equal(escolhasNaTela.titulo, 'Escolha ou sorte?');
+// Teste do Kleber de 05/10 (print 15): uma linha embaixo do título diz de onde
+// a conta parte; "piloto automático" continua fora da tela (D-041).
+assert.equal(escolhasNaTela.nota, 'Sem votos, fica o de sempre; a conta parte daí, com a sorte média.', '"Escolha ou sorte?": a linha que explica o ponto de partida da conta');
 assert.equal(escolhasNaTela.legendas, 0, '"escolha ou sorte?" sem legenda');
 for (const termo of ['piloto automático', 'efeito das decisões']) assert.ok(!escolhasNaTela.texto.includes(termo), `o termo "${termo}" saiu da tela`);
 // O total do fim, depois do "=", em destaque em cada linha (item 11).
@@ -1820,9 +1824,12 @@ for (const eq of ATIVAS) {
   const c = V.historia.escolhaOuSorte({ piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, renda: d.realizado });
   // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),
   // as variações sempre com + ou −, e o total do fim com "=".
-  const conta = `se não mudassem nada: ${F.moeda(c.piloto)} → as escolhas: ${F.variacao(c.escolhas)} → a sorte: ${F.variacao(c.sorte)} = terminaram com ${F.moeda(c.total)}`;
+  // Teste do Kleber de 05/10 (print 15): os rótulos dizem o que cada número é
+  // ("se ninguém votasse", "as escolhas mudaram", "as cartas mudaram"); a conta
+  // é a mesma.
+  const conta = `se ninguém votasse: ${F.moeda(c.piloto)} as escolhas mudaram: ${F.variacao(c.escolhas)} as cartas mudaram: ${F.variacao(c.sorte)} = terminaram com ${F.moeda(c.total)}`;
   assert.equal(escolhasNaTela.contas[eq], conta, `${eq}: página 2, escolha ou sorte`);
-  assert.match(escolhasNaTela.contas[eq], /^se não mudassem nada: −?R\$\s?[\d.]+ → as escolhas: [+−]R\$\s?[\d.]+ → a sorte: [+−]R\$\s?[\d.]+ = terminaram com −?R\$\s?[\d.]+$/, `${eq}: totais sem "+", variações com sinal`);
+  assert.match(escolhasNaTela.contas[eq], /^se ninguém votasse: −?R\$\s?[\d.]+ as escolhas mudaram: [+−]R\$\s?[\d.]+ as cartas mudaram: [+−]R\$\s?[\d.]+ = terminaram com −?R\$\s?[\d.]+$/, `${eq}: totais sem "+", variações com sinal`);
   const [lPiloto, lEscolhas, lSorte, lTotal] = reaisDoTexto(escolhasNaTela.contas[eq]);
   assert.equal(lPiloto + lEscolhas + lSorte, lTotal, `${eq}: página 2, as parcelas projetadas somam o "terminaram com"`);
   // Páginas da história: um item por mês, com a escolha, a carta e as contas.
@@ -2194,7 +2201,7 @@ await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.d
   const contas = await page.$$eval('.historia-escolha .historia-conta', (ns) => ns.map((n) => n.textContent));
   assert.equal(contas.length, EQUIPES.length, 'página 2 com as seis equipes');
   for (const t of contas) {
-    assert.match(t, / → as escolhas: [+−]R\$.* → a sorte: [+−]R\$.* = terminaram com −?R\$/, `página 2: variações com sinal ("${t}")`);
+    assert.match(t, / as escolhas mudaram: [+−]R\$.* as cartas mudaram: [+−]R\$.* = terminaram com −?R\$/, `página 2: variações com sinal ("${t}")`);
     const [a1, a2, a3, a4] = reaisDoTexto(t);
     assert.equal(a1 + a2 + a3, a4, `página 2: as parcelas somam o total ("${t}")`);
   }

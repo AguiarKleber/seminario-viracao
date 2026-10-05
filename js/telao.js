@@ -2882,7 +2882,7 @@
   // da conta é inteiro: a linha quebra entre eles. Os valores vêm de
   // historia.escolhaOuSorte, já inteiros e fechando com o total: a conta é lida
   // em voz alta, e R$ 1 de diferença ficava à vista de quem somava.
-  // Os dois totais (sem mudar nada, e o do fim) vão sem sinal de variação; as
+  // Os dois totais (se ninguém votasse, e o do fim) vão sem sinal de variação; as
   // duas variações, sempre com + ou − (rascunho, seção 7, item 11): no mesmo
   // formato, "−R$ 4.150 → −R$ 395" parecia uma sequência de saldos. O total do
   // fim entra com "=" e em destaque, e não com mais uma seta.
@@ -2891,11 +2891,23 @@
     const placar = app.dados.placar;
     const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
     const ordenadas = equipesPorSaldo();
-    // Esquema v3: com 6 rodadas, o "se não mudassem nada" e as escolhas vêm da
+    // Esquema v3: com 6 rodadas, o "se ninguém votasse" e as escolhas vêm da
     // simulação do motor (placar.estimado), e não da conta exata. A tela diz
     // isso uma vez, no kicker, em vez de repetir em cada linha.
     const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
     s.appendChild(cabecalho(estimado ? 'Placar final · valores estimados por simulação' : 'Placar final', 'Escolha ou sorte?', { extra: lado }));
+    // Teste do Kleber de 05/10 (print 15): ele não entendeu a tela, nem o que
+    // era "se não mudassem nada". O ponto de partida da conta é o piloto do
+    // motor: a opção de sempre (a que fica quando ninguém vota, "ninguém
+    // votou: ficou o de sempre" no celular) em todo período, com a sorte
+    // média. Uma linha diz isso embaixo do título, e os passos dizem o que cada
+    // número é: "se ninguém votasse", "as escolhas mudaram", "as cartas
+    // mudaram", "= terminaram com". A conta não mudou. O termo "piloto
+    // automático" continua fora da tela (D-041: no ensaio, ele confundia e
+    // soava como a opção boa de quem não votou). "o que as escolhas mudaram",
+    // como foi pedido, não cabia: com valores de cinco dígitos, as duas colunas
+    // da grade passavam da largura de 1024×768.
+    s.appendChild(el('p', { classe: 'escolhas-nota', texto: 'Sem votos, fica o de sempre; a conta parte daí, com a sorte média.' }));
     // Em grade fixa (escolhas-em-grade, css/telao.css): três linhas por
     // equipe, os mesmos passos em cada uma e as colunas alinhadas entre as
     // equipes. Corrida como texto, cada equipe quebrava a conta num ponto
@@ -2906,9 +2918,9 @@
       return el('li', { classe: 'historia-escolha', dados: { equipe: id, ...(c?.estimado ? { estimado: '1' } : {}) } }, [
         rotuloEquipe(id),
         c ? el('span', { classe: 'historia-conta' }, [
-          passo('se não mudassem nada: ', F().moeda(c.piloto), 'passo-total'), ' ',
-          passo('→ as escolhas: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
-          passo('→ a sorte: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
+          passo('se ninguém votasse: ', F().moeda(c.piloto), 'passo-total'), ' ',
+          passo('as escolhas mudaram: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
+          passo('as cartas mudaram: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
           passo('= terminaram com ', F().moeda(c.total), ['passo-total', 'passo-final']),
         ]) : null,
       ]);

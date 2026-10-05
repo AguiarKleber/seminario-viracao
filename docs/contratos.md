@@ -1104,15 +1104,20 @@ nenhuma sombra.
    `faltou_na_mesa` do placar (`historia.faltouNaMesaDe`), inclusive R$ 0. É o custo humano, à parte do dinheiro: não
    vira barra nem segundo número ao lado do "faltou R$ X", onde se leria como parte dele. Só quando o placar tem o
    indicador (sala com o limite);
-2. `escolhas`, "Escolha ou sorte?": uma linha por equipe, na mesma ordem, sem legenda
-   (`.historia-conta`): "se não mudassem nada: R$ a → as escolhas: ±R$ b → a sorte: ±R$ c =
-   terminaram com R$ d", com os totais a e d em `formatar.moeda` (nunca "+") e as variações b e c
+2. `escolhas`, "Escolha ou sorte?": embaixo do título, a linha `.escolhas-nota` "Sem votos, fica o de sempre; a
+   conta parte daí, com a sorte média." e uma linha por equipe, na mesma ordem, sem legenda
+   (`.historia-conta`): "se ninguém votasse: R$ a · as escolhas mudaram: ±R$ b · as cartas mudaram: ±R$ c =
+   terminaram com R$ d" (teste do Kleber de 05/10, print 15: com "se não mudassem nada", "→ as escolhas" e "→ a
+   sorte", ele não entendeu a tela. O ponto de partida é o piloto do motor, a opção de sempre, a que fica quando
+   ninguém vota, em todo período, com a sorte média; "piloto automático" continua fora da tela, D-041; "o que as
+   escolhas mudaram" não cabia: as duas colunas passavam da largura de 1024×768 com valores de cinco dígitos. A
+   conta não mudou), com os totais a e d em `formatar.moeda` (nunca "+") e as variações b e c
    em `formatar.variacao` (sempre + ou −, "+R$ 0" no zero); o último passo (`.passo-final`) em
    negrito; a, b, c e d de `historia.escolhaOuSorte(placar[eq])` (o
    `motor.decompor` gravado pelo anfitrião, em reais inteiros que fecham a conta). **Em grade fixa**
    (`.historias-escolha.escolhas-em-grade`; revisão da F7, achado 13 da revisão de conteúdo e legibilidade):
    três linhas por equipe, as mesmas em todas, em duas colunas alinhadas entre as equipes (subgrid): a equipe e
-   "se não mudassem nada"; "→ as escolhas" e "→ a sorte"; "= terminaram com". Em cada passo, o rótulo à
+   "se ninguém votasse"; "as escolhas mudaram" e "as cartas mudaram"; "= terminaram com". Em cada passo, o rótulo à
    esquerda e o valor à direita da coluna (os valores ficam em coluna). Corrida como texto, cada equipe quebrava
    num ponto diferente, e na projeção não dava para comparar; duas linhas não cabem com valores de cinco dígitos
    em 1024×768. O e2e (`conferirGradeDasEscolhas`) confere as mesmas linhas em toda equipe, cada passo numa

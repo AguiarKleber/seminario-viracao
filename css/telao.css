@@ -583,16 +583,18 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    num ponto diferente ("= terminaram com" na linha 2 de umas e na 3 de outras),
    e os números não ficavam em coluna. Agora são três linhas por equipe, as
    mesmas em todas, em duas colunas alinhadas entre as equipes (subgrid):
-     equipe              | se não mudassem nada: R$ a
-     → as escolhas: ±R$ b | → a sorte: ±R$ c
+     equipe                     | se ninguém votasse: R$ a
+     as escolhas mudaram: ±R$ b | as cartas mudaram: ±R$ c
      = terminaram com R$ d
+   (os rótulos de 05/10; antes, "se não mudassem nada", "→ as escolhas" e
+   "→ a sorte", que o Kleber não entendeu no teste de 05/10)
    Duas linhas não cabem: com valores de cinco dígitos, escolhas, sorte e total
    lado a lado passam da largura de 1024×768 com a letra de 28 px. Em cada
    passo, o rótulo à esquerda e o valor à direita da coluna: os valores ficam
    alinhados entre as equipes. A página do pior caso (.piores-casos) continua
    corrida: a conta dela tem outro formato.
    As duas colunas na largura do conteúdo (max-content), e não a segunda em
-   1fr: esticada até a borda, em 1920×1080 o rótulo "→ a sorte:" ficava a
+   1fr: esticada até a borda, em 1920×1080 o rótulo da sorte ficava a
    ~1.200 px do valor, e a conta se lia em diagonal (revisão do voto da F6b,
    achado 7). A grade, mais estreita que a tela em 1920×1080, fica no meio. */
 .historias-escolha.escolhas-em-grade {
@@ -613,6 +615,9 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
  * com uma frase curta embaixo do título. "Não escolheram proteção" fica no
  * tom secundário: é a ausência do número, e não um número. */
 .pior-nota { color: var(--texto-2); }
+/* "Escolha ou sorte?": a linha que explica de onde a conta parte (teste do
+   Kleber de 05/10), no tom da nota do pior caso. */
+.escolhas-nota { color: var(--texto-2); }
 .pior-sem-escolha { color: var(--texto-2); }
 /* A história de uma equipe: um mês por item. */
 .historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
