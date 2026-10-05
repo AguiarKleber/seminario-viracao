@@ -345,9 +345,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .persona-mes[data-sinal="positivo"] { color: var(--positivo); }
 /* O aperto (telao.js, telaPersonas): só quando a lista transborda, como seis
    personas com a faixa de entrada embaixo em 1024×768 (D-061). Entrelinha e
-   vãos menores; a letra não encolhe e o fio entre as personas fica. */
-.personas[data-aperto] { gap: 2px; }
-.personas[data-aperto] .persona-linha { gap: 0; line-height: 1.04; padding-bottom: 3px; }
+   vãos menores; a letra não encolhe e o fio entre as personas fica. Com a
+   equipe pelo personagem no rótulo (teste do Kleber de 05/10), as seis
+   entradas com a faixa de entrada passavam 1 px de 1024×768: vão de 1 px e
+   respiro de 2 px embaixo de cada uma. */
+.personas[data-aperto] { gap: 1px; }
+.personas[data-aperto] .persona-linha { gap: 0; line-height: 1.04; padding-bottom: 2px; }
 
 /* ---------- Rodada ---------- */
 
