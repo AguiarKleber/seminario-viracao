@@ -105,7 +105,12 @@ let injetouMapa = false;
 {
   const passos = brutoConfig.roteiros?.[ROTEIRO] || [];
   if (!passos.some((p) => p.tipo === 'bloco' && RE_MAPA.test(p.titulo || ''))) {
-    passos.splice(passos.findIndex((p) => p.tipo === 'bloco') + 1, 0, { tipo: 'bloco', titulo: 'Mapa do seminário', alvoSeg: 120 });
+    // Logo antes da formação das equipes, como no roteiro de 120 min. Antes ele
+    // ia depois do primeiro bloco, o "Gancho"; o gancho saiu dos roteiros
+    // (pedido 9 do Kleber, 05/10), e o primeiro bloco passou a ser "A conta de
+    // cada casa", depois da formação: o mapa não passava pela tela na parte 1.
+    const formar = passos.findIndex((p) => p.tipo === 'formarEquipes');
+    passos.splice(formar >= 0 ? formar : passos.findIndex((p) => p.tipo === 'bloco') + 1, 0, { tipo: 'bloco', titulo: 'Mapa do seminário', alvoSeg: 120 });
     injetouMapa = true;
   }
 }
