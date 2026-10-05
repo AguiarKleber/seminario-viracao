@@ -30,13 +30,44 @@
   // D-054: a mesma escolha dita do jeito de cada ofício. rotuloPor/narrativaPor
   // da persona, e o rotulo/narrativa da opção quando ela não tem entrada. O
   // telão também usa isto (o resultado de cada equipe fala do jeito dela);
-  // opção que não existe dá os dois null.
+  // opção que não existe dá tudo null.
+  // D-073 (teste do Kleber de 05/10): mais o impacto, a linha do custo humano que
+  // vai embaixo da opção no celular e no telão (impactoPor da persona, senão o
+  // impacto da opção, senão null). O celular busca aqui, no conteúdo, como já
+  // busca a narrativa (a telaDoAluno também o leva em opcoes[], só quando há).
   function textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
     const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
     return {
       rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
       narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+      impacto: em(opcao, 'impactoPor', personaId) ?? opcao.impacto ?? null,
     };
+  }
+
+  // D-075 (teste do Kleber de 05/10): a carta com o título do jeito do personagem
+  // ("A moto quebrou", "A bike quebrou", "O celular quebrou"), com a mesma
+  // chance: só o texto muda, e a mesma carta conta seis histórias. tituloPor
+  // e curtoPor da persona, senão o titulo e o curto da carta; carta que não
+  // existe dá os dois null. O telão usa no resultado e no sorteio; a história
+  // da equipe e o celular, no "aconteceu".
+  function textoDaCarta(conteudo, cartaId, personaId) {
+    const carta = em(conteudo, 'cartas', cartaId) || {};
+    return {
+      titulo: em(carta, 'tituloPor', personaId) ?? carta.titulo ?? null,
+      curto: em(carta, 'curtoPor', personaId) ?? carta.curto ?? null,
+    };
+  }
+
+  // Os curtos de todas as cartas para uma persona, { [cartaId]: curto }, só as
+  // que têm curto: o formato que o gráfico das fatias do sorteio recebe
+  // (D-040), agora por equipe (D-075).
+  function curtosDasCartas(conteudo, personaId) {
+    const curtos = {};
+    for (const cartaId of Object.keys(em(conteudo, 'cartas') || {})) {
+      const { curto } = textoDaCarta(conteudo, cartaId, personaId);
+      if (curto) curtos[cartaId] = curto;
+    }
+    return curtos;
   }
 
   // Esquema v2.2: as duas dívidas da família, a partir dos indicadores (o
@@ -216,13 +247,18 @@
       if (!res) return;
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
       const carta = em(conteudo, 'cartas', res.carta) || {};
+      // Só o rótulo e a narrativa: a história conta o que aconteceu, e o
+      // impacto (D-073) é da hora de decidir. O formato fica o de antes, que o
+      // e2e do telão compara campo a campo.
+      const { rotulo, narrativa } = textoDaOpcao(conteudo, rodadaId, res.decisao, personaId);
       historia.push({
         rodadaId,
         titulo: rodada.titulo ?? null,
         // O nome curto ("Jan–fev"), pela posição da rodada no config.
         rotulo: rotuloDaRodada(rodada.titulo, i),
-        opcao: textoDaOpcao(conteudo, rodadaId, res.decisao, personaId),
-        carta: { titulo: carta.titulo ?? null, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
+        opcao: { rotulo, narrativa },
+        // O título do jeito do personagem (D-075), quando a carta o tem.
+        carta: { titulo: textoDaCarta(conteudo, res.carta, personaId).titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
         mes: res.mes ?? null,
         cartaCusto: res.cartaCusto ?? null,
         // O que veio dos meses anteriores (motor, deAntes), gravado pelo
@@ -423,6 +459,6 @@
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
-    nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite,
+    nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
   };
 })(globalThis);

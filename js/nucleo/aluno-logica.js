@@ -86,12 +86,22 @@
   // mesma regra de historia.textoDaOpcao, repetida aqui porque a lógica do
   // celular não pode depender da ordem de carga do historia.js para montar a
   // decisão (sem ele, a história do fim fica vazia, mas a decisão não pode).
+  // D-073 (teste do Kleber de 05/10): o impacto (o custo humano da opção) pela mesma regra.
   function textoOpcao(conteudo, rodadaId, opcaoId, personaId) {
     const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
     return {
       rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
       narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+      impacto: em(opcao, 'impactoPor', personaId) ?? opcao.impacto ?? null,
     };
+  }
+
+  // D-075 (teste do Kleber de 05/10): o título da carta do jeito do personagem (tituloPor,
+  // senão o título). A mesma regra de historia.textoDaCarta, repetida aqui
+  // pelo mesmo motivo do textoOpcao.
+  function tituloCarta(conteudo, cartaId, personaId) {
+    const carta = em(conteudo, 'cartas', cartaId) || {};
+    return em(carta, 'tituloPor', personaId) ?? carta.titulo;
   }
 
   const personaDe = (conteudo, equipeId) => em(conteudo, 'equipes', equipeId, 'persona');
@@ -166,7 +176,7 @@
         ...(ultimo.mes || {}),
         rodada: rodadaId, titulo: rodada.titulo, origem: ultimo.origem,
         decisao: { id: ultimo.decisao, rotulo: opcao.rotulo },
-        carta: { id: ultimo.carta, titulo: carta.titulo, tom: carta.tom ?? null },
+        carta: { id: ultimo.carta, titulo: tituloCarta(conteudo, ultimo.carta, personaDe(conteudo, equipeId)), tom: carta.tom ?? null },
         cartaCusto: ultimo.cartaCusto ?? null,
         // O que veio dos meses anteriores (a fratura que continua, o INSS, a
         // multa do aluguel), gravado pelo anfitrião; vazio em sala antiga.
@@ -261,7 +271,12 @@
         contexto: em(rodada, 'contexto', em(conteudo, 'equipes', equipeId, 'persona')),
         // Sem a tendência (D-043): a seta dizia qual era a opção "certa", e a
         // decisão deixava de ser um dilema.
-        opcoes: visiveis.map((o) => ({ id: o, rotulo: textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)).rotulo, votos: contagem[o] || 0 })),
+        // D-073: o impacto (o custo humano) vai junto do rótulo, só
+        // quando a opção o tem: num config sem ele, as opções ficam iguais.
+        opcoes: visiveis.map((o) => {
+          const { rotulo, impacto } = textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId));
+          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }) };
+        }),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,
         motivo,
@@ -283,7 +298,7 @@
     return tela('resultado', {
       equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada, origem: res.origem,
       decisao: { id: res.decisao, rotulo: opcao.rotulo, narrativa: opcao.narrativa },
-      carta: { id: res.carta, titulo: carta.titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
+      carta: { id: res.carta, titulo: tituloCarta(conteudo, res.carta, personaDe(conteudo, equipeId)), narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
       delta: res.delta || {}, indicadores: listaIndicadores(conteudo, res.depois),
       mes: res.mes ?? null, divida: dividaDe(conteudo, res.depois),
       // D-052: "20 dias parado · renda perdida R$ X · gastos R$ Y". null em sala
