@@ -128,8 +128,7 @@ do site e as regras v4).** O que muda para quem conduz:
 - **o banco empresta até R$ 2.000** (o limite do cheque especial, com fonte).
   Passado o limite, ele corta o crédito, e o que falta vira **conta atrasada**
   (aluguel, luz, água, celular), com multa de 8% uma vez e mora de 1% ao mês;
-  o gás, o ônibus e o remédio não atrasam: a casa **fica sem** eles (proposta de
-  05/10, aguardando o Kleber); e, quando nem isso basta, **comida que não deu para comprar**
+  o gás, o ônibus e o remédio não atrasam: a casa **fica sem** eles (D-069, 05/10); e, quando nem isso basta, **comida que não deu para comprar**
   ("faltou na mesa"). Acabam os juros compostos sem fim: antes, no plano
   padrão e sem nenhuma carta ruim, a Rose terminava o ano devendo R$ 35.112 ao
   banco (rascunho, seção 5.1). Veja "Dívida, contas atrasadas e
@@ -138,8 +137,7 @@ do site e as regras v4).** O que muda para quem conduz:
   atrasadas R$ Y · faltou na mesa R$ Z". A "dívida" da faixa é só a do banco e
   do empréstimo; as contas atrasadas têm número próprio;
 - **duas cartas graves novas**, que só saem com contas atrasadas: "Cortaram a
-  luz" e "O dono entrou com o despejo" (pela proposta 1(b) de 05/10, aguardando
-  o Kleber, a chance delas cresce com o atraso e chega a ~30% cada por bimestre
+  luz" e "O dono entrou com o despejo" (pela D-068, de 05/10, a chance delas cresce com o atraso e chega a ~30% cada por bimestre
   na casa muito atrasada);
 - **o placar final mede o que a família ficou devendo** ("Quanto sobrou, e
   quanto ficou devendo"): a barra desconta o banco, o empréstimo e as contas
@@ -768,8 +766,7 @@ explicar quando aparecer)
 - **"Faltou na mesa" não é dívida** e não entra no saldo: é a comida que a casa
   deixou de comer. Por isso aparece sempre à parte, no resultado, no celular e
   no placar final.
-- **"Ficou sem" não tem consequência no jogo** (proposta 3(a) de 05/10,
-  aguardando o Kleber): ficar sem o ônibus não tira a renda de quem trabalha
+- **"Ficou sem" não tem consequência no jogo** (D-069, 05/10): ficar sem o ônibus não tira a renda de quem trabalha
   fora (a companheira do Jonas, a esposa do Marcos, a mãe da Bruna e a do
   Kauã), e ficar sem o remédio não aumenta a chance de adoecer, ao contrário
   do "remédio adiado" de jul–ago. Para a Rose e o Kauã, em vários bimestres
@@ -780,8 +777,7 @@ explicar quando aparecer)
   contas atrasadas no começo do bimestre; dois dias no escuro, a religação e a
   comida da geladeira) e "O dono entrou com o despejo" (acima de R$ 3.000, no
   máximo uma vez por partida: é o começo do processo, e o custo é o medo,
-  energia −2). **A chance cresce com o atraso** (proposta 1(b) de 05/10,
-  aguardando o Kleber): o despejo chega a ~30% por bimestre quando as contas
+  energia −2). **A chance cresce com o atraso** (D-068, 05/10): o despejo chega a ~30% por bimestre quando as contas
   atrasadas, com multa e mora, passam do valor de 4 aluguéis (uns 3 meses de
   aluguel atrasado), e o corte de luz, quando passam de 2 bimestres das
   contas; depois que o despejo já saiu, o corte vai a ~40%. No jogo, a
@@ -1044,8 +1040,7 @@ básico")
   nos 12 meses (inclusive R$ 0). Fica fora da barra de propósito: não é dívida,
   e a barra ficava menor justamente porque a família comeu menos. No config
   atual, a Daiane e a Rose são as de maior número (rascunho, seção 5.1).
-- **O que a casa ficou sem não aparece no placar final** (proposta 3(a) de
-  05/10, aguardando o Kleber): o gás, o ônibus e o remédio que a casa não
+- **O que a casa ficou sem não aparece no placar final** (D-069, 05/10): o gás, o ônibus e o remédio que a casa não
   pôde pagar aparecem só no resultado de cada bimestre ("ficou sem R$ Z"), e
   não em nenhum total do fim. Com a 3(a), a barra da Rose fica uns R$ 3 mil
   menos negativa (contas atrasadas no fim, no padrão: de R$ 24.040 para

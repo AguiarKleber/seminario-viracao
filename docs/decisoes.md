@@ -456,3 +456,69 @@ diz isso.**
 - É um dado real e vira ponto de debate sobre renda abaixo do mínimo.
 - A tela mostra algo como "o auxílio é de 1 salário mínimo, mais do que ela
   ganhava trabalhando".
+
+## 05/10/2026: decisões antes de publicar a versão 7
+
+Respostas do Kleber às perguntas do fechamento da F6d ("1. b / 2. a / seguir
+demais recomendações") e ao plano de publicação ("de acordo").
+
+**D-068. O despejo e o corte de luz ficam prováveis com o atraso.**
+- Antes, a chance travava em ~4% (despejo) e ~8% (corte) por bimestre, e ~85% das
+  Roses terminavam o ano com uns 10 aluguéis atrasados sem nunca receber o despejo.
+- Agora a chance cresce com as contas atrasadas no começo do bimestre e chega a
+  ~30% por bimestre quando elas passam do valor de 4 aluguéis da casa (uns 3 meses
+  de aluguel atrasado, contando as outras contas, a multa e a mora: despejo) ou de
+  2 bimestres das contas que atrasam (corte de luz). Depois que o despejo já saiu,
+  o corte vai a ~40%. O despejo continua no máximo uma vez por partida (os "× 0"
+  foram para o fim da lista: antes, ele podia sair de novo).
+- Para a D-063 continuar valendo, o peso das cartas de desgaste é multiplicado nas
+  mesmas faixas.
+- As regras têm fonte (ANEEL, REN 1.000/2021; Lei 8.245/1991, arts. 9º e 62); a
+  **chance é estimativa sem fonte**, e o apresentador diz isso em sala.
+- Medido no plano padrão: de 37% (Jonas) a 76% (Daiane) das partidas tiram o
+  despejo, e de 34% a 83% tiram o corte. Na casa muito atrasada, a carta "Normal"
+  e a doença perdem espaço no sorteio (rascunho, seção 8, item 20).
+
+**D-069. Gás, ônibus e remédio "ficam sem", sem multa.**
+- `semAtraso: true` nos 18 itens (os três de cada casa): quem não paga fica sem,
+  como já dizia a fonte da multa. Eles não viram conta atrasada e aparecem como
+  "ficou sem".
+- Consequência direta: a multa e a mora das contas que atrasam passam a 8% e 1%
+  ao mês (a média só de aluguel, luz, água e celular; eram 7% e 0,8%), e a linha
+  "com carteira assinada" vai a −R$ 14.939.
+- Limitações conhecidas, ditas na fala do apresentador: o "ficou sem" não
+  aparece no placar final; ficar sem não tem consequência no jogo (o ônibus de
+  quem traz a outra renda, o remédio que não aumenta a doença); a frase da
+  proteção não cita o "ficou sem" (rascunho, seção 8, item 21).
+
+**D-070. Confirmadas como estão** (recomendações do fechamento da F6d):
+- **A ordem do corte (D-066):** `cortarPrimeiro: "contas"`. A casa atrasa as
+  contas e só corta a comida no que passar delas. As pesquisas mostram as duas
+  coisas (22% e 30%), e o apresentador diz isso.
+- **O limite (D-066):** R$ 2.000 de cheque especial (Banco Central, Estudo
+  Especial 84/2020); a multa e a mora ficam como diz a D-069.
+- **O placar da Rose e da Daiane:** fica como está. O "faltou na mesa" continua
+  fora do saldo (não é dívida, D-066) e aparece ao lado do placar ("Faltou na
+  mesa no ano").
+- **A frase do auxílio (D-067):** como está, no telão, no celular e na história.
+- **A ordem das equipes (D-061):** Jonas e Rose primeiro e obrigatórios; com
+  menos de 6 equipes, saem as últimas.
+- **A linha "com carteira assinada" (D-056, D-062):** fica no placar, e o
+  apresentador explica o que ele não mede (o app dá mais caixa com mais horas e
+  sem INSS, FGTS, férias e auxílio-doença).
+
+**D-071. A versão 7 vai ao ar em 05/10 com o que foi testado, e dois ajustes
+ficam para 06/10**, antes de congelar o conteúdo, só no `config.json` (sem mexer
+nas regras do Firebase):
+- **O despejo ganha um custo em dinheiro.** Sem ele, na casa muito atrasada o
+  despejo toma o lugar de cartas caras e o bimestre esperado melhora: no ano, o
+  Jonas termina R$ 304 melhor e o Marcos R$ 505. O custo é o que o processo soma
+  à dívida pelo art. 62, II da Lei 8.245/1991: multa, juros, custas do TJRS
+  (2,5% do valor da causa, Lei RS 14.634/2014) e os 10% de honorários que a lei
+  fixa. Com 3 aluguéis atrasados, ~R$ 1.100 para aluguel de R$ 1.000 e ~R$ 1.400
+  para R$ 1.300 (estimativa com a conta declarada; pesquisa de 05/10).
+- **Os textos de fonte das cartas** ainda dizem "proposta de 05/10, aguardando o
+  Kleber" no config (não aparecem em nenhuma tela); trocam para D-068 e D-069
+  junto com o custo do despejo, que muda o config de qualquer jeito.
+- **O "ficou sem"** fica fora do placar e é explicado na fala. Um total no placar
+  final é código para depois do seminário.
