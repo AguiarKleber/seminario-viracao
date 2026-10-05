@@ -1070,9 +1070,11 @@ aproximam, sem encostar, e a origem some (o texto continua no DOM; o celular a m
 1,4× o corpo. D-066: no aperto, a entrelinha da faixa fecha em 1 e o respiro de dentro dela diminui (seis faixas de
 três linhas passavam ~60 px de 1024×768). **Segundo aperto** (`.grade-resultados[data-aperto="2"]`, e a seção com
 `data-aperto="2"`), medido logo depois, só se o primeiro não bastou (seis faixas no limite, uma com o empréstimo e a
-parada quebrando o detalhe, mais a frase da D-067, ou a faixa de entrada embaixo): o saldo a 1,15× e a carta a 1,05× o
-corpo, o título do mês a 1,15×, o vão entre as faixas em 8 px e a faixa sem respiro por dentro; a letra do corpo fica
-nos 28 px. A parada pode quebrar entre "N dias parado" e "perdeu R$ X" (cada um inteiro): inteira, numa coluna da
+parada quebrando o detalhe, mais a frase da D-067, ou a faixa de entrada embaixo): o saldo a 1,05× o corpo (ainda
+maior que ele), a carta e o título do mês no tamanho do corpo, a entrelinha da faixa a 0,98, o vão entre as faixas em
+8 px e a faixa sem respiro por dentro; a letra do corpo fica nos 28 px. Teste do Kleber de 05/10: com o rótulo do saldo
+e a linha da dívida total, toda faixa tem três linhas, e seis delas com a faixa de entrada passavam ~5 px de 1024×768
+com o segundo aperto antigo (saldo a 1,15×, carta e título a 1,05× e 1,15×). A parada pode quebrar entre "N dias parado" e "perdeu R$ X" (cada um inteiro): inteira, numa coluna da
 carta mais estreita, passava por cima do dinheiro. O e2e (`conferirVisualDoResultado`) confere, em 1024×768 e 1920×1080: nada abaixo de 28 px, sem
 rolagem, vão ≥ 8 px entre as faixas, colunas alinhadas, nenhum texto sobreposto, o saldo com sinal, na cor do
 token e com contraste ≥ 4,5:1 sobre a faixa, e nenhum "entrou", "básico", "juros" ou "multa" seguido de valor na tela

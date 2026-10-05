@@ -448,11 +448,17 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O segundo aperto (telao.js, apertarResultado): só se o primeiro não bastou. */
 .grade-resultados[data-aperto="2"] { row-gap: 8px; }
 /* Sem o respiro de dentro da faixa: com a faixa de entrada embaixo (online), seis
-   faixas de três linhas passavam 11 px de 1024×768 no teste da parte 2. */
-.grade-resultados[data-aperto="2"] .cartao-resultado { padding-top: 0; padding-bottom: 0; }
-.grade-resultados[data-aperto="2"] .resultado-saldo { font-size: 1.15em; }
-.grade-resultados[data-aperto="2"] .resultado-carta { font-size: 1.05em; }
-.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.15); }
+   faixas de três linhas passavam 11 px de 1024×768 no teste da parte 2.
+   Teste do Kleber de 05/10: toda faixa passou a ter três linhas (o rótulo
+   "saldo do bimestre" acima do saldo e a linha da dívida total embaixo), e
+   seis delas com a faixa de entrada passavam ~5 px de 1024×768 mesmo com o
+   segundo aperto antigo. Agora ele leva o saldo a 1,05× o corpo (ainda maior
+   que ele), a carta e o título ao tamanho do corpo e a entrelinha a 0,98; o
+   vão entre as faixas fica nos 8 px. */
+.grade-resultados[data-aperto="2"] .cartao-resultado { padding-top: 0; padding-bottom: 0; line-height: .98; }
+.grade-resultados[data-aperto="2"] .resultado-saldo { font-size: 1.05em; }
+.grade-resultados[data-aperto="2"] .resultado-carta { font-size: 1em; line-height: .98; }
+.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.05); }
 .cartao-resultado {
   grid-column: 1 / -1;
   display: grid; grid-template-columns: subgrid; align-items: center;
