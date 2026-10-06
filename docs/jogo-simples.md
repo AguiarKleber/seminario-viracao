@@ -105,7 +105,7 @@ R$ 6,25 e 6,21; conta: R$ 26).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Pneu novo antes da chuva | O pneu traseiro está quase no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
+| A | Pneu novo antes da chuva | O pneu traseiro está quase no fim, com 13 mil km: na chuva, careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
 | B | Parar nos dias de alerta | O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho. | −R$ 180 | Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco | INMET via O Tempo (27/09/2026); 2 × R$ 89,33 |
 | C ⚑ | Rodar de madrugada | Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
 | D * | Jornada de sempre | Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal. | R$ 0 | Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno | — |
@@ -135,7 +135,7 @@ furar; a Farroupilha lota o Harmonia. Sem efeito em dinheiro igual para todos.
 | A * | Jornada de sempre | Nem parar nem furar: seguir a rotina no mês do breque geral e do Acampamento Farroupilha. | R$ 0 | Nem para nem fura: segue cansado, longe da filha, como em todo bimestre | — |
 | B | Recusar o que não paga | Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa. | −R$ 270 | Recusa o que não paga, e o celular passa horas em silêncio na esquina | −5% do bimestre (estimativa); regra de recusa do iFood (7 seguidas = 15 minutos fora) |
 | C | Parar no dia do breque | 01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio. | −R$ 540 | Para no breque com o país, e o app responde com cinco dias de bloqueio | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
-| D ⚑ | Furar o breque pelo bônus | Furar o breque pelo bônus do concorrente e rodar as noites da Farroupilha: rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
+| D ⚑ | Furar o breque pelo bônus | O concorrente paga bônus a quem furar; rodar as noites da Farroupilha rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
 | E | Folgar no 20 de Setembro | Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro. | −R$ 90 | Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro | Feriado estadual (Lei RS 4.850/1964); 1 dia do bimestre |
 
 ### Nov–dez: Natal e nenhum 13º

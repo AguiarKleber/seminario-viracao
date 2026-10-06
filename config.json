@@ -481,7 +481,7 @@
         {
           "id": "a",
           "rotulo": "Pneu novo antes da chuva",
-          "narrativa": "O pneu traseiro está quase no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora.",
+          "narrativa": "O pneu traseiro está quase no fim, com 13 mil km: na chuva, careca derrapa e é multa grave; trocar custa agora.",
           "impacto": "Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado",
           "efeitos": [
             {
@@ -801,7 +801,7 @@
         {
           "id": "d",
           "rotulo": "Furar o breque pelo bônus",
-          "narrativa": "Furar o breque pelo bônus do concorrente e rodar as noites da Farroupilha: rende e queima com os colegas.",
+          "narrativa": "O concorrente paga bônus a quem furar; rodar as noites da Farroupilha rende e queima com os colegas.",
           "impacto": "Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra",
           "efeitos": [
             {

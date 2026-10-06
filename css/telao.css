@@ -92,6 +92,10 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
    número ficam na frente. */
 .equipe-nome { white-space: normal; }
 .equipe-quem, .equipe-oficio { white-space: nowrap; }
+/* Formato simples: a cor inteira ("Verde-azulado"), sem quebrar no hífen.
+   inline-block: a caixa fica do tamanho da entrelinha; inline, com a
+   entrelinha 1 do aperto do resultado, ela passava da faixa da equipe. */
+.equipe-cor { display: inline-block; white-space: nowrap; }
 
 /* ---------- Gráficos medidos ---------- */
 
@@ -421,6 +425,16 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .tela[data-aperto] .opcoes { gap: 0; line-height: 1.15; }
 .tela[data-aperto] .equipes-status { gap: 6px 1.5vw; }
 .tela[data-aperto] .equipe-status { line-height: 1.08; padding-top: .15em; padding-bottom: .15em; }
+/* O segundo aperto (telao.js, apertarDecisao; revisão de 06/10): online, em
+   1280×720 com a faixa de entrada, a segunda fileira de equipes ficava 39 px
+   embaixo da faixa. O andamento sobe para a linha do nome ("Laranja 2 de 3"),
+   sem a palavra "decidiram"; onde não couber, quebra como antes. Com a
+   margem da célula e os vãos um pouco menores, "3 Verde-azulado 2 de 2" cabe
+   numa linha em 1280 de largura (não cabia por ~10 px). */
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] { gap: calc(var(--espaco) * .3); }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .equipe-status { gap: .1em .3em; padding-left: .4em; padding-right: .4em; }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .equipe-andamento { flex-basis: auto; }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .andamento-palavra { display: none; }
 
 /* ---------- Sorteio e placar: linhas alinhadas com o gráfico ---------- */
 
@@ -697,6 +711,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* ---------- Fim ---------- */
 
 .placar-fim { margin-top: auto; }
+/* G1 (teste do Kleber de 06/10: telas complementares menos poluídas): em duas
+   colunas, "Equipe Verde-azulado" quebrava em três linhas em 1024×768 ao lado
+   do "devendo R$ 3.791". Uma coluna só, com o nome inteiro numa linha e o
+   valor perto dele; a tela do Fim tem altura de sobra para as seis linhas. */
+.placar-fim .resumido-lista { grid-template-columns: minmax(0, 1fr); max-width: 30em; }
+.placar-fim .equipe-nome { white-space: nowrap; }
 
 /* ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
  * O telão mostra um passo que já passou, só na projeção (telao.js,

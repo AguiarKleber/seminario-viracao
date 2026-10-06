@@ -306,12 +306,16 @@
   // chamada pela cor, "Equipe Laranja", com a forma e o número na frente, em
   // toda tela (a formação inclusive). curto: só a cor ("Laranja"), na tabela
   // do caminho de cada equipe, onde a coluna já se chama "Equipe".
+  // A cor vai num pedaço inteiro (.equipe-cor, sem quebra): numa coluna
+  // estreita, o rótulo quebra entre "Equipe" e a cor, e não no hífen
+  // ("Equipe Verde- / azulado" na formação das equipes em 1024×768, revisão
+  // de 06/10).
   function rotuloEquipe(id, classe, { cor = false, curto = false } = {}) {
     const equipe = app.config.equipes[id];
     const rotulo = G().rotuloEquipe(equipe, numeroEquipe(id), { classe });
     if (simples()) {
       const nome = rotulo.querySelector('.equipe-nome');
-      if (nome && !curto) nome.textContent = `Equipe ${equipe.nome}`;
+      if (nome) D().acrescentar(D().limpar(nome), [curto ? null : 'Equipe ', D().el('span', { classe: 'equipe-cor', texto: equipe.nome })]);
       return rotulo;
     }
     const persona = personaDaEquipe(id);
@@ -2298,7 +2302,9 @@
       filhos.push(el('span', { classe: 'equipe-andamento', texto: 'decidida pelo apresentador' }));
     } else {
       const { decidiram, total } = contagemDecisoes(e, eq);
-      filhos.push(el('span', { classe: 'equipe-andamento' }, [el('b', { texto: `${decidiram} de ${total}` }), ' decidiram']));
+      // "decidiram" num span próprio: o segundo aperto (apertarDecisao) o
+      // esconde para o andamento caber na linha do nome.
+      filhos.push(el('span', { classe: 'equipe-andamento' }, [el('b', { texto: `${decidiram} de ${total}` }), el('span', { classe: 'andamento-palavra', texto: ' decidiram' })]));
     }
     return el('div', { classe: ['equipe-status', equipeDecidiu(e, eq) ? 'decidida' : null], dados: { equipe: eq } }, filhos);
   }
@@ -2345,8 +2351,18 @@
   // tela transborda (medida depois do desenho), a situação, as opções e as
   // células se aproximam (data-aperto): entrelinhas e vãos menores, com a
   // letra nos 28 px.
+  // O segundo aperto (revisão de 06/10): online, em 1280×720 com a faixa de
+  // entrada aberta (projetor 16:9 de 720p, ou notebook 1920×1080 com escala de
+  // 150%), o primeiro não bastava. Com a mini-história, cada opção vai a duas
+  // linhas, e a segunda fileira de equipes ficava 39 px embaixo da faixa, com
+  // o "N de M decidiram" que diz ao apresentador quando encerrar. Só então o
+  // andamento sobe para a linha do nome ("Laranja 2 de 3"), sem a palavra
+  // "decidiram"; onde não couber, quebra como antes. O QR da faixa não
+  // encolhe: com 72 px, não era lido do fundo da sala (revisão da F2).
   function apertarDecisao(s) {
-    if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1';
+    const transborda = () => s.scrollHeight > s.clientHeight + 1;
+    if (transborda()) s.dataset.aperto = '1';
+    if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
   }
 
   function telaProrrogacao(s, e) {
