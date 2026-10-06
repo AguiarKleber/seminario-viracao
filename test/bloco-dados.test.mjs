@@ -2,7 +2,10 @@
 // com o contexto do tópico, até 3 números (itens) e a fonte, e a mini-história
 // de cada opção na decisão do telão. O validador conhece os três campos novos
 // do passo "bloco"; o config.json do dia os usa em todos os blocos de dados e
-// no Fim, e não tem mais a etapa "Entrevistas".
+// no Fim, e não tem mais a etapa "Entrevistas". D-080 (06/10 à tarde): o teto
+// de itens passa a 4, para os quatro caminhos; "Caminhos" e a "Conversa em
+// grupos" ganham itens, e um bloco de dados das outras plataformas entra
+// antes do Fim.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -61,14 +64,14 @@ test('bloco sem os campos novos: o normalizado e o hash ficam como antes', () =>
   assert.equal(hash(r.config), hash(vazio.config));
 });
 
-test('bloco: itens que não são lista de textos é erro; vazio é erro; mais de 3 é aviso', () => {
+test('bloco: itens que não são lista de textos é erro; vazio é erro; mais de 4 é aviso (D-080)', () => {
   // Arrange
   const casos = [
-    [{ itens: 'um texto só' }, '.itens', /lista de 1 a 3 textos/, 'erros'],
-    [{ itens: [] }, '.itens', /lista de 1 a 3 textos/, 'erros'],
+    [{ itens: 'um texto só' }, '.itens', /lista de 1 a 4 textos/, 'erros'],
+    [{ itens: [] }, '.itens', /lista de 1 a 4 textos/, 'erros'],
     [{ itens: ['ok', 42] }, '.itens[1]', /precisa ser texto/, 'erros'],
     [{ itens: ['ok', '  '] }, '.itens[1]', /texto vazio/, 'erros'],
-    [{ itens: ['1', '2', '3', '4'] }, '.itens', /4 itens \(mais de 3\)/, 'avisos'],
+    [{ itens: ['1', '2', '3', '4', '5'] }, '.itens', /5 itens \(mais de 4\)/, 'avisos'],
   ];
 
   for (const [campos, sufixo, re, onde] of casos) {
@@ -140,6 +143,27 @@ test('config.json do dia: depois de cada bimestre, um bloco de dados com context
       assert.ok(p.fonte, `${nome}/${p.titulo}: a fonte`);
     }
   }
+});
+
+// D-080 (prints 3 e 4 do Kleber, 06/10 à tarde): "Caminhos" e a "Conversa em
+// grupos" eram só o título e uma frase; agora mostram os itens, como os blocos
+// de dados. Caminhos: um item por caminho, com um dado e a fonte; a conversa:
+// os passos da atividade.
+test('bloco: 4 itens é o teto, sem aviso (D-080)', () => {
+  const { bruto } = comBloco({ itens: ['1', '2', '3', '4'] });
+  const r = validar(bruto);
+  assert.deepEqual(r.erros, [], listar(r.erros));
+  assert.deepEqual(r.avisos, [], listar(r.avisos));
+});
+
+test('config.json do dia: "Caminhos" com um item por caminho e a fonte, e a "Conversa em grupos" com os passos (120 min)', () => {
+  const passos = dia.config.roteiros['120min'];
+  const caminhos = passos.find((p) => /^Caminhos:/.test(p.titulo || ''));
+  assert.deepEqual(caminhos.itens.map((i) => i.split(':')[0]), ['Regulação', 'Proteção', 'Organização', 'Educação']);
+  assert.ok(caminhos.contexto && caminhos.fonte, 'Caminhos: o contexto e a fonte');
+  const conversa = passos.find((p) => /^Conversa em grupos/.test(p.titulo || ''));
+  assert.equal(conversa.itens.length, 3, 'a conversa: três passos');
+  assert.ok(conversa.contexto, 'a conversa: o contexto');
 });
 
 test('config.json do dia: cada opção tem a mini-história, de até 120 letras (cabe em duas linhas na decisão do telão)', () => {

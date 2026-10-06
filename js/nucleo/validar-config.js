@@ -58,9 +58,13 @@
   // aperta e depois rola diante da turma. Passar deles é aviso, e não erro: um
   // texto longo só aperta a tela, não muda o jogo. A fonte chega a 200 porque
   // o nome do informativo do IBGE é longo, e abreviá-lo perderia a referência.
+  // D-080 (pedido do Kleber de 06/10 à tarde): "Caminhos" mostra um item por
+  // caminho, e são quatro. Medido com a faixa de entrada: 4 itens de até 131
+  // letras, um contexto de 93 e uma fonte de 196 cabem em 1024×768 e 1280×720
+  // com o primeiro aperto do bloco, e o teto de itens passou de 3 a 4.
   const MAX_CONTEXTO_BLOCO = 220;
   const MAX_ITEM_BLOCO = 140;
-  const MAX_ITENS_BLOCO = 3;
+  const MAX_ITENS_BLOCO = 4;
   const MAX_FONTE_BLOCO = 200;
   const CAMPOS_DO_BLOCO = ['contexto', 'itens', 'fonte'];
   // D-079: no formato simples, a mini-história da opção (a narrativa) vai na

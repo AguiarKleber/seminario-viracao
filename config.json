@@ -1438,13 +1438,25 @@
         "tipo": "bloco",
         "titulo": "Conversa em grupos: o mapa do patrão",
         "alvoSeg": 600,
-        "contexto": "Em grupos: em cada bimestre, quem decidiu o preço, a regra e a punição? Marquem no mapa quem manda no trabalho do Jonas."
+        "contexto": "Cada equipe volta ao ano do Jonas e responde: quem manda no trabalho dele?",
+        "itens": [
+          "Repassem os seis bimestres: o que a equipe escolheu e o que aconteceu com o Jonas.",
+          "Em cada bimestre, quem decidiu o preço, a regra e a punição: o Jonas, o app, o cliente ou o governo?",
+          "Marquem no mapa quem manda em quê, e uma pessoa por equipe conta a resposta à turma."
+        ]
       },
       {
         "tipo": "bloco",
         "titulo": "Caminhos: regulação, proteção, organização e educação",
         "alvoSeg": 510,
-        "contexto": "Quatro caminhos em debate: a lei dos apps (regulação), INSS e seguro (proteção), breque e associação (organização) e educação."
+        "contexto": "Quatro caminhos em debate para quem trabalha por app. Qual deles teria mudado o ano do Jonas?",
+        "itens": [
+          "Regulação: a lei dos apps (PLP 152/2025) fixaria R$ 8,50 por entrega; saiu de pauta em 14/04/2026, sem nova data.",
+          "Proteção: só 19,4% dos motoboys de app contribuem para o INSS; o seguro do iFood só paga a partir de 7 dias parado.",
+          "Organização: em julho de 2026, com o apoio do sindicato do RS, a Justiça mandou a Uber desbloquear dois motoristas.",
+          "Educação: quem trabalha por app e tem diploma ganha 20,2% menos que os outros diplomados; muitos fazem trabalho abaixo da formação."
+        ],
+        "fonte": "O Tempo (08/04/2026); Mobile Time (14/04/2026); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; iFood, seguro de acidentes (2026); CUT (23/07/2026)"
       },
       {
         "tipo": "enquete",
