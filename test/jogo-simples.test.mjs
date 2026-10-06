@@ -2,7 +2,7 @@
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
 // motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
 // igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
-// encadeadas, e as 15.625 combinações (260 fecham o ano, todas com ao menos uma opção puxada; D-079).
+// encadeadas, e as 15.625 combinações (281 fecham o ano, todas com ao menos uma opção puxada; D-079 e D-080).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -90,6 +90,30 @@ test('config.json do dia: formato simples, o Jonas nas 6 equipes, 6 bimestres ×
   assert.deepEqual(cfg.ordem.rodadas.map((rid) => cfg.rodadas[rid].padrao), ['c', 'd', 'd', 'c', 'a', 'd']);
 });
 
+// D-080 (pedido do Kleber de 06/10 à tarde): a linha "Jonas com carteira assinada" saiu do
+// placar ("não agrega em nada"). Era a referência clt, −R$ 11.947 na conta de 06/10.
+test('config.json do dia: o placar sem referência (sem a linha "Jonas com carteira assinada")', () => {
+  const cfg = configDoDia().config;
+  assert.deepEqual(cfg.ordem.referencias, []);
+  assert.deepEqual(cfg.referencias, {});
+});
+
+// Pedido do Kleber de 06/10 à tarde (nota depois da D-079): o nome de cada equipe
+// em uma palavra. Azul-céu, Verde-azulado, Vermelhão e Roxo-rosado viraram
+// Celeste, Verde, Vermelho e Rosa; a cor, a forma e a ordem ficaram como estavam.
+test('config.json do dia: cada equipe com o nome da cor em uma palavra, e a cor e a forma de antes', () => {
+  const cfg = configDoDia().config;
+  const equipes = cfg.ordem.equipes.map((eq) => [eq, cfg.equipes[eq].nome, cfg.equipes[eq].cor, cfg.equipes[eq].forma]);
+  assert.deepEqual(equipes, [
+    ['e1', 'Laranja', '#E69F00', 'circulo'],
+    ['e2', 'Celeste', '#56B4E9', 'triangulo'],
+    ['e3', 'Verde', '#009E73', 'quadrado'],
+    ['e4', 'Azul', '#0072B2', 'losango'],
+    ['e5', 'Vermelho', '#D55E00', 'estrela'],
+    ['e6', 'Rosa', '#CC79A7', 'cruz'],
+  ]);
+});
+
 // Só no 1º bimestre o saldo muda exatamente o valor da tela: dali em diante, com a
 // família passada do limite do cheque especial, o que falta atrasa conta com multa
 // de 8%, e a diferença vai de −R$ 99 a +R$ 83 (revisão de 06/10).
@@ -109,7 +133,7 @@ test('config.json do dia: as costas travam na segunda puxada seguida (−R$ 1.23
   const motivo = (a) => H.consequenciasDaRodada([{ equipeId: 'e1', deAntes: a.deAntes }]);
   // A (12 h no sol) e B (dois apps) seguidas: as costas travam em mar–abr.
   const puxadas = jogar(cfg, 'ABDCAD').resultados;
-  assert.deepEqual(motivo(puxadas[1]), [{ motivo: 'as costas travaram (2 puxadas seguidas)', valor: -1230, equipes: ['e1'] }]);
+  assert.deepEqual(motivo(puxadas[1]), [{ motivo: 'as costas travaram (2 bimestres puxados seguidos)', valor: -1230, equipes: ['e1'] }]);
   // A e depois D (aceitar até entrega ruim): nada.
   assert.deepEqual(motivo(jogar(cfg, 'ADDCAD').resultados[1]), []);
   // As seis puxadas (A, B, C, A, D, B): as costas travam em todo bimestre depois do primeiro.
@@ -130,18 +154,18 @@ test('config.json do dia: as consequências encadeadas (o IPVA já pago, a parce
 
 // D-079 (06/10, de manhã): o pior caso tinha de ficar abaixo de R$ 7.000 de dívida (era
 // R$ 10.906). A casa foi recontada e o bloqueio passou a 5 dias; com isso, 260 combinações
-// fecham o ano, e nenhuma delas sem ao menos uma opção puxada.
-test('config.json do dia: das 15.625 combinações, 260 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
+// fechavam o ano, e nenhuma delas sem ao menos uma opção puxada. D-080 (06/10, à tarde):
+// "Presente para a filha" (−R$ 170) entra no lugar de "Temporário com carteira"
+// (−R$ 1.230) em nov–dez E; 281 fecham, e a pior passa de DAECCE (−R$ 6.783) a DAECCC.
+test('config.json do dia: das 15.625 combinações, 281 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
   const cfg = configDoDia().config;
   const c = M.enumerarCombinacoes(cfg, { equipeId: 'e1', rodadas: cfg.ordem.rodadas });
   assert.equal(c.total, 15625);
-  assert.equal(c.fecham, 260);
+  assert.equal(c.fecham, 281);
   assert.equal(c.melhor.opcoes.map((o, k) => 'ABCDE'[cfg.rodadas[cfg.ordem.rodadas[k]].ordemOpcoes.indexOf(o)]).join(''), 'ADCEDA');
   assert.equal(Math.round(c.melhor.valor), 1714);
-  assert.equal(Math.round(c.pior.valor), -6783);
+  assert.equal(c.pior.opcoes.map((o, k) => 'ABCDE'[cfg.rodadas[cfg.ordem.rodadas[k]].ordemOpcoes.indexOf(o)]).join(''), 'DAECCC');
+  assert.equal(Math.round(c.pior.valor), -6135);
   assert.ok(c.pior.valor > -7000, 'o pior caso deve menos de R$ 7.000 (pedido do Kleber, D-079)');
   assert.equal(jogar(cfg, 'CDDCAD').final, -3291);
-  // A linha "Jonas com carteira assinada" do placar (referencias.clt), refeita no motor em 06/10
-  // com a casa recontada da D-079 (antes, −R$ 15.498).
-  assert.equal(cfg.referencias.clt.renda, -11947);
 });

@@ -93,9 +93,9 @@ test('a frase da proteção, com o limite: o saldo evitado e a comida que ela co
 
   // Assert
   assert.equal(p.evitouMesa, 300);
-  assert.equal(H.fraseDaProtecao(p, moeda), 'A proteção pagou R$ 1000: auxílio do INSS. Sem ela, teria faltado R$ 770 a mais, e R$ 300 de comida não teria dado para comprar.');
+  assert.equal(H.fraseDaProtecao(p, moeda), 'A proteção pagou R$ 1000: auxílio do INSS. Sem ela, teria faltado R$ 770 a mais, e não teria dado para comprar R$ 300 de comida.');
   assert.equal(q.evitou, 0, 'gravado sem protecaoEvitou e com a mesa: não evitou nada no saldo');
-  assert.equal(H.fraseDaProtecao(q, moeda), 'A proteção pagou R$ 300: auxílio do INSS. Sem ela, R$ 300 de comida não teria dado para comprar.');
+  assert.equal(H.fraseDaProtecao(q, moeda), 'A proteção pagou R$ 300: auxílio do INSS. Sem ela, não teria dado para comprar R$ 300 de comida.');
   assert.equal(Object.hasOwn(H.protecaoDoResultado({ mes: { protecao: 600, saldoMes: -1 } }), 'evitouMesa'), false, 'sala de antes: como era');
 });
 
@@ -139,7 +139,7 @@ test('o caso da revisão: a Daiane em mar–abr depois de fratura com MEI, no co
   assert.ok(com.protecaoEvitou < com.mes.protecao, `evitou ${com.protecaoEvitou} no saldo, menos que os ${com.mes.protecao} pagos`);
   assert.equal(com.protecaoEvitouMesa, sem.mes.faltouNaMesa - com.mes.faltouNaMesa);
   const frase = H.fraseDaProtecao(H.protecaoDoResultado({ mes: com.mes, protecaoEvitou: com.protecaoEvitou, protecaoEvitouMesa: com.protecaoEvitouMesa, protecaoItens: com.protecaoItens }), moeda);
-  assert.ok(frase.includes(`teria faltado R$ ${com.protecaoEvitou} a mais, e R$ ${com.protecaoEvitouMesa} de comida`), frase);
+  assert.ok(frase.includes(`teria faltado R$ ${com.protecaoEvitou} a mais, e não teria dado para comprar R$ ${com.protecaoEvitouMesa} de comida`), frase);
 });
 
 // ---------------------------------------------- o que não atrasa: fica sem
@@ -174,7 +174,7 @@ test('semAtraso: o item que não atrasa fica sem comprar, fora das contas atrasa
   linhasFecham(a);
   assert.deepEqual(a.linhas.filter((l) => l.origem === 'ficouSem').map((l) => [l.indicador, l.valor]), [['renda', 100]]);
   assert.equal(Object.hasOwn(aplicar(minimo(), estado).mes, 'ficouSem'), false, 'sem item marcado, o mês fica como antes');
-  assert.equal(H.fraseDoLimite(a.mes, moeda), 'O limite do cheque especial acabou: R$ 700 de contas ficaram atrasadas (multa de R$ 70), a casa ficou sem R$ 100 do que não se paga depois e R$ 300 de comida não deu para comprar.');
+  assert.equal(H.fraseDoLimite(a.mes, moeda), 'O limite do cheque especial acabou: R$ 700 de contas ficaram atrasadas (multa de R$ 70), a casa ficou sem R$ 100 do que não se paga depois e não deu para comprar R$ 300 de comida.');
 });
 
 test('validador: semAtraso é true ou false, e um item não é comida e semAtraso ao mesmo tempo', () => {

@@ -404,9 +404,9 @@ test('história e celular: os campos da D-066 e a frase da D-067', () => {
   assert.deepEqual(protecao.acimaDoTrabalho, { trabalhoComum: 1400 });
   assert.deepEqual(resultado.dados.protecaoDoMes.acimaDoTrabalho, { trabalhoComum: 1400 });
   assert.equal(H.fraseAcimaDoTrabalho(protecao, 'Bruna', moeda, H.periodo(conteudo)),
-    'Auxílio do INSS (45 dias): R$ 2431, mais do que Bruna ganhava trabalhando num bimestre comum (R$ 1400).');
+    'Auxílio do INSS (45 dias): R$ 2431, mais do que Bruna ganhava trabalhando em um bimestre comum (R$ 1400).');
   assert.equal(H.fraseAcimaDoTrabalho(H.protecaoDoResultado({ ...res, protecaoAcimaDoTrabalho: undefined }), 'Bruna', moeda), null);
-  assert.equal(H.fraseDoLimite(mes, moeda), 'O limite do cheque especial acabou: R$ 1200 de contas ficaram atrasadas (multa de R$ 120) e R$ 400 de comida não deu para comprar.');
+  assert.equal(H.fraseDoLimite(mes, moeda), 'O limite do cheque especial acabou: R$ 1200 de contas ficaram atrasadas (multa de R$ 120) e não deu para comprar R$ 400 de comida.');
   assert.equal(H.fraseDoLimite({ ...mes, atrasou: 0, faltouNaMesa: 0, contasPagas: 300 }, moeda), 'Pagou R$ 300 de contas atrasadas.');
   assert.equal(H.fraseDoLimite({ saldoMes: 1 }, moeda), null, 'sala sem o limite');
   assert.equal(conteudo.personas.motoboy.basico.itens.find((i) => i.comida).rotulo, 'comida');

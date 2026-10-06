@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '9';
+  const VERSAO_APP = '10';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -1980,9 +1980,11 @@
 
   // D-079 (teste do Kleber de 06/10, prints 3, 4 e 7): o bloco de dados diz o
   // que é o tópico (contexto), até 3 números (itens) e de onde vêm (fonte),
-  // tudo do config. A tela só com isso: a trilha do seminário e o placar
-  // resumido saíam juntos e poluíam (pedido G1; no print 3, "Dados: gestão por
-  // algoritmo" era só o título e a trilha, sem dado nenhum). O "Mapa do
+  // tudo do config. Desde a D-080, "Caminhos" (4 itens, um por caminho) e a
+  // "Conversa em grupos" (os passos da atividade) usam a mesma tela. A tela só
+  // com isso: a trilha do seminário e o placar resumido saíam juntos e
+  // poluíam (pedido G1; no print 3, "Dados: gestão por algoritmo" era só o
+  // título e a trilha, sem dado nenhum). O "Mapa do
   // seminário" continua com a linha por extenso, que é o conteúdo dele, depois
   // do contexto. O bloco sem contexto nem itens (um config de antes) fica como
   // era, com a trilha e o placar resumido.
@@ -2045,7 +2047,7 @@
     const eq = app.config.equipes[id];
     if (!eq) return;
     if (abertas.has(id)) {
-      if (eq.obrigatoria) return avisar(`${eq.nome} sempre joga (equipe obrigatória).`);
+      if (eq.obrigatoria) return avisar(`A Equipe ${eq.nome} sempre joga (é obrigatória).`);
       if (abertas.size <= min) return avisar(`O mínimo é de ${min} equipes.`);
       abertas.delete(id);
     } else {
@@ -2134,15 +2136,14 @@
   }
 
   // Formato simples: com um personagem só, a etapa das personas vira "Conheça
-  // o Jonas": quem é, a casa, a renda, o básico e quanto falta num mês comum
-  // (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
+  // o Jonas": quem é, a casa, a renda, o básico e se a conta de um mês comum
+  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
   // básico item a item vai numa linha corrida (o celular tem as fontes).
   function telaConheca(s, e) {
     const { el } = D();
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
     const p = personaDaEquipe(primeira);
     const mes = N().motor.mesComum(app.config, primeira);
-    const { meses, noPeriodo } = periodo();
     s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
     const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
@@ -2159,13 +2160,15 @@
         pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
       ]),
       itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      // Sem o valor (pedido do Kleber de 06/10 à tarde, com o print da versão
+      // 9): era "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
+      // bimestre)". A frase diz só que a conta não fecha; os números ficam nas
+      // linhas de cima e no data-saldo-mes-comum, que o e2e confere.
       el('p', {
         classe: ['persona-mes', 'conheca-mes'], dados: { saldoMesComum: String(mes.saldoMes), sinal: sinalDoSaldo(mes.saldoMes) },
-      }, [
-        fecha ? 'Num mês comum, a conta fecha: sobram ' : 'Num mês comum, a conta não fecha: faltam ',
-        el('b', { texto: F().moeda(Math.abs(mes.saldoMes)) }),
-        meses > 1 ? ` (${F().moeda(Math.abs(mes.saldoMes) * meses)} ${noPeriodo})` : null,
-      ]),
+      }, fecha
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
   }
 
@@ -2848,6 +2851,16 @@
       const saldo = Math.round(mes.saldoMes) + 0;
       const familia = N().historia.dinheiroDaFamilia(r.depois) ?? { situacao: 'tem', valor: 0 };
       const rotulo = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo || r.decisao;
+      // D-078: a consequência de uma escolha de antes (as costas que travam, a
+      // moto que quebra, o IPVA que já estava pago), com o motivo e o valor.
+      // Sem ela, o saldo de uma equipe caía R$ 1.230 e ninguém sabia por quê.
+      // D-080 (print 2 do Kleber, 06/10 à tarde): era uma lista embaixo das
+      // faixas ("Parcela da moto atrasada, com multa e juros −R$ 500:
+      // Laranja"), e a sala tinha de achar a equipe pelo nome; agora é uma
+      // observação na faixa da própria equipe, embaixo da opção, em letra
+      // secundária. O motivo é o rótulo até os dois-pontos
+      // (historia.consequenciasDaRodada).
+      const consequencias = N().historia.consequenciasDaRodada([{ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) }]);
       grade.appendChild(el('article', {
         classe: 'resultado-simples', role: 'listitem',
         dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
@@ -2862,38 +2875,35 @@
           el('p', { classe: 'resultado-saldo-rotulo', texto: 'a família' }),
           el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
         ]),
+        consequencias.length > 0 ? el('p', {
+          classe: 'simples-obs',
+          dados: { motivos: consequencias.map((g) => g.motivo).join(' | '), valores: consequencias.map((g) => g.valor).join(' ') },
+        }, consequencias.map((g, i) => [
+          i > 0 ? ' · ' : null,
+          `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `,
+          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+        ])) : null,
       ]));
     }
     s.appendChild(grade);
-    // D-078: a consequência de uma escolha de antes (as costas que travam, a
-    // moto que quebra, o IPVA que já estava pago), com o motivo, embaixo das
-    // faixas: uma linha por motivo, com as equipes juntas
-    // (historia.consequenciasDaRodada). Sem ela, o saldo de uma equipe caía
-    // R$ 1.230 e ninguém sabia por quê. Bimestre sem consequência, sem a lista.
-    const consequencias = N().historia.consequenciasDaRodada(itens.map(({ eq, r }) => ({ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) })));
-    if (consequencias.length > 0) {
-      const nomeDa = (eq) => app.config.equipes[eq]?.nome || eq;
-      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas de antes' }, consequencias.map((g) => el('li', {
-        dados: { motivo: g.motivo, valor: String(g.valor), equipes: g.equipes.join(' ') },
-      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${g.equipes.map(nomeDa).join(', ')}`]))));
-    }
     // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
     // transborda (medido depois do desenho), as faixas se aproximam; a letra
-    // fica nos 28 px. Com as linhas das consequências (D-078), um terceiro
-    // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
-    // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
-    // celular de cada equipe): no teste com a faixa de entrada, as linhas das
-    // consequências ficavam por cima da última equipe. O terceiro e o quarto
-    // valem também sem consequência (revisão de 06/10): com a faixa de entrada
-    // em 1024×768, seis opções de duas linhas ("Rodar também no segundo app",
-    // na fixture) deixavam a sexta equipe embaixo da faixa, e o evento seguia
-    // na tela.
+    // fica nos 28 px. Com as consequências (D-078), um terceiro aperto tira a
+    // frase do evento do mês (o título dele fica) e, se ainda assim as faixas
+    // não couberem, um quarto tira o evento inteiro (ele está no celular de
+    // cada equipe). O terceiro e o quarto valem também sem consequência
+    // (revisão de 06/10): com a faixa de entrada em 1024×768, seis opções de
+    // duas linhas ("Rodar também no segundo app", na fixture) deixavam a sexta
+    // equipe embaixo da faixa, e o evento seguia na tela. Com a observação na
+    // faixa da equipe (D-080), cada equipe atingida ganha uma linha, e em
+    // mar–abr as seis podem ter consequência ao mesmo tempo.
     app.depoisDeMedir.push(() => {
       const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
       if (transborda()) s.dataset.aperto = '1';
       if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
       if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
+      if (s.dataset.aperto === '4' && transborda()) s.dataset.aperto = '5';
     });
   }
 
@@ -3005,6 +3015,9 @@
 
   function tituloSaldo(naoFecharam, total) {
     if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
+    // Revisão textual de 06/10: quando nenhuma fecha (o caso mais provável no
+    // jogo simples), "6 de 6 equipes não fecharam as contas" lia mal em voz alta.
+    if (naoFecharam === total) return total === 1 ? 'A equipe não fechou as contas' : `Nenhuma das ${total} equipes fechou as contas`;
     return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
   }
 
@@ -3508,7 +3521,7 @@
     const { el } = D();
     const n = hist.reduce((t, x) => t + x, 0);
     return el('div', { classe: 'painel-distribuicao' }, [
-      el('p', { classe: 'painel-titulo' }, [G().amostra(estilo === 'antes' ? 'antes' : 'depois'), ` ${titulo} · n = ${n}`]),
+      el('p', { classe: 'painel-titulo' }, [G().amostra(estilo === 'antes' ? 'antes' : 'depois'), ` ${titulo} · ${n} ${n === 1 ? 'resposta' : 'respostas'}`]),
       grafico('grafico-histograma', (largura, altura, fonte) => G().histograma({ largura, altura, fonte, series: [{ hist, estilo }] })),
       G().rotulosEscala(['', '', '', '', ''], { soNumeros: true }),
     ]);
@@ -3531,8 +3544,15 @@
     if (pc.caso === 'pareado') {
       const tr = depois.transicao[a];
       const soUmaVez = (tr.soAntes || 0) + (tr.soDepois || 0);
-      const frase = `Dos ${tr.pares} que responderam as duas vezes: ${tr.mais} foram para mais concordância, ${tr.igual} ficaram, ${tr.menos} foram para menos.`;
-      s.appendChild(el('p', { classe: 'frase-comparativo' }, [frase, soUmaVez > 0 ? el('span', { classe: 'texto-secundario', texto: ` Mais ${soUmaVez} ${soUmaVez === 1 ? 'respondeu' : 'responderam'} só uma vez.` }) : null]));
+      // Revisão textual de 06/10: era "Dos 12 que responderam as duas vezes: 1
+      // foram para mais concordância, 5 ficaram, 6 foram para menos." (sem
+      // concordância com 1, e o "ficaram" solto). Os pares são pelo menos
+      // minPareados (podeComparar; 5 no config do dia), mas um config com 1
+      // também tem de sair certo.
+      const passaram = (n, sentido) => `${n} ${n === 1 ? 'passou' : 'passaram'} a concordar ${sentido}`;
+      const quem = tr.pares === 1 ? 'Da 1 pessoa que respondeu antes e depois' : `Das ${tr.pares} pessoas que responderam antes e depois`;
+      const frase = `${quem}: ${passaram(tr.mais, 'mais')}, ${tr.igual} não ${tr.igual === 1 ? 'mudou' : 'mudaram'} e ${passaram(tr.menos, 'menos')}.`;
+      s.appendChild(el('p', { classe: 'frase-comparativo' }, [frase, soUmaVez > 0 ? el('span', { classe: 'texto-secundario', texto: soUmaVez === 1 ? ' Outra pessoa respondeu só uma vez.' : ` Outras ${soUmaVez} pessoas responderam só uma vez.` }) : null]));
       s.appendChild(el('p', { classe: 'legenda' }, [G().amostra('antes'), ' antes ', G().amostra('depois'), ' depois']));
       const hAntes = somaLinhas(tr.matriz);
       const hDepois = somaColunas(tr.matriz);

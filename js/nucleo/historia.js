@@ -306,7 +306,7 @@
 
   // D-067: a frase que explica por que a proteção rendeu mais que o trabalho.
   // "Auxílio do INSS (45 dias): R$ 2.431, mais do que Bruna ganhava trabalhando
-  // num bimestre comum (R$ 1.400)." O valor do auxílio é fixo pela lei (o piso
+  // em um bimestre comum (R$ 1.400)." O valor do auxílio é fixo pela lei (o piso
   // de um salário mínimo), e a renda do app fica abaixo dele: é o dado real que
   // vira debate, e sem a frase a sala lia "o acidente compensa". O nome do que
   // pagou vem dos itens da proteção (o config), porque o núcleo não escreve
@@ -319,13 +319,13 @@
     const quem = typeof nome === 'string' && nome.trim() ? nome : 'a família';
     const periodoComum = per && typeof per.nome === 'string' ? per.nome : 'mês';
     const inicio = oQue.charAt(0).toUpperCase() + oQue.slice(1);
-    return `${inicio}: ${moeda(protecao.pagou)}, mais do que ${quem} ganhava trabalhando num ${periodoComum} comum (${moeda(protecao.acimaDoTrabalho.trabalhoComum)}).`;
+    return `${inicio}: ${moeda(protecao.pagou)}, mais do que ${quem} ganhava trabalhando em um ${periodoComum} comum (${moeda(protecao.acimaDoTrabalho.trabalhoComum)}).`;
   }
 
   // D-066: a frase do mês em que o dinheiro e o limite do cheque especial
   // acabaram, a partir do mes gravado. "O limite do cheque especial acabou: R$ X
-  // de contas ficaram atrasadas (multa de R$ M) e R$ Y de comida não deu para
-  // comprar." e, se pagou atrasado, "Pagou R$ Z de contas atrasadas." null
+  // de contas ficaram atrasadas (multa de R$ M) e não deu para comprar R$ Y de
+  // comida." e, se pagou atrasado, "Pagou R$ Z de contas atrasadas." null
   // quando nada disso aconteceu, ou em sala sem o limite (mes sem os campos).
   function fraseDoLimite(mes, moeda) {
     if (!mes || !Number.isFinite(mes.contasAtrasadas)) return null;
@@ -336,7 +336,9 @@
       // Revisão da F6c: o que não atrasa (gás, ônibus, remédio), que a casa
       // ficou sem. Os nomes estão no config; a frase diz o que eles têm em comum.
       if (mes.ficouSem > 0) corte.push(`a casa ficou sem ${moeda(mes.ficouSem)} do que não se paga depois`);
-      if (mes.faltouNaMesa > 0) corte.push(`${moeda(mes.faltouNaMesa)} de comida não deu para comprar`);
+      // Na ordem direta (revisão textual de 06/10): "R$ Y de comida não deu para
+      // comprar" punha a comida no lugar do sujeito.
+      if (mes.faltouNaMesa > 0) corte.push(`não deu para comprar ${moeda(mes.faltouNaMesa)} de comida`);
       const juntos = corte.length > 1 ? `${corte.slice(0, -1).join(', ')} e ${corte.at(-1)}` : corte[0];
       partes.push(`O limite do cheque especial acabou: ${juntos}.`);
     }
@@ -355,8 +357,8 @@
     const nomes = protecao.itens.map((x) => x.rotulo);
     const pagou = `A proteção pagou ${moeda(protecao.pagou)}${nomes.length > 0 ? `: ${nomes.join(' e ')}` : ''}.`;
     // Com o limite (revisão da F6c), parte do que ela pagou comprou a comida
-    // que seria cortada: "e R$ Y de comida não teria dado para comprar".
-    const mesa = protecao.evitouMesa > 0 ? `${moeda(protecao.evitouMesa)} de comida não teria dado para comprar` : null;
+    // que seria cortada: "e não teria dado para comprar R$ Y de comida".
+    const mesa = protecao.evitouMesa > 0 ? `não teria dado para comprar ${moeda(protecao.evitouMesa)} de comida` : null;
     if (protecao.saldoMes === null) return pagou;
     if (!(protecao.evitou > 0)) return mesa ? `${pagou} Sem ela, ${mesa}.` : pagou;
     const semEla = protecao.saldoMes - protecao.evitou;

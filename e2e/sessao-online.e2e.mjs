@@ -440,7 +440,7 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
     abertoEm: Date.now(), prazo: Date.now() + 120_000 + V.alunoLogica.FOLGA_DA_REGRA_MS,
   });
   await esperarTela(aluno, 'decisao');
-  assert.equal(await aluno.p.textContent('.pressao .basico-linha'), `O básico da família custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), 2 * basicoMes)} no bimestre`, 'na decisão, o básico do bimestre');
+  assert.equal(await aluno.p.textContent('.pressao .basico-linha'), `O básico da casa custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), 2 * basicoMes)} no bimestre`, 'na decisão, o básico do bimestre');
   await conferirCelular(aluno, 'bimestres-decisao');
   // O resultado do bimestre: "Saldo do bimestre", "a conta do bimestre" e o
   // básico com "no bimestre" (o dobro do "por mês" da persona).
@@ -451,7 +451,7 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
   assert.equal(await aluno.p.textContent('.saldo-rotulo'), 'Saldo do bimestre');
   assert.equal(await aluno.p.textContent('details[data-recolhido="resultado:r6"] > summary'), 'A conta do bimestre em detalhe');
   const conta = await aluno.p.textContent('.conta-mes .conta-linha');
-  assert.ok(conta.includes(`o básico da família custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), mes.basico)} no bimestre`), `a conta diz "no bimestre" (${conta})`);
+  assert.ok(conta.includes(`o básico da casa custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), mes.basico)} no bimestre`), `a conta diz "no bimestre" (${conta})`);
   await conferirCelular(aluno, 'bimestres-resultado');
   // O resumo por bimestre (D-065) num bloco: "Bimestre · Saldo do bimestre ·
   // Ficou com", 6 linhas com o nome curto de cada uma ("Jan–fev"), o valor com
@@ -708,13 +708,13 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   const nome = config.personas[config.equipes.e1.persona].nome;
   const per = H.periodo(config);
   // A conta de um bimestre com o limite: "o básico custa R$ Y no bimestre (R$ F
-  // de comida não foi comprada)" e "multa e mora das contas atrasadas R$ M". E
+  // de comida não foi comprada)" e "multa e juros das contas atrasadas R$ M". E
   // ela fecha: entrou + proteção − gastos − (básico − comida não comprada) −
   // juros − multa − mora = saldo do bimestre (contratos, seção 3).
   async function trechosDaConta(m) {
     const t = [];
     if (m.faltouNaMesa > 0) t.push(`(${await moeda(m.faltouNaMesa)} de comida não foi comprada)`);
-    if (m.multa + m.mora > 0) t.push(`multa e mora das contas atrasadas ${await moeda(m.multa + m.mora)}`);
+    if (m.multa + m.mora > 0) t.push(`multa e juros das contas atrasadas ${await moeda(m.multa + m.mora)}`);
     return t;
   }
   const fecha = (m) => m.entrou + (m.protecao || 0) - (m.gastos || 0) - m.basico + m.faltouNaMesa - m.juros - m.multa - m.mora;
@@ -723,7 +723,7 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   // núcleo em Node não carrega o formatar.js) e, da tela, a da mora.
   async function fraseDoLimite(m) {
     const partes = [await aluno.p.evaluate((x) => globalThis.Viracao.historia.fraseDoLimite(x, (v) => globalThis.Viracao.formatar.moeda(v)), m)];
-    if (m.mora > 0) partes.push(`Mora de ${await moeda(m.mora)} sobre as contas que já estavam atrasadas.`);
+    if (m.mora > 0) partes.push(`Juros de ${await moeda(m.mora)} sobre as contas que já estavam atrasadas.`);
     return partes.filter(Boolean).join(' ') || null;
   }
 
@@ -762,7 +762,7 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   for (const x of [
     `Dívida total ${await moeda(totalDaTela)}`,
     `Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite · juros de 8% ao mês`,
-    `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e mora de 1% ao mês`,
+    `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e juros de 1% ao mês`,
   ]) assert.ok(lido.divida.texto.includes(x), `placar final: "${x}" em "${lido.divida.texto}"`);
   assert.ok(!lido.divida.texto.includes('Faltou na mesa'), 'o que faltou na mesa não entra na dívida');
   // Sem caixa (o banco no limite), o "faltou" da frase do topo é a própria
@@ -784,9 +784,9 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
     const acima = await aluno.p.evaluate(([p, n, r]) => globalThis.Viracao.historia.fraseAcimaDoTrabalho(p, n, (v) => globalThis.Viracao.formatar.moeda(v), r), [h.protecaoDoMes, nome, per]);
     assert.equal(historia[i].acima, acima, `história, ${h.rodadaId}: a frase da D-067`);
   }
-  const acimaR2 = `Auxílio do INSS (MEI): ${await moeda(6000)}, mais do que ${nome} ganhava trabalhando num bimestre comum (${await moeda(5200)}).`;
+  const acimaR2 = `Auxílio do INSS (MEI): ${await moeda(6000)}, mais do que ${nome} ganhava trabalhando em um bimestre comum (${await moeda(5200)}).`;
   assert.equal(historia[1].acima, acimaR2, 'Mar–abr: a frase da D-067, com o nome da persona e o bimestre comum');
-  assert.equal(historia[3].limite, `O limite do cheque especial acabou: ${await moeda(res('r4').mes.atrasou)} de contas ficaram atrasadas (multa de ${await moeda(res('r4').mes.multa)}) e ${await moeda(res('r4').mes.faltouNaMesa)} de comida não deu para comprar.`);
+  assert.equal(historia[3].limite, `O limite do cheque especial acabou: ${await moeda(res('r4').mes.atrasou)} de contas ficaram atrasadas (multa de ${await moeda(res('r4').mes.multa)}) e não deu para comprar ${await moeda(res('r4').mes.faltouNaMesa)} de comida.`);
 
   // 3. O resultado de cada bimestre que mostra uma das partes novas.
   const estado = await administrador('GET', `salas/${codigo}/estado`);
@@ -868,7 +868,7 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   await irParaResultado('r5');
   t = await lerResultado(aluno, 'r5');
   assert.equal(t.limite.texto, await fraseDoLimite(res('r5').mes));
-  assert.match(t.limite.texto, /Mora de R\$\s[\d.]+ sobre as contas que já estavam atrasadas\.$/);
+  assert.match(t.limite.texto, /Juros de R\$\s[\d.]+ sobre as contas que já estavam atrasadas\.$/);
 
   // 4. A situação num bloco: o último bimestre recolhido traz a mesma conta. O
   // roteiro de 60 min não tem bloco depois do último bimestre; a situação
@@ -1247,7 +1247,7 @@ async function jogar({ site, navegador, vigiar }) {
   const inclui = (texto, trecho) => String(texto).toLocaleLowerCase('pt-BR').includes(String(trecho).toLocaleLowerCase('pt-BR'));
   // O dinheiro formatado pelo próprio celular (o mesmo Viracao.formatar da tela).
   const moedaNa = (c, v) => c.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x), v);
-  // "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y · faltou R$ Z"
+  // "Entrou R$ X · gastos R$ G · o básico da casa custa R$ Y · faltou R$ Z"
   // (D-044, D-052), com os números do mês que o telão gravou em
   // resultados/{r}/{eq}.mes. Os gastos e os juros só aparecem quando existem.
   async function conferirContaDoMes(c, mes, onde) {
@@ -1260,7 +1260,7 @@ async function jogar({ site, navegador, vigiar }) {
     for (const k of ['entrou', 'protecao', 'gastos', 'basico', 'juros', 'saldoMes']) assert.equal(Number(lido[k]), mes[k] ?? 0, `${onde}: ${k} do mês`);
     const trechos = [
       `entrou ${await moedaNa(c, mes.entrou)}`,
-      `o básico da família custa ${await moedaNa(c, mes.basico)}`,
+      `o básico da casa custa ${await moedaNa(c, mes.basico)}`,
       mes.saldoMes < 0 ? `faltou ${await moedaNa(c, -mes.saldoMes)}` : `sobrou ${await moedaNa(c, mes.saldoMes)}`,
     ];
     // D-059: o que a proteção pagou, na linha da conta (fora do "entrou").
@@ -1279,7 +1279,7 @@ async function jogar({ site, navegador, vigiar }) {
       const doMes = [];
       if (mes.faltouNaMesa > 0) doMes.push(`(${await moedaNa(c, mes.faltouNaMesa)} de comida não foi comprada)`);
       if (mes.ficouSem > 0) doMes.push(`(a casa ficou sem ${await moedaNa(c, mes.ficouSem)} do que não se paga depois)`);
-      if (mes.multa + mes.mora > 0) doMes.push(`multa e mora das contas atrasadas ${await moedaNa(c, mes.multa + mes.mora)}`);
+      if (mes.multa + mes.mora > 0) doMes.push(`multa e juros das contas atrasadas ${await moedaNa(c, mes.multa + mes.mora)}`);
       for (const x of doMes) assert.ok(inclui(lido.texto, x), `${onde}: "${x}" em "${lido.texto}"`);
     }
     // Revisão da F6c: o que a casa ficou sem (gás, ônibus, remédio) também não
@@ -1699,7 +1699,7 @@ async function jogar({ site, navegador, vigiar }) {
   const basicoE1 = listaDe(personaDe(E1).basico.itens).reduce((soma, i) => soma + i.valor, 0);
   {
     const texto = await cel[0].p.textContent('#tela');
-    assert.ok(inclui(texto, `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'persona: o total do básico da casa');
+    assert.ok(inclui(texto, `o básico da casa custa ${await moedaNa(cel[0], basicoE1)}`), 'persona: o total do básico da casa');
     for (const i of listaDe(personaDe(E1).basico.itens)) assert.ok(texto.includes(i.rotulo) && texto.includes(i.fonte), `persona: o item "${i.rotulo}" do básico, com a fonte`);
   }
   await conferirCelular(cel[0], 'persona');
@@ -1707,7 +1707,7 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
   await esperarTela(cel[0], 'situacao');
   await conferirFamilia(cel[0], E1, 'situação antes do primeiro mês');
-  assert.ok(inclui(await cel[0].p.textContent('#tela'), `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'situação: o básico antes do primeiro mês');
+  assert.ok(inclui(await cel[0].p.textContent('#tela'), `o básico da casa custa ${await moedaNa(cel[0], basicoE1)}`), 'situação: o básico antes do primeiro mês');
   assert.equal(await cel[0].p.locator('.conta-mes').count(), 0, 'antes do primeiro mês não há conta do mês');
   await conferirCelular(cel[0], 'situacao-bloco');
 
@@ -2457,7 +2457,11 @@ async function jogar({ site, navegador, vigiar }) {
         return n ? { parcela: Number(n.dataset.parcela), texto: n.textContent } : null;
       });
       assert.equal(linha?.parcela, m.parcela, 'a conta do mês 3 traz a parcela');
-      const esperado = `Parcela do empréstimo ${await moedaNa(cel[0], m.parcela)}: ${await moedaNa(cel[0], m.jurosEmprestimo)} de juros (já na conta) e ${await moedaNa(cel[0], m.amortizacao)} que abatem a dívida.`;
+      // Com rodadas de mais de um mês, a soma das parcelas do período
+      // ("Parcelas do empréstimo no bimestre"; leitura final de 06/10).
+      const per = C.historia.periodo(C.cfg);
+      const nomeDaParcela = per.meses > 1 ? `Parcelas do empréstimo ${per.noPeriodo}` : 'Parcela do empréstimo';
+      const esperado = `${nomeDaParcela} ${await moedaNa(cel[0], m.parcela)}: ${await moedaNa(cel[0], m.jurosEmprestimo)} de juros (já na conta) e ${await moedaNa(cel[0], m.amortizacao)} que abatem a dívida.`;
       assert.ok(linha.texto.includes(esperado), `"${esperado}" em "${linha.texto}"`);
       await conferirContaDoMes(cel[0], m, 'resultado do mês 3');
       await conferirDivida(cel[0], res3[E1], 'resultado do mês 3');

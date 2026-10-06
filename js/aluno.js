@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '9';
+  const VERSAO_APP = '10';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -164,16 +164,18 @@
     return rotulo;
   }
 
-  // "Dinheiro da família: devendo R$ X" (ou "tem R$ X"), o patrimônio dos
-  // valores (historia.textoDaFamilia, as mesmas palavras do telão). No formato
-  // simples, é o único número de dívida que o celular mostra; null sem a renda.
+  // "A família está devendo R$ X." (ou "A família tem R$ X."), o patrimônio
+  // dos valores (historia.textoDaFamilia, as mesmas palavras do telão). No
+  // formato simples, é o único número de dívida que o celular mostra; null sem a
+  // renda. Até a revisão textual de 06/10 era "Dinheiro da família: tem R$ X",
+  // e quem tem é a família, e não o dinheiro.
   function linhaDaFamilia(valores) {
     const H = N().historia;
     const d = H?.dinheiroDaFamilia?.(valores);
     if (!d) return null;
     const { el } = D();
     return el('p', { classe: 'familia-dinheiro', dados: { situacao: d.situacao, valor: String(d.valor) } }, [
-      'Dinheiro da família: ', `${d.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(d.valor) }),
+      'A família ', `${d.situacao === 'devendo' ? 'está devendo' : 'tem'} `, el('b', { texto: F().moeda(d.valor) }), '.',
     ]);
   }
   function ordemOpcoes(rodadaId) {
@@ -1326,7 +1328,7 @@
       return 'entrada';
     }
     filhos.push(nota(app.aviso, 'erro'), entrar,
-      el('p', { classe: 'privacidade', texto: 'Sem nome e sem cadastro: o celular recebe só um crachá curto, como "Laranja · K7Q".' }));
+      el('p', { classe: 'privacidade', texto: 'Sem nome e sem cadastro: o celular recebe só um crachá curto, como "Equipe Laranja · K7Q".' }));
     // D-064: discreto, depois de tudo: o aluno não tem o que fazer aqui.
     if (!app.embutido) {
       filhos.push(botao('Sou apresentador', () => {
@@ -1469,7 +1471,7 @@
     telao: ['Aguardando o telão', 'O apresentador ainda não começou este passo.'],
     lobby: ['Você está na sala', 'Aguarde o apresentador começar. Deixe esta página aberta.'],
     apresentacao: ['Acompanhe a apresentação', 'O celular volta a pedir algo na hora certa.'],
-    semEquipe: ['Aguardando uma equipe', 'O apresentador vai colocar você numa equipe.'],
+    semEquipe: ['Aguardando uma equipe', 'O apresentador vai colocar você em uma equipe.'],
     votacaoEncerrada: ['Votação encerrada', 'Olhe o telão.'],
     desempateDeOutrasEquipes: ['Outras equipes estão desempatando', 'A sua equipe já decidiu. Olhe o telão.'],
   };
@@ -1592,7 +1594,7 @@
     const deNovo = decisao ? 'toque em “Votar nesta” de novo' : 'toque de novo na sua resposta';
     const erro = (texto) => ({ texto, tipo: 'erro' });
     switch (motivo) {
-      case 'fechou': return erro('A votação fechou antes do seu voto chegar: ele não foi contado.');
+      case 'fechou': return erro('A votação fechou antes de o seu voto chegar: ele não foi contado.');
       // Revisão de 30/09 (achado P2): quem trocou A por B sem rede via "não foi
       // contado", e o A tinha contado; o apresentador podia até desfazer a
       // apuração sem motivo.
@@ -1602,10 +1604,10 @@
           ? `A troca para ${letraDe(p.rodada, p.opcao)} chegou depois do fechamento: valeu o seu voto anterior, ${letraDe(p.rodada, envio.anterior)}.`
           : `A mudança para ${rotuloVoto(p.valor)} chegou depois do fechamento: valeu a sua resposta anterior, ${rotuloVoto(envio.anterior)}.`,
       };
-      case 'soEmpatadas': return erro('O seu voto chegou depois de a primeira votação fechar. Agora só valem as opções empatadas: vote numa delas.');
+      case 'soEmpatadas': return erro('O seu voto chegou depois de a primeira votação fechar. Agora só valem as opções empatadas: vote em uma delas.');
       // Revisão de 30/09 (achado P3): diz qual resposta se perdeu.
       case 'outraAfirmacao': return erro(`A resposta da afirmação ${posicaoDaAfirmacao(p)} chegou depois de o apresentador avançar e não foi contada.`);
-      case 'pausado': return erro(`A votação foi pausada antes do seu voto chegar: quando o apresentador retomar, ${deNovo}.`);
+      case 'pausado': return erro(`A votação foi pausada antes de o seu voto chegar: quando o apresentador retomar, ${deNovo}.`);
       // Quem volta à sala depois de a decisão abrir só vota na próxima; na
       // enquete, não há essa trava, e dá para responder de novo.
       case 'foraDaSala': return erro(decisao
@@ -1734,8 +1736,8 @@
       return b;
     });
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
-      cabecalho('Formação das equipes', minha ? 'Você está numa equipe' : 'Escolha a sua equipe'),
-      botao(minha ? 'Me coloque em outra equipe' : 'Me coloque numa equipe', () => colocarNumaEquipe(), {
+      cabecalho('Formação das equipes', minha ? 'Você está em uma equipe' : 'Escolha a sua equipe'),
+      botao(minha ? 'Me coloque em outra equipe' : 'Me coloque em uma equipe', () => colocarNumaEquipe(), {
         classe: [minha ? null : 'botao-primario', 'botao-largo'], desabilitado: app.trocandoEquipe || Boolean(app.espectador), dados: { acao: 'me-coloque' },
       }),
       el('p', { classe: 'texto-2', texto: 'Ou escolha uma (sente-se com ela). Dá para trocar até o apresentador travar as equipes.' }),
@@ -1805,8 +1807,8 @@
     if (!Number.isFinite(total) || total <= 0) return null;
     const { el } = D();
     const p = periodo();
-    let texto = ['O básico da família custa ', el('b', { texto: F().moeda(total) }), ' por mês'];
-    if (p.meses > 1 && curta) texto = ['O básico da família custa ', el('b', { texto: F().moeda(total * p.meses) }), ` ${p.noPeriodo}`];
+    let texto = ['O básico da casa custa ', el('b', { texto: F().moeda(total) }), ' por mês'];
+    if (p.meses > 1 && curta) texto = ['O básico da casa custa ', el('b', { texto: F().moeda(total * p.meses) }), ` ${p.noPeriodo}`];
     else if (p.meses > 1) texto.push(', ', el('b', { texto: F().moeda(total * p.meses) }), ` ${p.noPeriodo}`);
     return el('p', { classe: 'basico-linha', dados: { basicoTotal: String(total), meses: String(p.meses) } }, texto);
   }
@@ -1833,7 +1835,7 @@
     ]);
   }
 
-  // "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y · juros da
+  // "Entrou R$ X · gastos R$ G · o básico da casa custa R$ Y · juros da
   // dívida R$ J", e embaixo "Faltou R$ Z" (D-044, D-052), com os números que o
   // telão gravou no resultado (mes). Gastos e juros entram na linha quando
   // existem: sem eles, "faltou" não fecharia com as outras parcelas. Os gastos
@@ -1867,7 +1869,7 @@
     if (gastos > 0) linha.push(' · gastos ', moeda(gastos));
     // Com rodadas de 2 meses, o básico (e o trabalho) da conta são os do
     // bimestre: sem o "no bimestre", o dobro do "por mês" da persona parecia erro.
-    linha.push(' · o básico da família custa ', moeda(mes.basico));
+    linha.push(' · o básico da casa custa ', moeda(mes.basico));
     if (periodo().meses > 1) linha.push(` ${periodo().noPeriodo}`);
     if (limite?.faltouNaMesa > 0) linha.push(' (', moeda(limite.faltouNaMesa), ' de comida não foi comprada)');
     // Revisão da F6c: os itens que não atrasam (gás, ônibus, remédio) e que a
@@ -1875,7 +1877,7 @@
     // fechava no saldo.
     if (limite?.ficouSem > 0) linha.push(' (a casa ficou sem ', moeda(limite.ficouSem), ' do que não se paga depois)');
     if (mes.juros > 0) linha.push(' · juros da dívida ', moeda(mes.juros));
-    if (limite && limite.multa + limite.mora > 0) linha.push(' · multa e mora das contas atrasadas ', moeda(limite.multa + limite.mora));
+    if (limite && limite.multa + limite.mora > 0) linha.push(' · multa e juros das contas atrasadas ', moeda(limite.multa + limite.mora));
     // De onde veio o "entrou", quando ele não é só o trabalho: a parcela da
     // moto sai antes (custo fixo do trabalho), e a outra renda da casa soma. A
     // turma vê que o trabalho sozinho não pagava a conta. As parcelas somam o
@@ -1931,7 +1933,7 @@
     const limite = camposDoLimite(mes);
     if (!limite) return null;
     const frase = N().historia?.fraseDoLimite?.(mes, (v) => F().moeda(v)) ?? null;
-    const partes = [frase, limite.mora > 0 ? `Mora de ${F().moeda(limite.mora)} sobre as contas que já estavam atrasadas.` : null].filter(Boolean);
+    const partes = [frase, limite.mora > 0 ? `Juros de ${F().moeda(limite.mora)} sobre as contas que já estavam atrasadas.` : null].filter(Boolean);
     if (partes.length === 0) return null;
     const { atrasou, multa, mora, contasPagas, contasAtrasadas, dividaBanco } = limite;
     return D().el('p', { classe: 'conta-limite', dados: { atrasou, multa, mora, contasPagas, contasAtrasadas, dividaBanco }, texto: partes.join(' ') });
@@ -1975,17 +1977,23 @@
   // o mês do empréstimo mostrava "faltou R$ 1.034" com o caixa em −R$ 1, e
   // ninguém entendia de onde vinha a diferença. Sem empréstimo no mês (ou sala
   // antiga, sem os campos), sem a linha.
+  // Leitura final de 06/10: "não conta como sobra do mês" virou "não entra no
+  // saldo do bimestre", o nome do período que o resto da tela usa; e, com
+  // rodadas de mais de um mês, o valor é a soma das parcelas do período (duas
+  // de R$ 182,76 por bimestre no config do dia): "Parcelas do empréstimo no
+  // bimestre R$ 366", e não "Parcela … R$ 366", que não concordava.
   function linhaEmprestimo(mes) {
     const entrada = Number(mes?.emprestimo) || 0;
     const parcela = Number(mes?.parcela) || 0;
     if (entrada <= 0 && parcela <= 0) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
+    const per = periodo();
     const partes = [];
-    if (entrada > 0) partes.push(['Empréstimo de ', moeda(entrada), ': o dinheiro entrou no caixa, mas é dívida, e não conta como sobra do mês.']);
+    if (entrada > 0) partes.push(['Empréstimo de ', moeda(entrada), `: o dinheiro entrou no caixa, mas é dívida, e não entra no saldo ${per.doPeriodo}.`]);
     if (parcela > 0) {
       partes.push([
-        entrada > 0 ? ' ' : '', 'Parcela do empréstimo ', moeda(parcela), ': ', moeda(Number(mes.jurosEmprestimo) || 0),
+        entrada > 0 ? ' ' : '', per.meses > 1 ? `Parcelas do empréstimo ${per.noPeriodo} ` : 'Parcela do empréstimo ', moeda(parcela), ': ', moeda(Number(mes.jurosEmprestimo) || 0),
         ' de juros (já na conta) e ', moeda(Number(mes.amortizacao) || 0), ' que abatem a dívida.',
       ]);
     }
@@ -2007,13 +2015,20 @@
   // +R$ 2.431". Já estão somados na conta de cima; a linha diz de onde vieram,
   // porque sem ela os 25 dias e o INSS sumiam dentro do trabalho (revisão de
   // 29/09, 2ª rodada, achado 10). Sem nada (ou sala antiga), sem a linha.
+  // No formato simples (leitura final de 06/10), o mesmo nome da linha à vista
+  // ("Por causa de escolhas anteriores"), e não "meses", porque o jogo é por
+  // bimestre; e o ": " do rótulo vira ", " só aqui, na hora de mostrar, senão
+  // saíam dois-pontos em sequência ("(já na conta): as costas travaram (…): 7
+  // dias parado"). O config continua com os dois-pontos: é por eles que o
+  // historia.consequenciasDaRodada agrupa o motivo.
   function linhaDeAntes(itens) {
     const validos = lista(itens).filter((x) => x && typeof x.rotulo === 'string' && Number.isFinite(x.valor));
     if (validos.length === 0) return null;
     const { el } = D();
-    const partes = validos.map((x) => [`${x.rotulo} `, el('b', { texto: F().moeda(x.valor, { sinal: true }) })]);
+    const soUm = simples();
+    const partes = validos.map((x) => [`${soUm ? x.rotulo.replaceAll(': ', ', ') : x.rotulo} `, el('b', { texto: F().moeda(x.valor, { sinal: true }) })]);
     return el('p', { classe: 'conta-de-antes', dados: { deAntes: String(validos.length) } },
-      ['Veio dos meses anteriores (já na conta): ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+      [soUm ? 'Por causa de escolhas anteriores (já na conta): ' : 'Veio dos meses anteriores (já na conta): ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   // D-052: "O que a carta custou: 20 dias parado · renda perdida R$ X · gastos
@@ -2121,7 +2136,7 @@
       const taxas = Number.isFinite(divida.multaAtraso) && Number.isFinite(divida.moraMes);
       partes.push(el('p', { classe: 'divida-parte', dados: { parte: 'atrasadas' } }, [
         'Contas atrasadas ', moeda(divida.contasAtrasadas),
-        taxas ? [' · multa de ', el('b', { texto: F().taxa(divida.multaAtraso) }), ' e mora de ', el('b', { texto: F().taxa(divida.moraMes) }), ' ao mês'] : null,
+        taxas ? [' · multa de ', el('b', { texto: F().taxa(divida.multaAtraso) }), ' e juros de ', el('b', { texto: F().taxa(divida.moraMes) }), ' ao mês'] : null,
       ]));
     }
     if (divida.emprestimo > 0) {
@@ -2266,7 +2281,10 @@
   // (origem piloto) não é escolha, e a frase não pode dizer "em todos" quando
   // a equipe ficou calada numa delas. O "faltou" é o patrimônio do placar
   // (historia.patrimonioDe, o mesmo "faltou R$ X" da barra do telão).
-  function partesDaFrase(origens, patrimonio, nome) {
+  // opcoes.simples: no formato simples o telão diz "devendo R$ X", e o próprio
+  // celular, "A família está devendo R$ X." (leitura final de 06/10); por isso,
+  // "e a família ainda ficou devendo R$ X", e não "e ainda faltou R$ X".
+  function partesDaFrase(origens, patrimonio, nome, opcoes = {}) {
     const total = lista(origens).length;
     if (!Number.isFinite(patrimonio) || total === 0) return null;
     const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
@@ -2276,7 +2294,12 @@
     else quem = `A equipe não votou em nenhum ${nome}`;
     const valor = Math.round(patrimonio) + 0;
     const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
-    if (valor < 0) return { antes: `${quem}${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}`, reais: -valor, depois: '.', ...atributos };
+    if (valor < 0) {
+      const falta = opcoes.simples
+        ? (escolheram > 0 ? ', e a família ainda ficou devendo ' : ', e a família ficou devendo ')
+        : (escolheram > 0 ? ', e ainda faltou ' : ', e faltou ');
+      return { antes: `${quem}${falta}`, reais: -valor, depois: '.', ...atributos };
+    }
     // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
     // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
     return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
@@ -2284,7 +2307,7 @@
 
   // A frase na tela; sem placar, o "ficou com" do último bimestre.
   function fraseDasEscolhas(meses, patrimonio) {
-    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome);
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples() });
     if (!f) return null;
     const { el } = D();
     return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },
@@ -2403,7 +2426,7 @@
           ' · básico ', moeda(m.basico),
           limite?.faltouNaMesa > 0 ? [' (', moeda(limite.faltouNaMesa), ' de comida não foi comprada)'] : null,
           m.juros > 0 ? [' · juros ', moeda(m.juros)] : null,
-          limite && limite.multa + limite.mora > 0 ? [' · multa e mora das contas atrasadas ', moeda(limite.multa + limite.mora)] : null,
+          limite && limite.multa + limite.mora > 0 ? [' · multa e juros das contas atrasadas ', moeda(limite.multa + limite.mora)] : null,
           m.saldoMes < 0 ? ' · faltou ' : ' · sobrou ', moeda(Math.abs(m.saldoMes)),
         ])
         : null;
@@ -2413,7 +2436,7 @@
         el('p', { classe: 'kicker', texto: h.titulo || '' }),
         el('p', {}, ['Decisão: ', el('b', { texto: h.opcao?.rotulo || '' })]),
         h.opcao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.opcao.narrativa }) : null,
-        el('p', {}, ['Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
+        el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
         h.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.carta.narrativa }) : null,
         linhaCustoCarta(h.cartaCusto),
         linhaDeAntes(h.deAntes),
@@ -2502,7 +2525,7 @@
         contaDoMes(d.mes, d.persona),
         el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
           el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
-          el('p', {}, ['Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
+          el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
           linhaCustoCarta(d.mes.cartaCusto),
           ...lista(d.narrativa).map((t) => el('blockquote', { classe: 'narrativa', texto: t })),
         ]),
@@ -2554,7 +2577,7 @@
     const aberta = d.opcoes.some((op) => op.id === app.ui.aberta) ? app.ui.aberta : null;
     const eqNova = app.ui.movido?.rodada === d.rodada.id && !escolhido ? app.dados.conteudo?.equipes?.[app.ui.movido.para] : null;
     const eqNovaTexto = eqNova
-      ? `Você foi movido para a equipe ${numeroEquipe(app.ui.movido.para)} ${eqNova.nome}: o voto na equipe anterior não vale aqui. Vote de novo.`
+      ? `Você foi movido para a ${simples() ? `Equipe ${eqNova.nome}` : `equipe ${numeroEquipe(app.ui.movido.para)} ${eqNova.nome}`}: o voto na equipe anterior não vale aqui. Vote de novo.`
       : null;
     // D-055: tocar na opção abre a explicação dela, e só o "Votar nesta" vota. No
     // ensaio, o toque direto votava antes de a equipe ler o dilema. A narrativa
@@ -2639,7 +2662,7 @@
       notaDoEnvio(envio, escolhido ? `Seu voto: ${letraDe(d.rodada.id, escolhido)} · registrado.` : null) || nota(app.ui.nota),
       // A dica do toque que não vota (D-055) fica aqui, depois das opções: acima
       // delas, a linha a mais empurrava a letra D para baixo da dobra em 360×740.
-      el('p', { classe: 'texto-2', texto: `Toque numa opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome || 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
+      el('p', { classe: 'texto-2', texto: `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome ? `Equipe ${s.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
       s ? el('details', { classe: 'situacao-resumo' }, [
         el('summary', { texto: `Situação de ${persona || 'sua persona'}` }),
         // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
@@ -2835,15 +2858,17 @@
   }
 
   // D-078: a consequência de uma escolha de antes, à vista e não só no detalhe
-  // recolhido ("Por causa de antes: As costas travaram −R$ 1.230"), o mesmo
+  // recolhido ("Por causa de escolhas anteriores: as costas travaram (2
+  // bimestres puxados seguidos) −R$ 1.230"; até a revisão textual de 06/10, "Por
+  // causa de antes: As costas…", com maiúscula depois dos dois-pontos), o mesmo
   // agrupamento do telão (historia.consequenciasDaRodada: o motivo é o rótulo
   // até os dois-pontos). Sem consequência, null.
   function linhaConsequencia(deAntes) {
     const grupos = N().historia?.consequenciasDaRodada?.([{ equipeId: '', deAntes }]) || [];
     if (grupos.length === 0) return null;
     const { el } = D();
-    const partes = grupos.map((g) => [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) })]);
-    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, ['Por causa de antes: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+    const partes = grupos.map((g) => [`${g.motivo} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) })]);
+    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, ['Por causa de escolhas anteriores: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   function telaResultado(alvo, d) {

@@ -49,6 +49,21 @@ test('frase das escolhas: o "ninguém votou" não conta como escolha', () => {
   assert.equal(nenhum.escolheram, 0);
 });
 
+// Leitura final de 06/10: no formato simples, o telão diz "devendo R$ X" e o
+// celular, "A família está devendo R$ X."; a frase do topo usa a mesma palavra.
+// O jogo com sorteio continua com o "faltou", o mesmo da barra dele.
+test('frase das escolhas no formato simples: a família ficou devendo', () => {
+  const f = partesDaFrase(Array(6).fill('voto'), -2742, 'bimestre', { simples: true });
+  assert.equal(frase(f), 'Vocês escolheram em todos os 6 bimestres, e a família ainda ficou devendo R$ 2742.');
+  assert.equal(f.resultado, 'faltou', 'o atributo continua o mesmo');
+  assert.equal(frase(partesDaFrase(['voto', 'piloto', 'voto', 'voto', 'voto', 'voto'], -900, 'bimestre', { simples: true })),
+    'Vocês escolheram em 5 dos 6 bimestres, e a família ainda ficou devendo R$ 900.');
+  assert.equal(frase(partesDaFrase(Array(6).fill('piloto'), -500, 'bimestre', { simples: true })),
+    'A equipe não votou em nenhum bimestre, e a família ficou devendo R$ 500.');
+  assert.equal(frase(partesDaFrase(['voto', 'voto'], 250, 'bimestre', { simples: true })),
+    'Vocês escolheram em todos os 2 bimestres e fecharam as contas: sobrou R$ 250.', 'quando fecha, não muda');
+});
+
 test('frase das escolhas: fechou as contas (e o arredondamento decide)', () => {
   const f = partesDaFrase(['voto', 'voto'], 250, 'bimestre');
   assert.equal(frase(f), 'Vocês escolheram em todos os 2 bimestres e fecharam as contas: sobrou R$ 250.');

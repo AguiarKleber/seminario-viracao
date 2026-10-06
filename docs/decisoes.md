@@ -709,7 +709,8 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
     padrão −R$ 3.291; nenhuma opção domina. A linha "Jonas com carteira
     assinada" vai a −R$ 11.947. Num mês comum, falta R$ 128 (faltavam R$ 392).
 - **As regras do Firebase não mudam** (continuam v4). O config passa à versão
-  `2026-10-06-v4.1-simples`.
+  `2026-10-06-v4.1-simples` (e à `v4.2-simples` com os nomes das equipes em
+  uma palavra, na nota depois desta decisão).
 - **Como ficou na tela (versão 9 do site, 06/10 à tarde).** Medido no telão
   em 1024×768 e 1920×1080, offline com as 6 equipes e online com a faixa de
   entrada, e no celular em 360×740:
@@ -755,3 +756,97 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
 **Deixam de valer:** da D-078, "o valor em dinheiro aparece na opção" e
 "nenhuma das 15.625 combinações fecha o ano"; da D-072, a semana de bloqueio
 (agora, 5 dias); da D-060, as entrevistas.
+
+**Nota de 06/10 à tarde, com a versão 9 no ar: o nome de cada equipe em uma
+palavra.** Pedido do Kleber. As equipes passam a ser **Laranja** (e1),
+**Celeste** (e2, era Azul-céu), **Verde** (e3, era Verde-azulado), **Azul**
+(e4), **Vermelho** (e5, era Vermelhão) e **Rosa** (e6, era Roxo-rosado). Como há
+dois azuis, o claro virou Celeste. A cor, a forma e a ordem não mudam, nem nada
+do jogo. O config passa à versão `2026-10-06-v4.2-simples`, e as regras
+continuam v4. O que o telão faz pelo nome comprido (não quebrar no hífen, o
+nome numa linha no Fim) fica; a fixture `test/fixtures/config-simples.json`
+mantém os nomes compostos, para o e2e seguir medindo o caso mais largo.
+
+**Nota de 06/10 à tarde: o mês comum sem valor e a revisão textual das telas
+(versão 10 do site).** Pedido do Kleber, com o print da versão 9. Em "Conheça
+o Jonas", "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
+bimestre)" passa a "Em um mês comum, a conta não fecha: falta dinheiro para
+pagar as contas e sustentar a casa." (sem valor; o número continua nas linhas
+de cima e no roteiro). E todo texto de tela, no telão e no celular, foi revisto:
+sem "num/numa", com concordância, regência e crase, frases diretas, sem jargão
+nem sigla solta ("a lei dos apps (PLP 152/2025)", "greve dos
+entregadores", "juros" no lugar de "mora", "placar" e "Conversa em grupos" no
+lugar de "debrief") e o mesmo nome para a mesma coisa ("o básico da casa",
+"carteira assinada", "Equipe Laranja"). Nenhum número, fato, data ou fonte muda
+(260 fecham, melhor +R$ 1.714, pior −R$ 6.783). **A confirmar com o Kleber:** as
+notas "(até 06/10 de manhã, …; D-079)" nas fontes do aluguel, do ônibus e das
+faxinas, que o celular mostra, ficaram, porque a D-079 pede as recontas
+declaradas na fonte de cada valor. O Fim e o título do bloco de conversa em
+grupos ficaram em um commit à parte, porque os pedidos novos mexem neles. O config continua `2026-10-06-v4.2-simples`
+(hash `aa6a613c`), e as regras, v4.
+
+## 06/10/2026 (à tarde): os pedidos depois da versão 9
+
+Pedidos do Kleber de 06/10 à tarde, com a versão 9 no ar e os prints dela. O
+princípio dele vale para todos: "quanto menos explicações tivermos que dar,
+melhor". O conteúdo, com as fontes, está em [jogo-simples.md](jogo-simples.md).
+
+**D-080. Os pedidos de 06/10 à tarde: as equipes em uma palavra, o mês comum sem
+valor, a revisão textual, o presente da filha, a consequência na faixa da
+equipe, "Caminhos" e a conversa com itens, o bloco das outras plataformas e o
+placar sem a linha da carteira** (junta as duas notas acima e muda partes da
+D-079, da D-070 e da D-056).
+- **As equipes em uma palavra e o mês comum sem valor** (as duas notas acima):
+  Laranja, Celeste, Verde, Azul, Vermelho e Rosa; e "Em um mês comum, a conta
+  não fecha: falta dinheiro para pagar as contas e sustentar a casa.".
+- **A revisão textual de todo texto de tela** (a nota acima): sem "num/numa",
+  com concordância, regência e crase, frases diretas e o mesmo nome para a
+  mesma coisa, sem mudar fato, número, data nem fonte.
+- **Nov–dez E: "Presente para a filha" no lugar de "Temporário com carteira".**
+  O temporário pedia explicação (punha menos dinheiro no caixa, e os
+  benefícios não apareciam no jogo). O presente se entende sozinho: a filha de
+  6 anos pediu um brinquedo ao Papai Noel, −R$ 170 (Fecomércio-RS, Pesquisa de
+  Final de Ano 2025: R$ 166,93 por presente). É gasto, não é opção puxada e não
+  pede regra nova. A pesquisa da convenção coletiva dos motoboys, oferecida para o
+  temporário, não foi feita: o Kleber disse que não precisava.
+- **A linha "Jonas com carteira assinada" sai do placar final** (página 2):
+  "não agrega em nada". A referência sai do config (`referencias` vazia); o
+  telão já desenhava a página sem a linha quando não havia referência. Muda a
+  D-070 e a D-056 no jogo simples.
+- **A consequência de uma escolha de antes vira observação na faixa da equipe
+  atingida** (print 2): embaixo da opção, em letra secundária, com o motivo e o
+  valor ("As costas travaram (2 bimestres puxados seguidos) −R$ 1.230"). Era
+  uma lista embaixo das faixas, com o nome das equipes. Para seis equipes com
+  observação caberem com a faixa de entrada em 1280×720 (o pior caso: mar–abr,
+  com as costas, a parcela e o IPVA), um quinto aperto deixa cada linha da
+  faixa com a altura da letra. Nada abaixo de 28 px. O celular já mostrava a
+  linha "Por causa de escolhas anteriores" para a equipe, e não muda.
+- **"Caminhos" e a "Conversa em grupos" mostram os itens na tela** (prints 3 e
+  4), como os blocos de dados: em "Caminhos", um item por caminho, com um dado
+  e a fonte (regulação, proteção, organização e educação); na conversa, os
+  três passos da atividade. São quatro caminhos, e o validador passa a aceitar
+  até 4 itens sem aviso (medido em 1024×768 e 1280×720 com a faixa de entrada).
+- **Um bloco novo logo antes do Fim, nos dois roteiros: "Dados: e nos outros
+  aplicativos?"** (print 1: enriquecer o Fim com outras modalidades, como a
+  Uber): os motoristas de app, com a renda e a hora, quem define o preço da
+  corrida e o INSS (IBGE, PNAD 2025, conferido no PDF). O Fim fica com os dados
+  que já tinha. O tempo saiu, no roteiro de 60 min, do placar final, do
+  termômetro e do comparativo (30 s de cada); no de 120, do "Mapa do seminário"
+  e de "Caminhos" (2 min de cada).
+- **Os números** (`npm run combinacoes`): 281 das 15.625 combinações fecham o
+  ano (eram 260), todas com ao menos uma opção puxada; a melhor continua
+  A-D-C-E-D-A (+R$ 1.714); a pior passa a D-A-E-C-C-C, devendo R$ 6.135 (era
+  D-A-E-C-C-E, R$ 6.783); o padrão continua −R$ 3.291.
+- **A leitura final (06/10 à noite)** achou 10 pontos de texto, todos
+  corrigidos sem mudar número, fato, data nem fonte: no celular, "Por causa de
+  escolhas anteriores (já na conta)" no detalhe da conta, sem dois-pontos em
+  sequência; "e a família ainda ficou devendo R$ X" no topo do placar final;
+  "não entra no saldo do bimestre" e "Parcelas do empréstimo no bimestre" na
+  linha do empréstimo. No config, o sujeito claro em três mini-histórias e
+  custos humanos ("o Jonas fica seco", "a moto corre risco", "o jantar em casa
+  sem o pai"; "Adiar a parcela" no lugar de "Empurrar", para a opção caber em
+  2 linhas), "fixaria" (a lei não chegou a valer), "a lei dos apps" também no
+  evento de mar–abr e "nem carteira assinada" no lugar de "nem CLT". O hash do
+  config passa a `9265c896`, e a versão não muda.
+- **O config passa à versão `2026-10-06-v4.3-simples`**; o site continua na
+  versão 10, e as regras do Firebase, v4.

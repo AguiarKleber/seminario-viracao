@@ -85,7 +85,7 @@ ser obrigatórias:
 
 E a D-067: quando o dinheiro de uma proteção passa do que o trabalho daria num
 período comum, o motor marca o resultado, e as telas dizem "…, mais do que Bruna
-ganhava trabalhando num bimestre comum (R$ 1.400)". Não há chave nova: o "1
+ganhava trabalhando em um bimestre comum (R$ 1.400)". Não há chave nova: o "1
 salário mínimo" está no `rotulo` do efeito do auxílio, porque a tela usa o
 rótulo e o núcleo não escreve conteúdo.
 
@@ -313,7 +313,7 @@ hash do config não muda). O validador, com ele, também confere:
   motor: a carta que só sairia num caminho raro também conta). O jeito simples
   é uma carta por rodada, com `"rodadas": ["r1"]` e peso 1; os efeitos dela
   podem ter condição (`decidiu`, `indicador`): é assim que entra a
-  consequência que vem depois ("as costas travaram: duas puxadas seguidas");
+  consequência que vem depois ("as costas travaram: dois bimestres puxados seguidos");
 - **nenhum `multiplica` direto na renda** numa opção (sem condição, ou só com
   persona, opção ou rodada): o dinheiro da opção é a **soma** dos efeitos
   diretos dela, e o multiplica não tem valor fixo. Use `soma`;
@@ -321,7 +321,7 @@ hash do config não muda). O validador, com ele, também confere:
 
 **A mini-história** (D-079, teste do Kleber de 06/10) é a `narrativa` da opção:
 uma frase com o que é, por quê e o que impacta ("14/04: greve nacional contra a
-lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca
+lei dos apps, que fixaria R$ 8,50 por entrega e não R$ 10; quem para arrisca
 bloqueio"), sem o dinheiro
 do Jonas. No telão, ela corre na mesma linha do rótulo, depois de um travessão,
 e cada opção precisa caber em **duas linhas** em 1024×768; a situação do
@@ -341,9 +341,9 @@ bimestre em que ela acontece, com `decidiu` (e `opcao`, quando depende também d
 escolha do próprio bimestre, como as costas: `{ "decidiu": { "r1": "a" }, "opcao":
 "b" }`). O motor a nomeia (`deAntes`), e as telas a mostram no resultado com o
 motivo: o `rotulo` até os dois-pontos. Dois efeitos de mesmo motivo viram uma
-linha com a soma ("as costas travaram (2 puxadas seguidas): 7 dias parado" e
-"…: fisioterapia, 4 sessões" → "As costas travaram (2 puxadas seguidas)
-−R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
+linha com a soma ("as costas travaram (2 bimestres puxados seguidos): 7 dias
+parado" e "…: fisioterapia, 4 sessões" → "As costas travaram (2 bimestres
+puxados seguidos) −R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
 nome. Custo fixo (`fixo`) e proteção não são nomeados: use `soma` simples ou
 `categoria: "gasto"`. O jogo do dia, opção por opção, está em
 [jogo-simples.md](jogo-simples.md).
@@ -432,7 +432,7 @@ celular; os `longos`, nas legendas do telão.
   },
   "basico": {
     "itens": [
-      { "rotulo": "comida (cesta básica × 2,5)", "valor": 2098, "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026…" },
+      { "rotulo": "comida (2,5 cestas básicas)", "valor": 2098, "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026…" },
       { "rotulo": "aluguel (2 quartos)", "valor": 1300, "fonte": "QuintoAndar, lido em 29/09/2026…" },
       { "rotulo": "luz", "valor": 162, "fonte": "CEEE Equatorial, tarifa B1…" }
     ]
@@ -515,11 +515,15 @@ celular; os `longos`, nas legendas do telão.
   | Posição | Cor | Nome |
   | --- | --- | --- |
   | e1 | `#E69F00` | Laranja |
-  | e2 | `#56B4E9` | Azul-céu |
-  | e3 | `#009E73` | Verde-azulado |
+  | e2 | `#56B4E9` | Celeste |
+  | e3 | `#009E73` | Verde |
   | e4 | `#0072B2` | Azul |
-  | e5 | `#D55E00` | Vermelhão |
-  | e6 | `#CC79A7` | Roxo-rosado |
+  | e5 | `#D55E00` | Vermelho |
+  | e6 | `#CC79A7` | Rosa |
+
+  Cada nome é uma palavra só (pedido do Kleber de 06/10, nota depois da
+  D-079): até a versão `v4.1-simples`, e2, e3, e5 e e6 eram Azul-céu,
+  Verde-azulado, Vermelhão e Roxo-rosado.
 
 - `forma`: `circulo`, `triangulo`, `quadrado`, `losango`, `estrela`, `cruz` ou
   `hexagono`, diferente entre as equipes. Outro nome vira um círculo com miolo. Forma, número
@@ -773,7 +777,10 @@ seu `id`, como no `config.json` atual.)
 
 Opcional. Cada referência vira uma linha de comparação na página 1 do placar
 final ("quanto faltou para o básico"), e não uma equipe. O valor precisa de fonte
-e de validação (D-005).
+e de validação (D-005). **O config do dia (`v4.3-simples`) não tem referência**
+(`"referencias": []`): a linha "Jonas com carteira assinada" saiu do placar na
+D-080 ("não agrega em nada"), e o telão desenha a página sem ela. O texto abaixo
+vale para quem quiser pôr uma linha de volta.
 - `renda`: o saldo do jogo inteiro (12 meses no config atual), na mesma conta
   das equipes: desde o esquema v2, com a mesma casa (outra renda, básico e
   juros); no esquema v3, com os juros compostos no bimestre, e o 13º e o terço de
@@ -844,7 +851,10 @@ e sem o placar resumido):
 
 - `contexto`: o que é o tópico e como impacta o setor, em 1 ou 2 frases (até
   220 letras);
-- `itens`: de 1 a 3 números com fonte, um por linha (até 140 letras cada);
+- `itens`: de 1 a 4 textos, um por linha (até 140 letras cada): nos blocos de
+  dados, até 3 números com fonte; em "Caminhos", 4 (um por caminho; D-080, o
+  teto do validador, medido em 1024×768 com a faixa de entrada); na "Conversa
+  em grupos", os passos da atividade;
 - `fonte`: de onde vêm os itens, no pé da tela (até 200 letras).
 
 O telão escreve o rótulo "Fontes: " antes da `fonte`. Tipo errado é erro

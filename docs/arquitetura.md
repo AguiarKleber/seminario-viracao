@@ -114,7 +114,7 @@ função e tela está em [contratos.md](contratos.md).
     - O motor devolve, a cada mês, `mes = { trabalho, outraRenda, entrou, basico,
       juros, saldoMes, dividaAntes }`, e o anfitrião grava em
       `resultados/{r}/{eq}.mes`. O telão mostra "entrou · básico · faltou" em
-      cada resultado; o celular, "Entrou R$ X · o básico da família custa R$ Y ·
+      cada resultado; o celular, "Entrou R$ X · o básico da casa custa R$ Y ·
       Faltou R$ Z".
     - A tela das personas no telão mostra a casa ("básico · outra renda · falta
       R$ W por mês", pelo `motor.mesComum`), e o celular, a família e o básico
@@ -596,7 +596,7 @@ passou à versão 7 (`?v=7`, `VERSAO_APP`), e as regras do Firebase, à **v4**.
     pagou, trabalhoComum }` no resultado (só quando acontece; o celular não
     carrega o motor). `historia.fraseAcimaDoTrabalho` monta a frase ("Auxílio do
     INSS pelo MEI (45 dias de 1 salário mínimo): R$ 2.431, mais do que Bruna
-    ganhava trabalhando num bimestre comum (R$ 1.400).") a partir do rótulo do
+    ganhava trabalhando em um bimestre comum (R$ 1.400).") a partir do rótulo do
     efeito: o "1 salário mínimo" está no config, porque o núcleo não escreve
     conteúdo. Aparece no resultado do telão (embaixo da faixa), no resultado do
     celular (à vista, abaixo do saldo) e na história. No config atual, acontece
@@ -1132,8 +1132,8 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
   - mediana em destaque e média em letra pequena, porque a escala é ordinal;
   - com n = 0, "sem votos", nunca zero.
 - **Comparativo:**
-  - por padrão, só os **pareados** (o mesmo aparelho nas duas vezes), com "mais N responderam só uma vez";
-  - a frase "Dos 16 que responderam as duas vezes: 7 foram para mais concordância, 6 ficaram, 3 foram para menos";
+  - por padrão, só os **pareados** (o mesmo aparelho nas duas vezes), com "Outras N pessoas responderam só uma vez";
+  - a frase "Das 16 pessoas que responderam antes e depois: 7 passaram a concordar mais, 6 não mudaram e 3 passaram a concordar menos" (revisão textual de 06/10);
   - com menos de `minPareados` pares, só as duas distribuições, com o título "turmas diferentes".
 - **Métodos nunca se misturam.** Se o "depois" for por mão levantada (modo offline), o comparativo não desenha antes × depois, só as duas distribuições lado a lado, com um aviso.
 - **O que se pode dizer com n ≤ 20:** retrato desta turma neste dia e a direção do movimento, contada em pessoas. O rodapé fixo "retrato desta turma, não pesquisa" lembra o que não se pode dizer: causalidade, representatividade, diferenças de 1 ou 2 votos e valor-p.
@@ -1160,7 +1160,7 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 2. **"Registrado" só aparece quando o servidor confirma.**
 3. **Sem confirmação em 5 s:** "enviando…" e um ciclo de reconexão.
 4. **Em 20 s:** "guardado; será reenviado".
-5. **Recusa da regra:** "a votação fechou antes do seu voto chegar". O app nunca finge que contou.
+5. **Recusa da regra:** "a votação fechou antes de o seu voto chegar". O app nunca finge que contou.
 
 **Depois de recarregar:** o `uid` é o mesmo e a sala vem da URL ou do `localStorage`. Os ouvintes da equipe só são ligados **depois** de o registro de membro ser confirmado, e religados se o apresentador mover o aluno. Um pendente cuja etapa continua aberta é reenviado; como a chave é a mesma, não duplica.
 

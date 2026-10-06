@@ -428,6 +428,7 @@ const reaisDoTexto = (t) => [...t.matchAll(/([−+]?)R\$\s?([\d.]+)/g)].map((m) 
 const textoSaldo = (renda) => (renda < 0 ? `faltou ${F.moeda(-renda)}` : `sobrou ${F.moeda(renda)}`);
 function tituloSaldo(naoFecharam, total) {
   if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
+  if (naoFecharam === total) return total === 1 ? 'A equipe não fechou as contas' : `Nenhuma das ${total} equipes fechou as contas`;
   return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
 }
 // O placar conta o empréstimo como dívida (esquema v2.2): o saldo de uma equipe
@@ -505,7 +506,7 @@ function fraseAcimaEsperada(cfg, eq, x) {
   const oQue = nomes.length > 0 ? nomes.join(' e ') : 'a proteção';
   const nome = cfg.personas[cfg.equipes[eq].persona].nome;
   const periodo = NOME_DO_PERIODO[mesesDe(cfg)] ?? `período de ${mesesDe(cfg)} meses`;
-  return `${oQue.charAt(0).toUpperCase()}${oQue.slice(1)}: ${F.moeda(x.mes.protecao)}, mais do que ${nome} ganhava trabalhando num ${periodo} comum (${F.moeda(acima.trabalhoComum)}).`;
+  return `${oQue.charAt(0).toUpperCase()}${oQue.slice(1)}: ${F.moeda(x.mes.protecao)}, mais do que ${nome} ganhava trabalhando em um ${periodo} comum (${F.moeda(acima.trabalhoComum)}).`;
 }
 const lerFaixas = () => page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, {
   carta: c.dataset.carta,
@@ -1120,7 +1121,7 @@ const passoNoModal = (indice) => new RegExp(`^${indice + 1}\\. `);
 
 // D-042 e rascunho, seção 7, item 15: a linha do tempo do bloco mostra o
 // seminário inteiro, sem esconder passo. Se não couber, os passos depois do
-// último mês viram um item só ("debrief, termômetro, medição, fechamento").
+// último mês viram um item só ("placar, termômetro, medição, fechamento").
 // "Você está aqui" no item do passo atual; o "a seguir" nomeia o item seguinte,
 // que está na linha, à vista e marcado.
 const maiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1187,7 +1188,7 @@ async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
     const { itens } = V.roteiro.linhaDoTempo(configNode, passos, { maxItens: 1 });
     assert.equal(final.rotulo, maiuscula(itens.at(-1).palavras.join(', ')), 'o item agrupado diz o que junta');
     if (final.passos.map((i) => passos[i].tipo).join() === 'placarFinal,enquete,enquete,comparativo,bloco') {
-      assert.equal(final.rotulo, 'Debrief, termômetro, medição, fechamento');
+      assert.equal(final.rotulo, 'Placar, termômetro, medição, fechamento');
     }
   }
   for (const x of r.itens.filter((i) => i.passos.length === 1)) assert.equal(x.rotulo, descreverPasso(passos[x.passos[0]]), `o item do passo ${x.passos[0]}`);

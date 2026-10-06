@@ -850,7 +850,8 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 
 /* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em
    três colunas alinhadas entre as faixas (subgrid): a equipe e, embaixo, a
-   opção escolhida; o saldo do bimestre; o dinheiro da família. */
+   opção escolhida; o saldo do bimestre; o dinheiro da família. Na equipe que
+   uma escolha de antes atingiu, uma terceira linha: a observação (D-080). */
 .evento-do-mes { display: flex; flex-direction: column; gap: .05em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.2; }
 .evento-titulo { font-size: calc(var(--corpo) * 1.15); font-weight: 750; }
 .evento-linha { color: var(--texto-2); }
@@ -879,21 +880,36 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .simples-familia-valor b { font-weight: 800; }
 .simples-familia-valor[data-situacao="devendo"] b { color: var(--negativo); }
 /* O aperto (telao.js, telaResultadoSimples): só quando seis faixas com a
-   faixa de entrada embaixo não cabem; o segundo, se o primeiro não bastou. */
+   faixa de entrada embaixo não cabem; cada um, se o anterior não bastou (até o
+   quinto, D-080). */
 .tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
 .tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
 .tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) { gap: calc(var(--espaco) * .5); }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) h1 { font-size: calc(var(--corpo) * 1.1); }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .grade-simples { row-gap: 4px; }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
-/* D-078: a consequência de uma escolha de antes, uma linha por motivo, com as
-   equipes juntas. O terceiro aperto (só com elas) tira a frase do evento do
-   mês; o quarto, se ainda faltar altura, o evento inteiro (ele está no celular). */
-.simples-antes { flex: none; display: flex; flex-direction: column; gap: .1em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.15; }
-.simples-antes b { font-weight: 800; }
-.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"]) .evento-linha { display: none; }
-.tela-rodada-resultado[data-aperto="4"] .evento-do-mes { display: none; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .grade-simples { row-gap: 4px; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
+/* D-078 e D-080: a consequência de uma escolha de antes, como observação na
+   faixa da própria equipe, embaixo da opção, na largura das três colunas (na
+   coluna da opção, "As costas travaram (2 bimestres puxados seguidos)" ia a
+   duas linhas em 1024×768). Letra secundária: a cor do texto 2 e, onde o corpo
+   passa de 28 px (1920×1080), 85% dele; nunca abaixo de 28 px. O terceiro
+   aperto tira a frase do evento do mês; o quarto, se ainda faltar altura, o
+   evento inteiro (ele está no celular). */
+.simples-obs { grid-column: 1 / -1; grid-row: 3; font-size: max(28px, .85em); color: var(--texto-2); line-height: 1.12; }
+.simples-obs b { display: inline-block; font-weight: 800; }
+.tela-rodada-resultado[data-aperto] .simples-obs { line-height: 1; }
+.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .evento-linha { display: none; }
+.tela-rodada-resultado:is([data-aperto="4"], [data-aperto="5"]) .evento-do-mes { display: none; }
+/* O quinto aperto (D-080), só se seis faixas com a observação ainda não couberem
+   sem o evento: o pior caso medido é mar–abr com as seis equipes atingidas e a
+   faixa de entrada em 1280×720 (cada faixa com três linhas passava 74 px). Cada
+   linha da faixa fica com a altura da letra: a caixa da letra da opção, o saldo
+   e o dinheiro da família no tamanho do corpo, e o vão entre as faixas em 2 px. */
+.tela-rodada-resultado[data-aperto="5"] .grade-simples { row-gap: 2px; }
+.tela-rodada-resultado[data-aperto="5"] .simples-quem { display: flex; align-items: center; line-height: 1; }
+.tela-rodada-resultado[data-aperto="5"] .simples-opcao .letra { height: 1em; min-width: 1em; }
+.tela-rodada-resultado[data-aperto="5"] .resultado-simples :is(.resultado-saldo, .simples-familia-valor) { font-size: 1em; line-height: 1; }
 
 /* Placar, página 1: "O caminho de cada equipe". Em cada célula, a letra em
    cima e o saldo do bimestre embaixo (lado a lado, seis bimestres não cabiam

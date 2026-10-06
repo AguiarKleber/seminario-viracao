@@ -20,11 +20,12 @@
 // 3. o fechamento sem sorteio: do "decidindo" ao "resultado" direto (o telão
 //    nunca desenha a tela do sorteio), e o resultado com o evento do mês uma
 //    vez no topo e, por equipe, só a opção, o saldo do bimestre e o dinheiro
-//    da família ("tem"/"devendo"), iguais ao motor;
+//    da família ("tem"/"devendo"), iguais ao motor, e a consequência de uma
+//    escolha de antes como observação na faixa da equipe atingida (D-080);
 // 4. o placar final em três páginas: o caminho de cada equipe (a tabela das
 //    letras e dos saldos, da melhor para a pior), "Quanto sobrou, ou ficou
-//    devendo" (as barras, com a linha da referência e sem a do que faltou na
-//    mesa) e "Das N combinações possíveis" (a melhor e a pior, iguais a
+//    devendo" (as barras, com a linha da referência só se o config tiver uma,
+//    e sem a do que faltou na mesa) e "Das N combinações possíveis" (a melhor e a pior, iguais a
 //    motor.enumerarCombinacoes, sem a lista do lugar de cada equipe, D-079),
 //    com o tempo da contagem no navegador;
 // 5. com o config.json do dia (D-079), cada bloco com contexto: o contexto,
@@ -378,11 +379,16 @@ async function jogar(nome) {
         h1: document.querySelector('#palco h1').textContent,
         personas: document.querySelectorAll('.persona-linha').length,
         mes: document.querySelector('.conheca-mes')?.dataset.saldoMesComum,
+        frase: document.querySelector('.conheca-mes')?.textContent,
         quem: document.querySelector('.conheca-quem')?.textContent,
       }));
       assert.equal(lidoTela.h1, `Conheça o ${p.nome}`, `${onde}: o título`);
       assert.equal(lidoTela.personas, 0, `${onde}: sem a lista de personas`);
       assert.equal(Number(lidoTela.mes), mes.saldoMes, `${onde}: a conta de um mês comum`);
+      // Sem o valor (pedido do Kleber de 06/10 à tarde): a frase só diz se a conta fecha.
+      assert.equal(lidoTela.frase, mes.saldoMes >= 0
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.', `${onde}: a frase do mês comum, sem valor`);
       assert.equal(lidoTela.quem, p.descricao);
     });
   }
@@ -451,19 +457,24 @@ async function jogar(nome) {
           ...n.dataset, letra: n.querySelector('.simples-opcao .letra').textContent, opcaoTexto: n.querySelector('.simples-opcao span').textContent,
           saldo: n.querySelector('.resultado-saldo').textContent, sinal: n.querySelector('.resultado-saldo').dataset.sinal,
           familia: n.querySelector('.simples-familia-valor').textContent,
+          obs: n.querySelector('.simples-obs')?.textContent ?? null,
         })),
         texto: document.getElementById('palco').textContent,
-        antes: Array.from(document.querySelectorAll('.simples-antes li'), (n) => ({ ...n.dataset, texto: n.textContent })),
+        listaAntes: document.querySelectorAll('.simples-antes').length,
       }));
       const carta = esperado[EQUIPES[0]][k].carta;
-      // D-078: a consequência de uma escolha de antes, com o motivo, uma linha
-      // por motivo e valor (historia.consequenciasDaRodada, sobre o deAntes do motor).
-      const grupos = H.consequenciasDaRodada(EQUIPES.map((eq) => ({ equipeId: eq, deAntes: esperado[eq][k].deAntes })));
-      assert.deepEqual(lidoTela.antes.map((g) => [g.motivo, Number(g.valor), g.equipes]), grupos.map((g) => [g.motivo, g.valor, g.equipes.join(' ')]), `${onde}: as consequências de antes`);
-      for (const [i, g] of grupos.entries()) {
-        assert.equal(lido(lidoTela.antes[i].texto), lido(`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}: ${g.equipes.map((eq) => cfg.equipes[eq].nome).join(', ')}`), `${onde}: o texto da consequência`);
+      // D-078 e D-080: a consequência de uma escolha de antes, com o motivo e o
+      // valor (historia.consequenciasDaRodada, sobre o deAntes do motor), como
+      // observação na faixa da própria equipe, e não mais numa lista embaixo.
+      assert.equal(lidoTela.listaAntes, 0, `${onde}: sem a lista de consequências embaixo das faixas`);
+      let comConsequencia = 0;
+      for (const f of lidoTela.faixas) {
+        const grupos = H.consequenciasDaRodada([{ equipeId: f.equipe, deAntes: esperado[f.equipe][k].deAntes }]);
+        const obs = grupos.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}`).join(' · ');
+        assert.equal(f.obs === null ? null : lido(f.obs), grupos.length > 0 ? lido(obs) : null, `${onde}/${f.equipe}: a observação da consequência`);
+        if (grupos.length > 0) comConsequencia += 1;
       }
-      if (grupos.length > 0) consequenciasVistas += 1;
+      if (comConsequencia > 0) consequenciasVistas += 1;
       assert.equal(lidoTela.eventos, 1, `${onde}: o evento do mês uma vez`);
       assert.equal(lidoTela.evento, carta);
       assert.equal(lidoTela.eventoTitulo, H.textoDaCarta(cfg, carta, PERSONA).titulo);
@@ -527,7 +538,8 @@ async function jogar(nome) {
       assert.equal(lido(v.texto), lido(`${d.situacao} ${F.moeda(d.valor)}`), `${onde}/${v.equipe}`);
     }
     const refs = cfg.ordem.referencias || [];
-    assert.equal(t.referencias.length, refs.length, `${onde}: a referência ("com carteira assinada")`);
+    // D-080: o config do dia não tem mais a linha "Jonas com carteira assinada".
+    assert.equal(t.referencias.length, refs.length, `${onde}: a referência, só se o config tiver uma`);
     if (refs.length > 0) assert.equal(t.linhasReferencia, EQUIPES.length * refs.length, `${onde}: a linha da referência em todas as equipes (uma persona só)`);
   });
   await avancarPara(() => true, 'página 3');

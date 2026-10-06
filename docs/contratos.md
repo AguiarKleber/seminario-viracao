@@ -69,8 +69,8 @@ exibição fica num array de strings.
 - `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada?, contexto?, itens?, fonte? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
   - `momento` ∈ `antes | depois | unico`;
-  - D-079: `contexto` (texto), `itens` (lista de 1 a 3 textos) e `fonte` (texto), só no `bloco`. Tipo
-    errado é erro; contexto acima de 220 letras, item acima de 140, mais de 3 itens e fonte acima de 200 são
+  - D-079: `contexto` (texto), `itens` (lista de 1 a 4 textos; até 3 antes da D-080) e `fonte` (texto), só no `bloco`. Tipo
+    errado é erro; contexto acima de 220 letras, item acima de 140, mais de 4 itens e fonte acima de 200 são
     aviso; num passo de outro tipo, aviso e descartados. Ausentes, não entram no normalizado.
 
 **Esquema v2 (D-041 a D-048)**, conferido pelo validador:
@@ -823,9 +823,9 @@ celular e no `test/carregar-nucleo.mjs`.
 | `textoDoDinheiro(dinheiro, moeda, periodo) → string` | "+R$ 900 no bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre", "+R$ 1.500 emprestado" (e " · −R$ X no bimestre" se a opção também mexe na renda) |
 | `dinheiroDaFamilia(valores) → { situacao: 'tem' \| 'devendo', valor } \| null` / `textoDaFamilia(valores, moeda)` | o patrimônio (`patrimonioDe`) em reais inteiros: "tem R$ X" ou "devendo R$ X" |
 | `primeiraFrase(texto) → string \| null` | a primeira frase (o evento do mês no resultado do formato simples) |
-| `consequenciasDaRodada([{ equipeId, deAntes }]) → [{ motivo, valor, equipes: [ids] }]` | D-078: a consequência de uma escolha de antes, para a tela. O motivo é o `rotulo` do item do `deAntes` até os dois-pontos ("as costas travaram (2 puxadas seguidas): 7 dias parado" e "…: fisioterapia, 4 sessões" viram um motivo, com a soma); motivo com soma 0 some; equipes de mesmo motivo **e** mesmo valor ficam juntas; a ordem é a de aparição. O telão (resultado do formato simples) escreve uma linha por grupo embaixo das faixas ("As costas travaram (2 puxadas seguidas) −R$ 1.230: Laranja, Azul"); o celular, à vista, "Por causa de antes: …" |
-| `fraseAcimaDoTrabalho(protecao, nome, moeda, periodo?) → string \| null` | D-067, de `protecaoDoResultado`: "Auxílio do INSS (45 dias): R$ 2.431, mais do que Bruna ganhava trabalhando num bimestre comum (R$ 1.400)." O nome do que pagou vem dos itens da proteção (o config); o "1 salário mínimo" fica no rótulo do efeito ou na fala do apresentador (o núcleo não escreve conteúdo). `null` sem `acimaDoTrabalho` |
-| `fraseDoLimite(mes, moeda) → string \| null` | D-066: "O limite do cheque especial acabou: R$ X de contas ficaram atrasadas (multa de R$ M), a casa ficou sem R$ S do que não se paga depois e R$ Y de comida não deu para comprar." (o "ficou sem" só com `mes.ficouSem` > 0) e/ou "Pagou R$ Z de contas atrasadas."; `null` sem nada disso ou em sala sem o limite |
+| `consequenciasDaRodada([{ equipeId, deAntes }]) → [{ motivo, valor, equipes: [ids] }]` | D-078: a consequência de uma escolha de antes, para a tela. O motivo é o `rotulo` do item do `deAntes` até os dois-pontos ("as costas travaram (2 bimestres puxados seguidos): 7 dias parado" e "…: fisioterapia, 4 sessões" viram um motivo, com a soma); motivo com soma 0 some; equipes de mesmo motivo **e** mesmo valor ficam juntas; a ordem é a de aparição. O telão (resultado do formato simples) chama uma vez por equipe e escreve a observação na faixa dela, embaixo da opção ("As costas travaram (2 bimestres puxados seguidos) −R$ 1.230"; D-080; até a versão 9, uma linha por grupo embaixo das faixas, com as equipes); o celular, à vista, "Por causa de escolhas anteriores: as costas travaram (…) −R$ 1.230" |
+| `fraseAcimaDoTrabalho(protecao, nome, moeda, periodo?) → string \| null` | D-067, de `protecaoDoResultado`: "Auxílio do INSS (45 dias): R$ 2.431, mais do que Bruna ganhava trabalhando em um bimestre comum (R$ 1.400)." O nome do que pagou vem dos itens da proteção (o config); o "1 salário mínimo" fica no rótulo do efeito ou na fala do apresentador (o núcleo não escreve conteúdo). `null` sem `acimaDoTrabalho` |
+| `fraseDoLimite(mes, moeda) → string \| null` | D-066: "O limite do cheque especial acabou: R$ X de contas ficaram atrasadas (multa de R$ M), a casa ficou sem R$ S do que não se paga depois e não deu para comprar R$ Y de comida." (o "ficou sem" só com `mes.ficouSem` > 0) e/ou "Pagou R$ Z de contas atrasadas."; `null` sem nada disso ou em sala sem o limite |
 | `periodo(conteudo) → { meses, nome, noPeriodo, doPeriodo }` | esquema v3: `regras.mesesPorRodada` (inteiro ≥ 1, senão 1) e o nome do período: 1 "mês", 2 "bimestre", 3 "trimestre", 6 "semestre", outro "período de N meses"; `noPeriodo` = "no " + nome, `doPeriodo` = "do " + nome |
 | `rotuloDaRodada(titulo, i) → string` | esquema v3: o título até os dois-pontos ("Jan–fev: quanto trabalhar?" → "Jan–fev"); sem os dois-pontos, o título inteiro; sem título, "Rodada i+1" |
 | `mesesJogados(conteudo, historia) → n` | esquema v3: rodadas jogadas × `mesesPorRodada` ("No fim dos 12 meses"; com 3 rodadas mensais, 3) |
@@ -833,7 +833,7 @@ celular e no `test/carregar-nucleo.mjs`.
 | `nomesDosGastos(conteudo, { equipeId, rodadaId, decisao }, custo, mes, deAntes) → { antes, gastos, cartaNosGastos }` | o que a linha de um mês da história do telão nomeia nos gastos (revisão da F7, achado 9 da revisão de conteúdo e legibilidade). `antes`: os itens do `deAntes` sem `gasto` (o que mexeu no trabalho, com sinal); os de `gasto` (a multa) nunca entram aqui. `gastos`: as parcelas de `mes.gastos`, positivas e somando o total, na ordem: a da carta (`custo.gastos`, sem nome, "gastos"), as do config que valem sem o estado da equipe (efeitos de categoria "gasto" da opção decidida e os gerais da rodada, sem `se` ou só com `se.persona` da equipe: o curso de gel, os pneus), as de antes (a multa, pelo rótulo) e, se faltar, "outros gastos"; a primeira com nome sai "gastos: nome" quando há mais de uma, e só "nome" sozinha. Se as do config passam do total, sem elas; se ainda passam (dado incoerente), `gastos: null` (a tela escreve "gastos R$ G"). `cartaNosGastos`: a parcela da carta está nas contas. Antes (`nomesDoMes` do telão), com um gasto de opção a multa saía "−R$ 130" entre o que veio de antes e de novo dentro dos gastos |
 | `patrimonioDe(valores) → n \| null` | esquema v2.2: `renda − emprestimo` (esquema v3.1: `− contas_atrasadas` também), o mesmo `motor.patrimonio` (o celular não carrega o motor). `null` sem a renda |
 | `protecaoDoResultado(res) → { pagou, evitou, evitouMesa?, itens: [{ rotulo, valor }], saldoMes, acimaDoTrabalho? } \| null` (`evitouMesa`, revisão da F6c, só quando `res.protecaoEvitouMesa` > 0; com ele gravado, `protecaoEvitou` ausente vale 0) (`acimaDoTrabalho = { trabalhoComum }`, D-067, só quando `res.protecaoAcimaDoTrabalho` existe e o pago passa dele) | D-059, a partir do resultado gravado: `pagou = mes.protecao`, `evitou = protecaoEvitou` (ausente vale o `pagou`), `itens = protecaoItens` (lista que volta do RTDB como objeto é lida igual). `null` quando a proteção não pagou nada no mês, ou em sala de antes da D-059 |
-| `fraseDaProtecao(protecao, moeda) → string \| null` | a frase do celular: "A proteção pagou R$ X: <rótulos>." e, com o saldo do mês, "Sem ela, teria faltado R$ Y a mais." (fechou no vermelho), "Sem ela, teria faltado R$ Y." (fechou por causa dela) ou "Sem ela, teria sobrado R$ Y a menos." (sobrou de todo jeito). Com `evitouMesa` (revisão da F6c), acrescenta ", e R$ Z de comida não teria dado para comprar" (ou "Sem ela, R$ Z de comida não teria dado para comprar." quando ela não mudou o saldo). A `moeda` vem da tela (`formatar.moeda`): o núcleo não formata dinheiro |
+| `fraseDaProtecao(protecao, moeda) → string \| null` | a frase do celular: "A proteção pagou R$ X: <rótulos>." e, com o saldo do mês, "Sem ela, teria faltado R$ Y a mais." (fechou no vermelho), "Sem ela, teria faltado R$ Y." (fechou por causa dela) ou "Sem ela, teria sobrado R$ Y a menos." (sobrou de todo jeito). Com `evitouMesa` (revisão da F6c), acrescenta ", e não teria dado para comprar R$ Z de comida" (ou "Sem ela, não teria dado para comprar R$ Z de comida." quando ela não mudou o saldo). A `moeda` vem da tela (`formatar.moeda`): o núcleo não formata dinheiro |
 | `piorCasoDoPlacar(placar, protegeu) → { comEscolhas, semProtecao, evitou, situacao } \| null` | D-059: `piorCaso` e `piorCasoSemProtecao` do placar em reais inteiros para a tela. `situacao`: `"semEscolha"` (`protegeu` não é `true`), `"evitou"` (o "sem" é pior que o "com": `semProtecao` e `evitou = comEscolhas − semProtecao`), `"naoMelhorou"` (o "sem" é igual ou melhor: `semProtecao` `null`, `evitou` 0; o MEI com a sessão acabando antes do mês 3, a associação) ou `"semDado"` (sala de antes da D-059). O "sem" nunca sai melhor que o "com" (revisão da F5). `null` sem `piorCaso`. Esquema v3: com `placar.estimado === true`, o resultado leva `estimado: true` (a tela diz "pior caso estimado"); placar exato, sem o campo |
 | `temProtecao(conteudo) → boolean` | alguma opção do config tem `protege: true` |
 | `escolheuProtecao(conteudo, resultados, equipeId) → boolean` | a equipe decidiu, em algum mês com resultado, uma opção com `protege: true`. O telão e o celular usam a mesma |
@@ -1127,7 +1127,7 @@ saiu do telão: fica no celular de cada equipe e na história do placar final.
   linha de baixo;
 - `.resultado-acima` (D-067), só quando o resultado traz `protecaoAcimaDoTrabalho`: a frase de
   `historia.fraseAcimaDoTrabalho(historia.protecaoDoResultado(r), persona.nome, formatar.moeda, historia.periodo(config))`
-  ("Auxílio do INSS (MEI): R$ 4.000, mais do que Dani ganhava trabalhando num bimestre comum (R$ 3.800).") na largura da
+  ("Auxílio do INSS (MEI): R$ 4.000, mais do que Dani ganhava trabalhando em um bimestre comum (R$ 3.800).") na largura da
   faixa inteira, embaixo das três colunas, no tom do texto. O "1 salário mínimo" fica no rótulo do efeito no config ou
   na fala do apresentador (o núcleo não escreve conteúdo).
 As cores ficam no `base.css` (`--positivo` #6ee787, `--negativo` #ff7b72; 11:1 e 6,9:1 sobre a superfície). Os
@@ -1542,7 +1542,7 @@ anfitrião: quem decide é o telão.
 - **Redesenho de 29/09 (D-041, D-043 a D-046; esquema v2.1: D-052, D-054, D-055).** O que cada tela do jogo mostra,
   com as classes que o e2e confere:
   - **Persona:** a família em uma linha (`.familia`, "Em casa: …"), o básico da casa
-    item a item com a fonte de cada valor, o total ("O básico da família custa R$ Y
+    item a item com a fonte de cada valor, o total ("O básico da casa custa R$ Y
     por mês", `.basico-linha`) e a outra renda da casa, quando houver.
   - **Decisão e prorrogação**, de cima para baixo: cabeçalho com o cronômetro
     (`tempos.decisaoSeg`, 120 s); o contexto da família (`.contexto-familia`, só
@@ -1586,13 +1586,13 @@ anfitrião: quem decide é o telão.
     (`retornoAVista`, aluno.js): na matriz de votos com o jogo simples, a frase da pausa
     nasceu abaixo da tela, porque esse estágio não pedia a rolagem.
   - **Conta do mês** (`.conta-mes`, no resultado e na situação dos blocos): "Entrou
-    R$ X · gastos R$ G · o básico da família custa R$ Y · juros da dívida R$ J"
+    R$ X · gastos R$ G · o básico da casa custa R$ Y · juros da dívida R$ J"
     (gastos e juros só quando existem) e, em destaque, "Faltou R$ Z" ou "Sobrou
     R$ Z" (D-052). Com custo fixo do trabalho ou outra renda na casa, uma linha diz
     de onde veio o "entrou": "Do trabalho e da decisão: R$ T · custos fixos do
     trabalho: −R$ F · {outra renda}: R$ O" (era "Do trabalho", e levava o
     empréstimo e o INSS dentro; achado 10). Com `deAntes`, uma linha
-    `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …". Os números saem de `mes` gravado; `data-entrou`,
+    `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …" (no formato simples, "Por causa de escolhas anteriores (já na conta): …", com o ": " do rótulo trocado por ", " na tela; leitura final de 06/10). Os números saem de `mes` gravado; `data-entrou`,
     `data-gastos`, `data-basico`, `data-juros`, `data-saldo-mes` e `data-resultado`
     (`faltou`|`sobrou`) repetem os valores. Sala de antes do v2.1 (sem `gastos` nem
     `custosFixos`) mostra a linha como antes. **Proteção (D-059):** com
@@ -1628,8 +1628,11 @@ anfitrião: quem decide é o telão.
       positivo, "Dinheiro em caixa: R$ X".
   - **Empréstimo na conta do mês** (`.conta-emprestimo`, `data-emprestimo`,
     `data-parcela`): "Empréstimo de R$ 1.500: o dinheiro entrou no caixa, mas é
-    dívida, e não conta como sobra do mês." e "Parcela do empréstimo R$ 183: R$ 96
-    de juros (já na conta) e R$ 87 que abatem a dívida." Também na história.
+    dívida, e não entra no saldo do mês." (o nome do período: "do bimestre" com
+    rodadas bimestrais) e "Parcela do empréstimo R$ 183: R$ 96 de juros (já na
+    conta) e R$ 87 que abatem a dívida." (com rodadas de mais de um mês, a soma
+    das parcelas do período: "Parcelas do empréstimo no bimestre R$ 366: …";
+    leitura final de 06/10). Também na história.
   - **Telas enxutas (D-065).** Toda tela do jogo no celular começa pelo que se
     explica em aula, e o detalhe fica recolhido (`details.recolhido`, com
     `data-recolhido`, fechado ao chegar e com o marcador "▸ ver / ▾ fechar"; o
@@ -1643,9 +1646,9 @@ anfitrião: quem decide é o telão.
       bimestre", inteiro em 360×740 nos blocos (no placar final, desde 05/10, o topo são as escolhas do ano; ver
       "Placar final" abaixo). O período sai de `historia.periodo` (a regra do telão),
       e as outras telas dizem o mesmo: "Saldo do bimestre" e "A conta do bimestre em detalhe" no resultado,
-      "o básico da família custa R$ X no bimestre" na conta (o `mes.basico` já é o do bimestre), "(… no
+      "o básico da casa custa R$ X no bimestre" na conta (o `mes.basico` já é o do bimestre), "(… no
       bimestre)" na variação dos indicadores, "A história bimestre a bimestre" e, na persona e na situação
-      sem rodada, "R$ Y por mês, R$ 2Y no bimestre". Na decisão, só "o básico da família custa R$ 2Y no
+      sem rodada, "R$ Y por mês, R$ 2Y no bimestre". Na decisão, só "o básico da casa custa R$ 2Y no
       bimestre" (uma linha, pela dobra). Com o placar estimado (`estimado: true`), "Escolha ou sorte?
       (estimado)", "O pior que podia acontecer (pior caso estimado)" (`.pior-caso[data-estimado="1"]`) e a
       nota `.nota-estimado`. "Ficou com" é o
@@ -1692,14 +1695,14 @@ anfitrião: quem decide é o telão.
       + faltouNaMesa − juros − multa − mora`); `data-faltou-na-mesa`, `data-multa` e `data-mora`. Embaixo do
       empréstimo, `.conta-limite` (`data-atrasou`, `data-multa`, `data-mora`, `data-contas-pagas`,
       `data-contas-atrasadas`, `data-divida-banco`) com `historia.fraseDoLimite` ("O limite do cheque especial
-      acabou: R$ X de contas ficaram atrasadas (multa de R$ M) e R$ Y de comida não deu para comprar." e/ou
-      "Pagou R$ Z de contas atrasadas.") e, com mora, "Mora de R$ R sobre as contas que já estavam atrasadas."
+      acabou: R$ X de contas ficaram atrasadas (multa de R$ M) e não deu para comprar R$ Y de comida." e/ou
+      "Pagou R$ Z de contas atrasadas.") e, com mora, "Juros de R$ R sobre as contas que já estavam atrasadas."
       (a frase do núcleo não diz a mora). Nada disso no bimestre: sem a linha.
     - **História** (placar final e fim): a mesma comida não comprada e a mesma multa e mora na linha de cada
       bimestre, e o `.conta-limite`.
   - **Proteção acima do trabalho (D-067).** No bimestre em que o resultado gravado tem `protecaoAcimaDoTrabalho`
     (`protecaoDoMes.acimaDoTrabalho`), a frase de `historia.fraseAcimaDoTrabalho(protecao, nome da persona, moeda,
-    período)`: "Auxílio do INSS (MEI): R$ 6.000, mais do que Rafa ganhava trabalhando num bimestre comum (R$ 5.200)."
+    período)`: "Auxílio do INSS (MEI): R$ 6.000, mais do que Rafa ganhava trabalhando em um bimestre comum (R$ 5.200)."
     (`data-trabalho-comum`). No resultado, **à vista**, logo abaixo do saldo em destaque (`p.acima-trabalho`), e a
     conta recolhida não a repete; na conta da situação e na história, `p.conta-acima-trabalho`, depois da frase da
     proteção. O "1 salário mínimo" não é escrito pela tela: vem do rótulo do efeito no config ou da fala do
@@ -1715,7 +1718,8 @@ anfitrião: quem decide é o telão.
       "Terminaram com" do "Escolha ou sorte?"; sem placar, o "ficou com" do último bimestre). "Escolheram" conta as
       rodadas com origem diferente de `piloto` (o "ninguém votou" não é escolha): com uma delas, "em 5 dos 6
       bimestres"; sem nenhuma, "A equipe não votou em nenhum bimestre, e faltou R$ X."; uma rodada só, "no bimestre
-      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
+      jogado". No formato simples (leitura final de 06/10), a palavra do telão e da linha da família:
+      "…, e a família ainda ficou devendo R$ X." (sem nenhum voto, "…, e a família ficou devendo R$ X."). Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
       não votou em nenhum bimestre e fechou as contas: sobrou R$ X."). O texto sai de `partesDaFrase`. `data-resultado` =
       `faltou`|`fechou`, `data-valor` (o patrimônio arredondado), `data-escolheram` e `data-total`; no `faltou`,
       a borda grossa (nunca só cor, D-016);
