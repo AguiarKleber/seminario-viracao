@@ -50,6 +50,23 @@
   // letras ("A mobilização arrancou um reajuste"). 40 deixa folga sem deixar
   // entrar uma frase inteira. O curto por persona segue o curto (D-040).
   const MAX_TITULO_POR = 40;
+  // D-079 (teste do Kleber de 06/10): o bloco de dados depois de cada bimestre
+  // diz o que é o tópico (contexto, 1 ou 2 frases), até 3 números com fonte
+  // (itens) e de onde vêm (fonte). Os tetos são os do telão em 1024×768 com a
+  // letra de 28 px e a faixa de entrada embaixo (medido em 06/10: 220 letras
+  // de contexto, 3 itens de 140 e 200 de fonte cabem): com mais texto, a tela
+  // aperta e depois rola diante da turma. Passar deles é aviso, e não erro: um
+  // texto longo só aperta a tela, não muda o jogo. A fonte chega a 200 porque
+  // o nome do informativo do IBGE é longo, e abreviá-lo perderia a referência.
+  const MAX_CONTEXTO_BLOCO = 220;
+  const MAX_ITEM_BLOCO = 140;
+  const MAX_ITENS_BLOCO = 3;
+  const MAX_FONTE_BLOCO = 200;
+  const CAMPOS_DO_BLOCO = ['contexto', 'itens', 'fonte'];
+  // D-079: no formato simples, a mini-história da opção (a narrativa) vai na
+  // decisão do telão, embaixo do rótulo, com as 5 opções e as 6 equipes na
+  // mesma tela de 1024×768. Acima disto, a frase passa de duas linhas.
+  const MAX_NARRATIVA_SIMPLES = 120;
   // Esquema v2.1: os dias parados de uma carta são informativos (a tela mostra
   // "20 dias parado"), e um mês tem 30. Mais que isso era o que a revisão de
   // 29/09 achou (item 1: 50 dias parados num mês) e não pode voltar pelo config.
@@ -144,7 +161,7 @@
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
-    passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada'],
+    passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada', 'contexto', 'itens', 'fonte'],
     efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria', 'emprestimo'],
     emprestimo: ['valor', 'parcelas', 'taxaMes', 'fonte'],
     condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador', 'decidiu', 'sorteou'],
@@ -1096,6 +1113,10 @@
     if (n.tipo === 'bloco' && n.titulo === undefined && !tem(b, 'titulo')) {
       r.aviso(c, 'bloco sem "titulo": a tela de espera do telão fica sem o nome do trecho');
     }
+    if (n.tipo === 'bloco') conteudoDoBloco(r, b, n, c);
+    else if (n.tipo !== undefined) {
+      for (const k of CAMPOS_DO_BLOCO) if (tem(b, k)) r.aviso(junta(c, k), `só o passo "bloco" mostra "${k}" (será descartado)`);
+    }
     const precisaEnquete = n.tipo === 'enquete' || n.tipo === 'comparativo';
     if (tem(b, 'enquete') || precisaEnquete) {
       if (!tem(b, 'enquete')) r.erro(junta(c, 'enquete'), 'campo obrigatório ausente');
@@ -1122,6 +1143,37 @@
       r.aviso(c, `comparativo de uma enquete não pareada ("${n.enquete}"): não há antes e depois`);
     }
     return n;
+  }
+
+  // D-079: o contexto, os itens e a fonte do bloco (todos opcionais). Ausentes
+  // não entram no normalizado: o hash de um config sem eles não muda. Tipo
+  // errado é erro (o telão escreveria lixo); tamanho, aviso (só aperta a tela).
+  function conteudoDoBloco(r, b, n, c) {
+    const avisarTamanho = (caminho, frase, limite) => {
+      const letras = frase === undefined ? 0 : [...frase].length;
+      if (letras > limite) r.aviso(caminho, `texto com ${letras} caracteres (mais de ${limite}): pode não caber no telão em 1024×768`);
+    };
+    copiarTextos(r, b, n, c, ['contexto', 'fonte']);
+    avisarTamanho(junta(c, 'contexto'), n.contexto, MAX_CONTEXTO_BLOCO);
+    avisarTamanho(junta(c, 'fonte'), n.fonte, MAX_FONTE_BLOCO);
+    if (!tem(b, 'itens')) return;
+    const ci = junta(c, 'itens');
+    if (!Array.isArray(b.itens) || b.itens.length === 0) {
+      r.erro(ci, `precisa ser uma lista de 1 a ${MAX_ITENS_BLOCO} textos`);
+      return;
+    }
+    const itens = [];
+    b.itens.forEach((item, i) => {
+      const caminho = `${ci}[${i}]`;
+      if (typeof item !== 'string') r.erro(caminho, 'precisa ser texto');
+      else if (item.trim() === '') r.erro(caminho, 'texto vazio');
+      else {
+        itens.push(item);
+        avisarTamanho(caminho, item, MAX_ITEM_BLOCO);
+      }
+    });
+    if (b.itens.length > MAX_ITENS_BLOCO) r.aviso(ci, `${b.itens.length} itens (mais de ${MAX_ITENS_BLOCO}): pode não caber no telão em 1024×768`);
+    if (itens.length === b.itens.length) n.itens = itens;
   }
 
   function roteiros(r, bruto, idx) {
@@ -1389,6 +1441,16 @@
   // do motor e roda, como a conferência de carta possível, só sem outros erros.
   function conferirFormatoSimples(r, cfg) {
     if (cfg.regras.formatoSimples !== true) return;
+    // D-079: a mini-história vai na decisão do telão; longa demais, a tela aperta.
+    for (const rodadaId of cfg.ordem.rodadas) {
+      for (const opcaoId of cfg.rodadas[rodadaId]?.ordemOpcoes || []) {
+        const narrativa = cfg.rodadas[rodadaId].opcoes[opcaoId]?.narrativa;
+        const letras = typeof narrativa === 'string' ? [...narrativa].length : 0;
+        if (letras > MAX_NARRATIVA_SIMPLES) {
+          r.aviso(`rodadas.${rodadaId}.opcoes.${opcaoId}.narrativa`, `mini-história com ${letras} caracteres (mais de ${MAX_NARRATIVA_SIMPLES}): pode não caber na decisão do telão em 1024×768`);
+        }
+      }
+    }
     const personas = [...new Set(cfg.ordem.equipes.map((id) => cfg.equipes[id]?.persona).filter((p) => typeof p === 'string'))];
     if (personas.length > 1) {
       r.erro('equipes', `no formato simples, todas as equipes jogam com a mesma persona; há ${personas.length} (${personas.join(', ')})`);
