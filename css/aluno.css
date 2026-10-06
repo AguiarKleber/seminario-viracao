@@ -468,6 +468,11 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
    (52 px) e o aviso "Mais opções abaixo" (48 px mais a margem) quando a opção
    aberta rola para a vista. */
 .opcao-aluno { display: flex; flex-direction: column; scroll-margin-top: 64px; scroll-margin-bottom: 76px; }
+/* A frase da opção aberta que muda (voto enviado, guardado, recusado; o motivo
+   do botão apagado) rola sozinha para a vista (retornoAVista, aluno.js), com
+   as mesmas folgas da opção aberta. */
+.opcao-detalhe .opcao-votada, .opcao-detalhe .opcao-aviso { scroll-margin-top: 64px; scroll-margin-bottom: 76px; }
+body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .opcao-aviso { scroll-margin-top: 124px; }
 .opcao-aluno.aberta .botao-opcao-aluno { border-color: var(--texto); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .opcao-detalhe {
   display: flex; flex-direction: column; gap: 10px;

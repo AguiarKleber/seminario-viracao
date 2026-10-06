@@ -86,7 +86,8 @@
     // que acabou de ser aberta e ainda precisa rolar para a vista.
     // recolhidos: os detalhes recolhidos que o aluno abriu nesta tela (D-065),
     // para um redesenho (a contagem das equipes, um voto) não fechá-los na mão dele.
-    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, recolhidos: new Set() },
+    // retornoVisto: as frases da opção aberta no último desenho (retornoAVista).
+    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set() },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
     // D-064: o modo espectador, o celular do apresentador. null fora dele;
     // dentro, { equipe, pin }: a equipe cuja tela ele vê e o PIN, só em memória
@@ -1149,7 +1150,7 @@
       // navegador pinta a tela nova. A opção recém-aberta rola para a vista
       // antes da conferência da dobra.
       raiz.requestAnimationFrame?.(() => {
-        rolarParaAberta();
+        retornoAVista(rolarParaAberta());
         conferirDobra();
       });
     }
@@ -2714,13 +2715,37 @@
   // Só logo depois de abrir, e nunca a cada desenho: a contagem ao vivo redesenha
   // a tela a cada voto da equipe, e puxar a rolagem ali tiraria o aluno do lugar.
   // O scroll-margin do CSS desconta o topo fixo e o aviso "Mais opções abaixo".
+  // Devolve se rolou: o retornoAVista não puxa a rolagem de novo no mesmo quadro.
   function rolarParaAberta() {
     const id = app.ui.rolarAte;
     app.ui.rolarAte = null;
-    if (!id) return;
+    if (!id) return false;
     const alvo = [...app.el.tela.querySelectorAll('[data-opcao-bloco]')].find((n) => n.dataset.opcaoBloco === id);
     const suave = !raiz.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
     alvo?.scrollIntoView({ block: 'nearest', behavior: suave ? 'smooth' : 'auto' });
+    return Boolean(alvo);
+  }
+
+  // A frase da opção aberta (o "Enviando…", o "guardado: vai sozinho quando o
+  // apresentador retomar", a recusa, o motivo do botão apagado) sempre à vista.
+  // Até 06/10, cada mudança de estágio pedia a rolagem por conta própria
+  // (rolarAte), e a que esquecia deixava a frase fora da tela: na matriz de
+  // votos com o jogo simples (D-078: 5 opções, cada uma com o dinheiro e o
+  // custo humano, e a casa do Jonas acima delas), a frase da pausa nasceu entre
+  // 714 e 789 px numa tela de 740, e ninguém a via. Agora toda frase nova rola
+  // para a vista. Só quando ela MUDA, e nunca a cada desenho: a contagem ao
+  // vivo redesenha a tela a cada voto da equipe, e puxar a rolagem ali tiraria
+  // o aluno do lugar. O scroll-margin do CSS desconta o topo fixo e o aviso
+  // "Mais opções abaixo".
+  function retornoAVista(jaRolou) {
+    const detalhe = app.el.tela?.querySelector('[data-detalhe]');
+    const frases = detalhe ? [...detalhe.querySelectorAll('.opcao-votada, .opcao-aviso')] : [];
+    const assinatura = detalhe ? [detalhe.dataset.detalhe, ...frases.map((n) => n.textContent)].join('|') : null;
+    if (assinatura === app.ui.retornoVisto) return;
+    app.ui.retornoVisto = assinatura;
+    if (jaRolou || frases.length === 0) return;
+    const suave = !raiz.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    frases.at(-1).scrollIntoView({ block: 'nearest', behavior: suave ? 'smooth' : 'auto' });
   }
 
   // ----- A dobra da decisão: 4 opções com narrativa podem não caber em 360×740.
