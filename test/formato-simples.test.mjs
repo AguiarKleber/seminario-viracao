@@ -299,6 +299,12 @@ test('celular: a decisão leva o dinheiro de cada opção só no formato simples
   assert.ok(decisaoComum.dados.opcoes.every((o) => !Object.hasOwn(o, 'dinheiro')), 'sem a chave, as opções ficam iguais');
   assert.equal(noSorteio.tipo, 'resultado');
   assert.equal(noSorteioComum.tipo, 'sorteando');
+  // O estado "resultado" chega antes do resultado (dois ouvintes): no formato
+  // simples, a "votação encerrada", e nunca o "Sorteando…" das fatias.
+  const semResultado = V.alunoLogica.telaDoAluno({ ...base, resultados: {}, conteudo: config, estado: { ...sorteio, subfase: 'resultado' } });
+  const semResultadoComum = V.alunoLogica.telaDoAluno({ ...base, resultados: {}, conteudo: comum, estado: { ...sorteio, subfase: 'resultado' } });
+  assert.deepEqual([semResultado.tipo, semResultado.dados.motivo], ['aguardando', 'votacaoEncerrada']);
+  assert.equal(semResultadoComum.tipo, 'sorteando', 'sem a chave, como antes');
 });
 
 // ---------- As combinações possíveis ----------

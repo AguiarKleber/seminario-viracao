@@ -1,0 +1,343 @@
+// O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à noite)
+// com celulares, contra o emulador do Firebase: `npm run e2e:online:simples`.
+// Fica fora do `npm run check`, como o e2e:online (navegador instalado e JDK 21).
+//
+// Sobe o bin/servir.mjs e o emulador (projeto demo-seminario), e joga a
+// fixture test/fixtures/config-simples.json (servida no lugar do config.json)
+// com o telão de verdade em 1024×768, com a faixa de entrada aberta embaixo (o
+// pior caso de altura), e 3 celulares de verdade em 360×740:
+// 1. "Conheça o Jonas" no celular, sem o ponto de partida dos indicadores;
+// 2. a decisão: as 5 opções com a letra, o rótulo, o dinheiro ("+R$ 900 no
+//    bimestre") e o custo humano; a dobra "Mais opções abaixo" aparece enquanto
+//    a última opção está abaixo da tela e some quando ela aparece; aberta a
+//    última opção, o "Votar nesta" fica à vista (e não atrás do aviso);
+// 3. o fechamento sem sorteio: o celular vai da decisão ao resultado sem
+//    passar pela tela "Sorteando…", e o telão também não desenha o sorteio;
+// 4. o resultado no celular: o saldo do bimestre e o dinheiro da família
+//    (tem/devendo), sem os indicadores (energia, proteção) e sem o detalhe da
+//    dívida; a situação do bloco seguinte, idem;
+// 5. o placar final: o celular mostra as escolhas da equipe, sem "Escolha ou
+//    sorte?" e sem o pior caso; o telão, as três páginas, cabendo em 1024×768
+//    com a faixa de entrada.
+/* global document, innerHeight, innerWidth, MutationObserver, requestAnimationFrame */
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { administrador, PIN_EMULADOR, RAIZ, rodarNoEmulador } from '../bin/emulador.mjs';
+import { servir } from '../bin/servir.mjs';
+import { carregarNucleo } from '../test/carregar-nucleo.mjs';
+
+const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
+const SDK_CDN = 'https://www.gstatic.com/firebasejs/12.19.0/';
+const UA_CELULAR = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
+const TEXTO_CONFIG = readFileSync(join(RAIZ, 'test', 'fixtures', 'config-simples.json'), 'utf8');
+
+if (!process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
+  process.exitCode = await rodarNoEmulador('node e2e/simples-online.e2e.mjs');
+} else {
+  await sessao();
+}
+
+async function abrirNavegador() {
+  const erros = [];
+  for (const channel of ['msedge', 'chrome']) {
+    try {
+      return await chromium.launch({ channel, headless: true });
+    } catch (e) {
+      erros.push(`${channel}: ${e.message.split('\n')[0]}`);
+    }
+  }
+  throw new Error(`Nenhum navegador instalado serviu (Edge ou Chrome):\n${erros.join('\n')}`);
+}
+
+// Os módulos da CDN saem do node_modules (o mesmo SDK 12.19.0), sem internet.
+async function servirSdk(contexto) {
+  await contexto.route(`${SDK_CDN}*`, async (rota) => {
+    const nome = new URL(rota.request().url()).pathname.split('/').pop();
+    const arquivo = join(RAIZ, 'node_modules', 'firebase', nome);
+    if (!/^firebase-[a-z-]+\.js$/.test(nome) || !existsSync(arquivo)) return rota.fulfill({ status: 404, body: 'não há' });
+    return rota.fulfill({
+      status: 200, body: readFileSync(arquivo, 'utf8'),
+      headers: { 'Content-Type': 'text/javascript; charset=utf-8', 'Access-Control-Allow-Origin': '*' },
+    });
+  });
+}
+
+async function sessao() {
+  mkdirSync(CAPTURAS, { recursive: true });
+  const site = await servir({ porta: 0 });
+  await administrador('PUT', 'privado/pinApresentador', PIN_EMULADOR);
+  const navegador = await abrirNavegador();
+  const erros = [];
+  const vigiar = (p, nome) => {
+    p.on('pageerror', (e) => erros.push(`${nome} pageerror: ${e.message}`));
+    p.on('console', (m) => {
+      if (m.type() === 'error' && !/PERMISSION_DENIED|permission_denied|ERR_INTERNET_DISCONNECTED|WebSocket|FIREBASE WARNING/i.test(m.text())) erros.push(`${nome} console: ${m.text()}`);
+    });
+  };
+  try {
+    await jogar({ site, navegador, vigiar });
+  } finally {
+    await navegador.close();
+    await site.fechar();
+  }
+  assert.deepEqual(erros, [], 'nenhum erro inesperado no console das páginas');
+}
+
+async function jogar({ site, navegador, vigiar }) {
+  const V = await carregarNucleo();
+  await import(new URL('../js/ui/formatar.js', import.meta.url).href);
+  const F = globalThis.Viracao.formatar;
+  const H = V.historia;
+  const cfg = V.validarConfig.validarTexto(TEXTO_CONFIG).config;
+  const RODADAS = cfg.ordem.rodadas;
+  const PERSONA = cfg.equipes.e1.persona;
+  const lido = (t) => String(t).replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  const servirConfig = (ctx) => ctx.route(`${site.url}config.json`, (rota) => rota.fulfill({
+    status: 200, contentType: 'application/json; charset=utf-8', body: TEXTO_CONFIG,
+  }));
+
+  // ---------- Telão (online, com a faixa de entrada aberta) ----------
+  const ctxTelao = await navegador.newContext({ viewport: { width: 1024, height: 768 }, acceptDownloads: true });
+  await servirSdk(ctxTelao);
+  await servirConfig(ctxTelao);
+  const telao = await ctxTelao.newPage();
+  vigiar(telao, 'telão');
+  await telao.goto(`${site.url}telao/?emulador=1`);
+  await telao.waitForFunction(() => /regras v[0-9]+ conferidas/.test(document.getElementById('status-online')?.textContent || ''), null, { timeout: 30000 });
+  await telao.waitForFunction(() => document.getElementById('hash-config'));
+  assert.equal(await telao.textContent('#hash-config'), V.validarConfig.hash(cfg), 'o telão leu a fixture do formato simples');
+  await telao.fill('#pin-apresentador', PIN_EMULADOR);
+  await telao.click('[data-acao="criar-online"]');
+  await telao.waitForFunction(() => document.body.dataset.tela === 'lobby', null, { timeout: 20000 });
+  const sala = await telao.evaluate(() => globalThis.Viracao.telao.sala());
+  await telao.evaluate(() => {
+    globalThis.__telas = [];
+    new MutationObserver(() => globalThis.__telas.push(document.body.dataset.tela)).observe(document.body, { attributes: true, attributeFilter: ['data-tela'] });
+  });
+  console.log(`Sala ${sala} (formato simples) criada.`);
+
+  const estado = () => telao.evaluate(() => globalThis.Viracao.telao.estado());
+  async function esperarEstado(teste, descricao, timeout = 15000) {
+    const inicio = Date.now();
+    for (;;) {
+      const e = await estado();
+      if (e && teste(e)) return e;
+      if (Date.now() - inicio > timeout) throw new Error(`Tempo esgotado esperando: ${descricao}. Estado: ${JSON.stringify(e)}`);
+      await telao.waitForTimeout(80);
+    }
+  }
+  let ultimoAvanco = 0;
+  async function avancar() {
+    const falta = 1650 - (Date.now() - ultimoAvanco);
+    if (falta > 0) await telao.waitForTimeout(falta);
+    const antes = await estado();
+    await telao.keyboard.press('Space');
+    ultimoAvanco = Date.now();
+    await esperarEstado((e) => e.indice !== antes.indice || e.subfase !== antes.subfase, `sair do passo ${antes.indice}`);
+  }
+  async function avancarAte(teste, descricao) {
+    for (let i = 0; i < 6; i += 1) {
+      if (teste(await estado())) return;
+      await avancar();
+    }
+    await esperarEstado(teste, descricao);
+  }
+  // O telão com a faixa de entrada: nada rola, nada sai do palco nem da
+  // própria caixa (a faixa do resultado, a linha das combinações).
+  async function conferirTelao(nome) {
+    await telao.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const m = await telao.evaluate(() => {
+      const se = document.scrollingElement;
+      const palco = document.getElementById('palco').getBoundingClientRect();
+      const fora = [];
+      for (const el of document.querySelectorAll('#palco *')) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0 && (r.right > innerWidth + 1 || r.bottom > Math.min(innerHeight, palco.bottom) + 1)) fora.push(`${el.tagName.toLowerCase()}.${el.getAttribute('class') || ''}`);
+      }
+      const vazados = [];
+      for (const caixa of document.querySelectorAll('#palco .resultado-simples, #palco .combinacao-equipe, #palco .equipe-status, #palco .tabela-caminho td')) {
+        const c = caixa.getBoundingClientRect();
+        for (const n of caixa.querySelectorAll('*')) {
+          const r = n.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0 && (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1)) vazados.push(`${n.tagName.toLowerCase()}.${n.getAttribute('class') || ''}`);
+        }
+      }
+      return { rola: se.scrollHeight > innerHeight + 1 || se.scrollWidth > innerWidth + 1, fora: fora.slice(0, 5), vazados: vazados.slice(0, 5), faixa: !document.getElementById('faixa').hidden };
+    });
+    await telao.screenshot({ path: join(CAPTURAS, `online-simples-telao-${nome}.png`) });
+    assert.equal(m.faixa, true, `${nome}: a faixa de entrada está embaixo`);
+    assert.equal(m.rola, false, `${nome}: o telão rola`);
+    assert.deepEqual(m.fora, [], `${nome}: elemento fora do palco (com a faixa de entrada)`);
+    assert.deepEqual(m.vazados, [], `${nome}: elemento fora da própria caixa`);
+  }
+
+  // ---------- Celulares (360×740) ----------
+  const url = `${site.url}aluno/?sala=${sala}&emulador=1`;
+  async function novoCelular(nome) {
+    const ctx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
+    await servirSdk(ctx);
+    const p = await ctx.newPage();
+    vigiar(p, nome);
+    await p.goto(url);
+    // Entrar na sala (o toque de "Entrar"); depois, aguarda o telão.
+    await p.click('[data-acao="entrar"]');
+    await p.waitForFunction(() => document.body.dataset.tela === 'aguardando', null, { timeout: 20000 });
+    await p.evaluate(() => {
+      globalThis.__telas = [];
+      new MutationObserver(() => globalThis.__telas.push(document.body.dataset.tela)).observe(document.body, { attributes: true, attributeFilter: ['data-tela'] });
+    });
+    return { nome, ctx, p };
+  }
+  const esperarTela = (c, tipo, timeout = 20000) => c.p.waitForFunction((t) => document.body.dataset.tela === t, tipo, { timeout });
+  let capturas = 0;
+  async function conferirCelular(c, nome) {
+    const r = await c.p.evaluate(() => ({ rolagem: document.documentElement.scrollWidth - innerWidth }));
+    assert.ok(r.rolagem <= 0, `${nome}: rolagem lateral de ${r.rolagem} px`);
+    await c.p.screenshot({ path: join(CAPTURAS, `celular-simples-${String(++capturas).padStart(2, '0')}-${nome}.png`) });
+  }
+  const cel = [await novoCelular('Ana'), await novoCelular('Bia'), await novoCelular('Caio')];
+  const EQUIPES_CEL = ['e1', 'e2', 'e3'];
+
+  // Formação: cada celular numa equipe; as seis ficam abertas (as sem
+  // celular jogam no padrão).
+  await avancarAte((e) => e.tipo === 'formarEquipes', 'formar equipes');
+  for (const [i, c] of cel.entries()) {
+    await esperarTela(c, 'escolherEquipe');
+    await c.p.click(`.botao-equipe[data-equipe="${EQUIPES_CEL[i]}"]`);
+    await c.p.waitForFunction((s) => document.querySelector(s)?.getAttribute('aria-pressed') === 'true', `.botao-equipe[data-equipe="${EQUIPES_CEL[i]}"]`);
+  }
+  assert.match(lido(await cel[0].p.textContent(`.botao-equipe[data-equipe="e1"]`)), /Equipe Laranja/, 'no celular, a equipe pela cor');
+
+  // 1. Conheça o Jonas
+  await avancar();
+  await esperarEstado((e) => e.tipo === 'personas', 'personas');
+  await esperarTela(cel[0], 'persona');
+  {
+    const t = await cel[0].p.evaluate(() => ({ h1: document.querySelector('#tela h1')?.textContent, subtitulos: Array.from(document.querySelectorAll('#tela h2'), (n) => n.textContent), indicadores: document.querySelectorAll('#tela .indicadores').length }));
+    assert.equal(t.h1, `Conheça o ${cfg.personas[PERSONA].nome}`);
+    assert.ok(!t.subtitulos.includes('Ponto de partida'), 'sem o ponto de partida dos indicadores');
+    assert.equal(t.indicadores, 0);
+  }
+  await conferirCelular(cel[0], 'conheca');
+
+  for (const [k, r] of RODADAS.entries()) {
+    await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r, `${r} aberta`);
+    await esperarEstado((e) => e.subfase === 'decidindo', `${r} decidindo`);
+    for (const c of cel) await esperarTela(c, 'decisao');
+    const c0 = cel[0];
+    // 2. As 5 opções, com o dinheiro e o custo humano.
+    const opcoes = await c0.p.evaluate(() => Array.from(document.querySelectorAll('.botao-opcao-aluno'), (b) => ({
+      opcao: b.dataset.opcao, letra: b.querySelector('.opcao-letra')?.textContent, rotulo: b.querySelector('.opcao-rotulo')?.textContent,
+      dinheiro: b.querySelector('.opcao-dinheiro')?.textContent ?? null, impacto: b.querySelector('.opcao-impacto')?.textContent ?? null,
+    })));
+    assert.equal(opcoes.length, cfg.rodadas[r].ordemOpcoes.length, `${r}: as opções no celular`);
+    for (const [i, o] of opcoes.entries()) {
+      const op = cfg.rodadas[r].ordemOpcoes[i];
+      assert.equal(o.opcao, op);
+      assert.equal(o.letra, 'ABCDE'[i]);
+      assert.equal(lido(o.dinheiro), lido(H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, op, PERSONA), F.moeda, H.periodo(cfg))), `${r}/${op}: o dinheiro no celular`);
+      assert.equal(o.impacto, H.textoDaOpcao(cfg, r, op, PERSONA).impacto, `${r}/${op}: o custo humano no celular`);
+    }
+    assert.ok(!(await c0.p.locator('#tela .indicadores').count()), `${r}: a decisão sem os indicadores`);
+    assert.match(lido(await c0.p.textContent('.pressao')), /^Dinheiro da família: (tem|devendo) R\$ [\d.]+$/, `${r}: uma linha só, o dinheiro da família`);
+    if (k === 0) {
+      // A dobra: com 5 opções, a última fica abaixo da tela, e o aviso aparece.
+      await c0.p.evaluate(() => globalThis.scrollTo(0, 0));
+      await c0.p.waitForFunction(() => !document.querySelector('[data-aviso-rolagem]').hidden);
+      await conferirCelular(c0, 'decisao-topo');
+      // Abrir a última opção pelo aviso e pelo toque: o "Votar nesta" à vista,
+      // e não atrás do aviso.
+      await c0.p.click('[data-aviso-rolagem]');
+      await c0.p.waitForFunction(() => document.querySelector('.botao-opcao-aluno:last-of-type, .opcao-aluno:last-child .botao-opcao-aluno').getBoundingClientRect().bottom <= innerHeight + 1);
+      await c0.p.waitForFunction(() => document.querySelector('[data-aviso-rolagem]').hidden, null, { timeout: 5000 });
+      const ultima = cfg.rodadas[r].ordemOpcoes.at(-1);
+      await c0.p.click(`.botao-opcao-aluno[data-opcao="${ultima}"]`);
+      await c0.p.waitForSelector(`[data-detalhe="${ultima}"] [data-votar]`);
+      await c0.p.waitForTimeout(600);
+      const votar = await c0.p.evaluate((op) => {
+        const b = document.querySelector(`[data-detalhe="${op}"] [data-votar]`).getBoundingClientRect();
+        const aviso = document.querySelector('[data-aviso-rolagem]');
+        const coberto = !aviso.hidden && aviso.getBoundingClientRect().top < b.bottom;
+        return { topo: b.top, baixo: b.bottom, coberto };
+      }, ultima);
+      assert.ok(votar.topo >= 0 && votar.baixo <= 740 + 1 && !votar.coberto, `o "Votar nesta" da última opção fica à vista (${JSON.stringify(votar)})`);
+      await conferirCelular(c0, 'decisao-ultima-aberta');
+    }
+    // Cada celular vota (a primeira, a segunda e a terceira opção).
+    for (const [i, c] of cel.entries()) {
+      const op = cfg.rodadas[r].ordemOpcoes[(i + k) % 5];
+      const aberta = await c.p.evaluate((o) => Boolean(document.querySelector(`[data-detalhe="${o}"]`)), op);
+      if (!aberta) await c.p.click(`.botao-opcao-aluno[data-opcao="${op}"]`);
+      await c.p.click(`[data-detalhe="${op}"] [data-votar]`);
+      await c.p.waitForFunction((o) => document.querySelector(`.botao-opcao-aluno[data-opcao="${o}"]`)?.dataset.meuVoto === '1', op, { timeout: 15000 });
+    }
+    await telao.waitForFunction(() => /1 de 1/.test(document.querySelector('.equipe-status[data-equipe="e3"]')?.textContent || ''), null, { timeout: 15000 });
+    if (k === 0) await conferirTelao('decisao');
+    // 3. Encerrar: o celular vai ao resultado sem o "Sorteando…".
+    await telao.keyboard.press('Enter');
+    await telao.waitForFunction(() => document.getElementById('modal').open);
+    await telao.keyboard.press('Tab');
+    await telao.keyboard.press('Enter');
+    await esperarEstado((e) => e.subfase === 'resultado' && e.rodada === r, `resultado de ${r}`, 20000);
+    for (const c of cel) await esperarTela(c, 'resultado');
+    for (const c of cel) assert.ok(!(await c.p.evaluate(() => globalThis.__telas)).includes('sorteando'), `${c.nome}: a tela "Sorteando…" nunca apareceu`);
+    assert.ok(!(await telao.evaluate(() => globalThis.__telas)).includes('rodada-sorteio'), 'o telão nunca desenhou o sorteio');
+    // 4. O resultado no celular: o saldo e o dinheiro da família, e mais nada.
+    const gravado = await administrador('GET', `salas/${sala}/resultados/${r}/e1`);
+    const t = await c0.p.evaluate(() => ({
+      saldo: document.querySelector('.saldo-destaque')?.dataset.saldoMes,
+      familia: document.querySelector('.familia-dinheiro')?.textContent,
+      situacao: document.querySelector('.familia-dinheiro')?.dataset.situacao,
+      indicadores: document.querySelectorAll('#tela .indicadores').length,
+      divida: document.querySelectorAll('#tela .divida').length,
+      mesa: document.querySelectorAll('#tela .faltou-mesa').length,
+    }));
+    assert.equal(Number(t.saldo), gravado.mes.saldoMes, `${r}: o saldo do bimestre gravado`);
+    const d = H.dinheiroDaFamilia(gravado.depois);
+    assert.equal(t.situacao, d.situacao);
+    assert.equal(lido(t.familia), lido(`Dinheiro da família: ${d.situacao} ${F.moeda(d.valor)}`), `${r}: o dinheiro da família`);
+    assert.deepEqual([t.indicadores, t.divida, t.mesa], [0, 0, 0], `${r}: sem indicadores, sem o detalhe da dívida, sem a mesa`);
+    if (k === 0) {
+      await conferirCelular(c0, 'resultado');
+      await conferirTelao('resultado');
+    }
+    // O bloco seguinte: a situação, com o mesmo dinheiro da família.
+    if (k < RODADAS.length - 1) {
+      await avancar();
+      await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
+      await esperarTela(c0, 'situacao');
+      const s = await c0.p.evaluate(() => ({
+        familia: document.querySelector('.familia-dinheiro')?.textContent, indicadores: document.querySelectorAll('#tela .indicadores').length, divida: document.querySelectorAll('#tela .divida').length,
+      }));
+      assert.equal(lido(s.familia), lido(`Dinheiro da família: ${d.situacao} ${F.moeda(d.valor)}`), `${r}: a situação diz o mesmo dinheiro`);
+      assert.deepEqual([s.indicadores, s.divida], [0, 0], `${r}: a situação sem indicadores nem o detalhe da dívida`);
+      if (k === 0) await conferirCelular(c0, 'situacao');
+    }
+  }
+
+  // 5. O placar final.
+  await avancarAte((e) => e.tipo === 'placarFinal', 'placar final');
+  await esperarTela(cel[0], 'situacao');
+  await cel[0].p.waitForSelector('.escolhas-ano');
+  {
+    const t = await cel[0].p.evaluate(() => ({
+      escolhas: Array.from(document.querySelectorAll('.escolha'), (n) => n.dataset.letra),
+      pior: document.querySelectorAll('.pior-caso').length, sorte: document.querySelectorAll('.placar-historia').length,
+      indicadores: document.querySelectorAll('#tela .indicadores').length,
+    }));
+    assert.deepEqual(t.escolhas, RODADAS.map((_, k) => 'ABCDE'[k % 5]), 'o celular mostra as escolhas da equipe');
+    assert.deepEqual([t.pior, t.sorte, t.indicadores], [0, 0, 0], 'sem o pior caso, sem "Escolha ou sorte?", sem indicadores');
+  }
+  await conferirCelular(cel[0], 'placar');
+  for (const pagina of ['caminho', 'saldo', 'combinacoes']) {
+    await telao.waitForFunction((p) => document.querySelector('.tela')?.dataset.pagina === p, pagina);
+    await conferirTelao(`placar-${pagina}`);
+    if (pagina !== 'combinacoes') {
+      await telao.waitForTimeout(1700);
+      await telao.keyboard.press('Space');
+    }
+  }
+  console.log('OK: o formato simples com celulares (telão em 1024×768 com a faixa de entrada; celulares em 360×740).');
+}

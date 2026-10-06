@@ -16,6 +16,7 @@
     "e2e:simples": "node e2e/telao-simples.e2e.mjs",
     "e2e:online": "node e2e/sessao-online.e2e.mjs",
     "e2e:online:fixture": "node e2e/sessao-online.e2e.mjs --fixture",
+    "e2e:online:simples": "node e2e/simples-online.e2e.mjs",
     "e2e:votos": "node e2e/matriz-votos.e2e.mjs",
     "emulador": "node bin/emulador.mjs \"node --test test/emulador/*.test.mjs\"",
     "simular": "node bin/simular-alunos.mjs",

@@ -146,8 +146,34 @@
     return ordem.length > 0 ? ordem : Object.keys(conteudo?.[colecao] || {});
   }
   const numeroEquipe = (id) => ordemDe(app.dados.conteudo, 'equipes').indexOf(id) + 1;
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite): um personagem só para todas as equipes, o dinheiro na própria
+  // opção, sem sorteio e com a tela enxuta (o saldo do bimestre e o dinheiro
+  // da família, sem energia, proteção e o detalhe da dívida). Sem a chave,
+  // todas as telas ficam como antes.
+  const simples = () => N().historia?.formatoSimples?.(app.dados.conteudo) === true;
+
+  // No formato simples, a equipe pela cor, "Equipe Laranja", como no telão:
+  // todas jogam com o mesmo personagem.
   function rotuloEquipe(equipe) {
-    return equipe ? G().rotuloEquipe(equipe, numeroEquipe(equipe.id)) : null;
+    if (!equipe) return null;
+    const rotulo = G().rotuloEquipe(equipe, numeroEquipe(equipe.id));
+    const nome = rotulo.querySelector('.equipe-nome');
+    if (simples() && nome) nome.textContent = `Equipe ${equipe.nome}`;
+    return rotulo;
+  }
+
+  // "Dinheiro da família: devendo R$ X" (ou "tem R$ X"), o patrimônio dos
+  // valores (historia.textoDaFamilia, as mesmas palavras do telão). No formato
+  // simples, é o único número de dívida que o celular mostra; null sem a renda.
+  function linhaDaFamilia(valores) {
+    const H = N().historia;
+    const d = H?.dinheiroDaFamilia?.(valores);
+    if (!d) return null;
+    const { el } = D();
+    return el('p', { classe: 'familia-dinheiro', dados: { situacao: d.situacao, valor: String(d.valor) } }, [
+      'Dinheiro da família: ', `${d.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(d.valor) }),
+    ]);
   }
   function ordemOpcoes(rodadaId) {
     const r = app.dados.conteudo?.rodadas?.[rodadaId];
@@ -2188,11 +2214,18 @@
         ])]),
         el('tbody', {}, linhas),
       ]),
-      blocoDivida(dividaDoUltimo(ultimo), ultimo.mes),
+      // Formato simples: o dinheiro da família no lugar do detalhe da dívida e
+      // do que faltou na mesa (o telão também não os mostra).
+      simples() ? linhaDaFamilia(ultimoDepois(ultimo)) : blocoDivida(dividaDoUltimo(ultimo), ultimo.mes),
       // D-066: o que faltou na mesa até aqui, embaixo da dívida e fora dela.
-      linhaMesa(ultimo.faltouNaMesa),
+      simples() ? null : linhaMesa(ultimo.faltouNaMesa),
     ]);
   }
+
+  // Os valores do fim do último período jogado (o "depois" gravado), para o
+  // dinheiro da família do formato simples. Pelo patrimônio da história (o
+  // "ficou com"): é o mesmo número, e a história não carrega o "depois".
+  const ultimoDepois = (ultimo) => (Number.isFinite(ultimo?.saldoAcumulado) ? { renda: ultimo.saldoAcumulado } : null);
 
   // A dívida de hoje, a do último mês jogado da história. O caixa é o
   // patrimônio mais o que ele desconta: o empréstimo e, com o limite (D-066),
@@ -2298,7 +2331,8 @@
         el('span', { classe: 'escolha-mes', texto: h.rotulo || rotuloDoMes(h.titulo, i) }),
         valorSaldo(h.mes.saldoMes, 'saldo-mes'),
         el('span', { classe: 'escolha-opcao' }, [el('b', { classe: 'escolha-letra', texto: letra }), ` · ${h.opcao?.rotulo || decisao || ''}`, sufixo ? ` (${sufixo})` : null]),
-        el('span', { classe: 'escolha-carta' }, ['Carta: ', h.carta?.titulo || '']),
+        // No formato simples, a carta é o evento do mês, o mesmo para todos.
+        el('span', { classe: 'escolha-carta' }, [simples() ? 'O que aconteceu: ' : 'Carta: ', h.carta?.titulo || '']),
       ]);
     });
     const ultimo = meses.at(-1).h;
@@ -2310,7 +2344,7 @@
         // O cabeçalho das duas colunas, como o da tabela do resumo: o número
         // colorido de cada linha é o saldo do bimestre (pedido de 05/10, item 3:
         // tem de ficar claro que o valor colorido é o saldo do bimestre).
-        el('p', { classe: 'escolhas-cabecalho' }, [el('span', { texto: `${maiuscula(p.nome)} · escolha · carta` }), el('span', { texto: `Saldo ${p.doPeriodo}` })]),
+        el('p', { classe: 'escolhas-cabecalho' }, [el('span', { texto: `${maiuscula(p.nome)} · escolha${simples() ? '' : ' · carta'}` }), el('span', { texto: `Saldo ${p.doPeriodo}` })]),
         el('ol', { classe: 'escolhas-lista' }, linhas),
         linhaMesaDoAno(historia, d.placar),
       ]),
@@ -2389,14 +2423,17 @@
   function telaPersona(alvo, d) {
     const { el, acrescentar } = D();
     const persona = { ...(app.dados.conteudo?.personas?.[d.persona.id] || {}), ...d.persona };
+    // Formato simples: "Conheça o Jonas", como o telão (todas as equipes jogam
+    // com ele), sem o ponto de partida dos indicadores (energia, proteção).
+    const soUm = simples();
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
-      cabecalho('A persona da sua equipe', persona.nome || ''),
+      cabecalho(soUm ? 'Todas as equipes jogam com o mesmo personagem' : 'A persona da sua equipe', soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
       el('p', { classe: 'texto', texto: persona.descricao || '' }),
       linhaFamilia(persona),
       detalheBasico(persona),
-      el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
-      listaIndicadores(d.indicadores),
+      soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
+      soUm ? null : listaIndicadores(d.indicadores),
       el('p', { classe: 'texto-2', texto: 'Nas rodadas, a equipe decide junto. Vale a opção mais votada.' }),
     ]));
     return 'persona';
@@ -2434,13 +2471,19 @@
       // recolhida (D-045, D-065).
       const jaEstimado = N().historia.escolhaOuSorte(d.placar)?.estimado === true;
       const ultimo = lista(historia).filter((h) => Number.isFinite(h?.mes?.saldoMes)).at(-1);
-      filhos.push(blocoEscolhas(historia, d), ultimo ? blocoDivida(dividaDoUltimo(ultimo), ultimo.mes) : null,
-        blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
+      // Formato simples: as escolhas do ano (a frase de cima já diz quanto
+      // sobrou ou faltou) e a história recolhida. Sem "Escolha ou sorte?" (não
+      // há sorte), sem o pior caso e sem o detalhe da dívida.
+      if (simples()) filhos.push(blocoEscolhas(historia, d), blocoHistoria(historia, d.persona?.nome));
+      else {
+        filhos.push(blocoEscolhas(historia, d), ultimo ? blocoDivida(dividaDoUltimo(ultimo), ultimo.mes) : null,
+          blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
+      }
     } else {
       const resumo = resumoMesAMes(historia);
       if (resumo) filhos.push(resumo);
       else {
-        filhos.push(linhaBasico(d.persona), linhaDivida(dividaDe(valoresDe(d.indicadores))),
+        filhos.push(linhaBasico(d.persona), simples() ? linhaDaFamilia(valoresDe(d.indicadores)) : linhaDivida(dividaDe(valoresDe(d.indicadores))),
           el('p', { classe: 'texto-2', texto: 'Ainda não houve rodada: este é o ponto de partida.' }));
       }
     }
@@ -2460,7 +2503,8 @@
       ]));
     }
     filhos.push(linhaFamilia(d.persona));
-    const indicadores = listaIndicadores(d.indicadores, null, { semDinheiro: true });
+    // Formato simples: sem os indicadores que não são dinheiro (energia, proteção).
+    const indicadores = simples() ? null : listaIndicadores(d.indicadores, null, { semDinheiro: true });
     if (indicadores) filhos.push(el('h2', { classe: 'subtitulo', texto: 'Indicadores' }), indicadores);
     acrescentar(alvo, el('section', { classe: 'bloco' }, filhos));
     return 'situacao';
@@ -2530,10 +2574,22 @@
       if (minha && enviando) marca = 'enviando…';
       else if (minha && envio?.estagio === 'guardado') marca = 'guardado no aparelho';
       else if (minha && envio?.estagio === 'esperaRetomar') marca = 'guardado até retomar';
+      // Formato simples: o dinheiro da opção ("+R$ 900 no bimestre", a mesma
+      // linha do telão, historia.textoDoDinheiro) logo abaixo do rótulo. E,
+      // quando a opção tem, a linha curta do custo humano (D-073), menor.
+      const dinheiro = op.dinheiro && N().historia?.textoDoDinheiro
+        ? el('span', {
+          classe: 'opcao-dinheiro',
+          dados: { sinal: op.dinheiro.emprestimo > 0 && Math.round(op.dinheiro.valor) === 0 ? 'zero' : sinalDe(op.dinheiro.valor), dinheiro: op.dinheiro.valor, emprestimo: op.dinheiro.emprestimo },
+          texto: N().historia.textoDoDinheiro(op.dinheiro, F().moeda, periodo()),
+        })
+        : null;
       acrescentar(b, [
         el('b', { classe: 'opcao-letra', texto: letraDe(d.rodada.id, op.id) }),
         el('span', { classe: 'opcao-textos' }, [
           el('span', { classe: 'opcao-rotulo', texto: op.rotulo || op.id }),
+          dinheiro,
+          op.impacto ? el('span', { classe: 'opcao-impacto', texto: op.impacto }) : null,
           minha ? el('span', { classe: 'opcao-seu-voto', texto: marca }) : null,
         ]),
         el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
@@ -2554,7 +2610,11 @@
     // decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500 emprestados. Só a linha
     // muda; o voto não. As partes vão na situação recolhida, embaixo.
     const divida = s ? dividaDe(valoresDe(s.indicadores)) : null;
-    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(divida)].filter(Boolean);
+    // Formato simples: uma linha só, o dinheiro da família (as 5 opções, cada
+    // uma com o dinheiro e o custo humano, precisam da altura de 360×740).
+    const pressao = (simples()
+      ? [s ? linhaDaFamilia(valoresDe(s.indicadores)) : null]
+      : [linhaBasico(s?.persona, { curta: true }), linhaDivida(divida)]).filter(Boolean);
     const aviso = botao('Mais opções abaixo ↓', () => rolarAteUltimaOpcao(), { classe: 'aviso-rolagem', dados: { avisoRolagem: '1' } });
     aviso.hidden = true;
     // Movido de equipe depois de votar (avisarSeMovido): a nota fica acima das
@@ -2587,8 +2647,9 @@
         // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
         // total, e o cheque especial, o empréstimo e as contas atrasadas, com
         // as taxas, ficam aqui, fora da dobra.
-        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), blocoDivida(divida, s.mes), contaDoMes(s.mes, s.persona)]),
-        listaIndicadores(s.indicadores),
+        // Formato simples: sem o detalhe da dívida e sem os indicadores.
+        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), simples() ? null : blocoDivida(divida, s.mes), contaDoMes(s.mes, s.persona)]),
+        simples() ? null : listaIndicadores(s.indicadores),
       ]) : null,
       aviso,
     ]));
@@ -2721,7 +2782,37 @@
   // conta inteira (D-044, D-052, D-059), a narrativa da decisão e o custo da
   // carta ficam recolhidos; a energia e a proteção, com a variação do mês, ficam
   // à vista (são duas linhas, e mudam a sorte do mês seguinte, D-051).
+  // Formato simples (decisão do Kleber de 05/10 à noite): o evento do mês (a
+  // carta, a mesma de todas as equipes), a decisão, o saldo do bimestre em
+  // destaque e o dinheiro da família no fim dele; a conta em detalhe fica
+  // recolhida. Sem a energia, a proteção e o detalhe da dívida.
+  function telaResultadoSimples(alvo, d) {
+    const { el, acrescentar } = D();
+    const mes = d.mes;
+    const persona = personaDaEquipe(d.equipe?.id);
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { tom: 'normal', carta: d.carta?.id || '' } }, [
+      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
+      cabecalho(`${d.rodada?.titulo || 'Rodada'} · o que aconteceu`, d.carta?.titulo || ''),
+      notaDaRecusaDaEtapa(),
+      d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
+      el('p', { classe: 'decisao-linha' }, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
+      Number.isFinite(mes?.saldoMes)
+        ? el('p', { classe: 'saldo-destaque', dados: { saldoMes: mes.saldoMes, sinal: sinalDe(mes.saldoMes) } }, [
+          el('span', { classe: 'saldo-rotulo', texto: `Saldo ${periodo().doPeriodo}` }),
+          valorSaldo(mes.saldoMes),
+        ])
+        : null,
+      linhaDaFamilia(valoresDe(d.indicadores)),
+      recolhido(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
+        d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
+        contaDoMes(mes, persona, d.deAntes, d.protecaoDoMes, { comAcima: false }),
+      ]),
+    ]));
+    return 'resultado';
+  }
+
   function telaResultado(alvo, d) {
+    if (simples()) return telaResultadoSimples(alvo, d);
     const { el, acrescentar } = D();
     const grave = d.carta?.tom === 'grave';
     const mes = d.mes;
@@ -2818,7 +2909,8 @@
       d.equipe ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
       resumoMesAMes(d.historia),
-      blocoPiorCaso(d.piorCaso),
+      // Formato simples: sem sorte, o pior caso é o próprio caminho jogado.
+      simples() ? null : blocoPiorCaso(d.piorCaso),
       blocoHistoria(d.historia, personaDaEquipe(d.equipe?.id)?.nome),
       el('p', { classe: 'texto-2', texto: 'Pode fechar esta página. Os votos individuais são apagados com a sala.' }),
     ]));

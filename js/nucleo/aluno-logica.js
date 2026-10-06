@@ -313,6 +313,10 @@
     // telão: a sala vê as fatias girarem junto. No formato simples não há
     // sorteio (o anfitrião vai direto ao resultado), e um "sorteio" que chegue
     // assim mesmo (sala de antes, outra versão do telão) mostra o resultado.
+    // Sem o resultado ainda (o estado chega antes dele: são dois ouvintes), o
+    // formato simples continua na "votação encerrada" da apuração, e nunca no
+    // "Sorteando…", que falaria de fatias que não existem (e2e:online:simples).
+    if (!res && semSorteio) return aguardando('votacaoEncerrada');
     if ((sub === 'sorteio' && !semSorteio) || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
     const opcao = textoOpcao(conteudo, estado.rodada, res.decisao, personaDe(conteudo, equipeId));
     const carta = em(conteudo, 'cartas', res.carta) || {};

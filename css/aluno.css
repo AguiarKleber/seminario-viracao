@@ -447,6 +447,19 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 /* O voto do aparelho: fundo claro E o texto "seu voto" (D-016, nunca só cor). */
 .botao-opcao-aluno.meu-voto { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
 .opcao-seu-voto { font-size: 14px; font-weight: 700; }
+/* Formato simples (decisão do Kleber de 05/10 à noite): o dinheiro da opção
+   ("+R$ 900 no bimestre") logo abaixo do rótulo, em verde ou vermelho e
+   sempre com o sinal; e a linha do custo humano (D-073), menor e discreta.
+   No voto do aparelho (fundo claro), o verde e o vermelho claros não têm
+   contraste: ali, a cor da letra, com o sinal dizendo o mesmo. */
+.opcao-dinheiro { font-size: 16px; font-weight: 700; line-height: 1.2; }
+.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
+.opcao-impacto { font-size: 14px; font-weight: 400; line-height: 1.25; color: var(--texto-2); }
+.botao-opcao-aluno.meu-voto .opcao-dinheiro, .botao-opcao-aluno.meu-voto .opcao-impacto { color: inherit; }
+/* "Dinheiro da família: devendo R$ X", a linha única do formato simples. */
+.familia-dinheiro { font-size: 17px; }
+.familia-dinheiro[data-situacao="devendo"] b { color: var(--negativo); }
 
 /* D-055: a opção aberta e a explicação dela formam um cartão só, com a borda
    clara ligando o botão à caixa de baixo. O scroll-margin desconta o topo fixo
