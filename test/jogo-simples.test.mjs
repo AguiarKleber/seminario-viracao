@@ -1,7 +1,7 @@
 // O jogo simples de 06/10 (D-078): a consequência de antes na tela
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
 // motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
-// igual ao que o jogo cobra, a regra das costas e as outras consequências
+// igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
 // encadeadas, e as 15.625 combinações (nenhuma fecha o ano).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -90,7 +90,10 @@ test('config.json do dia: formato simples, o Jonas nas 6 equipes, 6 bimestres ×
   assert.deepEqual(cfg.ordem.rodadas.map((rid) => cfg.rodadas[rid].padrao), ['c', 'd', 'd', 'c', 'a', 'd']);
 });
 
-test('config.json do dia: o dinheiro da opção é o que o jogo cobra (o saldo do bimestre muda exatamente esse valor em relação à jornada de sempre)', () => {
+// Só no 1º bimestre o saldo muda exatamente o valor da tela: dali em diante, com a
+// família passada do limite do cheque especial, o que falta atrasa conta com multa
+// de 8%, e a diferença vai de −R$ 99 a +R$ 83 (revisão de 06/10).
+test('config.json do dia: no 1º bimestre (jan–fev), o dinheiro da opção é o que o jogo cobra (o saldo muda exatamente esse valor em relação à jornada de sempre)', () => {
   const cfg = configDoDia().config;
   // Jan–fev é o primeiro bimestre: sem dívida de antes, sem juros, sem consequência.
   const base = jogar(cfg, 'CDDCAD').resultados[0].mes.saldoMes;
@@ -125,7 +128,7 @@ test('config.json do dia: as consequências encadeadas (o IPVA já pago, a parce
   assert.deepEqual(valoresDe(jogar(cfg, 'CDDDAD').resultados[4]), [], 'sem a revisão adiada, a moto não quebra');
 });
 
-test('config.json do dia: das 15.625 combinações, nenhuma fecha o ano; a melhor alterna esforço e respiro (ADCEDA), e o padrão termina devendo R$ 7.294', () => {
+test('config.json do dia: das 15.625 combinações, nenhuma fecha o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), e o padrão termina devendo R$ 7.294', () => {
   const cfg = configDoDia().config;
   const c = M.enumerarCombinacoes(cfg, { equipeId: 'e1', rodadas: cfg.ordem.rodadas });
   assert.equal(c.total, 15625);

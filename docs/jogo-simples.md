@@ -17,11 +17,19 @@ e congelado em `test/fixtures/config-real-v31.json`.
 - **As equipes** aparecem pela cor ("Equipe Laranja"). Todas jogam o mesmo
   Jonas; o que muda entre elas é a combinação de escolhas.
 - **Cada opção** mostra a letra, o rótulo, o dinheiro do bimestre ("+R$ 900 no
-  bimestre") e, no celular, o custo humano numa linha curta (D-073). Os valores
-  são **em relação à jornada de sempre** e arredondados a R$ 10; o valor da tela
-  é exatamente o que o jogo cobra.
+  bimestre") e, no celular, o custo humano numa linha curta (D-073; no telão não
+  cabe, veja "Para o Kleber", item 7). Os valores são **em relação à jornada de
+  sempre** e arredondados a R$ 10. O valor da tela é o que a opção põe ou tira:
+  em jan–fev, o saldo do bimestre muda exatamente esse valor; dali em diante, com
+  a família já passada do limite do cheque especial, o que falta atrasa conta
+  com multa de 8%, e o saldo pesa um pouco mais (medido em 06/10: de −R$ 99 a
+  +R$ 83 de diferença; o temporário de −R$ 1.230, depois de A-A-A-A-A, tira
+  R$ 1.329 do saldo).
 - **O evento do mês** é igual para todas as equipes (gasolina, IPVA,
-  licenciamento, dezembro). Aparece uma vez, no alto do resultado.
+  licenciamento, dezembro). Aparece uma vez, no alto do resultado. Com a faixa
+  de entrada aberta, o telão pode esconder a frase do evento, ou o evento
+  inteiro, para caber (mar–abr com três consequências em 1024×768); fechando a
+  entrada depois de formar as equipes, ele volta.
 - **O que vem depois** de uma escolha (as costas, a moto que quebra, o IPVA já
   pago, a parcela atrasada) aparece no resultado do bimestre em que acontece,
   com o motivo: no telão, uma linha por motivo embaixo das faixas; no celular,
@@ -31,8 +39,11 @@ e congelado em `test/fixtures/config-real-v31.json`.
   dentro, continuam o cheque especial a 7,43% ao mês até o limite de R$ 2.000, e,
   passado o limite, o aluguel, a luz, a água e o celular atrasam, com multa de
   8% uma vez e mora de 1% ao mês (D-066, D-069, D-070). Em nenhuma das 15.625
-  combinações o Jonas chega a cortar comida: o que passa do limite cabe nas
-  contas que atrasam.
+  combinações o limite do cheque especial chega a cortar a comida: o que passa
+  do limite cabe nas contas que atrasam. Só corta comida quem escolhe nov–dez A
+  (3.125 combinações), e esse corte entra como o dinheiro da opção (+R$ 170). Por
+  isso o "faltou na mesa" não aparece no formato simples, nem no telão nem no
+  celular: ele seria sempre R$ 0.
 
 ## O Jonas e a casa (um mês comum)
 
@@ -84,8 +95,10 @@ e gasolina **−R$ 60** (ANP, R$ 6,38 e 6,52; conta: R$ 63).
 | E | Trocar iFood pelo 99Food | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | 99Food em POA: R$ 250 por 20 corridas, R$ 5 acima do mínimo do iFood (Jornal do Brás, 23/03/2026). **Estimativa sem fonte:** que o volume no 99Food seja o mesmo |
 
 **O empréstimo é dívida, e não renda (D-065).** A opção mostra "+R$ 1.500
-emprestado": o dinheiro entra na conta e a dívida também, e por isso nem o saldo
-do bimestre nem o dinheiro da família mudam no dia. Daí em diante, duas parcelas
+emprestado": o dinheiro entra na conta e a dívida também, e por isso o saldo do
+bimestre e o dinheiro da família quase não mudam no dia (passado o limite, o
+dinheiro emprestado evita a multa de algumas contas: de R$ 6 a R$ 20 a mais em 4
+dos 5 caminhos de jan–fev, medido em 06/10). Daí em diante, duas parcelas
 por bimestre (R$ 366); os juros delas pesam no saldo, e a parte que abate a dívida
 não. No fim do ano ainda faltam 4 parcelas (o placar conta o que falta pagar).
 
@@ -182,13 +195,13 @@ as que fecham, a melhor e a pior; o telão conta no navegador em ~0,15 s).
 | Medida | Resultado |
 | --- | --- |
 | Fecham o ano (dinheiro da família ≥ R$ 0) | **Nenhuma** das 15.625 |
-| Melhor combinação | **A-D-C-E-D-A: devendo R$ 2.429** (12 h no sol, aceitar até entrega ruim, madrugada na chuva, promoções da noite, furar o breque, cortar comida e remédio) |
+| Melhor combinação | **A-D-C-E-D-A: devendo R$ 2.429** (12 h no sol, aceitar até entrega ruim, madrugada na chuva, promoções da noite, furar o breque, cortar comida e remédio: nenhum bimestre de descanso) |
 | Pior combinação | **D-A-E-C-C-E: devendo R$ 10.906** (R$ 2.000 de cheque especial e R$ 8.906 de contas atrasadas) |
 | Mediana / média | −R$ 7.084 / −R$ 7.074 |
 | Percentis | 10%: −R$ 8.793 · 25%: −R$ 7.990 · 75%: −R$ 6.196 · 90%: −R$ 5.372 |
-| Jornada de sempre o ano todo (os padrões, C-D-D-C-A-D) | −R$ 7.294, 8.751º de 15.625 |
+| Os padrões (ninguém votou), C-D-D-C-A-D: jornada de sempre em jan–fev, mai–jun, set–out e nov–dez, aceitar até entrega ruim em mar–abr e adiar a revisão em jul–ago (a moto quebra em set–out) | −R$ 7.294, 8.751º de 15.625 |
 | Acima de −R$ 3.000 / −R$ 4.000 / −R$ 5.000 | 16 / 161 / 876 combinações |
-| Comida cortada | Nenhuma combinação (o que passa do limite cabe nas contas que atrasam) |
+| Comida cortada pelo limite do banco | Nenhuma combinação (o que passa do limite cabe nas contas que atrasam). Por escolha (nov–dez A): 3.125 |
 | "Jonas com carteira assinada" (a linha do placar) | −R$ 15.498: abaixo das 15.625 combinações (veja "Para o Kleber") |
 
 **A média de cada opção** (o fim do ano de quem a escolheu, nas 3.125
@@ -207,7 +220,11 @@ rodadas ela é a melhor do bimestre**:
 **Nenhuma opção domina em dinheiro**: a melhor de cada bimestre depende do resto
 do caminho. Sem a regra das costas, a opção puxada era a melhor em todas as
 combinações, em todos os bimestres (no rascunho de 05/10, seção 5, ainda com o MEI
-e a associação); com ela, o melhor plano alterna esforço e respiro. Na média, a puxada ainda é a melhor em 5
+e a associação). Com ela, a melhor combinação não descansa nenhum bimestre: ela
+intercala as puxadas (12 h no sol, madrugada, furar o breque) com opções que a
+regra não marca como puxadas, mas que também são mais horas ou noites na rua
+(aceitar até entrega ruim, promoções da noite), e termina cortando a comida
+(veja "Para o Kleber", item 6). Na média, a puxada ainda é a melhor em 5
 dos 6 bimestres (em jul–ago, são as promoções da noite): o validador avisa isso
 como "dominante" (seção c), porque o critério dele é a média. Também: o crédito
 (mar–abr C) termina, em média, R$ 444 abaixo do padrão (o empréstimo é dívida, e
@@ -251,6 +268,41 @@ manter sabendo disso (D-078).
 5. **O 13º do temporário** (nov–dez E) usa a Constituição, art. 7º, VIII, e a
    Lei 4.090/1962 (o temporário é empregado da empresa de trabalho temporário); a
    Lei 6.019 lista as férias, e não o 13º.
+
+**Da revisão de 06/10** (nada disto muda número de tela; cada item é decisão sua):
+
+6. **A regra das costas tem duas brechas.** Ela conta como puxada "mais horas ou
+   noites na rua", mas duas opções que o próprio texto descreve assim não contam:
+   jul–ago E, "Pegar promoções da noite" ("Noites de inverno na rua atrás do
+   bônus"), e mar–abr D, "Aceitar até entrega ruim" ("mais horas longe da
+   filha"). As 10 melhores combinações têm jul–ago E logo depois da madrugada
+   (mai–jun C, puxada). Uma equipe que fez madrugada e depois as promoções da
+   noite pode perguntar por que as costas não travaram. **(a)** Sem mudar nenhum número: reescrever o custo
+   humano e a narrativa das duas sem "noites" e sem "mais horas". **(b)** Marcar
+   as duas como puxadas: a melhor passa a A-E-D-A-A-B (devendo R$ 3.352), e os
+   números desta página, do roteiro e do teste do config se refazem.
+7. **O custo humano não está no telão.** A D-073 diz "no celular e no telão", e a
+   D-078 a mantém. No telão, a letra mínima é a do corpo (28 px em 1024×768), e
+   cada custo humano tem até 85 letras: as 5 opções com o custo humano e as 6
+   equipes não cabem. Hoje ele está só no celular, e o roteiro sugere lê-lo em voz
+   alta. Fica assim (e a D-078 registra), ou o telão mostra o custo humano numa
+   tela maior?
+8. **"Folgar na semana do Natal" cobra a semana média** (−R$ 630), e o +R$ 430 de
+   dezembro fica inteiro para quem folga. Uma semana de dezembro valeria
+   R$ 725,67 (a conta está na fonte). Sobe para −R$ 730 (e os números se refazem)
+   ou fica como simplificação?
+9. **"Pneu novo antes da chuva" contraria a premissa da revisão.** A fonte de
+   jul–ago C diz que a renda da PNAD já desconta a manutenção média, e o pneu é
+   cobrado à parte em mai–jun A; quem não troca não paga o pneu no ano. A opção
+   nunca vale mais que a jornada de sempre (medido em 06/10). Está declarado na
+   fonte; fica, ou vira adiantamento da troca?
+10. **O padrão de jul–ago é "Adiar a revisão"**: a equipe que não votar (ou cujo
+    celular cair) vê a moto quebrar em set–out por uma escolha que não fez. O
+    roteiro (seção 0) manda decidir por ela antes do Enter. Mudar o padrão mexe na
+    D-078.
+11. **"Cortar comida e remédio"**: o valor (+R$ 170) é só a comida; o remédio
+    está na fala do apresentador (roteiro, nov–dez). Fica, ou o rótulo vira
+    "Cortar comida"?
 
 ## Onde mexer
 

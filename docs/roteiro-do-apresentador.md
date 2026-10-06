@@ -10,8 +10,8 @@ seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 
 **Para 07/10, vale a [seção 0](#0-o-jogo-simples-de-0710-d-078): o jogo simples
 (D-078).** Os blocos logo abaixo são o histórico das versões; onde as seções 5.5 a
-5.7 falam de personas, cartas sorteadas, "Escolha ou sorte?" ou do pior caso, vale
-a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
+5.7 e a 5.11 falam de personas, cartas sorteadas, "Escolha ou sorte?" ou do pior
+caso, vale a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
 
 **Redesenho de 29/09 (D-041 a D-048).** O teste de 30/09 já usa a versão nova
 (D-048). O que mudou para quem conduz:
@@ -195,8 +195,11 @@ caminho fez com o dinheiro da família."
   de um mês comum (falta R$ 392). Dela, o Espaço vai direto a Jan–fev: a tela "A
   conta de cada casa" saiu.
 - **5 opções por bimestre**, cada uma com o dinheiro ("+R$ 900 no bimestre"); no
-  celular, também a linha do custo humano. A decisão tem **120 s** no
-  cronômetro (o mínimo de conversa continua 45 s).
+  celular, também a linha do custo humano. No telão vai só o dinheiro (o custo
+  humano não cabe em 1024×768 com as seis equipes): se quiser que a turma ouça o
+  custo humano, leia-o junto, do seu celular de espectador ou das tabelas do
+  [jogo-simples.md](jogo-simples.md). A decisão tem **120 s** no cronômetro (o
+  mínimo de conversa continua 45 s).
 - **Sem sorteio.** O Enter encerra a decisão e vai direto ao resultado: não há
   tela de sorteio nem "Sorteando…" no celular. O resultado mostra o evento do mês
   (o mesmo para todas) e, por equipe, a letra, o saldo do bimestre e "a família:
@@ -204,6 +207,9 @@ caminho fez com o dinheiro da família."
   linha por motivo: "As costas travaram (2 puxadas seguidas) −R$ 1.230: Laranja,
   Azul". Com seis equipes e a faixa de entrada, o telão pode esconder a frase do
   evento, ou o evento inteiro, para caber: ele está no celular de cada equipe.
+  Para o evento voltar ao telão, feche a entrada depois de formar as equipes
+  (barra → **Entrada aberta**, que vira **Entrada fechada**). Se chegar um
+  atrasado, reabra a qualquer hora: a tela se refaz com a faixa.
 - **O telão não baixa mais o JSON sozinho** no fim de cada rodada (pedido do
   Kleber; muda a D-015). Se quiser o arquivo, barra oculta → **Salvar estado**
   (por exemplo, depois de Mar–abr e de Set–out). Online, a sala fica no Firebase
@@ -220,17 +226,22 @@ caminho fez com o dinheiro da família."
 - "Algumas escolhas cobram depois. No jogo, sempre cobram; na vida, é risco."
   Não conte quais: a surpresa é do resultado.
 
+**Equipe sem voto** fica com a opção padrão (C, D, D, C, A, D). Em jul–ago, o
+padrão é **Adiar a revisão**, e a moto dessa equipe quebra em set–out. Se foi o
+celular que caiu, pergunte à equipe e use **Decidir por esta equipe** antes do
+Enter.
+
 **Bimestre a bimestre: o que dizer depois do resultado** (uma ou duas frases;
 entre parênteses, as consequências que podem aparecer naquele bimestre):
 
 | Bimestre | Diga |
 | --- | --- |
 | Jan–fev | "Num mês comum já falta R$ 392. Quem fez 12 horas no sol fechou o bimestre melhor, por enquanto. Quem pagou o IPVA adiantado pagou no cheque especial: desconto é para quem tem dinheiro sobrando." |
-| Mar–abr | (As costas, o IPVA já pago, a parcela atrasada.) "Duas puxadas seguidas: as costas cobraram R$ 1.230." "Quem parou na greve ficou uma semana sem chamada: é o bloqueio branco." "No empréstimo, o dinheiro entrou e a dívida também: o dinheiro da família não mudou." |
+| Mar–abr | (As costas, o IPVA já pago, a parcela atrasada.) "Duas puxadas seguidas: as costas cobraram R$ 1.230." "Quem parou na greve ficou uma semana sem chamada: é o bloqueio branco." "No empréstimo, o dinheiro entrou e a dívida também: o dinheiro da família quase não mudou." |
 | Mai–jun | (As costas.) "O pneu e a capa só custam no jogo; na rua, é o que separa voltar para casa ou não." |
 | Jul–ago | (As costas.) "O +Entregas paga R$ 3 por entrega e pede quase nenhuma recusa. Quem adiou a revisão ganhou R$ 100 agora." |
 | Set–out | (A moto, as costas.) "Quem adiou a revisão viu a moto quebrar: no jogo, sempre; com o pneu novo, só a relação. Furar o breque rendeu; parar custou uma semana. Quem paga a conta da organização?" |
-| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém aqui tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem cortou a comida ganhou R$ 170: é isso que a planilha não mostra." |
+| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém aqui tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem cortou comida e remédio ganhou R$ 170: é isso que a planilha não mostra. O remédio nem entra na conta, porque no jogo ninguém adoece; na vida, é o que vira doença depois." |
 
 **No placar:**
 - **Página 1, o caminho:** "Mesma casa, mesmo Jonas: a diferença entre as equipes
@@ -240,8 +251,9 @@ entre parênteses, as consequências que podem aparecer naquele bimestre):
   líquidos, e a manutenção da moto sai do bolso dele. O que a linha não mede: INSS
   desde o primeiro dia, FGTS, férias, auxílio-doença e hora para acabar."
 - **Página 3, as combinações:** "Das 15.625 combinações possíveis, nenhuma fecha o
-  ano. A melhor termina devendo R$ 2.429, e alterna esforço e respiro; a pior,
-  R$ 10.906." Ligue com o termômetro de entrada (D-074): "Alguém achou a
+  ano. A melhor não descansa nenhum bimestre: 12 h no sol, madrugada, noites,
+  fura o breque e, no fim, corta a comida da filha. E ainda termina devendo
+  R$ 2.429; a pior, R$ 10.906." Ligue com o termômetro de entrada (D-074): "Alguém achou a
   combinação que fechava? Então é falta de administração?"
 
 **Se perguntarem por que as costas sempre travam:** "No jogo, sempre; na vida, é um
@@ -1283,8 +1295,8 @@ básico")
   momento, e texto livre nunca aparece no telão.
 - **Fim:** o telão mostra o título e o placar resumido (o saldo de cada equipe já
   descontados o empréstimo a pagar e as contas atrasadas); o celular de cada
-  equipe mostra o resumo por bimestre, a dívida, o que faltou na mesa, o pior
-  caso e a história dela, recolhida. Se o seu celular
+  equipe mostra o resumo por bimestre (o saldo e com quanto ficou), o dinheiro
+  da família e a história dela, recolhida. Se o seu celular
   está no modo espectador, saia dele (**Sair do modo espectador**) antes de
   apagar a sala. Os dois botões ficam **na barra** (D-047):
   aperte H (ou encoste o mouse na borda de baixo), clique em **Exportar totais**
@@ -1427,7 +1439,9 @@ guardado no celular e é reenviado. Não feche o telão.
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
 1. **Recarregue a página** (F5). No bloco 3, o código da última sala já vem
-   preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN.
+   preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
+   placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
+   até a página onde estava.
 2. **O navegador ou o notebook morreu:** em outro navegador ou outro notebook,
    abra o telão, digite o PIN, digite o código da sala (o do papel) e clique em
    **Retomar sala**.

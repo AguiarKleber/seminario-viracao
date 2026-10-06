@@ -596,7 +596,10 @@ opção.** Publicado em 06/10 até as 12h (o Kleber funde o PR).
 - **Sem sorteio:** o evento do mês é igual para todas as equipes, e as
   consequências vêm das próprias escolhas, sempre (simplificação dita em sala).
 - **O valor em dinheiro aparece na opção** ("+R$ 900 no bimestre"), junto da
-  linha do custo humano (D-073). O valor da tela é exatamente o que o jogo cobra.
+  linha do custo humano (D-073). O valor da tela é o que a opção põe ou tira
+  (corrigido em 06/10: em jan–fev, o saldo do bimestre muda exatamente esse valor;
+  depois, passado o limite do cheque especial, o que falta atrasa conta com multa
+  de 8%, e o saldo pesa um pouco mais).
 - **Saem o MEI e a associação:** precisam de explicação e, sem sorteio, só
   custam. Entram "Atrasar a parcela da moto" (jan–fev) e "Pneu novo antes da
   chuva" (mai–jun). Os padrões (ninguém votou) ficam C, D, D, C, A, D.
