@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-06-v4-simples",
+  "versao": "2026-10-06-v4.1-simples",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -97,8 +97,8 @@
           },
           {
             "rotulo": "aluguel (2 quartos)",
-            "valor": 1300,
-            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Mercado formal (exige fiador ou análise de crédito)"
+            "valor": 1200,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Usado o piso da faixa do Sarandi (R$ 1.192, R$ 1.200 no jogo): a casa que já não fecha o mês aluga o mais barato do bairro (até 06/10 de manhã, R$ 1.300, dentro da mesma faixa; D-079). Mercado formal (exige fiador ou análise de crédito)"
           },
           {
             "rotulo": "luz",
@@ -118,8 +118,8 @@
           },
           {
             "rotulo": "ônibus da companheira",
-            "valor": 159,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026; 30 passagens por mês (estimativa)",
+            "valor": 95,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95 (até 06/10 de manhã, 30 passagens, estimativa sem conta; reconta da D-079). Que ela não pegue outro ônibus no mês (a revenda vai a pé ou na moto do Jonas): estimativa sem fonte",
             "semAtraso": true
           },
           {
@@ -137,8 +137,8 @@
       },
       "outraRenda": {
         "rotulo": "faxinas e revenda da companheira",
-        "valor": 1500,
-        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). 8 faxinas por mês × R$ 150, sem carteira e sem INSS. DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Três dias por semana na mesma casa gera vínculo (LC 150/2015), por isso a diarista fica em até 2 por cliente. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). 8 × 150 + 300 = R$ 1.500. D-062: ninguém com carteira na casa"
+        "valor": 1600,
+        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300 (até 06/10 de manhã, 8 por mês, o mês arredondado para 4 semanas; reconta da D-079). DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Três dias por semana na mesma casa gera vínculo (LC 150/2015), por isso a diarista fica em até 2 por cliente. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. D-062: ninguém com carteira na casa"
       },
       "todoMes": [
         {
@@ -358,7 +358,7 @@
           "id": "a",
           "rotulo": "Parar no dia da greve",
           "narrativa": "Desliguei o app no dia da greve, junto com os outros, e depois veio uma semana sem chamada.",
-          "impacto": "Uma semana bloqueado depois da greve: em casa, olhando o celular que não toca",
+          "impacto": "Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca",
           "efeitos": [
             {
               "soma": {
@@ -369,10 +369,10 @@
             },
             {
               "soma": {
-                "renda": -630
+                "renda": -450
               },
-              "rotulo": "bloqueio branco: 7 dias sem pedidos",
-              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072): quem adere fica 7 dias sem chamada depois; 7 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. A certeza e a semana são simplificação do jogo: nem todo grevista é bloqueado"
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra da 99 (finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
         },
@@ -606,7 +606,7 @@
           "id": "b",
           "rotulo": "Ir ao protesto de 27/07",
           "narrativa": "Fui ao protesto da Esquina Democrática até o Praia de Belas, e depois veio uma semana sem chamada.",
-          "impacto": "Do protesto para uma semana bloqueado: a filha estranha o pai em casa de dia",
+          "impacto": "Do protesto para cinco dias bloqueado: a filha estranha o pai em casa de dia",
           "efeitos": [
             {
               "soma": {
@@ -617,10 +617,10 @@
             },
             {
               "soma": {
-                "renda": -630
+                "renda": -450
               },
-              "rotulo": "bloqueio branco: 7 dias sem pedidos",
-              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072): quem adere fica 7 dias sem chamada depois; 7 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. A certeza e a semana são simplificação do jogo: nem todo grevista é bloqueado"
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra da 99 (finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
         },
@@ -780,7 +780,7 @@
           "id": "c",
           "rotulo": "Parar no dia do breque",
           "narrativa": "Parei no breque de 1º de setembro, junto com o país, e depois veio uma semana sem chamada.",
-          "impacto": "Para no breque com o país, e o app responde com uma semana de bloqueio",
+          "impacto": "Para no breque com o país, e o app responde com cinco dias de bloqueio",
           "efeitos": [
             {
               "soma": {
@@ -791,10 +791,10 @@
             },
             {
               "soma": {
-                "renda": -630
+                "renda": -450
               },
-              "rotulo": "bloqueio branco: 7 dias sem pedidos",
-              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072): quem adere fica 7 dias sem chamada depois; 7 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. A certeza e a semana são simplificação do jogo: nem todo grevista é bloqueado"
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra da 99 (finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
         },
@@ -877,16 +877,16 @@
       "opcoes": [
         {
           "id": "a",
-          "rotulo": "Cortar comida e remédio",
-          "narrativa": "Cortei a carne, a fruta e o remédio que não era urgente, e a casa passou a comer pior no fim do ano.",
-          "impacto": "Corta carne e fruta: a filha de 6 anos come pior no fim do ano",
+          "rotulo": "Pedir ajuda à família",
+          "narrativa": "Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, a rede é a família.",
+          "impacto": "A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa",
           "efeitos": [
             {
               "soma": {
-                "renda": 170
+                "renda": 300
               },
-              "rotulo": "cortou carne, fruta e remédio",
-              "fonte": "Estimativa: ~4% da comida da casa nos 2 meses (R$ 2.098 × 2 × 4% = R$ 168, R$ 170 na tela e no jogo). Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar. O remédio cortado não tem efeito no jogo (sem sorteio, ninguém adoece): fica na fala do apresentador"
+              "rotulo": "ajuda da mãe no Natal",
+              "fonte": "Estimativa sem fonte do valor: a mãe do Jonas, aposentada pelo INSS com 1 salário mínimo (R$ 1.621 desde 01/01/2026, Decreto 12.797/2025; o benefício que substitui o salário não fica abaixo do mínimo, Constituição, art. 201, § 2º), dá R$ 300 para o mercado do Natal, menos de um quinto do que recebe. Quem não tem INSS nem 13º se apoia na família: dos entregadores que ficaram 15 dias ou mais parados depois de um acidente, só 20% receberam do INSS e 38,3% viveram de ajuda da família (Siqueira et al., Cad. Saúde Pública 41(3), 2025, UFBA, 563 entregadores). Entrou no lugar de \"Cortar comida e remédio\" (pedido do Kleber de 06/10: o básico para sobreviver não é opção realista; D-079). Não é opção puxada (não põe horas na rua)"
             }
           ]
         },
@@ -1144,9 +1144,9 @@
     {
       "id": "clt",
       "nome": "Jonas com carteira assinada",
-      "renda": -15498,
+      "renda": -11947,
       "persona": "motoboy",
-      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026): líquido R$ 2.110,48; IR isento (Lei 15.270/2025). A mesma casa do Jonas de app (D-056): + as faxinas e a revenda da companheira (R$ 1.500, informal, D-062), − básico de R$ 4.092, parcela da moto (R$ 480) e manutenção (R$ 261, que com carteira sai do salário) = −R$ 1.222,52 por mês. No jogo simples (06/10), também o que a mesma moto e a mesma casa pagam no ano, igual para as equipes: IPVA (R$ 340, mar–abr), licenciamento (R$ 110, jul–ago) e a luz mais cara de dezembro (R$ 40); a gasolina e os 16% a mais de pedidos de dezembro não, porque são do app. Como no jogo (D-066, D-069): o cheque especial vai até o limite de R$ 2.000, com juros de 7,43% ao mês compostos no bimestre; o que passa dele vira conta atrasada, com multa de 8% uma vez e mora de 1% ao mês, simples, sobre o principal atrasado (gás, ônibus e remédio não atrasam; neste caminho, o que passa do limite nunca chega a eles); + 13º (R$ 2.110) e o terço de férias (~R$ 672) de 12 meses no último bimestre. Calculado no motor do jogo (06/10). Patrimônio por bimestre (o caixa menos as contas atrasadas): −2.481 → −5.830 → −8.874 → −12.092 → −15.248 → −15.498 (no fim, R$ 2.000 no banco e R$ 13.498 de contas atrasadas; a comida não chega a ser cortada). Sem o IPVA, o licenciamento e a luz, a mesma conta dá os −R$ 14.939 de 05/10. Conta nossa; a validar (D-062). Não leva o FGTS (R$ 183 por mês) nem o INSS desde o 1º dia"
+      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026): líquido R$ 2.110,48; IR isento (Lei 15.270/2025). A mesma casa do Jonas de app (D-056; a casa recontada na D-079): + as faxinas e a revenda da companheira (R$ 1.600, informal, D-062), − básico de R$ 3.928, parcela da moto (R$ 480) e manutenção (R$ 261, que com carteira sai do salário) = −R$ 958,52 por mês. No jogo simples, também o que a mesma moto e a mesma casa pagam no ano, igual para as equipes: IPVA (R$ 340, mar–abr), licenciamento (R$ 110, jul–ago) e a luz mais cara de dezembro (R$ 40); a gasolina e os 16% a mais de pedidos de dezembro não, porque são do app. Como no jogo (D-066, D-069): o cheque especial vai até o limite de R$ 2.000, com juros de 7,43% ao mês compostos no bimestre; o que passa dele vira conta atrasada, com multa de 8% uma vez e mora de 1% ao mês, simples, sobre o principal atrasado (gás, ônibus e remédio não atrasam; neste caminho, o que passa do limite nunca chega a eles); + 13º (R$ 2.110) e o terço de férias (~R$ 672) de 12 meses no último bimestre. Calculado no motor do jogo (06/10, depois da D-079). Patrimônio por bimestre (o caixa menos as contas atrasadas): −1.917 → −4.667 → −7.119 → −9.735 → −12.279 → −11.947 (no fim, R$ 2.000 no banco e R$ 9.947 de contas atrasadas; a comida não chega a ser cortada). Com a casa de antes da D-079, −R$ 15.498. Conta nossa; a validar (D-062). Não leva o FGTS (R$ 183 por mês) nem o INSS desde o 1º dia"
     }
   ],
   "roteiros": {

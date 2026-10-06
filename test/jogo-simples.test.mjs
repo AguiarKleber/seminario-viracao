@@ -2,7 +2,7 @@
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
 // motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
 // igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
-// encadeadas, e as 15.625 combinações (nenhuma fecha o ano).
+// encadeadas, e as 15.625 combinações (260 fecham o ano, todas sem bimestre de descanso; D-079).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -128,15 +128,20 @@ test('config.json do dia: as consequências encadeadas (o IPVA já pago, a parce
   assert.deepEqual(valoresDe(jogar(cfg, 'CDDDAD').resultados[4]), [], 'sem a revisão adiada, a moto não quebra');
 });
 
-test('config.json do dia: das 15.625 combinações, nenhuma fecha o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), e o padrão termina devendo R$ 7.294', () => {
+// D-079 (06/10, de manhã): o pior caso tinha de ficar abaixo de R$ 7.000 de dívida (era
+// R$ 10.906). A casa foi recontada e o bloqueio passou a 5 dias; com isso, 260 combinações
+// fecham o ano, todas sem bimestre de descanso.
+test('config.json do dia: das 15.625 combinações, 260 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
   const cfg = configDoDia().config;
   const c = M.enumerarCombinacoes(cfg, { equipeId: 'e1', rodadas: cfg.ordem.rodadas });
   assert.equal(c.total, 15625);
-  assert.equal(c.fecham, 0);
+  assert.equal(c.fecham, 260);
   assert.equal(c.melhor.opcoes.map((o, k) => 'ABCDE'[cfg.rodadas[cfg.ordem.rodadas[k]].ordemOpcoes.indexOf(o)]).join(''), 'ADCEDA');
-  assert.equal(Math.round(c.melhor.valor), -2429);
-  assert.equal(Math.round(c.pior.valor), -10906);
-  assert.equal(jogar(cfg, 'CDDCAD').final, -7294);
-  // A linha "Jonas com carteira assinada" do placar (referencias.clt), refeita no motor em 06/10.
-  assert.equal(cfg.referencias.clt.renda, -15498);
+  assert.equal(Math.round(c.melhor.valor), 1714);
+  assert.equal(Math.round(c.pior.valor), -6783);
+  assert.ok(c.pior.valor > -7000, 'o pior caso deve menos de R$ 7.000 (pedido do Kleber, D-079)');
+  assert.equal(jogar(cfg, 'CDDCAD').final, -3291);
+  // A linha "Jonas com carteira assinada" do placar (referencias.clt), refeita no motor em 06/10
+  // com a casa recontada da D-079 (antes, −R$ 15.498).
+  assert.equal(cfg.referencias.clt.renda, -11947);
 });
