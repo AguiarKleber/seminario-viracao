@@ -1974,14 +1974,40 @@
     return el('nav', { classe: 'linha-tempo', 'aria-label': 'Linha do tempo do seminário' }, [trilha, seguir]);
   }
 
+  // D-079 (teste do Kleber de 06/10, prints 3, 4 e 7): o bloco de dados diz o
+  // que é o tópico (contexto), até 3 números (itens) e de onde vêm (fonte),
+  // tudo do config. A tela só com isso: a trilha do seminário e o placar
+  // resumido saíam juntos e poluíam (pedido G1; no print 3, "Dados: gestão por
+  // algoritmo" era só o título e a trilha, sem dado nenhum). O "Mapa do
+  // seminário" continua com a linha por extenso, que é o conteúdo dele, depois
+  // do contexto. O bloco sem contexto nem itens (um config de antes) fica como
+  // era, com a trilha e o placar resumido.
+  const temConteudo = (passo) => Boolean(passo?.contexto || passo?.itens?.length);
+
+  function conteudoDoBloco(passo) {
+    const { el } = D();
+    return [
+      passo.contexto ? el('p', { classe: 'bloco-contexto', texto: passo.contexto }) : null,
+      passo.itens?.length ? el('ul', { classe: 'bloco-itens' }, passo.itens.map((item) => el('li', { classe: 'bloco-item', texto: item }))) : null,
+      passo.fonte ? el('p', { classe: 'bloco-fonte' }, [el('b', { texto: 'Fontes: ' }), passo.fonte]) : null,
+    ];
+  }
+
   function telaBloco(s, e) {
     const passo = passoDe(e);
     const mapa = ehMapa(passo);
+    const conteudo = temConteudo(passo);
     if (mapa) s.classList.add('bloco-mapa');
+    if (conteudo) s.classList.add('bloco-com-conteudo');
     s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
-    s.appendChild(linhaDoTempo(e, { mapa }));
+    if (conteudo) D().acrescentar(s, conteudoDoBloco(passo));
+    if (mapa || !conteudo) s.appendChild(linhaDoTempo(e, { mapa }));
     // Revisto (modo revendo), o placar de quando o bloco estava na tela.
-    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    if (!mapa && !conteudo && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    // Com a faixa de entrada embaixo (online), o bloco mais longo pode passar
+    // de 1024×768: só quando a tela transborda (medida depois do desenho), as
+    // entrelinhas e os vãos diminuem (data-aperto), com a letra nos 28 px.
+    if (conteudo) app.depoisDeMedir.push(() => { if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1'; });
   }
 
   // ---------- Tela: formar equipes ----------

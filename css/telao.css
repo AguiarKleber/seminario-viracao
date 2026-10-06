@@ -239,6 +239,24 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 .tela-bloco { justify-content: flex-start; }
 
+/* D-079 (teste do Kleber de 06/10): o bloco de dados com o contexto do tópico,
+   até 3 números e a fonte. O contexto um pouco maior (é o que se lê primeiro);
+   cada número com um fio à esquerda, sem marcador nem caixa (pedido G1: menos
+   poluído); a fonte em cinza, no corpo mínimo de 28 px. O aperto (telao.js,
+   telaBloco): só quando a tela transborda, entrelinhas e vãos menores. */
+.bloco-contexto { font-size: calc(var(--corpo) * 1.08); line-height: 1.3; max-width: 46em; }
+.bloco-itens { display: flex; flex-direction: column; gap: calc(var(--espaco) * .9); }
+.bloco-item { padding-left: .6em; border-left: 6px solid var(--foco); line-height: 1.25; max-width: 48em; }
+/* O respiro embaixo da fonte: colada ao pé da tela, a caixa do <b> (mais alta
+   que a entrelinha) passava 2 px da tela, e o aperto ligava sem precisar. */
+.bloco-fonte { margin-top: auto; padding-bottom: .15em; color: var(--texto-2); line-height: 1.2; }
+.bloco-fonte b { color: var(--texto-2); font-weight: 700; }
+.bloco-mapa .bloco-fonte { margin-top: 0; }
+.tela-bloco[data-aperto] { gap: calc(var(--espaco) * .6); }
+.tela-bloco[data-aperto] .bloco-contexto, .tela-bloco[data-aperto] .bloco-item { line-height: 1.15; }
+.tela-bloco[data-aperto] .bloco-itens { gap: calc(var(--espaco) * .5); }
+.tela-bloco[data-aperto] .bloco-fonte { line-height: 1.1; }
+
 /* Linha do tempo do seminário (D-042). Discreta nos blocos: uma trilha de
    marcas, com o mês do jogo escrito dentro da dele, e uma linha de texto. A cor
    nunca é o único canal: o passo atual também tem "você está aqui" escrito, e
