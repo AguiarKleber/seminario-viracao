@@ -478,6 +478,20 @@ async function jogar(nome) {
     }
   });
   assert.ok(msNoNavegador < 1000, `a contagem das combinações no navegador levou ${msNoNavegador} ms`);
+  // O modo revendo (pedido 6 do Kleber, 05/10): ← revê o resultado do último
+  // bimestre, no formato simples, só no telão; → volta ao placar.
+  {
+    const antes = await estado();
+    await page.keyboard.press('ArrowLeft');
+    await page.waitForFunction(() => document.body.dataset.tela === 'revendo' && document.querySelectorAll('.resultado-simples').length > 0);
+    assert.equal(await page.locator('.resultado-simples').count(), EQUIPES.length, 'revendo: o resultado do último bimestre, no formato simples');
+    assert.equal(await page.locator('.grafico-fatias').count(), 0, 'revendo: sem sorteio');
+    await page.keyboard.press('ArrowRight');
+    // Sair do modo pela tecla trava o Avançar por 1,5 s, como o passador.
+    ultimoAvanco = Date.now();
+    await esperarTela('placar-final');
+    assert.equal((await estado()).geracao, antes.geracao, 'revendo não grava nada');
+  }
   // Não há uma quarta página: o Espaço segue o roteiro.
   await avancarPara((e) => e.tipo !== 'placarFinal', 'o passo depois do placar');
   console.log(`  ${RODADAS.length} rodadas × ${opcoesDe(RODADAS[0]).length} opções; ${contagem.total} combinações, ${contagem.fecham} fecham; contagem no navegador: ${msNoNavegador} ms`);
