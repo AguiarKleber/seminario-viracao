@@ -91,7 +91,11 @@ const SEM_ESPERA = process.argv.includes('--sem-espera');
 // Os configs da matriz: o do --config, ou os dois (o real e a fixture de 6
 // rodadas). Relativos à raiz do projeto.
 const ARG_CONFIG = process.argv.includes('--config') ? process.argv[process.argv.indexOf('--config') + 1] : null;
-const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : ['config.json', 'test/fixtures/config-teste-v3.json'];
+// Desde 06/10 (D-078), o config.json é o jogo simples (sem sorteio), com os votos
+// conferidos pelo simples-online.e2e.mjs; a matriz segue com o conteúdo de 05/10
+// (sorteio e 6 personas), congelado em test/fixtures/config-real-v31.json.
+const CONFIG_REAL = 'test/fixtures/config-real-v31.json';
+const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : [CONFIG_REAL, 'test/fixtures/config-teste-v3.json'];
 const ROTEIRO = '60min';
 const LETRAS = 'ABCDEFGHIJ';
 const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
@@ -158,11 +162,11 @@ async function conteudoDoTeste(arquivo) {
   // prorrogação não depende da persona: é o sétimo celular na equipe 2.
   assert.ok(rodadas.length >= 3, `a matriz precisa de pelo menos 3 rodadas no roteiro ${ROTEIRO} (tem ${rodadas.length})`);
   // A D-060 leva o jogo a 6 rodadas: a matriz do config.json tem de passar pelas 6 (revisão da F7).
-  if (arquivo === 'config.json') assert.equal(rodadas.length, 6, `o config.json tem 6 rodadas no roteiro ${ROTEIRO} (D-060)`);
+  if (arquivo === CONFIG_REAL) assert.equal(rodadas.length, 6, `o config de 05/10 tem 6 rodadas no roteiro ${ROTEIRO} (D-060)`);
   for (const rId of rodadas) assert.ok(lista(cfg.rodadas[rId].ordemOpcoes).length >= 3, `a rodada ${rId} tem pelo menos 3 opções`);
   console.log(`Conteúdo: ${arquivo} (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos, ${rodadas.length} rodadas de ${V.motor.mesesPorRodada(cfg)} mês(es).`);
   // As capturas da fixture v3 levam o prefixo, para não sobrescrever as do config.json.
-  const prefixo = arquivo === 'config.json' ? 'votos' : 'votos-v3';
+  const prefixo = arquivo === CONFIG_REAL ? 'votos' : 'votos-v3';
   return { V, cfg, texto, passos, equipes, rodadas, enquetes, prefixo, opcoesDe: (rId) => lista(cfg.rodadas[rId].ordemOpcoes) };
 }
 

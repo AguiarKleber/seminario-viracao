@@ -114,9 +114,11 @@ function semProtecao(bruto) {
   return copia;
 }
 
+// Desde 06/10 (D-078), o config.json é o jogo simples, só com o Jonas: o caso
+// das 6 personas fica no config de 05/10, congelado em test/fixtures/config-real-v31.json.
 test('o caso da revisão: a Daiane em mar–abr depois de fratura com MEI, no config real', () => {
   // Arrange
-  const bruto = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  const bruto = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8'));
   const config = normalizar(V, bruto);
   const configSem = normalizar(V, semProtecao(bruto));
   const [r1, r2] = config.ordem.rodadas;
