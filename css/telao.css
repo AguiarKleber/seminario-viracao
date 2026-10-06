@@ -376,6 +376,13 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .opcoes { display: flex; flex-direction: column; gap: .25em; }
 .opcoes li { display: flex; align-items: baseline; gap: .6em; }
 .opcoes-compactas { color: var(--texto-2); }
+/* D-079 (teste do Kleber de 06/10, print 1: "que greve? por quê? o que
+   impacta?"): no formato simples, a mini-história em cinza, na mesma linha
+   corrida do rótulo em negrito, e nenhum dinheiro na opção (a escolha é às
+   cegas; o saldo aparece no resultado). */
+.opcao-textos { min-width: 0; line-height: 1.22; }
+.opcao-textos .opcao-rotulo { font-weight: 700; }
+.opcao-narrativa { color: var(--texto-2); }
 .letra {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 1.35em; height: 1.35em;
@@ -408,6 +415,10 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    de entrada passavam ~96 px de 1024×768. Entrelinhas e vãos menores; a letra
    fica nos 28 px. */
 .tela[data-aperto] .situacao { line-height: 1.15; }
+/* D-079: com a mini-história nas 5 opções, também os vãos entre o cabeçalho,
+   a situação, as opções e as equipes encolhem pela metade. */
+.tela-rodada-decidindo[data-aperto], .tela-rodada-prorrogacao[data-aperto] { gap: calc(var(--espaco) * .5); }
+.tela[data-aperto] .opcao-textos { line-height: 1.15; }
 .tela[data-aperto] .opcoes { gap: 0; line-height: 1.15; }
 .tela[data-aperto] .equipes-status { gap: 6px 1.5vw; }
 .tela[data-aperto] .equipe-status { line-height: 1.08; padding-top: .15em; padding-bottom: .15em; }
@@ -796,17 +807,16 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 }
 
 /* ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
- * Um personagem só, 5 opções por bimestre com o dinheiro na própria opção, o
- * evento do mês igual para todas as equipes (sem sorteio) e o placar pelo
- * caminho de cada equipe (telao.js, simples()). Nada abaixo do corpo (28 px em
- * 1024×768); o e2e (telao-simples) prova seis equipes em 1024×768 e 1920×1080. */
+ * Um personagem só, 5 opções por bimestre com a mini-história e sem o dinheiro
+ * (D-079: às cegas), o evento do mês igual para todas as equipes (sem sorteio)
+ * e o placar pelo caminho de cada equipe (telao.js, simples()). Nada abaixo do
+ * corpo (28 px em 1024×768); o e2e (telao-simples) prova seis equipes em
+ * 1024×768 e 1920×1080. */
 
-/* A decisão: a letra, o rótulo e, à direita, o dinheiro da opção ("+R$ 900 no
-   bimestre"), que nunca quebra; o rótulo comprido quebra antes dele. */
-.opcoes-com-dinheiro li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6em; }
-.opcao-dinheiro { white-space: nowrap; font-weight: 700; text-align: right; }
-.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
-.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+/* A decisão: a letra alinhada com a primeira linha do rótulo (o rótulo e a
+   mini-história correm juntos, em duas linhas). */
+.opcoes-simples li { align-items: flex-start; }
+.opcoes-simples .letra { margin-top: .05em; }
 
 /* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
    (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */

@@ -2580,21 +2580,13 @@
       if (minha && enviando) marca = 'enviando…';
       else if (minha && envio?.estagio === 'guardado') marca = 'guardado no aparelho';
       else if (minha && envio?.estagio === 'esperaRetomar') marca = 'guardado até retomar';
-      // Formato simples: o dinheiro da opção ("+R$ 900 no bimestre", a mesma
-      // linha do telão, historia.textoDoDinheiro) logo abaixo do rótulo. E,
-      // quando a opção tem, a linha curta do custo humano (D-073), menor.
-      const dinheiro = op.dinheiro && N().historia?.textoDoDinheiro
-        ? el('span', {
-          classe: 'opcao-dinheiro',
-          dados: { sinal: op.dinheiro.emprestimo > 0 && Math.round(op.dinheiro.valor) === 0 ? 'zero' : sinalDe(op.dinheiro.valor), dinheiro: op.dinheiro.valor, emprestimo: op.dinheiro.emprestimo },
-          texto: N().historia.textoDoDinheiro(op.dinheiro, F().moeda, periodo()),
-        })
-        : null;
+      // Quando a opção tem, a linha curta do custo humano (D-073), menor. Sem
+      // o dinheiro da opção (D-079: às cegas, como no telão; até a versão 8 ia
+      // "+R$ 900 no bimestre" logo abaixo do rótulo).
       acrescentar(b, [
         el('b', { classe: 'opcao-letra', texto: letraDe(d.rodada.id, op.id) }),
         el('span', { classe: 'opcao-textos' }, [
           el('span', { classe: 'opcao-rotulo', texto: op.rotulo || op.id }),
-          dinheiro,
           op.impacto ? el('span', { classe: 'opcao-impacto', texto: op.impacto }) : null,
           minha ? el('span', { classe: 'opcao-seu-voto', texto: marca }) : null,
         ]),

@@ -111,14 +111,6 @@
   // resultado não podem depender da ordem de carga.
   const simples = (conteudo) => em(conteudo, 'regras', 'formatoSimples') === true;
 
-  // O dinheiro da opção (historia.dinheiroDaOpcao, a mesma conta do telão),
-  // buscado na hora da chamada. Sem o historia.js, null: a opção sai sem a
-  // linha do dinheiro, e o voto continua funcionando.
-  function dinheiroDe(conteudo, rodadaId, opcaoId, personaId) {
-    const H = raiz.Viracao.historia;
-    return H && H.dinheiroDaOpcao ? H.dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) : null;
-  }
-
   // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
   // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
   // itens, a mesma conta do motor (que o celular não carrega).
@@ -287,14 +279,13 @@
         // decisão deixava de ser um dilema.
         // D-073: o impacto (o custo humano) vai junto do rótulo, só
         // quando a opção o tem: num config sem ele, as opções ficam iguais.
-        // Formato simples (decisão do Kleber de 05/10 à noite): o dinheiro que
-        // a opção move ({ valor, emprestimo }, historia.dinheiroDaOpcao), a
-        // mesma conta da linha do telão. Só nele: as opções de um config sem
-        // a chave ficam iguais.
+        // D-079 (teste do Kleber de 06/10): nenhum dinheiro na opção, nem no
+        // formato simples. Até a versão 8 ia o { valor, emprestimo } de cada
+        // uma, e a equipe escolhia pelo número; agora a escolha é às cegas, e
+        // o saldo aparece só no resultado.
         opcoes: visiveis.map((o) => {
           const { rotulo, impacto } = textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId));
-          const dinheiro = semSorteio ? dinheiroDe(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)) : null;
-          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }), ...(dinheiro ? { dinheiro } : {}) };
+          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }) };
         }),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,

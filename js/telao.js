@@ -2280,9 +2280,13 @@
     executar(() => app.anf.decidirPorEquipe(eq, atual === opcao ? null : opcao), vista());
   }
 
+  // Formato simples (D-079): na célula, só a cor ("Laranja", como na tabela do
+  // caminho), sem o "Equipe": com a mini-história nas 5 opções, a decisão não
+  // cabia em 1024×768, e "Equipe Verde-azulado" quebrava em duas linhas na
+  // célula. Fora do formato simples, o personagem, como antes (curto não muda).
   function celulaEquipe(e, eq, rodada, opcoesVisiveis) {
     const { el, botao } = D();
-    const filhos = [rotuloEquipe(eq)];
+    const filhos = [rotuloEquipe(eq, null, { curto: true })];
     const forcada = e.forcadas?.[eq] ?? null;
     if (app.modo === 'offline') {
       filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${numeroEquipe(eq)}, ${nomeDoPersonagem(eq)}` },
@@ -2299,21 +2303,25 @@
     return el('div', { classe: ['equipe-status', equipeDecidiu(e, eq) ? 'decidida' : null], dados: { equipe: eq } }, filhos);
   }
 
-  // Formato simples: a linha do dinheiro de cada opção ("+R$ 900 no
-  // bimestre"), a soma dos efeitos diretos dela para a persona
-  // (historia.dinheiroDaOpcao, a mesma conta do celular). O que vem depois,
-  // encadeado, não aparece: é a surpresa do resultado. Em verde ou vermelho,
-  // sempre com o sinal (a cor nunca vai sozinha); o empréstimo, neutro (é
-  // dívida). Sem o formato simples, null.
-  function linhaDoDinheiro(rodadaId, op, personaId) {
-    if (!simples()) return null;
+  // D-079 (teste do Kleber de 06/10): a escolha é às cegas. Até a versão 8, o
+  // formato simples punha o dinheiro de cada opção ao lado do rótulo ("+R$ 900
+  // no bimestre"), e a turma escolhia pelo número, sem ler o dilema. No lugar
+  // dele, a mini-história (a narrativa do config: o que é, por quê, o que
+  // impacta), na mesma linha corrida do rótulo, depois de um travessão. Numa
+  // linha própria embaixo do rótulo, cada opção ia a três linhas, e as 5
+  // opções com as 6 equipes passavam ~200 px de 1024×768. O saldo continua no
+  // resultado.
+  function textosDaOpcao(rodadaId, op, personaId, { comNarrativa }) {
     const { el } = D();
-    const dinheiro = N().historia.dinheiroDaOpcao(app.config, rodadaId, op, personaId);
-    const sinal = dinheiro.emprestimo > 0 && Math.round(dinheiro.valor) === 0 ? 'zero' : sinalDoSaldo(dinheiro.valor);
-    return el('span', {
-      classe: 'opcao-dinheiro', dados: { dinheiro: String(dinheiro.valor), emprestimo: String(dinheiro.emprestimo), sinal },
-      texto: N().historia.textoDoDinheiro(dinheiro, F().moeda, periodo()),
-    });
+    const rodada = app.config.rodadas[rodadaId];
+    if (!simples()) return [el('span', { classe: 'opcao-rotulo', texto: rodada.opcoes[op].rotulo })];
+    // No formato simples, o texto do jeito da persona (D-054), a única.
+    const { rotulo, narrativa } = N().historia.textoDaOpcao(app.config, rodadaId, op, personaId);
+    if (!comNarrativa || !narrativa) return [el('span', { classe: 'opcao-rotulo', texto: rotulo })];
+    return [el('span', { classe: 'opcao-textos' }, [
+      el('span', { classe: 'opcao-rotulo', texto: rotulo }),
+      el('span', { classe: 'opcao-narrativa', texto: ` — ${narrativa}` }),
+    ])];
   }
 
   function telaRodadaDecidindo(s, e) {
@@ -2322,12 +2330,10 @@
     const { n, total } = posicaoRodada(e.rodada);
     s.appendChild(cabecalho(`Rodada ${n} de ${total} · decisão`, rodada.titulo, { cronometro: true }));
     s.appendChild(el('p', { classe: 'situacao', texto: rodada.texto }));
-    // No formato simples, o rótulo do jeito da persona (D-054), a única.
     const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
-    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
+    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-simples' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
-      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
-      linhaDoDinheiro(e.rodada, op, personaId),
+      ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: true }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
     app.depoisDeMedir.push(() => apertarDecisao(s));
@@ -2350,22 +2356,20 @@
     const celulas = ativas(e).map((eq) => {
       const empatadas = e.empatadas?.[eq];
       if (!empatadas) {
-        return el('div', { classe: 'equipe-status decidida', dados: { equipe: eq } }, [rotuloEquipe(eq), el('span', { classe: 'equipe-andamento', texto: 'decidida' })]);
+        return el('div', { classe: 'equipe-status decidida', dados: { equipe: eq } }, [rotuloEquipe(eq, null, { curto: true }), el('span', { classe: 'equipe-andamento', texto: 'decidida' })]);
       }
       const ops = ordemOpcoes(rodada).filter((op) => empatadas[op] === true);
       const celula = celulaEquipe(e, eq, rodada, ops);
       celula.insertBefore(el('span', { classe: 'equipe-empate', texto: `entre ${ops.map((op) => letraDe(rodada, op)).join(' e ')}` }), celula.children[1] || null);
       return celula;
     });
-    // Formato simples: a lista como a da decisão, com o rótulo da persona e o
-    // dinheiro de cada opção (D-078). Só pelo rótulo, o telão do empate
-    // escondia o valor que os celulares da equipe empatada mostravam (revisão
-    // de 06/10). O dinheiro fica na mesma linha: a lista não cresce.
+    // Formato simples: o rótulo da persona, compacto, sem a mini-história (as
+    // equipes empatadas já a leram na decisão) e sem dinheiro (D-079: às cegas,
+    // como nos celulares).
     const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
-    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
+    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas'] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
-      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
-      linhaDoDinheiro(e.rodada, op, personaId),
+      ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: false }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, celulas));
     app.depoisDeMedir.push(() => apertarDecisao(s));
