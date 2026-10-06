@@ -958,6 +958,9 @@ a barra escondida e o `#modal` aberto.
 **Medidas depois do desenho:** a faixa de entrada é desenhada **antes** da tela (`desenhar`): o aperto do resultado,
 das personas e do mapa mede a altura que sobra com ela. Desenhada depois, a primeira tela depois do lobby, e toda
 troca de tamanho (a altura do QR é 12% da tela), era medida sem a faixa.
+A faixa aberta ou fechada (`app.el.faixa.hidden`) também entra na chave do desenho (revisão de 06/10): fora
+dela, abrir ou fechar a entrada não redesenhava a tela, e a faixa reaberta cobria as linhas das consequências do
+resultado (o fechamento não devolvia o evento do mês). O e2e simples-online fecha e reabre a entrada em mar–abr.
 
 **A equipe pelo personagem (teste do Kleber de 05/10, prints 12 a 14):** em toda tela do telão, a equipe aparece
 pelo personagem, e não pelo nome da cor: `rotuloEquipe(id)` monta o `graficos.rotuloEquipe` (a forma na cor da
@@ -1719,7 +1722,8 @@ anfitrião: quem decide é o telão.
       `resultados/{r}/{eq}`, que o celular já ouve; nenhuma leitura nova (as regras v4 ficam como estão). No fim do cartão,
       `p.faltou-mesa.faltou-mesa-ano` ("Faltou na mesa no ano: R$ M de comida que não deu para comprar (fora do
       saldo)."), M = `historia.faltouNaMesaDe(placar/{eq})`, inclusive R$ 0, com o "no ano" do telão (12 meses
-      jogados; 1, "no mês"; senão "em N meses"); sala sem o limite, sem a linha;
+      jogados; 1, "no mês"; senão "em N meses"); sala sem o limite, sem a linha; no formato simples, sem a linha,
+      como no telão (revisão de 06/10: ela dizia "R$ 0" embaixo de "Cortar comida e remédio");
     - a dívida de hoje (`div.divida`, a do último bimestre: "Dívida total R$ D" e as partes);
     - "Escolha ou sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte · = Terminaram com",
       as variações sempre com + ou −, o total do fim em `.placar-total`), sem "piloto automático" nem "efeito das
