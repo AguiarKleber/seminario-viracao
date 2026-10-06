@@ -100,7 +100,9 @@ const MUTACOES = [
   ['contexto com mais de 160 caracteres', (b) => { rodada(b, 'r1').contexto.costureira = 'x'.repeat(161); }, 'rodadas.r1.contexto.costureira', /161 caracteres.*160/, 'erro'],
   ['contexto vazio', (b) => { rodada(b, 'r1').contexto.costureira = ' '; }, 'rodadas.r1.contexto.costureira', /texto vazio/, 'erro'],
   // De 2 a 4 opções (D-043)
-  ['rodada com 5 opções', (b) => { rodada(b, 'r1').opcoes.e = { rotulo: 'E', efeitos: [] }; }, 'rodadas.r1.opcoes', /5 opções.*no máximo 4/, 'erro'],
+  // O teto subiu de 4 para 5 com o formato simples (decisão do Kleber de 05/10
+  // à noite: 5 opções por bimestre); 6 continua erro.
+  ['rodada com 6 opções', (b) => { Object.assign(rodada(b, 'r1').opcoes, { e: { rotulo: 'E', efeitos: [] }, f: { rotulo: 'F', efeitos: [] } }); }, 'rodadas.r1.opcoes', /6 opções.*no máximo 5/, 'erro'],
   ['rodada com uma opção só', (b) => { rodada(b, 'r1').opcoes = { c: rodada(b, 'r1').opcoes.c }; }, 'rodadas.r1.opcoes', /pelo menos 2/, 'erro'],
   // decidiu / sorteou
   ['decidiu que não é objeto', (b) => { rodada(b, 'r2').efeitosGerais[1].se.decidiu = 'r1'; }, 'rodadas.r2.efeitosGerais[1].se.decidiu', /objeto/, 'erro'],

@@ -480,7 +480,79 @@ function analisar(cfg, hash) {
   conferirProtecao(cfg, perfis, finaisPorPerfil, avisar, estimado);
   conferirDivida(cfg, perfis, finaisPorPerfil, avisar, estimado);
   const falhas = conferirContaDoMes(cfg, perfis, antesPorPerfil, ctx, avisar);
+  conferirTextosPorPersona(cfg, avisar);
+  conferirFormatoSimples(cfg);
   return { avisos: totalAvisos, falhas };
+}
+
+// (l) O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+// noite): o dinheiro que cada opção mostra (historia.dinheiroDaOpcao, a mesma
+// linha do telão e do celular) e as combinações possíveis de cada roteiro
+// (motor.enumerarCombinacoes, a mesma conta da última página do placar):
+// quantas fecham, a melhor e a pior. Sem sorteio, é tudo exato. Config sem a
+// chave: nada.
+function conferirFormatoSimples(cfg) {
+  if (cfg.regras.formatoSimples !== true) return;
+  const H = V.historia;
+  const equipeId = cfg.ordem.equipes[0];
+  const persona = cfg.equipes[equipeId].persona;
+  const per = H.periodo(cfg);
+  // A mesma forma do formatar.moeda das telas: o "+" só com { sinal: true }.
+  const reais = (v, { sinal = false } = {}) => `${Math.round(v) < 0 ? '−' : sinal && Math.round(v) > 0 ? '+' : ''}R$ ${Math.abs(Math.round(v)).toLocaleString('pt-BR')}`;
+  console.log('\n== (l) Formato simples: o dinheiro de cada opção e as combinações possíveis (decisão do Kleber de 05/10) ==');
+  for (const r of cfg.ordem.rodadas) {
+    const linhas = cfg.rodadas[r].ordemOpcoes.map((o, i) => `${LETRAS[i]} ${H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, o, persona), reais, per)}`);
+    console.log(`  ${r}: ${linhas.join(' · ')}`);
+  }
+  const vistos = new Set();
+  for (const [nome, passos] of Object.entries(cfg.roteiros)) {
+    const rodadas = passos.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
+    if (rodadas.length === 0 || vistos.has(rodadas.join())) continue;
+    vistos.add(rodadas.join());
+    const t0 = performance.now();
+    const e = M.enumerarCombinacoes(cfg, { equipeId, rodadas });
+    const ms = performance.now() - t0;
+    const letras = (c) => c.opcoes.map((o, i) => LETRAS[cfg.rodadas[rodadas[i]].ordemOpcoes.indexOf(o)]).join('');
+    console.log(`  roteiro ${nome}: ${e.total.toLocaleString('pt-BR')} combinações, ${e.fecham.toLocaleString('pt-BR')} fecham (patrimônio ≥ 0) · melhor ${letras(e.melhor)} ${reais(e.melhor.valor, { sinal: true })} · pior ${letras(e.pior)} ${reais(e.pior.valor, { sinal: true })} · ${ms.toFixed(0)} ms`);
+  }
+}
+
+// (k) D-073 e D-075 (teste do Kleber de 05/10): a linha do custo humano embaixo de
+// cada opção (impacto/impactoPor) e o título da carta do jeito do personagem
+// (tituloPor/curtoPor). É só texto, e não mexe em conta nenhuma: a seção
+// mostra, pela mesma regra das telas (historia.textoDaOpcao e textoDaCarta),
+// o que cada persona lê, para a revisão do conteúdo. Com o custo humano em
+// uso, a opção que deixa alguma persona sem a linha é aviso: a D-073 pede a
+// linha embaixo de CADA opção. Config sem nenhum dos campos: duas linhas, e
+// nenhum aviso.
+function conferirTextosPorPersona(cfg, avisar) {
+  const H = V.historia;
+  console.log('\n== (k) Custo humano das opções e título das cartas por persona (D-073 e D-075, teste do Kleber de 05/10) ==');
+  const personas = [...new Set(cfg.ordem.equipes.map((eq) => cfg.equipes[eq].persona))];
+  const nome = (p) => cfg.personas[p].nome;
+  const opcoes = cfg.ordem.rodadas.flatMap((r) => cfg.rodadas[r].ordemOpcoes.map((o) => [r, o, cfg.rodadas[r].opcoes[o]]));
+  if (!opcoes.some(([, , op]) => op.impacto !== undefined || op.impactoPor !== undefined)) {
+    console.log('  Nenhuma opção tem impacto nem impactoPor: as telas não mostram a linha do custo humano.');
+  } else {
+    let com = 0;
+    for (const [r, o, op] of opcoes) {
+      console.log(`  ${r} ${o}  geral: ${op.impacto === undefined ? '(nenhum)' : `"${op.impacto}"`}`);
+      for (const p of personas) if (Object.hasOwn(op.impactoPor || {}, p)) console.log(`        ${nome(p)}: "${op.impactoPor[p]}"`);
+      const sem = personas.filter((p) => H.textoDaOpcao(cfg, r, o, p).impacto === null);
+      com += personas.length - sem.length;
+      if (sem.length > 0) avisar(`${r} ${o}: sem a linha do custo humano (D-073) para ${sem.map(nome).join(', ')}.`);
+    }
+    console.log(`  Com a linha do custo humano: ${com} de ${opcoes.length * personas.length} (opção × persona).`);
+  }
+  const comTitulo = cfg.ordem.cartas.filter((c) => cfg.cartas[c].tituloPor || cfg.cartas[c].curtoPor);
+  if (comTitulo.length === 0) console.log('  Nenhuma carta tem tituloPor nem curtoPor: todas as equipes leem o título geral.');
+  for (const c of comTitulo) {
+    const partes = personas.map((p) => {
+      const t = H.textoDaCarta(cfg, c, p);
+      return `${nome(p)} "${t.titulo}"${t.curto ? ` (fatia: ${t.curto})` : ''}`;
+    });
+    console.log(`  ${c}: ${partes.join(' · ')}`);
+  }
 }
 
 // (g) D-050 e D-058: quem fecha o básico no fim do jogo. "Fechar" é

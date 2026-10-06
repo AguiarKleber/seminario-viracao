@@ -38,14 +38,15 @@ const RESULTADOS = {
 };
 
 test('textoDaOpcao: o texto da persona, e o da opção quando ela não tem entrada', () => {
-  // Act / Assert
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'a', 'manicure'), { rotulo: 'Aceitar todos os atendimentos', narrativa: 'Atendi até cliente longe e barata.' });
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'a', 'costureira'),
-    { rotulo: 'Aceitar todas as encomendas', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.' }, 'só o rótulo é dela');
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'a', 'motoboy'), { rotulo: 'Aceitar tudo', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.' });
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'b', 'manicure'), { rotulo: 'Recusar corridas ruins', narrativa: null });
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'z', 'manicure'), { rotulo: null, narrativa: null });
-  assert.deepEqual(V.historia.textoDaOpcao(conteudo, 'r2', 'a', 'constructor'), { rotulo: 'Aceitar tudo', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.' });
+  // Act / Assert (o impacto, D-073, teste do Kleber de 05/10, é null: a fixture não o tem)
+  const texto = (...a) => V.historia.textoDaOpcao(...a);
+  assert.deepEqual(texto(conteudo, 'r2', 'a', 'manicure'), { rotulo: 'Aceitar todos os atendimentos', narrativa: 'Atendi até cliente longe e barata.', impacto: null });
+  assert.deepEqual(texto(conteudo, 'r2', 'a', 'costureira'),
+    { rotulo: 'Aceitar todas as encomendas', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.', impacto: null }, 'só o rótulo é dela');
+  assert.deepEqual(texto(conteudo, 'r2', 'a', 'motoboy'), { rotulo: 'Aceitar tudo', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.', impacto: null });
+  assert.deepEqual(texto(conteudo, 'r2', 'b', 'manicure'), { rotulo: 'Recusar corridas ruins', narrativa: null, impacto: null });
+  assert.deepEqual(texto(conteudo, 'r2', 'z', 'manicure'), { rotulo: null, narrativa: null, impacto: null });
+  assert.deepEqual(texto(conteudo, 'r2', 'a', 'constructor'), { rotulo: 'Aceitar tudo', narrativa: 'Aceitei tudo o que apareceu, até o que não compensava.', impacto: null });
 });
 
 test('historiaDaEquipe: o texto da opção pela persona da equipe, o cartaCusto e o mes com gastos', () => {

@@ -48,10 +48,12 @@ function linhasFecham(a) {
   }
 }
 
+// Desde 06/10 (D-078), o config.json é o jogo simples, só com o Jonas: o caso
+// das 6 personas fica no config de 05/10, congelado em test/fixtures/config-real-v31.json.
 // O config.json real com o limite (D-066), se ainda não tiver: o caso que
 // estourava é da conta do motor, e não do conteúdo do dia.
 function realComLimite() {
-  const bruto = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  const bruto = JSON.parse(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8'));
   if (bruto.regras.limiteChequeEspecial === undefined) {
     Object.assign(bruto.regras, { limiteChequeEspecial: 1500, limiteFonte: 'teste', multaAtraso: 0.1, moraMes: 0.01, atrasoFonte: 'teste' });
     bruto.indicadores.push({ ...IND_ATRASADAS }, { ...IND_MESA });

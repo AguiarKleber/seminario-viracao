@@ -8,6 +8,11 @@ Como publicar o site está no [README](../README.md). Como mudar o conteúdo est
 seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 06/10.
 
+**Para 07/10, vale a [seção 0](#0-o-jogo-simples-de-0710-d-078): o jogo simples
+(D-078).** Os blocos logo abaixo são o histórico das versões; onde as seções 5.5 a
+5.7 e a 5.11 falam de personas, cartas sorteadas, "Escolha ou sorte?" ou do pior
+caso, vale a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
+
 **Redesenho de 29/09 (D-041 a D-048).** O teste de 30/09 já usa a versão nova
 (D-048). O que mudou para quem conduz:
 - a família de cada persona e o **básico da casa** entram no jogo, e todo mês a
@@ -157,6 +162,7 @@ testar" (D-041, D-042, D-043, D-060) são para observar na aula, e o "a
 validar" da D-066 (as contas atrasam antes de cortar a comida) está no
 rascunho, seção 8, item 15.
 
+0. [O jogo simples de 07/10 (D-078)](#0-o-jogo-simples-de-0710-d-078)
 1. [O que levar](#1-o-que-levar)
 2. [Véspera](#2-véspera)
 3. [No dia: montagem](#3-no-dia-montagem)
@@ -170,6 +176,89 @@ rascunho, seção 8, item 15.
 11. [Cuidados com o tema](#11-cuidados-com-o-tema)
 12. [Depois da aula](#12-depois-da-aula)
 13. [Teste no eduroam (30/09)](#13-teste-no-eduroam-3009)
+
+---
+
+## 0. O jogo simples de 07/10 (D-078)
+
+Decisão do Kleber de 05/10 à noite, depois de testar a versão no ar: o jogo de 6
+personagens com cartas sorteadas ficou complexo demais. O conteúdo inteiro, com
+os valores e as fontes, está em [jogo-simples.md](jogo-simples.md).
+
+**Em uma frase, para a turma:** "Todo mundo é o Jonas, motoboy do iFood. Cada
+equipe decide o que ele faz em cada bimestre, e no fim a gente compara o que cada
+caminho fez com o dinheiro da família."
+
+**O que muda para quem conduz:**
+- **Um personagem só.** As 6 equipes jogam o Jonas e aparecem pela cor ("Equipe
+  Laranja"). A tela das personas virou **"Conheça o Jonas"**, com a casa e a conta
+  de um mês comum (falta R$ 392). Dela, o Espaço vai direto a Jan–fev: a tela "A
+  conta de cada casa" saiu.
+- **5 opções por bimestre**, cada uma com o dinheiro ("+R$ 900 no bimestre"); no
+  celular, também a linha do custo humano. No telão vai só o dinheiro (o custo
+  humano não cabe em 1024×768 com as seis equipes): se quiser que a turma ouça o
+  custo humano, leia-o junto, do seu celular de espectador ou das tabelas do
+  [jogo-simples.md](jogo-simples.md). A decisão tem **120 s** no cronômetro (o
+  mínimo de conversa continua 45 s).
+- **Sem sorteio.** O Enter encerra a decisão e vai direto ao resultado: não há
+  tela de sorteio nem "Sorteando…" no celular. O resultado mostra o evento do mês
+  (o mesmo para todas) e, por equipe, a letra, o saldo do bimestre e "a família:
+  tem/devendo R$ X". Embaixo, quando há, **as consequências de antes**, uma
+  linha por motivo: "As costas travaram (2 puxadas seguidas) −R$ 1.230: Laranja,
+  Azul". Com seis equipes e a faixa de entrada, o telão pode esconder a frase do
+  evento, ou o evento inteiro, para caber: ele está no celular de cada equipe.
+  Para o evento voltar ao telão, feche a entrada depois de formar as equipes
+  (barra → **Entrada aberta**, que vira **Entrada fechada**). Se chegar um
+  atrasado, reabra a qualquer hora: a tela se refaz com a faixa.
+- **O telão não baixa mais o JSON sozinho** no fim de cada rodada (pedido do
+  Kleber; muda a D-015). Se quiser o arquivo, barra oculta → **Salvar estado**
+  (por exemplo, depois de Mar–abr e de Set–out). Online, a sala fica no Firebase
+  e se retoma com o PIN em outra máquina (seção 9).
+- **O placar final tem 3 páginas** (o Espaço passa): o caminho de cada equipe (a
+  letra e o saldo de cada bimestre); quanto sobrou ou ficou devendo, com a linha
+  "Jonas com carteira assinada"; e "Das 15.625 combinações possíveis, nenhuma
+  fecha o ano", com a melhor, a pior e o lugar de cada equipe. O celular mostra
+  as escolhas da equipe.
+
+**O que dizer uma vez, em "Conheça o Jonas"** (e não explicar mais que isso):
+- "O valor de cada opção é o que entra ou sai no bimestre, comparado com a
+  jornada de sempre."
+- "Algumas escolhas cobram depois. No jogo, sempre cobram; na vida, é risco."
+  Não conte quais: a surpresa é do resultado.
+
+**Equipe sem voto** fica com a opção padrão (C, D, D, C, A, D). Em jul–ago, o
+padrão é **Adiar a revisão**, e a moto dessa equipe quebra em set–out. Se foi o
+celular que caiu, pergunte à equipe e use **Decidir por esta equipe** antes do
+Enter.
+
+**Bimestre a bimestre: o que dizer depois do resultado** (uma ou duas frases;
+entre parênteses, as consequências que podem aparecer naquele bimestre):
+
+| Bimestre | Diga |
+| --- | --- |
+| Jan–fev | "Num mês comum já falta R$ 392. Quem fez 12 horas no sol fechou o bimestre melhor, por enquanto. Quem pagou o IPVA adiantado pagou no cheque especial: desconto é para quem tem dinheiro sobrando." |
+| Mar–abr | (As costas, o IPVA já pago, a parcela atrasada.) "Duas puxadas seguidas: as costas cobraram R$ 1.230." "Quem parou na greve ficou uma semana sem chamada: é o bloqueio branco." "No empréstimo, o dinheiro entrou e a dívida também: o dinheiro da família quase não mudou." |
+| Mai–jun | (As costas.) "O pneu e a capa só custam no jogo; na rua, é o que separa voltar para casa ou não." |
+| Jul–ago | (As costas.) "O +Entregas paga R$ 3 por entrega e pede quase nenhuma recusa. Quem adiou a revisão ganhou R$ 100 agora." |
+| Set–out | (A moto, as costas.) "Quem adiou a revisão viu a moto quebrar: no jogo, sempre; com o pneu novo, só a relação. Furar o breque rendeu; parar custou uma semana. Quem paga a conta da organização?" |
+| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém aqui tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem cortou comida e remédio ganhou R$ 170: é isso que a planilha não mostra. O remédio nem entra na conta, porque no jogo ninguém adoece; na vida, é o que vira doença depois." |
+
+**No placar:**
+- **Página 1, o caminho:** "Mesma casa, mesmo Jonas: a diferença entre as equipes
+  é só o caminho."
+- **Página 2, quanto sobrou:** "Nenhuma equipe fechou o ano." Sobre a linha da
+  carteira (D-070): "Com carteira, o Jonas põe menos dinheiro no caixa: R$ 2.110
+  líquidos, e a manutenção da moto sai do bolso dele. O que a linha não mede: INSS
+  desde o primeiro dia, FGTS, férias, auxílio-doença e hora para acabar."
+- **Página 3, as combinações:** "Das 15.625 combinações possíveis, nenhuma fecha o
+  ano. A melhor não descansa nenhum bimestre: 12 h no sol, madrugada, noites,
+  fura o breque e, no fim, corta a comida da filha. E ainda termina devendo
+  R$ 2.429; a pior, R$ 10.906." Ligue com o termômetro de entrada (D-074): "Alguém achou a
+  combinação que fechava? Então é falta de administração?"
+
+**Se perguntarem por que as costas sempre travam:** "No jogo, sempre; na vida, é um
+risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada'
+(Souza et al., 2024)."
 
 ---
 
@@ -232,10 +321,10 @@ dos menus mudam um pouco entre versões.
     Permissões adicionais → Downloads automáticos → permitir
     `https://aguiarkleber.github.io`.
   - Edge: Configurações → Cookies e permissões de site → Downloads automáticos.
-  - Por quê: ao fim de cada rodada, o telão baixa sozinho um JSON com o estado da
-    sala, o seguro para o caso "travou e caiu a internet" (D-015). Sem a
-    permissão, a partir do segundo arquivo o navegador pergunta na frente da
-    turma, ou bloqueia.
+  - Por quê: o "Salvar estado" e o "Exportar totais" baixam um JSON. Desde a
+    D-078 (06/10), o telão não baixa mais nada sozinho no fim de cada rodada; a
+    permissão evita que o navegador pergunte na frente da turma quando você
+    salvar à mão.
 - [ ] **"Perguntar onde salvar cada arquivo" desligado** (Configurações →
       Downloads). No Edge, desligue também "Mostrar o menu de downloads quando um
       download começar": ele cobre o canto do telão.
@@ -319,8 +408,8 @@ janela de escolha aberta ou o foco do teclado dentro dela. As teclas funcionam
 com ela escondida. À esquerda, ela mostra:
 - o passo e o atraso, por exemplo "passo 8 de 19 · +3 min de atraso";
 - o nome do passo;
-- "estado salvo às 14:05 (r1)", depois do primeiro salvamento. O salvamento
-  automático do fim de rodada aparece **só aqui**, sem aviso na tela projetada;
+- "estado salvo às 14:05", depois do primeiro "Salvar estado" (desde a D-078,
+  não há mais salvamento automático no fim da rodada);
 - com celulares, "18 ativos / 21 membros". Membro é quem já entrou na sala;
   ativo é o celular com sinal no último minuto. Esse número fica **só aqui**: o
   lobby projeta apenas os conectados;
@@ -843,9 +932,8 @@ explicar quando aparecer)
 - **Telão:** uma barra de fatias por equipe, com as chances de cada carta; os
   ponteiros param juntos. As chances só aparecem aqui (D-012). As cartas graves
   aparecem hachuradas.
-- **Faça:** deixe a animação terminar. O telão baixa sozinho o JSON do estado
-  (D-015), sem aviso na tela: só a barra registra "estado salvo às …". Espaço
-  mostra o resultado.
+- **Faça:** deixe a animação terminar. Espaço mostra o resultado. (Só no jogo
+  com sorteio; no jogo simples de 07/10 não há esta tela, seção 0.)
 - **Diga:** "A decisão de vocês mudou o tamanho das fatias. A sorte escolhe a
   fatia. Decide-se antes de saber, como na vida."
 
@@ -1207,8 +1295,8 @@ básico")
   momento, e texto livre nunca aparece no telão.
 - **Fim:** o telão mostra o título e o placar resumido (o saldo de cada equipe já
   descontados o empréstimo a pagar e as contas atrasadas); o celular de cada
-  equipe mostra o resumo por bimestre, a dívida, o que faltou na mesa, o pior
-  caso e a história dela, recolhida. Se o seu celular
+  equipe mostra o resumo por bimestre (o saldo e com quanto ficou), o dinheiro
+  da família e a história dela, recolhida. Se o seu celular
   está no modo espectador, saia dele (**Sair do modo espectador**) antes de
   apagar a sala. Os dois botões ficam **na barra** (D-047):
   aperte H (ou encoste o mouse na borda de baixo), clique em **Exportar totais**
@@ -1217,84 +1305,78 @@ básico")
 
 ## 6. Minuto a minuto: 60 min
 
-**O roteiro gira em torno do jogo** (D-060, "vamos testar"). As seis rodadas
-somam 21 min; com a formação das equipes, as personas e o placar final, o jogo
-ocupa 30 dos 60 min. A apresentação entra entre as rodadas, em blocos curtos de
-dados (2 min cada), com os números da realidade brasileira que explicam o
-bimestre que acabou ou o que vem. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-05-v3.1`; rascunho, seção 7).
+**O roteiro gira em torno do jogo** (D-060, D-078). As seis rodadas somam 25 min;
+com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo ocupa 34
+dos 60 min. A apresentação entra entre as rodadas, em blocos curtos de dados (2
+min cada). Os tempos são os tempos-alvo do `config.json` (versão
+`2026-10-06-v4-simples`).
 
-**Cada rodada tem 3:30:** 90 s de decisão (o mínimo de conversa é 45 s), o
-sorteio e uns 1:30 de resultado. Não há folga: com seis rodadas, 30 s a mais em
-cada uma são 3 min de atraso. A barra mostra o atraso ao vivo. Se atrasar,
-encurte primeiro as **Entrevistas** (opcional, 4 min: **Pular para…** o passo
-seguinte) e a enquete "antes" (opcional), depois os blocos de dados, e nunca as
-rodadas.
+**Cada rodada tem 4:10:** 120 s de decisão (o mínimo de conversa é 45 s), o
+Enter e uns 1:30 de resultado, com a frase da seção 0. A barra mostra o atraso ao
+vivo. Se atrasar, encurte primeiro as **Entrevistas** (opcional, 4 min: **Pular
+para…** o passo seguinte) e a enquete "antes" (opcional), depois os blocos de
+dados, e nunca as rodadas.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
 | 1 | 0:00 | Lobby (2:00) | QR na tela. "Apontem a câmera… sem nome, sem cadastro." (5.1) |
 | 2 | 2:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
-| 3 | 3:30 | Bloco: Gancho: o lançamento (2:30) | Espaço, Alt+Tab. O lançamento encenado da trilha |
-| 4 | 6:00 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque numa equipe; sentem juntos." (5.4) |
-| 5 | 8:00 | Personas (3:00) | Seis casas, seis trabalhos. "Um ano de uma dessas famílias; ninguém tem carteira." (5.5) |
-| 6 | 11:00 | Bloco: A conta de cada casa: 12 meses em 6 bimestres (2:00) | A linha do tempo no telão é o mapa do ano. O básico, a dívida e os juros (5.3) |
-| 7 | 13:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (3:30) | Leia as 4 opções; 90 s; Enter depois do tempo mínimo; sorteio; resultado. "A decisão muda as fatias, a sorte escolhe." Mostre quanto faltou (5.6) |
-| 8 | 16:30 | Bloco: Dados: quem trabalha por aplicativo (PNAD 2025) (2:00) | Slides |
-| 9 | 18:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (3:30) | Como a rodada 1. O empréstimo (C) é dívida (5.6) |
-| 10 | 22:00 | Bloco: Dados: a lei que saiu de pauta (nem CLT, nem autônomo) (2:00) | Slides |
-| 11 | 24:00 | Rodada 3 · Mai–jun: água, frio e Dia das Mães (3:30) | Como a rodada 1 (5.6) |
-| 12 | 27:30 | Bloco: Entrevistas (4:00), opcional | Uma ou duas entrevistas. O telão fica na espera. Se atrasou, pule (Pular para…) |
-| 13 | 31:30 | Bloco: Dados: gestão por algoritmo (2:00) | Slides |
-| 14 | 33:30 | Rodada 4 · Jul–ago: a regra nova do app (3:30) | Como a rodada 1. Daqui em diante o risco cresce (5.6) |
-| 15 | 37:00 | Bloco: Dados: breque e organização (2:00) | Slides |
-| 16 | 39:00 | Rodada 5 · Set–out: breque geral (3:30) | Como a rodada 1 (5.6) |
-| 17 | 42:30 | Bloco: Dados: ninguém tem 13º (2:00) | Slides |
-| 18 | 44:30 | Rodada 6 · Nov–dez: Black Friday, Natal e nenhum 13º (3:30) | Como a rodada 1. É o fim do ano: o resultado fecha os 12 meses (5.6) |
-| 19 | 48:00 | Placar final (4:00) | 15 páginas: demore no saldo, em "Escolha ou sorte?" e no pior caso; passe as histórias (5.7) |
-| 20 | 52:00 | Termômetro (3:00), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
-| 21 | 55:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
-| 22 | 56:30 | Comparativo (2:00) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
-| 23 | 58:30 | Bloco: Fim: quem é o patrão? (1:30) | Conversa; o app não faz nada (5.11) |
-| 24 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 3 | 3:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque numa equipe; sentem juntos." (5.4) |
+| 4 | 5:30 | Conheça o Jonas (2:30) | "Todo mundo é o Jonas." A casa e o mês comum que já não fecha (falta R$ 392). As duas frases da seção 0 |
+| 5 | 8:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:10) | Leia as 5 opções com o dinheiro; 120 s; Enter depois do tempo mínimo; o resultado e a frase da seção 0 |
+| 6 | 12:10 | Bloco: Dados: quem trabalha por aplicativo (PNAD 2025) (2:00) | Slides |
+| 7 | 14:10 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:10) | Como a rodada 1. O empréstimo (C) é dívida |
+| 8 | 18:20 | Bloco: Dados: a lei que saiu de pauta (nem CLT, nem autônomo) (2:00) | Slides |
+| 9 | 20:20 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (4:10) | Como a rodada 1 |
+| 10 | 24:30 | Bloco: Entrevistas (4:00), opcional | Uma ou duas entrevistas. O telão fica na espera. Se atrasou, pule (Pular para…) |
+| 11 | 28:30 | Bloco: Dados: gestão por algoritmo (2:00) | Slides |
+| 12 | 30:30 | Rodada 4 · Jul–ago: a regra nova do app (4:10) | Como a rodada 1 |
+| 13 | 34:40 | Bloco: Dados: breque e organização (2:00) | Slides |
+| 14 | 36:40 | Rodada 5 · Set–out: breque geral (4:10) | Como a rodada 1 |
+| 15 | 40:50 | Bloco: Dados: ninguém tem 13º (2:00) | Slides |
+| 16 | 42:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:10) | Como a rodada 1. É o fim do ano |
+| 17 | 47:00 | Placar final (5:00) | 3 páginas: o caminho, quanto sobrou e as 15.625 combinações (seção 0) |
+| 18 | 52:00 | Termômetro (3:00), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
+| 19 | 55:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
+| 20 | 56:30 | Comparativo (2:00) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
+| 21 | 58:30 | Bloco: Fim: quem é o patrão? (1:30) | Conversa; o app não faz nada (5.11) |
+| 22 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 7. Minuto a minuto: 120 min
 
-Os mesmos seis bimestres, com rodadas de 4:30 (os mesmos 90 s de decisão e mais
+Os mesmos seis bimestres, com rodadas de 5:00 (os mesmos 120 s de decisão e mais
 tempo para comentar o resultado), blocos de dados de 5 a 6 min, **20 min de
 entrevistas** (opcional; a D-060 põe esse teto) e o debrief em grupos depois do
-placar. As seis rodadas somam 27 min; com a formação das equipes, as personas e
-o placar final, o jogo ocupa 38 dos 120 min. Se atrasar, encurte as entrevistas
-e o debrief, e nunca as rodadas.
+placar. As seis rodadas somam 30 min; com a formação das equipes, "Conheça o
+Jonas" e o placar final, o jogo ocupa 41 dos 120 min. Se atrasar, encurte as
+entrevistas e o debrief, e nunca as rodadas.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
 | 1 | 0:00 | Lobby (2:30) | QR na tela (5.1) |
 | 2 | 2:30 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra (5.2) |
-| 3 | 4:00 | Bloco: Gancho: o lançamento (4:00) | O lançamento encenado da trilha |
-| 4 | 8:00 | Bloco: Mapa do seminário (2:30) | A linha do tempo no telão é o mapa (5.3) |
-| 5 | 10:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
-| 6 | 12:30 | Personas (4:00) | Seis casas, seis trabalhos (5.5) |
-| 7 | 16:30 | Bloco: A conta de cada casa: 12 meses em 6 bimestres (3:00) | O básico, a dívida e os juros (5.3) |
-| 8 | 19:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:30) | (5.6) |
-| 9 | 24:00 | Bloco: Dados: quem trabalha por aplicativo (PNAD 2025) (5:00) | Slides |
-| 10 | 29:00 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:30) | (5.6) |
-| 11 | 33:30 | Bloco: Dados: a lei que saiu de pauta (nem CLT, nem autônomo) (5:00) | Slides |
-| 12 | 38:30 | Rodada 3 · Mai–jun: água, frio e Dia das Mães (4:30) | (5.6) |
-| 13 | 43:00 | Bloco: Entrevistas (20:00), opcional | Duas ou três entrevistas. O telão fica na espera |
-| 14 | 63:00 | Rodada 4 · Jul–ago: a regra nova do app (4:30) | (5.6) |
-| 15 | 67:30 | Bloco: Dados: gestão por algoritmo e o quiz anúncio ou conteúdo (6:00) | Slides |
-| 16 | 73:30 | Rodada 5 · Set–out: breque geral (4:30) | (5.6) |
-| 17 | 78:00 | Bloco: Contraponto: a Viração e os dados sobre CLT (5:00) | Slides |
-| 18 | 83:00 | Rodada 6 · Nov–dez: Black Friday, Natal e nenhum 13º (4:30) | (5.6) |
-| 19 | 87:30 | Placar final (5:00) | 15 páginas (5.7) |
-| 20 | 92:30 | Bloco: Debrief: mapa do patrão em grupos (8:30) | Atividade em grupos. O telão fica na espera |
-| 21 | 101:00 | Bloco: Caminhos: regulação, proteção, organização e educação (7:00) | Slides |
-| 22 | 108:00 | Termômetro (6:00), 3 afirmações | (5.8) |
-| 23 | 114:00 | Enquete de entrada · depois (1:30) | (5.9) |
-| 24 | 115:30 | Comparativo (2:30) | (5.10) |
-| 25 | 118:00 | Bloco: Fim: quem é o patrão? (2:00) | Conversa (5.11) |
-| 26 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 3 | 4:00 | Bloco: Mapa do seminário (6:30) | A linha do tempo no telão é o mapa: os meses e os blocos de dados (5.3) |
+| 4 | 10:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
+| 5 | 12:30 | Conheça o Jonas (3:00) | As duas frases da seção 0 |
+| 6 | 15:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (5:00) | (seção 0) |
+| 7 | 20:30 | Bloco: Dados: quem trabalha por aplicativo (PNAD 2025) (5:00) | Slides |
+| 8 | 25:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (5:00) | (seção 0) |
+| 9 | 30:30 | Bloco: Dados: a lei que saiu de pauta (nem CLT, nem autônomo) (5:00) | Slides |
+| 10 | 35:30 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (5:00) | (seção 0) |
+| 11 | 40:30 | Bloco: Entrevistas (20:00), opcional | Duas ou três entrevistas. O telão fica na espera |
+| 12 | 60:30 | Rodada 4 · Jul–ago: a regra nova do app (5:00) | (seção 0) |
+| 13 | 65:30 | Bloco: Dados: gestão por algoritmo e o quiz anúncio ou conteúdo (6:00) | Slides |
+| 14 | 71:30 | Rodada 5 · Set–out: breque geral (5:00) | (seção 0) |
+| 15 | 76:30 | Bloco: Contraponto: a Viração e os dados sobre CLT (5:00) | Slides |
+| 16 | 81:30 | Rodada 6 · Nov–dez: Natal e nenhum 13º (5:00) | (seção 0) |
+| 17 | 86:30 | Placar final (6:00) | 3 páginas (seção 0) |
+| 18 | 92:30 | Bloco: Debrief: mapa do patrão em grupos (8:30) | Atividade em grupos. O telão fica na espera |
+| 19 | 101:00 | Bloco: Caminhos: regulação, proteção, organização e educação (7:00) | Slides |
+| 20 | 108:00 | Termômetro (6:00), 3 afirmações | (5.8) |
+| 21 | 114:00 | Enquete de entrada · depois (1:30) | (5.9) |
+| 22 | 115:30 | Comparativo (2:30) | (5.10) |
+| 23 | 118:00 | Bloco: Fim: quem é o patrão? (2:00) | Conversa (5.11) |
+| 24 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 8. Se a rede cair
 
@@ -1337,8 +1419,8 @@ guardado no celular e é reenviado. Não feche o telão.
 3. Decisões: cada equipe anuncia a sua, e você clica na letra de cada equipe (A a
    D). Sem celular, o contexto da família não chega às equipes: leia em voz alta
    o de cada persona, se der tempo, ou siga só com a situação do mês.
-4. Clique em **Salvar estado** de vez em quando. Ele também é salvo sozinho a
-   cada sorteio.
+4. Clique em **Salvar estado** de vez em quando: desde a D-078, ele não é mais
+   salvo sozinho no fim da rodada.
 5. Se o "depois" for por mão levantada e o "antes" foi pelo celular, o
    comparativo mostra as duas distribuições lado a lado, sem misturar os métodos.
 
@@ -1357,7 +1439,9 @@ guardado no celular e é reenviado. Não feche o telão.
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
 1. **Recarregue a página** (F5). No bloco 3, o código da última sala já vem
-   preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN.
+   preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
+   placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
+   até a página onde estava.
 2. **O navegador ou o notebook morreu:** em outro navegador ou outro notebook,
    abra o telão, digite o PIN, digite o código da sala (o do papel) e clique em
    **Retomar sala**.

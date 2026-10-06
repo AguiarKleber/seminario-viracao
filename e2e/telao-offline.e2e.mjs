@@ -2,9 +2,10 @@
 // baixar navegador): `npm run e2e`. Fica fora do `npm run check` (arquitetura,
 // seção 13) porque depende de um navegador na máquina.
 //
-// O conteúdo vem do config.json da raiz; outro arquivo entra por
-// `VIRACAO_CONFIG=caminho npm run e2e` ou `npm run e2e -- --config caminho`
-// (a fixture v2 dos testes, enquanto o config.json está em reescrita). Tudo o
+// O conteúdo vem do config de 05/10 com sorteio e 6 personas, congelado em
+// test/fixtures/config-real-v31.json (desde 06/10, D-078, o config.json da raiz
+// é o jogo simples, conferido pelo telao-simples.e2e.mjs); outro arquivo entra por
+// `VIRACAO_CONFIG=caminho npm run e2e` ou `npm run e2e -- --config caminho`. Tudo o
 // que o teste precisa do conteúdo (passos, equipes, opções, afirmações) sai do
 // próprio config: o conteúdo muda até o congelamento, e o teste não pode quebrar
 // porque uma rodada ganhou uma opção. Sem um bloco "Mapa do seminário" no
@@ -52,12 +53,25 @@
 //    + empréstimo), com "caixa R$ X" quando o caixa é positivo; nenhum contorno
 //    de destaque no resultado; a parcela do empréstimo detalhada só no celular.
 // 12. D-066 e D-067 (parte 8, fixture v3.1 com o limite do cheque especial):
-//    no resultado, a dívida (banco + empréstimo) e, numa linha própria, as
-//    contas atrasadas e o que faltou na mesa; a frase da proteção acima do
-//    trabalho; no placar final, o saldo pelo patrimônio (menos as contas
-//    atrasadas) e a linha "Faltou na mesa no ano" por equipe; na história, a
-//    comida que faltou, a multa e os juros do atraso e, no fim, as contas
-//    atrasadas e o que faltou na mesa. Seis equipes em 1024×768, sem rolagem.
+//    no resultado, numa linha embaixo da carta e do saldo, a dívida total
+//    (banco, empréstimo e contas atrasadas num número só, pedido 3 do Kleber
+//    de 05/10) e o que faltou na mesa; a frase da proteção acima do trabalho;
+//    no placar final, o saldo pelo patrimônio (menos as contas atrasadas) e a
+//    linha "Faltou na mesa no ano" por equipe; na história, a comida que
+//    faltou, a multa e os juros do atraso e, no fim, a dívida total e o que
+//    faltou na mesa. Seis equipes em 1024×768, sem rolagem.
+// 13. Pedidos do Kleber de 05/10: o rótulo "saldo do bimestre" logo acima de
+//    cada saldo do resultado; a equipe pelo personagem ("Jonas, motoboy") em
+//    toda tela, menos na formação (a cor, com o personagem ao lado).
+// 14. Pedido 6 do Kleber de 05/10, o modo revendo: ← (ou PageUp) revê o passo
+//    anterior só no telão, com o selo "Revendo: <passo> · … no passo atual · →
+//    volta"; repetir volta mais, até a entrada na sala; cada tela revista é a
+//    de quando o passo estava no telão (o resultado de cada bimestre igual ao
+//    lido na hora, o placar resumido de então); → e Esc voltam ao passo atual;
+//    Espaço (também o duplo do passador), Enter (também mantido apertado), P,
+//    números e Ctrl+Z só saem do modo, sem rodar; o clique num comando da barra
+//    sai e roda. Offline e com celulares, nada é gravado: o estado, a geracao,
+//    o localStorage e a sala inteira no canal ficam iguais.
 // 9. esquema v2.1, com as seis equipes e a carta mais cara que cada uma podia
 //    tirar em cada mês (parte 4): o resultado enxuto cabendo em 1024×768, com
 //    um vão entre as faixas, e a história com o custo real da carta ("N dias
@@ -93,7 +107,10 @@ const RE_MAPA = /^mapa do semin[aá]rio\b/i;
 function caminhoDoConfig() {
   const i = process.argv.indexOf('--config');
   const arg = i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
-  return resolve(RAIZ, process.env.VIRACAO_CONFIG || arg || 'config.json');
+  // Desde 06/10 (D-078), o config.json é o jogo simples, que tem o e2e próprio
+  // (telao-simples.e2e.mjs). Este percorre o jogo com sorteio e 6 personas: o
+  // config de 05/10, congelado em test/fixtures/config-real-v31.json.
+  return resolve(RAIZ, process.env.VIRACAO_CONFIG || arg || join('test', 'fixtures', 'config-real-v31.json'));
 }
 
 const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
@@ -105,7 +122,12 @@ let injetouMapa = false;
 {
   const passos = brutoConfig.roteiros?.[ROTEIRO] || [];
   if (!passos.some((p) => p.tipo === 'bloco' && RE_MAPA.test(p.titulo || ''))) {
-    passos.splice(passos.findIndex((p) => p.tipo === 'bloco') + 1, 0, { tipo: 'bloco', titulo: 'Mapa do seminário', alvoSeg: 120 });
+    // Logo antes da formação das equipes, como no roteiro de 120 min. Antes ele
+    // ia depois do primeiro bloco, o "Gancho"; o gancho saiu dos roteiros
+    // (pedido 9 do Kleber, 05/10), e o primeiro bloco passou a ser "A conta de
+    // cada casa", depois da formação: o mapa não passava pela tela na parte 1.
+    const formar = passos.findIndex((p) => p.tipo === 'formarEquipes');
+    passos.splice(formar >= 0 ? formar : passos.findIndex((p) => p.tipo === 'bloco') + 1, 0, { tipo: 'bloco', titulo: 'Mapa do seminário', alvoSeg: 120 });
     injetouMapa = true;
   }
 }
@@ -138,6 +160,9 @@ const MESES = mesesDe(configNode);
 const DO_PERIODO = doPeriodoDe(configNode);
 // O período do config carregado no telão agora (a parte 6 troca pela fixture v2.1, mensal).
 let doPeriodoNaTela = DO_PERIODO;
+// O config carregado no telão agora (as partes 6, 7 e 8 trocam), para conferir
+// o rótulo de cada equipe pelo personagem.
+let configNaTela = configNode;
 // A história em páginas de até 3 rodadas (js/telao.js, RODADAS_POR_PAGINA_HISTORIA).
 const RODADAS_POR_PAGINA = 3;
 console.log(`  ${RODADAS.length} rodadas de ${MESES} ${MESES === 1 ? 'mês' : 'meses'}`);
@@ -314,17 +339,17 @@ function conferirMesesDaHistoria(eq, historia, meses, resultados, cfg = configNo
 // empréstimo ficam só no celular. Esquema v3: "No fim dos 12 meses" (rodadas ×
 // meses por rodada), e cada página do meio termina com "Depois de 6 meses: …",
 // pelo "depois" da última rodada dela.
-// D-066: com o limite, depois da dívida (banco + empréstimo) vêm as contas
-// atrasadas e o que faltou na mesa até ali, cada um com o próprio nome.
+// D-066: com o limite, depois da dívida vem o que faltou na mesa até ali, com o
+// próprio nome. Teste do Kleber de 05/10 (print 7): a dívida é a total (banco,
+// empréstimo e contas atrasadas num número só, "dívida total"), a mesma do
+// resultado da rodada; as contas atrasadas não têm mais pedaço próprio.
 const textoDividaECaixa = (v) => {
   const divida = Math.round(dividaEsperada(v)) + 0;
   const caixa = Math.round(v.renda) > 0 ? Math.round(v.renda) : 0;
-  const atrasadas = Math.round(v.contas_atrasadas ?? 0);
   const mesa = Math.round(v.faltou_na_mesa ?? 0);
   return [
-    divida > 0 ? ` · dívida ${F.moeda(divida)}` : '',
+    divida > 0 ? ` · dívida total ${F.moeda(divida)}` : '',
     divida > 0 && caixa > 0 ? ` · caixa ${F.moeda(caixa)}` : '',
-    atrasadas > 0 ? ` · contas atrasadas ${F.moeda(atrasadas)}` : '',
     mesa > 0 ? ` · faltou na mesa ${F.moeda(mesa)}` : '',
   ].join('');
 };
@@ -350,6 +375,7 @@ const escolheuProtecao = (cfg, resultados, eq) => Object.entries(resultados).som
 // A página "O pior que podia acontecer", lida na tela.
 const lerPiorCaso = () => page.evaluate(() => ({
   titulo: document.querySelector('#palco h1').textContent,
+  oQue: document.querySelector('#palco .pior-o-que')?.textContent ?? null,
   kicker: document.querySelector('#palco .kicker')?.textContent ?? '',
   estimados: document.querySelectorAll('.piores-casos .historia-escolha[data-estimado="1"]').length,
   linhas: Object.fromEntries(Array.from(document.querySelectorAll('.piores-casos .historia-escolha'), (n) => [n.dataset.equipe, {
@@ -362,8 +388,21 @@ const lerPiorCaso = () => page.evaluate(() => ({
 // proteção que não melhorou (o MEI com a sessão acabando antes do mês 3, a
 // associação) vê um texto neutro, sem número: o "sem" nunca aparece melhor que
 // o "com" (revisão da F5, achado 1). Devolve quantas mostraram o "sem".
+// Teste do Kleber de 05/10 (print 16): "o que seria escolher a proteção?". A
+// página diz o que é proteção e quais opções protegem (protege: true), pela
+// letra e pelo período, na ordem das rodadas do roteiro; e, em quem não
+// escolheu, as que a equipe podia ter escolhido (nas rodadas que jogou).
+function opcoesQueProtegemEsperadas(cfg) {
+  return V.roteiro.passos(cfg, ROTEIRO).filter((p) => p.tipo === 'rodada').flatMap(({ rodada: r }) => lista(cfg.rodadas[r].ordemOpcoes)
+    .filter((o) => cfg.rodadas[r].opcoes[o].protege === true)
+    .map((o) => ({ r, letra: 'ABCDEFGHIJ'[lista(cfg.rodadas[r].ordemOpcoes).indexOf(o)], quando: rotuloCurto(r, cfg), rotulo: cfg.rodadas[r].opcoes[o].rotulo })));
+}
+const juntarEsperado = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs.at(-1)}` : xs[0] || '');
 function conferirPiorCaso(lido, cfg, placar, resultados, equipes) {
   assert.equal(lido.titulo, 'O pior que podia acontecer');
+  const protegem = opcoesQueProtegemEsperadas(cfg);
+  assert.ok(protegem.length > 0, 'a página do pior caso só existe com opção que protege');
+  assert.equal(lido.oQue, `Proteção é pagar antes para ter ajuda se der errado: ${juntarEsperado(protegem.map((o) => `${o.letra} em ${o.quando} (${o.rotulo})`))}.`, 'o que é proteção e quais opções protegem');
   const estimados = equipes.filter((eq) => placar[eq].estimado === true).length;
   assert.equal(lido.estimados, estimados, 'data-estimado nas linhas do placar simulado');
   assert.equal(lido.kicker, estimados > 0 ? 'Placar final · pior caso estimado' : 'Placar final', 'o kicker diz "pior caso estimado" só quando o motor simulou');
@@ -374,7 +413,8 @@ function conferirPiorCaso(lido, cfg, placar, resultados, equipes) {
     const sem = Math.round(placar[eq].piorCasoSemProtecao) + 0;
     const protegeu = escolheuProtecao(cfg, resultados, eq);
     const mostra = protegeu && sem < pior;
-    let depois = ' · não escolheram proteção';
+    const podiam = protegem.filter((o) => resultados[o.r]?.[eq]);
+    let depois = ` · não escolheram proteção${podiam.length > 0 ? ` (podiam: ${juntarEsperado(podiam.map((o) => `${o.letra} em ${o.quando}`))})` : ''}`;
     if (mostra) depois = ` · sem a proteção: ${F.moeda(sem)} · a proteção evitou ${F.moeda(pior - sem)}`;
     else if (protegeu) depois = ' · a proteção não melhorou o pior caso';
     const texto = `com as escolhas de vocês: ${F.moeda(pior)}${depois}`;
@@ -394,10 +434,11 @@ function tituloSaldo(naoFecharam, total) {
 // é o patrimônio (renda − empréstimo a pagar), e a dívida, o cheque especial
 // mais o saldo devedor. Conta refeita aqui, e não com o historia.js da tela.
 // Esquema v3.1 (D-066): menos as contas atrasadas também (o "faltou na mesa"
-// não entra: não é dívida). A dívida da tela continua sendo a do banco mais o
-// empréstimo; as contas atrasadas têm linha própria.
+// não entra: não é dívida). Teste do Kleber de 05/10 (print 7): a dívida do
+// telão é a total, o banco, o empréstimo e as contas atrasadas ("dívida
+// total"); com o caixa zerado, é o mesmo número do "faltou" do placar.
 const patrimonioEsperado = (v) => v.renda - Math.max(0, v.emprestimo ?? 0) - Math.max(0, v.contas_atrasadas ?? 0) + 0;
-const dividaEsperada = (v) => Math.max(0, -v.renda) + Math.max(0, v.emprestimo ?? 0);
+const dividaEsperada = (v) => Math.max(0, -v.renda) + Math.max(0, v.emprestimo ?? 0) + Math.max(0, v.contas_atrasadas ?? 0);
 
 // ---------- Resultado da rodada enxuto (D-065, teste de 30/09) ----------
 
@@ -417,19 +458,25 @@ function textoParada(custo) {
 // achado 9: duas equipes do Jonas com a mesma carta tinham saldos diferentes
 // sem explicação), a parada, o que a proteção pagou (D-059), a origem (quando
 // não é a maioria), o saldo do mês com sinal (o zero neutro, "R$ 0", achado
-// 16) e a dívida total de depois do mês.
-// D-066: com o limite, uma linha embaixo do dinheiro com as contas atrasadas
-// (no fim do período) e o que faltou na mesa NESTE período. D-067: a frase da
-// proteção acima do trabalho na largura da faixa, e então "a proteção pagou"
-// sai do detalhe (a frase já diz o valor).
+// 16), com o rótulo "saldo do bimestre" logo acima dele, e, numa linha embaixo
+// da carta e do saldo, a dívida total de depois do período, o caixa positivo e
+// o que faltou na mesa NESTE período (D-066). Teste do Kleber de 05/10 (print
+// 7): a dívida e as contas atrasadas eram duas linhas, e o número colorido não
+// dizia que era o saldo do bimestre. D-067: a frase da proteção acima do
+// trabalho na largura da faixa, e então "a proteção pagou" sai do detalhe (a
+// frase já diz o valor).
 function faixaEsperada(x, origem, cfg, rodadaId, eq) {
   const saldo = Math.round(x.mes.saldoMes) + 0;
-  const divida = dividaEsperada(x.depois);
+  const divida = Math.round(dividaEsperada(x.depois)) + 0;
+  const caixa = Math.round(x.depois.renda) > 0 ? Math.round(x.depois.renda) : 0;
   const letra = 'ABCDEFGHIJ'[lista(cfg.rodadas[rodadaId].ordemOpcoes).indexOf(x.decisao)];
   const acima = fraseAcimaEsperada(cfg, eq, x);
-  const atrasadas = Math.round(x.depois.contas_atrasadas ?? 0);
   const mesa = Math.round(x.mes.faltouNaMesa ?? 0);
-  const limite = [atrasadas > 0 ? `contas atrasadas ${F.moeda(atrasadas)}` : null, mesa > 0 ? `faltou na mesa ${F.moeda(mesa)}` : null].filter(Boolean).join(' · ') || null;
+  // Revisão da F6a: sem dívida e com caixa, só "caixa R$ X"; sem os dois,
+  // "sem dívida".
+  const textoDivida = divida > 0 ? `dívida total ${F.moeda(divida)}` : caixa > 0 ? null : 'sem dívida';
+  const textoCaixa = caixa > 0 ? `caixa ${F.moeda(caixa)}` : null;
+  const limite = [textoDivida, textoCaixa, mesa > 0 ? `faltou na mesa ${F.moeda(mesa)}` : null].filter(Boolean).join(' · ');
   return {
     carta: x.carta,
     escolha: `decisão ${letra}`,
@@ -439,10 +486,9 @@ function faixaEsperada(x, origem, cfg, rodadaId, eq) {
     origem,
     saldo: `${saldo < 0 ? '−' : saldo > 0 ? '+' : ''}${F.moeda(Math.abs(saldo))}`,
     sinal: saldo < 0 ? 'negativo' : saldo > 0 ? 'positivo' : 'zero',
-    // Revisão da F6a: sem dívida e com caixa, só "caixa R$ X"; com os dois,
-    // "dívida" e "caixa" em linhas próprias.
-    divida: Math.round(divida) > 0 ? `dívida ${F.moeda(divida)}` : Math.round(x.depois.renda) > 0 || atrasadas > 0 ? null : 'sem dívida',
-    caixa: Math.round(x.depois.renda) > 0 ? `caixa ${F.moeda(x.depois.renda)}` : null,
+    rotuloSaldo: `saldo ${doPeriodoDe(cfg)}`,
+    divida: textoDivida,
+    caixa: textoCaixa,
     limite,
     acima,
   };
@@ -470,6 +516,7 @@ const lerFaixas = () => page.evaluate(() => Object.fromEntries(Array.from(docume
   origem: c.querySelector('.resultado-decisao')?.textContent ?? null,
   saldo: c.querySelector('.resultado-saldo')?.textContent ?? null,
   sinal: c.querySelector('.resultado-saldo')?.dataset.sinal ?? null,
+  rotuloSaldo: c.querySelector('.resultado-saldo-rotulo')?.textContent ?? null,
   divida: c.querySelector('.resultado-divida')?.textContent ?? null,
   caixa: c.querySelector('.resultado-caixa')?.textContent ?? null,
   limite: c.querySelector('.resultado-limite')?.textContent ?? null,
@@ -614,12 +661,19 @@ async function conferirVisualDoResultado(onde) {
       dinheiro: faixas.map((f) => Math.round(f.querySelector('.resultado-dinheiro').getBoundingClientRect().right)),
       saldos: faixas.map((f) => {
         const s = f.querySelector('.resultado-saldo');
-        return { equipe: f.dataset.equipe, texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, fundo: getComputedStyle(f).backgroundColor, px: parseFloat(getComputedStyle(s).fontSize) };
+        const rotulo = f.querySelector('.resultado-saldo-rotulo');
+        const rs = s.getBoundingClientRect();
+        const rr = rotulo?.getBoundingClientRect();
+        return {
+          equipe: f.dataset.equipe, texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, fundo: getComputedStyle(f).backgroundColor, px: parseFloat(getComputedStyle(s).fontSize),
+          // O rótulo "saldo do bimestre" logo acima do número e alinhado com ele à direita.
+          rotulo: rotulo?.textContent ?? null, rotuloAcima: rr ? rr.bottom <= rs.top + 2 && rs.top - rr.bottom < rs.height : false, rotuloDireita: rr ? Math.abs(rr.right - rs.right) <= 1 : false,
+        };
       }),
       tokens: { positivo: raiz.getPropertyValue('--positivo').trim(), negativo: raiz.getPropertyValue('--negativo').trim() },
       corpo: parseFloat(getComputedStyle(document.body).fontSize),
       texto: document.getElementById('palco').textContent,
-      legenda: document.querySelector('.resultado-legenda')?.textContent ?? '',
+      legenda: document.querySelector('.resultado-legenda')?.textContent ?? null,
       contornos: faixas.map((f) => ({ grave: f.classList.contains('grave'), borda: getComputedStyle(f).borderTopColor, sombra: getComputedStyle(f).boxShadow })),
     };
   });
@@ -628,6 +682,10 @@ async function conferirVisualDoResultado(onde) {
   assert.ok(espalhamento(m.meio) <= 1, `${onde}: a coluna da carta alinhada entre as faixas (${m.meio.join(', ')})`);
   assert.ok(espalhamento(m.dinheiro) <= 1, `${onde}: a coluna do saldo alinhada entre as faixas (${m.dinheiro.join(', ')})`);
   for (const s of m.saldos) {
+    // Teste do Kleber de 05/10 (print 7): o número colorido diz que é o saldo
+    // do período, com o rótulo junto dele (e não só no cabeçalho).
+    assert.equal(s.rotulo, `saldo ${doPeriodoNaTela}`, `${onde}/${s.equipe}: o rótulo do saldo`);
+    assert.ok(s.rotuloAcima && s.rotuloDireita, `${onde}/${s.equipe}: o rótulo "saldo ${doPeriodoNaTela}" logo acima do número e alinhado com ele`);
     // O zero é neutro, sem "+" e na cor da letra (revisão de 30/09, achado 16).
     if (s.sinal === 'zero') {
       assert.match(s.texto, /^R\$\s?0$/, `${onde}/${s.equipe}: o saldo zero sem sinal ("${s.texto}")`);
@@ -647,7 +705,8 @@ async function conferirVisualDoResultado(onde) {
   // são graves têm todas a mesma borda, e nenhuma tem sombra por dentro.
   const bordas = new Set(m.contornos.filter((c) => !c.grave).map((c) => c.borda));
   assert.ok(bordas.size <= 1 && m.contornos.every((c) => c.sombra === 'none'), `${onde}: faixa com contorno de destaque (${JSON.stringify(m.contornos)})`);
-  assert.equal(m.legenda, `saldo ${doPeriodoNaTela}`, `${onde}: o cabeçalho da coluna do saldo`);
+  // O rótulo saiu do cabeçalho: está em cada faixa.
+  assert.equal(m.legenda, null, `${onde}: o "saldo do período" do cabeçalho saiu (vai em cada faixa)`);
 }
 // As personas em cada tamanho de tela: nenhum texto sobreposto e três linhas
 // por persona (quem é, a casa, a conta do mês), cada uma sem quebrar.
@@ -752,9 +811,12 @@ async function avancarAte(teste, descricao, { maximo = 8, aoPassar } = {}) {
 }
 
 // D-038: a barra só aparece com o mouse encostado na borda de baixo (ou com H).
+// Pedido 8 do Kleber (05/10): a faixa é fina (10 px) e a barra só abre com o
+// mouse parado nela ~400 ms; o ajudante encosta o mouse a 4 px do pé da tela e
+// espera.
 async function mostrarBarra() {
   const { height } = page.viewportSize();
-  await page.mouse.move(200 + Math.random() * 50, height - 12);
+  await page.mouse.move(200 + Math.random() * 50, height - 4);
   await page.waitForFunction(() => !document.getElementById('barra').hidden);
 }
 
@@ -937,6 +999,47 @@ async function controlesNaProjecao() {
   }, [SELETORES_OPERADOR, RE_TEXTO_OPERADOR.source]);
 }
 
+// Teste do Kleber de 05/10 (prints 12 a 14): o telão chamava a equipe pelo nome
+// da cor ("1 Laranja"). Fora da formação das equipes, ela aparece pelo
+// personagem, "Jonas, motoboy", com a forma da equipe na frente; na formação
+// (é pela cor que o aluno escolhe a equipe no celular), pela cor, com o
+// personagem ao lado. O ofício é refeito aqui, e não com a função da tela: o
+// começo da descrição da persona até a primeira vírgula ou ponto, cortado antes
+// da primeira preposição ou "e", com a primeira letra minúscula.
+const RE_CORTE_OFICIO = /\s(?:de|do|da|dos|das|em|no|na|nos|nas|por|pelo|pela|pelos|pelas|com|e)\s/i;
+function oficioEsperado(p) {
+  const m = /^(.+?)[,.;:!?](\s|$)/.exec(String(p.descricao || ''));
+  const trecho = (m ? m[1] : String(p.descricao || '')).trim().split(RE_CORTE_OFICIO)[0].trim();
+  return /^\p{Lu}\p{Ll}/u.test(trecho) ? trecho.charAt(0).toLowerCase() + trecho.slice(1) : trecho;
+}
+function personagemEsperado(cfg, eq) {
+  const p = cfg.personas[cfg.equipes[eq].persona];
+  const oficio = oficioEsperado(p);
+  return oficio ? `${p.nome}, ${oficio}` : p.nome;
+}
+console.log(`  personagens no telão: ${EQUIPES.map((eq) => `${numeroDe(eq)} ${personagemEsperado(configNode, eq)}`).join('; ')}`);
+for (const eq of EQUIPES) assert.ok(oficioEsperado(configNode.personas[configNode.equipes[eq].persona]).length > 0, `${eq}: o ofício sai do começo da descrição da persona`);
+async function conferirRotulosDasEquipes(onde) {
+  const lido = await page.evaluate(() => ({
+    tela: document.body.dataset.tela,
+    rotulos: Array.from(document.querySelectorAll('#palco .equipe[data-equipe]'), (n) => ({
+      equipe: n.dataset.equipe,
+      nome: n.querySelector('.equipe-nome')?.textContent ?? '',
+      forma: Boolean(n.querySelector('svg.forma')),
+      personagem: n.closest('.cartao-equipe')?.querySelector('.equipe-persona')?.textContent ?? null,
+    })),
+  }));
+  for (const r of lido.rotulos) {
+    assert.ok(r.forma, `${onde}/${r.equipe}: a forma da equipe na frente do nome`);
+    if (lido.tela === 'formar-equipes') {
+      assert.equal(r.nome, configNaTela.equipes[r.equipe].nome, `${onde}/${r.equipe}: na formação, a equipe pela cor`);
+      assert.equal(r.personagem, personagemEsperado(configNaTela, r.equipe), `${onde}/${r.equipe}: na formação, o personagem ao lado da cor`);
+    } else {
+      assert.equal(r.nome, personagemEsperado(configNaTela, r.equipe), `${onde}/${r.equipe}: a equipe pelo personagem, e não pela cor`);
+    }
+  }
+}
+
 const verificadas = [];
 // Em cada tamanho: redesenha, esconde a barra, mede, captura. aoMedir(onde)
 // confere o que é próprio da tela (o resultado enxuto, as personas), no mesmo
@@ -960,6 +1063,7 @@ async function conferirTela(nome, { esperarMs = 0, criterios = true, aoMedir = n
       assert.deepEqual(m.cortados, [], `${nome} em ${largura}×${altura}: texto cortado com reticências`);
       assert.deepEqual(await controlesNaProjecao(), [], `${nome} em ${largura}×${altura}: controle de operador fora da barra (D-047)`);
       assert.ok(!/piloto autom/i.test(await page.textContent('#palco')), `${nome}: "piloto automático" na tela (D-041)`);
+      await conferirRotulosDasEquipes(`${nome} em ${largura}×${altura}`);
       if (aoMedir) await aoMedir(`${nome} em ${largura}×${altura}`);
     }
   }
@@ -1048,6 +1152,33 @@ async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
     };
   });
   assert.ok(r && r.visivel, `bloco ${e.indice}: sem a linha do tempo`);
+  if (mapa) {
+    // Teste do Kleber de 05/10 (print 10): o mapa traz só os meses e os blocos
+    // de dados (o título com a palavra "dados", como o "Contraponto: a Viração
+    // e os dados sobre CLT"), um item por passo, na ordem; o termômetro, a
+    // formação, as personas, a conta de cada casa, as entrevistas e o fim
+    // saíram. O passo atual (o próprio mapa) não está na lista: o rodapé diz o
+    // nome dele, e o "a seguir" é o primeiro item da lista depois dele.
+    assert.equal(r.mapa, true, 'no "Mapa do seminário", a linha do tempo é o conteúdo principal');
+    const doMapa = passos.filter((p) => p.tipo === 'rodada' || (p.tipo === 'bloco' && /\bdados\b/i.test(p.titulo || ''))).map((p) => [p.indice]);
+    assert.deepEqual(r.itens.map((x) => x.passos), doMapa, 'o mapa traz só os meses e os blocos de dados, na ordem');
+    assert.ok(doMapa.length >= RODADAS.length, 'o mapa tem pelo menos um item por mês');
+    for (const x of r.itens) {
+      assert.equal(x.rotulo, descreverPasso(passos[x.passos[0]]), `o item do passo ${x.passos[0]} no mapa`);
+      assert.ok(r.texto.includes(x.rotulo), `o mapa traz "${x.rotulo}"`);
+    }
+    const k = r.itens.findIndex((x) => x.atual === 'step');
+    assert.ok(r.itens.filter((x) => x.atual === 'step').length <= 1, 'no máximo um item com "você está aqui"');
+    const seguinte = k >= 0 ? r.itens[k + 1] : r.itens.find((x) => x.passos[0] > e.indice);
+    if (k >= 0) assert.ok(r.seguir.includes(`(${k + 1} de ${r.itens.length})`), `"${k + 1} de ${r.itens.length}" em "${r.seguir}"`);
+    else assert.ok(r.seguir.startsWith(`Você está aqui: ${descreverPasso(passos[e.indice])}`), `o rodapé diz o passo atual, fora da lista ("${r.seguir}")`);
+    assert.deepEqual(r.itens.filter((x) => x.seguinte), seguinte ? [seguinte] : [], 'só o item do "a seguir" fica marcado no mapa');
+    if (seguinte) {
+      assert.ok(r.seguir.includes(`a seguir: ${seguinte.rotulo}`), `"a seguir: ${seguinte.rotulo}" em "${r.seguir}"`);
+      assert.ok(seguinte.visivel, `o item do "a seguir" (${seguinte.rotulo}) está à vista`);
+    }
+    return;
+  }
   assert.deepEqual(r.itens.flatMap((x) => x.passos), visiveis, 'a linha do tempo traz o seminário inteiro, até o fim, na ordem, sem esconder passo');
   const final = r.itens.at(-1);
   if (final.passos.length > 1) {
@@ -1101,6 +1232,69 @@ async function conferirLinhaDoTempo({ mapa, passos = PASSOS }) {
   }
 }
 
+// ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
+// Teste do Kleber de 05/10: o apresentador precisa rever a tela anterior sem
+// afetar os celulares. ← (ou PageUp) mostra o passo anterior só no telão,
+// repetir volta mais, → ou Esc volta ao atual, e as outras teclas de comando
+// só saem do modo, sem rodar. Nada vai ao canal, ao banco nem à fila.
+
+// A tela que o telão refaz para o passo revisto (js/telao.js, telaRevista): a
+// que dá para refazer a partir da sala guardada; o resto, o cartão com o
+// título do passo.
+function telaRevistaEsperada(p, sala) {
+  switch (p.tipo) {
+    case 'lobby': return 'lobby';
+    case 'bloco': return 'bloco';
+    case 'personas': return 'personas';
+    case 'rodada': return sala?.resultados?.[p.rodada] ? 'rodada-resultado' : 'revista-cartao';
+    case 'enquete': return sala?.enquetes?.[p.enquete]?.[p.momento] ? 'enquete-apurada' : 'revista-cartao';
+    case 'placarFinal': return 'placar-final';
+    case 'comparativo': return 'comparativo';
+    default: return 'revista-cartao';
+  }
+}
+
+// O selo em cima do palco. Offline não há celular: "a sessão continua".
+const seloEsperado = (p, online) => `Revendo: ${descreverPasso(p)} · ${online ? 'os celulares continuam' : 'a sessão continua'} no passo atual · → volta`;
+
+const lerRevendo = () => page.evaluate(() => {
+  const selo = document.getElementById('revendo');
+  const s = document.querySelector('#palco > .tela');
+  const classes = Array.from(s?.classList || []);
+  return {
+    tela: document.body.dataset.tela,
+    revendo: s?.dataset.revendo ?? null,
+    revista: classes.includes('tela-revista'),
+    id: classes.find((c) => c.startsWith('tela-') && c !== 'tela-revista')?.slice('tela-'.length) ?? null,
+    pagina: s?.dataset.pagina ?? null,
+    selo: selo && !selo.hidden ? selo.textContent : null,
+    kicker: document.querySelector('#palco .tela-cabecalho .kicker')?.textContent ?? null,
+    h1: document.querySelector('#palco h1')?.textContent ?? null,
+  };
+});
+
+// Tudo o que o telão guarda no navegador (o canal local do offline, que é o
+// banco da sessão, e as chaves do próprio telão): o modo revendo não muda nem
+// um byte.
+const lerArmazenado = () => page.evaluate(() => Object.fromEntries(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)])));
+// A sala guardada pelo canal local da sessão offline.
+const lerSalaLocal = () => page.evaluate(() => {
+  const T = globalThis.Viracao.telao;
+  return JSON.parse(localStorage.getItem(T.chaveSessao(T.sala())) || 'null')?.salas?.[T.sala()] ?? null;
+});
+
+// ← (ou PageUp) e espera a tela revista do passo k.
+async function recuarRevendo(k, tecla = 'ArrowLeft') {
+  await page.keyboard.press(tecla);
+  await page.waitForFunction((i) => document.querySelector('#palco > .tela')?.dataset.revendo === String(i), k);
+  return lerRevendo();
+}
+
+// Espera a tela do passo atual de volta, sem o selo.
+async function esperarFimDoRevendo(idTela) {
+  await page.waitForFunction((t) => document.body.dataset.tela === t && document.getElementById('revendo').hidden, idTela);
+}
+
 // ---------- Parte 1: sessão inteira sem celulares ----------
 
 console.log(`Parte 1: sessão inteira do roteiro ${ROTEIRO}, sem celulares`);
@@ -1144,26 +1338,43 @@ await page.click('[data-acao="comecar-offline"]');
 await esperarTela('lobby');
 await conferirTela('lobby-offline');
 
-// D-038: a barra do apresentador só aparece com H ou com o mouse na borda de
-// baixo, e some sozinha 3 s depois de o mouse sair dela.
+// D-038: a barra do apresentador só aparece com H ou com o mouse parado na
+// faixa fina do pé da tela (pedido 8 do Kleber, 05/10), some sozinha 3 s depois
+// do último movimento sobre ela e ~0,7 s depois de o mouse sair dela.
 {
   assert.equal(await barraVisivel(), false, 'a barra não aparece sozinha ao começar a sessão');
   await page.mouse.move(400, 300);
   await page.mouse.move(520, 420);
   await page.waitForTimeout(400);
   assert.equal(await barraVisivel(), false, 'mouse no meio da tela não mostra a barra');
-  await page.mouse.move(520, 768 - 70); // perto, mas fora da faixa de 48 px
+  await page.mouse.move(520, 768 - 70); // perto, mas fora da faixa
   await page.waitForTimeout(300);
   assert.equal(await barraVisivel(), false, 'fora da faixa da borda, a barra continua escondida');
-  await page.mouse.move(520, 768 - 10);
+  // Pedido 8 do Kleber (05/10): a barra aparecia sem querer quando o mouse
+  // passava perto do pé da tela. A faixa que a revela é fina (10 px), e ela só
+  // abre com o mouse parado ali ~400 ms.
+  await page.mouse.move(520, 768 - 30); // dentro da faixa antiga de 48 px, fora da nova
+  await page.waitForTimeout(700);
+  assert.equal(await barraVisivel(), false, 'a 30 px do pé da tela (dentro da faixa antiga de 48 px), a barra continua escondida');
+  await page.mouse.move(530, 768 - 3);
+  await page.mouse.move(530, 400);
+  await page.waitForTimeout(700);
+  assert.equal(await barraVisivel(), false, 'o mouse que só passa pela faixa não abre a barra');
+  await page.mouse.move(520, 768 - 3);
+  const parouNaFaixa = Date.now();
   await page.waitForFunction(() => !document.getElementById('barra').hidden, null, { timeout: 2000 });
+  const espera = Date.now() - parouNaFaixa;
+  assert.ok(espera >= 300, `a barra abre só depois de o mouse parar na faixa (${espera} ms)`);
+  // Compacta: aberta, ela cobre no máximo um quarto da altura de 1024×768
+  // (antes, com a informação em coluna e botões de 40 px, cobria um terço).
+  const alturaBarra = await page.evaluate(() => document.getElementById('barra').getBoundingClientRect().height);
+  assert.ok(alturaBarra <= 768 / 4, `a barra compacta (${Math.round(alturaBarra)} px de altura em 1024×768)`);
+  // Ao sair dela, some com um atraso curto (~0,7 s; antes, 3 s).
   await page.mouse.move(520, 300);
   const saiu = Date.now();
-  await page.waitForTimeout(1500);
-  assert.equal(await barraVisivel(), true, 'a barra não some antes de 3 s');
   await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3000 });
   const durou = Date.now() - saiu;
-  assert.ok(durou >= 2800 && durou <= 4200, `a barra some cerca de 3 s depois de o mouse sair da borda (${durou} ms)`);
+  assert.ok(durou >= 400 && durou <= 1800, `a barra some pouco depois de o mouse sair dela (${durou} ms)`);
   // H mostra a barra, e ela também some sozinha em 3 s (D-038: "some sozinha
   // depois de 3 s" vale para os dois jeitos de abrir). H com ela aberta esconde.
   await page.mouse.move(520, 300);
@@ -1227,11 +1438,13 @@ assert.equal(await page.locator('#barra [data-acao="semVencedor"]').count(), 0, 
   await aba2.close();
 }
 
-// ← e PageUp (o "voltar" do passador) não fazem nada.
+// ← e PageUp (o "voltar" do passador) entram no modo revendo (pedido 6 do
+// Kleber, 05/10); no passo 0 não há o que rever, e nada muda.
 await page.keyboard.press('ArrowLeft');
 await page.keyboard.press('PageUp');
 await page.waitForTimeout(200);
 assert.equal((await estado()).indice, 0);
+assert.deepEqual([(await lerRevendo()).selo, (await lerRevendo()).tela], [null, 'lobby'], 'no passo 0, ← não entra no modo revendo');
 
 // Enquete "antes" (revelada só no comparativo)
 await avancarAte((e) => e.indice === I_ANTES, 'enquete antes');
@@ -1317,7 +1530,8 @@ async function conferirCasaDasPersonas(abertas, configNode = CONFIG_PADRAO) {
     const suas = abertas.filter((eq) => configNode.equipes[eq].persona === l.persona);
     assert.deepEqual(l.equipes, suas, `${l.persona}: as equipes da persona, juntas`);
     assert.equal(l.juntas, suas.length - 1, `${l.persona}: duas equipes da mesma persona ligadas por "e"`);
-    assert.ok(l.quem.includes(`${p.nome} · `), `${l.persona}: o nome e o ofício ("${l.quem}")`);
+    // O nome e o ofício estão no rótulo de cada equipe (teste do Kleber de 05/10).
+    assert.ok(l.quem.includes(`${p.nome}, ${oficioEsperado(p)}`), `${l.persona}: o nome e o ofício ("${l.quem}")`);
     const mes = V.motor.mesComum(configNode, suas[0]);
     const pessoas = p.familia.pessoas;
     const casa = [
@@ -1412,12 +1626,9 @@ for (const r of RODADAS) {
     assert.ok((await page.locator('.linha-graves').allTextContents()).every((x) => /^decisão [A-D] · cartas graves \d+%$/.test(x)));
     await page.waitForTimeout(3000);
     assert.equal(await contorno(), 'rgb(242, 242, 242)', 'contornada depois que os ponteiros param');
-    // Achado 9: o salvamento automático não cobre o título com um aviso.
-    for (let k = 0; k < 40 && downloads.length <= baixadosAntes; k += 1) await page.waitForTimeout(50);
-    assert.ok(downloads.length > baixadosAntes, 'o JSON automático foi baixado');
-    const aviso = await page.evaluate(() => ({ visivel: !document.getElementById('aviso').hidden, texto: document.getElementById('aviso').textContent }));
-    assert.ok(!(aviso.visivel && /automaticamente/.test(aviso.texto)), `o salvamento automático não avisa na tela: "${aviso.texto}"`);
-    assert.match(await page.textContent('[data-barra-salvo]'), new RegExp(`^estado salvo às \\d{2}:\\d{2} \\(${r}\\)$`));
+    // D-078 (pedido do Kleber de 05/10, que muda a D-015): o fim da rodada não
+    // baixa mais o JSON sozinho; o seguro é o "Salvar estado" da barra, à mão.
+    assert.equal(downloads.length, baixadosAntes, 'nenhum JSON baixado sozinho no fim da rodada');
     await conferirTela('rodada-sorteio', { esperarMs: 3200 });
     const curtosVistos = await conferirRotulosFatias();
     const aprovados = new Set(Object.values(configNode.cartas).map((c) => c.curto).filter(Boolean));
@@ -1454,18 +1665,84 @@ for (const r of RODADAS) {
   // D-065: por equipe, a carta, a parada, o saldo do mês com sinal e a dívida
   // total. Conferidos contra os resultados gravados no fim.
   contasNaTela[r] = await lerFaixas();
-  contasNaTela[r].cabecalho = await page.textContent('#palco .tela-cabecalho');
   if (r !== RODADAS[0]) {
     const temDivida = Object.values(contasNaTela[r]).some((x) => x?.divida?.startsWith('dívida'));
     if (temDivida) await conferirTela(`rodada-resultado-divida-${r}`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });
   }
   await page.waitForTimeout(300);
 }
-// D-015: um download automático do estado ao fim de cada rodada (uma apuração
-// por rodada, mais a primeira refeita).
+// D-078 (pedido do Kleber de 05/10, que muda a D-015): nenhum download
+// automático do estado nas rodadas; o seguro é o "Salvar estado", à mão.
 await page.waitForTimeout(500);
 const automaticos = downloads.slice(downloadsAntesR).filter((d) => new RegExp(`viracao-estado-.*-(${RODADAS.join('|')})-`).test(d.suggestedFilename()));
-assert.equal(automaticos.length, RODADAS.length + 1, `um JSON automático por apuração de rodada (vieram ${automaticos.length})`);
+assert.equal(automaticos.length, 0, `nenhum JSON automático nas rodadas (vieram ${automaticos.length})`);
+
+// Pedido 6 do Kleber (05/10), modo revendo, no resultado do último bimestre
+// (onde o Espaço avançaria e o Ctrl+Z abriria a confirmação do desfazer): ←
+// mostra o passo anterior só no telão, e as teclas de comando só saem do
+// modo. Nenhuma roda o comando, abre confirmação ou grava alguma coisa.
+{
+  const atual = await estado();
+  assert.deepEqual([atual.tipo, atual.subfase], ['rodada', 'resultado']);
+  const guardado = await lerArmazenado();
+  const k = atual.indice - 1;
+  const anterior = PASSOS[k];
+  const mesmoEstado = async (onde) => assert.deepEqual(await estado(), atual, `${onde}: o estado (passo, subfase, geracao) não muda`);
+  let r = await recuarRevendo(k);
+  assert.deepEqual([r.tela, r.revista, r.selo, r.id], ['revendo', true, seloEsperado(anterior, false), telaRevistaEsperada(anterior, await lerSalaLocal())], 'revendo o passo anterior');
+  // A barra diz que é o modo revendo; o passo dela continua o atual. H (a
+  // barra) não sai do modo.
+  await mostrarBarra();
+  assert.match(await page.textContent('#barra [data-barra-dica]'), new RegExp(`^Revendo o passo ${k + 1} \\(só no telão; a sessão continua no passo atual\\) · ← volta mais · → ou Esc volta ao passo atual`));
+  assert.match(await page.textContent('[data-barra-passo]'), new RegExp(`^passo ${atual.indice + 1} de ${PASSOS.length}`));
+  await page.mouse.move(520, 300);
+  await page.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 3000 });
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => !document.getElementById('barra').hidden);
+  assert.equal((await lerRevendo()).revendo, String(k), 'H não sai do modo revendo');
+  await page.keyboard.press('h');
+  await page.waitForFunction(() => document.getElementById('barra').hidden);
+  // O Espaço (o "avançar" do passador) só sai do modo; o segundo Espaço logo
+  // depois (o passador manda dois) também não avança: a saída conta para a
+  // trava de 1,5 s.
+  await page.keyboard.press('Space');
+  await page.keyboard.press('Space');
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(300);
+  await mesmoEstado('Espaço duplo no modo revendo');
+  // As outras: → e Esc voltam ao passo atual; Enter, P, um número e Ctrl+Z,
+  // que fora do modo rodariam, só saem dele.
+  await page.evaluate(() => { document.getElementById('aviso').textContent = ''; });
+  for (const tecla of ['ArrowRight', 'Escape', 'Enter', 'p', 'Digit1', 'Control+z']) {
+    r = await recuarRevendo(k, tecla === 'Escape' ? 'PageUp' : 'ArrowLeft');
+    assert.equal(r.selo, seloEsperado(anterior, false));
+    await page.keyboard.press(tecla);
+    await esperarFimDoRevendo('rodada-resultado');
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => document.getElementById('modal').open), false, `${tecla} no modo revendo não abre confirmação`);
+    await mesmoEstado(`${tecla} no modo revendo`);
+  }
+  // A tecla mantida apertada repete (keyboard.down de novo: repeat = true): a
+  // repetição que chega depois da saída também não roda o comando.
+  await recuarRevendo(k);
+  await page.keyboard.down('Enter');
+  await page.keyboard.down('Enter');
+  await page.keyboard.down('Enter');
+  await page.keyboard.up('Enter');
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(200);
+  assert.ok(!/votação aberta/.test(await page.textContent('#aviso')), 'o Enter mantido apertado, saindo do modo revendo, não roda o "encerrar"');
+  await mesmoEstado('Enter mantido apertado');
+  assert.deepEqual(await lerArmazenado(), guardado, 'o modo revendo não grava nada no navegador (canal local e chaves do telão)');
+  // O clique num comando da barra é de propósito: sai do modo e roda o comando.
+  await page.waitForTimeout(1600); // a trava da última saída por tecla
+  await recuarRevendo(k);
+  await clicarBarra('avancar');
+  await esperarEstado((e) => e.indice === atual.indice + 1, 'o "Avançar" da barra, no modo revendo, sai dele e avança');
+  ultimoAvanco = Date.now();
+  await page.waitForFunction(() => document.getElementById('revendo').hidden && document.body.dataset.tela !== 'revendo');
+  await page.mouse.move(520, 300);
+}
 
 // Placar final em páginas (D-041): o saldo contra o básico, "escolha ou sorte?"
 // e a história de cada equipe (D-045). O Espaço pagina dentro do passo; na
@@ -1502,9 +1779,13 @@ const escolhasNaTela = await page.evaluate(() => ({
     };
   }),
   legendas: document.querySelectorAll('#palco .legenda').length,
+  nota: document.querySelector('#palco .escolhas-nota')?.textContent ?? null,
   texto: document.getElementById('palco').textContent,
 }));
 assert.equal(escolhasNaTela.titulo, 'Escolha ou sorte?');
+// Teste do Kleber de 05/10 (print 15): uma linha embaixo do título diz de onde
+// a conta parte; "piloto automático" continua fora da tela (D-041).
+assert.equal(escolhasNaTela.nota, 'Sem votos, fica o de sempre; a conta parte daí, com a sorte média.', '"Escolha ou sorte?": a linha que explica o ponto de partida da conta');
 assert.equal(escolhasNaTela.legendas, 0, '"escolha ou sorte?" sem legenda');
 for (const termo of ['piloto automático', 'efeito das decisões']) assert.ok(!escolhasNaTela.texto.includes(termo), `o termo "${termo}" saiu da tela`);
 // O total do fim, depois do "=", em destaque em cada linha (item 11).
@@ -1638,6 +1919,93 @@ await avancarAte((e) => e.tipo === 'fim', 'fim', { aoPassar: (e) => conferirBloc
 await esperarTela('fim');
 await conferirTela('fim');
 
+// Pedido 6 do Kleber (05/10), modo revendo: do fim, ← (e PageUp) volta passo a
+// passo até a entrada na sala, e cada tela revista é a de quando o passo
+// estava no telão: o resultado de cada bimestre igual ao lido na hora, o
+// placar resumido dos blocos de então (e não o de agora), o "você está aqui"
+// no passo revisto, a enquete apurada, a primeira página do placar final e do
+// comparativo; a formação das equipes, que não dá para refazer, é um cartão
+// com o título. Cabe em 1024×768 com o selo. Esc volta ao fim, e nada foi
+// gravado: o estado, a geracao e o localStorage ficam iguais.
+{
+  const atual = await estado();
+  const guardado = await lerArmazenado();
+  const sala = await lerSalaLocal();
+  const renda = configNode.indicadores.renda;
+  const vistas = new Set();
+  // Na primeira vez que cada tipo de tela revista aparece, os critérios do
+  // visual, com o selo em cima.
+  const conferirUmaVez = async (nome, opcoes) => {
+    if (vistas.has(nome)) return;
+    vistas.add(nome);
+    await conferirTela(nome, opcoes);
+  };
+  for (let k = atual.indice - 1; k >= 0; k -= 1) {
+    const p = PASSOS[k];
+    const onde = `revendo o passo ${k} (${descreverPasso(p)})`;
+    const r = await recuarRevendo(k, k % 2 ? 'ArrowLeft' : 'PageUp');
+    assert.deepEqual([r.tela, r.revista, r.selo], ['revendo', true, seloEsperado(p, false)], `${onde}: o selo`);
+    assert.equal(r.id, telaRevistaEsperada(p, sala), `${onde}: a tela revista`);
+    if (p.tipo === 'rodada') {
+      assert.deepEqual(await lerFaixas(), contasNaTela[p.rodada], `${onde}: o resultado igual ao projetado na hora`);
+      await conferirUmaVez('revendo-rodada-resultado', { aoMedir: conferirVisualDoResultado });
+    } else if (p.tipo === 'bloco') {
+      const mapa = RE_MAPA.test(p.titulo || '');
+      const lido = await page.evaluate(() => ({
+        seguir: document.querySelector('#palco .linha-tempo-seguir')?.textContent ?? '',
+        aqui: Array.from(document.querySelectorAll('#palco .linha-tempo [aria-current="step"]'), (n) => n.dataset.passos),
+        resumido: Object.fromEntries(Array.from(document.querySelectorAll('#palco .resumido-linha'), (n) => [n.dataset.equipe, n.querySelector('.resumido-valor').textContent])),
+      }));
+      assert.equal(r.h1, p.titulo, `${onde}: o título do bloco`);
+      if (mapa) assert.ok(lido.seguir.startsWith(`Você está aqui: ${descreverPasso(p)}`), `${onde}: "Você está aqui" no mapa revisto ("${lido.seguir}")`);
+      else assert.ok(lido.aqui.length === 1 && lido.aqui[0].split(',').map(Number).includes(k), `${onde}: "você está aqui" no passo revisto (${lido.aqui})`);
+      // O placar resumido de quando o bloco estava na tela: o "depois" da
+      // última rodada antes dele (o estado inicial antes da primeira).
+      const esperado = mapa || k < I_FORMAR ? {} : Object.fromEntries(ATIVAS.map((eq) => {
+        let valores = V.motor.estadoInicial(configNode, eq);
+        for (const q of PASSOS.slice(0, k)) if (q.tipo === 'rodada' && sala.resultados?.[q.rodada]?.[eq]) valores = sala.resultados[q.rodada][eq].depois;
+        return [eq, F.indicador(renda, V.historia.patrimonioDe(valores) ?? 0)];
+      }));
+      assert.deepEqual(lido.resumido, esperado, `${onde}: o placar resumido de então`);
+      await conferirUmaVez(mapa ? 'revendo-bloco-mapa' : 'revendo-bloco-com-placar');
+    } else if (p.tipo === 'enquete') {
+      const enq = configNode.enquetes[p.enquete];
+      assert.equal(r.h1, enq.revelar === 'so_no_comparativo' ? 'Respostas registradas' : enq.titulo, `${onde}: a enquete apurada`);
+      await conferirUmaVez(`revendo-enquete-${enq.revelar === 'so_no_comparativo' ? 'escondida' : 'apurada'}`);
+    } else if (p.tipo === 'placarFinal') {
+      assert.deepEqual([r.pagina, r.h1], ['saldo', saldoNaTela.titulo], `${onde}: a primeira página do placar final`);
+      const valores = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.valor-saldo'), (n) => [n.dataset.equipe, n.textContent])));
+      assert.deepEqual(valores, saldoNaTela.valores, `${onde}: os saldos do placar final`);
+      await conferirUmaVez('revendo-placar-saldo');
+    } else if (p.tipo === 'comparativo') {
+      const enq = configNode.enquetes[p.enquete];
+      const ordem = lista(enq.ordemAfirmacoes);
+      assert.deepEqual([r.kicker, r.h1], [`Comparativo · afirmação 1 de ${ordem.length}`, enq.afirmacoes[ordem[0]].texto], `${onde}: a primeira afirmação do comparativo`);
+      await conferirUmaVez('revendo-comparativo');
+    } else if (p.tipo === 'personas') {
+      const personas = new Set(ATIVAS.map((eq) => configNode.equipes[eq].persona));
+      assert.equal(await page.locator('#palco .persona-linha').count(), personas.size, `${onde}: uma linha por persona das equipes que jogam`);
+      await conferirUmaVez('revendo-personas', { aoMedir: conferirVisualDasPersonas });
+    } else if (r.id === 'revista-cartao') {
+      assert.deepEqual([r.kicker, r.h1], [`Passo ${k + 1} de ${PASSOS.length}`, descreverPasso(p)], `${onde}: o cartão com o título do passo`);
+      await conferirUmaVez('revendo-cartao');
+    }
+  }
+  // No passo 0 não há o que rever: ← não muda nada.
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(200);
+  assert.equal((await lerRevendo()).revendo, '0', 'no passo 0, ← fica no passo 0');
+  for (const tipo of ['lobby', 'enquete', 'bloco', 'formarEquipes', 'personas', 'rodada', 'placarFinal', 'comparativo']) {
+    assert.ok(PASSOS.slice(0, atual.indice).some((p) => p.tipo === tipo), `o roteiro passa por um passo "${tipo}" antes do fim (o teste reviu cada tipo)`);
+  }
+  // Esc volta ao passo atual (o fim).
+  await page.keyboard.press('Escape');
+  ultimoAvanco = Date.now(); // a saída por tecla arma a trava do avançar
+  await esperarFimDoRevendo('fim');
+  assert.deepEqual(await estado(), atual, 'o modo revendo não muda o estado nem a geracao');
+  assert.deepEqual(await lerArmazenado(), guardado, 'o modo revendo não grava nada no navegador (canal local e chaves do telão)');
+}
+
 // Exportar totais (na barra, D-047): só agregados, sem nenhum uid
 let esperaDownload = page.waitForEvent('download');
 await clicarBarra('exportar');
@@ -1680,7 +2048,10 @@ for (const [k, r] of RODADAS.entries()) {
     assert.deepEqual(resultados[r][eq].protecaoItens ?? [], res.protecaoItens, `${r}/${eq}: protecaoItens gravado`);
     if (res.mes.juros > 0) viuJuros = true;
     if (dividaEsperada(res.depois) > 0) viuDivida = true;
-    assert.ok(contasNaTela[r].cabecalho.includes(`saldo ${DO_PERIODO}`), `${r}: o cabeçalho diz que o número grande é o saldo ${DO_PERIODO} ("${contasNaTela[r].cabecalho}")`);
+    // Teste do Kleber de 05/10 (print 7): cada número grande diz que é o saldo
+    // do período (o rótulo saiu do cabeçalho e vai em cada faixa; o
+    // conferirFaixas acima confere o texto).
+    assert.equal(contasNaTela[r][eq].rotuloSaldo, `saldo ${DO_PERIODO}`, `${r}/${eq}: o rótulo diz que o número grande é o saldo ${DO_PERIODO}`);
     estadoNode[eq] = res.depois;
     jogadas[eq].push({ rodadaId: r, opcaoId: opcao, cartaId: res.carta });
   }
@@ -1717,9 +2088,12 @@ for (const eq of ATIVAS) {
   const c = V.historia.escolhaOuSorte({ piloto: d.esperadoPiloto, efeitoDecisoes: d.efeitoDecisoes, sorte: d.sorte, renda: d.realizado });
   // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),
   // as variações sempre com + ou −, e o total do fim com "=".
-  const conta = `se não mudassem nada: ${F.moeda(c.piloto)} → as escolhas: ${F.variacao(c.escolhas)} → a sorte: ${F.variacao(c.sorte)} = terminaram com ${F.moeda(c.total)}`;
+  // Teste do Kleber de 05/10 (print 15): os rótulos dizem o que cada número é
+  // ("se ninguém votasse", "as escolhas mudaram", "as cartas mudaram"); a conta
+  // é a mesma.
+  const conta = `se ninguém votasse: ${F.moeda(c.piloto)} as escolhas mudaram: ${F.variacao(c.escolhas)} as cartas mudaram: ${F.variacao(c.sorte)} = terminaram com ${F.moeda(c.total)}`;
   assert.equal(escolhasNaTela.contas[eq], conta, `${eq}: página 2, escolha ou sorte`);
-  assert.match(escolhasNaTela.contas[eq], /^se não mudassem nada: −?R\$\s?[\d.]+ → as escolhas: [+−]R\$\s?[\d.]+ → a sorte: [+−]R\$\s?[\d.]+ = terminaram com −?R\$\s?[\d.]+$/, `${eq}: totais sem "+", variações com sinal`);
+  assert.match(escolhasNaTela.contas[eq], /^se ninguém votasse: −?R\$\s?[\d.]+ as escolhas mudaram: [+−]R\$\s?[\d.]+ as cartas mudaram: [+−]R\$\s?[\d.]+ = terminaram com −?R\$\s?[\d.]+$/, `${eq}: totais sem "+", variações com sinal`);
   const [lPiloto, lEscolhas, lSorte, lTotal] = reaisDoTexto(escolhasNaTela.contas[eq]);
   assert.equal(lPiloto + lEscolhas + lSorte, lTotal, `${eq}: página 2, as parcelas projetadas somam o "terminaram com"`);
   // Páginas da história: um item por mês, com a escolha, a carta e as contas.
@@ -1878,6 +2252,49 @@ assert.equal(origemE2, 'moeda', 'empate que continua na prorrogação vai para a
 await avancarPara((e) => e.subfase === 'resultado', 'resultado (celulares)');
 await esperarTela('rodada-resultado');
 await conferirTela('rodada-resultado-celulares', { esperarMs: 900, aoMedir: conferirVisualDoResultado });
+// Para o modo revendo, logo abaixo: o resultado como foi projetado.
+const contasNaTelaCelulares = await lerFaixas();
+
+// Pedido 6 do Kleber (05/10), modo revendo com celulares: o selo diz que os
+// celulares continuam no passo atual, as telas revistas cabem em 1024×768 com
+// o selo em cima e a faixa de entrada embaixo (as seis personas são o caso
+// mais apertado), e nada é gravado no canal: a sala inteira (estado, membros,
+// presença, votos, resultados) fica igual, e a tela dos celulares é função
+// dela.
+{
+  const atual = await estado();
+  const lerSala = () => page.evaluate(() => globalThis.__canalTeste.ler('salas/K7Q2'));
+  const antes = await lerSala();
+  for (let k = atual.indice - 1; k >= 0; k -= 1) {
+    const p = PASSOS[k];
+    const r = await recuarRevendo(k);
+    assert.deepEqual([r.tela, r.selo, r.id], ['revendo', seloEsperado(p, true), telaRevistaEsperada(p, antes)], `revendo o passo ${k} com celulares`);
+    if (p.tipo === 'personas') {
+      assert.equal(await page.locator('#faixa').isVisible(), true, 'com a faixa de entrada');
+      await conferirTela('revendo-personas-celulares', { aoMedir: conferirVisualDasPersonas });
+    }
+  }
+  await page.keyboard.press('ArrowRight');
+  // A saída por tecla conta para a trava de 1,5 s do avançar (o telão
+  // ignora o Espaço logo depois): o próximo avancar() do teste espera.
+  ultimoAvanco = Date.now();
+  await esperarFimDoRevendo('rodada-resultado');
+  await page.waitForTimeout(200);
+  assert.deepEqual(await estado(), atual, 'com celulares, o modo revendo não muda o estado nem a geracao');
+  assert.deepEqual(await lerSala(), antes, 'com celulares, o modo revendo não grava nada no canal');
+  // O resultado das seis equipes com a faixa de entrada, o caso mais apertado
+  // do telão, revisto do passo seguinte: cabe também com o selo em cima.
+  const lido = contasNaTelaCelulares;
+  await avancarPara((e) => e.indice === atual.indice + 1, 'o passo depois do resultado (celulares)');
+  const r = await recuarRevendo(atual.indice);
+  assert.deepEqual([r.id, r.selo], ['rodada-resultado', seloEsperado(PASSOS[atual.indice], true)], 'revendo o resultado com celulares');
+  assert.deepEqual(await lerFaixas(), lido, 'o resultado revisto igual ao projetado na hora (celulares)');
+  await conferirTela('revendo-rodada-resultado-celulares', { aoMedir: conferirVisualDoResultado });
+  await page.keyboard.press('Escape');
+  ultimoAvanco = Date.now();
+  await page.waitForFunction(() => document.getElementById('revendo').hidden && document.body.dataset.tela !== 'revendo');
+  assert.equal((await estado()).indice, atual.indice + 1, 'Esc volta ao passo atual, sem mexer nele');
+}
 
 // ---------- Parte 3: seguir sem celulares no meio de uma enquete ----------
 
@@ -2091,7 +2508,7 @@ await page.waitForFunction(() => document.querySelector('.tela-placar-final')?.d
   const contas = await page.$$eval('.historia-escolha .historia-conta', (ns) => ns.map((n) => n.textContent));
   assert.equal(contas.length, EQUIPES.length, 'página 2 com as seis equipes');
   for (const t of contas) {
-    assert.match(t, / → as escolhas: [+−]R\$.* → a sorte: [+−]R\$.* = terminaram com −?R\$/, `página 2: variações com sinal ("${t}")`);
+    assert.match(t, / as escolhas mudaram: [+−]R\$.* as cartas mudaram: [+−]R\$.* = terminaram com −?R\$/, `página 2: variações com sinal ("${t}")`);
     const [a1, a2, a3, a4] = reaisDoTexto(t);
     assert.equal(a1 + a2 + a3, a4, `página 2: as parcelas somam o total ("${t}")`);
   }
@@ -2174,6 +2591,7 @@ console.log('Parte 6: a proteção (D-059), com a fixture v2.1');
   assert.ok(r6.ok, `a fixture da parte 6 é válida: ${JSON.stringify(r6.erros.slice(0, 3))}`);
   const cfg6 = r6.config;
   doPeriodoNaTela = doPeriodoDe(cfg6);
+  configNaTela = cfg6;
   assert.ok(temProtecao(cfg6), 'a fixture v2.1 tem uma opção que protege');
   const passos6 = V.roteiro.passos(cfg6, ROTEIRO);
   const rodadas6 = passos6.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
@@ -2315,6 +2733,7 @@ console.log('Parte 7: a tela de personas com uma persona por equipe');
   assert.ok(r7.ok, `o config da parte 7 é válido: ${JSON.stringify(r7.erros.slice(0, 3))}`);
   const cfg7 = r7.config;
   doPeriodoNaTela = doPeriodoDe(cfg7);
+  configNaTela = cfg7;
   const equipes7 = lista(cfg7.ordem.equipes);
   assert.equal(new Set(equipes7.map((eq) => cfg7.equipes[eq].persona)).size, equipes7.length, 'uma persona por equipe');
   const passos7 = V.roteiro.passos(cfg7, ROTEIRO);
@@ -2383,6 +2802,7 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
   const cfg8 = r8.config;
   assert.ok(cfg8.regras.limiteChequeEspecial > 0, 'a fixture v3.1 tem o limite do cheque especial');
   doPeriodoNaTela = doPeriodoDe(cfg8);
+  configNaTela = cfg8;
   const passos8 = V.roteiro.passos(cfg8, ROTEIRO);
   const rodadas8 = passos8.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
   const equipes8 = lista(cfg8.ordem.equipes);
@@ -2472,8 +2892,9 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
     }), esperado);
     const lido = await lerFaixas();
     conferirFaixas(lido, esperado, cfg8, `${r} (parte 8)`);
-    // A dívida da faixa é a do banco mais o empréstimo; as contas atrasadas
-    // vão num atributo próprio (e o banco nunca passa do limite).
+    // A dívida da faixa é a total (o banco, o empréstimo e as contas
+    // atrasadas); a parte das contas atrasadas fica num atributo próprio (e o
+    // banco nunca passa do limite).
     const dados = await page.evaluate(() => Object.fromEntries(Array.from(document.querySelectorAll('.cartao-resultado'), (c) => [c.dataset.equipe, { divida: c.dataset.divida, atrasadas: c.dataset.contasAtrasadas ?? null, mesa: c.dataset.faltouNaMesa ?? null }])));
     for (const eq of equipes8) {
       const x = resultados8[r][eq];
@@ -2482,13 +2903,15 @@ console.log('Parte 8: o limite do cheque especial (D-066) e a proteção acima d
         divida: String(Math.round(dividaEsperada(x.depois))), atrasadas: String(Math.round(x.depois.contas_atrasadas)),
         mesa: x.mes.faltouNaMesa > 0 ? String(Math.round(x.mes.faltouNaMesa)) : null,
       }, `${r}/${eq}: data-divida, data-contas-atrasadas e data-faltou-na-mesa`);
-      // Revisão da F6c: a "dívida" do telão é o total de historia.dividaTotal,
-      // o mesmo que o celular da equipe escreve em "Dívida no banco" (o
-      // e2e:online confere o lado do celular contra a mesma função). Antes, o
-      // telão dizia "dívida R$ 3.000" e o celular, "Dívida hoje R$ 7.811".
-      assert.equal(dados[eq].divida, String(Math.round(V.historia.dividaTotal(x.depois).total)), `${r}/${eq}: a dívida do telão é a do celular`);
+      // Teste do Kleber de 05/10 (print 7): a "dívida total" do telão é o
+      // total de historia.dividaTotal (o banco e o empréstimo, a "Dívida no
+      // banco" do celular) mais as contas atrasadas, e, com o caixa zerado, o
+      // mesmo número do "faltou" do placar (o patrimônio).
+      const d = V.historia.dividaTotal(x.depois);
+      assert.equal(dados[eq].divida, String(Math.round(d.total + d.contasAtrasadas)), `${r}/${eq}: a dívida total do telão é o banco, o empréstimo e as contas atrasadas`);
+      if (Math.round(x.depois.renda) <= 0) assert.equal(Number(dados[eq].divida), Math.round(-patrimonioEsperado(x.depois)), `${r}/${eq}: sem caixa, a dívida total é o "faltou" do patrimônio`);
     }
-    limitesVistos += Object.values(lido).filter((x) => x.limite?.includes('contas atrasadas')).length;
+    limitesVistos += Object.values(dados).filter((x) => Number(x.atrasadas) > 0).length;
     mesasVistas += Object.values(lido).filter((x) => x.limite?.includes('faltou na mesa')).length;
     for (const [eq, x] of Object.entries(lido)) if (x.acima) acimaVistas.push(`${r}/${eq}`);
     await conferirTela(`rodada-resultado-limite-${r}-6-equipes`, { esperarMs: 900, aoMedir: conferirVisualDoResultado });

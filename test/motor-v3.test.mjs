@@ -188,7 +188,9 @@ test('decompor: abaixo de 200 mil caminhos é exato; acima, estimado (a 5ª roda
   // em todas as equipes (de 1,45 a 4,04 milhões de caminhos).
   const v22 = V.validarConfig.validarTexto(textoConfigRealV22()).config;
   for (const eq of v22.ordem.equipes) assert.ok(M.caminhosDeCartas(v22, eq, v22.ordem.rodadas) < M.LIMITE_CAMINHOS / 10, `${eq}: o config de 30/09 continua exato`);
-  const real = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8')).config;
+  // Desde 06/10 (D-078), o config.json é o jogo simples (uma carta por rodada): o
+  // de 12 meses com sorteio fica congelado em test/fixtures/config-real-v31.json.
+  const real = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8')).config;
   for (const eq of real.ordem.equipes) {
     assert.ok(M.caminhosDeCartas(real, eq, real.ordem.rodadas.slice(0, 4)) <= M.LIMITE_CAMINHOS, `${eq}: config.json exato até a 4ª rodada`);
     assert.ok(M.caminhosDeCartas(real, eq, real.ordem.rodadas) > M.LIMITE_CAMINHOS, `${eq}: config.json estimado na 6ª rodada`);

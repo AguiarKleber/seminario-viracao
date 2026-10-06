@@ -85,6 +85,14 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 
 .legenda { color: var(--texto-2); display: flex; flex-wrap: wrap; align-items: center; gap: .2em .5em; }
 
+/* A equipe pelo personagem, "◯ 1 Jonas, motoboy" (telao.js, rotuloEquipe;
+   teste do Kleber de 05/10). O nome e o ofício são pedaços inteiros: numa
+   coluna estreita (a célula da decisão, a coluna da equipe no resultado), o
+   rótulo quebra entre os dois, nunca no meio de uma palavra, e a forma e o
+   número ficam na frente. */
+.equipe-nome { white-space: normal; }
+.equipe-quem, .equipe-oficio { white-space: nowrap; }
+
 /* ---------- Gráficos medidos ---------- */
 
 .grafico { position: relative; flex: 1 1 auto; min-height: 90px; min-width: 0; }
@@ -277,16 +285,16 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .placar-resumido { display: flex; flex-direction: column; gap: .3em; }
 .placar-discreto { margin-top: auto; color: var(--texto-2); }
 .resumido-lista { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25em 3vw; }
-/* A persona vai na linha de baixo do nome da equipe, e não entre ele e o
-   valor: ali, em 1024×768, sobravam poucos pixels e o nome virava "Ka…"
-   (revisão da F2, achado 18). */
+/* O rótulo da equipe já traz o personagem ("◯ 1 Jonas, motoboy", teste do
+   Kleber de 05/10), e a linha de baixo com o nome saiu. Revisão da F2, achado
+   18: entre o nome e o valor, em 1024×768, o nome virava "Ka…"; o rótulo
+   quebra entre o nome e o ofício, e nunca é cortado. */
 .resumido-linha {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 .6em;
   padding: .15em 0; border-bottom: 1px solid var(--linha);
 }
 .resumido-linha > .equipe { grid-column: 1; grid-row: 1; }
-.resumido-persona { grid-column: 1; grid-row: 2; color: var(--texto-2); min-width: 0; overflow-wrap: anywhere; line-height: 1.15; }
-.resumido-valor { grid-column: 2; grid-row: 1 / span 2; font-weight: 700; color: var(--texto); }
+.resumido-valor { grid-column: 2; grid-row: 1; font-weight: 700; color: var(--texto); }
 
 /* ---------- Formar equipes ---------- */
 
@@ -331,16 +339,18 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .persona-quem { display: flex; flex-wrap: wrap; align-items: center; gap: .1em 1em; }
 .persona-equipes { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .1em .45em; }
 .persona-e { color: var(--texto-2); }
-.persona-nome { white-space: nowrap; }
 .persona-casa b { color: var(--texto); }
 .persona-mes { font-weight: 600; }
 .persona-mes[data-sinal="negativo"] { color: var(--negativo); }
 .persona-mes[data-sinal="positivo"] { color: var(--positivo); }
 /* O aperto (telao.js, telaPersonas): só quando a lista transborda, como seis
    personas com a faixa de entrada embaixo em 1024×768 (D-061). Entrelinha e
-   vãos menores; a letra não encolhe e o fio entre as personas fica. */
-.personas[data-aperto] { gap: 2px; }
-.personas[data-aperto] .persona-linha { gap: 0; line-height: 1.04; padding-bottom: 3px; }
+   vãos menores; a letra não encolhe e o fio entre as personas fica. Com a
+   equipe pelo personagem no rótulo (teste do Kleber de 05/10), as seis
+   entradas com a faixa de entrada passavam 1 px de 1024×768: vão de 1 px e
+   respiro de 2 px embaixo de cada uma. */
+.personas[data-aperto] { gap: 1px; }
+.personas[data-aperto] .persona-linha { gap: 0; line-height: 1.04; padding-bottom: 2px; }
 
 /* ---------- Rodada ---------- */
 
@@ -368,6 +378,21 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .equipe-empate { font-weight: 700; flex-basis: 100%; }
 .botoes-opcao { display: flex; gap: .4em; }
 .botao-letra { min-width: 2em; min-height: 48px; padding: 0 .3em; font-size: max(28px, .85em); font-weight: 800; line-height: 1.3; }
+/* 5 opções (formato simples, decisão do Kleber de 05/10): com a largura de 4,
+   o quinto botão saía da célula da equipe em 1024×768 (três células por
+   linha) e ficava por baixo da vizinha. Botões mais estreitos e vão menor; a
+   altura de 48 px (o clique do apresentador) fica. */
+.botoes-opcao:has(> :nth-child(5)) { gap: .2em; }
+.botoes-opcao:has(> :nth-child(5)) .botao-letra { min-width: 1.55em; padding: 0 .12em; }
+/* O aperto da decisão e da prorrogação (telao.js, apertarDecisao): só quando a
+   tela transborda. Com a equipe pelo personagem (teste do Kleber de 05/10), o
+   rótulo comprido quebra em duas linhas na célula, e seis células com a faixa
+   de entrada passavam ~96 px de 1024×768. Entrelinhas e vãos menores; a letra
+   fica nos 28 px. */
+.tela[data-aperto] .situacao { line-height: 1.15; }
+.tela[data-aperto] .opcoes { gap: 0; line-height: 1.15; }
+.tela[data-aperto] .equipes-status { gap: 6px 1.5vw; }
+.tela[data-aperto] .equipe-status { line-height: 1.08; padding-top: .15em; padding-bottom: .15em; }
 
 /* ---------- Sorteio e placar: linhas alinhadas com o gráfico ---------- */
 
@@ -391,19 +416,26 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* ---------- Resultado ---------- */
 
 /* D-065 (teste de 30/09): uma faixa por equipe, só com o essencial, em três
- * colunas alinhadas entre as faixas (subgrid): a equipe e a persona; a carta,
- * grande, com os dias parados embaixo; o saldo do mês em verde ou vermelho,
- * com sinal, e a dívida embaixo. Antes, cada equipe era uma frase corrida de
+ * colunas alinhadas entre as faixas (subgrid): a equipe pelo personagem; a
+ * carta, grande, com os dias parados embaixo; o saldo do período em verde ou
+ * vermelho, com sinal e com o rótulo "saldo do bimestre" logo acima; e, numa
+ * linha embaixo da carta e do saldo, a dívida total e o que faltou na mesa
+ * (teste do Kleber de 05/10). Antes, cada equipe era uma frase corrida de
  * três linhas com todas as contas, sem espaço entre as equipes, e a tela era
  * difícil de explicar em aula. O detalhamento ficou no celular e na história.
  * Nada abaixo do corpo (28 px em 1024×768); o e2e prova seis equipes com a
  * carta mais cara em 1024×768, sem rolagem e com espaço entre as faixas. */
 .tela-rodada-resultado { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
 .tela-rodada-resultado h1 { font-size: calc(var(--corpo) * 1.4); }
-.resultado-legenda { color: var(--texto-2); padding-right: .6em; white-space: nowrap; }
+/* A coluna da equipe em fit-content: com o personagem no rótulo ("◯ 1 Bruna,
+   influenciadora", teste do Kleber de 05/10), em max-content ela tirava ~70 px
+   da carta em 1024×768. Até 9em o rótulo fica numa linha; o mais comprido
+   quebra entre o nome e o ofício, e a coluna da equipe ocupa as linhas da
+   faixa inteira (.resultado-quem), ao lado da carta, do dinheiro e da linha de
+   baixo. */
 .grade-resultados {
   flex: 1 1 auto; min-height: 0;
-  display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content;
+  display: grid; grid-template-columns: fit-content(9em) minmax(0, 1fr) max-content;
   align-content: safe center;
   row-gap: calc(var(--espaco) * 1.2);
 }
@@ -412,9 +444,9 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    da decisão sai (o celular de cada equipe a mostra). */
 .grade-resultados[data-aperto] { row-gap: calc(var(--espaco) * .7); }
 .grade-resultados[data-aperto] .resultado-origem { display: none; }
-/* D-066: com o limite do cheque especial, a faixa de quem estourou tem três
-   linhas (a dívida e, embaixo, as contas atrasadas e o que faltou na mesa), e
-   seis delas com a entrelinha de 1,08 passavam ~60 px de 1024×768. No aperto,
+/* A faixa tem três linhas (a carta e, ao lado, o rótulo e o saldo; embaixo,
+   a linha da dívida total; teste do Kleber de 05/10), e seis delas com a
+   entrelinha de 1,08 passavam ~60 px de 1024×768 (D-066). No aperto,
    a entrelinha fecha em 1 e o respiro de dentro da faixa diminui; a letra fica
    nos 28 px. */
 .grade-resultados[data-aperto] .cartao-resultado { line-height: 1; padding-top: .1em; padding-bottom: .1em; }
@@ -422,11 +454,17 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O segundo aperto (telao.js, apertarResultado): só se o primeiro não bastou. */
 .grade-resultados[data-aperto="2"] { row-gap: 8px; }
 /* Sem o respiro de dentro da faixa: com a faixa de entrada embaixo (online), seis
-   faixas de três linhas passavam 11 px de 1024×768 no teste da parte 2. */
-.grade-resultados[data-aperto="2"] .cartao-resultado { padding-top: 0; padding-bottom: 0; }
-.grade-resultados[data-aperto="2"] .resultado-saldo { font-size: 1.15em; }
-.grade-resultados[data-aperto="2"] .resultado-carta { font-size: 1.05em; }
-.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.15); }
+   faixas de três linhas passavam 11 px de 1024×768 no teste da parte 2.
+   Teste do Kleber de 05/10: toda faixa passou a ter três linhas (o rótulo
+   "saldo do bimestre" acima do saldo e a linha da dívida total embaixo), e
+   seis delas com a faixa de entrada passavam ~5 px de 1024×768 mesmo com o
+   segundo aperto antigo. Agora ele leva o saldo a 1,05× o corpo (ainda maior
+   que ele), a carta e o título ao tamanho do corpo e a entrelinha a 0,98; o
+   vão entre as faixas fica nos 8 px. */
+.grade-resultados[data-aperto="2"] .cartao-resultado { padding-top: 0; padding-bottom: 0; line-height: .98; }
+.grade-resultados[data-aperto="2"] .resultado-saldo { font-size: 1.05em; }
+.grade-resultados[data-aperto="2"] .resultado-carta { font-size: 1em; line-height: .98; }
+.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.05); }
 .cartao-resultado {
   grid-column: 1 / -1;
   display: grid; grid-template-columns: subgrid; align-items: center;
@@ -437,9 +475,19 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
   line-height: 1.08;
 }
 .resultado-quem, .resultado-meio, .resultado-dinheiro { display: flex; flex-direction: column; gap: .04em; min-width: 0; }
-.resultado-persona { color: var(--texto-2); }
-/* "Jonas · decisão B" numa linha só (revisão de 30/09, achado 9). */
-.resultado-persona { white-space: nowrap; }
+/* As linhas da faixa (telao.js, telaResultado): a equipe na primeira coluna,
+   de cima a baixo; a carta e o dinheiro na primeira linha; embaixo deles, a
+   linha da dívida (.resultado-limite); e a frase da D-067 na largura inteira.
+   Linha sem nada fica com altura zero (a faixa não tem vão entre linhas). */
+/* min-width: auto na equipe: com o 0 das três colunas, o fit-content deixava a
+   coluna mais estreita que a palavra mais comprida do rótulo
+   ("influenciadora"), e ela passava por cima da carta. */
+.resultado-quem { grid-column: 1; grid-row: 1 / span 2; min-width: auto; }
+.resultado-meio { grid-column: 2; grid-row: 1; }
+.resultado-dinheiro { grid-column: 3; grid-row: 1; }
+/* "decisão B" numa linha só (revisão de 30/09, achado 9); o nome do
+   personagem está no rótulo da equipe (teste do Kleber de 05/10). */
+.resultado-escolha { color: var(--texto-2); white-space: nowrap; }
 .resultado-escolha b { color: var(--texto); }
 .resultado-carta { font-size: 1.15em; font-weight: 750; line-height: 1.08; }
 /* Cada pedaço da linha de detalhe inteiro (a decisão, o empréstimo, a parada,
@@ -457,24 +505,28 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .resultado-detalhe b { color: var(--texto); }
 .resultado-decisao { color: var(--texto-2); }
 .resultado-dinheiro { align-items: flex-end; text-align: right; }
+/* Teste do Kleber de 05/10 (print 7): o número colorido não dizia o que era (o
+   "saldo do bimestre" ficava só no cabeçalho, no canto de cima). O rótulo vai
+   logo acima de cada saldo, discreto e no corpo (28 px em 1024×768). */
+.resultado-saldo-rotulo { color: var(--texto-2); white-space: nowrap; }
 .resultado-saldo { font-size: 1.3em; font-weight: 800; white-space: nowrap; }
 .resultado-saldo[data-sinal="negativo"] { color: var(--negativo); }
 .resultado-saldo[data-sinal="positivo"] { color: var(--positivo); }
-.resultado-divida, .resultado-caixa { color: var(--texto-2); white-space: nowrap; }
-.resultado-divida b, .resultado-caixa b { color: var(--texto); }
-/* D-066: as contas atrasadas e o que faltou na mesa, numa linha embaixo do
-   dinheiro, alinhada à direita como ele, da coluna da carta até a borda. Na
-   coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna e a parada
-   da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só quebra
-   entre eles. */
-.resultado-limite { grid-column: 2 / -1; justify-self: end; text-align: right; color: var(--texto-2); }
+/* A linha de baixo, alinhada à direita, da coluna da carta até a borda: a
+   dívida total (o banco, o empréstimo e as contas atrasadas num número só;
+   teste do Kleber de 05/10, print 7: em duas linhas, "dívida" e "contas
+   atrasadas" se liam como duas dívidas), o caixa positivo e o que faltou na
+   mesa (D-066). Na coluna do dinheiro, um texto comprido alargava a coluna e a
+   parada da carta quebrava em duas linhas. Cada pedaço inteiro; a linha só
+   quebra entre eles. */
+.resultado-limite { grid-column: 2 / -1; grid-row: 2; justify-self: end; text-align: right; color: var(--texto-2); }
 .resultado-limite > span { white-space: nowrap; }
 .resultado-limite b { color: var(--texto); }
 /* D-067: a frase de quando a proteção pagou mais do que o trabalho, na largura
    da faixa inteira, embaixo das três colunas (numa coluna só, ela ocupava três
    ou quatro linhas). No tom do texto, e não no secundário: é o dado que a sala
    precisa ler, e não um detalhe. */
-.resultado-acima { grid-column: 1 / -1; line-height: 1.12; padding-top: .1em; }
+.resultado-acima { grid-column: 1 / -1; grid-row: 3; line-height: 1.12; padding-top: .1em; }
 /* As contas do mês (D-044) e o custo real da carta (D-052), no resultado e na
    história: cada pedaço inteiro, o rótulo discreto e o valor em destaque. */
 .contas, .custo-carta, .historia-dinheiro { color: var(--texto-2); }
@@ -510,7 +562,6 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O nome da equipe no título da história, no peso do título. */
 .tela-placar-final h1 .equipe-nome { font-weight: inherit; }
 .linha-rotulo-placar { flex-direction: column; align-items: flex-start; justify-content: center; line-height: 1.12; }
-.linha-persona { color: var(--texto-2); }
 .valor-saldo { justify-content: flex-end; white-space: nowrap; }
 /* Escolha ou sorte: uma linha por equipe, contada como história. */
 .historias-escolha { display: flex; flex-direction: column; gap: calc(var(--espaco) * .8); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
@@ -531,6 +582,14 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .historias-escolha[data-aperto] .historia-escolha { line-height: 1.08; padding-bottom: 3px; }
 .historia-meses[data-aperto] { gap: calc(var(--espaco) * .4); }
 .historia-meses[data-aperto] .historia-mes { line-height: 1.08; gap: 0; }
+/* O segundo aperto do "Escolha ou sorte?" (telao.js, telaPlacarFinal; teste do
+   Kleber de 05/10, pedido 14): com a linha de onde a conta parte, seis equipes
+   passavam ~23 px de 1024×768 mesmo apertadas. O título da página menor (34 px
+   em 1024×768, ainda maior que o corpo), os vãos da tela pela metade e o fio
+   entre as equipes colado; a letra do corpo continua nos 28 px. */
+.tela-placar-final[data-aperto="2"] { gap: calc(var(--espaco) * .5); }
+.tela-placar-final[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.2); }
+.historias-escolha[data-aperto="2"] .historia-escolha { padding-bottom: 1px; }
 /* O segundo aperto (telao.js, telaPlacarFinal): só se o primeiro não bastou. */
 .historia-meses[data-aperto="2"] .historia-narrativa { -webkit-line-clamp: 1; line-clamp: 1; }
 /* "Escolha ou sorte?" em grade fixa (revisão da F7, achado 13 da revisão de
@@ -538,16 +597,18 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    num ponto diferente ("= terminaram com" na linha 2 de umas e na 3 de outras),
    e os números não ficavam em coluna. Agora são três linhas por equipe, as
    mesmas em todas, em duas colunas alinhadas entre as equipes (subgrid):
-     equipe              | se não mudassem nada: R$ a
-     → as escolhas: ±R$ b | → a sorte: ±R$ c
+     equipe                     | se ninguém votasse: R$ a
+     as escolhas mudaram: ±R$ b | as cartas mudaram: ±R$ c
      = terminaram com R$ d
+   (os rótulos de 05/10; antes, "se não mudassem nada", "→ as escolhas" e
+   "→ a sorte", que o Kleber não entendeu no teste de 05/10)
    Duas linhas não cabem: com valores de cinco dígitos, escolhas, sorte e total
    lado a lado passam da largura de 1024×768 com a letra de 28 px. Em cada
    passo, o rótulo à esquerda e o valor à direita da coluna: os valores ficam
    alinhados entre as equipes. A página do pior caso (.piores-casos) continua
    corrida: a conta dela tem outro formato.
    As duas colunas na largura do conteúdo (max-content), e não a segunda em
-   1fr: esticada até a borda, em 1920×1080 o rótulo "→ a sorte:" ficava a
+   1fr: esticada até a borda, em 1920×1080 o rótulo da sorte ficava a
    ~1.200 px do valor, e a conta se lia em diagonal (revisão do voto da F6b,
    achado 7). A grade, mais estreita que a tela em 1920×1080, fica no meio. */
 .historias-escolha.escolhas-em-grade {
@@ -568,6 +629,13 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
  * com uma frase curta embaixo do título. "Não escolheram proteção" fica no
  * tom secundário: é a ausência do número, e não um número. */
 .pior-nota { color: var(--texto-2); }
+/* O que é proteção no jogo e quais opções protegem (teste do Kleber de 05/10,
+   print 16: "o que seria escolher a proteção?"). No tom do texto: é a
+   explicação que a sala precisa ler para entender a página. */
+.pior-o-que { color: var(--texto); }
+/* "Escolha ou sorte?": a linha que explica de onde a conta parte (teste do
+   Kleber de 05/10), no tom da nota do pior caso. */
+.escolhas-nota { color: var(--texto-2); }
 .pior-sem-escolha { color: var(--texto-2); }
 /* A história de uma equipe: um mês por item. */
 .historia-meses { display: flex; flex-direction: column; gap: var(--espaco); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
@@ -586,8 +654,8 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* O empréstimo como dívida (esquema v2.2): "pegou empréstimo de R$ 1.500" depois
    das contas do mês, e a dívida com que a equipe termina no fim da história. */
 .historia-emprestimo b { color: var(--texto); }
-.historia-divida, .historia-caixa, .historia-atrasadas { color: var(--texto-2); white-space: nowrap; }
-.historia-divida b, .historia-caixa b, .historia-atrasadas b, .historia-mesa b, .historia-mesa-total b, .conta-atraso b { color: var(--texto); }
+.historia-divida, .historia-caixa { color: var(--texto-2); white-space: nowrap; }
+.historia-divida b, .historia-caixa b, .historia-mesa b, .historia-mesa-total b, .conta-atraso b { color: var(--texto); }
 /* D-067: a mesma frase do resultado, no mês da história em que aconteceu. */
 .historia-acima { color: var(--texto); }
 /* D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
@@ -602,31 +670,69 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 
 .placar-fim { margin-top: auto; }
 
+/* ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
+ * O telão mostra um passo que já passou, só na projeção (telao.js,
+ * telaRevista), e o selo em cima do palco diz isso à turma e ao apresentador:
+ * "Revendo: <passo> · os celulares continuam no passo atual · → volta". É uma
+ * faixa do fluxo (flex: none), e não uma camada por cima: as medidas do
+ * desenho (o aperto do resultado, das personas e do mapa) contam com a altura
+ * que sobra. No amarelo que nenhuma equipe usa (--foco), com o texto escuro
+ * (14,3:1): não se confunde com nada da tela revista. A letra é a do aviso de
+ * operação (~20 px em 1024×768), para o selo caber numa linha e a tela revista
+ * continuar cabendo.
+ * O resultado de seis equipes com a faixa de entrada embaixo, o caso mais
+ * apertado do telão, passava 12 px de 1024×768 com o selo de 36 px em cima (o
+ * e2e, parte 2). O selo fica com ~31 px, e o palco, que já tem o selo como
+ * borda de cima, perde a maior parte do respiro de cima (18 → 6 px). */
+.selo-revendo {
+  flex: none;
+  padding: .2em var(--lateral);
+  background: var(--foco);
+  color: var(--texto-sobre-claro);
+  font-size: clamp(18px, min(1.95vw, 2.8vh), 40px);
+  font-weight: 600;
+  line-height: 1.15;
+}
+.selo-revendo b { font-weight: 800; }
+body.revendo #palco { padding-top: calc(var(--espaco) * .4); }
+/* O resultado revisto não repete a entrada animada das cartas: rever é para
+   comentar, e a animação já mostrou, na hora, quais cartas pesaram. */
+.tela-revista .cartao-resultado.animada { animation: none; }
+.tela-revista-cartao { justify-content: center; }
+
 /* ---------- Barra do apresentador ----------
- * Sobreposta ao que está projetado. Só aparece com H ou com o mouse na faixa de
- * 48 px da borda de baixo (D-038; BORDA_BARRA_PX no telao.js), e some 3 s depois
- * do último movimento do mouse na faixa ou sobre ela. */
+ * Sobreposta ao que está projetado. Só aparece com H ou com o mouse PARADO
+ * ~400 ms na faixa fina do pé da tela (D-038; pedido 8 do Kleber, 05/10;
+ * BORDA_BARRA_PX e PARAR_NA_BORDA_MS no telao.js). Some 3 s depois do último
+ * movimento do mouse sobre ela, ou ~0,7 s depois de o mouse sair dela.
+ *
+ * Compacta (pedido 8): a informação do passo numa linha corrida em cima (o
+ * passo, o título, o salvamento, os ativos e o selo), a dica do passo embaixo
+ * dela e os botões menores. Antes, a informação vinha numa coluna de cinco
+ * linhas e os botões tinham 40 px de altura: aberta, a barra cobria um terço
+ * da tela em 1024×768. Os botões ficam com pelo menos 28 px (alvo de toque
+ * acima dos 24 px da WCAG 2.2). */
 
 .barra {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px;
-  padding: 10px 16px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 4px 10px 6px;
   background: rgba(17, 17, 17, .97);
   border-top: 1px solid var(--linha-forte);
-  font-size: 18px;
+  font-size: 15px; line-height: 1.25;
 }
-.barra-info { display: flex; flex-direction: column; gap: 2px; min-width: 14em; }
+.barra-info { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; }
 .barra-passo { font-weight: 700; }
 .barra-titulo { color: var(--texto-2); max-width: 22em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .barra-salvo { color: var(--texto-2); }
 .barra-salvo:empty { display: none; }
 .barra-ativos { color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .barra-ativos:empty { display: none; }
-.barra-dica { color: var(--texto); max-width: 40em; }
+.barra-dica { color: var(--texto); flex-basis: 100%; order: 1; }
 .barra-dica:empty { display: none; }
-.barra-info .selo { align-self: flex-start; margin-top: 4px; }
-.barra-botoes { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-.botao-barra { min-height: 40px; padding: .25em .7em; font-size: 17px; }
+.barra-info .selo { padding: 0 .6em; font-size: 14px; }
+.barra-botoes { display: flex; flex-wrap: wrap; gap: 4px; }
+.botao-barra { min-height: 28px; padding: .1em .55em; font-size: 14px; }
 
 /* ---------- Aviso e modal ---------- */
 
@@ -670,6 +776,108 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
   width: 5em; padding: .2em .4em; margin-bottom: .8em;
   background: var(--fundo); color: var(--texto); border: 2px solid var(--linha-forte); border-radius: var(--raio);
 }
+
+/* ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
+ * Um personagem só, 5 opções por bimestre com o dinheiro na própria opção, o
+ * evento do mês igual para todas as equipes (sem sorteio) e o placar pelo
+ * caminho de cada equipe (telao.js, simples()). Nada abaixo do corpo (28 px em
+ * 1024×768); o e2e (telao-simples) prova seis equipes em 1024×768 e 1920×1080. */
+
+/* A decisão: a letra, o rótulo e, à direita, o dinheiro da opção ("+R$ 900 no
+   bimestre"), que nunca quebra; o rótulo comprido quebra antes dele. */
+.opcoes-com-dinheiro li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6em; }
+.opcao-dinheiro { white-space: nowrap; font-weight: 700; text-align: right; }
+.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
+.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+
+/* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
+   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */
+.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+.conheca-quem { font-size: calc(var(--corpo) * 1.1); line-height: 1.25; }
+.conheca-conta { display: grid; grid-template-columns: max-content max-content; gap: .1em 1.4em; }
+.conheca-linha { display: contents; }
+.conheca-linha > b { text-align: right; }
+.conheca-itens { line-height: 1.25; }
+.conheca-itens b { color: var(--texto); }
+.conheca-mes { font-size: calc(var(--corpo) * 1.1); }
+
+/* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em
+   três colunas alinhadas entre as faixas (subgrid): a equipe e, embaixo, a
+   opção escolhida; o saldo do bimestre; o dinheiro da família. */
+.evento-do-mes { display: flex; flex-direction: column; gap: .05em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.2; }
+.evento-titulo { font-size: calc(var(--corpo) * 1.15); font-weight: 750; }
+.evento-linha { color: var(--texto-2); }
+.grade-simples {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content;
+  align-content: safe center;
+  row-gap: calc(var(--espaco) * .9);
+}
+.resultado-simples {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: subgrid; align-items: center;
+  column-gap: 1.2em;
+  padding: .15em .6em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  line-height: 1.12;
+}
+.simples-quem { grid-column: 1; grid-row: 1; min-width: 0; }
+.simples-opcao { grid-column: 1; grid-row: 2; display: flex; align-items: baseline; gap: .45em; min-width: 0; }
+.simples-opcao .letra { height: 1.2em; min-width: 1.2em; }
+.simples-saldo, .simples-familia { grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.simples-saldo { grid-column: 2; }
+.simples-familia { grid-column: 3; }
+.simples-familia-valor { font-size: 1.1em; white-space: nowrap; }
+.simples-familia-valor b { font-weight: 800; }
+.simples-familia-valor[data-situacao="devendo"] b { color: var(--negativo); }
+/* O aperto (telao.js, telaResultadoSimples): só quando seis faixas com a
+   faixa de entrada embaixo não cabem; o segundo, se o primeiro não bastou. */
+.tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
+.tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
+.tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .grade-simples { row-gap: 4px; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
+/* D-078: a consequência de uma escolha de antes, uma linha por motivo, com as
+   equipes juntas. O terceiro aperto (só com elas) tira a frase do evento do
+   mês; o quarto, se ainda faltar altura, o evento inteiro (ele está no celular). */
+.simples-antes { flex: none; display: flex; flex-direction: column; gap: .1em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.15; }
+.simples-antes b { font-weight: 800; }
+.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"]) .evento-linha { display: none; }
+.tela-rodada-resultado[data-aperto="4"] .evento-do-mes { display: none; }
+
+/* Placar, página 1: "O caminho de cada equipe". Em cada célula, a letra em
+   cima e o saldo do bimestre embaixo (lado a lado, seis bimestres não cabiam
+   em 1024×768); o total em destaque. Usa a margem lateral, como o resultado. */
+.tela-placar-final[data-pagina="caminho"] { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
+.caminho { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; }
+.tabela-caminho { border-collapse: collapse; width: 100%; line-height: 1.1; }
+.tabela-caminho th, .tabela-caminho td { padding: .15em .25em; border-bottom: 1px solid var(--linha); text-align: center; vertical-align: middle; }
+.tabela-caminho thead th { color: var(--texto-2); font-weight: 600; }
+.tabela-caminho .caminho-equipe { text-align: left; }
+.tabela-caminho .caminho-equipe .equipe { white-space: normal; }
+.caminho-letra { display: block; }
+.caminho-saldo { display: block; white-space: nowrap; }
+.caminho-saldo[data-sinal="negativo"], .caminho-total[data-sinal="negativo"] { color: var(--negativo); }
+.caminho-saldo[data-sinal="positivo"], .caminho-total[data-sinal="positivo"] { color: var(--positivo); }
+td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
+.tela-placar-final[data-aperto] .tabela-caminho { line-height: 1; }
+.tela-placar-final[data-aperto] .tabela-caminho th, .tela-placar-final[data-aperto] .tabela-caminho td { padding-top: 0; padding-bottom: 0; }
+
+/* Placar, página 3: as combinações possíveis. A melhor e a pior, e uma linha
+   por equipe: as letras dela e o lugar entre todas. */
+.combinacoes-extremos { display: flex; flex-direction: column; gap: .1em; color: var(--texto-2); }
+.combinacoes-extremos b { color: var(--texto); }
+.combinacao-letras { letter-spacing: .06em; white-space: nowrap; }
+.combinacoes-equipes { display: flex; flex-direction: column; gap: calc(var(--espaco) * .5); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+.combinacao-equipe {
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content; align-items: baseline; column-gap: 1.2em;
+  padding-bottom: calc(var(--espaco) * .3); border-bottom: 1px solid var(--linha); line-height: 1.15;
+}
+.combinacao-lugar { color: var(--texto-2); white-space: nowrap; text-align: right; }
+.combinacao-lugar b { color: var(--texto); }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }

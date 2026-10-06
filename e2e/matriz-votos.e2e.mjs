@@ -11,8 +11,8 @@
 // do botão tocado.
 //
 // A sessão inteira do roteiro 60min, com o config.json real, contra o emulador:
-// 6 equipes com um celular de 360×740 em cada (mais um na segunda equipe do
-// Jonas, para o empate), votando pela TELA, com toques (tocar na opção →
+// 6 equipes com um celular de 360×740 em cada (mais um na segunda equipe, para
+// o empate), votando pela TELA, com toques (tocar na opção →
 // "Votar nesta"; tocar no número da enquete). A cada voto, confere o servidor e
 // a contagem da equipe no telão; ao fim de cada etapa, a apuração. Cobre:
 // - as 3 rodadas e as 3 enquetes, com celulares nas 6 equipes (as duas do Jonas);
@@ -62,20 +62,26 @@
 // O número de rodadas vem do roteiro (a D-060 leva a 6): a primeira e a
 // segunda têm os casos acima, as do meio são votadas por todos, e a última é o
 // caso do teste de 30/09 (todos votam depois do cronômetro).
-// Esquema v3 (D-060: 12 meses em 6 bimestres): a matriz roda DUAS sessões,
-// uma com o config.json (as 6 rodadas bimestrais do conteúdo real) e outra com a fixture
-// de 6 rodadas bimestrais (test/fixtures/config-teste-v3.json), para as 6
-// rodadas, o placar estimado das duas últimas e o fechamento mais pesado do
-// telão (o decompor simulado) passarem pelos mesmos toques. Com --config
-// <arquivo>, só aquele.
+// Esquema v3 (D-060: 12 meses em 6 bimestres): a matriz roda TRÊS sessões:
+// - o config.json do dia (D-078, o jogo simples): o Jonas nas 6 equipes, 5
+//   opções por bimestre e a apuração direto no resultado, sem sorteio; cada
+//   celular guarda as telas que desenhou, e nenhum pode passar pelo
+//   "Sorteando…";
+// - o config de 05/10 com sorteio e 6 personas (test/fixtures/config-real-v31.json);
+// - a fixture de 6 rodadas bimestrais (test/fixtures/config-teste-v3.json), com
+//   o placar estimado das duas últimas e o fechamento mais pesado do telão (o
+//   decompor simulado).
+// Nas três, toda opção de toda rodada tem de ser tocada num celular e contada
+// numa apuração conferida (as do meio giram uma opção por equipe). Com
+// --config <arquivo>, só aquele.
 // Capturas em e2e/capturas/votos-*.png (as antigas são apagadas no começo; as
-// da fixture v3 levam "votos-v3-").
+// do config de 05/10 levam "votos-v31-", e as da fixture v3, "votos-v3-").
 //
 // Uso: npm run e2e:votos. Com --sem-espera, as esperas longas encolhem para
 // depurar o próprio teste; a verificação de verdade é sem ele.
 //
 // As funções passadas a page.evaluate/waitForFunction rodam no navegador.
-/* global document, innerHeight */
+/* global document, innerHeight, MutationObserver */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
@@ -88,10 +94,22 @@ const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const SDK_CDN = 'https://www.gstatic.com/firebasejs/12.19.0/';
 const UA_CELULAR = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
 const SEM_ESPERA = process.argv.includes('--sem-espera');
-// Os configs da matriz: o do --config, ou os dois (o real e a fixture de 6
-// rodadas). Relativos à raiz do projeto.
+// Os configs da matriz: o do --config, ou os três abaixo. Relativos à raiz do
+// projeto.
 const ARG_CONFIG = process.argv.includes('--config') ? process.argv[process.argv.indexOf('--config') + 1] : null;
-const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : ['config.json', 'test/fixtures/config-teste-v3.json'];
+// Desde 06/10 (D-078), o config.json é o jogo simples: o Jonas nas 6 equipes, 5
+// opções por bimestre e o fechamento sem sorteio (a decisão vai direto ao
+// resultado). Ele vem PRIMEIRO, porque é o conteúdo do dia 07/10: na primeira
+// versão do jogo simples a matriz só rodava as fixtures, e nenhum toque de
+// celular passava pela quinta opção nem pelo fechamento sem sorteio com 7
+// aparelhos. Depois dele, o conteúdo de 05/10 (sorteio e 6 personas, congelado
+// em test/fixtures/config-real-v31.json) e a fixture de 6 rodadas, que
+// continuam provando o caminho com sorteio.
+const CONFIG_DO_DIA = 'config.json';
+const CONFIG_REAL = 'test/fixtures/config-real-v31.json';
+const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : [CONFIG_DO_DIA, CONFIG_REAL, 'test/fixtures/config-teste-v3.json'];
+// O prefixo das capturas de cada config, para uma sessão não sobrescrever a outra.
+const PREFIXOS = { [CONFIG_DO_DIA]: 'votos', [CONFIG_REAL]: 'votos-v31', 'test/fixtures/config-teste-v3.json': 'votos-v3' };
 const ROTEIRO = '60min';
 const LETRAS = 'ABCDEFGHIJ';
 const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
@@ -158,12 +176,19 @@ async function conteudoDoTeste(arquivo) {
   // prorrogação não depende da persona: é o sétimo celular na equipe 2.
   assert.ok(rodadas.length >= 3, `a matriz precisa de pelo menos 3 rodadas no roteiro ${ROTEIRO} (tem ${rodadas.length})`);
   // A D-060 leva o jogo a 6 rodadas: a matriz do config.json tem de passar pelas 6 (revisão da F7).
-  if (arquivo === 'config.json') assert.equal(rodadas.length, 6, `o config.json tem 6 rodadas no roteiro ${ROTEIRO} (D-060)`);
+  if (arquivo === CONFIG_REAL || arquivo === CONFIG_DO_DIA) assert.equal(rodadas.length, 6, `o ${arquivo} tem 6 rodadas no roteiro ${ROTEIRO} (D-060)`);
   for (const rId of rodadas) assert.ok(lista(cfg.rodadas[rId].ordemOpcoes).length >= 3, `a rodada ${rId} tem pelo menos 3 opções`);
-  console.log(`Conteúdo: ${arquivo} (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos, ${rodadas.length} rodadas de ${V.motor.mesesPorRodada(cfg)} mês(es).`);
-  // As capturas da fixture v3 levam o prefixo, para não sobrescrever as do config.json.
-  const prefixo = arquivo === 'config.json' ? 'votos' : 'votos-v3';
-  return { V, cfg, texto, passos, equipes, rodadas, enquetes, prefixo, opcoesDe: (rId) => lista(cfg.rodadas[rId].ordemOpcoes) };
+  // O formato simples (D-078): sem sorteio, a apuração vai direto ao resultado.
+  const simples = V.historia.formatoSimples(cfg);
+  // D-078: 5 opções em cada bimestre do dia. A matriz confere no fim que cada
+  // uma delas foi tocada num celular e contada numa apuração conferida.
+  if (arquivo === CONFIG_DO_DIA) {
+    assert.equal(simples, true, 'o config.json do dia é o formato simples (D-078)');
+    for (const rId of rodadas) assert.equal(lista(cfg.rodadas[rId].ordemOpcoes).length, 5, `a rodada ${rId} do dia tem 5 opções (D-078)`);
+  }
+  console.log(`Conteúdo: ${arquivo} (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos, ${rodadas.length} rodadas de ${V.motor.mesesPorRodada(cfg)} mês(es)${simples ? ', formato simples (sem sorteio)' : ''}.`);
+  const prefixo = PREFIXOS[arquivo] ?? 'votos-outro';
+  return { V, cfg, texto, passos, equipes, rodadas, enquetes, prefixo, simples, opcoesDe: (rId) => lista(cfg.rodadas[rId].ordemOpcoes) };
 }
 
 // O que o telão grava logo depois de a tela mudar chega um instante depois:
@@ -181,7 +206,7 @@ async function esperarNoBanco(caminho, esperado, esperaMs = 8000) {
 async function matriz() {
   mkdirSync(CAPTURAS, { recursive: true });
   for (const n of readdirSync(CAPTURAS)) if (/^votos-.*\.png$/.test(n)) rmSync(join(CAPTURAS, n));
-  for (const arquivo of CONFIGS) await sessaoDaMatriz(await conteudoDoTeste(arquivo));
+  for (const [i, arquivo] of CONFIGS.entries()) await sessaoDaMatriz({ ...(await conteudoDoTeste(arquivo)), primeira: i === 0 });
 }
 
 async function sessaoDaMatriz(C) {
@@ -322,6 +347,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   async function novoCelular(nome) {
     const ctx = await navegador.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: UA_CELULAR });
     await servirSdk(ctx);
+    await vigiarTelas(ctx);
     // Falha de rede simulada (achado 5): com globalThis.__falhasGravar > 0, a
     // escrita de uma decisão falha sem ser recusa da regra, como numa rede que
     // derruba a escrita. É o único jeito de exercitar o reenvio até o teto: o
@@ -374,6 +400,18 @@ async function jogar({ C, site, navegador, vigiar }) {
     } catch (erro) {
       throw new Error(`${c.nome}: esperava a tela "${tipo}", está em "${await telaDe(c)}" (${erro.message.split('\n')[0]})`);
     }
+  }
+  // A história das telas de cada celular (o data-tela do body), para o formato
+  // simples conferir que nenhum passou pelo "Sorteando…" nem por um instante.
+  // Recomeça a cada carga da página.
+  async function vigiarTelas(ctx) {
+    await ctx.addInitScript(() => {
+      globalThis.__telasVistas = [];
+      new MutationObserver(() => {
+        const t = document.body?.dataset.tela;
+        if (t && globalThis.__telasVistas.at(-1) !== t) globalThis.__telasVistas.push(t);
+      }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-tela'] });
+    });
   }
   // O elemento inteiro à vista: abaixo do topo fixo e acima do aviso "Mais
   // opções abaixo" (quando ele aparece). Um retorno fora da tela é um retorno
@@ -439,7 +477,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   // Revisão da F7 (achados 1 e 2), só na primeira sessão (a prova sem
   // resposta espera os 15 s do tempo-limite): dois caminhos em que o celular do
   // apresentador escapava do modo espectador.
-  if (C.prefixo === 'votos') await tropecosDoEspectador();
+  if (C.primeira) await tropecosDoEspectador();
   const esp = await novoCelular('espectador');
   await esperarTela(esp, 'entrada');
   await esp.p.locator('[data-acao="sou-apresentador"]').tap();
@@ -765,6 +803,11 @@ async function jogar({ C, site, navegador, vigiar }) {
     const noServidor = await esperarNoBanco(s('decisoes', rId, c.equipe, c.uid), op);
     assert.equal(noServidor, op, `${c.nome}: o voto em ${rId}/${op} está no servidor`);
   }
+  // As opções de cada rodada que foram tocadas num celular e contadas numa
+  // apuração conferida (D-078: 5 por bimestre). No fim, toda opção de toda
+  // rodada tem de estar aqui: na primeira versão do jogo simples, a quinta
+  // opção nunca passava por um toque na matriz.
+  const cobertas = Object.fromEntries(C.rodadas.map((r) => [r, new Set()]));
   // O que a apuração tem de dar, equipe por equipe: { eq: { decisao, origem, contagem? } }.
   async function conferirResultado(rId, esperado) {
     const res = await esperarNoBanco(s('resultados', rId, E1, 'origem'), esperado[E1].origem, 15000)
@@ -777,10 +820,39 @@ async function jogar({ C, site, navegador, vigiar }) {
       if (exp.contagem) {
         const contagem = Object.fromEntries(C.opcoesDe(rId).map((o) => [o, exp.contagem[o] ?? 0]));
         assert.deepEqual({ ...r.contagem }, contagem, `${rId}/${eq}: a contagem da apuração é a dos votos da tela`);
+        for (const [o, n] of Object.entries(contagem)) if (n > 0) cobertas[rId].add(o);
       }
     }
   }
   const umVoto = (op) => ({ [op]: 1 });
+  // Depois de apurar: com sorteio, o telão para no "sorteio"; no formato
+  // simples (D-078), não há sorteio, e a apuração vai direto ao resultado.
+  const apurou = (e) => e.subfase === (C.simples ? 'resultado' : 'sorteio');
+  // No formato simples, nenhum celular pode ter passado pela tela "Sorteando…"
+  // (ela fala de fatias que não existem): confere o que cada um já desenhou
+  // desde a última carga da página (__telasVistas, do vigiarTelas).
+  async function nuncaSorteando(oque) {
+    if (!C.simples) return;
+    for (const c of [...cel, esp]) {
+      const vistas = await c.p.evaluate(() => globalThis.__telasVistas || []);
+      // A vigia funciona: uma lista vazia passaria calada pela conferência.
+      assert.ok(vistas.length > 0, `${c.nome}: a vigia das telas não registrou nada (${oque})`);
+      assert.ok(!vistas.includes('sorteando'), `${c.nome}: no formato simples, nunca "Sorteando…" (${oque}; telas: ${vistas.join(' → ')})`);
+    }
+  }
+  // Do sorteio ao resultado é um Espaço. No formato simples, a apuração já
+  // deixou o telão no resultado, e um Espaço a mais sairia da rodada.
+  async function irAoResultado(rId) {
+    if (!C.simples) return avancar(`resultado de ${rId}`, (e) => e.subfase === 'resultado');
+    const e = await estado();
+    assert.deepEqual([e.rodada, e.subfase], [rId, 'resultado'], `formato simples: a apuração de ${rId} vai direto ao resultado`);
+    for (const c of cel) {
+      await esperarTela(c, 'resultado');
+      assert.equal((await c.p.evaluate(() => globalThis.__telasVistas || [])).at(-1), 'resultado', `${c.nome}: a vigia das telas viu o resultado de ${rId}`);
+    }
+    await nuncaSorteando(rId);
+    return e;
+  }
 
   // Achado 5: a escrita da decisão falha 5 vezes sem ser recusa da regra (a
   // falha simulada do novoCelular). Antes, depois da quinta, a tela dizia
@@ -871,7 +943,10 @@ async function jogar({ C, site, navegador, vigiar }) {
     await conferirOrdem(c, R1);
   }
   const o1 = C.opcoesDe(R1);
-  const plano1 = new Map([[cel[0], o1[0]], [cel[1], o1[1]], [cel[2], o1[2]], [cel[3], o1[3] ?? o1[0]], [cel[4], o1[0]], [cel[5], o1[1]], [extra, o1[1]]]);
+  // D-078: com 5 opções, a equipe 5 vota na última (a que fica abaixo da dobra
+  // em 360×740); com menos, na primeira, como antes.
+  const ultima1 = o1[4] ?? o1[0];
+  const plano1 = new Map([[cel[0], o1[0]], [cel[1], o1[1]], [cel[2], o1[2]], [cel[3], o1[3] ?? o1[0]], [cel[4], ultima1], [cel[5], o1[1]], [extra, o1[1]]]);
   // O celular 3 recarrega no meio da rodada, antes de votar.
   await cel[2].p.reload();
   await esperarTela(cel[2], 'decisao');
@@ -916,20 +991,20 @@ async function jogar({ C, site, navegador, vigiar }) {
   assert.equal(await movido.p.locator('.botao-opcao-aluno[data-meu-voto]').count(), 0, `${movido.nome}: na equipe nova, nenhuma opção marcada como voto`);
   await naTela(movido, `[data-detalhe="${plano1.get(movido)}"] .opcao-aviso`, 'o aviso de "movido" junto do botão');
   await capturar(movido, 'mes1-movido-depois-de-votar');
-  await votarPelaTela(movido, R1, o1[0]);
+  await votarPelaTela(movido, R1, ultima1);
   assert.equal(await movido.p.locator('[data-movido]').count(), 0, `${movido.nome}: votou pela equipe nova, e o aviso sai`);
   await decidiramNoTelao(E5, 2, 2);
   await espectadorVe(E2, 'mês 1');
   await capturar(esp, 'mes1-espectador');
   await capturar(cel[0], 'mes1-votado');
-  await encerrar('apurar o mês 1', (e) => e.subfase === 'sorteio');
+  await encerrar('apurar o mês 1', apurou);
   const esperado1 = {
     [E1]: { decisao: o1[0], origem: 'maioria', contagem: umVoto(o1[0]) },
     [E2]: { decisao: o1[1], origem: 'maioria', contagem: { [o1[1]]: 2 } },
     [E3]: { decisao: o1[2], origem: 'maioria', contagem: umVoto(o1[2]) },
     [E4]: { decisao: plano1.get(cel[3]), origem: 'maioria', contagem: umVoto(plano1.get(cel[3])) },
     // O movido votou pela equipe 5; o voto dele pela 6 foi descartado.
-    [E5]: { decisao: o1[0], origem: 'maioria', contagem: { [o1[0]]: 2 } },
+    [E5]: { decisao: ultima1, origem: 'maioria', contagem: { [ultima1]: 2 } },
     [E6]: { decisao: C.cfg.rodadas[R1].padrao, origem: 'piloto', contagem: {} },
   };
   await conferirResultado(R1, esperado1);
@@ -939,9 +1014,9 @@ async function jogar({ C, site, navegador, vigiar }) {
   await esperarTela(cel[0], 'decisao');
   await votarPelaTela(cel[0], R1, o1[2]);
   await decidiramNoTelao(E1, 1, 1);
-  await encerrar('apurar o mês 1 de novo', (e) => e.subfase === 'sorteio');
+  await encerrar('apurar o mês 1 de novo', apurou);
   await conferirResultado(R1, { ...esperado1, [E1]: { decisao: o1[2], origem: 'maioria', contagem: umVoto(o1[2]) } });
-  await avancar('resultado do mês 1', (e) => e.subfase === 'resultado');
+  await irAoResultado(R1);
   for (const c of cel) await esperarTela(c, 'resultado');
   // Fora da decisão, mover não descarta voto nenhum: volta sem confirmação.
   await moverPeloTelao(movido, E6);
@@ -998,7 +1073,8 @@ async function jogar({ C, site, navegador, vigiar }) {
     assert.equal(await esperarNoBanco(s('decisoes', R2, c3.equipe, c3.uid), opPausa, 15000), opPausa, `${c3.nome}: o voto guardado na pausa foi sozinho na retomada`);
     await c3.p.waitForFunction((o) => /✓ seu voto/.test(document.querySelector(`.botao-opcao-aluno[data-opcao="${o}"]`)?.textContent || ''), opPausa, { timeout: 15000 });
   }
-  const plano2 = new Map([[cel[0], o2[3] ?? o2[2]], [cel[1], o2[0]], [cel[2], o2[1]], [cel[3], o2[2]], [cel[5], o2[3] ?? o2[0]], [extra, o2[1]]]);
+  // D-078: com 5 opções, a equipe 6 vota na última; com 4, na quarta, como antes.
+  const plano2 = new Map([[cel[0], o2[3] ?? o2[2]], [cel[1], o2[0]], [cel[2], o2[1]], [cel[3], o2[2]], [cel[5], o2[4] ?? o2[3] ?? o2[0]], [extra, o2[1]]]);
   const votos2 = {};
   assert.equal(plano2.get(c3), opPausa, 'o plano do mês 2 conta o voto que foi na retomada');
   for (const [c, op] of plano2) {
@@ -1067,7 +1143,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   await votarPelaTela(extra, R2, o2[0]);
   await decidiramNoTelao(E2, 2, 2);
   await espectadorVe(E2, 'prorrogação do mês 2');
-  await encerrar('apurar o mês 2', (e) => e.subfase === 'sorteio');
+  await encerrar('apurar o mês 2', apurou);
   const padrao2 = C.cfg.rodadas[R2].padrao;
   await conferirResultado(R2, {
     [E1]: { decisao: plano2.get(cel[0]), origem: 'maioria', contagem: umVoto(plano2.get(cel[0])) },
@@ -1077,7 +1153,7 @@ async function jogar({ C, site, navegador, vigiar }) {
     [E5]: { decisao: padrao2, origem: 'piloto', contagem: {} },
     [E6]: { decisao: plano2.get(cel[5]), origem: 'maioria', contagem: umVoto(plano2.get(cel[5])) },
   });
-  await avancar('resultado do mês 2', (e) => e.subfase === 'resultado');
+  await irAoResultado(R2);
   console.log('Mês 2: pausa com o motivo à vista, e o voto em trânsito guardado e enviado na retomada; prorrogação votada depois do corte do prazo antigo; voto sem rede que chegou depois do fechamento recusado e avisado à vista; troca tardia avisada com o voto anterior contado.');
 
   // ---------- 4b. As rodadas do meio (a D-060 leva o roteiro a 6): todos votam ----------
@@ -1085,19 +1161,24 @@ async function jogar({ C, site, navegador, vigiar }) {
     await avancarAte((e) => e.tipo === 'rodada' && e.rodada === rMeio, `até ${rMeio}`);
     await esperarEstado((e) => e.subfase === 'decidindo', `${rMeio} aberto`);
     await conferirOrdemNoTelao(rMeio);
-    const op = C.opcoesDe(rMeio)[0];
+    // Cada equipe numa opção, girando a cada rodada: com 6 equipes e 5
+    // opções (D-078), toda letra é tocada e contada em toda rodada do meio.
+    // Antes, todas votavam na primeira, e as outras nunca passavam por um
+    // toque ali. As duas do celular da equipe 2 votam juntas (maioria).
+    const opsMeio = C.opcoesDe(rMeio);
+    const opDe = (eq) => opsMeio[(C.equipes.indexOf(eq) + iMeio) % opsMeio.length];
     const votosMeio = {};
     for (const c of cel) {
       await esperarTela(c, 'decisao');
       await conferirOrdem(c, rMeio);
-      if (c === extra && iMeio === 0) await votoGuardadoERecarga(c, rMeio, op);
-      else await votarPelaTela(c, rMeio, op);
+      if (c === extra && iMeio === 0) await votoGuardadoERecarga(c, rMeio, opDe(c.equipe));
+      else await votarPelaTela(c, rMeio, opDe(c.equipe));
       votosMeio[c.equipe] = (votosMeio[c.equipe] || 0) + 1;
     }
     await espectadorVe(C.equipes[(2 + iMeio) % C.equipes.length], rMeio);
-    await encerrar(`apurar ${rMeio}`, (e) => e.subfase === 'sorteio');
-    await conferirResultado(rMeio, Object.fromEntries(C.equipes.map((eq) => [eq, { decisao: op, origem: 'maioria', contagem: { [op]: votosMeio[eq] } }])));
-    await avancar(`resultado de ${rMeio}`, (e) => e.subfase === 'resultado');
+    await encerrar(`apurar ${rMeio}`, apurou);
+    await conferirResultado(rMeio, Object.fromEntries(C.equipes.map((eq) => [eq, { decisao: opDe(eq), origem: 'maioria', contagem: { [opDe(eq)]: votosMeio[eq] } }])));
+    await irAoResultado(rMeio);
     console.log(`${rMeio}: ${cel.length} votos pela tela, contados.`);
   }
 
@@ -1148,7 +1229,8 @@ async function jogar({ C, site, navegador, vigiar }) {
   // conexão voltar e conta.
   await cel[1].p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   const o3 = C.opcoesDe(R3);
-  const plano3 = new Map([[cel[0], o3[1]], [cel[1], o3[2]], [cel[2], o3[3] ?? o3[0]], [cel[3], o3[0]], [cel[4], o3[1]], [cel[5], o3[2]]]);
+  // D-078: com 5 opções, a equipe 6 vota na última; com menos, na terceira, como antes.
+  const plano3 = new Map([[cel[0], o3[1]], [cel[1], o3[2]], [cel[2], o3[3] ?? o3[0]], [cel[3], o3[0]], [cel[4], o3[1]], [cel[5], o3[4] ?? o3[2]]]);
   const votos3 = {};
   for (const [c, op] of plano3) {
     await votarPelaTela(c, R3, op);
@@ -1160,9 +1242,9 @@ async function jogar({ C, site, navegador, vigiar }) {
   await espectadorVe(E4, 'mês 3');
   await capturar(cel[0], 'mes3-jonas-votou-depois-do-cronometro');
   await capturar(cel[1], 'mes3-jonas2-votou-depois-do-cronometro');
-  await encerrar('apurar o mês 3', (e) => e.subfase === 'sorteio');
+  await encerrar('apurar o mês 3', apurou);
   await conferirResultado(R3, Object.fromEntries([...plano3].map(([c, op]) => [c.equipe, { decisao: op, origem: 'maioria', contagem: umVoto(op) }])));
-  await avancar('resultado do mês 3', (e) => e.subfase === 'resultado');
+  await irAoResultado(R3);
   for (const c of cel) await esperarTela(c, 'resultado');
   console.log(`Mês 3: 6 votos pela tela, o último ${Math.round((ultimoVoto3 - abertura3.abertoEm) / 1000)} s depois de abrir, todos contados (servidor, telão e apuração); o regravado viu o motivo à vista.`);
 
@@ -1205,6 +1287,14 @@ async function jogar({ C, site, navegador, vigiar }) {
     const estimado = C.V.motor.caminhosDeCartas(C.cfg, eq, C.rodadas) > C.V.motor.LIMITE_CAMINHOS;
     assert.equal(placar[eq].estimado === true, estimado, `placar ${eq}: estimado ${estimado}`);
   }
+  // Toda opção de toda rodada (as 5 do dia, D-078) foi tocada num celular e
+  // contada numa apuração conferida.
+  for (const rId of C.rodadas) {
+    const faltam = C.opcoesDe(rId).filter((o) => !cobertas[rId].has(o)).map((o) => LETRAS[C.opcoesDe(rId).indexOf(o)]);
+    assert.deepEqual(faltam, [], `${rId}: as opções ${faltam.join(', ')} nunca foram votadas pela tela e contadas`);
+  }
+  await nuncaSorteando('a sessão inteira');
+  console.log(`Cobertura: as opções de cada rodada (${C.rodadas.map((r) => C.opcoesDe(r).length).join('/')}) foram todas votadas pela tela e contadas${C.simples ? '; nenhum celular passou pelo "Sorteando…"' : ''}.`);
   await telao.keyboard.press('h');
   await telao.locator('[data-acao="apagar"]').hover();
   await telao.mouse.down();

@@ -30,13 +30,44 @@
   // D-054: a mesma escolha dita do jeito de cada ofício. rotuloPor/narrativaPor
   // da persona, e o rotulo/narrativa da opção quando ela não tem entrada. O
   // telão também usa isto (o resultado de cada equipe fala do jeito dela);
-  // opção que não existe dá os dois null.
+  // opção que não existe dá tudo null.
+  // D-073 (teste do Kleber de 05/10): mais o impacto, a linha do custo humano que
+  // vai embaixo da opção no celular e no telão (impactoPor da persona, senão o
+  // impacto da opção, senão null). O celular busca aqui, no conteúdo, como já
+  // busca a narrativa (a telaDoAluno também o leva em opcoes[], só quando há).
   function textoDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
     const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
     return {
       rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
       narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+      impacto: em(opcao, 'impactoPor', personaId) ?? opcao.impacto ?? null,
     };
+  }
+
+  // D-075 (teste do Kleber de 05/10): a carta com o título do jeito do personagem
+  // ("A moto quebrou", "A bike quebrou", "O celular quebrou"), com a mesma
+  // chance: só o texto muda, e a mesma carta conta seis histórias. tituloPor
+  // e curtoPor da persona, senão o titulo e o curto da carta; carta que não
+  // existe dá os dois null. O telão usa no resultado e no sorteio; a história
+  // da equipe e o celular, no "aconteceu".
+  function textoDaCarta(conteudo, cartaId, personaId) {
+    const carta = em(conteudo, 'cartas', cartaId) || {};
+    return {
+      titulo: em(carta, 'tituloPor', personaId) ?? carta.titulo ?? null,
+      curto: em(carta, 'curtoPor', personaId) ?? carta.curto ?? null,
+    };
+  }
+
+  // Os curtos de todas as cartas para uma persona, { [cartaId]: curto }, só as
+  // que têm curto: o formato que o gráfico das fatias do sorteio recebe
+  // (D-040), agora por equipe (D-075).
+  function curtosDasCartas(conteudo, personaId) {
+    const curtos = {};
+    for (const cartaId of Object.keys(em(conteudo, 'cartas') || {})) {
+      const { curto } = textoDaCarta(conteudo, cartaId, personaId);
+      if (curto) curtos[cartaId] = curto;
+    }
+    return curtos;
   }
 
   // Esquema v2.2: as duas dívidas da família, a partir dos indicadores (o
@@ -216,13 +247,18 @@
       if (!res) return;
       const rodada = em(conteudo, 'rodadas', rodadaId) || {};
       const carta = em(conteudo, 'cartas', res.carta) || {};
+      // Só o rótulo e a narrativa: a história conta o que aconteceu, e o
+      // impacto (D-073) é da hora de decidir. O formato fica o de antes, que o
+      // e2e do telão compara campo a campo.
+      const { rotulo, narrativa } = textoDaOpcao(conteudo, rodadaId, res.decisao, personaId);
       historia.push({
         rodadaId,
         titulo: rodada.titulo ?? null,
         // O nome curto ("Jan–fev"), pela posição da rodada no config.
         rotulo: rotuloDaRodada(rodada.titulo, i),
-        opcao: textoDaOpcao(conteudo, rodadaId, res.decisao, personaId),
-        carta: { titulo: carta.titulo ?? null, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
+        opcao: { rotulo, narrativa },
+        // O título do jeito do personagem (D-075), quando a carta o tem.
+        carta: { titulo: textoDaCarta(conteudo, res.carta, personaId).titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
         mes: res.mes ?? null,
         cartaCusto: res.cartaCusto ?? null,
         // O que veio dos meses anteriores (motor, deAntes), gravado pelo
@@ -410,6 +446,37 @@
     return /^.*?[.!?](?=\s|$)/s.exec(limpo)?.[0] ?? limpo;
   }
 
+  // Formato simples (D-078): a consequência que vem de uma escolha de antes (as
+  // costas que travam na segunda puxada seguida, a moto que quebra porque a
+  // revisão ficou para depois, o IPVA que já estava pago) aparece no resultado
+  // do bimestre em que acontece, com o motivo. Sem isso, o saldo de uma equipe
+  // caía R$ 1.230 e ninguém na sala sabia por quê. O motivo é o rótulo do efeito
+  // até os dois-pontos ("as costas travaram: 7 dias parado" e "as costas
+  // travaram: fisioterapia" viram um motivo só, com a soma); as equipes com o
+  // mesmo motivo e o mesmo valor ficam juntas, numa linha: no telão de
+  // 1024×768 não cabe uma linha a mais por equipe. Entrada: [{ equipeId,
+  // deAntes }] (o deAntes do resultado, o que o motor nomeia); saída, na ordem em
+  // que os motivos aparecem: [{ motivo, valor, equipes: [ids] }].
+  function consequenciasDaRodada(itens) {
+    const grupos = [];
+    for (const { equipeId, deAntes } of lista(itens)) {
+      const porMotivo = new Map();
+      for (const x of lista(deAntes)) {
+        if (!x || typeof x.rotulo !== 'string' || !Number.isFinite(x.valor)) continue;
+        const motivo = x.rotulo.split(':')[0].trim();
+        porMotivo.set(motivo, (porMotivo.get(motivo) || 0) + x.valor);
+      }
+      for (const [motivo, soma] of porMotivo) {
+        const valor = Math.round(soma) + 0;
+        if (valor === 0) continue;
+        const grupo = grupos.find((g) => g.motivo === motivo && g.valor === valor);
+        if (grupo) grupo.equipes.push(equipeId);
+        else grupos.push({ motivo, valor, equipes: [equipeId] });
+      }
+    }
+    return grupos;
+  }
+
   // A linha curta de um mês na história do telão (D-045; rascunho, seção 7,
   // item 12): a primeira frase da narrativa da opção e a da carta, em primeira
   // pessoa. As narrativas inteiras (de 90 a 150 letras cada) davam quatro
@@ -420,9 +487,93 @@
     return frases.length > 0 ? frases.join(' ') : null;
   }
 
+  // ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
+  //
+  // No teste dele, o jogo de 6 personagens com sorteio de cartas e várias telas
+  // de placar ficou complexo demais para explicar em aula. Com
+  // regras.formatoSimples: um personagem só (o Jonas) para todas as equipes, 5
+  // opções por bimestre, o evento do mês igual para todos (sem sorteio) e o
+  // dinheiro na própria opção. O telão e o celular perguntam aqui, e não cada
+  // um ao config.
+  function formatoSimples(conteudo) {
+    return em(conteudo, 'regras', 'formatoSimples') === true;
+  }
+
+  // Um id ou uma lista de ids (a Condicao do config).
+  const contem = (valor, id) => (typeof valor === 'string' ? valor === id : lista(valor).includes(id));
+
+  // O efeito é direto quando vale sempre que a equipe escolhe a opção: sem
+  // condição, ou com condição só de persona, opção ou rodada, valendo aqui.
+  // Condição de equipe, de indicador ou de histórico (decidiu, sorteou) é
+  // consequência, que depende do caminho: fica de fora da linha da opção.
+  function efeitoDireto(se, { rodadaId, opcaoId, personaId }) {
+    if (se == null) return true;
+    if (typeof se !== 'object') return false;
+    for (const [chave, valor] of Object.entries(se)) {
+      if (chave === 'persona' && contem(valor, personaId)) continue;
+      if (chave === 'opcao' && contem(valor, opcaoId)) continue;
+      if (chave === 'rodada' && contem(valor, rodadaId)) continue;
+      return false;
+    }
+    return true;
+  }
+
+  // O dinheiro que a opção move, para a linha embaixo dela ("+R$ 900 no
+  // bimestre"): a soma das somas na renda dos efeitos diretos da opção (o
+  // trabalho, o custo fixo, o gasto, a proteção), como o motor os soma, uma vez
+  // por período. O empréstimo vai à parte: é dívida, e não renda (o motor o
+  // deixa fora do saldo do período). O que vem depois, encadeado (a condição
+  // de histórico ou de estado, nos efeitos da opção, nos gerais da rodada ou na
+  // carta), fica de fora de propósito: é a surpresa do resultado. O multiplica
+  // não entra: o validador o recusa como efeito direto no formato simples,
+  // porque não tem valor fixo. { valor, emprestimo }; opção que não existe dá
+  // os dois 0.
+  function dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
+    let valor = 0;
+    let emprestimo = 0;
+    for (const efeito of lista(em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId, 'efeitos'))) {
+      if (!efeito || typeof efeito !== 'object' || !efeitoDireto(efeito.se, { rodadaId, opcaoId, personaId })) continue;
+      if (efeito.emprestimo) emprestimo += Number(efeito.emprestimo.valor) || 0;
+      else valor += Number(em(efeito, 'soma', 'renda')) || 0;
+    }
+    return { valor: valor + 0, emprestimo };
+  }
+
+  // A linha do dinheiro da opção, a mesma no telão e no celular: "+R$ 900 no
+  // bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre"; com empréstimo,
+  // "+R$ 1.500 emprestado" e, se a opção também mexe na renda, o valor depois
+  // ("+R$ 1.500 emprestado · −R$ 90 no bimestre"). A moeda vem da tela.
+  function textoDoDinheiro(dinheiro, moeda, per) {
+    if (!dinheiro) return null;
+    const noPeriodo = per && typeof per.noPeriodo === 'string' ? per.noPeriodo : 'no mês';
+    const doPeriodo = `${moeda(dinheiro.valor, { sinal: true })} ${noPeriodo}`;
+    if (!(dinheiro.emprestimo > 0)) return doPeriodo;
+    const emprestado = `+${moeda(dinheiro.emprestimo)} emprestado`;
+    return Math.round(dinheiro.valor) !== 0 ? `${emprestado} · ${doPeriodo}` : emprestado;
+  }
+
+  // O dinheiro da família no fim de um período: o patrimônio (o caixa menos a
+  // dívida total: o cheque especial, o empréstimo e as contas atrasadas), em
+  // reais inteiros. { situacao: 'tem' | 'devendo', valor (sempre ≥ 0) }; null
+  // sem a renda (sala sem resultado). O "tem R$ X" e o "devendo R$ X" das duas
+  // telas saem daqui.
+  function dinheiroDaFamilia(valores) {
+    const p = patrimonioDe(valores);
+    if (p === null) return null;
+    const r = Math.round(p) + 0;
+    return r < 0 ? { situacao: 'devendo', valor: -r } : { situacao: 'tem', valor: r };
+  }
+
+  function textoDaFamilia(valores, moeda) {
+    const d = dinheiroDaFamilia(valores);
+    return d ? `${d.situacao === 'devendo' ? 'devendo' : 'tem'} ${moeda(d.valor)}` : null;
+  }
+
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
-    nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite,
+    nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
+    formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
+    consequenciasDaRodada,
   };
 })(globalThis);

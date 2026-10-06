@@ -86,15 +86,38 @@
   // mesma regra de historia.textoDaOpcao, repetida aqui porque a lógica do
   // celular não pode depender da ordem de carga do historia.js para montar a
   // decisão (sem ele, a história do fim fica vazia, mas a decisão não pode).
+  // D-073 (teste do Kleber de 05/10): o impacto (o custo humano da opção) pela mesma regra.
   function textoOpcao(conteudo, rodadaId, opcaoId, personaId) {
     const opcao = em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId) || {};
     return {
       rotulo: em(opcao, 'rotuloPor', personaId) ?? opcao.rotulo ?? null,
       narrativa: em(opcao, 'narrativaPor', personaId) ?? opcao.narrativa ?? null,
+      impacto: em(opcao, 'impactoPor', personaId) ?? opcao.impacto ?? null,
     };
   }
 
+  // D-075 (teste do Kleber de 05/10): o título da carta do jeito do personagem (tituloPor,
+  // senão o título). A mesma regra de historia.textoDaCarta, repetida aqui
+  // pelo mesmo motivo do textoOpcao.
+  function tituloCarta(conteudo, cartaId, personaId) {
+    const carta = em(conteudo, 'cartas', cartaId) || {};
+    return em(carta, 'tituloPor', personaId) ?? carta.titulo;
+  }
+
   const personaDe = (conteudo, equipeId) => em(conteudo, 'equipes', equipeId, 'persona');
+
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite). Lido do conteúdo aqui mesmo, e não do historia.js: a decisão e o
+  // resultado não podem depender da ordem de carga.
+  const simples = (conteudo) => em(conteudo, 'regras', 'formatoSimples') === true;
+
+  // O dinheiro da opção (historia.dinheiroDaOpcao, a mesma conta do telão),
+  // buscado na hora da chamada. Sem o historia.js, null: a opção sai sem a
+  // linha do dinheiro, e o voto continua funcionando.
+  function dinheiroDe(conteudo, rodadaId, opcaoId, personaId) {
+    const H = raiz.Viracao.historia;
+    return H && H.dinheiroDaOpcao ? H.dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) : null;
+  }
 
   // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
   // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
@@ -166,7 +189,7 @@
         ...(ultimo.mes || {}),
         rodada: rodadaId, titulo: rodada.titulo, origem: ultimo.origem,
         decisao: { id: ultimo.decisao, rotulo: opcao.rotulo },
-        carta: { id: ultimo.carta, titulo: carta.titulo, tom: carta.tom ?? null },
+        carta: { id: ultimo.carta, titulo: tituloCarta(conteudo, ultimo.carta, personaDe(conteudo, equipeId)), tom: carta.tom ?? null },
         cartaCusto: ultimo.cartaCusto ?? null,
         // O que veio dos meses anteriores (a fratura que continua, o INSS, a
         // multa do aluguel), gravado pelo anfitrião; vazio em sala antiga.
@@ -238,6 +261,7 @@
     const rodada = em(conteudo, 'rodadas', estado.rodada);
     if (!rodada) return aguardando('telao');
     const sub = estado.subfase;
+    const semSorteio = simples(conteudo);
     const infoRodada = { id: estado.rodada, titulo: rodada.titulo, texto: rodada.texto };
     const empatadas = em(estado, 'empatadas', equipeId);
     if (sub === 'decidindo' || (sub === 'prorrogacao' && empatadas)) {
@@ -261,7 +285,17 @@
         contexto: em(rodada, 'contexto', em(conteudo, 'equipes', equipeId, 'persona')),
         // Sem a tendência (D-043): a seta dizia qual era a opção "certa", e a
         // decisão deixava de ser um dilema.
-        opcoes: visiveis.map((o) => ({ id: o, rotulo: textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)).rotulo, votos: contagem[o] || 0 })),
+        // D-073: o impacto (o custo humano) vai junto do rótulo, só
+        // quando a opção o tem: num config sem ele, as opções ficam iguais.
+        // Formato simples (decisão do Kleber de 05/10 à noite): o dinheiro que
+        // a opção move ({ valor, emprestimo }, historia.dinheiroDaOpcao), a
+        // mesma conta da linha do telão. Só nele: as opções de um config sem
+        // a chave ficam iguais.
+        opcoes: visiveis.map((o) => {
+          const { rotulo, impacto } = textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId));
+          const dinheiro = semSorteio ? dinheiroDe(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)) : null;
+          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }), ...(dinheiro ? { dinheiro } : {}) };
+        }),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,
         motivo,
@@ -276,14 +310,20 @@
     if (sub === 'fechando') return aguardando('votacaoEncerrada');
     const res = em(resultados, estado.rodada, equipeId);
     // No sorteio o resultado já está gravado, mas o celular não revela antes do
-    // telão: a sala vê as fatias girarem junto.
-    if (sub === 'sorteio' || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
+    // telão: a sala vê as fatias girarem junto. No formato simples não há
+    // sorteio (o anfitrião vai direto ao resultado), e um "sorteio" que chegue
+    // assim mesmo (sala de antes, outra versão do telão) mostra o resultado.
+    // Sem o resultado ainda (o estado chega antes dele: são dois ouvintes), o
+    // formato simples continua na "votação encerrada" da apuração, e nunca no
+    // "Sorteando…", que falaria de fatias que não existem (e2e:online:simples).
+    if (!res && semSorteio) return aguardando('votacaoEncerrada');
+    if ((sub === 'sorteio' && !semSorteio) || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
     const opcao = textoOpcao(conteudo, estado.rodada, res.decisao, personaDe(conteudo, equipeId));
     const carta = em(conteudo, 'cartas', res.carta) || {};
     return tela('resultado', {
       equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada, origem: res.origem,
       decisao: { id: res.decisao, rotulo: opcao.rotulo, narrativa: opcao.narrativa },
-      carta: { id: res.carta, titulo: carta.titulo, narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
+      carta: { id: res.carta, titulo: tituloCarta(conteudo, res.carta, personaDe(conteudo, equipeId)), narrativa: carta.narrativa ?? null, tom: carta.tom ?? null },
       delta: res.delta || {}, indicadores: listaIndicadores(conteudo, res.depois),
       mes: res.mes ?? null, divida: dividaDe(conteudo, res.depois),
       // D-052: "20 dias parado · renda perdida R$ X · gastos R$ Y". null em sala

@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '7';
+  const VERSAO_APP = '8';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -36,7 +36,17 @@
   const ESCONDER_BARRA_MS = 3000;
   // D-038: a barra só aparece com o mouse encostado nesta faixa de baixo (ou com
   // H). A qualquer movimento, ela cobria o que estava projetado.
-  const BORDA_BARRA_PX = 48;
+  // Teste do Kleber de 05/10 (pedido 8): com a faixa de 48 px, ela ainda
+  // aparecia sem querer quando o mouse passava perto do pé da tela. Agora a
+  // faixa é fina, colada ao pé da tela, e a barra só abre com o mouse PARADO
+  // nela por PARAR_NA_BORDA_MS (passar não abre). 10 px, e não os ~6 px
+  // pedidos: os e2e com celulares (e2e:online, e2e:votos) encostam o mouse em
+  // 800 − 10 numa tela de 800 px, e o que impede a abertura sem querer é a
+  // espera, não a largura. Ao sair dela, a barra some depois de
+  // SAIR_DA_BARRA_MS (antes, 3 s).
+  const BORDA_BARRA_PX = 10;
+  const PARAR_NA_BORDA_MS = 400;
+  const SAIR_DA_BARRA_MS = 700;
   const ATIVO_MS = 60000;
   const RODAPE_ENQUETE = 'Retrato desta turma, não pesquisa.';
   const LETRAS = 'ABCDEFGHIJ';
@@ -58,9 +68,11 @@
     depoisDeMedir: [],
     ultimoAvanco: -Infinity, inicioPasso: null,
     selo: null, wake: null, barraTimer: 0, barraVisivel: false,
-    // mouseNaBorda: o último movimento do mouse foi na faixa de baixo (sair dela
-    // recomeça os 3 s da barra).
-    mouseNaBorda: false,
+    // mouseNaBorda: o último movimento do mouse foi na faixa de baixo.
+    // mouseSobreBarra: o mouse esteve sobre a barra aberta (ou na faixa); sair
+    // dela arma o sumiço curto (SAIR_DA_BARRA_MS). bordaTimer: a espera do
+    // mouse parado na faixa; saidaTimer: o sumiço depois de sair.
+    mouseNaBorda: false, mouseSobreBarra: false, bordaTimer: 0, saidaTimer: 0,
     // Só online: a conexão (undefined = ainda não se sabe, e não recusa nada), a
     // hora da última reconexão forçada pelo próprio telão, a releitura adiada
     // para quando a rede voltar e o modo passivo (outra máquina assumiu).
@@ -69,6 +81,11 @@
     ultimoSalvo: '',
     // O último "N ativos / M membros" desenhado (o tique compara com ele).
     ultimosAtivos: '',
+    // Pedido 6 do Kleber (05/10): o índice do passo que o apresentador está
+    // revendo (← ou PageUp), ou null. Só interface: nada vai ao banco nem à fila.
+    // saiuDoRevendoEm: a hora (performance.now) da saída do modo por uma tecla,
+    // que segura a repetição da tecla mantida apertada (aoTeclar).
+    revendo: null, saiuDoRevendoEm: -Infinity,
   };
 
   // ---------- Utilidades ----------
@@ -274,7 +291,67 @@
   const passoDe = (e) => (app.passos && e ? app.passos[e.indice] : null);
   const equipesOrdem = () => lista(app.config.ordem.equipes);
   const numeroEquipe = (id) => equipesOrdem().indexOf(id) + 1;
-  const rotuloEquipe = (id, classe) => G().rotuloEquipe(app.config.equipes[id], numeroEquipe(id), { classe });
+
+  // Teste do Kleber de 05/10 (prints 12 a 14): o telão chamava a equipe pelo
+  // nome da cor ("1 Laranja"), e a sala não ligava a cor ao personagem que
+  // estava jogando. Agora a equipe aparece pelo personagem, "Jonas, motoboy",
+  // com a forma e a cor na frente (são elas que ligam a equipe do telão à do
+  // celular) e o número (o das teclas e dos modais do apresentador). A cor por
+  // extenso fica na formação das equipes (cor: true), onde o aluno escolhe a
+  // equipe pela cor, e na dica (title). O nome e o ofício são pedaços inteiros:
+  // numa coluna estreita (a célula da decisão, a coluna da equipe no resultado),
+  // o rótulo só quebra entre eles.
+  // Formato simples (decisão do Kleber de 05/10 à noite): todas as equipes
+  // são o Jonas, e o personagem não diferencia ninguém. A equipe volta a ser
+  // chamada pela cor, "Equipe Laranja", com a forma e o número na frente, em
+  // toda tela (a formação inclusive). curto: só a cor ("Laranja"), na tabela
+  // do caminho de cada equipe, onde a coluna já se chama "Equipe".
+  function rotuloEquipe(id, classe, { cor = false, curto = false } = {}) {
+    const equipe = app.config.equipes[id];
+    const rotulo = G().rotuloEquipe(equipe, numeroEquipe(id), { classe });
+    if (simples()) {
+      const nome = rotulo.querySelector('.equipe-nome');
+      if (nome && !curto) nome.textContent = `Equipe ${equipe.nome}`;
+      return rotulo;
+    }
+    const persona = personaDaEquipe(id);
+    const nome = rotulo.querySelector('.equipe-nome');
+    if (cor || !persona || !nome) return rotulo;
+    const oficio = oficioDe(persona);
+    D().acrescentar(D().limpar(nome), [
+      D().el('span', { classe: 'equipe-quem', texto: oficio ? `${persona.nome},` : persona.nome }),
+      oficio ? [' ', D().el('span', { classe: 'equipe-oficio', texto: oficio })] : null,
+    ]);
+    nome.setAttribute('title', equipe.nome);
+    return rotulo;
+  }
+
+  // O ofício do personagem, para o rótulo da equipe: o começo da descrição da
+  // persona no config (até a primeira vírgula ou ponto, primeiroTrecho),
+  // cortado antes da primeira preposição ou "e", com a primeira letra
+  // minúscula. Com o config de 05/10: "Motoboy, 34 anos…" → "motoboy";
+  // "Manicure por aplicativo" → "manicure"; "Motorista de aplicativo na 99 e na
+  // Uber" → "motorista"; "Influenciadora de beleza" → "influenciadora";
+  // "Entregador de bicicleta pelo iFood" → "entregador"; "Vende doces e
+  // marmitas pelo Instagram" → "vende doces". O trecho inteiro ("Bruna,
+  // influenciadora de beleza") não cabia na coluna da equipe do sorteio e do
+  // resultado em 1024×768. O texto vem só do config (AGENTS.md, regra 1): para
+  // mudar o ofício na tela, muda-se o começo da descrição.
+  const RE_CORTE_OFICIO = /\s(?:de|do|da|dos|das|em|no|na|nos|nas|por|pelo|pela|pelos|pelas|com|e)\s/i;
+  function oficioDe(persona) {
+    const curto = primeiroTrecho(persona?.descricao).trim().split(RE_CORTE_OFICIO)[0].trim();
+    // Só quando a segunda letra já é minúscula: uma sigla ("DJ") fica como está.
+    return /^\p{Lu}\p{Ll}/u.test(curto) ? curto.charAt(0).toLowerCase() + curto.slice(1) : curto;
+  }
+
+  // "Jonas, motoboy": o personagem por extenso (a formação das equipes, ao lado
+  // da cor).
+  function nomeDoPersonagem(id) {
+    const persona = personaDaEquipe(id);
+    if (!persona) return '';
+    const oficio = oficioDe(persona);
+    return oficio ? `${persona.nome}, ${oficio}` : persona.nome;
+  }
   const ativas = (e) => equipesOrdem().filter((id) => e && e.equipesAbertas && e.equipesAbertas[id] === true);
   const ordemOpcoes = (rodada) => (lista(rodada.ordemOpcoes).length > 0 ? lista(rodada.ordemOpcoes) : Object.keys(rodada.opcoes));
   const letraDe = (rodada, opcao) => LETRAS[ordemOpcoes(rodada).indexOf(opcao)] || '?';
@@ -311,6 +388,12 @@
   // e as telas dizem o que diziam. A regra mora no historia.js, que o celular
   // também carrega: as duas telas falam o mesmo período.
   const periodo = () => N().historia.periodo(app.config);
+
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite): um personagem só, 5 opções por bimestre com o dinheiro na própria
+  // opção, o evento do mês igual para todas as equipes (sem sorteio) e o placar
+  // pelo caminho de cada equipe. Sem a chave, todas as telas ficam como antes.
+  const simples = () => N().historia.formatoSimples(app.config);
 
   // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
   // regra da história e do resumo do celular (historia.rotuloDaRodada).
@@ -859,6 +942,7 @@
     app.ui = { pagina: 0, afirmacaoManual: 0, lp: false };
     app.inicioPasso = lerLocal(chavePassoLocal(sala));
     app.passivo = false;
+    app.revendo = null;
     // Só o anfitrião desta sessão desenha: o de uma sessão anterior (um comando
     // online que ainda termina depois de seguir sem celulares) não mexe na tela.
     const anf = N().anfitriao.criar({
@@ -900,7 +984,8 @@
       apagarLocal(chaveBaixados(app.sala));
       if (lerLocal(CHAVE_ULTIMA)?.sala === app.sala) apagarLocal(CHAVE_ULTIMA);
     }
-    Object.assign(app, { anf: null, canal: null, sala: null, estado: null, modo: null, chaveDesenho: null });
+    Object.assign(app, { anf: null, canal: null, sala: null, estado: null, modo: null, chaveDesenho: null, revendo: null });
+    atualizarSeloRevendo();
     app.wake.desligar();
     esconderBarra(true);
     document.body.classList.remove('em-sessao');
@@ -991,37 +1076,14 @@
     }
     if (!anterior || anterior.enquete !== e.enquete || anterior.momento !== e.momento) app.ui.afirmacaoManual = 0;
     religarOuvintesDoPasso(e);
-    baixarAoFimDaRodada(e);
   }
 
-  // D-015: ao fim de cada rodada, o telão baixa sozinho um JSON pequeno com o
-  // estado, o seguro para o caso "travou e caiu a internet". Uma vez por
-  // apuração (rodada + geracao), guardado no localStorage para recarregar a
-  // página não baixar de novo.
-  function baixarAoFimDaRodada(e) {
-    if (e.tipo !== 'rodada' || e.subfase !== 'sorteio') return;
-    const marca = `${e.rodada}:${e.geracao}`;
-    const baixados = lista(lerLocal(chaveBaixados(app.sala)));
-    if (baixados.includes(marca)) return;
-    gravarLocal(chaveBaixados(app.sala), [...baixados, marca]);
-    esperarEspelhoDaRodada(e).then(() => salvarEstado(e.rodada)).catch(mostrarErro);
-  }
-
-  // O espelho (o ouvinte da sala inteira) chega depois do ouvinte do estado.
-  // Salvar no instante em que o estado vira "sorteio" gravava o arquivo com a
-  // rodada ainda "fechando" e sem o resultado: os três arquivos do teste de
-  // 30/09 saíram assim, e carregar um deles refaria a rodada sem nenhum voto
-  // (os votos ficam fora do arquivo). Espera o espelho alcançar a geração do
-  // sorteio e trazer o resultado da rodada, por até 10 s. Offline não há
-  // espelho: o salvarEstado lê o canal local, que já está consistente.
-  async function esperarEspelhoDaRodada(e) {
-    if (typeof app.lerEspelho !== 'function') return;
-    for (let i = 0; i < 50; i += 1) {
-      const esp = app.lerEspelho();
-      if (esp && (esp.estado?.geracao || 0) >= e.geracao && esp.resultados?.[e.rodada]) return;
-      await new Promise((r) => setTimeout(r, 200));
-    }
-  }
+  // D-015 dizia que, ao fim de cada rodada, o telão baixava sozinho um JSON com
+  // o estado. Desde a D-078 (pedido do Kleber de 05/10, depois de testar a
+  // versão no ar: "não baixar o JSON a cada rodada"), o seguro é só o manual:
+  // o "Salvar estado" da barra do apresentador, online e offline. Online, a
+  // sala continua no Firebase e se retoma com o PIN; o download que pipocava a
+  // cada bimestre, na frente da turma, saiu.
 
   // ---------- Salvar e carregar estado ----------
 
@@ -1370,15 +1432,30 @@
     // com a faixa. Desenhada depois, a primeira tela depois do lobby (e toda
     // troca de tamanho, que muda a altura do QR) era medida sem ela.
     desenharFaixa();
-    const tela = escolherTela(e);
+    // O passo revisto tem de ser um que já passou: se o estado voltou (o
+    // desfazer, outra máquina), o modo revendo acaba.
+    if (app.revendo !== null && !(app.revendo >= 0 && app.revendo < e.indice)) app.revendo = null;
+    // O selo antes da tela, como a faixa: ele ocupa uma faixa em cima, e as
+    // medidas do desenho precisam da altura que sobra.
+    atualizarSeloRevendo();
+    const revendo = app.revendo !== null;
+    const tela = revendo ? telaRevista(app.revendo) : escolherTela(e);
+    // A faixa de entrada aberta ou fechada também entra na chave: ela muda a
+    // altura que sobra para a tela. Fora da chave, reabrir a entrada com o
+    // resultado na tela (o roteiro manda reabrir quando chega um atrasado)
+    // punha a faixa por cima das linhas das consequências, e fechá-la com o
+    // aperto 4 não devolvia o evento do mês (revisão de 06/10).
     const chave = JSON.stringify([
-      tela.id, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
-      raiz.innerWidth, raiz.innerHeight, tela.chave ? tela.chave(e) : null,
+      tela.id, app.revendo, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
+      raiz.innerWidth, raiz.innerHeight, app.el.faixa.hidden, tela.chave ? tela.chave(e) : null,
     ]);
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
-      document.body.dataset.tela = tela.id;
-      const secao = D().el('section', { classe: ['tela', `tela-${tela.id}`] });
+      document.body.dataset.tela = revendo ? 'revendo' : tela.id;
+      const secao = D().el('section', {
+        classe: ['tela', `tela-${tela.id}`, revendo ? 'tela-revista' : null],
+        dados: revendo ? { revendo: String(app.revendo) } : undefined,
+      });
       D().limpar(app.el.palco).appendChild(secao);
       app.graficos.clear();
       app.depoisDeMedir = [];
@@ -1410,7 +1487,9 @@
         if (e.subfase === 'decidindo') return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
         if (e.subfase === 'prorrogacao') return { id: 'rodada-prorrogacao', desenhar: telaProrrogacao, chave: chaveDecisoes };
         if (e.subfase === 'fechando') return telaDoFechando(e);
-        if (e.subfase === 'sorteio') return { id: 'rodada-sorteio', desenhar: telaSorteio, chave: () => app.dados.resultados?.[e.rodada] ?? null };
+        // Formato simples: não há sorteio. Um "sorteio" que chegue assim mesmo
+        // (sala de antes, outro telão) mostra o resultado.
+        if (e.subfase === 'sorteio' && !simples()) return { id: 'rodada-sorteio', desenhar: telaSorteio, chave: () => app.dados.resultados?.[e.rodada] ?? null };
         return { id: 'rodada-resultado', desenhar: telaResultado, chave: () => app.dados.resultados?.[e.rodada] ?? null };
       case 'placarFinal': return { id: 'placar-final', desenhar: telaPlacarFinal, chave: () => app.dados.placar };
       case 'comparativo': return { id: 'comparativo', desenhar: telaComparativo, chave: () => app.dados.enquetes?.[e.enquete] ?? null };
@@ -1461,7 +1540,7 @@
     }
     const dica = app.el.barra.querySelector('[data-barra-dica]');
     if (dica) {
-      const t = dicaDoPasso(e);
+      const t = app.revendo !== null ? dicaDoRevendo() : dicaDoPasso(e);
       if (dica.textContent !== t) dica.textContent = t;
     }
     const info = app.el.barra.querySelector('[data-barra-passo]');
@@ -1725,23 +1804,40 @@
 
   // ---------- Tela: bloco ----------
 
-  function placarResumido(classe) {
+  // O "depois" da última rodada apurada antes do passo k, na ordem do roteiro
+  // (o estado inicial, sem nenhuma): é o placar de quando o passo k estava na
+  // tela, a mesma conta do calcularPlacar do anfitrião (o último "depois").
+  function estadoAtePasso(equipe, k) {
+    let estado = null;
+    for (const p of app.passos.slice(0, k)) {
+      const r = p.tipo === 'rodada' ? app.dados.resultados?.[p.rodada]?.[equipe] : null;
+      if (r?.depois) estado = r.depois;
+    }
+    return estado;
+  }
+
+  // ateIndice: o modo revendo (pedido 6 do Kleber, 05/10) mostra o placar de
+  // quando o passo revisto estava na tela, e não o de agora: um bloco entre a
+  // rodada 2 e a 3, revisto depois da 3, mostraria o saldo de depois dela.
+  function placarResumido(classe, ateIndice = null) {
     const { el } = D();
     const e = app.estado;
     const renda = app.config.indicadores.renda;
     const itens = ativas(e).map((id) => {
-      const persona = app.config.personas[app.config.equipes[id].persona];
       // O patrimônio (esquema v2.2): o empréstimo a pagar é dívida, e não
-      // dinheiro em caixa. Antes do placar, o estado inicial da equipe.
-      const valor = patrimonioDe(app.dados.placar?.[id] ?? N().motor.estadoInicial(app.config, id));
+      // dinheiro em caixa. Antes do placar, o estado inicial da equipe. O nome
+      // do personagem já está no rótulo da equipe (teste do Kleber de 05/10).
+      const valores = ateIndice === null ? app.dados.placar?.[id] : estadoAtePasso(id, ateIndice);
+      const valor = patrimonioDe(valores ?? N().motor.estadoInicial(app.config, id));
+      // Formato simples: as palavras do resultado ("tem R$ X", "devendo R$ X").
+      const texto = simples() ? N().historia.textoDaFamilia({ renda: valor }, F().moeda) : F().indicador(renda, valor);
       return el('li', { classe: 'resumido-linha', dados: { equipe: id } }, [
         rotuloEquipe(id),
-        el('span', { classe: 'resumido-persona', texto: persona?.nome || '' }),
-        el('span', { classe: 'resumido-valor', texto: F().indicador(renda, valor) }),
+        el('span', { classe: 'resumido-valor', texto }),
       ]);
     });
     return el('div', { classe: ['placar-resumido', classe] }, [
-      el('p', { classe: 'kicker', texto: renda ? renda.nome : 'Saldo' }),
+      el('p', { classe: 'kicker', texto: simples() ? 'O dinheiro da família' : renda ? renda.nome : 'Saldo' }),
       el('ol', { classe: 'resumido-lista' }, itens),
     ]);
   }
@@ -1760,6 +1856,15 @@
   const RE_MAPA = /^mapa do semin[aá]rio\b/i;
   const ehMapa = (passo) => passo?.tipo === 'bloco' && RE_MAPA.test(passo.titulo || '');
 
+  // Teste do Kleber de 05/10 (print 10): o mapa listava todos os passos
+  // (termômetro, formação, personas, a conta de cada casa, entrevistas,
+  // debrief…), e o Kleber pediu só as linhas dos meses e dos dados. Um bloco
+  // de dados é o que tem a palavra "dados" no título ("Dados: quem trabalha por
+  // aplicativo", "Contraponto: a Viração e os dados sobre CLT"): o passo não
+  // tem campo próprio, como o mapa.
+  const RE_DADOS = /\bdados\b/i;
+  const noMapa = (passo) => passo?.tipo === 'rodada' || (passo?.tipo === 'bloco' && RE_DADOS.test(passo.titulo || ''));
+
   const maiuscula = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const descreverItem = (item) => (item.tipo === 'final' ? maiuscula(item.palavras.join(', ')) : descreverPasso(app.passos[item.indices[0]]));
 
@@ -1770,7 +1875,12 @@
   // estava na linha (formação das equipes, placar, termômetro, "Fim").
   function linhaDoTempo(e, { mapa }) {
     const { el } = D();
-    const { itens } = N().roteiro.linhaDoTempo(app.config, app.passos, { maxItens: MAX_ITENS_LINHA });
+    // No mapa, só os meses e os blocos de dados (noMapa), um item por passo,
+    // sem o agrupamento do fim (os passos do fim não entram). Nos outros
+    // blocos, a trilha continua com o seminário inteiro.
+    const itens = mapa
+      ? N().roteiro.linhaDoTempo(app.config, app.passos).itens.filter((x) => noMapa(app.passos[x.indices[0]]))
+      : N().roteiro.linhaDoTempo(app.config, app.passos, { maxItens: MAX_ITENS_LINHA }).itens;
     const posicao = itens.findIndex((x) => x.indices.includes(e.indice));
     const seguinte = posicao >= 0 ? itens[posicao + 1] : itens.find((x) => x.indices[0] > e.indice);
     const momento = (item) => {
@@ -1782,16 +1892,19 @@
       dados: { trecho: String(item.indices[0]), passos: item.indices.join(','), ...(item === seguinte ? { seguinte: '1' } : {}) },
       'aria-current': momento(item) === 'atual' ? 'step' : null,
     });
+    // O passo atual pode não estar na linha (no mapa, o próprio mapa nunca
+    // está): então o rodapé diz o nome dele, "Você está aqui: Mapa do
+    // seminário", e o "a seguir" é o primeiro item da linha depois dele.
     const seguir = el('p', { classe: 'linha-tempo-seguir' }, [
       el('b', { texto: 'Você está aqui' }),
-      posicao >= 0 ? ` (${posicao + 1} de ${itens.length})` : null,
+      posicao >= 0 ? ` (${posicao + 1} de ${itens.length})` : [': ', el('b', { texto: descreverPasso(app.passos[e.indice]) })],
       seguinte ? [' · a seguir: ', el('b', { texto: descreverItem(seguinte) })] : ' · é o último trecho',
     ]);
     if (mapa) {
-      // No "Mapa do seminário", a linha é o conteúdo: todos os itens por
-      // extenso, em duas colunas quando passam de seis (cabe em 1024×768).
-      // Esquema v3 (D-060): com 6 rodadas e os blocos de dados entre elas, o
-      // roteiro de 60 min dá 19 itens, e vários títulos quebram em duas linhas.
+      // No "Mapa do seminário", a linha é o conteúdo: os meses e os blocos de
+      // dados por extenso, em duas colunas quando passam de seis (cabe em
+      // 1024×768). Com o config de 05/10, 11 itens (6 meses e 5 blocos de
+      // dados), vários títulos quebrando em duas linhas.
       // As colunas são de texto corrido (CSS columns), e não linhas de grade: na
       // grade, cada linha tinha a altura do item mais alto do par, e a lista
       // passava da faixa de entrada em 1024×768. Se ainda transbordar (medido
@@ -1867,7 +1980,8 @@
     if (mapa) s.classList.add('bloco-mapa');
     s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
     s.appendChild(linhaDoTempo(e, { mapa }));
-    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto'));
+    // Revisto (modo revendo), o placar de quando o bloco estava na tela.
+    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
   }
 
   // ---------- Tela: formar equipes ----------
@@ -1921,14 +2035,18 @@
     equipesOrdem().forEach((id) => {
       const eq = app.config.equipes[id];
       const aberta = abertas.includes(id);
-      const persona = app.config.personas[eq.persona];
-      const detalhes = [el('span', { classe: 'equipe-persona', texto: persona?.nome || '' })];
+      // A cor (é por ela que o aluno escolhe a equipe no celular) e o
+      // personagem, "Jonas, motoboy": daqui em diante, o telão chama a equipe
+      // pelo personagem (teste do Kleber de 05/10), e é aqui que a sala liga um
+      // ao outro.
+      // No formato simples, todas são o Jonas: o personagem não vai no cartão.
+      const detalhes = simples() ? [] : [el('span', { classe: 'equipe-persona', texto: nomeDoPersonagem(id) })];
       if (eq.lugar) detalhes.push(el('span', { classe: 'equipe-lugar', texto: eq.lugar }));
       if (!offline && aberta) detalhes.push(el('span', { classe: 'equipe-conta', texto: F().pessoas(conta[id] || 0) }));
       detalhes.push(el('span', { classe: 'equipe-situacao', texto: aberta ? (eq.obrigatoria ? 'sempre joga' : 'aberta') : 'fechada' }));
       const b = botao('', () => alternarEquipe(id), { classe: ['cartao-equipe', aberta ? 'aberta' : 'fechada'], pressionado: aberta, dados: { equipe: id } });
       D().limpar(b);
-      D().acrescentar(b, [rotuloEquipe(id), el('span', { classe: 'cartao-equipe-detalhes' }, detalhes)]);
+      D().acrescentar(b, [rotuloEquipe(id, null, { cor: true }), el('span', { classe: 'cartao-equipe-detalhes' }, detalhes)]);
       grade.appendChild(b);
     });
     s.appendChild(grade);
@@ -1985,7 +2103,44 @@
     ];
   }
 
+  // Formato simples: com um personagem só, a etapa das personas vira "Conheça
+  // o Jonas": quem é, a casa, a renda, o básico e quanto falta num mês comum
+  // (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
+  // básico item a item vai numa linha corrida (o celular tem as fontes).
+  function telaConheca(s, e) {
+    const { el } = D();
+    const primeira = ativas(e)[0] ?? equipesOrdem()[0];
+    const p = personaDaEquipe(primeira);
+    const mes = N().motor.mesComum(app.config, primeira);
+    const { meses, noPeriodo } = periodo();
+    s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
+    const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
+    const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
+    const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
+    const itens = lista(p.basico?.itens).filter((i) => i && i.valor > 0);
+    const fecha = mes.saldoMes >= 0;
+    s.appendChild(el('div', { classe: 'conheca' }, [
+      el('p', { classe: 'conheca-quem', texto: p.descricao || '' }),
+      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'], texto: p.familia.descricao }) : null,
+      el('ul', { classe: 'conheca-conta' }, [
+        pedaco('o trabalho rende por mês', F().moeda(mes.trabalho), 'conheca-trabalho'),
+        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? `menos ${fixos.join(' e ')}` : 'menos os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
+        outra ? pedaco(outra.rotulo, F().moeda(outra.valor, { sinal: true }), 'conheca-outra') : null,
+        pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
+      ]),
+      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      el('p', {
+        classe: ['persona-mes', 'conheca-mes'], dados: { saldoMesComum: String(mes.saldoMes), sinal: sinalDoSaldo(mes.saldoMes) },
+      }, [
+        fecha ? 'Num mês comum, a conta fecha: sobram ' : 'Num mês comum, a conta não fecha: faltam ',
+        el('b', { texto: F().moeda(Math.abs(mes.saldoMes)) }),
+        meses > 1 ? ` (${F().moeda(Math.abs(mes.saldoMes) * meses)} ${noPeriodo})` : null,
+      ]),
+    ]));
+  }
+
   function telaPersonas(s, e) {
+    if (simples()) return telaConheca(s, e);
     const { el } = D();
     s.appendChild(cabecalho(null, 'As personas'));
     const abertas = ativas(e);
@@ -2000,10 +2155,11 @@
       const p = app.config.personas[pid];
       linhas.appendChild(el('div', { classe: 'persona-linha', dados: { persona: pid, equipes: equipes.join(',') } }, [
         el('p', { classe: 'persona-quem' }, [
-          // Duas equipes da mesma persona: "1 Laranja e 2 Azul-céu", juntas e
-          // antes do nome, para a sala ver que as duas jogam com o Jonas.
+          // A equipe pelo personagem, "◯ 1 Jonas, motoboy" (teste do Kleber de
+          // 05/10): o nome e o ofício já estão no rótulo, e o ".persona-nome"
+          // ao lado repetiria os dois. Duas equipes da mesma persona (config
+          // anterior à D-061) ficam juntas, ligadas por "e".
           el('span', { classe: 'persona-equipes' }, equipes.flatMap((id, i) => [i > 0 ? el('span', { classe: 'persona-e', texto: 'e' }) : null, rotuloEquipe(id)])),
-          el('span', { classe: 'persona-nome' }, [el('b', { texto: p.nome }), ` · ${primeiroTrecho(p.descricao)}`]),
         ]),
         ...linhasDaCasa(p, equipes[0]),
       ]));
@@ -2103,7 +2259,7 @@
     const filhos = [rotuloEquipe(eq)];
     const forcada = e.forcadas?.[eq] ?? null;
     if (app.modo === 'offline') {
-      filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${app.config.equipes[eq].nome}` },
+      filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${numeroEquipe(eq)}, ${nomeDoPersonagem(eq)}` },
         opcoesVisiveis.map((op) => botao(letraDe(rodada, op), () => decidirOffline(eq, op), {
           classe: ['botao-letra', forcada === op ? 'botao-marcado' : null], pressionado: forcada === op,
           titulo: rodada.opcoes[op].rotulo, dados: { equipe: eq, opcao: op },
@@ -2117,16 +2273,48 @@
     return el('div', { classe: ['equipe-status', equipeDecidiu(e, eq) ? 'decidida' : null], dados: { equipe: eq } }, filhos);
   }
 
+  // Formato simples: a linha do dinheiro de cada opção ("+R$ 900 no
+  // bimestre"), a soma dos efeitos diretos dela para a persona
+  // (historia.dinheiroDaOpcao, a mesma conta do celular). O que vem depois,
+  // encadeado, não aparece: é a surpresa do resultado. Em verde ou vermelho,
+  // sempre com o sinal (a cor nunca vai sozinha); o empréstimo, neutro (é
+  // dívida). Sem o formato simples, null.
+  function linhaDoDinheiro(rodadaId, op, personaId) {
+    if (!simples()) return null;
+    const { el } = D();
+    const dinheiro = N().historia.dinheiroDaOpcao(app.config, rodadaId, op, personaId);
+    const sinal = dinheiro.emprestimo > 0 && Math.round(dinheiro.valor) === 0 ? 'zero' : sinalDoSaldo(dinheiro.valor);
+    return el('span', {
+      classe: 'opcao-dinheiro', dados: { dinheiro: String(dinheiro.valor), emprestimo: String(dinheiro.emprestimo), sinal },
+      texto: N().historia.textoDoDinheiro(dinheiro, F().moeda, periodo()),
+    });
+  }
+
   function telaRodadaDecidindo(s, e) {
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const { n, total } = posicaoRodada(e.rodada);
     s.appendChild(cabecalho(`Rodada ${n} de ${total} · decisão`, rodada.titulo, { cronometro: true }));
     s.appendChild(el('p', { classe: 'situacao', texto: rodada.texto }));
-    s.appendChild(el('ol', { classe: 'opcoes' }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
-      el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
+    // No formato simples, o rótulo do jeito da persona (D-054), a única.
+    const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
+    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
+      el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
+      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
+      linhaDoDinheiro(e.rodada, op, personaId),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
+    app.depoisDeMedir.push(() => apertarDecisao(s));
+  }
+
+  // Com a equipe pelo personagem (teste do Kleber de 05/10), o rótulo mais
+  // comprido quebra em duas linhas na célula de cada equipe, e as seis células
+  // com a faixa de entrada embaixo passavam ~96 px de 1024×768. Só quando a
+  // tela transborda (medida depois do desenho), a situação, as opções e as
+  // células se aproximam (data-aperto): entrelinhas e vãos menores, com a
+  // letra nos 28 px.
+  function apertarDecisao(s) {
+    if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1';
   }
 
   function telaProrrogacao(s, e) {
@@ -2143,10 +2331,18 @@
       celula.insertBefore(el('span', { classe: 'equipe-empate', texto: `entre ${ops.map((op) => letraDe(rodada, op)).join(' e ')}` }), celula.children[1] || null);
       return celula;
     });
-    s.appendChild(el('ol', { classe: 'opcoes opcoes-compactas' }, ordemOpcoes(rodada).map((op) => el('li', {}, [
-      el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
+    // Formato simples: a lista como a da decisão, com o rótulo da persona e o
+    // dinheiro de cada opção (D-078). Só pelo rótulo, o telão do empate
+    // escondia o valor que os celulares da equipe empatada mostravam (revisão
+    // de 06/10). O dinheiro fica na mesma linha: a lista não cresce.
+    const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
+    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
+      el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
+      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
+      linhaDoDinheiro(e.rodada, op, personaId),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, celulas));
+    app.depoisDeMedir.push(() => apertarDecisao(s));
   }
 
   function resultadosDaRodada(e) {
@@ -2371,14 +2567,22 @@
   // eram do banco e o resto era aluguel e luz atrasados, com risco de despejo e
   // corte, que é a escolha que a D-066 quer mostrar. contasAtrasadas é null em
   // sala sem o limite (os valores não têm o indicador), e a tela fica como antes.
-  // O total de historia.dividaTotal já é o banco e o empréstimo (revisão da
-  // F6c): é a mesma "dívida" que o celular da equipe escreve.
+  // Teste do Kleber de 05/10 (print 7): com "dívida R$ 2.000" numa linha e
+  // "contas atrasadas R$ 19.797" na outra, a sala lia dois números de dívida e
+  // não somava. No telão, a dívida volta a ser um número só, a "dívida total":
+  // o banco (cheque especial), o empréstimo e as contas atrasadas
+  // (historia.dividaTotal: total + contasAtrasadas). É o mesmo número do
+  // "faltou R$ X" do placar quando o caixa é zero (o patrimônio desconta as
+  // três), no resultado, na história e no placar. contasAtrasadas continua no
+  // retorno (o data-contas-atrasadas do resultado). O celular da equipe ainda
+  // separa "dívida no banco" e "contas atrasadas" (js/aluno.js, fora deste
+  // pedido).
   function dividaECaixa(valores) {
     const renda = Number(valores?.renda);
     const d = N().historia.dividaTotal(valores);
     const atrasadas = Number.isFinite(d?.contasAtrasadas) ? Math.round(d.contasAtrasadas) + 0 : null;
     return {
-      divida: Math.round(d?.total ?? 0) + 0,
+      divida: Math.round((d?.total ?? 0) + (d?.contasAtrasadas ?? 0)) + 0,
       contasAtrasadas: atrasadas,
       caixa: Number.isFinite(renda) && Math.round(renda) > 0 ? Math.round(renda) : 0,
     };
@@ -2439,14 +2643,21 @@
   // juros, faltou, dívida), e o Kleber achou a tela difícil de explicar em
   // aula. Agora, uma faixa por equipe, em três colunas alinhadas entre as
   // faixas (subgrid):
-  // - a equipe (forma, número e nome) e, embaixo, a persona e a letra da decisão;
+  // - a equipe (forma, número e personagem) e, embaixo, a letra da decisão;
   // - a carta que saiu, grande, e embaixo só o que a sala precisa ouvir: o
   //   empréstimo tomado no mês, os dias parados, o que a proteção pagou (D-059)
   //   e a origem da decisão quando não foi a maioria;
-  // - o saldo do mês em destaque, com + ou − e em verde ou vermelho (o sinal e
-  //   o cabeçalho "saldo do mês" dizem o mesmo que a cor, que nunca é o único
-  //   canal; o zero fica neutro, "R$ 0", como no celular), e embaixo a dívida
-  //   total, discreta.
+  // - o saldo do período em destaque, com + ou − e em verde ou vermelho, e o
+  //   rótulo "saldo do bimestre" logo acima dele (o sinal e o rótulo dizem o
+  //   mesmo que a cor, que nunca é o único canal; o zero fica neutro, "R$ 0",
+  //   como no celular);
+  // - embaixo da carta e do saldo, uma linha discreta com a dívida total e o
+  //   que faltou na mesa.
+  // Teste do Kleber de 05/10 (print 7): o "saldo do bimestre" ficava só no
+  // cabeçalho, no canto de cima, e o número colorido não dizia o que era; e a
+  // dívida vinha em duas linhas ("dívida R$ 2.000" e "contas atrasadas
+  // R$ 19.797"), que a sala lia como duas dívidas. Agora o rótulo vai junto de
+  // cada saldo, e a dívida é um número só (dividaECaixa).
   // Revisão de 30/09 (achado 9): sem a decisão, duas equipes do Jonas com a
   // mesma carta mostravam saldos diferentes sem explicação, e nada dizia que
   // uma delas tinha pegado R$ 1.500 (a dívida total fica igual com ou sem o
@@ -2454,6 +2665,7 @@
   // O detalhamento das contas (entrou, gastos, multa, básico, juros,
   // empréstimo) fica no celular de cada equipe e na história do placar final.
   function telaResultado(s, e) {
+    if (simples()) return telaResultadoSimples(s, e);
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
@@ -2466,20 +2678,21 @@
       .sort((a, b) => Math.abs(b.efeito) - Math.abs(a.efeito) || numeroEquipe(a.eq) - numeroEquipe(b.eq))
       .slice(0, n).map((x) => x.eq));
     // "saldo do bimestre" com rodadas de 2 meses (esquema v3): o número grande
-    // é o saldo da rodada inteira, e "do mês" diria metade do que ele é.
+    // é o saldo da rodada inteira, e "do mês" diria metade do que ele é. O
+    // rótulo vai em cada faixa, logo acima do número (teste do Kleber de 05/10);
+    // no cabeçalho, ele ficava longe do número que nomeava.
     const { doPeriodo } = periodo();
-    s.appendChild(cabecalho(null, rodada.titulo, {
-      extra: el('p', { classe: 'resultado-legenda', texto: `saldo ${doPeriodo}` }),
-    }));
+    const rotuloSaldo = `saldo ${doPeriodo}`;
+    s.appendChild(cabecalho(null, rodada.titulo));
     const grade = el('div', { classe: 'grade-resultados', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
     for (const { eq, r } of itens) {
       const carta = app.config.cartas[r.carta] || {};
       const grave = carta.tom === 'grave';
       const mes = mesDoResultado(e.rodada, eq, r);
       const saldo = Math.round(mes.saldoMes) + 0;
-      // A dívida de depois do mês (cheque especial + empréstimo) e o caixa, se
-      // positivo. Resultado de sala antiga sem o "depois" não tem de onde
-      // tirá-los, e fica em 0.
+      // A dívida total de depois do período (cheque especial, empréstimo e
+      // contas atrasadas) e o caixa, se positivo. Resultado de sala antiga sem
+      // o "depois" não tem de onde tirá-los, e fica em 0.
       const { divida, contasAtrasadas, caixa } = dividaECaixa(r.depois);
       const mesa = reaisInteiros(mes.faltouNaMesa);
       const acima = fraseAcimaDoTrabalho(eq, r);
@@ -2493,17 +2706,20 @@
         // mesmo valor duas vezes; a frase já diz quanto ela pagou.
         mes.protecao > 0 && !acima ? rotuloEValor('a\u00a0proteção pagou', F().moeda(mes.protecao), ['conta-protecao'], { protecao: String(mes.protecao) }) : null,
       ].filter(Boolean);
-      // D-066: as contas atrasadas (o que a casa deve de aluguel, luz e água,
-      // no fim do período) e a comida que não deu para comprar NESTE período,
-      // numa linha própria embaixo do dinheiro, alinhada à direita como ele.
-      // Na coluna do dinheiro, "contas atrasadas R$ 8.635" alargava a coluna
-      // em ~120 px, a parada da carta quebrava em duas linhas, e seis equipes
-      // passavam de 1024×768; ao lado da parada, a linha de detalhe ia a três.
-      // Aqui, a linha cabe inteira na largura da faixa. Com contas atrasadas, o
-      // caixa está no limite do cheque especial (o banco cortou o crédito):
-      // a linha do caixa nunca aparece junto, e a faixa fica com três linhas.
+      // A linha de baixo, embaixo da carta e do saldo, alinhada à direita: a
+      // dívida total ("sem dívida" quando não há dívida nem caixa), o caixa
+      // positivo, quando há (revisão da F6a: com o empréstimo, a família pode
+      // ter dinheiro no bolso e dever ao banco), e a comida que não deu para
+      // comprar NESTE período (D-066), que não é dívida e por isso vem com o
+      // próprio nome. Na coluna do dinheiro, um texto comprido alargava a
+      // coluna, a parada da carta quebrava em duas linhas, e seis equipes
+      // passavam de 1024×768; aqui, a linha cabe inteira na largura da faixa.
+      // Teste do Kleber de 05/10 (print 7): a dívida e as contas atrasadas eram
+      // duas linhas; a "dívida total" junta as duas.
       const limite = [
-        contasAtrasadas > 0 ? el('span', { classe: ['conta', 'resultado-atrasadas'] }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })]) : null,
+        divida > 0 ? el('span', { classe: ['conta', 'resultado-divida'] }, ['dívida total ', el('b', { texto: F().moeda(divida) })])
+          : caixa === 0 ? el('span', { classe: ['conta', 'resultado-divida'] }, ['sem dívida']) : null,
+        caixa > 0 ? el('span', { classe: ['conta', 'resultado-caixa'] }, ['caixa ', el('b', { texto: F().moeda(caixa) })]) : null,
         mesa > 0 ? pedacoMesa(mesa, 'resultado-mesa') : null,
       ].filter(Boolean);
       const dados = { equipe: eq, carta: r.carta, origem: r.origem, saldoMes: String(saldo), divida: String(divida), caixa: String(caixa) };
@@ -2518,14 +2734,12 @@
       }, [
         el('div', { classe: 'resultado-quem' }, [
           rotuloEquipe(eq),
-          // "Jonas · decisão B": quem jogou e o que decidiu, à esquerda; o que
-          // aconteceu (a carta) no meio; o dinheiro à direita. Na linha de
-          // detalhe, a letra empurrava a parada para uma terceira linha, e seis
-          // faixas deixavam de caber em 1024×768 com a faixa de entrada.
-          el('span', { classe: 'resultado-persona' }, [
-            personaDaEquipe(eq)?.nome || '', ' · ',
-            el('span', { classe: 'resultado-escolha', title: rotuloDaOpcao || null, dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]),
-          ]),
+          // Quem jogou e o que decidiu, à esquerda; o que aconteceu (a carta)
+          // no meio; o dinheiro à direita. Na linha de detalhe, a letra
+          // empurrava a parada para uma terceira linha, e seis faixas deixavam
+          // de caber em 1024×768 com a faixa de entrada. O nome do personagem
+          // saiu daqui: está no rótulo da equipe (teste do Kleber de 05/10).
+          el('span', { classe: 'resultado-escolha', title: rotuloDaOpcao || null, dados: { decisao: r.decisao } }, ['decisão ', el('b', { texto: letraDe(rodada, r.decisao) })]),
         ]),
         el('div', { classe: 'resultado-meio' }, [
           // O título inteiro da carta; se ele não couber numa linha, o
@@ -2538,18 +2752,13 @@
           ]) : null,
         ]),
         el('div', { classe: 'resultado-dinheiro' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: rotuloSaldo }),
           el('p', {
             classe: 'resultado-saldo', title: textoSaldo(saldo),
             dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }),
           }),
-          // Sem dívida, o caixa no lugar do "sem dívida"; com os dois, o caixa
-          // numa linha própria (na mesma, a coluna do dinheiro apertava a carta).
-          divida > 0 || (caixa === 0 && !(contasAtrasadas > 0))
-            ? el('p', { classe: 'resultado-divida' }, divida > 0 ? ['dívida ', el('b', { texto: F().moeda(divida) })] : ['sem dívida'])
-            : null,
-          caixa > 0 ? el('p', { classe: 'resultado-caixa' }, ['caixa ', el('b', { texto: F().moeda(caixa) })]) : null,
         ]),
-        limite.length > 0 ? el('p', { classe: 'resultado-limite' }, juntarPedacos(limite)) : null,
+        el('p', { classe: 'resultado-limite' }, juntarPedacos(limite)),
         // D-067: a faixa inteira, embaixo das três colunas. É dado real e
         // ponto de debate (o auxílio tem o piso de um salário mínimo, e a renda
         // do app fica abaixo dele); sem a frase, a sala lia "o acidente
@@ -2561,6 +2770,80 @@
     app.depoisDeMedir.push(() => {
       encurtarCartas(grade);
       apertarResultado(grade);
+    });
+  }
+
+  // Formato simples (decisão do Kleber de 05/10 à noite): o evento do mês uma
+  // vez no topo (a carta, a mesma para todas as equipes: o título e uma
+  // frase) e, por equipe, só o que se compara: a equipe pela cor, a opção
+  // escolhida (letra e rótulo), o saldo do bimestre em verde ou vermelho e o
+  // dinheiro da família no fim dele ("tem R$ X" ou "devendo R$ X": o caixa
+  // menos a dívida total, historia.dinheiroDaFamilia). Nada mais: as contas
+  // atrasadas, o que faltou na mesa e a carta de cada equipe ficam fora.
+  function telaResultadoSimples(s, e) {
+    const { el } = D();
+    const rodada = app.config.rodadas[e.rodada];
+    const itens = resultadosDaRodada(e);
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(null, rodada.titulo));
+    const primeira = itens[0];
+    if (primeira) {
+      const personaId = app.config.equipes[primeira.eq]?.persona;
+      const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
+      const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
+      s.appendChild(el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
+        el('p', { classe: 'evento-titulo', texto: titulo }),
+        frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
+      ]));
+    }
+    const grade = el('div', { classe: 'grade-simples', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
+    for (const { eq, r } of itens) {
+      const mes = mesDoResultado(e.rodada, eq, r);
+      const saldo = Math.round(mes.saldoMes) + 0;
+      const familia = N().historia.dinheiroDaFamilia(r.depois) ?? { situacao: 'tem', valor: 0 };
+      const rotulo = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo || r.decisao;
+      grade.appendChild(el('article', {
+        classe: 'resultado-simples', role: 'listitem',
+        dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
+      }, [
+        el('div', { classe: 'simples-quem' }, [rotuloEquipe(eq)]),
+        el('p', { classe: 'simples-opcao' }, [el('b', { classe: 'letra', texto: letraDe(rodada, r.decisao) }), el('span', { texto: rotulo })]),
+        el('div', { classe: 'simples-saldo' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: `saldo ${doPeriodo}` }),
+          el('p', { classe: 'resultado-saldo', title: textoSaldo(saldo), dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }) }),
+        ]),
+        el('div', { classe: 'simples-familia' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: 'a família' }),
+          el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
+        ]),
+      ]));
+    }
+    s.appendChild(grade);
+    // D-078: a consequência de uma escolha de antes (as costas que travam, a
+    // moto que quebra, o IPVA que já estava pago), com o motivo, embaixo das
+    // faixas: uma linha por motivo, com as equipes juntas
+    // (historia.consequenciasDaRodada). Sem ela, o saldo de uma equipe caía
+    // R$ 1.230 e ninguém sabia por quê. Bimestre sem consequência, sem a lista.
+    const consequencias = N().historia.consequenciasDaRodada(itens.map(({ eq, r }) => ({ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) })));
+    if (consequencias.length > 0) {
+      const nomeDa = (eq) => app.config.equipes[eq]?.nome || eq;
+      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas de antes' }, consequencias.map((g) => el('li', {
+        dados: { motivo: g.motivo, valor: String(g.valor), equipes: g.equipes.join(' ') },
+      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${g.equipes.map(nomeDa).join(', ')}`]))));
+    }
+    // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
+    // transborda (medido depois do desenho), as faixas se aproximam; a letra
+    // fica nos 28 px. Com as linhas das consequências (D-078), um terceiro
+    // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
+    // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
+    // celular de cada equipe): no teste com a faixa de entrada, as linhas das
+    // consequências ficavam por cima da última equipe.
+    app.depoisDeMedir.push(() => {
+      const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
+      if (transborda()) s.dataset.aperto = '1';
+      if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
+      if (s.dataset.aperto === '2' && consequencias.length > 0 && transborda()) s.dataset.aperto = '3';
+      if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
     });
   }
 
@@ -2648,9 +2931,17 @@
   // uma página por equipe, como antes.
   const RODADAS_POR_PAGINA_HISTORIA = 3;
 
+  // Formato simples (decisão do Kleber de 05/10 à noite): três páginas só. (1)
+  // "O caminho de cada equipe", a tabela das escolhas e do saldo de cada
+  // bimestre; (2) "Quanto sobrou, ou ficou devendo", as barras; (3) "Das N
+  // combinações possíveis, X fecham o ano", todas as combinações contadas pelo
+  // motor (sem sorteio, cada uma tem um valor só). Sem "Escolha ou sorte?" (não
+  // há sorte), sem o pior caso e sem as histórias por equipe: no teste dele,
+  // as várias telas de placar ficaram complexas demais.
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
+    if (simples()) return [{ tipo: 'caminho' }, { tipo: 'saldo' }, { tipo: 'combinacoes' }];
     const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
     const historias = equipes.flatMap((eq) => {
       const n = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados).length;
@@ -2667,10 +2958,12 @@
     return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
   }
 
-  function telaPlacarFinal(s) {
+  // paginaPedida: a do apresentador (app.ui.pagina); o modo revendo mostra a
+  // primeira.
+  function telaPlacarFinal(s, _e, paginaPedida = app.ui.pagina) {
     const { el } = D();
     const paginas = paginasDoPlacar();
-    const i = Math.min(Math.max(0, app.ui.pagina), paginas.length - 1);
+    const i = Math.min(Math.max(0, paginaPedida), paginas.length - 1);
     const pagina = paginas[i];
     s.dataset.pagina = pagina.tipo;
     if (pagina.eq) s.dataset.equipe = pagina.eq;
@@ -2680,6 +2973,8 @@
     }
     const lado = paginas.length > 1 ? el('p', { classe: 'pagina-placar', texto: `${i + 1} de ${paginas.length}` }) : null;
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
+    else if (pagina.tipo === 'caminho') paginaCaminho(s, lado);
+    else if (pagina.tipo === 'combinacoes') paginaCombinacoes(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
     else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
     else if (pagina.tipo === 'historia') paginaHistoria(s, pagina, lado);
@@ -2701,6 +2996,16 @@
         // linha (com reticências no fim, como já ficava na segunda): as contas
         // fecham no saldo e não podem ser cortadas.
         if (lista.dataset.aperto && lista.classList.contains('historia-meses') && lista.scrollHeight > lista.clientHeight + 1) lista.dataset.aperto = '2';
+        // Teste do Kleber de 05/10 (pedido 14): a linha que diz de onde a conta
+        // parte, embaixo do título do "Escolha ou sorte?", fez seis equipes com
+        // valores de cinco dígitos passarem ~23 px de 1024×768 mesmo apertadas
+        // (e2e, partes 4 e 8). Só então, um segundo aperto: o título da página
+        // menor (ainda maior que o corpo) e os vãos da tela e entre as equipes
+        // no mínimo. A letra do corpo continua nos 28 px, e a linha fica.
+        if (lista.dataset.aperto && lista.classList.contains('historias-escolha') && lista.scrollHeight > lista.clientHeight + 1) {
+          lista.dataset.aperto = '2';
+          s.dataset.aperto = '2';
+        }
       }
     });
   }
@@ -2713,6 +3018,8 @@
   // F6c). O título diz o que a barra mede: o que ficou devendo. Sem o limite,
   // o de sempre.
   function tituloDaPaginaSaldo() {
+    // Formato simples: o título pedido pelo Kleber (05/10 à noite).
+    if (simples()) return 'Quanto sobrou, ou ficou devendo';
     return Number.isInteger(app.config?.regras?.limiteChequeEspecial)
       ? 'Quanto sobrou, e quanto ficou devendo'
       : 'Quanto sobrou, e quanto faltou para o básico';
@@ -2730,9 +3037,10 @@
     const dominio = dominioCom(ordenadas.map(patrimonioNoPlacar).concat(referencias.map((r) => r.renda)));
     const estiloLinhas = { '--linhas': String(ordenadas.length) };
     s.appendChild(el('div', { classe: 'linhas-grafico linhas-placar' }, [
+      // O nome do personagem está no rótulo da equipe (teste do Kleber de
+      // 05/10): a linha de baixo com o nome saiu.
       el('div', { classe: 'coluna-rotulos', estilo: estiloLinhas }, ordenadas.map((id) => el('div', { classe: 'linha-rotulo linha-rotulo-placar' }, [
         rotuloEquipe(id),
-        el('span', { classe: 'linha-persona', texto: personaDaEquipe(id)?.nome || '' }),
       ]))),
       grafico('grafico-placar', (largura, altura, fonte) => G().barras({
         largura, altura, fonte, dominio,
@@ -2742,17 +3050,130 @@
           linhas: r.persona ? ordenadas.flatMap((id, k) => (app.config.equipes[id]?.persona === r.persona ? [k] : [])) : undefined,
         })),
       })),
+      // Formato simples: o dinheiro da família com as mesmas palavras do
+      // resultado de cada bimestre ("tem R$ X", "devendo R$ X").
       el('div', { classe: 'coluna-valores', estilo: estiloLinhas }, ordenadas.map((id) => el('div', {
         classe: 'linha-valor valor-saldo', dados: { equipe: id, valor: String(patrimonioNoPlacar(id)) },
-      }, [textoSaldo(patrimonioNoPlacar(id))]))),
+      }, [simples() ? textoDaFamiliaNoPlacar(id) : textoSaldo(patrimonioNoPlacar(id))]))),
     ]));
     if (referencias.length > 0) {
       s.appendChild(el('ul', { classe: 'referencias' }, referencias.map((r) => el('li', { dados: { referencia: r.id } }, [
-        el('span', { classe: 'marca-referencia', 'aria-hidden': 'true', texto: '┊' }), ` ${r.nome}: `, el('b', { texto: F().moeda(r.renda) }),
+        el('span', { classe: 'marca-referencia', 'aria-hidden': 'true', texto: '┊' }), ` ${r.nome}: `,
+        simples() && r.renda < 0 ? ['devendo ', el('b', { texto: F().moeda(-r.renda) })] : el('b', { texto: F().moeda(r.renda) }),
       ]))));
     }
-    const mesa = linhaDaMesaNoAno(ordenadas);
+    // Formato simples: sem a linha do que faltou na mesa (pedido do Kleber).
+    const mesa = simples() ? null : linhaDaMesaNoAno(ordenadas);
     if (mesa) s.appendChild(mesa);
+  }
+
+  // "tem R$ X" ou "devendo R$ X", pelo patrimônio do placar (formato simples).
+  const textoDaFamiliaNoPlacar = (eq) => N().historia.textoDaFamilia(app.dados.placar?.[eq], F().moeda) ?? '';
+
+  // As rodadas jogadas, na ordem do roteiro (a do anfitrião): as que têm
+  // resultado de alguma equipe. Uma rodada pulada no dia fica de fora, como no
+  // estado da equipe.
+  function rodadasJogadas() {
+    return app.passos.filter((p) => p.tipo === 'rodada' && app.dados.resultados?.[p.rodada]).map((p) => p.rodada);
+  }
+
+  // Formato simples, página 1: "O caminho de cada equipe". Uma linha por
+  // equipe, da que terminou com mais dinheiro para a que terminou com menos;
+  // em cada bimestre, a letra escolhida e o saldo do bimestre (verde ou
+  // vermelho, sempre com o sinal); na última coluna, o total, o dinheiro da
+  // família no fim (o patrimônio, que é a soma dos saldos: a família começa
+  // em zero). Os valores em reais sem o "R$" (o kicker diz "em reais"): com o
+  // "R$" em cada célula, seis bimestres e o nome da equipe não cabiam em
+  // 1024×768 com a letra de 28 px.
+  function paginaCaminho(s, lado) {
+    const { el } = D();
+    const ordenadas = equipesPorSaldo();
+    const rodadas = rodadasJogadas();
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(`Placar final · saldo ${doPeriodo}, em reais`, 'O caminho de cada equipe', { extra: lado }));
+    const cabeca = el('tr', {}, [
+      el('th', { scope: 'col', classe: 'caminho-equipe', texto: 'Equipe' }),
+      ...rodadas.map((r) => el('th', { scope: 'col', texto: rotuloDaRodada(r) })),
+      el('th', { scope: 'col', classe: 'caminho-total', texto: 'Total' }),
+    ]);
+    const linhas = ordenadas.map((eq) => {
+      const total = Math.round(patrimonioNoPlacar(eq)) + 0;
+      return el('tr', { dados: { equipe: eq, total: String(total) } }, [
+        el('th', { scope: 'row', classe: 'caminho-equipe' }, [rotuloEquipe(eq, null, { curto: true })]),
+        ...rodadas.map((r) => {
+          const res = app.dados.resultados?.[r]?.[eq];
+          if (!res) return el('td', { classe: 'caminho-celula', texto: '—' });
+          const saldo = Math.round(mesDoResultado(r, eq, res).saldoMes) + 0;
+          const letra = letraDe(app.config.rodadas[r], res.decisao);
+          return el('td', { classe: 'caminho-celula', dados: { rodada: r, decisao: res.decisao, letra, saldoMes: String(saldo) } }, [
+            el('b', { classe: 'caminho-letra', texto: letra }),
+            el('span', { classe: 'caminho-saldo', dados: { sinal: sinalDoSaldo(saldo) }, texto: F().inteiro(saldo, { sinal: true }) }),
+          ]);
+        }),
+        el('td', { classe: 'caminho-total', dados: { sinal: sinalDoSaldo(total) }, texto: F().inteiro(total, { sinal: true }) }),
+      ]);
+    });
+    const tabela = el('table', { classe: 'tabela-caminho' }, [el('thead', {}, [cabeca]), el('tbody', {}, linhas)]);
+    s.appendChild(el('div', { classe: 'caminho' }, [tabela]));
+    // Seis equipes com a faixa de entrada (online): só quando a tabela
+    // transborda, as linhas se aproximam (a letra fica nos 28 px).
+    app.depoisDeMedir.push(() => {
+      const caixa = tabela.parentElement;
+      if (caixa.scrollHeight > caixa.clientHeight + 1 || caixa.scrollWidth > caixa.clientWidth + 1) s.dataset.aperto = '1';
+    });
+  }
+
+  // A contagem das combinações (motor.enumerarCombinacoes), guardada na memória
+  // desta janela: o config e as rodadas jogadas não mudam no placar, e as
+  // 15.625 combinações de 6 bimestres levam ~0,1 s no Node (o e2e mede no
+  // navegador). A chave leva o hash do config e as rodadas: outra sessão, ou
+  // uma rodada a mais, conta de novo.
+  const combinacoesContadas = new Map();
+  function contarCombinacoes(equipeId, rodadas) {
+    const chave = `${app.hash}|${equipeId}|${rodadas.join(',')}`;
+    if (!combinacoesContadas.has(chave)) {
+      const inicio = raiz.performance.now();
+      const contagem = N().motor.enumerarCombinacoes(app.config, { equipeId, rodadas });
+      combinacoesContadas.set(chave, { ...contagem, ms: raiz.performance.now() - inicio });
+    }
+    return combinacoesContadas.get(chave);
+  }
+
+  // Formato simples, página 3: "Das N combinações possíveis, X fecham o ano".
+  // Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor
+  // conta todas (5^6 = 15.625 com 6 bimestres de 5 opções): é a resposta direta
+  // para "mesmo escolhendo, faltou dinheiro". A melhor e a pior combinação
+  // (letras e o dinheiro da família no fim) e, para cada equipe, em que lugar a
+  // combinação dela ficou entre todas (empate divide o lugar). Todas as
+  // equipes jogam o mesmo Jonas (o validador garante uma persona só), e a
+  // contagem é a da primeira equipe do placar.
+  function paginaCombinacoes(s, lado) {
+    const { el } = D();
+    const ordenadas = equipesPorSaldo();
+    const rodadas = rodadasJogadas();
+    const c = contarCombinacoes(equipesDoPlacar()[0], rodadas);
+    s.dataset.msCombinacoes = String(Math.round(c.ms));
+    const meses = rodadas.length * periodo().meses;
+    const fechar = meses === 12 ? 'o ano' : 'as contas';
+    const quantas = c.fecham === 0 ? `nenhuma fecha ${fechar}` : c.fecham === 1 ? `1 fecha ${fechar}` : `${F().inteiro(c.fecham)} fecham ${fechar}`;
+    s.appendChild(cabecalho('Placar final', `Das ${F().inteiro(c.total)} combinações possíveis, ${quantas}`, { extra: lado }));
+    const letras = (opcoes) => opcoes.map((o, i) => letraDe(app.config.rodadas[rodadas[i]], o)).join(' ');
+    const familia = (v) => N().historia.textoDaFamilia({ renda: v }, F().moeda);
+    const extremo = (rotulo, x, classe) => el('p', { classe: ['combinacao-extremo', classe], dados: { letras: letras(x.opcoes).replace(/ /g, ''), valor: String(Math.round(x.valor) + 0) } }, [
+      `${rotulo} `, el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ` · ${familia(x.valor)}`,
+    ]);
+    s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [extremo('A melhor:', c.melhor, 'combinacao-melhor'), extremo('A pior:', c.pior, 'combinacao-pior')]));
+    s.appendChild(el('ol', { classe: 'combinacoes-equipes' }, ordenadas.map((eq) => {
+      const opcoes = rodadas.map((r) => app.dados.resultados?.[r]?.[eq]?.decisao);
+      const jogou = opcoes.every((o) => typeof o === 'string');
+      const valor = patrimonioNoPlacar(eq);
+      const lugar = jogou ? N().motor.lugarEntre(c.valores, valor) : null;
+      return el('li', { classe: 'combinacao-equipe', dados: { equipe: eq, lugar: lugar === null ? '' : String(lugar), letras: jogou ? letras(opcoes).replace(/ /g, '') : '' } }, [
+        rotuloEquipe(eq),
+        jogou ? el('b', { classe: 'combinacao-letras', texto: letras(opcoes) }) : null,
+        el('span', { classe: 'combinacao-lugar' }, lugar === null ? ['—'] : [el('b', { texto: `${F().inteiro(lugar)}º` }), ` de ${F().inteiro(c.total)}`]),
+      ]);
+    })));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
@@ -2787,7 +3208,7 @@
   // da conta é inteiro: a linha quebra entre eles. Os valores vêm de
   // historia.escolhaOuSorte, já inteiros e fechando com o total: a conta é lida
   // em voz alta, e R$ 1 de diferença ficava à vista de quem somava.
-  // Os dois totais (sem mudar nada, e o do fim) vão sem sinal de variação; as
+  // Os dois totais (se ninguém votasse, e o do fim) vão sem sinal de variação; as
   // duas variações, sempre com + ou − (rascunho, seção 7, item 11): no mesmo
   // formato, "−R$ 4.150 → −R$ 395" parecia uma sequência de saldos. O total do
   // fim entra com "=" e em destaque, e não com mais uma seta.
@@ -2796,11 +3217,23 @@
     const placar = app.dados.placar;
     const passo = (texto, valor, classe) => el('span', { classe: ['passo-conta', classe] }, [texto, el('b', { texto: valor })]);
     const ordenadas = equipesPorSaldo();
-    // Esquema v3: com 6 rodadas, o "se não mudassem nada" e as escolhas vêm da
+    // Esquema v3: com 6 rodadas, o "se ninguém votasse" e as escolhas vêm da
     // simulação do motor (placar.estimado), e não da conta exata. A tela diz
     // isso uma vez, no kicker, em vez de repetir em cada linha.
     const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
     s.appendChild(cabecalho(estimado ? 'Placar final · valores estimados por simulação' : 'Placar final', 'Escolha ou sorte?', { extra: lado }));
+    // Teste do Kleber de 05/10 (print 15): ele não entendeu a tela, nem o que
+    // era "se não mudassem nada". O ponto de partida da conta é o piloto do
+    // motor: a opção de sempre (a que fica quando ninguém vota, "ninguém
+    // votou: ficou o de sempre" no celular) em todo período, com a sorte
+    // média. Uma linha diz isso embaixo do título, e os passos dizem o que cada
+    // número é: "se ninguém votasse", "as escolhas mudaram", "as cartas
+    // mudaram", "= terminaram com". A conta não mudou. O termo "piloto
+    // automático" continua fora da tela (D-041: no ensaio, ele confundia e
+    // soava como a opção boa de quem não votou). "o que as escolhas mudaram",
+    // como foi pedido, não cabia: com valores de cinco dígitos, as duas colunas
+    // da grade passavam da largura de 1024×768.
+    s.appendChild(el('p', { classe: 'escolhas-nota', texto: 'Sem votos, fica o de sempre; a conta parte daí, com a sorte média.' }));
     // Em grade fixa (escolhas-em-grade, css/telao.css): três linhas por
     // equipe, os mesmos passos em cada uma e as colunas alinhadas entre as
     // equipes. Corrida como texto, cada equipe quebrava a conta num ponto
@@ -2811,9 +3244,9 @@
       return el('li', { classe: 'historia-escolha', dados: { equipe: id, ...(c?.estimado ? { estimado: '1' } : {}) } }, [
         rotuloEquipe(id),
         c ? el('span', { classe: 'historia-conta' }, [
-          passo('se não mudassem nada: ', F().moeda(c.piloto), 'passo-total'), ' ',
-          passo('→ as escolhas: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
-          passo('→ a sorte: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
+          passo('se ninguém votasse: ', F().moeda(c.piloto), 'passo-total'), ' ',
+          passo('as escolhas mudaram: ', F().variacao(c.escolhas), 'passo-variacao'), ' ',
+          passo('as cartas mudaram: ', F().variacao(c.sorte), 'passo-variacao'), ' ',
           passo('= terminaram com ', F().moeda(c.total), ['passo-total', 'passo-final']),
         ]) : null,
       ]);
@@ -2854,6 +3287,19 @@
     const ordenadas = equipesPorSaldo();
     const estimado = ordenadas.some((id) => placar[id]?.estimado === true);
     s.appendChild(cabecalho(estimado ? 'Placar final · pior caso estimado' : 'Placar final', 'O pior que podia acontecer', { extra: lado }));
+    // Teste do Kleber de 05/10 (print 16): "o que seria escolher a proteção?".
+    // A tela não dizia o que é proteção no jogo nem quais opções protegem.
+    // Agora uma linha diz as duas coisas, com as opções do config (protege:
+    // true), pela letra e pelo período da decisão: "Proteção é pagar antes
+    // para ter ajuda se der errado: B em Jan–fev (Jornada de sempre e abrir o
+    // MEI)." Com o config de 05/10, só o MEI de jan–fev tem protege: true.
+    const protegem = opcoesQueProtegem();
+    if (protegem.length > 0) {
+      s.appendChild(el('p', { classe: 'pior-o-que' }, [
+        'Proteção é pagar antes para ter ajuda se der errado: ',
+        juntarOpcoes(protegem.map((o) => `${o.letra} em ${o.quando} (${o.rotulo})`)), '.',
+      ]));
+    }
     s.appendChild(el('p', { classe: 'pior-nota', texto: 'Na média, a proteção custa dinheiro. O que ela pode fazer é evitar o pior.' }));
     s.appendChild(el('ol', { classe: ['historias-escolha', 'piores-casos'] }, ordenadas.map((id) => {
       const p = N().historia.piorCasoDoPlacar(placar[id], N().historia.escolheuProtecao(app.config, app.dados.resultados, id));
@@ -2873,7 +3319,16 @@
           passo('· a proteção evitou ', F().moeda(p.evitou), ['passo-total', 'passo-final', 'pior-evitou']),
         ];
       } else if (p?.situacao === 'naoMelhorou') depois = nota('· a proteção não melhorou o pior caso');
-      else if (p?.situacao === 'semEscolha') depois = nota('· não escolheram proteção');
+      else if (p?.situacao === 'semEscolha') {
+        // "(podiam: B em Jan–fev)": as opções que protegem nas rodadas que a
+        // equipe jogou (teste do Kleber de 05/10). Num pedaço à parte, para a
+        // linha poder quebrar antes dele.
+        const podiam = protegem.filter((o) => app.dados.resultados?.[o.rodadaId]?.[id]);
+        depois = [
+          nota('· não escolheram proteção'),
+          podiam.length > 0 ? [' ', el('span', { classe: ['passo-conta', 'pior-sem-escolha', 'pior-podiam'], texto: `(podiam: ${juntarOpcoes(podiam.map((o) => `${o.letra} em ${o.quando}`))})` })] : null,
+        ];
+      }
       return el('li', { classe: 'historia-escolha', dados }, [
         rotuloEquipe(id),
         p ? el('span', { classe: 'historia-conta' }, [
@@ -2882,6 +3337,20 @@
       ]);
     })));
   }
+
+  // As opções que protegem (D-059, protege: true no config), na ordem das
+  // rodadas do roteiro: a letra (a mesma da decisão no telão e no celular), o
+  // período ("Jan–fev") e o rótulo comum da opção.
+  function opcoesQueProtegem() {
+    return app.passos.filter((p) => p.tipo === 'rodada').flatMap(({ rodada: rodadaId }) => {
+      const rodada = app.config.rodadas[rodadaId];
+      return ordemOpcoes(rodada).filter((op) => rodada.opcoes[op]?.protege === true)
+        .map((op) => ({ rodadaId, opcaoId: op, letra: letraDe(rodada, op), quando: rotuloDaRodada(rodadaId), rotulo: rodada.opcoes[op].rotulo }));
+    });
+  }
+
+  // "A", "A e B", "A, B e C".
+  const juntarOpcoes = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs.at(-1)}` : xs[0] || '');
 
   // Página 3 (uma por equipe; com 6 bimestres, duas, de até 3 rodadas cada):
   // cada rodada com uma linha curta em primeira pessoa (a primeira frase da
@@ -2902,14 +3371,15 @@
   function paginaHistoria(s, pagina, lado) {
     const { el } = D();
     const { eq, parte, partes } = pagina;
-    const persona = personaDaEquipe(eq);
     const historia = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados);
     const inicio = parte * RODADAS_POR_PAGINA_HISTORIA;
     const trecho = historia.slice(inicio, inicio + RODADAS_POR_PAGINA_HISTORIA);
     const kicker = partes > 1 && trecho.length > 0
       ? `A história da equipe · ${trecho[0].rotulo}${trecho.length > 1 ? ` a ${trecho.at(-1).rotulo}` : ''}`
       : 'A história da equipe';
-    s.appendChild(cabecalho(kicker, [rotuloEquipe(eq), persona ? ` · ${persona.nome}` : null], { extra: lado }));
+    // A equipe pelo personagem ("◯ 1 Jonas, motoboy"): o " · Jonas" que vinha
+    // depois do nome da cor repetiria o nome (teste do Kleber de 05/10).
+    s.appendChild(cabecalho(kicker, [rotuloEquipe(eq)], { extra: lado }));
     s.appendChild(el('ol', { classe: 'historia-meses' }, trecho.map((h) => {
       const r = app.dados.resultados?.[h.rodadaId]?.[eq] || {};
       const linha = N().historia.linhaDoMes(h);
@@ -2963,18 +3433,22 @@
   // diz só quanto a família deve e quanto tem. Aqui o caixa só vem junto de
   // uma dívida (o empréstimo): sem dívida, o "sobrou R$ X" já é o caixa, e
   // "sobrou R$ 8.252 · caixa R$ 8.252" repetia o número.
-  // D-066: com o limite, a dívida é a do banco mais o empréstimo, e as contas
-  // atrasadas e o que faltou na mesa até ali vêm em seguida, cada um com o
-  // próprio nome (o "faltou na mesa" não é dívida: é a comida que não deu para
-  // comprar, acumulada). Sala sem o limite: como antes.
+  // D-066: com o limite, o que faltou na mesa até ali vem em seguida, com o
+  // próprio nome (não é dívida: é a comida que não deu para comprar,
+  // acumulada). Teste do Kleber de 05/10 (print 7): a dívida é a total, o
+  // banco, o empréstimo e as contas atrasadas num número só ("dívida total"),
+  // o mesmo do resultado da rodada; antes, "dívida" e "contas atrasadas" vinham
+  // separadas. data-contas-atrasadas fica no span da dívida (a parte dela que é
+  // aluguel, luz e água atrasados). Sala sem o limite: a dívida é o banco e o
+  // empréstimo, como antes.
   function pedacosDaDivida(valores) {
     const { el } = D();
     const { divida, contasAtrasadas, caixa } = dividaECaixa(valores);
     const mesa = reaisInteiros(N().historia.faltouNaMesaDe(valores));
+    const dadosDivida = { divida: String(divida), ...(contasAtrasadas !== null ? { contasAtrasadas: String(contasAtrasadas) } : {}) };
     return [
-      divida > 0 ? [' · ', el('span', { classe: 'historia-divida', dados: { divida: String(divida) } }, ['dívida ', el('b', { texto: F().moeda(divida) })])] : null,
+      divida > 0 ? [' · ', el('span', { classe: 'historia-divida', dados: dadosDivida }, ['dívida total ', el('b', { texto: F().moeda(divida) })])] : null,
       divida > 0 && caixa > 0 ? [' · ', el('span', { classe: 'historia-caixa', dados: { caixa: String(caixa) } }, ['caixa ', el('b', { texto: F().moeda(caixa) })])] : null,
-      contasAtrasadas > 0 ? [' · ', el('span', { classe: 'historia-atrasadas', dados: { contasAtrasadas: String(contasAtrasadas) } }, ['contas atrasadas ', el('b', { texto: F().moeda(contasAtrasadas) })])] : null,
       mesa > 0 ? [' · ', pedacoMesa(mesa, 'historia-mesa-total')] : null,
     ];
   }
@@ -3000,11 +3474,13 @@
     ]);
   }
 
-  function telaComparativo(s, e) {
+  // paginaPedida: a do apresentador (app.ui.pagina); o modo revendo mostra a
+  // primeira afirmação.
+  function telaComparativo(s, e, paginaPedida = app.ui.pagina) {
     const { el } = D();
     const enq = app.config.enquetes[e.enquete];
     const ordem = ordemAfirmacoes(enq);
-    const pagina = Math.min(Math.max(0, app.ui.pagina), ordem.length - 1);
+    const pagina = Math.min(Math.max(0, paginaPedida), ordem.length - 1);
     const a = ordem[pagina];
     const antes = app.dados.enquetes?.[e.enquete]?.antes ?? null;
     const depois = app.dados.enquetes?.[e.enquete]?.depois ?? null;
@@ -3060,6 +3536,148 @@
     if (app.dados.placar && ativas(app.estado).length > 0) s.appendChild(placarResumido('placar-fim'));
   }
 
+  // ---------- Revendo: voltar só para ver (pedido 6 do Kleber, 05/10) ----------
+  //
+  // Teste do Kleber de 05/10: o apresentador precisava rever a tela anterior
+  // (o resultado da rodada que acabou de passar, para comentar com a turma), e
+  // não havia como. Voltar o roteiro (o anfitrião) mudaria o estado da sala, e
+  // os celulares iriam junto. O modo revendo é só desenho: app.revendo guarda o
+  // índice do passo revisto, e nada é gravado no canal, no banco ou no
+  // localStorage, nem entra na fila de comandos (I6: a tela é função dos
+  // dados; o estado e a geracao continuam os do passo atual). Igual online e
+  // offline.
+  //
+  // O que dá para refazer fielmente a partir do banco é refeito como estava na
+  // hora: os blocos (slides) e o "Mapa do seminário", com o "você está aqui" no
+  // passo revisto e o placar resumido de então; a entrada na sala; as personas;
+  // o resultado de cada rodada já apurada (resultados/{r}); a enquete já
+  // apurada (enquetes/{e}/{momento}); a primeira página do placar final e do
+  // comparativo. O resto (a formação das equipes, que hoje mostraria os
+  // membros de agora; uma rodada ou enquete pulada, sem apuração) vira um
+  // cartão com o título do passo.
+
+  // ← e PageUp: um passo antes (o primeiro aperto entra no modo, a partir do
+  // passo atual). No passo 0 não há o que rever.
+  function recuarRevendo() {
+    const e = app.estado;
+    if (!e) return;
+    const de = app.revendo ?? e.indice;
+    if (de <= 0) {
+      if (app.revendo === null) avisar('Não há passo antes deste para rever.');
+      return;
+    }
+    app.revendo = de - 1;
+    agendarDesenho();
+  }
+
+  // pelaTecla: a saída por uma tecla de comando conta como um avanço para a
+  // trava do passador (TRAVA_AVANCAR_MS). O passador manda dois "avançar"
+  // seguidos (arquitetura, seção 5): o primeiro sai do modo, e sem a trava o
+  // segundo avançaria o roteiro de quem só queria voltar ao passo atual. A
+  // hora da saída também segura a repetição de uma tecla mantida apertada
+  // (aoTeclar), que, depois da saída, rodaria o comando.
+  function sairRevendo({ pelaTecla = false } = {}) {
+    if (app.revendo === null) return false;
+    app.revendo = null;
+    if (pelaTecla) {
+      app.ultimoAvanco = performance.now();
+      app.saiuDoRevendoEm = app.ultimoAvanco;
+    }
+    agendarDesenho();
+    return true;
+  }
+
+  // As teclas que não são comando e valem também no modo revendo: as que só
+  // mexem na tela do telão (H, a barra; F, a tela cheia), as teclas de
+  // modificador sozinhas e os atalhos do navegador. O Ctrl+Z é comando.
+  const TECLAS_SO_DE_TELA = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab', 'h', 'H', 'f', 'F']);
+  function teclaSoDeTela(ev) {
+    if (TECLAS_SO_DE_TELA.has(ev.key)) return true;
+    return (ev.ctrlKey || ev.altKey || ev.metaKey) && !(ev.ctrlKey && /^z$/i.test(ev.key));
+  }
+
+  // Online, quem segue no passo atual são os celulares. Offline não há
+  // celular, e "os celulares continuam" diria à turma que há algum.
+  const oQueContinua = () => (app.modo === 'offline' ? 'a sessão continua no passo atual' : 'os celulares continuam no passo atual');
+
+  function dicaDoRevendo() {
+    return `Revendo o passo ${app.revendo + 1} (só no telão; ${oQueContinua()}) · ← volta mais · → ou Esc volta ao passo atual · outra tecla só sai do modo, sem rodar o comando`;
+  }
+
+  // O selo bem visível em cima do palco: "Revendo: <título do passo> · os
+  // celulares continuam no passo atual · → volta". Fica fora do #palco: ele é
+  // do modo, e não da tela revista.
+  function atualizarSeloRevendo() {
+    const selo = app.el.revendo;
+    if (!selo) return;
+    const k = app.revendo;
+    document.body.classList.toggle('revendo', k !== null);
+    if (k === null || !app.passos?.[k]) {
+      selo.hidden = true;
+      return;
+    }
+    const titulo = descreverPasso(app.passos[k]);
+    const texto = `${titulo}|${oQueContinua()}`;
+    if (selo.dataset.texto !== texto) {
+      selo.dataset.texto = texto;
+      D().acrescentar(D().limpar(selo), [
+        D().el('b', { texto: 'Revendo: ' }), titulo,
+        ` · ${oQueContinua()} · `, D().el('b', { texto: '→ volta' }),
+      ]);
+    }
+    selo.hidden = false;
+  }
+
+  // O estado de quando o passo k estava na tela, só com o que as telas
+  // revistas leem: o tipo, o índice (a linha do tempo marca o passo revisto
+  // como "você está aqui", como estava na hora), as equipes abertas de agora
+  // (a formação já passou quando há resultado) e travadas só se o passo
+  // revisto vem depois da formação. revisto: o bloco usa o placar resumido de
+  // então (placarResumido), e não o de agora.
+  function estadoDoPasso(k) {
+    const passo = app.passos[k];
+    const e = app.estado;
+    return {
+      tipo: passo.tipo, indice: k, geracao: e.geracao, equipesAbertas: e.equipesAbertas, revisto: true,
+      equipesTravadas: e.equipesTravadas === true && app.passos.slice(0, k).some((p) => p.tipo === 'formarEquipes'),
+    };
+  }
+
+  function telaRevista(k) {
+    const passo = app.passos[k];
+    const falso = estadoDoPasso(k);
+    const cartao = { id: 'revista-cartao', desenhar: (s) => telaCartaoRevisto(s, passo, k) };
+    switch (passo.tipo) {
+      case 'lobby': return { id: 'lobby', desenhar: (s) => telaLobby(s), chave: chaveLobby };
+      case 'bloco': return { id: 'bloco', desenhar: (s) => telaBloco(s, falso), chave: () => app.dados.resultados };
+      case 'personas': return ativas(falso).length > 0 ? { id: 'personas', desenhar: (s) => telaPersonas(s, falso) } : cartao;
+      case 'rodada':
+        // Só a rodada apurada: a pulada (pularPara) não tem resultado.
+        if (!app.dados.resultados?.[passo.rodada]) return cartao;
+        return {
+          id: 'rodada-resultado', chave: () => app.dados.resultados?.[passo.rodada] ?? null,
+          desenhar: (s) => telaResultado(s, { ...falso, rodada: passo.rodada, subfase: 'resultado' }),
+        };
+      case 'enquete':
+        if (!app.dados.enquetes?.[passo.enquete]?.[passo.momento]) return cartao;
+        return {
+          id: 'enquete-apurada', chave: () => app.dados.enquetes?.[passo.enquete]?.[passo.momento] ?? null,
+          desenhar: (s) => telaEnqueteApurada(s, { ...falso, enquete: passo.enquete, momento: passo.momento, subfase: 'apurada' }),
+        };
+      // O placar final e o comparativo, na primeira página (o saldo; a primeira
+      // afirmação): o Espaço, que pagina, aqui só sai do modo.
+      case 'placarFinal': return { id: 'placar-final', desenhar: (s) => telaPlacarFinal(s, falso, 0), chave: () => app.dados.placar };
+      case 'comparativo':
+        return { id: 'comparativo', desenhar: (s) => telaComparativo(s, { ...falso, enquete: passo.enquete }, 0), chave: () => app.dados.enquetes?.[passo.enquete] ?? null };
+      default: return cartao;
+    }
+  }
+
+  // O cartão do passo que não dá para refazer fielmente.
+  function telaCartaoRevisto(s, passo, k) {
+    s.appendChild(cabecalho(`Passo ${k + 1} de ${app.passos.length}`, descreverPasso(passo)));
+  }
+
   // ---------- Barra do apresentador ----------
 
   const BOTOES = [
@@ -3076,7 +3694,8 @@
     { id: 'entrada', rotulo: 'Entrada', acao: () => executar(() => app.anf.abrirEntrada(app.dados.meta?.entradaAberta !== true)) },
     { id: 'rede', rotulo: 'Rede restrita', acao: () => { app.ui.lp = !app.ui.lp; app.chaveDesenho = null; agendarDesenho(); } },
     { id: 'salvar', rotulo: 'Salvar estado', acao: () => socorro(() => salvarEstado('manual')) },
-    { id: 'telaCheia', rotulo: 'Tela cheia', dica: 'F', acao: () => alternarTelaCheia() },
+    // soDeTela: não sai do modo revendo, como a tecla F (teclaSoDeTela).
+    { id: 'telaCheia', rotulo: 'Tela cheia', dica: 'F', soDeTela: true, acao: () => alternarTelaCheia() },
     { id: 'encerrarJogo', rotulo: 'Encerrar jogo (segure)', segurar: true, acao: () => encerrarJogo() },
     { id: 'semCelulares', rotulo: 'Continuar sem celulares (segure)', segurar: true, acao: () => socorro(continuarSemCelulares) },
     // Vieram da tela do fim (D-047). Apagar só no fim: no meio da aula, um
@@ -3100,7 +3719,13 @@
   function montarBarra() {
     const { el, botao, limpar } = D();
     const barra = limpar(app.el.barra);
-    const botoes = BOTOES.map((b) => botao(b.rotulo, b.acao, { dica: b.dica, segurarMs: b.segurar ? SEGURAR_MS : null, dados: { acao: b.id }, classe: 'botao-barra' }));
+    // Pedido 6 do Kleber (05/10): um comando clicado na barra durante o modo
+    // revendo sai dele antes de rodar. O clique no botão é de propósito (no
+    // teclado, o Espaço dado por hábito só sai do modo, para não avançar sem
+    // querer), e o apresentador passa a ver o passo atual, que é onde o
+    // comando age. A tela cheia não é comando do roteiro e não sai.
+    const acaoDe = (b) => (b.soDeTela ? b.acao : (...args) => { sairRevendo(); return b.acao(...args); });
+    const botoes = BOTOES.map((b) => botao(b.rotulo, acaoDe(b), { dica: b.dica, segurarMs: b.segurar ? SEGURAR_MS : null, dados: { acao: b.id }, classe: 'botao-barra' }));
     D().acrescentar(barra, [
       el('div', { classe: 'barra-info' }, [
         el('p', { classe: 'barra-passo', dados: { barraPasso: '1' } }),
@@ -3199,20 +3824,62 @@
     }, ESCONDER_BARRA_MS);
   }
 
-  // Movimento fora da borda não mostra a barra. Ao sair da borda com ela aberta,
-  // os 3 s recomeçam: contam a partir de quando o mouse saiu, e não de quando
-  // ele entrou na faixa. Movimento sobre a barra aberta também recomeça.
+  // Pedido 8 do Kleber (05/10):
+  // - escondida, a barra só abre com o mouse parado na faixa fina do pé da tela:
+  //   cada movimento dentro dela recomeça a espera de PARAR_NA_BORDA_MS, e sair
+  //   dela antes cancela. O mouse que só passa pela faixa (indo de um canto ao
+  //   outro, por exemplo) não abre nada. O mouse que fica parado na faixa
+  //   depois de a barra sumir também não: sem movimento, não há evento;
+  // - aberta, cada movimento sobre ela (ou na faixa) recomeça os 3 s
+  //   (mostrarBarra); ao sair dela, ela some depois de SAIR_DA_BARRA_MS, com o
+  //   mesmo critério do mostrarBarra para segurar (um modal aberto, o foco do
+  //   teclado dentro dela). Movimento fora dela, sem ter passado por ela (a
+  //   barra aberta pelo H), não a esconde: ela some nos 3 s, como antes.
   function aoMoverMouse(ev) {
     if (!app.anf) return;
     const naBorda = ev.clientY >= raiz.innerHeight - BORDA_BARRA_PX;
-    const saiu = app.mouseNaBorda && !naBorda;
-    const sobreABarra = app.barraVisivel && app.el.barra.contains(ev.target);
     app.mouseNaBorda = naBorda;
-    if (naBorda || sobreABarra || (saiu && app.barraVisivel)) mostrarBarra();
+    if (app.barraVisivel) {
+      if (naBorda || app.el.barra.contains(ev.target)) {
+        app.mouseSobreBarra = true;
+        clearTimeout(app.saidaTimer);
+        app.saidaTimer = 0;
+        mostrarBarra();
+      } else if (app.mouseSobreBarra) {
+        app.mouseSobreBarra = false;
+        clearTimeout(app.saidaTimer);
+        app.saidaTimer = setTimeout(() => {
+          app.saidaTimer = 0;
+          if (app.el.modal.open || app.el.barra.contains(document.activeElement)) return;
+          esconderBarra();
+        }, SAIR_DA_BARRA_MS);
+      }
+      return;
+    }
+    clearTimeout(app.bordaTimer);
+    app.bordaTimer = naBorda ? setTimeout(() => {
+      app.bordaTimer = 0;
+      if (!app.mouseNaBorda || app.barraVisivel) return;
+      // O mouse está na faixa, embaixo da barra que abre: sair dela (sem outro
+      // movimento antes) já arma o sumiço curto.
+      app.mouseSobreBarra = true;
+      mostrarBarra();
+    }, PARAR_NA_BORDA_MS) : 0;
+  }
+
+  // O mouse que sai da janela pela borda de baixo não fica "na borda" para
+  // sempre, nem abre a barra depois da espera.
+  function aoSairDaJanela() {
+    app.mouseNaBorda = false;
+    clearTimeout(app.bordaTimer);
+    app.bordaTimer = 0;
   }
 
   function esconderBarra(tambemDesligar = false) {
     clearTimeout(app.barraTimer);
+    clearTimeout(app.saidaTimer);
+    app.saidaTimer = 0;
+    app.mouseSobreBarra = false;
     app.el.barra.hidden = true;
     app.barraVisivel = false;
     document.body.classList.remove('barra-visivel');
@@ -3473,12 +4140,33 @@
     if (!app.anf) return; // na abertura, o teclado é o do formulário
     const tecla = ev.key;
     const numero = numeroDaTecla(ev);
+    // Pedido 6 do Kleber (05/10), modo revendo: ← e PageUp voltam mais um
+    // passo; → e Esc voltam ao passo atual; e qualquer outra tecla de comando
+    // (Espaço, Enter, P, Ctrl+Z, os números…) só sai do modo, sem rodar o
+    // comando: o Espaço do passador, dado por hábito, não avança o roteiro de
+    // quem estava olhando para trás. H e F (barra e tela cheia) e os atalhos do
+    // navegador valem normalmente.
+    if (app.revendo !== null && !teclaSoDeTela(ev)) {
+      if (tecla === 'ArrowLeft' || tecla === 'PageUp') recuarRevendo();
+      else sairRevendo({ pelaTecla: true });
+      ev.preventDefault();
+      return;
+    }
+    // A tecla de comando mantida apertada repete: a repetição que chega logo
+    // depois de sair do modo revendo rodaria o comando (o Enter encerraria a
+    // votação) que a primeira batida só usou para sair.
+    if (ev.repeat && !teclaSoDeTela(ev) && performance.now() - app.saiuDoRevendoEm < TRAVA_AVANCAR_MS) {
+      ev.preventDefault();
+      return;
+    }
     let tratada = true;
     if (ev.ctrlKey && (tecla === 'z' || tecla === 'Z')) desfazer();
     else if (ev.ctrlKey || ev.altKey || ev.metaKey) tratada = false;
     else if (tecla === ' ' || tecla === 'ArrowRight' || tecla === 'PageDown') avancar();
-    // O passador de slides manda ← e PageUp no "voltar": aqui não fazem nada.
-    else if (tecla === 'ArrowLeft' || tecla === 'PageUp') { /* de propósito, nada */ }
+    // ← e PageUp (o "voltar" do passador de slides) entram no modo revendo
+    // (pedido 6): mostram o passo anterior só no telão. Antes, não faziam nada,
+    // porque voltar o roteiro mexeria nos celulares; o modo revendo não mexe.
+    else if (tecla === 'ArrowLeft' || tecla === 'PageUp') recuarRevendo();
     else if (tecla === 'Enter') encerrar();
     else if (tecla === 'p' || tecla === 'P') pausarOuRetomar();
     else if (tecla === 'f' || tecla === 'F') alternarTelaCheia();
@@ -3565,6 +4253,10 @@
   function iniciar() {
     const $ = (sel) => document.querySelector(sel);
     app.el = { palco: $('#palco'), faixa: $('#faixa'), barra: $('#barra'), aviso: $('#aviso'), modal: $('#modal') };
+    // O selo do modo revendo (pedido 6), criado aqui para não mexer no HTML:
+    // uma faixa em cima do palco, escondida fora do modo.
+    app.el.revendo = D().el('p', { id: 'revendo', classe: 'selo-revendo', role: 'status', hidden: true });
+    document.body.insertBefore(app.el.revendo, app.el.palco);
     app.selo = N().conexao.criarSelo();
     app.wake = N().conexao.criarWakeLock();
     document.body.classList.add('em-abertura');
@@ -3572,8 +4264,7 @@
     ligarArrastar();
     document.addEventListener('keydown', aoTeclar);
     document.addEventListener('mousemove', aoMoverMouse);
-    // O mouse que sai da janela pela borda de baixo não fica "na borda" para sempre.
-    document.documentElement.addEventListener('mouseleave', () => { app.mouseNaBorda = false; });
+    document.documentElement.addEventListener('mouseleave', aoSairDaJanela);
     raiz.addEventListener('resize', () => agendarDesenho());
     N().conexao.aoVoltarAVista(() => sincronizar());
     setInterval(tique, 250);

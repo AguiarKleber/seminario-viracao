@@ -160,7 +160,9 @@ test('linhaDoMes: com as narrativas do config.json real, cada pedaço é uma fra
 // R$ 1.079 · multa do aluguel atrasado −R$ 130 · … · gastos R$ 2.709". A multa
 // saía com sinal trocado, contada de novo dentro dos R$ 2.709, e o curso de
 // R$ 1.500 ficava sem nome.
-const configReal = () => V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8')).config;
+// Desde 06/10 (D-078), o config.json é o jogo simples, só com o Jonas: o caso
+// das 6 personas fica no config de 05/10, congelado em test/fixtures/config-real-v31.json.
+const configReal = () => V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8')).config;
 // O config de 12 meses de antes do limite do cheque especial (v3, hash 19b12a5d),
 // congelado: ele ainda tem a "multa do aluguel atrasado" por bimestre começado no
 // vermelho, que o config.json perdeu com a D-066 (o atraso passou a ser do motor,

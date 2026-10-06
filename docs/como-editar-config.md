@@ -299,6 +299,58 @@ novos (`se.indicador` em `ajustesDePeso`): é assim que "Cortaram a luz" e "O
 dono entrou com o despejo" só saem com contas atrasadas. Nenhum `soma` ou
 `multiplica` pode mexer neles: só o motor.
 
+#### `regras.formatoSimples` (decisão do Kleber de 05/10 à noite)
+
+`"formatoSimples": true` liga o jogo simples: **um personagem só** (o Jonas)
+para todas as equipes, **até 5 opções** por bimestre, **sem sorteio** (a carta
+de cada bimestre é o evento do mês, igual para todas as equipes) e **o dinheiro
+na própria opção**. Ausente ou `false`, tudo continua como antes (o hash do
+config não muda). O validador, com ele, também confere:
+
+- todas as equipes com a **mesma persona**;
+- **no máximo uma carta possível** em cada rodada, para cada equipe (o teto do
+  motor: a carta que só sairia num caminho raro também conta). O jeito simples
+  é uma carta por rodada, com `"rodadas": ["r1"]` e peso 1; os efeitos dela
+  podem ter condição (`decidiu`, `indicador`): é assim que entra a
+  consequência que vem depois ("as costas travaram: duas puxadas seguidas");
+- **nenhum `multiplica` direto na renda** numa opção (sem condição, ou só com
+  persona, opção ou rodada): a linha de dinheiro da opção é a **soma** dos
+  efeitos diretos dela, e o multiplica não tem valor fixo. Use `soma`.
+
+**A linha do dinheiro** ("+R$ 900 no bimestre", no telão e no celular) é a
+soma dos `soma.renda` dos efeitos diretos da opção: os sem condição e os com
+condição só de persona, opção ou rodada. O que tem condição de histórico ou de
+estado, e tudo o que está nos efeitos gerais e na carta, **não aparece**: é a
+surpresa do resultado. O empréstimo aparece à parte ("+R$ 1.500 emprestado"),
+porque é dívida: ele não entra no saldo do bimestre nem no dinheiro da família.
+Para o número da opção e o do resultado baterem, ponha na opção o valor que a
+tela deve mostrar. A seção (l) do `npm run validar` lista a linha de cada opção
+e conta as combinações de cada roteiro (quantas fecham, a melhor e a pior).
+
+**A consequência que vem depois** (D-078): ponha-a nos `efeitosGerais` do
+bimestre em que ela acontece, com `decidiu` (e `opcao`, quando depende também da
+escolha do próprio bimestre, como as costas: `{ "decidiu": { "r1": "a" }, "opcao":
+"b" }`). O motor a nomeia (`deAntes`), e as telas a mostram no resultado com o
+motivo: o `rotulo` até os dois-pontos. Dois efeitos de mesmo motivo viram uma
+linha com a soma ("as costas travaram (2 puxadas seguidas): 7 dias parado" e
+"…: fisioterapia, 4 sessões" → "As costas travaram (2 puxadas seguidas)
+−R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
+nome. Custo fixo (`fixo`) e proteção não são nomeados: use `soma` simples ou
+`categoria: "gasto"`. O jogo do dia, opção por opção, está em
+[jogo-simples.md](jogo-simples.md).
+
+**O que muda nas telas:** a equipe pela cor ("Equipe Laranja"); "Conheça o
+Jonas" no lugar das personas; o fechamento vai direto ao resultado (sem a tela
+do sorteio); o resultado mostra o evento do mês uma vez e, por equipe, a opção,
+o saldo do bimestre e o dinheiro da família ("tem R$ X" ou "devendo R$ X": o
+caixa menos o cheque especial, o empréstimo e as contas atrasadas); o celular
+esconde a energia, a proteção e o detalhe da dívida; o placar final tem três
+páginas: o caminho de cada equipe, "Quanto sobrou, ou ficou devendo" e "Das N
+combinações possíveis, X fecham o ano". Os testes: `npm run e2e:simples` (o
+telão, sem celulares) e `npm run e2e:online:simples` (com celulares, no
+emulador); os dois aceitam outro config com `-- --config caminho` só no
+primeiro.
+
 ### `escala`
 
 ```json

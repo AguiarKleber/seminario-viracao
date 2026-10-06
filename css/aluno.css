@@ -351,6 +351,42 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
    360×740 (o e2e:online confere). */
 .resumo-meses .faltou-mesa { padding-left: 0; border-left: 0; }
 
+/* ---------- As escolhas do ano, no placar final (pedido de 05/10, item 4) ----------
+   A frase de cima ("Vocês escolheram em todos os 6 bimestres, e ainda faltou
+   R$ X") com a borda grossa do "faltou" (nunca só cor, D-016) e, num cartão,
+   uma linha por bimestre: o nome curto e o saldo do bimestre na primeira
+   linha, a opção e a carta embaixo, de ponta a ponta. A opção ocupa a largura
+   inteira de propósito: ao lado do valor, os rótulos de até 50 letras ("Aceitar
+   toda encomenda de Páscoa, até a sem margem") iam a três linhas em 360 px, e
+   as duas primeiras linhas da lista não cabiam sem rolar. */
+.escolhas-frase {
+  padding: 10px 14px;
+  font-size: 18px; font-weight: 600; line-height: 1.35;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.escolhas-frase[data-resultado="faltou"] { border: 2px solid var(--texto); border-left-width: 8px; }
+.escolhas-ano {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 14px 12px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.escolhas-cabecalho {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--linha-forte);
+  font-size: 14px; font-weight: 600; color: var(--texto-2);
+}
+.escolha {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px 12px;
+  padding: 8px 0;
+}
+.escolha + .escolha { border-top: 1px solid var(--linha); }
+.escolha-mes { font-size: 16px; font-weight: 700; }
+.escolha .valor-saldo { font-size: 17px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.escolha-opcao, .escolha-carta { grid-column: 1 / -1; line-height: 1.3; }
+.escolha-opcao { font-size: 16px; }
+.escolha-carta { font-size: 15px; color: var(--texto-2); }
+.escolhas-ano .faltou-mesa { padding: 8px 0 0; border-left: 0; border-top: 1px solid var(--linha-forte); }
+
 .valor-saldo { font-weight: 700; }
 /* Verde se positivo, vermelho se negativo, a pedido do Kleber depois do
    teste de 30/09, com os mesmos tokens e nomes do telão (base.css: --positivo e
@@ -372,6 +408,8 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .saldo-rotulo { font-size: 16px; font-weight: 600; color: var(--texto-2); }
 .saldo-destaque .valor-saldo { font-size: 30px; line-height: 1.1; }
 .decisao-linha { font-size: 16px; }
+/* D-078: a consequência de uma escolha de antes, à vista no resultado. */
+.consequencia-linha { font-size: 16px; padding: 6px 10px; border-left: 4px solid var(--texto-2); background: var(--superficie); }
 
 /* A história da equipe no fim (D-045): um cartão por mês, todos iguais. */
 .historia { display: flex; flex-direction: column; gap: 10px; }
@@ -397,6 +435,11 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .contexto-texto { font-weight: 600; }
 .pressao { display: flex; flex-direction: column; gap: 4px; }
 .pressao .divida { padding: 4px 12px; }
+/* A linha curta da decisão é um <p> de texto corrido, e não a caixa em coluna
+   do .divida: no teste do Kleber de 05/10, o flex em coluna herdado empilhava
+   cada pedaço numa linha ("Dívida" / "R$ 2.625" / ", com"…) e empurrava as
+   opções para baixo da dobra. */
+.divida-curta { display: block; }
 
 .opcoes-aluno { display: flex; flex-direction: column; gap: 8px; }
 .botao-opcao-aluno { align-items: center; gap: 12px; }
@@ -406,12 +449,30 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 /* O voto do aparelho: fundo claro E o texto "seu voto" (D-016, nunca só cor). */
 .botao-opcao-aluno.meu-voto { background: var(--texto); color: var(--texto-sobre-claro); border-color: var(--texto); }
 .opcao-seu-voto { font-size: 14px; font-weight: 700; }
+/* Formato simples (decisão do Kleber de 05/10 à noite): o dinheiro da opção
+   ("+R$ 900 no bimestre") logo abaixo do rótulo, em verde ou vermelho e
+   sempre com o sinal; e a linha do custo humano (D-073), menor e discreta.
+   No voto do aparelho (fundo claro), o verde e o vermelho claros não têm
+   contraste: ali, a cor da letra, com o sinal dizendo o mesmo. */
+.opcao-dinheiro { font-size: 16px; font-weight: 700; line-height: 1.2; }
+.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
+.opcao-impacto { font-size: 14px; font-weight: 400; line-height: 1.25; color: var(--texto-2); }
+.botao-opcao-aluno.meu-voto .opcao-dinheiro, .botao-opcao-aluno.meu-voto .opcao-impacto { color: inherit; }
+/* "Dinheiro da família: devendo R$ X", a linha única do formato simples. */
+.familia-dinheiro { font-size: 17px; }
+.familia-dinheiro[data-situacao="devendo"] b { color: var(--negativo); }
 
 /* D-055: a opção aberta e a explicação dela formam um cartão só, com a borda
    clara ligando o botão à caixa de baixo. O scroll-margin desconta o topo fixo
    (52 px) e o aviso "Mais opções abaixo" (48 px mais a margem) quando a opção
    aberta rola para a vista. */
 .opcao-aluno { display: flex; flex-direction: column; scroll-margin-top: 64px; scroll-margin-bottom: 76px; }
+/* A frase da opção aberta que muda (voto enviado, guardado, recusado; o motivo
+   do botão apagado) rola sozinha para a vista (retornoAVista, aluno.js), com
+   as mesmas folgas da opção aberta. */
+.opcao-detalhe .opcao-votada, .opcao-detalhe .opcao-aviso { scroll-margin-top: 64px; scroll-margin-bottom: 76px; }
+body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .opcao-aviso { scroll-margin-top: 124px; }
 .opcao-aluno.aberta .botao-opcao-aluno { border-color: var(--texto); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
 .opcao-detalhe {
   display: flex; flex-direction: column; gap: 10px;

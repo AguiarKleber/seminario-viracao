@@ -522,3 +522,131 @@ nas regras do Firebase):
   junto com o custo do despejo, que muda o config de qualquer jeito.
 - **O "ficou sem"** fica fora do placar e é explicado na fala. Um total no placar
   final é código para depois do seminário.
+
+## 05/10/2026 (noite): depois do teste do Kleber na versão 7
+
+Pedidos do Kleber com os prints do teste da versão 7 publicada, e as respostas
+dele às perguntas ("1. A / 2. A / 3. de acordo / 4. A, mas eles também enxergar
+no telão de apresentador quando sair o resultado / 5. B").
+
+**D-072. Greve, protesto e breque levam ao bloqueio da plataforma.**
+- Quem depende de aplicativo e adere à greve (14/04), ao protesto (27/07) ou ao
+  breque (01/09) é bloqueado por 1 semana e perde a renda desses 7 dias.
+- O "bloqueio branco" é documentado (Abílio, 2021); a certeza é simplificação do
+  jogo (nem todo grevista é bloqueado), e o apresentador diz isso.
+
+**D-073. Cada opção mostra o custo humano, numa linha curta.**
+- Embaixo de cada opção, do jeito do personagem, o que a escolha custa para ele e
+  para a casa (ex.: "12 h por dia no sol: chega em casa e os filhos já dormiram").
+  Sem chance nem porcentagem. No celular e no telão.
+
+**D-074. O termômetro de entrada pergunta o que o jogo põe à prova.**
+- As afirmações óbvias ("é difícil viver de aplicativo") davam a mesma resposta no
+  começo e no fim. Passam a ser:
+  - "Se eu estivesse no lugar desses trabalhadores, faria escolhas que fechariam
+    as contas."
+  - "Quem trabalha por aplicativo e não fecha as contas está administrando mal o
+    dinheiro."
+  - "Trabalhar mais horas resolve o problema de quem ganha pouco por aplicativo."
+
+**D-075. As cartas contam a história de cada personagem.**
+- Seis equipes tirando "o instrumento de trabalho quebrou" pareciam repetição.
+  A carta ganha o título do jeito do personagem ("A moto quebrou", "O celular
+  quebrou"...), com a mesma chance, no celular e no telão quando sai o resultado.
+- O corte de luz volta a ~30% por bimestre na partida real (no teste, estava em
+  37% a 43% para todas as equipes).
+
+**D-076. "Escolha ou sorte?" mostra quanto a sorte podia pesar.**
+- Para cada equipe, com as mesmas escolhas: o resultado com a melhor sorte, com a
+  pior, e onde ela ficou. Os rótulos dizem o que é cada número ("no piloto
+  automático", "o que as escolhas mudaram", "o que as cartas mudaram").
+
+**D-077. Ajustes de tela pedidos no teste de 05/10.**
+- Resultado no telão: o valor colorido é o "saldo do bimestre"; a dívida vira uma
+  linha só, "dívida total" (banco, empréstimo e contas atrasadas); o "faltou na
+  mesa" continua à parte. O celular mostra o mesmo total.
+- No placar final, o celular mostra as escolhas da equipe em cada bimestre, para a
+  turma ver que, mesmo escolhendo, faltou dinheiro.
+- O telão pode rever a tela anterior sem afetar os celulares.
+- A barra oculta só abre quando o mouse para numa faixa fina no pé da tela.
+- Sai o slide "Gancho: o lançamento"; o mapa do seminário mostra só os meses e os
+  blocos de dados.
+- No telão, a equipe aparece pelo nome e ofício do personagem ("Jonas, motoboy"),
+  com o ícone da cor.
+- "O pior que podia acontecer" explica o que é proteção e o que cada equipe podia
+  ter escolhido.
+
+## 05/10/2026 (noite, depois do teste): o jogo simples
+
+Depois de testar a versão no ar, o Kleber achou o formato de 6 personagens, com
+cartas sorteadas e várias telas de placar, complexo demais para a turma: "não
+precisamos tornar tão complexo, pode ser em um formato mais simplificado". As
+respostas dele ("1. 5 alternativas por bimestre / 2. opção A / 3. opção A / 4.
+preciso amanhã até as 12h") e os pedidos de 05/10 à noite, depois de ler o
+rascunho do Jonas (docs/jogo-simples.md).
+
+**D-078. O jogo simples: um personagem, cinco opções, sem sorteio, o dinheiro na
+opção.** Publicado em 06/10 até as 12h (o Kleber funde o PR).
+- **Um personagem só, o Jonas** (motoboy do iFood, a casa e as fontes de
+  05/10). As 6 equipes jogam o mesmo Jonas e aparecem pela cor ("Equipe
+  Laranja"); o que muda entre elas é a combinação de escolhas, e o fim compara o
+  impacto financeiro de cada combinação.
+- **6 bimestres, 5 opções cada (A a E)**, do dia a dia de um entregador. A
+  decisão passa a 120 s (5 opções para ler).
+- **Sem sorteio:** o evento do mês é igual para todas as equipes, e as
+  consequências vêm das próprias escolhas, sempre (simplificação dita em sala).
+- **O valor em dinheiro aparece na opção** ("+R$ 900 no bimestre"), junto da
+  linha do custo humano (D-073). O valor da tela é o que a opção põe ou tira
+  (corrigido em 06/10: em jan–fev, o saldo do bimestre muda exatamente esse valor;
+  depois, passado o limite do cheque especial, o que falta atrasa conta com multa
+  de 8%, e o saldo pesa um pouco mais).
+- **Saem o MEI e a associação:** precisam de explicação e, sem sorteio, só
+  custam. Entram "Atrasar a parcela da moto" (jan–fev) e "Pneu novo antes da
+  chuva" (mai–jun). Os padrões (ninguém votou) ficam C, D, D, C, A, D.
+- **A regra das costas** (decidida pelo Kleber): duas opções puxadas seguidas (mais
+  horas ou noites na rua) travam as costas no bimestre da segunda: 7 dias parado e
+  4 sessões de fisioterapia, −R$ 1.230. Sem ela, a opção puxada era a melhor em
+  dinheiro em todos os bimestres. Com ela, **nenhuma das 15.625 combinações fecha
+  o ano** (a melhor termina devendo R$ 2.429), o que o rascunho já dizia ao
+  propor a regra.
+- **A consequência aparece no resultado do bimestre em que acontece, com o
+  motivo** (no telão, embaixo das faixas; no celular, à vista).
+- **O placar final** tem três páginas: o caminho de cada equipe, "Quanto sobrou,
+  ou ficou devendo" (com a linha "Jonas com carteira assinada") e "Das 15.625
+  combinações possíveis, X fecham o ano".
+- **Os roteiros** saem sem "A conta de cada casa" ("não temos necessidade da tela
+  prévia à rodada de decisão"): de "Conheça o Jonas" direto para Jan–fev. O tempo
+  dos passos removidos foi para as decisões e o placar, e os roteiros continuam
+  fechando 60 e 120 min.
+- **O telão não baixa mais o JSON a cada rodada** ("não baixar o JSON a cada
+  rodada"). Muda a D-015: o seguro passa a ser manual, o "Salvar estado" da barra
+  oculta (online e offline). Online, a sala continua no Firebase e se retoma com o
+  PIN.
+- **As regras do Firebase não mudam** (continuam v4).
+
+**Deixam de valer no jogo do seminário** (o código continua sabendo jogá-las: é
+o config sem `regras.formatoSimples`, guardado em
+`test/fixtures/config-real-v31.json`):
+- os 6 personagens, um por equipe (D-061; antes, D-004 e D-026), a ordem das
+  equipes por personagem (D-070, "A ordem das equipes") e a equipe pelo nome e
+  ofício do personagem no telão (D-077): agora, pela cor;
+- as cartas sorteadas por equipe e as chances no sorteio (D-012, D-013), a
+  parcela "sorte" do placar (D-009), "Escolha ou sorte?" e a faixa da sorte
+  (D-076);
+- a energia, a proteção que vale pelo pior caso e a página "O pior que podia
+  acontecer" (D-051, D-059, e o item da D-077 que a explicava), o MEI e o auxílio
+  do INSS acima do trabalho (D-067);
+- o risco que cresce com os meses e as cartas de desgaste, de despejo e de corte
+  de luz (D-063, D-068, D-071, D-075, inclusive os títulos das cartas por
+  personagem);
+- "quase ninguém fecha" e a meta de 5% a 10% (D-050, D-058): com a regra das
+  costas, ninguém fecha;
+- o JSON automático do fim da rodada (D-015, segundo item).
+
+**Continuam valendo:** os 12 meses em 6 bimestres (D-060); ninguém com carteira
+(D-062); o modo espectador (D-064); o empréstimo como dívida (D-065); o limite do
+cheque especial, as contas atrasadas e o "ficou sem" por dentro, com a multa e a
+mora (D-066, D-069, D-070); o bloqueio de 1 semana depois de greve, protesto ou
+breque (D-072); a linha do custo humano (D-073); o termômetro de entrada (D-074);
+e, da D-077, o modo de rever a tela anterior, a barra oculta fina, o mapa sem o
+gancho, o "saldo do bimestre" e as escolhas da equipe no celular no placar final.

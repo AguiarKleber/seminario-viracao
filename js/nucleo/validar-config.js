@@ -36,6 +36,20 @@
   // limites são os do botão (60) e os do contexto (160), contados por letra.
   const MAX_ROTULO_POR = 60;
   const MAX_NARRATIVA_POR = 160;
+  // D-073 (teste do Kleber de 05/10): embaixo de cada opção, uma linha curta só
+  // com o custo humano, do jeito do personagem ("12 h por dia no sol: chega em
+  // casa e os filhos já dormiram"), sem chance e sem porcentagem. Vai embaixo
+  // do botão do celular e no telão. O teto de 90 letras veio com a decisão: é
+  // uma linha, e não um parágrafo, e são até 5 opções na mesma tela do celular
+  // (o mesmo motivo do teto do contexto, acima).
+  const MAX_IMPACTO = 90;
+  // D-075 (teste do Kleber de 05/10): a carta com o título do jeito do personagem
+  // ("A moto quebrou", "A bike quebrou", "O punho travou de tanto lixar"),
+  // com a mesma chance. O título vai numa linha da faixa de resultado do
+  // telão e na coluna do sorteio; o mais longo do config.json de 05/10 tem 34
+  // letras ("A mobilização arrancou um reajuste"). 40 deixa folga sem deixar
+  // entrar uma frase inteira. O curto por persona segue o curto (D-040).
+  const MAX_TITULO_POR = 40;
   // Esquema v2.1: os dias parados de uma carta são informativos (a tela mostra
   // "20 dias parado"), e um mês tem 30. Mais que isso era o que a revisão de
   // 29/09 achou (item 1: 50 dias parados num mês) e não pode voltar pelo config.
@@ -46,9 +60,15 @@
   // uma proteção (o INSS pago ao MEI, a ajuda da associação, a liminar).
   const CATEGORIAS_EFEITO = new Set(['gasto', 'protecao']);
   // D-043: 4 opções por mês, cada uma um dilema. Uma só não é decisão, e mais de
-  // 4 não cabe nos botões do celular nem na conversa de 120 s.
+  // 4 não cabia nos botões do celular nem na conversa de 120 s.
+  // Decisão do Kleber de 05/10 à noite (o formato simples, regras.formatoSimples):
+  // um personagem só, o Jonas, para todas as equipes, e 5 opções por bimestre.
+  // Com um personagem só, a tela não precisa mais dos textos de seis ofícios, e
+  // as 5 opções (letra, rótulo, dinheiro e custo humano) cabem em 360×740 com a
+  // dobra "Mais opções abaixo" (e2e:online). O teto vale para todo config: o de
+  // 4 opções continua válido.
   const MIN_OPCOES = 2;
-  const MAX_OPCOES = 4;
+  const MAX_OPCOES = 5;
   // Acima disto a conferência de "carta possível" desiste com ERRO, em vez de
   // travar o telão enumerando estados (sem a conferência, não há a garantia).
   const MAX_ESTADOS = 20000;
@@ -108,7 +128,7 @@
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
     regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
       'jurosDividaMes', 'jurosFonte', 'pisoTrabalho', 'mesesPorRodada',
-      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro'],
+      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro', 'formatoSimples'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
     persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
@@ -118,8 +138,9 @@
     outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
-    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte', 'rotuloPor', 'narrativaPor', 'protege'],
-    carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte', 'diasParado'],
+    opcao: ['id', 'rotulo', 'narrativa', 'tendencia', 'efeitos', 'fonte', 'rotuloPor', 'narrativaPor', 'protege', 'impacto', 'impactoPor'],
+    carta: ['id', 'titulo', 'curto', 'narrativa', 'peso', 'rodadas', 'somenteSe', 'ajustesDePeso', 'efeitos', 'tom', 'fonte', 'diasParado',
+      'tituloPor', 'curtoPor'],
     enquete: ['id', 'titulo', 'pareada', 'revelar', 'modo', 'afirmacoes'],
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
@@ -615,6 +636,13 @@
       if (m !== undefined) n.mesesPorRodada = m;
     }
     divida(r, g, n);
+    // O formato simples (decisão do Kleber de 05/10 à noite): um personagem só,
+    // sem sorteio (uma carta só por rodada: o evento do mês, igual para todas
+    // as equipes), o dinheiro na própria opção e o placar pelo caminho de cada
+    // equipe. false some na normalização, como o protege: o hash e as telas de
+    // um config sem a chave não mudam. As conferências dele estão em
+    // conferirFormatoSimples.
+    if (tem(g, 'formatoSimples') && booleano(r, g, 'formatoSimples', 'regras', false) === true) n.formatoSimples = true;
     // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
     // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
     if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
@@ -827,19 +855,53 @@
     // O placar refaz o pior caso trocando-a pelo padrão do mês. false some na
     // normalização, como o fixo: o hash de um config sem proteção não muda.
     if (tem(b, 'protege') && booleano(r, b, 'protege', c, false) === true) n.protege = true;
+    // D-073: o custo humano da opção. Ausente não entra no normalizado: o
+    // hash de um config sem ele não muda.
+    const impacto = texto(r, b, 'impacto', c, true);
+    if (impacto !== undefined && ateLetras(r, MAX_IMPACTO)(junta(c, 'impacto'), impacto)) n.impacto = impacto;
     n.efeitos = [];
     r.depois(() => {
       n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, [rodadaId], true);
-      textoPorPersona(r, b, n, c, idx, 'rotuloPor', MAX_ROTULO_POR);
-      textoPorPersona(r, b, n, c, idx, 'narrativaPor', MAX_NARRATIVA_POR);
+      textoPorPersona(r, b, n, c, idx, 'rotuloPor', ateLetras(r, MAX_ROTULO_POR));
+      textoPorPersona(r, b, n, c, idx, 'narrativaPor', ateLetras(r, MAX_NARRATIVA_POR));
+      textoPorPersona(r, b, n, c, idx, 'impactoPor', ateLetras(r, MAX_IMPACTO));
     });
     return n;
   }
 
-  // D-054: { [persona]: texto }, persona existente, texto até o limite (por
-  // letra). Persona sem entrada usa o rotulo/narrativa da opção. Mapa vazio não
-  // muda nada (e o RTDB some com ele): é aviso, para a chave sair do arquivo.
-  function textoPorPersona(r, b, n, c, idx, chave, limite) {
+  // A conferência do tamanho de um texto, por letra ([...texto]: um emoji
+  // conta 1): erro acima do limite. Devolve se o texto passou.
+  function ateLetras(r, limite) {
+    return (caminho, frase) => {
+      const letras = [...frase].length;
+      if (letras <= limite) return true;
+      r.erro(caminho, `texto com ${letras} caracteres (mais de ${limite})`);
+      return false;
+    };
+  }
+
+  // D-040: o rótulo curto vai dentro da fatia do sorteio. Contado por letra,
+  // sem os espaços das pontas: é a largura na fatia que importa. Erro acima de
+  // CURTO_MAX (não cabe nem na fatia da carta mais comum); aviso acima de
+  // CURTO_AVISO (quase nunca cabe, e o telão o omite). Devolve se o curto
+  // passou (com aviso, passa). Vale para o curto e para o curtoPor (D-075).
+  function curtoCabe(r, caminho, curto) {
+    const letras = [...curto.trim()].length;
+    if (letras > CURTO_MAX) {
+      r.erro(caminho, `rótulo curto com ${letras} caracteres (mais de ${CURTO_MAX}): não cabe na fatia do sorteio`);
+      return false;
+    }
+    if (letras > CURTO_AVISO) r.aviso(caminho, `rótulo curto com ${letras} caracteres (mais de ${CURTO_AVISO}): quase nunca cabe na fatia, e o telão o omite`);
+    return true;
+  }
+
+  // D-054: { [persona]: texto }, persona existente, texto não vazio e que passe
+  // na conferência (o tamanho: ateLetras, ou curtoCabe no curtoPor). Persona
+  // sem entrada usa o texto geral (o rotulo/narrativa/impacto da opção, o
+  // titulo/curto da carta). Mapa vazio não muda nada (e o RTDB some com ele):
+  // é aviso, para a chave sair do arquivo. Ausente ou vazio, a chave não entra
+  // no normalizado, e o hash do config não muda.
+  function textoPorPersona(r, b, n, c, idx, chave, conferir) {
     if (!tem(b, chave)) return;
     const cc = junta(c, chave);
     const bruto = b[chave];
@@ -852,12 +914,7 @@
       const cp = junta(cc, personaId);
       if (!referencia(r, personaId, cp, (x) => Object.hasOwn(idx.personas, x), 'persona')) continue;
       const frase = texto(r, bruto, personaId, cc);
-      if (frase === undefined) continue;
-      const letras = [...frase].length;
-      if (letras > limite) {
-        r.erro(cp, `texto com ${letras} caracteres (mais de ${limite})`);
-        continue;
-      }
+      if (frase === undefined || !conferir(cp, frase)) continue;
       mapa[personaId] = frase;
     }
     if (Object.keys(bruto).length === 0) r.aviso(cc, 'vazio: não muda nada; tire a chave');
@@ -918,16 +975,9 @@
     conferirChaves(r, b, CHAVES.carta, c, false);
     const n = { id, titulo: texto(r, b, 'titulo', c) };
     const curto = texto(r, b, 'curto', c, true);
-    if (curto !== undefined) {
-      // Contado por letra ([...texto]), e não por unidade UTF-16: é a largura na
-      // fatia que importa, e um emoji contaria 2.
-      const letras = [...curto.trim()].length;
-      if (letras > CURTO_MAX) r.erro(junta(c, 'curto'), `rótulo curto com ${letras} caracteres (mais de ${CURTO_MAX}): não cabe na fatia do sorteio`);
-      else {
-        if (letras > CURTO_AVISO) r.aviso(junta(c, 'curto'), `rótulo curto com ${letras} caracteres (mais de ${CURTO_AVISO}): quase nunca cabe na fatia, e o telão o omite`);
-        n.curto = curto;
-      }
-    }
+    // Contado por letra ([...texto]), e não por unidade UTF-16: é a largura na
+    // fatia que importa, e um emoji contaria 2.
+    if (curto !== undefined && curtoCabe(r, junta(c, 'curto'), curto)) n.curto = curto;
     copiarTextos(r, b, n, c, ['narrativa']);
     n.peso = numero(r, b, 'peso', c, { inteiro: true, naoNegativo: true });
     const dias = numero(r, b, 'diasParado', c, { opcional: true, inteiro: true, naoNegativo: true });
@@ -966,6 +1016,10 @@
         else n.ajustesDePeso = b.ajustesDePeso.map((a, i) => ajuste(r, a, `${ca}[${i}]`, idx, onde)).filter(Boolean);
       }
       n.efeitos = efeitos(r, b, 'efeitos', c, idx, true, onde);
+      // D-075: o título e o curto do jeito do personagem. Só texto: a
+      // chance, as condições e os efeitos continuam os da carta.
+      textoPorPersona(r, b, n, c, idx, 'tituloPor', ateLetras(r, MAX_TITULO_POR));
+      textoPorPersona(r, b, n, c, idx, 'curtoPor', (cp, frase) => curtoCabe(r, cp, frase));
     });
     return n;
   }
@@ -1313,6 +1367,59 @@
     }
   }
 
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite). Todas as equipes jogam o mesmo jogo, e só as escolhas mudam: é o que
+  // deixa o placar comparar o caminho de cada equipe com todas as combinações
+  // possíveis (motor.enumerarCombinacoes). Por isso:
+  // - um personagem só: todas as equipes com a mesma persona (a tela chama a
+  //   equipe pela cor, e o "Conheça o Jonas" mostra uma casa só);
+  // - sem sorteio: em cada rodada, para cada equipe, no máximo UMA carta pode
+  //   sair (o evento do mês). A conta é o teto do motor
+  //   (motor.cartasPossiveisNaRodada: a parte que lê o estado conta como
+  //   "pode"), e não o estado: uma segunda carta que só saísse num caminho raro
+  //   viraria sorteio na frente da turma. Nenhuma carta é o erro de sempre
+  //   (conferirCartasPossiveis);
+  // - o dinheiro da opção (historia.dinheiroDaOpcao) é a soma dos efeitos
+  //   diretos dela. Um "multiplica" direto na renda não tem valor fixo (depende
+  //   do que entrou antes no período), e a linha da opção mostraria um número
+  //   que o resultado não confirma. O multiplica com condição de estado ou de
+  //   histórico (a consequência que vem depois) continua valendo: ele é a
+  //   surpresa, e não aparece na linha.
+  // As duas primeiras conferências leem só o normalizado; a das cartas precisa
+  // do motor e roda, como a conferência de carta possível, só sem outros erros.
+  function conferirFormatoSimples(r, cfg) {
+    if (cfg.regras.formatoSimples !== true) return;
+    const personas = [...new Set(cfg.ordem.equipes.map((id) => cfg.equipes[id]?.persona).filter((p) => typeof p === 'string'))];
+    if (personas.length > 1) {
+      r.erro('equipes', `no formato simples, todas as equipes jogam com a mesma persona; há ${personas.length} (${personas.join(', ')})`);
+    }
+    for (const rodadaId of cfg.ordem.rodadas) {
+      const rodada = cfg.rodadas[rodadaId];
+      for (const opcaoId of rodada?.ordemOpcoes || []) {
+        (rodada.opcoes[opcaoId]?.efeitos || []).forEach((efeito, i) => {
+          if (efeito?.multiplica === undefined || !Object.hasOwn(efeito.multiplica, 'renda')) return;
+          if (efeito.se && !Object.keys(efeito.se).every((k) => k === 'persona' || k === 'opcao' || k === 'rodada')) return;
+          r.erro(`rodadas.${rodadaId}.opcoes.${opcaoId}.efeitos[${i}]`, 'no formato simples, a opção não multiplica a renda direto: o dinheiro mostrado na opção é a soma dos efeitos dela; use "soma"');
+        });
+      }
+    }
+    if (r.erros.length > 0) return;
+    const M = raiz.Viracao.motor;
+    if (!M) {
+      r.aviso('cartas', 'motor não carregado: a conferência de uma carta por rodada do formato simples foi pulada');
+      return;
+    }
+    for (const rodadaId of cfg.ordem.rodadas) {
+      for (const equipeId of cfg.ordem.equipes) {
+        const n = M.cartasPossiveisNaRodada(cfg, equipeId, rodadaId);
+        if (n > 1) {
+          r.erro(`rodadas.${rodadaId}`, `no formato simples, só uma carta pode sair em cada rodada (o evento do mês, sem sorteio); para a equipe ${equipeId}, podem sair ${n}`);
+          break;
+        }
+      }
+    }
+  }
+
   // Pelo menos uma carta possível em cada persona × opção × rodada, em TODO estado
   // alcançável: somenteSe e ajustesDePeso leem indicadores, então um baralho pode
   // ficar vazio só depois de um mês ruim. As rodadas seguem a ordem de CADA
@@ -1496,6 +1603,7 @@
     conferirDivida(r, cfg, idx);
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
+    conferirFormatoSimples(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.
     if (r.erros.length === 0) conferirCartasPossiveis(r, cfg, idx);
     const ok = r.erros.length === 0;

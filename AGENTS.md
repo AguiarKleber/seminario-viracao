@@ -9,9 +9,13 @@ O app de um **seminário universitário** sobre empreendedorismo e trabalho em
 plataformas, com até 20 alunos, cada um no próprio celular, e um telão. Tem dois
 módulos:
 - **enquetes de 1 a 5**, com comparação antes e depois;
-- o **Jogo da Viração**: 6 equipes, cada uma com um personagem (D-061), 12 meses
-  em 6 rodadas bimestrais intercaladas com a apresentação (D-060), e cartas de
-  evento sorteadas por probabilidade.
+- o **Jogo da Viração**: 12 meses em 6 rodadas bimestrais intercaladas com a
+  apresentação (D-060). No seminário de 07/10, o formato simples (D-078): as 6
+  equipes jogam o mesmo personagem, o Jonas, com 5 opções por bimestre, o
+  dinheiro na opção e o evento do mês igual para todos, sem sorteio
+  ([docs/jogo-simples.md](docs/jogo-simples.md)). O motor continua sabendo jogar
+  o formato com um personagem por equipe e cartas sorteadas (D-061): é o config
+  sem `regras.formatoSimples`.
 
 É um projeto pessoal do Kleber, **sem vínculo com nenhum empregador**.
 
@@ -86,7 +90,8 @@ npm run check          # validador do config + ESLint + testes sem rede: antes d
 npm test               # só os testes sem rede
 npm run emulador       # regras reais + canal-firebase + simulador contra o emulador (JDK 21)
 npm run e2e            # telão offline por file:// no Playwright (Chrome/Edge instalados)
-npm run e2e:online     # telão e 3 celulares contra o emulador, com o config.json
+npm run e2e:online     # telão e 3 celulares contra o emulador: o jogo de sorteio (config de 05/10) e o config.json do dia
+npm run e2e:votos      # a matriz de votos pela tela: o config.json do dia (5 opções, sem sorteio) e as fixtures com sorteio
 npm run e2e:online:fixture   # o mesmo com a fixture: passa sempre pela frase da proteção (D-059)
 npm run simular -- --memoria      # 20 alunos simulados, sem rede
 ```
