@@ -301,9 +301,19 @@
   // equipe pela cor, e na dica (title). O nome e o ofício são pedaços inteiros:
   // numa coluna estreita (a célula da decisão, a coluna da equipe no resultado),
   // o rótulo só quebra entre eles.
-  function rotuloEquipe(id, classe, { cor = false } = {}) {
+  // Formato simples (decisão do Kleber de 05/10 à noite): todas as equipes
+  // são o Jonas, e o personagem não diferencia ninguém. A equipe volta a ser
+  // chamada pela cor, "Equipe Laranja", com a forma e o número na frente, em
+  // toda tela (a formação inclusive). curto: só a cor ("Laranja"), na tabela
+  // do caminho de cada equipe, onde a coluna já se chama "Equipe".
+  function rotuloEquipe(id, classe, { cor = false, curto = false } = {}) {
     const equipe = app.config.equipes[id];
     const rotulo = G().rotuloEquipe(equipe, numeroEquipe(id), { classe });
+    if (simples()) {
+      const nome = rotulo.querySelector('.equipe-nome');
+      if (nome && !curto) nome.textContent = `Equipe ${equipe.nome}`;
+      return rotulo;
+    }
     const persona = personaDaEquipe(id);
     const nome = rotulo.querySelector('.equipe-nome');
     if (cor || !persona || !nome) return rotulo;
@@ -378,6 +388,12 @@
   // e as telas dizem o que diziam. A regra mora no historia.js, que o celular
   // também carrega: as duas telas falam o mesmo período.
   const periodo = () => N().historia.periodo(app.config);
+
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite): um personagem só, 5 opções por bimestre com o dinheiro na própria
+  // opção, o evento do mês igual para todas as equipes (sem sorteio) e o placar
+  // pelo caminho de cada equipe. Sem a chave, todas as telas ficam como antes.
+  const simples = () => N().historia.formatoSimples(app.config);
 
   // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
   // regra da história e do resumo do celular (historia.rotuloDaRodada).
@@ -1067,8 +1083,11 @@
   // estado, o seguro para o caso "travou e caiu a internet". Uma vez por
   // apuração (rodada + geracao), guardado no localStorage para recarregar a
   // página não baixar de novo.
+  // No formato simples, o fechamento vai direto ao "resultado" (não há sorteio):
+  // é nele que a rodada termina, e o seguro sai uma vez, como no sorteio.
   function baixarAoFimDaRodada(e) {
-    if (e.tipo !== 'rodada' || e.subfase !== 'sorteio') return;
+    const fimDaRodada = simples() ? 'resultado' : 'sorteio';
+    if (e.tipo !== 'rodada' || e.subfase !== fimDaRodada) return;
     const marca = `${e.rodada}:${e.geracao}`;
     const baixados = lista(lerLocal(chaveBaixados(app.sala)));
     if (baixados.includes(marca)) return;
@@ -1489,7 +1508,9 @@
         if (e.subfase === 'decidindo') return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
         if (e.subfase === 'prorrogacao') return { id: 'rodada-prorrogacao', desenhar: telaProrrogacao, chave: chaveDecisoes };
         if (e.subfase === 'fechando') return telaDoFechando(e);
-        if (e.subfase === 'sorteio') return { id: 'rodada-sorteio', desenhar: telaSorteio, chave: () => app.dados.resultados?.[e.rodada] ?? null };
+        // Formato simples: não há sorteio. Um "sorteio" que chegue assim mesmo
+        // (sala de antes, outro telão) mostra o resultado.
+        if (e.subfase === 'sorteio' && !simples()) return { id: 'rodada-sorteio', desenhar: telaSorteio, chave: () => app.dados.resultados?.[e.rodada] ?? null };
         return { id: 'rodada-resultado', desenhar: telaResultado, chave: () => app.dados.resultados?.[e.rodada] ?? null };
       case 'placarFinal': return { id: 'placar-final', desenhar: telaPlacarFinal, chave: () => app.dados.placar };
       case 'comparativo': return { id: 'comparativo', desenhar: telaComparativo, chave: () => app.dados.enquetes?.[e.enquete] ?? null };
@@ -1829,13 +1850,15 @@
       // do personagem já está no rótulo da equipe (teste do Kleber de 05/10).
       const valores = ateIndice === null ? app.dados.placar?.[id] : estadoAtePasso(id, ateIndice);
       const valor = patrimonioDe(valores ?? N().motor.estadoInicial(app.config, id));
+      // Formato simples: as palavras do resultado ("tem R$ X", "devendo R$ X").
+      const texto = simples() ? N().historia.textoDaFamilia({ renda: valor }, F().moeda) : F().indicador(renda, valor);
       return el('li', { classe: 'resumido-linha', dados: { equipe: id } }, [
         rotuloEquipe(id),
-        el('span', { classe: 'resumido-valor', texto: F().indicador(renda, valor) }),
+        el('span', { classe: 'resumido-valor', texto }),
       ]);
     });
     return el('div', { classe: ['placar-resumido', classe] }, [
-      el('p', { classe: 'kicker', texto: renda ? renda.nome : 'Saldo' }),
+      el('p', { classe: 'kicker', texto: simples() ? 'O dinheiro da família' : renda ? renda.nome : 'Saldo' }),
       el('ol', { classe: 'resumido-lista' }, itens),
     ]);
   }
@@ -2037,7 +2060,8 @@
       // personagem, "Jonas, motoboy": daqui em diante, o telão chama a equipe
       // pelo personagem (teste do Kleber de 05/10), e é aqui que a sala liga um
       // ao outro.
-      const detalhes = [el('span', { classe: 'equipe-persona', texto: nomeDoPersonagem(id) })];
+      // No formato simples, todas são o Jonas: o personagem não vai no cartão.
+      const detalhes = simples() ? [] : [el('span', { classe: 'equipe-persona', texto: nomeDoPersonagem(id) })];
       if (eq.lugar) detalhes.push(el('span', { classe: 'equipe-lugar', texto: eq.lugar }));
       if (!offline && aberta) detalhes.push(el('span', { classe: 'equipe-conta', texto: F().pessoas(conta[id] || 0) }));
       detalhes.push(el('span', { classe: 'equipe-situacao', texto: aberta ? (eq.obrigatoria ? 'sempre joga' : 'aberta') : 'fechada' }));
@@ -2100,7 +2124,44 @@
     ];
   }
 
+  // Formato simples: com um personagem só, a etapa das personas vira "Conheça
+  // o Jonas": quem é, a casa, a renda, o básico e quanto falta num mês comum
+  // (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
+  // básico item a item vai numa linha corrida (o celular tem as fontes).
+  function telaConheca(s, e) {
+    const { el } = D();
+    const primeira = ativas(e)[0] ?? equipesOrdem()[0];
+    const p = personaDaEquipe(primeira);
+    const mes = N().motor.mesComum(app.config, primeira);
+    const { meses, noPeriodo } = periodo();
+    s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
+    const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
+    const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
+    const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
+    const itens = lista(p.basico?.itens).filter((i) => i && i.valor > 0);
+    const fecha = mes.saldoMes >= 0;
+    s.appendChild(el('div', { classe: 'conheca' }, [
+      el('p', { classe: 'conheca-quem', texto: p.descricao || '' }),
+      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'], texto: p.familia.descricao }) : null,
+      el('ul', { classe: 'conheca-conta' }, [
+        pedaco('o trabalho rende por mês', F().moeda(mes.trabalho), 'conheca-trabalho'),
+        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? `menos ${fixos.join(' e ')}` : 'menos os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
+        outra ? pedaco(outra.rotulo, F().moeda(outra.valor, { sinal: true }), 'conheca-outra') : null,
+        pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
+      ]),
+      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      el('p', {
+        classe: ['persona-mes', 'conheca-mes'], dados: { saldoMesComum: String(mes.saldoMes), sinal: sinalDoSaldo(mes.saldoMes) },
+      }, [
+        fecha ? 'Num mês comum, a conta fecha: sobram ' : 'Num mês comum, a conta não fecha: faltam ',
+        el('b', { texto: F().moeda(Math.abs(mes.saldoMes)) }),
+        meses > 1 ? ` (${F().moeda(Math.abs(mes.saldoMes) * meses)} ${noPeriodo})` : null,
+      ]),
+    ]));
+  }
+
   function telaPersonas(s, e) {
+    if (simples()) return telaConheca(s, e);
     const { el } = D();
     s.appendChild(cabecalho(null, 'As personas'));
     const abertas = ativas(e);
@@ -2233,14 +2294,35 @@
     return el('div', { classe: ['equipe-status', equipeDecidiu(e, eq) ? 'decidida' : null], dados: { equipe: eq } }, filhos);
   }
 
+  // Formato simples: a linha do dinheiro de cada opção ("+R$ 900 no
+  // bimestre"), a soma dos efeitos diretos dela para a persona
+  // (historia.dinheiroDaOpcao, a mesma conta do celular). O que vem depois,
+  // encadeado, não aparece: é a surpresa do resultado. Em verde ou vermelho,
+  // sempre com o sinal (a cor nunca vai sozinha); o empréstimo, neutro (é
+  // dívida). Sem o formato simples, null.
+  function linhaDoDinheiro(rodadaId, op, personaId) {
+    if (!simples()) return null;
+    const { el } = D();
+    const dinheiro = N().historia.dinheiroDaOpcao(app.config, rodadaId, op, personaId);
+    const sinal = dinheiro.emprestimo > 0 && Math.round(dinheiro.valor) === 0 ? 'zero' : sinalDoSaldo(dinheiro.valor);
+    return el('span', {
+      classe: 'opcao-dinheiro', dados: { dinheiro: String(dinheiro.valor), emprestimo: String(dinheiro.emprestimo), sinal },
+      texto: N().historia.textoDoDinheiro(dinheiro, F().moeda, periodo()),
+    });
+  }
+
   function telaRodadaDecidindo(s, e) {
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const { n, total } = posicaoRodada(e.rodada);
     s.appendChild(cabecalho(`Rodada ${n} de ${total} · decisão`, rodada.titulo, { cronometro: true }));
     s.appendChild(el('p', { classe: 'situacao', texto: rodada.texto }));
-    s.appendChild(el('ol', { classe: 'opcoes' }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
-      el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
+    // No formato simples, o rótulo do jeito da persona (D-054), a única.
+    const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
+    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
+      el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
+      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
+      linhaDoDinheiro(e.rodada, op, personaId),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
     app.depoisDeMedir.push(() => apertarDecisao(s));
@@ -2597,6 +2679,7 @@
   // O detalhamento das contas (entrou, gastos, multa, básico, juros,
   // empréstimo) fica no celular de cada equipe e na história do placar final.
   function telaResultado(s, e) {
+    if (simples()) return telaResultadoSimples(s, e);
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
@@ -2704,6 +2787,61 @@
     });
   }
 
+  // Formato simples (decisão do Kleber de 05/10 à noite): o evento do mês uma
+  // vez no topo (a carta, a mesma para todas as equipes: o título e uma
+  // frase) e, por equipe, só o que se compara: a equipe pela cor, a opção
+  // escolhida (letra e rótulo), o saldo do bimestre em verde ou vermelho e o
+  // dinheiro da família no fim dele ("tem R$ X" ou "devendo R$ X": o caixa
+  // menos a dívida total, historia.dinheiroDaFamilia). Nada mais: as contas
+  // atrasadas, o que faltou na mesa e a carta de cada equipe ficam fora.
+  function telaResultadoSimples(s, e) {
+    const { el } = D();
+    const rodada = app.config.rodadas[e.rodada];
+    const itens = resultadosDaRodada(e);
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(null, rodada.titulo));
+    const primeira = itens[0];
+    if (primeira) {
+      const personaId = app.config.equipes[primeira.eq]?.persona;
+      const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
+      const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
+      s.appendChild(el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
+        el('p', { classe: 'evento-titulo', texto: titulo }),
+        frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
+      ]));
+    }
+    const grade = el('div', { classe: 'grade-simples', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
+    for (const { eq, r } of itens) {
+      const mes = mesDoResultado(e.rodada, eq, r);
+      const saldo = Math.round(mes.saldoMes) + 0;
+      const familia = N().historia.dinheiroDaFamilia(r.depois) ?? { situacao: 'tem', valor: 0 };
+      const rotulo = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo || r.decisao;
+      grade.appendChild(el('article', {
+        classe: 'resultado-simples', role: 'listitem',
+        dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
+      }, [
+        el('div', { classe: 'simples-quem' }, [rotuloEquipe(eq)]),
+        el('p', { classe: 'simples-opcao' }, [el('b', { classe: 'letra', texto: letraDe(rodada, r.decisao) }), el('span', { texto: rotulo })]),
+        el('div', { classe: 'simples-saldo' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: `saldo ${doPeriodo}` }),
+          el('p', { classe: 'resultado-saldo', title: textoSaldo(saldo), dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }) }),
+        ]),
+        el('div', { classe: 'simples-familia' }, [
+          el('p', { classe: 'resultado-saldo-rotulo', texto: 'a família' }),
+          el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
+        ]),
+      ]));
+    }
+    s.appendChild(grade);
+    // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
+    // transborda (medido depois do desenho), as faixas se aproximam; a letra
+    // fica nos 28 px.
+    app.depoisDeMedir.push(() => {
+      if (grade.scrollHeight > grade.clientHeight + 1) s.dataset.aperto = '1';
+      if (s.dataset.aperto && grade.scrollHeight > grade.clientHeight + 1) s.dataset.aperto = '2';
+    });
+  }
+
   // O título da carta vai inteiro quando cabe numa linha ("Uma semana boa") e
   // pelo curto do config quando quebraria ("A mobilização arrancou um reajuste"
   // → "Reajuste"): uma carta em duas linhas faz a faixa crescer, e seis faixas
@@ -2788,9 +2926,17 @@
   // uma página por equipe, como antes.
   const RODADAS_POR_PAGINA_HISTORIA = 3;
 
+  // Formato simples (decisão do Kleber de 05/10 à noite): três páginas só. (1)
+  // "O caminho de cada equipe", a tabela das escolhas e do saldo de cada
+  // bimestre; (2) "Quanto sobrou, ou ficou devendo", as barras; (3) "Das N
+  // combinações possíveis, X fecham o ano", todas as combinações contadas pelo
+  // motor (sem sorteio, cada uma tem um valor só). Sem "Escolha ou sorte?" (não
+  // há sorte), sem o pior caso e sem as histórias por equipe: no teste dele,
+  // as várias telas de placar ficaram complexas demais.
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
+    if (simples()) return [{ tipo: 'caminho' }, { tipo: 'saldo' }, { tipo: 'combinacoes' }];
     const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
     const historias = equipes.flatMap((eq) => {
       const n = N().historia.historiaDaEquipe(app.config, eq, app.dados.resultados).length;
@@ -2822,6 +2968,8 @@
     }
     const lado = paginas.length > 1 ? el('p', { classe: 'pagina-placar', texto: `${i + 1} de ${paginas.length}` }) : null;
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
+    else if (pagina.tipo === 'caminho') paginaCaminho(s, lado);
+    else if (pagina.tipo === 'combinacoes') paginaCombinacoes(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
     else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
     else if (pagina.tipo === 'historia') paginaHistoria(s, pagina, lado);
@@ -2865,6 +3013,8 @@
   // F6c). O título diz o que a barra mede: o que ficou devendo. Sem o limite,
   // o de sempre.
   function tituloDaPaginaSaldo() {
+    // Formato simples: o título pedido pelo Kleber (05/10 à noite).
+    if (simples()) return 'Quanto sobrou, ou ficou devendo';
     return Number.isInteger(app.config?.regras?.limiteChequeEspecial)
       ? 'Quanto sobrou, e quanto ficou devendo'
       : 'Quanto sobrou, e quanto faltou para o básico';
@@ -2895,17 +3045,130 @@
           linhas: r.persona ? ordenadas.flatMap((id, k) => (app.config.equipes[id]?.persona === r.persona ? [k] : [])) : undefined,
         })),
       })),
+      // Formato simples: o dinheiro da família com as mesmas palavras do
+      // resultado de cada bimestre ("tem R$ X", "devendo R$ X").
       el('div', { classe: 'coluna-valores', estilo: estiloLinhas }, ordenadas.map((id) => el('div', {
         classe: 'linha-valor valor-saldo', dados: { equipe: id, valor: String(patrimonioNoPlacar(id)) },
-      }, [textoSaldo(patrimonioNoPlacar(id))]))),
+      }, [simples() ? textoDaFamiliaNoPlacar(id) : textoSaldo(patrimonioNoPlacar(id))]))),
     ]));
     if (referencias.length > 0) {
       s.appendChild(el('ul', { classe: 'referencias' }, referencias.map((r) => el('li', { dados: { referencia: r.id } }, [
-        el('span', { classe: 'marca-referencia', 'aria-hidden': 'true', texto: '┊' }), ` ${r.nome}: `, el('b', { texto: F().moeda(r.renda) }),
+        el('span', { classe: 'marca-referencia', 'aria-hidden': 'true', texto: '┊' }), ` ${r.nome}: `,
+        simples() && r.renda < 0 ? ['devendo ', el('b', { texto: F().moeda(-r.renda) })] : el('b', { texto: F().moeda(r.renda) }),
       ]))));
     }
-    const mesa = linhaDaMesaNoAno(ordenadas);
+    // Formato simples: sem a linha do que faltou na mesa (pedido do Kleber).
+    const mesa = simples() ? null : linhaDaMesaNoAno(ordenadas);
     if (mesa) s.appendChild(mesa);
+  }
+
+  // "tem R$ X" ou "devendo R$ X", pelo patrimônio do placar (formato simples).
+  const textoDaFamiliaNoPlacar = (eq) => N().historia.textoDaFamilia(app.dados.placar?.[eq], F().moeda) ?? '';
+
+  // As rodadas jogadas, na ordem do roteiro (a do anfitrião): as que têm
+  // resultado de alguma equipe. Uma rodada pulada no dia fica de fora, como no
+  // estado da equipe.
+  function rodadasJogadas() {
+    return app.passos.filter((p) => p.tipo === 'rodada' && app.dados.resultados?.[p.rodada]).map((p) => p.rodada);
+  }
+
+  // Formato simples, página 1: "O caminho de cada equipe". Uma linha por
+  // equipe, da que terminou com mais dinheiro para a que terminou com menos;
+  // em cada bimestre, a letra escolhida e o saldo do bimestre (verde ou
+  // vermelho, sempre com o sinal); na última coluna, o total, o dinheiro da
+  // família no fim (o patrimônio, que é a soma dos saldos: a família começa
+  // em zero). Os valores em reais sem o "R$" (o kicker diz "em reais"): com o
+  // "R$" em cada célula, seis bimestres e o nome da equipe não cabiam em
+  // 1024×768 com a letra de 28 px.
+  function paginaCaminho(s, lado) {
+    const { el } = D();
+    const ordenadas = equipesPorSaldo();
+    const rodadas = rodadasJogadas();
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(`Placar final · saldo ${doPeriodo}, em reais`, 'O caminho de cada equipe', { extra: lado }));
+    const cabeca = el('tr', {}, [
+      el('th', { scope: 'col', classe: 'caminho-equipe', texto: 'Equipe' }),
+      ...rodadas.map((r) => el('th', { scope: 'col', texto: rotuloDaRodada(r) })),
+      el('th', { scope: 'col', classe: 'caminho-total', texto: 'Total' }),
+    ]);
+    const linhas = ordenadas.map((eq) => {
+      const total = Math.round(patrimonioNoPlacar(eq)) + 0;
+      return el('tr', { dados: { equipe: eq, total: String(total) } }, [
+        el('th', { scope: 'row', classe: 'caminho-equipe' }, [rotuloEquipe(eq, null, { curto: true })]),
+        ...rodadas.map((r) => {
+          const res = app.dados.resultados?.[r]?.[eq];
+          if (!res) return el('td', { classe: 'caminho-celula', texto: '—' });
+          const saldo = Math.round(mesDoResultado(r, eq, res).saldoMes) + 0;
+          const letra = letraDe(app.config.rodadas[r], res.decisao);
+          return el('td', { classe: 'caminho-celula', dados: { rodada: r, decisao: res.decisao, letra, saldoMes: String(saldo) } }, [
+            el('b', { classe: 'caminho-letra', texto: letra }),
+            el('span', { classe: 'caminho-saldo', dados: { sinal: sinalDoSaldo(saldo) }, texto: F().inteiro(saldo, { sinal: true }) }),
+          ]);
+        }),
+        el('td', { classe: 'caminho-total', dados: { sinal: sinalDoSaldo(total) }, texto: F().inteiro(total, { sinal: true }) }),
+      ]);
+    });
+    const tabela = el('table', { classe: 'tabela-caminho' }, [el('thead', {}, [cabeca]), el('tbody', {}, linhas)]);
+    s.appendChild(el('div', { classe: 'caminho' }, [tabela]));
+    // Seis equipes com a faixa de entrada (online): só quando a tabela
+    // transborda, as linhas se aproximam (a letra fica nos 28 px).
+    app.depoisDeMedir.push(() => {
+      const caixa = tabela.parentElement;
+      if (caixa.scrollHeight > caixa.clientHeight + 1 || caixa.scrollWidth > caixa.clientWidth + 1) s.dataset.aperto = '1';
+    });
+  }
+
+  // A contagem das combinações (motor.enumerarCombinacoes), guardada na memória
+  // desta janela: o config e as rodadas jogadas não mudam no placar, e as
+  // 15.625 combinações de 6 bimestres levam ~0,1 s no Node (o e2e mede no
+  // navegador). A chave leva o hash do config e as rodadas: outra sessão, ou
+  // uma rodada a mais, conta de novo.
+  const combinacoesContadas = new Map();
+  function contarCombinacoes(equipeId, rodadas) {
+    const chave = `${app.hash}|${equipeId}|${rodadas.join(',')}`;
+    if (!combinacoesContadas.has(chave)) {
+      const inicio = raiz.performance.now();
+      const contagem = N().motor.enumerarCombinacoes(app.config, { equipeId, rodadas });
+      combinacoesContadas.set(chave, { ...contagem, ms: raiz.performance.now() - inicio });
+    }
+    return combinacoesContadas.get(chave);
+  }
+
+  // Formato simples, página 3: "Das N combinações possíveis, X fecham o ano".
+  // Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor
+  // conta todas (5^6 = 15.625 com 6 bimestres de 5 opções): é a resposta direta
+  // para "mesmo escolhendo, faltou dinheiro". A melhor e a pior combinação
+  // (letras e o dinheiro da família no fim) e, para cada equipe, em que lugar a
+  // combinação dela ficou entre todas (empate divide o lugar). Todas as
+  // equipes jogam o mesmo Jonas (o validador garante uma persona só), e a
+  // contagem é a da primeira equipe do placar.
+  function paginaCombinacoes(s, lado) {
+    const { el } = D();
+    const ordenadas = equipesPorSaldo();
+    const rodadas = rodadasJogadas();
+    const c = contarCombinacoes(equipesDoPlacar()[0], rodadas);
+    s.dataset.msCombinacoes = String(Math.round(c.ms));
+    const meses = rodadas.length * periodo().meses;
+    const fechar = meses === 12 ? 'o ano' : 'as contas';
+    const quantas = c.fecham === 0 ? `nenhuma fecha ${fechar}` : c.fecham === 1 ? `1 fecha ${fechar}` : `${F().inteiro(c.fecham)} fecham ${fechar}`;
+    s.appendChild(cabecalho('Placar final', `Das ${F().inteiro(c.total)} combinações possíveis, ${quantas}`, { extra: lado }));
+    const letras = (opcoes) => opcoes.map((o, i) => letraDe(app.config.rodadas[rodadas[i]], o)).join(' ');
+    const familia = (v) => N().historia.textoDaFamilia({ renda: v }, F().moeda);
+    const extremo = (rotulo, x, classe) => el('p', { classe: ['combinacao-extremo', classe], dados: { letras: letras(x.opcoes).replace(/ /g, ''), valor: String(Math.round(x.valor) + 0) } }, [
+      `${rotulo} `, el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ` · ${familia(x.valor)}`,
+    ]);
+    s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [extremo('A melhor:', c.melhor, 'combinacao-melhor'), extremo('A pior:', c.pior, 'combinacao-pior')]));
+    s.appendChild(el('ol', { classe: 'combinacoes-equipes' }, ordenadas.map((eq) => {
+      const opcoes = rodadas.map((r) => app.dados.resultados?.[r]?.[eq]?.decisao);
+      const jogou = opcoes.every((o) => typeof o === 'string');
+      const valor = patrimonioNoPlacar(eq);
+      const lugar = jogou ? N().motor.lugarEntre(c.valores, valor) : null;
+      return el('li', { classe: 'combinacao-equipe', dados: { equipe: eq, lugar: lugar === null ? '' : String(lugar), letras: jogou ? letras(opcoes).replace(/ /g, '') : '' } }, [
+        rotuloEquipe(eq),
+        jogou ? el('b', { classe: 'combinacao-letras', texto: letras(opcoes) }) : null,
+        el('span', { classe: 'combinacao-lugar' }, lugar === null ? ['—'] : [el('b', { texto: `${F().inteiro(lugar)}º` }), ` de ${F().inteiro(c.total)}`]),
+      ]);
+    })));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.

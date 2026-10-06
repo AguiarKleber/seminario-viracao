@@ -378,6 +378,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .equipe-empate { font-weight: 700; flex-basis: 100%; }
 .botoes-opcao { display: flex; gap: .4em; }
 .botao-letra { min-width: 2em; min-height: 48px; padding: 0 .3em; font-size: max(28px, .85em); font-weight: 800; line-height: 1.3; }
+/* 5 opções (formato simples, decisão do Kleber de 05/10): com a largura de 4,
+   o quinto botão saía da célula da equipe em 1024×768 (três células por
+   linha) e ficava por baixo da vizinha. Botões mais estreitos e vão menor; a
+   altura de 48 px (o clique do apresentador) fica. */
+.botoes-opcao:has(> :nth-child(5)) { gap: .2em; }
+.botoes-opcao:has(> :nth-child(5)) .botao-letra { min-width: 1.55em; padding: 0 .12em; }
 /* O aperto da decisão e da prorrogação (telao.js, apertarDecisao): só quando a
    tela transborda. Com a equipe pelo personagem (teste do Kleber de 05/10), o
    rótulo comprido quebra em duas linhas na célula, e seis células com a faixa
@@ -770,6 +776,101 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
   width: 5em; padding: .2em .4em; margin-bottom: .8em;
   background: var(--fundo); color: var(--texto); border: 2px solid var(--linha-forte); border-radius: var(--raio);
 }
+
+/* ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
+ * Um personagem só, 5 opções por bimestre com o dinheiro na própria opção, o
+ * evento do mês igual para todas as equipes (sem sorteio) e o placar pelo
+ * caminho de cada equipe (telao.js, simples()). Nada abaixo do corpo (28 px em
+ * 1024×768); o e2e (telao-simples) prova seis equipes em 1024×768 e 1920×1080. */
+
+/* A decisão: a letra, o rótulo e, à direita, o dinheiro da opção ("+R$ 900 no
+   bimestre"), que nunca quebra; o rótulo comprido quebra antes dele. */
+.opcoes-com-dinheiro li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6em; }
+.opcao-dinheiro { white-space: nowrap; font-weight: 700; text-align: right; }
+.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
+.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+
+/* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
+   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */
+.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+.conheca-quem { font-size: calc(var(--corpo) * 1.1); line-height: 1.25; }
+.conheca-conta { display: grid; grid-template-columns: max-content max-content; gap: .1em 1.4em; }
+.conheca-linha { display: contents; }
+.conheca-linha > b { text-align: right; }
+.conheca-itens { line-height: 1.25; }
+.conheca-itens b { color: var(--texto); }
+.conheca-mes { font-size: calc(var(--corpo) * 1.1); }
+
+/* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em
+   três colunas alinhadas entre as faixas (subgrid): a equipe e, embaixo, a
+   opção escolhida; o saldo do bimestre; o dinheiro da família. */
+.evento-do-mes { display: flex; flex-direction: column; gap: .05em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.2; }
+.evento-titulo { font-size: calc(var(--corpo) * 1.15); font-weight: 750; }
+.evento-linha { color: var(--texto-2); }
+.grade-simples {
+  flex: 1 1 auto; min-height: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content;
+  align-content: safe center;
+  row-gap: calc(var(--espaco) * .9);
+}
+.resultado-simples {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: subgrid; align-items: center;
+  column-gap: 1.2em;
+  padding: .15em .6em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  line-height: 1.12;
+}
+.simples-quem { grid-column: 1; grid-row: 1; min-width: 0; }
+.simples-opcao { grid-column: 1; grid-row: 2; display: flex; align-items: baseline; gap: .45em; min-width: 0; }
+.simples-opcao .letra { height: 1.2em; min-width: 1.2em; }
+.simples-saldo, .simples-familia { grid-row: 1 / span 2; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.simples-saldo { grid-column: 2; }
+.simples-familia { grid-column: 3; }
+.simples-familia-valor { font-size: 1.1em; white-space: nowrap; }
+.simples-familia-valor b { font-weight: 800; }
+.simples-familia-valor[data-situacao="devendo"] b { color: var(--negativo); }
+/* O aperto (telao.js, telaResultadoSimples): só quando seis faixas com a
+   faixa de entrada embaixo não cabem; o segundo, se o primeiro não bastou. */
+.tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
+.tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
+.tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
+.tela-rodada-resultado[data-aperto="2"] { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado[data-aperto="2"] .grade-simples { row-gap: 4px; }
+.tela-rodada-resultado[data-aperto="2"] .resultado-simples .resultado-saldo { font-size: 1.1em; }
+
+/* Placar, página 1: "O caminho de cada equipe". Em cada célula, a letra em
+   cima e o saldo do bimestre embaixo (lado a lado, seis bimestres não cabiam
+   em 1024×768); o total em destaque. Usa a margem lateral, como o resultado. */
+.tela-placar-final[data-pagina="caminho"] { margin-left: calc(var(--lateral) * -.6); margin-right: calc(var(--lateral) * -.6); }
+.caminho { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; }
+.tabela-caminho { border-collapse: collapse; width: 100%; line-height: 1.1; }
+.tabela-caminho th, .tabela-caminho td { padding: .15em .25em; border-bottom: 1px solid var(--linha); text-align: center; vertical-align: middle; }
+.tabela-caminho thead th { color: var(--texto-2); font-weight: 600; }
+.tabela-caminho .caminho-equipe { text-align: left; }
+.tabela-caminho .caminho-equipe .equipe { white-space: normal; }
+.caminho-letra { display: block; }
+.caminho-saldo { display: block; white-space: nowrap; }
+.caminho-saldo[data-sinal="negativo"], .caminho-total[data-sinal="negativo"] { color: var(--negativo); }
+.caminho-saldo[data-sinal="positivo"], .caminho-total[data-sinal="positivo"] { color: var(--positivo); }
+td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
+.tela-placar-final[data-aperto] .tabela-caminho { line-height: 1; }
+.tela-placar-final[data-aperto] .tabela-caminho th, .tela-placar-final[data-aperto] .tabela-caminho td { padding-top: 0; padding-bottom: 0; }
+
+/* Placar, página 3: as combinações possíveis. A melhor e a pior, e uma linha
+   por equipe: as letras dela e o lugar entre todas. */
+.combinacoes-extremos { display: flex; flex-direction: column; gap: .1em; color: var(--texto-2); }
+.combinacoes-extremos b { color: var(--texto); }
+.combinacao-letras { letter-spacing: .06em; white-space: nowrap; }
+.combinacoes-equipes { display: flex; flex-direction: column; gap: calc(var(--espaco) * .5); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+.combinacao-equipe {
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content; align-items: baseline; column-gap: 1.2em;
+  padding-bottom: calc(var(--espaco) * .3); border-bottom: 1px solid var(--linha); line-height: 1.15;
+}
+.combinacao-lugar { color: var(--texto-2); white-space: nowrap; text-align: right; }
+.combinacao-lugar b { color: var(--texto); }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }
