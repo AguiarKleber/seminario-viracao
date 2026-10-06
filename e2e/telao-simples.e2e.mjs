@@ -8,7 +8,7 @@
 // quando o conteúdo do Jonas entrar). Tudo o que o teste espera sai do próprio
 // config e do motor, recalculado aqui no Node.
 //
-// O que prova, com as seis equipes abertas, em 1024×768 e em 1920×1080 (sem
+// O que prova, com as seis equipes abertas, em 1024×768, 1280×720 e 1920×1080 (sem
 // rolagem, nada abaixo de 28 px, nada fora da tela, nada cortado e nenhum
 // controle de operador na projeção, como o e2e do telão):
 // 1. "Conheça o Jonas" no lugar das personas: uma casa só, com a falta de um
@@ -44,7 +44,9 @@ const F = globalThis.Viracao.formatar;
 
 const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const URL_TELAO = pathToFileURL(join(RAIZ, 'telao', 'index.html')).href;
-const TAMANHOS = [[1024, 768], [1920, 1080]];
+// 1280×720 (revisão de 06/10): o projetor 16:9 de 720p, ou o notebook 1920×1080
+// com escala de 150% no Windows; é o mais baixo dos tamanhos comuns.
+const TAMANHOS = [[1024, 768], [1280, 720], [1920, 1080]];
 const MIN_FONTE = 28;
 const ROTEIRO = '60min';
 const LETRAS = 'ABCDEFGHIJ';
@@ -253,7 +255,13 @@ async function medir() {
         }
       }
     }
-    return { rolagem, pequenos, fora: fora.slice(0, 6), cortados, sobrepostos: sobrepostos.slice(0, 6), vazados: vazados.slice(0, 6) };
+    // G1 (revisão de 06/10): no Fim, na tabela do caminho e na célula da
+    // decisão, o nome da equipe numa linha só. Em 1024×768, "Equipe / Verde- /
+    // azulado" ia a três linhas no Fim e "Verde- / azulado" a duas na tabela.
+    const quebrados = [...document.querySelectorAll('#palco :is(.placar-fim, .tabela-caminho, .equipe-status) .equipe-nome')]
+      .filter((n) => n.getClientRects().length > 1 || n.getBoundingClientRect().height > parseFloat(getComputedStyle(n).fontSize) * 1.8)
+      .map((n) => n.textContent.trim());
+    return { rolagem, pequenos, fora: fora.slice(0, 6), cortados, sobrepostos: sobrepostos.slice(0, 6), vazados: vazados.slice(0, 6), quebrados };
   }, MIN_FONTE);
 }
 
@@ -325,6 +333,7 @@ async function conferirTela(nome, aoMedir = null) {
     assert.deepEqual(m.cortados, [], `${onde}: texto cortado com reticências`);
     assert.deepEqual(m.sobrepostos, [], `${onde}: texto sobreposto`);
     assert.deepEqual(m.vazados, [], `${onde}: elemento fora da própria caixa`);
+    assert.deepEqual(m.quebrados, [], `${onde}: nome de equipe em mais de uma linha`);
     assert.deepEqual(await controlesNaProjecao(), [], `${onde}: controle de operador na projeção`);
     await conferirRotulos(onde);
     if (aoMedir) await aoMedir(onde);
@@ -601,5 +610,5 @@ if (!process.argv.some((a) => a.startsWith('--config'))) {
   await jogar('6r');
 }
 assert.deepEqual(errosDaPagina, [], 'nenhum erro na página');
-console.log('OK: o formato simples no telão offline (1024×768 e 1920×1080).');
+console.log('OK: o formato simples no telão offline (1024×768, 1280×720 e 1920×1080).');
 await navegador.close();

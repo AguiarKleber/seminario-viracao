@@ -4,8 +4,8 @@
 //
 // Sobe o bin/servir.mjs e o emulador (projeto demo-seminario), e joga a
 // fixture test/fixtures/config-simples.json (servida no lugar do config.json)
-// com o telão de verdade em 1024×768, com a faixa de entrada aberta embaixo (o
-// pior caso de altura), e 3 celulares de verdade em 360×740:
+// com o telão de verdade em 1024×768 e em 1280×720, com a faixa de entrada
+// aberta embaixo (o pior caso de altura), e 3 celulares de verdade em 360×740:
 // 1. "Conheça o Jonas" no celular, sem o ponto de partida dos indicadores;
 // 2. a decisão: as 5 opções com a letra, o rótulo e o custo humano, sem o
 //    dinheiro (D-079: às cegas); a dobra "Mais opções abaixo" aparece enquanto
@@ -165,8 +165,18 @@ async function jogar({ site, navegador, vigiar }) {
     await esperarEstado(teste, descricao);
   }
   // O telão com a faixa de entrada: nada rola, nada sai do palco nem da
-  // própria caixa (a faixa do resultado, a linha das combinações).
+  // própria caixa (a faixa do resultado, a linha das combinações). Em 1024×768
+  // e em 1280×720 (revisão de 06/10): no projetor 16:9 de 720p, a segunda
+  // fileira de equipes da decisão ficava 39 px embaixo da faixa, e só em
+  // 1024×768 o e2e não via.
   async function conferirTelao(nome) {
+    for (const [largura, altura] of [[1280, 720], [1024, 768]]) {
+      await telao.setViewportSize({ width: largura, height: altura });
+      await telao.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a, [largura, altura]);
+      await medirTelao(largura === 1024 ? nome : `${nome}-${largura}x${altura}`);
+    }
+  }
+  async function medirTelao(nome) {
     await telao.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     const m = await telao.evaluate(() => {
       const se = document.scrollingElement;
@@ -422,5 +432,5 @@ async function jogar({ site, navegador, vigiar }) {
       await telao.keyboard.press('Space');
     }
   }
-  console.log('OK: o formato simples com celulares (telão em 1024×768 com a faixa de entrada; celulares em 360×740).');
+  console.log('OK: o formato simples com celulares (telão em 1024×768 e 1280×720 com a faixa de entrada; celulares em 360×740).');
 }
