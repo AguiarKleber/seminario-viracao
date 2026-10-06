@@ -224,7 +224,7 @@
         {
           "id": "a",
           "rotulo": "12 horas por dia no sol",
-          "narrativa": "Fiquei online da manhã à noite, sete dias, no sol das 14h, e quase não vi minha casa acordada.",
+          "narrativa": "Rodar 12 horas por dia, sete dias, no calor de 39 °C: mais entregas, menos sono e quase nada de casa.",
           "impacto": "12 h por dia no sol: chega em casa e a filha de férias já dormiu",
           "efeitos": [
             {
@@ -239,7 +239,7 @@
         {
           "id": "b",
           "rotulo": "Atrasar a parcela da moto",
-          "narrativa": "Deixei a parcela de fevereiro da moto para depois, e em março ela volta com multa e juros.",
+          "narrativa": "Empurrar a parcela da moto de fevereiro para março: alivia agora, volta com multa e juros e arrisca a moto.",
           "impacto": "O banco liga todo dia, e em março a parcela volta com multa e juros",
           "efeitos": [
             {
@@ -254,14 +254,14 @@
         {
           "id": "c",
           "rotulo": "Jornada de sempre",
-          "narrativa": "Mantive a rotina no calor, sem nada a mais e sem nada a menos.",
+          "narrativa": "Manter as cerca de 45 horas por semana de sempre, no sol, sem esticar e sem parar nos dias mais quentes.",
           "impacto": "Roda no sol como sempre: chega exausto, e a conta segue sem fechar",
           "efeitos": []
         },
         {
           "id": "d",
           "rotulo": "Parar das 10h às 16h",
-          "narrativa": "Nos dias de 39 °C parei das 10h às 16h, como manda a Defesa Civil, e perdi o pico do almoço.",
+          "narrativa": "A Defesa Civil pede para evitar esforço das 10h às 16h no calor: parar poupa o corpo e perde o pico do almoço.",
           "impacto": "Volta inteiro para a filha, e o pico do almoço fica para quem aguentou o sol",
           "efeitos": [
             {
@@ -276,7 +276,7 @@
         {
           "id": "e",
           "rotulo": "Pagar o IPVA em janeiro",
-          "narrativa": "Paguei o IPVA da moto em janeiro, com desconto, no cheque especial, e em abril ele não vence.",
+          "narrativa": "O IPVA da moto tem desconto se pago até 30/01: pagar agora sai do cheque especial, que cobra juros todo mês.",
           "impacto": "Paga a moto adiantado no cheque especial: o ano já começa no vermelho",
           "efeitos": [
             {
@@ -357,7 +357,7 @@
         {
           "id": "a",
           "rotulo": "Parar no dia da greve",
-          "narrativa": "Desliguei o app no dia da greve, junto com os outros, e depois veio uma semana sem chamada.",
+          "narrativa": "14/04: greve nacional no dia em que a lei dos apps (R$ 8,50 por entrega) ia a voto; quem para fica fora do app.",
           "impacto": "Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca",
           "efeitos": [
             {
@@ -379,7 +379,7 @@
         {
           "id": "b",
           "rotulo": "Rodar também no 99Food",
-          "narrativa": "Entrei no 99Food e rodei nos dois apps ao mesmo tempo, com o bônus de entrada.",
+          "narrativa": "O 99Food chegou à cidade com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito.",
           "impacto": "Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo",
           "efeitos": [
             {
@@ -394,7 +394,7 @@
         {
           "id": "c",
           "rotulo": "Empréstimo de R$ 1.500",
-          "narrativa": "Peguei R$ 1.500 em 12 parcelas de R$ 183, e a dívida continua depois do jogo.",
+          "narrativa": "Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano.",
           "impacto": "12 parcelas de R$ 183: duas dívidas pagas com a mesma entrega",
           "efeitos": [
             {
@@ -411,7 +411,7 @@
         {
           "id": "d",
           "rotulo": "Aceitar até entrega ruim",
-          "narrativa": "Aceitei até o que não compensava, para o app não me esconder, e trabalhei mais para ganhar quase o mesmo.",
+          "narrativa": "O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila.",
           "impacto": "Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo",
           "efeitos": [
             {
@@ -426,7 +426,7 @@
         {
           "id": "e",
           "rotulo": "Trocar iFood pelo 99Food",
-          "narrativa": "Troquei o iFood pelo 99Food atrás do bônus de entrada, e comecei do zero no app novo.",
+          "narrativa": "Largar o iFood pelo bônus do 99Food, recém-chegado: paga mais por corrida, sem saber quantos pedidos virão.",
           "impacto": "Troca de app pelo bônus: começa do zero, sem saber se o pedido vem",
           "efeitos": [
             {
@@ -481,7 +481,7 @@
         {
           "id": "a",
           "rotulo": "Pneu novo antes da chuva",
-          "narrativa": "Troquei o pneu traseiro, que estava no fim, antes da chuva, com o dinheiro do mês.",
+          "narrativa": "O pneu traseiro está no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora.",
           "impacto": "Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado",
           "efeitos": [
             {
@@ -497,7 +497,7 @@
         {
           "id": "b",
           "rotulo": "Parar nos dias de alerta",
-          "narrativa": "Nos dois dias de alerta laranja de temporal fiquei em casa, sem rodar e sem ganhar.",
+          "narrativa": "O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho.",
           "impacto": "Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco",
           "efeitos": [
             {
@@ -512,7 +512,7 @@
         {
           "id": "c",
           "rotulo": "Rodar de madrugada",
-          "narrativa": "Rodei até de madrugada, na chuva e no frio, atrás da promoção de chuva.",
+          "narrativa": "Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio, no escuro e no molhado.",
           "impacto": "Rodando de madrugada na chuva: a companheira acordada esperando a moto",
           "efeitos": [
             {
@@ -527,14 +527,14 @@
         {
           "id": "d",
           "rotulo": "Jornada de sempre",
-          "narrativa": "Mantive a rotina na chuva, do almoço ao jantar, molhado e com frio.",
+          "narrativa": "Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal.",
           "impacto": "Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno",
           "efeitos": []
         },
         {
           "id": "e",
           "rotulo": "Comprar capa, bota e luva",
-          "narrativa": "Comprei capa, bota, luva e balaclava de chuva, e pela primeira vez cheguei seco em casa.",
+          "narrativa": "Kit de chuva para moto (capa, bota, luva e balaclava): chega seco e protegido, com dinheiro que sai do mercado.",
           "impacto": "O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez",
           "efeitos": [
             {
@@ -590,7 +590,7 @@
         {
           "id": "a",
           "rotulo": "Entrar no +Entregas",
-          "narrativa": "Entrei na regra nova do app, R$ 3 por entrega e quase nenhuma recusa, e trabalhei mais para ganhar pouco mais.",
+          "narrativa": "+Entregas: o iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega.",
           "impacto": "+Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete",
           "efeitos": [
             {
@@ -605,7 +605,7 @@
         {
           "id": "b",
           "rotulo": "Ir ao protesto de 27/07",
-          "narrativa": "Fui ao protesto da Esquina Democrática até o Praia de Belas, e depois veio uma semana sem chamada.",
+          "narrativa": "27/07: entregadores marcham no Centro contra o +Entregas; quem vai perde meio dia e arrisca o bloqueio.",
           "impacto": "Do protesto para cinco dias bloqueado: a filha estranha o pai em casa de dia",
           "efeitos": [
             {
@@ -627,7 +627,7 @@
         {
           "id": "c",
           "rotulo": "Adiar a revisão da moto",
-          "narrativa": "Deixei a revisão da moto para depois, com 20 mil km rodados no ano, e o dinheiro fechou o bimestre.",
+          "narrativa": "A revisão da moto está vencida, com 20 mil km no ano: adiar alivia o mês e deixa a moto mais perto de quebrar.",
           "impacto": "Adia a revisão e roda com a moto pedindo socorro, atento a cada barulho",
           "efeitos": [
             {
@@ -642,7 +642,7 @@
         {
           "id": "d",
           "rotulo": "Tirar uma semana de folga",
-          "narrativa": "Tirei uma semana inteira de folga, a primeira do ano, e voltei com o corpo inteiro.",
+          "narrativa": "A primeira semana de descanso do ano: no app não há férias pagas, e cada dia parado é um dia sem ganho.",
           "impacto": "Uma semana inteira com a filha, paga com o dinheiro que não entra",
           "efeitos": [
             {
@@ -657,7 +657,7 @@
         {
           "id": "e",
           "rotulo": "Pegar promoções da noite",
-          "narrativa": "Fiquei ativo nas noites de promoção, das 18h às 22h, atrás do bônus do app.",
+          "narrativa": "O iFood paga bônus a quem fica online das 18h às 22h: a jornada gira em torno do horário que o app quer.",
           "impacto": "Noites de inverno na rua atrás do bônus, e o jantar em casa sem ele",
           "efeitos": [
             {
@@ -757,14 +757,14 @@
         {
           "id": "a",
           "rotulo": "Jornada de sempre",
-          "narrativa": "Mantive a rotina no mês do breque, sem parar e sem furar.",
+          "narrativa": "Nem parar nem furar: seguir a rotina no mês do breque geral e do Acampamento Farroupilha.",
           "impacto": "Nem para nem fura: segue cansado, longe da filha, como em todo bimestre",
           "efeitos": []
         },
         {
           "id": "b",
           "rotulo": "Recusar o que não paga",
-          "narrativa": "Recusei o pedido que não pagava o custo, ganhei menos no total, e o app passou a me esconder.",
+          "narrativa": "Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa.",
           "impacto": "Recusa o que não paga, e o celular passa horas em silêncio na esquina",
           "efeitos": [
             {
@@ -779,7 +779,7 @@
         {
           "id": "c",
           "rotulo": "Parar no dia do breque",
-          "narrativa": "Parei no breque de 1º de setembro, junto com o país, e depois veio uma semana sem chamada.",
+          "narrativa": "01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio.",
           "impacto": "Para no breque com o país, e o app responde com cinco dias de bloqueio",
           "efeitos": [
             {
@@ -801,7 +801,7 @@
         {
           "id": "d",
           "rotulo": "Furar o breque pelo bônus",
-          "narrativa": "Rodei no dia do breque pelo bônus e fiz toda noite da Farroupilha, e virei o fura-greve da quadra.",
+          "narrativa": "Furar o breque pelo bônus de até R$ 9 e rodar as noites da Farroupilha: rende e queima com os colegas.",
           "impacto": "Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra",
           "efeitos": [
             {
@@ -823,7 +823,7 @@
         {
           "id": "e",
           "rotulo": "Folgar no 20 de Setembro",
-          "narrativa": "Folguei no 20 de Setembro e levei a filha ao Acampamento, e o feriado cheio de pedidos ficou para outro.",
+          "narrativa": "Feriado de 20 de Setembro com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro.",
           "impacto": "Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro",
           "efeitos": [
             {
@@ -893,7 +893,7 @@
         {
           "id": "b",
           "rotulo": "Sem folga até o Natal",
-          "narrativa": "Trabalhei todo dia de novembro e dezembro, até a véspera do Natal, e fiquei um caco.",
+          "narrativa": "Dezembro tem 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso.",
           "impacto": "Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado",
           "efeitos": [
             {
@@ -908,7 +908,7 @@
         {
           "id": "c",
           "rotulo": "Folgar na semana do Natal",
-          "narrativa": "Parei uma semana no Natal para ficar com os meus, e perdi a semana mais cheia do ano.",
+          "narrativa": "Uma semana com a família no Natal, sem férias pagas: é justo a semana com mais pedidos do ano.",
           "impacto": "Uma semana de Natal com a filha, e a semana mais cheia do ano vai para outro",
           "efeitos": [
             {
@@ -923,14 +923,14 @@
         {
           "id": "d",
           "rotulo": "Jornada de sempre",
-          "narrativa": "Mantive a rotina até o fim do ano, e sem 13º o ano fechou do jeito que dava.",
+          "narrativa": "Seguir a rotina até o fim do ano, sem 13º, sem férias e sem um dia a mais de folga.",
           "impacto": "Rotina de sempre até o fim do ano, sem 13º e sem um dia a mais com a filha",
           "efeitos": []
         },
         {
           "id": "e",
           "rotulo": "Temporário com carteira",
-          "narrativa": "Peguei uma vaga temporária de motoboy com carteira até o Natal, com horário fixo, 13º e férias.",
+          "narrativa": "Vaga temporária de motoboy com carteira até o Natal: horário fixo, salário, 13º, férias e INSS no lugar do app.",
           "impacto": "Carteira por dois meses: horário fixo, 13º e férias, e menos dinheiro no fim",
           "efeitos": [
             {
