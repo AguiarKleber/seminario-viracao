@@ -650,3 +650,65 @@ mora (D-066, D-069, D-070); o bloqueio de 1 semana depois de greve, protesto ou
 breque (D-072); a linha do custo humano (D-073); o termômetro de entrada (D-074);
 e, da D-077, o modo de rever a tela anterior, a barra oculta fina, o mapa sem o
 gancho, o "saldo do bimestre" e as escolhas da equipe no celular no placar final.
+
+## 06/10/2026 (de manhã): depois do teste do Kleber na versão 8
+
+Pedidos do Kleber com os prints do teste da versão 8 publicada (o jogo simples),
+na manhã de 06/10. O princípio dele continua: prático, pouca explicação, fácil
+de entender. O conteúdo, com as fontes, está em
+[jogo-simples.md](jogo-simples.md).
+
+**D-079. Contexto nas opções, dados depois de cada bimestre e o pior caso abaixo
+de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
+- **As opções ficam às cegas.** Nem o telão nem o celular mostram o dinheiro ao
+  lado da alternativa; o saldo continua aparecendo no resultado. Muda a D-078
+  ("o valor em dinheiro aparece na opção").
+- **Cada opção tem uma mini-história junto do título** ("que greve? por quê? o
+  que impacta?"): o que é, por quê e o que impacta, numa frase de até ~110
+  caracteres, sem o dinheiro do Jonas. É o campo `narrativa` da opção.
+- **Depois do resultado de cada bimestre, uma tela com dados reais do tema
+  dele**, com um contexto curto do que é o tópico (o que é gestão por algoritmo,
+  o que é o breque) e até 3 números com fonte: calor e jornada, a greve de 14/04
+  e a lei, chuva e acidentes, gestão por algoritmo, o que é o breque e fim de
+  ano sem 13º. Substitui os blocos de dados genéricos (PNAD, lei, algoritmo,
+  breque, 13º), o quiz e o contraponto do roteiro de 120 min. No config, o passo
+  `bloco` ganha `contexto`, `itens` e `fonte`.
+- **Sem a etapa "Entrevistas"** nos dois roteiros (muda a D-060, que reservava
+  até 20 min a elas). O tempo foi para as rodadas (a leitura da mini-história),
+  os blocos de dados, o placar, o debrief e o Fim; os roteiros continuam fechando
+  60 e 120 min.
+- **"Fim: quem é o patrão?" com dados do setor** sobre quem manda: quem define o
+  preço e os clientes, a ameaça de bloqueio e a concentração do delivery.
+- **"Cortar comida e remédio" sai** de nov–dez: o básico para sobreviver não é
+  opção realista. Entra **"Pedir ajuda à família"** (+R$ 300 da mãe aposentada;
+  o valor é estimativa sem fonte). Não é opção puxada.
+- **As telas complementares** (as que não são de alternativas) ficam menos
+  poluídas; o placar sai **sem a lista de posições de cada equipe** ("975º de
+  15.625"), e o comparativo, **sem a linha "mediana · média · n"**.
+- **A pior combinação deve menos de R$ 7.000** (devia R$ 10.906). Mudaram só
+  estimativas e recontas, todas declaradas na fonte de cada valor:
+  - o bloqueio depois da greve, do protesto e do breque passa de 7 para **5
+    dias** (R$ 450), o menor afastamento da regra da 99 (5, 10 e 15 dias). Muda a
+    intensidade da D-072; o bloqueio continua existindo, sempre;
+  - as faxinas da companheira: duas por semana são **8,67 por mês**, e não 8
+    (R$ 1.600, eram R$ 1.500);
+  - o ônibus da companheira: as idas e voltas das faxinas, **18 passagens**
+    (R$ 95), e não 30 sem conta (R$ 159);
+  - o aluguel: **o piso da faixa do Sarandi** no QuintoAndar, R$ 1.200 (era
+    R$ 1.300, dentro da mesma faixa).
+  - Não mudaram: a regra das costas (7 dias e 4 sessões), a moto que quebra, o
+    temporário com carteira, os juros, a multa e o limite do cheque especial.
+    Só com o bloqueio e as costas mais leves o pior caso não descia de R$ 9.800:
+    o pior caminho é o das opções de descanso e de proteção, e o déficit da casa
+    vem de todo mês. Por isso a casa foi recontada.
+  - **Resultado (06/10, `npm run combinacoes`):** pior D-A-E-C-C-E, devendo
+    R$ 6.783; melhor A-D-C-E-D-A, +R$ 1.714; **260 das 15.625 combinações fecham
+    o ano** (eram 0), todas com ao menos uma opção puxada; mediana −R$ 2.904;
+    padrão −R$ 3.291; nenhuma opção domina. A linha "Jonas com carteira
+    assinada" vai a −R$ 11.947. Num mês comum, falta R$ 128 (faltavam R$ 392).
+- **As regras do Firebase não mudam** (continuam v4). O config passa à versão
+  `2026-10-06-v4.1-simples`.
+
+**Deixam de valer:** da D-078, "o valor em dinheiro aparece na opção" e
+"nenhuma das 15.625 combinações fecha o ano"; da D-072, a semana de bloqueio
+(agora, 5 dias); da D-060, as entrevistas.
