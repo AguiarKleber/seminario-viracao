@@ -126,7 +126,7 @@ test('config.json do dia: válido, sem nenhum aviso sobre o roteiro ou sobre o t
   assert.deepEqual(doRoteiro, [], listar(doRoteiro));
 });
 
-test('config.json do dia: depois de cada bimestre, um bloco de dados com contexto, 1 a 3 itens e fonte; o Fim, idem; sem "Entrevistas"', () => {
+test('config.json do dia: depois de cada bimestre, um bloco de dados com contexto, 1 a 3 itens e fonte; o das outras plataformas e o Fim, idem; sem "Entrevistas"', () => {
   for (const [nome, passos] of Object.entries(dia.config.roteiros)) {
     assert.ok(!passos.some((p) => /entrevista/i.test(p.titulo || '')), `${nome}: sem a etapa "Entrevistas"`);
     passos.forEach((p, k) => {
@@ -136,7 +136,7 @@ test('config.json do dia: depois de cada bimestre, um bloco de dados com context
       assert.match(seguinte.titulo, /^Dados: /, `${nome}: depois de ${p.rodada}, o bloco de dados`);
     });
     const comDados = passos.filter((p) => p.tipo === 'bloco' && /^(Dados|Fim):/.test(p.titulo || ''));
-    assert.equal(comDados.length, 7, `${nome}: 6 blocos de dados e o Fim`);
+    assert.equal(comDados.length, 8, `${nome}: 6 blocos de dados, o das outras plataformas (D-080) e o Fim`);
     for (const p of comDados) {
       assert.ok(p.contexto, `${nome}/${p.titulo}: o contexto`);
       assert.ok(p.itens?.length >= 1 && p.itens.length <= 3, `${nome}/${p.titulo}: de 1 a 3 itens`);
@@ -164,6 +164,22 @@ test('config.json do dia: "Caminhos" com um item por caminho e a fonte, e a "Con
   const conversa = passos.find((p) => /^Conversa em grupos/.test(p.titulo || ''));
   assert.equal(conversa.itens.length, 3, 'a conversa: três passos');
   assert.ok(conversa.contexto, 'a conversa: o contexto');
+});
+
+// D-080 (print 1 do Kleber, 06/10 à tarde): o Fim enriquecido com outras
+// modalidades de trabalho por app. Um bloco de dados próprio, logo antes do Fim,
+// nos dois roteiros, com os dados do IBGE sobre os motoristas de app; e os dois
+// roteiros continuam fechando 60 e 120 minutos.
+test('config.json do dia: "Dados: e nos outros aplicativos?" logo antes do Fim, nos dois roteiros, e os tempos fecham 60 e 120 min', () => {
+  for (const [nome, passos] of Object.entries(dia.config.roteiros)) {
+    const iFim = passos.findIndex((p) => /^Fim:/.test(p.titulo || ''));
+    const antes = passos[iFim - 1];
+    assert.equal(antes.titulo, 'Dados: e nos outros aplicativos?', `${nome}: o bloco antes do Fim`);
+    assert.equal(antes.itens.length, 3, `${nome}: três números`);
+    assert.match(antes.fonte, /^IBGE, PNAD Contínua/, `${nome}: a fonte`);
+    const soma = passos.reduce((s, p) => s + (p.alvoSeg || 0), 0);
+    assert.equal(soma, Number(nome.replace('min', '')) * 60, `${nome}: os tempos-alvo somam o roteiro inteiro`);
+  }
 });
 
 test('config.json do dia: cada opção tem a mini-história, de até 120 letras (cabe em duas linhas na decisão do telão)', () => {

@@ -1267,13 +1267,13 @@
       },
       {
         "tipo": "placarFinal",
-        "alvoSeg": 360
+        "alvoSeg": 330
       },
       {
         "tipo": "enquete",
         "enquete": "termometro_curto",
         "momento": "unico",
-        "alvoSeg": 180
+        "alvoSeg": 150
       },
       {
         "tipo": "enquete",
@@ -1284,7 +1284,19 @@
       {
         "tipo": "comparativo",
         "enquete": "entrada",
-        "alvoSeg": 120
+        "alvoSeg": 90
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: e nos outros aplicativos?",
+        "alvoSeg": 90,
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e reparos.",
+        "itens": [
+          "Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora, R$ 14,40, contra R$ 16 de quem dirige sem app.",
+          "80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto recebem por corrida; 60,8%, quais passageiros atendem.",
+          "Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas sem app, 59,2%."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
       },
       {
         "tipo": "bloco",
@@ -1317,7 +1329,7 @@
       {
         "tipo": "bloco",
         "titulo": "Mapa do seminário",
-        "alvoSeg": 390,
+        "alvoSeg": 270,
         "contexto": "Doze meses do Jonas em seis bimestres; depois de cada um, dados reais do tema. No fim, a pergunta: quem é o patrão?"
       },
       {
@@ -1448,7 +1460,7 @@
       {
         "tipo": "bloco",
         "titulo": "Caminhos: regulação, proteção, organização e educação",
-        "alvoSeg": 510,
+        "alvoSeg": 390,
         "contexto": "Quatro caminhos em debate para quem trabalha por app. Qual deles teria mudado o ano do Jonas?",
         "itens": [
           "Regulação: a lei dos apps (PLP 152/2025) fixaria R$ 8,50 por entrega; saiu de pauta em 14/04/2026, sem nova data.",
@@ -1474,6 +1486,18 @@
         "tipo": "comparativo",
         "enquete": "entrada",
         "alvoSeg": 150
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: e nos outros aplicativos?",
+        "alvoSeg": 240,
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e reparos.",
+        "itens": [
+          "Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora, R$ 14,40, contra R$ 16 de quem dirige sem app.",
+          "80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto recebem por corrida; 60,8%, quais passageiros atendem.",
+          "Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas sem app, 59,2%."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
       },
       {
         "tipo": "bloco",
