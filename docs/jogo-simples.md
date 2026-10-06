@@ -381,6 +381,18 @@ R$ 7.000, para você confirmar:
    desconte a manutenção média. Está declarado na fonte.
 9. **O padrão de jul–ago é "Adiar a revisão"**: a equipe que não votar vê a moto
    quebrar em set–out. O roteiro (seção 0) manda decidir por ela antes do Enter.
+10. **Valores do contexto nas mini-histórias.** Saíram os que eram dinheiro do
+    Jonas ("Empréstimo de R$ 1.500", "12 parcelas de R$ 183", "bônus de até
+    R$ 9"). Ficaram os do contexto: o piso da lei e o pedido da categoria
+    (mar–abr A: R$ 8,50 e R$ 10), os R$ 3 do +Entregas (jul–ago A) e a pauta do
+    breque (set–out C: R$ 10). Ficam, ou saem também?
+11. **No celular, embaixo do rótulo vai o custo humano**, e a mini-história
+    aparece ao tocar na opção (o telão projeta a mini-história para todos).
+    Trocar pela mini-história no botão exige conferir de novo a tela de
+    360×740.
+12. **Na célula da decisão, só a cor** ("Laranja", sem "Equipe"); com a faixa
+    de entrada numa tela baixa (1280×720), "Laranja 2 de 3", sem "decidiram".
+    Nas outras telas, "Equipe Laranja" continua.
 
 ## Onde mexer
 

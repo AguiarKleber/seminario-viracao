@@ -221,9 +221,10 @@ caminho fez com o dinheiro da família."
 - **O telão não baixa o JSON sozinho** (muda a D-015). Se quiser o arquivo,
   barra oculta → **Salvar estado** (por exemplo, depois de Mar–abr e de
   Set–out). Online, a sala fica no Firebase e se retoma com o PIN (seção 9).
-- Com seis equipes e a faixa de entrada aberta, o telão pode esconder o evento
-  do mês para caber; feche a entrada depois de formar as equipes (barra →
-  **Entrada aberta**) e ele volta.
+- Com seis equipes e a faixa de entrada aberta, o telão aperta a tela para
+  caber: no resultado, pode esconder o evento do mês; na decisão, numa tela
+  baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
+  formar as equipes (barra → **Entrada aberta**) e tudo volta.
 
 **O que dizer uma vez, em "Conheça o Jonas"** (e não explicar mais que isso):
 - "Vocês escolhem às cegas: o dinheiro de cada opção só aparece no resultado."

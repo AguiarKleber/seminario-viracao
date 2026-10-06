@@ -688,8 +688,10 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
 - **A pior combinação deve menos de R$ 7.000** (devia R$ 10.906). Mudaram só
   estimativas e recontas, todas declaradas na fonte de cada valor:
   - o bloqueio depois da greve, do protesto e do breque passa de 7 para **5
-    dias** (R$ 450), o menor afastamento da regra da 99 (5, 10 e 15 dias). Muda a
-    intensidade da D-072; o bloqueio continua existindo, sempre;
+    dias** (R$ 450), o menor afastamento da regra da 99 (5, 10 e 15 dias; é a
+    regra dos motoristas, que conta aceitar e cancelar: para o entregador
+    grevista, a duração é estimativa sem fonte). Muda a intensidade da D-072;
+    o bloqueio continua existindo, sempre;
   - as faxinas da companheira: duas por semana são **8,67 por mês**, e não 8
     (R$ 1.600, eram R$ 1.500);
   - o ônibus da companheira: as idas e voltas das faxinas, **18 passagens**
@@ -725,6 +727,30 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
   - no validador, `contexto` até 220 letras, cada item até 140, até 3 itens,
     `fonte` até 200 e, no formato simples, a mini-história até 120: acima
     disso, aviso (não bloqueia a sala).
+- **Revisão de 06/10 à tarde (ainda na versão 9, antes de publicar).** Nada
+  muda de número do jogo (260 fecham, melhor +R$ 1.714, pior −R$ 6.783):
+  - **o conteúdo conferido com as fontes:** a greve de 14/04 foi convocada
+    *contra* o texto da lei (R$ 8,50 por entrega, a categoria queria R$ 10);
+    os 38,3% de ajuda da família valem para todos os acidentados que se
+    afastaram; os 16% de dezembro são do começo do mês contra os meses
+    anteriores; o seguro do iFood paga diária de 7 a 30 dias parado; 2 de
+    cada 3 que trabalham por app não contribuem ao INSS; o breque de 31/03/2025
+    foi em 60 cidades, segundo os entregadores; a regra dos 70% da 99 (dos
+    motoristas) saiu dos blocos, e no lugar dela entrou a do iFood (7 recusas
+    seguidas = 15 minutos fora); a semana do Natal deixou de ser "a com mais
+    pedidos do ano" (sem fonte);
+  - **às cegas de verdade:** "Empréstimo de R$ 1.500" passa a "Pegar um
+    empréstimo", e o custo humano dele perde o "R$ 183"; a mini-história de
+    "Furar o breque" perde o "até R$ 9". Ficam na mini-história valores do
+    contexto que não são o dinheiro do Jonas (o piso da lei, a pauta do
+    breque, os R$ 3 do +Entregas);
+  - **1280×720** (projetor 16:9 de 720p, ou notebook com escala de 150%)
+    entra nos tamanhos medidos. Online, com a faixa de entrada, a decisão
+    passava 39 px: um segundo aperto põe o andamento na linha do nome
+    ("Laranja 2 de 3"). O resultado tira a frase e o evento do mês (que estão
+    no celular) sempre que não cabe, e não só com consequência;
+  - **G1:** o Fim lista as equipes em uma coluna, com "Equipe Verde-azulado"
+    numa linha (em duas colunas, ia a três); a cor nunca quebra no hífen.
 
 **Deixam de valer:** da D-078, "o valor em dinheiro aparece na opção" e
 "nenhuma das 15.625 combinações fecha o ano"; da D-072, a semana de bloqueio
