@@ -15,7 +15,7 @@
     "combinacoes": "node bin/combinacoes.mjs",
     "e2e": "node e2e/telao-offline.e2e.mjs && node e2e/telao-simples.e2e.mjs && node e2e/telao-simples.e2e.mjs --config config.json",
     "e2e:simples": "node e2e/telao-simples.e2e.mjs",
-    "e2e:online": "node e2e/sessao-online.e2e.mjs",
+    "e2e:online": "node e2e/sessao-online.e2e.mjs && node e2e/simples-online.e2e.mjs --config config.json",
     "e2e:online:fixture": "node e2e/sessao-online.e2e.mjs --fixture",
     "e2e:online:simples": "node e2e/simples-online.e2e.mjs",
     "e2e:online:dia": "node e2e/simples-online.e2e.mjs --config config.json",

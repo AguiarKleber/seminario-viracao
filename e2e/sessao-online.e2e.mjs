@@ -196,7 +196,11 @@ async function conteudoDoTeste() {
   // pelo simples-online.e2e.mjs; este percorre o jogo com sorteio e 6 personas, o
   // config de 05/10 congelado em test/fixtures/config-real-v31.json.
   let textoConfig = readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8');
-  let origem = 'config.json';
+  // O rótulo dizia "config.json" mesmo depois da D-078, e o log de 06/10
+  // parecia dizer que este e2e jogava o conteúdo do dia: ele joga o de 05/10.
+  const ROTULO_REAL = 'test/fixtures/config-real-v31.json (o config de 05/10, com sorteio e 6 personas)';
+  let origem = ROTULO_REAL;
+  let usandoFixture = false;
   let r = V.validarConfig.validarTexto(textoConfig);
   // E2E_FIXTURE=1 força a fixture mesmo com o config.json válido: é ela que passa
   // com certeza pelo "faltou", pela dívida e pelos juros (o config real depende da carta).
@@ -205,16 +209,17 @@ async function conteudoDoTeste() {
   const forcarFixture = process.env.E2E_FIXTURE === '1' || process.argv.includes('--fixture');
   if (!r.ok || forcarFixture) {
     textoConfig = fixtureV21ParaE2e();
-    origem = `test/fixtures/config-teste-v21.json (${forcarFixture ? 'forçada: E2E_FIXTURE=1 ou --fixture' : 'o config.json da raiz ainda não passa no validador'})`;
+    usandoFixture = true;
+    origem = `test/fixtures/config-teste-v21.json (${forcarFixture ? 'forçada: E2E_FIXTURE=1 ou --fixture' : 'o config de 05/10 não passa no validador'})`;
     r = V.validarConfig.validarTexto(textoConfig);
   }
-  if (r.ok && origem === 'config.json') {
+  if (r.ok && !usandoFixture) {
     // Revisão de 29/09, 2ª rodada (achado 19): com o config real, o resultado
     // no celular saía com a carta "Normal" ou "Semana boa", e a linha "O que a
     // carta custou" (D-052) nunca era vista em 360×740. No mês 1, só as cartas
     // com dias parados podem sair (as outras continuam nos meses seguintes).
     textoConfig = soCartasDeParadaNoMes1(textoConfig);
-    origem = 'config.json (no mês 1, só as cartas com dias parados)';
+    origem = `${ROTULO_REAL}, no mês 1 só as cartas com dias parados`;
     r = V.validarConfig.validarTexto(textoConfig);
   }
   assert.ok(r.ok, `o conteúdo do e2e precisa ser válido (${origem}): ${JSON.stringify(r.erros)}`);
@@ -236,7 +241,7 @@ async function conteudoDoTeste() {
     passos, opcoesDe: (r) => lista(cfg.rodadas[r].ordemOpcoes),
     cfg, textoConfig, historiaDaEquipe: V.historia.historiaDaEquipe, textoDaOpcao: V.historia.textoDaOpcao,
     decompor: V.motor.decompor, protecaoDoResultado: V.historia.protecaoDoResultado, historia: V.historia,
-    usandoFixture: !origem.startsWith('config.json'),
+    usandoFixture,
   };
 }
 
@@ -532,7 +537,7 @@ async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conf
   const lido = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8'));
   const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
   if (!lido.ok || lista(lido.config.ordem.rodadas).length !== 6 || lido.config.regras.mesesPorRodada !== 2) {
-    console.log('Resumo de 6 bimestres com o config.json real: pulado (o config.json não tem 6 rodadas de 2 meses ou não passa no validador).');
+    console.log('Resumo de 6 bimestres com o config de 05/10: pulado (ele não tem 6 rodadas de 2 meses ou não passa no validador).');
     return;
   }
   const config = lido.config;
@@ -626,7 +631,7 @@ async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conf
   await conferirCelular(aluno, 'bimestres-real-bloco-resumo');
   await ctx.close();
   await administrador('DELETE', `salas/${codigo}`);
-  console.log(`Config.json real (equipe ${equipe}): as escolhas dos 6 bimestres no placar final e o resumo até ${tela.linhas.at(-1).ficou} no último bloco, em 360×740.`);
+  console.log(`Config de 05/10 (equipe ${equipe}): as escolhas dos 6 bimestres no placar final e o resumo até ${tela.linhas.at(-1).ficou} no último bloco, em 360×740.`);
 }
 
 // ---------- D-066 e D-067 no celular: o limite do cheque especial e a proteção acima do trabalho ----------
