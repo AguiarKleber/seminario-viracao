@@ -378,11 +378,16 @@ async function jogar(nome) {
         h1: document.querySelector('#palco h1').textContent,
         personas: document.querySelectorAll('.persona-linha').length,
         mes: document.querySelector('.conheca-mes')?.dataset.saldoMesComum,
+        frase: document.querySelector('.conheca-mes')?.textContent,
         quem: document.querySelector('.conheca-quem')?.textContent,
       }));
       assert.equal(lidoTela.h1, `Conheça o ${p.nome}`, `${onde}: o título`);
       assert.equal(lidoTela.personas, 0, `${onde}: sem a lista de personas`);
       assert.equal(Number(lidoTela.mes), mes.saldoMes, `${onde}: a conta de um mês comum`);
+      // Sem o valor (pedido do Kleber de 06/10 à tarde): a frase só diz se a conta fecha.
+      assert.equal(lidoTela.frase, mes.saldoMes >= 0
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.', `${onde}: a frase do mês comum, sem valor`);
       assert.equal(lidoTela.quem, p.descricao);
     });
   }

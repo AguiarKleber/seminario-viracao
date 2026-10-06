@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '9';
+  const VERSAO_APP = '10';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -2134,15 +2134,14 @@
   }
 
   // Formato simples: com um personagem só, a etapa das personas vira "Conheça
-  // o Jonas": quem é, a casa, a renda, o básico e quanto falta num mês comum
-  // (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
+  // o Jonas": quem é, a casa, a renda, o básico e se a conta de um mês comum
+  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
   // básico item a item vai numa linha corrida (o celular tem as fontes).
   function telaConheca(s, e) {
     const { el } = D();
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
     const p = personaDaEquipe(primeira);
     const mes = N().motor.mesComum(app.config, primeira);
-    const { meses, noPeriodo } = periodo();
     s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
     const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
@@ -2159,13 +2158,15 @@
         pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
       ]),
       itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      // Sem o valor (pedido do Kleber de 06/10 à tarde, com o print da versão
+      // 9): era "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
+      // bimestre)". A frase diz só que a conta não fecha; os números ficam nas
+      // linhas de cima e no data-saldo-mes-comum, que o e2e confere.
       el('p', {
         classe: ['persona-mes', 'conheca-mes'], dados: { saldoMesComum: String(mes.saldoMes), sinal: sinalDoSaldo(mes.saldoMes) },
-      }, [
-        fecha ? 'Num mês comum, a conta fecha: sobram ' : 'Num mês comum, a conta não fecha: faltam ',
-        el('b', { texto: F().moeda(Math.abs(mes.saldoMes)) }),
-        meses > 1 ? ` (${F().moeda(Math.abs(mes.saldoMes) * meses)} ${noPeriodo})` : null,
-      ]),
+      }, fecha
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
   }
 
