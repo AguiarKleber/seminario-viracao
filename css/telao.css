@@ -231,9 +231,8 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .resumo-texto { font-weight: 600; }
 .resumo-dados { display: flex; align-items: center; gap: 1.2em; }
 .resumo-dados .grafico { height: 1.9em; min-height: 0; }
-.resumo-estat { flex: none; white-space: nowrap; }
-.mediana { font-size: 1.35em; }
-.media { color: var(--texto-2); }
+/* Só o "sem votos" (D-079: sem a linha "mediana · média · n"). */
+.resumo-estat { flex: none; white-space: nowrap; color: var(--texto-2); }
 
 /* ---------- Bloco ---------- */
 
@@ -894,18 +893,14 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 .tela-placar-final[data-aperto] .tabela-caminho { line-height: 1; }
 .tela-placar-final[data-aperto] .tabela-caminho th, .tela-placar-final[data-aperto] .tabela-caminho td { padding-top: 0; padding-bottom: 0; }
 
-/* Placar, página 3: as combinações possíveis. A melhor e a pior, e uma linha
-   por equipe: as letras dela e o lugar entre todas. */
-.combinacoes-extremos { display: flex; flex-direction: column; gap: .1em; color: var(--texto-2); }
+/* Placar, página 3: as combinações possíveis, só a melhor e a pior (D-079:
+   sem a lista do lugar de cada equipe), maiores e no meio da tela. */
+.combinacoes-extremos {
+  flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center;
+  gap: calc(var(--espaco) * 1.5); font-size: calc(var(--corpo) * 1.3); line-height: 1.2; color: var(--texto-2);
+}
 .combinacoes-extremos b { color: var(--texto); }
 .combinacao-letras { letter-spacing: .06em; white-space: nowrap; }
-.combinacoes-equipes { display: flex; flex-direction: column; gap: calc(var(--espaco) * .5); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
-.combinacao-equipe {
-  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content; align-items: baseline; column-gap: 1.2em;
-  padding-bottom: calc(var(--espaco) * .3); border-bottom: 1px solid var(--linha); line-height: 1.15;
-}
-.combinacao-lugar { color: var(--texto-2); white-space: nowrap; text-align: right; }
-.combinacao-lugar b { color: var(--texto); }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }

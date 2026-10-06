@@ -1787,14 +1787,14 @@
     for (const a of ordem) {
       const hist = lista(ap.histogramas?.[a]);
       const r = N().enquete.resumo(hist.length === 5 ? hist : [0, 0, 0, 0, 0]);
-      const estat = r.n === 0
-        ? [el('span', { texto: 'sem votos' })]
-        : [el('span', {}, ['mediana ', el('b', { classe: 'mediana', texto: F().decimal(r.mediana) })]), el('span', { classe: 'media', texto: ` · média ${F().decimal(r.media)} · n = ${r.n}` })];
+      // Sem a linha "mediana · média · n" embaixo do gráfico (teste do Kleber
+      // de 06/10, print 8, D-079): as três partes já dizem o resultado, e a
+      // linha só poluía. Sem votos, o gráfico vazio leva o "sem votos".
       linhas.appendChild(el('div', { classe: 'resumo-linha', dados: { afirmacao: a } }, [
         el('p', { classe: 'resumo-texto', texto: enq.afirmacoes[a].texto }),
         el('div', { classe: 'resumo-dados' }, [
           r.n === 0 ? el('div', { classe: 'grafico grafico-vazio' }) : grafico('grafico-partes', (largura, altura, fonte) => G().tresPartes({ largura, altura, fonte, resumo: r })),
-          el('p', { classe: 'resumo-estat' }, estat),
+          r.n === 0 ? el('p', { classe: 'resumo-estat', texto: 'sem votos' }) : null,
         ]),
       ]));
     }
@@ -3173,13 +3173,14 @@
   // Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor
   // conta todas (5^6 = 15.625 com 6 bimestres de 5 opções): é a resposta direta
   // para "mesmo escolhendo, faltou dinheiro". A melhor e a pior combinação
-  // (letras e o dinheiro da família no fim) e, para cada equipe, em que lugar a
-  // combinação dela ficou entre todas (empate divide o lugar). Todas as
-  // equipes jogam o mesmo Jonas (o validador garante uma persona só), e a
-  // contagem é a da primeira equipe do placar.
+  // (letras e o dinheiro da família no fim), só. Até a versão 8, uma linha por
+  // equipe com o lugar dela entre todas ("975º de 15.625"); o Kleber pediu
+  // para tirar (teste de 06/10, print 6, D-079): as letras e o saldo de cada
+  // equipe já estão na página 1. Todas as equipes jogam o mesmo Jonas (o
+  // validador garante uma persona só), e a contagem é a da primeira equipe do
+  // placar.
   function paginaCombinacoes(s, lado) {
     const { el } = D();
-    const ordenadas = equipesPorSaldo();
     const rodadas = rodadasJogadas();
     const c = contarCombinacoes(equipesDoPlacar()[0], rodadas);
     s.dataset.msCombinacoes = String(Math.round(c.ms));
@@ -3193,17 +3194,6 @@
       `${rotulo} `, el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ` · ${familia(x.valor)}`,
     ]);
     s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [extremo('A melhor:', c.melhor, 'combinacao-melhor'), extremo('A pior:', c.pior, 'combinacao-pior')]));
-    s.appendChild(el('ol', { classe: 'combinacoes-equipes' }, ordenadas.map((eq) => {
-      const opcoes = rodadas.map((r) => app.dados.resultados?.[r]?.[eq]?.decisao);
-      const jogou = opcoes.every((o) => typeof o === 'string');
-      const valor = patrimonioNoPlacar(eq);
-      const lugar = jogou ? N().motor.lugarEntre(c.valores, valor) : null;
-      return el('li', { classe: 'combinacao-equipe', dados: { equipe: eq, lugar: lugar === null ? '' : String(lugar), letras: jogou ? letras(opcoes).replace(/ /g, '') : '' } }, [
-        rotuloEquipe(eq),
-        jogou ? el('b', { classe: 'combinacao-letras', texto: letras(opcoes) }) : null,
-        el('span', { classe: 'combinacao-lugar' }, lugar === null ? ['—'] : [el('b', { texto: `${F().inteiro(lugar)}º` }), ` de ${F().inteiro(c.total)}`]),
-      ]);
-    })));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
