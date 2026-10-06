@@ -88,10 +88,10 @@ e gasolina **−R$ 60** (ANP, R$ 6,38 e 6,52; conta: R$ 63).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Parar no dia da greve | 14/04: greve nacional no dia em que a lei dos apps (R$ 8,50 por entrega) ia a voto; quem para fica fora do app. | −R$ 540 | Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
+| A | Parar no dia da greve | 14/04: greve nacional contra a lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca bloqueio. | −R$ 540 | Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
 | B ⚑ | Rodar também no 99Food | O 99Food chegou com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito. | +R$ 900 | Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo | +15% do bimestre (estimativa, R$ 804) + bônus de entrada (R$ 100, Jornal do Brás) |
-| C | Empréstimo de R$ 1.500 | Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano. | dívida (D-065) | 12 parcelas de R$ 183: duas dívidas pagas com a mesma entrega | BCB, SGS 25464: 6,39% a.m.; Price, 12 × R$ 182,76 |
-| D * | Aceitar até entrega ruim | O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila. | +R$ 160 | Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo | +3% do bimestre (estimativa, R$ 161); regras de recusa do iFood e da 99 |
+| C | Pegar um empréstimo | Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano. | dívida (D-065): +R$ 1.500 | 12 parcelas: duas dívidas pagas com a mesma entrega | BCB, SGS 25464: 6,39% a.m.; Price, 12 × R$ 182,76 |
+| D * | Aceitar até entrega ruim | O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila. | +R$ 160 | Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo | +3% do bimestre (estimativa, R$ 161); regra de recusa do iFood (7 seguidas = 15 minutos fora) |
 | E | Trocar iFood pelo 99Food | Largar o iFood pelo bônus do 99Food: paga mais por corrida, sem saber quantos pedidos virão. | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | R$ 5 acima do mínimo do iFood em 20 corridas (Jornal do Brás). **Estimativa sem fonte:** o mesmo volume |
 
 **O empréstimo é dívida, e não renda (D-065).** O dinheiro entra na conta e a
@@ -105,7 +105,7 @@ R$ 6,25 e 6,21; conta: R$ 26).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Pneu novo antes da chuva | O pneu traseiro está no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
+| A | Pneu novo antes da chuva | O pneu traseiro está quase no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
 | B | Parar nos dias de alerta | O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho. | −R$ 180 | Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco | INMET via O Tempo (27/09/2026); 2 × R$ 89,33 |
 | C ⚑ | Rodar de madrugada | Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
 | D * | Jornada de sempre | Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal. | R$ 0 | Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno | — |
@@ -133,23 +133,24 @@ furar; a Farroupilha lota o Harmonia. Sem efeito em dinheiro igual para todos.
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
 | A * | Jornada de sempre | Nem parar nem furar: seguir a rotina no mês do breque geral e do Acampamento Farroupilha. | R$ 0 | Nem para nem fura: segue cansado, longe da filha, como em todo bimestre | — |
-| B | Recusar o que não paga | Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa. | −R$ 270 | Recusa o que não paga, e o celular passa horas em silêncio na esquina | −5% do bimestre (estimativa); regras de recusa da 99 e do iFood |
+| B | Recusar o que não paga | Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa. | −R$ 270 | Recusa o que não paga, e o celular passa horas em silêncio na esquina | −5% do bimestre (estimativa); regra de recusa do iFood (7 seguidas = 15 minutos fora) |
 | C | Parar no dia do breque | 01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio. | −R$ 540 | Para no breque com o país, e o app responde com cinco dias de bloqueio | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
-| D ⚑ | Furar o breque pelo bônus | Furar o breque pelo bônus de até R$ 9 e rodar as noites da Farroupilha: rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
+| D ⚑ | Furar o breque pelo bônus | Furar o breque pelo bônus do concorrente e rodar as noites da Farroupilha: rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
 | E | Folgar no 20 de Setembro | Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro. | −R$ 90 | Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro | Feriado estadual (Lei RS 4.850/1964); 1 dia do bimestre |
 
 ### Nov–dez: Natal e nenhum 13º
 
-**O evento:** dezembro tem 16% mais pedidos: **+R$ 430** (iFood, release de
-30/10/2023; renda proporcional, conta nossa); a luz pode subir 24%: **−R$ 40**
+**O evento:** dezembro começa com 16% mais pedidos: **+R$ 430** (iFood, release
+de 30/10/2023: os 12 primeiros dias de dezembro de 2022 contra a média dos meses
+anteriores; estender os 16% ao mês inteiro e à renda é estimativa sem fonte); a luz pode subir 24%: **−R$ 40**
 (Sul21, CEEE, em consulta pública). Quem tem carteira recebe o 13º até 20/12;
 nesta casa, ninguém.
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Pedir ajuda à família (nova, D-079) | Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, a rede é a família. | +R$ 300 | A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa | **Estimativa sem fonte do valor:** a mãe, aposentada com 1 salário mínimo (R$ 1.621, Decreto 12.797/2025), dá R$ 300, menos de um quinto do que recebe. UFBA (Siqueira et al., 2025): dos entregadores parados 15 dias ou mais, 38,3% viveram de ajuda da família |
-| B ⚑ | Sem folga até o Natal | Dezembro tem 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso. | +R$ 1.040 | Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado | O mesmo +20 h por semana de jan–fev (D-024) |
-| C | Folgar na semana do Natal | Uma semana com a família no Natal, sem férias pagas: é justo a semana com mais pedidos do ano. | −R$ 630 | Uma semana de Natal com a filha, e a semana mais cheia do ano vai para outro | 7 dias do bimestre |
+| A | Pedir ajuda à família (nova, D-079) | Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, a rede é a família. | +R$ 300 | A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa | **Estimativa sem fonte do valor:** a mãe, aposentada com 1 salário mínimo (R$ 1.621, Decreto 12.797/2025), dá R$ 300, menos de um quinto do que recebe. UFBA (Siqueira et al., 2025): entre os entregadores que se afastaram depois de um acidente, a ajuda da família foi o apoio mais citado (38,3%) |
+| B ⚑ | Sem folga até o Natal | Dezembro começa com 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso. | +R$ 1.040 | Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado | O mesmo +20 h por semana de jan–fev (D-024) |
+| C | Folgar na semana do Natal | Uma semana com a família no Natal, sem férias pagas, justo em dezembro, quando os pedidos sobem. | −R$ 630 | Uma semana de Natal com a filha, e os pedidos de dezembro vão para outro | 7 dias do bimestre |
 | D * | Jornada de sempre | Seguir a rotina até o fim do ano, sem 13º, sem férias e sem um dia a mais de folga. | R$ 0 | Rotina de sempre até o fim do ano, sem 13º e sem um dia a mais com a filha | — |
 | E | Temporário com carteira | Vaga temporária de motoboy com carteira até o Natal: horário fixo, salário, 13º, férias e INSS no lugar do app. | −R$ 1.230 | Carteira por dois meses: horário fixo, 13º e férias, e menos dinheiro no fim | A conta abaixo |
 
@@ -204,15 +205,15 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   menos por hora.
 - Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto
   Alegre chegou a 39,5 °C.
-- *Fonte:* IBGE, PNAD 2025, p. 7 e 10; OIT, "Trabalhar num planeta mais quente";
-  Correio Braziliense (02/2025).
+- *Fonte:* IBGE, PNAD 2025, p. 7 e 10; OIT, "Trabalhar num planeta mais quente"
+  (2019); Correio Braziliense (02/2025).
 
 **Dados: a greve de 14/04 e a lei** (depois de mar–abr)
-- *Contexto:* O PLP 152/2025 criaria o trabalhador "plataformizado": nem CLT, nem
-  autônomo, com piso de R$ 8,50 por entrega. Em 14/04/2026, dia de greve
-  nacional, saiu de pauta sem nova data.
-- R$ 8,50 por entrega era o piso da lei; hoje, o mínimo do iFood é R$ 7,50, um
-  valor que ele mesmo define.
+- *Contexto:* O PLP 152/2025 criaria o "plataformizado" (nem CLT, nem autônomo)
+  com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de
+  14/04/2026 convocada contra o texto, saiu de pauta.
+- R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do
+  iFood é R$ 7,50, que ele mesmo define.
 - 1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como
   entregadores.
 - 72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais
@@ -222,16 +223,17 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
 
 **Dados: chuva e acidentes** (depois de mai–jun)
 - *Contexto:* Na chuva, a moto freia pior e a promoção paga mais: é quando o
-  entregador mais se arrisca. Acidentado, quem não contribui ao INSS fica sem
-  ninguém que pague o dia parado.
+  entregador mais se arrisca. Acidentado e sem INSS, ele depende do seguro do
+  app (de 7 a 30 dias parado) e da família.
 - 22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa
   financiada pelas plataformas.
-- Dos entregadores parados 15 dias ou mais, só 20% receberam do INSS; 38,3%
-  viveram de ajuda da família.
-- Na enchente de maio de 2024, só 66% dos entregadores conseguiram trabalhar na
-  primeira semana.
+- Dos acidentados parados 15 dias ou mais, só 20% tiveram INSS; entre os que
+  pararam, a ajuda da família foi o apoio mais citado (38,3%).
+- Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores
+  ficaram ativos na 1ª semana.
 - *Fonte:* Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025
-  (UFBA, 563 entregadores); 55content (04/07/2024).
+  (UFBA, 563 entregadores); 55content (04/07/2024); iFood, seguro de acidentes
+  (2026: diária a partir de 7 dias parado, por até 30 dias).
 
 **Dados: gestão por algoritmo** (depois de jul–ago)
 - *Contexto:* Gestão por algoritmo: é o app, e não um chefe, que distribui os
@@ -239,12 +241,13 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   como o +Entregas.
 - +Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no
   máximo 2 recusas.
-- A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; na 99, finalizar
-  menos de 70% tira de 5 a 15 dias.
-- 47,4% dos entregadores dizem que bônus e promoções que mudam o preço definem a
-  jornada deles.
-- *Fonte:* iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); 99, página oficial;
-  IBGE, PNAD 2025, p. 14.
+- A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7
+  recusas seguidas tiram o entregador 15 minutos do app.
+- 47,4% dos entregadores dizem que bônus e promoções que mudam o preço
+  influenciam a jornada deles.
+- *Fonte:* iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles
+  (01/08/2025); IBGE, PNAD 2025, p. 14. (A regra dos 70% da 99 saiu: é dos
+  motoristas, e conta aceitar e cancelar, não recusar.)
 
 **Dados: o que é o breque** (depois de set–out)
 - *Contexto:* Breque é a greve dos entregadores de app: todos desligam o
@@ -252,24 +255,25 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   quem para perde o dia e arrisca o bloqueio.
 - 01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o
   fim dos bloqueios sem explicação.
-- 31/03/2025: breque em mais de 100 cidades; dois meses depois, o iFood subiu o
-  mínimo de R$ 6,50 para R$ 7,50.
+- 31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois,
+  o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.
 - 01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do
   +Entregas; até agora, sem reajuste.
-- *Fonte:* Agência Brasil (25/07/2020); Brasil de Fato (29/04/2025); Metrópoles
-  (01/09/2026).
+- *Fonte:* Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025);
+  Metrópoles (01/09/2026).
 
 **Dados: fim de ano sem 13º** (depois de nov–dez)
 - *Contexto:* O 13º é um salário a mais no fim do ano, direito de quem tem
   carteira (Lei 4.090/1962). Quem trabalha por app é "conta própria": sem 13º,
-  sem férias pagas e, quase sempre, sem INSS.
+  sem férias pagas e, em 2 de cada 3 casos, sem INSS.
 - 86,8% de quem trabalha por app é "conta própria"; só 4,5% têm carteira
   assinada.
 - Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys,
   37,1%.
-- Em dezembro, o iFood tem 16% mais pedidos que a média do ano (dado de 2022).
-- *Fonte:* Lei 4.090/1962; IBGE, PNAD 2025, p. 5 e 10; iFood, release de
-  30/10/2023.
+- No começo de dezembro de 2022, o iFood teve 16% mais pedidos que a média dos
+  meses anteriores.
+- *Fonte:* Lei 4.090/1962; IBGE, PNAD 2025, p. 5, 8 e 10 (34,0% dos
+  plataformizados contribuem); iFood, release de 30/10/2023.
 
 **Fim: quem é o patrão?** (o último bloco, P7)
 - *Contexto:* No papel, o entregador é autônomo. Patrão é quem decide o preço,
@@ -278,8 +282,8 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   entrega; 70,8%, quem atendem.
 - 23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou
   bloqueio do app.
-- 92% das transações de delivery passaram pelo iFood no 1º tri de 2025; de cada
-  pedido com entrega, ele cobra 26,2% do restaurante.
+- Cerca de 92% do delivery passou pelo iFood no 1º tri/2025 (amostra de Open
+  Finance); de cada pedido com entrega, cobra 26,2% do restaurante.
 - *Fonte:* IBGE, PNAD 2025, p. 13-14; Klavi, via Giro News (07/10/2025; a Klavi
   mede transações numa amostra de Open Finance); iFood, Portal do Parceiro (2026:
   Plano Entrega, 23% + 3,2% de pagamento online).
@@ -331,9 +335,9 @@ avisa isso como "dominante" (seção c), porque o critério dele é a média.
 bimestre (de mar–abr a nov–dez); a moto quebra em 3.125 (2.500 com o pneu velho,
 625 com o novo); o IPVA já pago e a parcela atrasada, em 3.125 cada.
 
-**O que o validador diz** (sem erros): 45 avisos de chave desconhecida, que são
-os campos novos dos blocos (`contexto`, `itens` e `fonte`, em 15 passos), até o
-validador da frente do código passar a conhecê-los; e 8 avisos de equilíbrio: (c)
+**O que o validador diz:** sem erros e sem chave desconhecida (o validador
+conhece `contexto`, `itens` e `fonte` desde o commit 43507ba; acima dos limites,
+só aviso); e 8 avisos de equilíbrio: (c)
 a opção de maior média é "dominante" pelo critério da média em cada bimestre (A,
 B, C, E, D, B); (e) as decisões explicam 100% da variância (não há sorteio); (g)
 o Jonas fecha em 1,7% das combinações, abaixo da faixa de 5% a 10% da D-058, que
