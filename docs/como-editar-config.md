@@ -321,7 +321,7 @@ hash do config não muda). O validador, com ele, também confere:
 
 **A mini-história** (D-079, teste do Kleber de 06/10) é a `narrativa` da opção:
 uma frase com o que é, por quê e o que impacta ("14/04: greve nacional contra a
-lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca
+lei dos apps, que fixaria R$ 8,50 por entrega e não R$ 10; quem para arrisca
 bloqueio"), sem o dinheiro
 do Jonas. No telão, ela corre na mesma linha do rótulo, depois de um travessão,
 e cada opção precisa caber em **duas linhas** em 1024×768; a situação do

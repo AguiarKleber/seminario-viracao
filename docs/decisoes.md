@@ -837,5 +837,16 @@ D-079, da D-070 e da D-056).
   ano (eram 260), todas com ao menos uma opção puxada; a melhor continua
   A-D-C-E-D-A (+R$ 1.714); a pior passa a D-A-E-C-C-C, devendo R$ 6.135 (era
   D-A-E-C-C-E, R$ 6.783); o padrão continua −R$ 3.291.
+- **A leitura final (06/10 à noite)** achou 10 pontos de texto, todos
+  corrigidos sem mudar número, fato, data nem fonte: no celular, "Por causa de
+  escolhas anteriores (já na conta)" no detalhe da conta, sem dois-pontos em
+  sequência; "e a família ainda ficou devendo R$ X" no topo do placar final;
+  "não entra no saldo do bimestre" e "Parcelas do empréstimo no bimestre" na
+  linha do empréstimo. No config, o sujeito claro em três mini-histórias e
+  custos humanos ("o Jonas fica seco", "a moto corre risco", "o jantar em casa
+  sem o pai"; "Adiar a parcela" no lugar de "Empurrar", para a opção caber em
+  2 linhas), "fixaria" (a lei não chegou a valer), "a lei dos apps" também no
+  evento de mar–abr e "nem carteira assinada" no lugar de "nem CLT". O hash do
+  config passa a `9265c896`, e a versão não muda.
 - **O config passa à versão `2026-10-06-v4.3-simples`**; o site continua na
   versão 10, e as regras do Firebase, v4.

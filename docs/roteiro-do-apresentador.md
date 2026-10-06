@@ -1029,7 +1029,7 @@ explicar quando aparecer)
   R$ X · gastos R$ G · o básico da casa custa R$ Y no bimestre" e o que
   faltou; de onde veio o "entrou" (o trabalho e a decisão, os custos fixos, a
   outra renda da casa) e, quando há, "Veio dos meses anteriores (já na conta):
-  …".
+  …" (no jogo simples, "Por causa de escolhas anteriores (já na conta): …").
   - **A dívida** (D-065, D-066): "Dívida no banco R$ D"; o cheque especial,
     "R$ C de R$ 2.000 do limite · juros de 7,43% ao mês"; o empréstimo,
     "Empréstimo a 6,39% ao mês: fica devendo R$ E em N parcelas · a próxima:
@@ -1040,9 +1040,10 @@ explicar quando aparecer)
   - **O auxílio acima do trabalho** (D-067), à vista, logo abaixo do saldo,
     quando aconteceu.
   - **O empréstimo na conta:** no bimestre em que foi tomado, "Empréstimo de
-    R$ 1.500: o dinheiro entrou no caixa, mas é dívida, e não conta como
-    sobra…"; nos seguintes, as duas parcelas do bimestre, cada uma com os juros
-    (já na conta) e a parte que abate a dívida.
+    R$ 1.500: o dinheiro entrou no caixa, mas é dívida, e não entra no saldo
+    do bimestre."; nos seguintes, "Parcelas do empréstimo no bimestre R$ P", as
+    duas parcelas do bimestre somadas, com os juros (já na conta) e a parte que
+    abate a dívida.
 - **Como ler a conta:**
   - tudo é do **bimestre inteiro**: o trabalho, o básico e a outra renda contam
     dois meses; a decisão e a carta contam uma vez (são acontecimentos);

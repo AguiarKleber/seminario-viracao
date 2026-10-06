@@ -1592,7 +1592,7 @@ anfitrião: quem decide é o telão.
     de onde veio o "entrou": "Do trabalho e da decisão: R$ T · custos fixos do
     trabalho: −R$ F · {outra renda}: R$ O" (era "Do trabalho", e levava o
     empréstimo e o INSS dentro; achado 10). Com `deAntes`, uma linha
-    `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …". Os números saem de `mes` gravado; `data-entrou`,
+    `.conta-de-antes` "Veio dos meses anteriores (já na conta): rótulo ±R$ V · …" (no formato simples, "Por causa de escolhas anteriores (já na conta): …", com o ": " do rótulo trocado por ", " na tela; leitura final de 06/10). Os números saem de `mes` gravado; `data-entrou`,
     `data-gastos`, `data-basico`, `data-juros`, `data-saldo-mes` e `data-resultado`
     (`faltou`|`sobrou`) repetem os valores. Sala de antes do v2.1 (sem `gastos` nem
     `custosFixos`) mostra a linha como antes. **Proteção (D-059):** com
@@ -1628,8 +1628,11 @@ anfitrião: quem decide é o telão.
       positivo, "Dinheiro em caixa: R$ X".
   - **Empréstimo na conta do mês** (`.conta-emprestimo`, `data-emprestimo`,
     `data-parcela`): "Empréstimo de R$ 1.500: o dinheiro entrou no caixa, mas é
-    dívida, e não conta como sobra do mês." e "Parcela do empréstimo R$ 183: R$ 96
-    de juros (já na conta) e R$ 87 que abatem a dívida." Também na história.
+    dívida, e não entra no saldo do mês." (o nome do período: "do bimestre" com
+    rodadas bimestrais) e "Parcela do empréstimo R$ 183: R$ 96 de juros (já na
+    conta) e R$ 87 que abatem a dívida." (com rodadas de mais de um mês, a soma
+    das parcelas do período: "Parcelas do empréstimo no bimestre R$ 366: …";
+    leitura final de 06/10). Também na história.
   - **Telas enxutas (D-065).** Toda tela do jogo no celular começa pelo que se
     explica em aula, e o detalhe fica recolhido (`details.recolhido`, com
     `data-recolhido`, fechado ao chegar e com o marcador "▸ ver / ▾ fechar"; o
@@ -1715,7 +1718,8 @@ anfitrião: quem decide é o telão.
       "Terminaram com" do "Escolha ou sorte?"; sem placar, o "ficou com" do último bimestre). "Escolheram" conta as
       rodadas com origem diferente de `piloto` (o "ninguém votou" não é escolha): com uma delas, "em 5 dos 6
       bimestres"; sem nenhuma, "A equipe não votou em nenhum bimestre, e faltou R$ X."; uma rodada só, "no bimestre
-      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
+      jogado". No formato simples (leitura final de 06/10), a palavra do telão e da linha da família:
+      "…, e a família ainda ficou devendo R$ X." (sem nenhum voto, "…, e a família ficou devendo R$ X."). Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
       não votou em nenhum bimestre e fechou as contas: sobrou R$ X."). O texto sai de `partesDaFrase`. `data-resultado` =
       `faltou`|`fechou`, `data-valor` (o patrimônio arredondado), `data-escolheram` e `data-total`; no `faltou`,
       a borda grossa (nunca só cor, D-016);
