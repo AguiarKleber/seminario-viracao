@@ -2849,6 +2849,16 @@
       const saldo = Math.round(mes.saldoMes) + 0;
       const familia = N().historia.dinheiroDaFamilia(r.depois) ?? { situacao: 'tem', valor: 0 };
       const rotulo = N().historia.textoDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona).rotulo || r.decisao;
+      // D-078: a consequência de uma escolha de antes (as costas que travam, a
+      // moto que quebra, o IPVA que já estava pago), com o motivo e o valor.
+      // Sem ela, o saldo de uma equipe caía R$ 1.230 e ninguém sabia por quê.
+      // D-080 (print 2 do Kleber, 06/10 à tarde): era uma lista embaixo das
+      // faixas ("Parcela da moto atrasada, com multa e juros −R$ 500:
+      // Laranja"), e a sala tinha de achar a equipe pelo nome; agora é uma
+      // observação na faixa da própria equipe, embaixo da opção, em letra
+      // secundária. O motivo é o rótulo até os dois-pontos
+      // (historia.consequenciasDaRodada).
+      const consequencias = N().historia.consequenciasDaRodada([{ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) }]);
       grade.appendChild(el('article', {
         classe: 'resultado-simples', role: 'listitem',
         dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
@@ -2863,38 +2873,35 @@
           el('p', { classe: 'resultado-saldo-rotulo', texto: 'a família' }),
           el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
         ]),
+        consequencias.length > 0 ? el('p', {
+          classe: 'simples-obs', 'aria-label': 'Por causa de escolhas anteriores',
+          dados: { motivos: consequencias.map((g) => g.motivo).join(' | '), valores: consequencias.map((g) => g.valor).join(' ') },
+        }, consequencias.map((g, i) => [
+          i > 0 ? ' · ' : null,
+          `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `,
+          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+        ])) : null,
       ]));
     }
     s.appendChild(grade);
-    // D-078: a consequência de uma escolha de antes (as costas que travam, a
-    // moto que quebra, o IPVA que já estava pago), com o motivo, embaixo das
-    // faixas: uma linha por motivo, com as equipes juntas
-    // (historia.consequenciasDaRodada). Sem ela, o saldo de uma equipe caía
-    // R$ 1.230 e ninguém sabia por quê. Bimestre sem consequência, sem a lista.
-    const consequencias = N().historia.consequenciasDaRodada(itens.map(({ eq, r }) => ({ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) })));
-    if (consequencias.length > 0) {
-      const nomeDa = (eq) => app.config.equipes[eq]?.nome || eq;
-      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas anteriores' }, consequencias.map((g) => el('li', {
-        dados: { motivo: g.motivo, valor: String(g.valor), equipes: g.equipes.join(' ') },
-      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${juntarOpcoes(g.equipes.map(nomeDa))}`]))));
-    }
     // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
     // transborda (medido depois do desenho), as faixas se aproximam; a letra
-    // fica nos 28 px. Com as linhas das consequências (D-078), um terceiro
-    // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
-    // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
-    // celular de cada equipe): no teste com a faixa de entrada, as linhas das
-    // consequências ficavam por cima da última equipe. O terceiro e o quarto
-    // valem também sem consequência (revisão de 06/10): com a faixa de entrada
-    // em 1024×768, seis opções de duas linhas ("Rodar também no segundo app",
-    // na fixture) deixavam a sexta equipe embaixo da faixa, e o evento seguia
-    // na tela.
+    // fica nos 28 px. Com as consequências (D-078), um terceiro aperto tira a
+    // frase do evento do mês (o título dele fica) e, se ainda assim as faixas
+    // não couberem, um quarto tira o evento inteiro (ele está no celular de
+    // cada equipe). O terceiro e o quarto valem também sem consequência
+    // (revisão de 06/10): com a faixa de entrada em 1024×768, seis opções de
+    // duas linhas ("Rodar também no segundo app", na fixture) deixavam a sexta
+    // equipe embaixo da faixa, e o evento seguia na tela. Com a observação na
+    // faixa da equipe (D-080), cada equipe atingida ganha uma linha, e em
+    // mar–abr as seis podem ter consequência ao mesmo tempo.
     app.depoisDeMedir.push(() => {
       const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
       if (transborda()) s.dataset.aperto = '1';
       if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
       if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
+      if (s.dataset.aperto === '4' && transborda()) s.dataset.aperto = '5';
     });
   }
 

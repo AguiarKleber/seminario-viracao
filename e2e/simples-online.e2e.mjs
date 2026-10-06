@@ -361,8 +361,8 @@ async function jogar({ site, navegador, vigiar }) {
     assert.equal(t.situacao, d.situacao);
     assert.equal(lido(t.familia), lido(`A família ${d.situacao === 'devendo' ? 'está devendo' : 'tem'} ${F.moeda(d.valor)}.`), `${r}: o dinheiro da família`);
     assert.deepEqual([t.indicadores, t.divida, t.mesa], [0, 0, 0], `${r}: sem indicadores, sem o detalhe da dívida, sem a mesa`);
-    // D-078: a consequência de uma escolha de antes, à vista no celular e embaixo
-    // das faixas no telão (com a faixa de entrada, o pior caso de altura).
+    // D-078: a consequência de uma escolha de antes, à vista no celular e, no
+    // telão, na faixa da equipe (D-080; com a faixa de entrada, o pior caso de altura).
     {
       const grupos = H.consequenciasDaRodada([{ equipeId: 'e1', deAntes: gravado.deAntes || [] }]);
       const linha = await c0.p.evaluate(() => document.querySelector('.consequencia-linha')?.textContent ?? null);
@@ -371,7 +371,11 @@ async function jogar({ site, navegador, vigiar }) {
         assert.equal(lido(linha), lido(`Por causa de escolhas anteriores: ${grupos.map((g) => `${g.motivo} ${F.moeda(g.valor, { sinal: true })}`).join(' · ')}`), `${r}: a consequência no celular`);
         await conferirCelular(c0, `resultado-consequencia-${r}`);
       }
-      if (await telao.locator('.simples-antes li').count() > 0) await conferirTelao(`resultado-consequencia-${r}`);
+      // D-080: no telão, a observação na faixa da equipe atingida (e não mais a lista embaixo).
+      const obsTelao = await telao.evaluate(() => document.querySelector('.resultado-simples[data-equipe="e1"] .simples-obs')?.textContent ?? null);
+      assert.equal(obsTelao === null ? null : lido(obsTelao), grupos.length > 0 ? lido(grupos.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}`).join(' · ')) : null, `${r}: a observação no telão`);
+      assert.equal(await telao.locator('.simples-antes').count(), 0, `${r}: sem a lista embaixo das faixas`);
+      if (await telao.locator('.simples-obs').count() > 0) await conferirTelao(`resultado-consequencia-${r}`);
     }
     // A entrada fechada e reaberta com o resultado na tela (o roteiro manda
     // reabrir quando chega um atrasado), em mar–abr, com as três consequências:
