@@ -90,6 +90,14 @@ test('config.json do dia: formato simples, o Jonas nas 6 equipes, 6 bimestres ×
   assert.deepEqual(cfg.ordem.rodadas.map((rid) => cfg.rodadas[rid].padrao), ['c', 'd', 'd', 'c', 'a', 'd']);
 });
 
+// D-080 (pedido do Kleber de 06/10 à tarde): a linha "Jonas com carteira assinada" saiu do
+// placar ("não agrega em nada"). Era a referência clt, −R$ 11.947 na conta de 06/10.
+test('config.json do dia: o placar sem referência (sem a linha "Jonas com carteira assinada")', () => {
+  const cfg = configDoDia().config;
+  assert.deepEqual(cfg.ordem.referencias, []);
+  assert.deepEqual(cfg.referencias, {});
+});
+
 // Pedido do Kleber de 06/10 à tarde (nota depois da D-079): o nome de cada equipe
 // em uma palavra. Azul-céu, Verde-azulado, Vermelhão e Roxo-rosado viraram
 // Celeste, Verde, Vermelho e Rosa; a cor, a forma e a ordem ficaram como estavam.
@@ -160,7 +168,4 @@ test('config.json do dia: das 15.625 combinações, 281 fecham o ano; a melhor �
   assert.equal(Math.round(c.pior.valor), -6135);
   assert.ok(c.pior.valor > -7000, 'o pior caso deve menos de R$ 7.000 (pedido do Kleber, D-079)');
   assert.equal(jogar(cfg, 'CDDCAD').final, -3291);
-  // A linha "Jonas com carteira assinada" do placar (referencias.clt), refeita no motor em 06/10
-  // com a casa recontada da D-079 (antes, −R$ 15.498).
-  assert.equal(cfg.referencias.clt.renda, -11947);
 });

@@ -1141,15 +1141,7 @@
       ]
     }
   ],
-  "referencias": [
-    {
-      "id": "clt",
-      "nome": "Jonas com carteira assinada",
-      "renda": -11947,
-      "persona": "motoboy",
-      "fonte": "CAGED ago/2025-jul/2026: salário-base médio de motoboy R$ 1.763,45; +30% de periculosidade (Lei 12.997/2014); INSS 2026 (Portaria MPS/MF 13/2026): líquido R$ 2.110,48; IR isento (Lei 15.270/2025). A mesma casa do Jonas de app (D-056; a casa recontada na D-079): + as faxinas e a revenda da companheira (R$ 1.600, informal, D-062), − básico de R$ 3.928, parcela da moto (R$ 480) e manutenção (R$ 261, que com carteira sai do salário) = −R$ 958,52 por mês. No jogo simples, também o que a mesma moto e a mesma casa pagam no ano, igual para as equipes: IPVA (R$ 340, mar–abr), licenciamento (R$ 110, jul–ago) e a luz mais cara de dezembro (R$ 40); a gasolina e os 16% a mais de pedidos de dezembro não, porque são do app. Como no jogo (D-066, D-069): o cheque especial vai até o limite de R$ 2.000, com juros de 7,43% ao mês compostos no bimestre; o que passa dele vira conta atrasada, com multa de 8% uma vez e mora de 1% ao mês, simples, sobre o principal atrasado (gás, ônibus e remédio não atrasam; neste caminho, o que passa do limite nunca chega a eles); + 13º (R$ 2.110) e o terço de férias (~R$ 672) de 12 meses no último bimestre. Calculado no motor do jogo (06/10, depois da D-079). Patrimônio por bimestre (o caixa menos as contas atrasadas): −1.917 → −4.667 → −7.119 → −9.735 → −12.279 → −11.947 (no fim, R$ 2.000 no banco e R$ 9.947 de contas atrasadas; a comida não chega a ser cortada). Com a casa de antes da D-079, −R$ 15.498. Conta nossa; a validar (D-062). Não leva o FGTS (R$ 183 por mês) nem o INSS desde o 1º dia"
-    }
-  ],
+  "referencias": [],
   "roteiros": {
     "60min": [
       {
