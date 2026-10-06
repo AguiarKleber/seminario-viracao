@@ -208,6 +208,19 @@ async function jogar({ site, navegador, vigiar }) {
     assert.deepEqual(m.sobrepostos, [], `${nome}: texto sobre texto`);
   }
 
+  // Abre ou fecha a entrada pela barra (tecla H), como o apresentador, e espera
+  // a tela se refazer. O mouse sai de cima da barra para ela não reabrir.
+  async function alternarEntrada(querAberta) {
+    await telao.keyboard.press('h');
+    await telao.waitForSelector('#barra [data-acao="entrada"]', { state: 'visible' });
+    await telao.click('#barra [data-acao="entrada"]');
+    await telao.waitForFunction((q) => document.getElementById('faixa').hidden === !q, querAberta, { timeout: 8000 });
+    await telao.mouse.move(512, 300);
+    await telao.keyboard.press('h');
+    await telao.waitForFunction(() => document.getElementById('barra').hidden);
+    await telao.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+  }
+
   // ---------- Celulares (360×740) ----------
   const url = `${site.url}aluno/?sala=${sala}&emulador=1`;
   async function novoCelular(nome) {
@@ -348,6 +361,22 @@ async function jogar({ site, navegador, vigiar }) {
         await conferirCelular(c0, `resultado-consequencia-${r}`);
       }
       if (await telao.locator('.simples-antes li').count() > 0) await conferirTelao(`resultado-consequencia-${r}`);
+    }
+    // A entrada fechada e reaberta com o resultado na tela (o roteiro manda
+    // reabrir quando chega um atrasado), em mar–abr, com as três consequências:
+    // a tela se refaz nas duas vezes. Antes (revisão de 06/10), reabrir punha a
+    // faixa por cima das linhas das consequências, e fechar com o aperto 4 não
+    // devolvia o evento do mês.
+    if (k === 1) {
+      await alternarEntrada(false);
+      const fechada = await telao.evaluate(() => ({
+        evento: globalThis.getComputedStyle(document.querySelector('.evento-do-mes')).display !== 'none',
+        rola: document.scrollingElement.scrollHeight > innerHeight + 1,
+      }));
+      assert.deepEqual(fechada, { evento: true, rola: false }, `${r}: com a entrada fechada, o evento do mês volta ao resultado`);
+      await telao.screenshot({ path: join(CAPTURAS, `online-simples-telao-resultado-entrada-fechada-${r}.png`) });
+      await alternarEntrada(true);
+      await conferirTelao(`resultado-entrada-reaberta-${r}`);
     }
     if (k === 0) {
       await conferirCelular(c0, 'resultado');

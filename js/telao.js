@@ -1440,9 +1440,14 @@
     atualizarSeloRevendo();
     const revendo = app.revendo !== null;
     const tela = revendo ? telaRevista(app.revendo) : escolherTela(e);
+    // A faixa de entrada aberta ou fechada também entra na chave: ela muda a
+    // altura que sobra para a tela. Fora da chave, reabrir a entrada com o
+    // resultado na tela (o roteiro manda reabrir quando chega um atrasado)
+    // punha a faixa por cima das linhas das consequências, e fechá-la com o
+    // aperto 4 não devolvia o evento do mês (revisão de 06/10).
     const chave = JSON.stringify([
       tela.id, app.revendo, e.geracao, e.indice, e.subfase, e.afirmacao, app.ui, app.modo,
-      raiz.innerWidth, raiz.innerHeight, tela.chave ? tela.chave(e) : null,
+      raiz.innerWidth, raiz.innerHeight, app.el.faixa.hidden, tela.chave ? tela.chave(e) : null,
     ]);
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
