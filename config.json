@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-06-v4.1-simples",
+  "versao": "2026-10-06-v4.2-simples",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -171,7 +171,7 @@
     },
     {
       "id": "e2",
-      "nome": "Azul-céu",
+      "nome": "Celeste",
       "cor": "#56B4E9",
       "forma": "triangulo",
       "persona": "motoboy",
@@ -179,7 +179,7 @@
     },
     {
       "id": "e3",
-      "nome": "Verde-azulado",
+      "nome": "Verde",
       "cor": "#009E73",
       "forma": "quadrado",
       "persona": "motoboy",
@@ -195,7 +195,7 @@
     },
     {
       "id": "e5",
-      "nome": "Vermelhão",
+      "nome": "Vermelho",
       "cor": "#D55E00",
       "forma": "estrela",
       "persona": "motoboy",
@@ -203,7 +203,7 @@
     },
     {
       "id": "e6",
-      "nome": "Roxo-rosado",
+      "nome": "Rosa",
       "cor": "#CC79A7",
       "forma": "cruz",
       "persona": "motoboy",

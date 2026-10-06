@@ -1318,7 +1318,7 @@ básico")
 28 min; com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo
 ocupa 38 min e meio dos 60. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-06-v4.1-simples`).
+(versão `2026-10-06-v4.2-simples`).
 
 **Cada rodada tem 4:40:** a leitura das 5 opções (o título e a mini-história, sem
 valores), 120 s de decisão (o mínimo de conversa é 45 s), o Enter e o resultado,

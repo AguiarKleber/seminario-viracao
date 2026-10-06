@@ -90,6 +90,22 @@ test('config.json do dia: formato simples, o Jonas nas 6 equipes, 6 bimestres ×
   assert.deepEqual(cfg.ordem.rodadas.map((rid) => cfg.rodadas[rid].padrao), ['c', 'd', 'd', 'c', 'a', 'd']);
 });
 
+// Pedido do Kleber de 06/10 à tarde (nota depois da D-079): o nome de cada equipe
+// em uma palavra. Azul-céu, Verde-azulado, Vermelhão e Roxo-rosado viraram
+// Celeste, Verde, Vermelho e Rosa; a cor, a forma e a ordem ficaram como estavam.
+test('config.json do dia: cada equipe com o nome da cor em uma palavra, e a cor e a forma de antes', () => {
+  const cfg = configDoDia().config;
+  const equipes = cfg.ordem.equipes.map((eq) => [eq, cfg.equipes[eq].nome, cfg.equipes[eq].cor, cfg.equipes[eq].forma]);
+  assert.deepEqual(equipes, [
+    ['e1', 'Laranja', '#E69F00', 'circulo'],
+    ['e2', 'Celeste', '#56B4E9', 'triangulo'],
+    ['e3', 'Verde', '#009E73', 'quadrado'],
+    ['e4', 'Azul', '#0072B2', 'losango'],
+    ['e5', 'Vermelho', '#D55E00', 'estrela'],
+    ['e6', 'Rosa', '#CC79A7', 'cruz'],
+  ]);
+});
+
 // Só no 1º bimestre o saldo muda exatamente o valor da tela: dali em diante, com a
 // família passada do limite do cheque especial, o que falta atrasa conta com multa
 // de 8%, e a diferença vai de −R$ 99 a +R$ 83 (revisão de 06/10).

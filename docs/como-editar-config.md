@@ -515,11 +515,15 @@ celular; os `longos`, nas legendas do telão.
   | Posição | Cor | Nome |
   | --- | --- | --- |
   | e1 | `#E69F00` | Laranja |
-  | e2 | `#56B4E9` | Azul-céu |
-  | e3 | `#009E73` | Verde-azulado |
+  | e2 | `#56B4E9` | Celeste |
+  | e3 | `#009E73` | Verde |
   | e4 | `#0072B2` | Azul |
-  | e5 | `#D55E00` | Vermelhão |
-  | e6 | `#CC79A7` | Roxo-rosado |
+  | e5 | `#D55E00` | Vermelho |
+  | e6 | `#CC79A7` | Rosa |
+
+  Cada nome é uma palavra só (pedido do Kleber de 06/10, nota depois da
+  D-079): até a versão `v4.1-simples`, e2, e3, e5 e e6 eram Azul-céu,
+  Verde-azulado, Vermelhão e Roxo-rosado.
 
 - `forma`: `circulo`, `triangulo`, `quadrado`, `losango`, `estrela`, `cruz` ou
   `hexagono`, diferente entre as equipes. Outro nome vira um círculo com miolo. Forma, número

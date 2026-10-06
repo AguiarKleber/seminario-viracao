@@ -6,9 +6,9 @@ as 6 equipes; **6 bimestres com 5 opções** cada; **sem sorteio**. Com os
 pedidos de 06/10 de manhã (D-079), **as opções ficam às cegas** (sem o dinheiro
 ao lado), cada uma com uma **mini-história**, e depois do resultado de cada
 bimestre vem **uma tela de dados reais** do tema dele. Arquivo:
-[`config.json`](../config.json), versão `2026-10-06-v4.1-simples` (o hash é o
-que `npm run validar` imprimir; em 06/10, depois dos ajustes de tela,
-`c4f99ae7`). O conteúdo de 6
+[`config.json`](../config.json), versão `2026-10-06-v4.2-simples` (o hash é o
+que `npm run validar` imprimir; em 06/10, com as equipes em uma palavra,
+`01b25320`). O conteúdo de 6
 personagens, com cartas sorteadas, ficou no git e congelado em
 `test/fixtures/config-real-v31.json`.
 
@@ -18,8 +18,9 @@ personagens, com cartas sorteadas, ficou no git e congelado em
 
 ## Como se lê o jogo
 
-- **As equipes** aparecem pela cor ("Equipe Laranja"). Todas jogam o mesmo
-  Jonas; o que muda entre elas é a combinação de escolhas.
+- **As equipes** aparecem pela cor ("Equipe Laranja"): Laranja, Celeste,
+  Verde, Azul, Vermelho e Rosa, em uma palavra (nota depois da D-079).
+  Todas jogam o mesmo Jonas; o que muda entre elas é a combinação de escolhas.
 - **Cada opção** mostra a letra, o rótulo e a **mini-história** (o campo
   `narrativa`): o que é, por quê e o que impacta, numa frase de até 111
   caracteres. No telão, ela corre na mesma linha do rótulo, depois de um

@@ -709,7 +709,8 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
     padrão −R$ 3.291; nenhuma opção domina. A linha "Jonas com carteira
     assinada" vai a −R$ 11.947. Num mês comum, falta R$ 128 (faltavam R$ 392).
 - **As regras do Firebase não mudam** (continuam v4). O config passa à versão
-  `2026-10-06-v4.1-simples`.
+  `2026-10-06-v4.1-simples` (e à `v4.2-simples` com os nomes das equipes em
+  uma palavra, na nota depois desta decisão).
 - **Como ficou na tela (versão 9 do site, 06/10 à tarde).** Medido no telão
   em 1024×768 e 1920×1080, offline com as 6 equipes e online com a faixa de
   entrada, e no celular em 360×740:
@@ -755,3 +756,13 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
 **Deixam de valer:** da D-078, "o valor em dinheiro aparece na opção" e
 "nenhuma das 15.625 combinações fecha o ano"; da D-072, a semana de bloqueio
 (agora, 5 dias); da D-060, as entrevistas.
+
+**Nota de 06/10 à tarde, com a versão 9 no ar: o nome de cada equipe em uma
+palavra.** Pedido do Kleber. As equipes passam a ser **Laranja** (e1),
+**Celeste** (e2, era Azul-céu), **Verde** (e3, era Verde-azulado), **Azul**
+(e4), **Vermelho** (e5, era Vermelhão) e **Rosa** (e6, era Roxo-rosado). Como há
+dois azuis, o claro virou Celeste. A cor, a forma e a ordem não mudam, nem nada
+do jogo. O config passa à versão `2026-10-06-v4.2-simples`, e as regras
+continuam v4. O que o telão faz pelo nome comprido (não quebrar no hífen, o
+nome numa linha no Fim) fica; a fixture `test/fixtures/config-simples.json`
+mantém os nomes compostos, para o e2e seguir medindo o caso mais largo.
