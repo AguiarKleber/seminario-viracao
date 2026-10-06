@@ -239,7 +239,7 @@
         {
           "id": "b",
           "rotulo": "Atrasar a parcela da moto",
-          "narrativa": "Empurrar a parcela de fevereiro para março: alivia agora, mas ela volta com multa e juros e arrisca a moto.",
+          "narrativa": "Adiar a parcela de fevereiro para março: alivia agora, mas ela volta com multa e juros, e a moto corre risco.",
           "impacto": "O banco liga todo dia, e em março a parcela volta com multa e juros",
           "efeitos": [
             {
@@ -357,7 +357,7 @@
         {
           "id": "a",
           "rotulo": "Parar no dia da greve",
-          "narrativa": "14/04: greve nacional contra a lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca bloqueio.",
+          "narrativa": "14/04: greve nacional contra a lei dos apps, que fixaria R$ 8,50 por entrega e não R$ 10; quem para arrisca bloqueio.",
           "impacto": "Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca",
           "efeitos": [
             {
@@ -534,8 +534,8 @@
         {
           "id": "e",
           "rotulo": "Comprar capa, bota e luva",
-          "narrativa": "Kit de chuva para moto (capa, bota, luva e balaclava): ele chega seco e protegido, mas o dinheiro sai do mercado.",
-          "impacto": "O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez",
+          "narrativa": "Kit de chuva (capa, bota, luva e balaclava): o Jonas fica seco e protegido, mas o dinheiro sai do mercado.",
+          "impacto": "O dinheiro da roupa sai do mercado, e o Jonas chega seco em casa pela primeira vez",
           "efeitos": [
             {
               "soma": {
@@ -658,7 +658,7 @@
           "id": "e",
           "rotulo": "Pegar promoções da noite",
           "narrativa": "O iFood paga bônus a quem fica online das 18h às 22h: a jornada gira em torno do horário que o app quer.",
-          "impacto": "Noites de inverno na rua atrás do bônus, e o jantar em casa sem ele",
+          "impacto": "Noites de inverno na rua atrás do bônus, e o jantar em casa sem o pai",
           "efeitos": [
             {
               "soma": {
@@ -972,7 +972,7 @@
       "id": "pauta",
       "titulo": "A lei saiu de pauta",
       "curto": "Sem lei",
-      "narrativa": "A greve parou as capitais, e a lei dos aplicativos saiu de pauta sem nova data. O IPVA venceu.",
+      "narrativa": "A greve parou as capitais, e a lei dos apps saiu de pauta sem nova data. O IPVA venceu.",
       "peso": 1,
       "rodadas": [
         "r2"
@@ -1189,7 +1189,7 @@
         "tipo": "bloco",
         "titulo": "Dados: a greve de 14/04 e a lei",
         "alvoSeg": 90,
-        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem CLT, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem carteira assinada, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
         "itens": [
           "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
           "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
@@ -1366,7 +1366,7 @@
         "tipo": "bloco",
         "titulo": "Dados: a greve de 14/04 e a lei",
         "alvoSeg": 330,
-        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem CLT, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem carteira assinada, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
         "itens": [
           "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
           "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
