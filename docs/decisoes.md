@@ -624,8 +624,9 @@ opção.** Publicado em 06/10 até as 12h (o Kleber funde o PR).
 **Deixam de valer no jogo do seminário** (o código continua sabendo jogá-las: é
 o config sem `regras.formatoSimples`, guardado em
 `test/fixtures/config-real-v31.json`):
-- os 6 personagens, um por equipe (D-061; antes, D-004 e D-026), e a ordem das
-  equipes por personagem (D-070, último item);
+- os 6 personagens, um por equipe (D-061; antes, D-004 e D-026), a ordem das
+  equipes por personagem (D-070, "A ordem das equipes") e a equipe pelo nome e
+  ofício do personagem no telão (D-077): agora, pela cor;
 - as cartas sorteadas por equipe e as chances no sorteio (D-012, D-013), a
   parcela "sorte" do placar (D-009), "Escolha ou sorte?" e a faixa da sorte
   (D-076);
