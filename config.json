@@ -1173,67 +1173,108 @@
       {
         "tipo": "rodada",
         "rodada": "r1",
-        "alvoSeg": 250
+        "alvoSeg": 280
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: quem trabalha por aplicativo (PNAD 2025)",
-        "alvoSeg": 120
+        "titulo": "Dados: calor e jornada",
+        "alvoSeg": 90,
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e perder o pico do almoço.",
+        "itens": [
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês já sem a gasolina.",
+          "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto Alegre chegou a 39,5 °C."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\"; Correio Braziliense (02/2025)"
       },
       {
         "tipo": "rodada",
         "rodada": "r2",
-        "alvoSeg": 250
+        "alvoSeg": 280
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: a lei que saiu de pauta (nem CLT, nem autônomo)",
-        "alvoSeg": 120
+        "titulo": "Dados: a greve de 14/04 e a lei",
+        "alvoSeg": 90,
+        "contexto": "O PLP 152/2025 criaria o entregador \"plataformizado\": nem CLT, nem autônomo, com piso de R$ 8,50 por entrega. Em 14/04/2026, dia de greve nacional, saiu de pauta sem nova data.",
+        "itens": [
+          "R$ 8,50 por entrega era o piso da lei; hoje, o mínimo do iFood é R$ 7,50, um valor que ele mesmo define.",
+          "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
+          "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
+        ],
+        "fonte": "O Tempo (08/04/2026); Diário do Transporte e Mobile Time (14/04/2026); Brasil de Fato (29/04/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 4 e 8"
       },
       {
         "tipo": "rodada",
         "rodada": "r3",
-        "alvoSeg": 250
+        "alvoSeg": 280
       },
       {
         "tipo": "bloco",
-        "titulo": "Entrevistas",
-        "alvoSeg": 240,
-        "opcional": true
-      },
-      {
-        "tipo": "bloco",
-        "titulo": "Dados: gestão por algoritmo",
-        "alvoSeg": 120
+        "titulo": "Dados: chuva e acidentes",
+        "alvoSeg": 90,
+        "contexto": "Na chuva, a moto freia pior e a promoção paga mais: é quando o entregador mais se arrisca. Acidentado, quem não contribui ao INSS fica sem ninguém que pague o dia parado.",
+        "itens": [
+          "22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa financiada pelas plataformas.",
+          "Dos entregadores parados 15 dias ou mais, só 20% receberam do INSS; 38,3% viveram de ajuda da família.",
+          "Na enchente de maio de 2024, só 66% dos entregadores conseguiram trabalhar na primeira semana."
+        ],
+        "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024)"
       },
       {
         "tipo": "rodada",
         "rodada": "r4",
-        "alvoSeg": 250
+        "alvoSeg": 280
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: breque e organização",
-        "alvoSeg": 120
+        "titulo": "Dados: gestão por algoritmo",
+        "alvoSeg": 90,
+        "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
+        "itens": [
+          "+Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; na 99, finalizar menos de 70% tira de 5 a 15 dias.",
+          "47,4% dos entregadores dizem que bônus e promoções que mudam o preço definem a jornada deles."
+        ],
+        "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); 99, página oficial; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
       },
       {
         "tipo": "rodada",
         "rodada": "r5",
-        "alvoSeg": 250
+        "alvoSeg": 280
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: ninguém tem 13º",
-        "alvoSeg": 120
+        "titulo": "Dados: o que é o breque",
+        "alvoSeg": 90,
+        "contexto": "Breque é a greve dos entregadores de app: todos desligam o aplicativo no mesmo dia para pressionar a plataforma. Sem salário garantido, quem para perde o dia e arrisca o bloqueio.",
+        "itens": [
+          "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
+          "31/03/2025: breque em mais de 100 cidades; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
+          "01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+        ],
+        "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (29/04/2025); Metrópoles (01/09/2026)"
       },
       {
         "tipo": "rodada",
         "rodada": "r6",
-        "alvoSeg": 250
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: fim de ano sem 13º",
+        "alvoSeg": 90,
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, quase sempre, sem INSS.",
+        "itens": [
+          "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
+          "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
+          "Dezembro tem 16% mais pedidos que a média do ano no iFood."
+        ],
+        "fonte": "Lei 4.090/1962; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 5 e 10; iFood, release de 30/10/2023"
       },
       {
         "tipo": "placarFinal",
-        "alvoSeg": 300
+        "alvoSeg": 360
       },
       {
         "tipo": "enquete",
@@ -1255,7 +1296,14 @@
       {
         "tipo": "bloco",
         "titulo": "Fim: quem é o patrão?",
-        "alvoSeg": 90
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, quem trabalha e as regras, e no app quem decide é a plataforma.",
+        "itens": [
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8%, quem atendem.",
+          "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
+          "92% das transações de delivery passaram pelo iFood no 1º tri de 2025; de cada pedido com entrega, ele cobra 26,2% do restaurante."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "alvoSeg": 150
       },
       {
         "tipo": "fim"
@@ -1276,7 +1324,8 @@
       {
         "tipo": "bloco",
         "titulo": "Mapa do seminário",
-        "alvoSeg": 390
+        "alvoSeg": 390,
+        "contexto": "Doze meses do Jonas em seis bimestres; depois de cada um, dados reais do tema. No fim, a pergunta: quem é o patrão?"
       },
       {
         "tipo": "formarEquipes",
@@ -1289,58 +1338,104 @@
       {
         "tipo": "rodada",
         "rodada": "r1",
-        "alvoSeg": 300
+        "alvoSeg": 330
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: quem trabalha por aplicativo (PNAD 2025)",
-        "alvoSeg": 300
+        "titulo": "Dados: calor e jornada",
+        "alvoSeg": 330,
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e perder o pico do almoço.",
+        "itens": [
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês já sem a gasolina.",
+          "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto Alegre chegou a 39,5 °C."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\"; Correio Braziliense (02/2025)"
       },
       {
         "tipo": "rodada",
         "rodada": "r2",
-        "alvoSeg": 300
+        "alvoSeg": 330
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: a lei que saiu de pauta (nem CLT, nem autônomo)",
-        "alvoSeg": 300
+        "titulo": "Dados: a greve de 14/04 e a lei",
+        "alvoSeg": 330,
+        "contexto": "O PLP 152/2025 criaria o entregador \"plataformizado\": nem CLT, nem autônomo, com piso de R$ 8,50 por entrega. Em 14/04/2026, dia de greve nacional, saiu de pauta sem nova data.",
+        "itens": [
+          "R$ 8,50 por entrega era o piso da lei; hoje, o mínimo do iFood é R$ 7,50, um valor que ele mesmo define.",
+          "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
+          "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
+        ],
+        "fonte": "O Tempo (08/04/2026); Diário do Transporte e Mobile Time (14/04/2026); Brasil de Fato (29/04/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 4 e 8"
       },
       {
         "tipo": "rodada",
         "rodada": "r3",
-        "alvoSeg": 300
+        "alvoSeg": 330
       },
       {
         "tipo": "bloco",
-        "titulo": "Entrevistas",
-        "alvoSeg": 1200,
-        "opcional": true
+        "titulo": "Dados: chuva e acidentes",
+        "alvoSeg": 330,
+        "contexto": "Na chuva, a moto freia pior e a promoção paga mais: é quando o entregador mais se arrisca. Acidentado, quem não contribui ao INSS fica sem ninguém que pague o dia parado.",
+        "itens": [
+          "22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa financiada pelas plataformas.",
+          "Dos entregadores parados 15 dias ou mais, só 20% receberam do INSS; 38,3% viveram de ajuda da família.",
+          "Na enchente de maio de 2024, só 66% dos entregadores conseguiram trabalhar na primeira semana."
+        ],
+        "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024)"
       },
       {
         "tipo": "rodada",
         "rodada": "r4",
-        "alvoSeg": 300
+        "alvoSeg": 330
       },
       {
         "tipo": "bloco",
-        "titulo": "Dados: gestão por algoritmo e o quiz anúncio ou conteúdo",
-        "alvoSeg": 360
+        "titulo": "Dados: gestão por algoritmo",
+        "alvoSeg": 330,
+        "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
+        "itens": [
+          "+Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; na 99, finalizar menos de 70% tira de 5 a 15 dias.",
+          "47,4% dos entregadores dizem que bônus e promoções que mudam o preço definem a jornada deles."
+        ],
+        "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); 99, página oficial; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
       },
       {
         "tipo": "rodada",
         "rodada": "r5",
-        "alvoSeg": 300
+        "alvoSeg": 330
       },
       {
         "tipo": "bloco",
-        "titulo": "Contraponto: a Viração e os dados sobre CLT",
-        "alvoSeg": 300
+        "titulo": "Dados: o que é o breque",
+        "alvoSeg": 330,
+        "contexto": "Breque é a greve dos entregadores de app: todos desligam o aplicativo no mesmo dia para pressionar a plataforma. Sem salário garantido, quem para perde o dia e arrisca o bloqueio.",
+        "itens": [
+          "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
+          "31/03/2025: breque em mais de 100 cidades; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
+          "01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+        ],
+        "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (29/04/2025); Metrópoles (01/09/2026)"
       },
       {
         "tipo": "rodada",
         "rodada": "r6",
-        "alvoSeg": 300
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: fim de ano sem 13º",
+        "alvoSeg": 330,
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, quase sempre, sem INSS.",
+        "itens": [
+          "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
+          "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
+          "Dezembro tem 16% mais pedidos que a média do ano no iFood."
+        ],
+        "fonte": "Lei 4.090/1962; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 5 e 10; iFood, release de 30/10/2023"
       },
       {
         "tipo": "placarFinal",
@@ -1349,12 +1444,14 @@
       {
         "tipo": "bloco",
         "titulo": "Debrief: mapa do patrão em grupos",
-        "alvoSeg": 510
+        "alvoSeg": 600,
+        "contexto": "Em grupos: em cada bimestre, quem decidiu o preço, a regra e a punição? Marquem no mapa quem manda no trabalho do Jonas."
       },
       {
         "tipo": "bloco",
         "titulo": "Caminhos: regulação, proteção, organização e educação",
-        "alvoSeg": 420
+        "alvoSeg": 510,
+        "contexto": "Quatro caminhos em debate: a lei dos apps (regulação), INSS e seguro (proteção), breque e associação (organização) e educação."
       },
       {
         "tipo": "enquete",
@@ -1376,7 +1473,14 @@
       {
         "tipo": "bloco",
         "titulo": "Fim: quem é o patrão?",
-        "alvoSeg": 120
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, quem trabalha e as regras, e no app quem decide é a plataforma.",
+        "itens": [
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8%, quem atendem.",
+          "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
+          "92% das transações de delivery passaram pelo iFood no 1º tri de 2025; de cada pedido com entrega, ele cobra 26,2% do restaurante."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "alvoSeg": 240
       },
       {
         "tipo": "fim"
