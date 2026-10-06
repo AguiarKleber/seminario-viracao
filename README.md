@@ -29,19 +29,20 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
 | 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 9 do site (PR #9), publicada em 06/10 à tarde |
 | Ajustes de 06/10 | Na versão 9 do site (D-079: a decisão às cegas, com a mini-história ao lado do rótulo; um bloco de dados com contexto, números e fonte depois de cada bimestre, sem a trilha; o Fim com os dados do setor; sem entrevistas; o placar sem a lista de posições; a enquete sem "mediana · média · n"; o conteúdo conferido com as fontes; o telão medido também em 1280×720). **As regras não mudam** (continuam v4) |
-| Cores de 06/10 à tarde | Branch `claude/cores-simples`, **ainda não fundida nem publicada**: o nome de cada equipe em uma palavra: Laranja, Celeste, Verde, Azul, Vermelho e Rosa (nota depois da D-079). Só o `config.json` e os documentos mudam: o site continua na versão 9 e as regras em v4 |
-| Conteúdo | `config.json` versão `2026-10-06-v4.2-simples` (D-079: opções às cegas com mini-história, um bloco de dados depois de cada bimestre, sem entrevistas, o pior caso abaixo de R$ 7.000; e, na nota depois dela, as equipes em uma palavra; o hash é o que `npm run validar` imprimir). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
+| Cores e texto de 06/10 à tarde | Branch `claude/cores-simples`, **ainda não fundida nem publicada**: o nome de cada equipe em uma palavra: Laranja, Celeste, Verde, Azul, Vermelho e Rosa; "Conheça o Jonas" sem o valor do mês comum; e a revisão textual de todo texto de tela (as duas notas depois da D-079). **Versão 10 do site**; as regras continuam v4 |
+| Conteúdo | `config.json` versão `2026-10-06-v4.2-simples` (D-079: opções às cegas com mini-história, um bloco de dados depois de cada bimestre, sem entrevistas, o pior caso abaixo de R$ 7.000; e, nas notas depois dela, as equipes em uma palavra e a revisão textual; o hash é o que `npm run validar` imprimir, `aa6a613c` em 06/10 à tarde). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
 
-**Para publicar (antes do seminário de 07/10):** só o `config.json` muda; o site fica
-na versão 9 e as regras ficam como estão (v4), sem nenhum passo no console do Firebase.
+**Para publicar (antes do seminário de 07/10):** o site passa à versão 10 e o
+`config.json` muda; as regras ficam como estão (v4), sem nenhum passo no console do
+Firebase.
 1. Sem nenhuma sala aberta, funda o PR da `claude/cores-simples` na `main` (o
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
 2. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
    repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, o bloco 1, a
    versão `2026-10-06-v4.2-simples` e o mesmo hash que `npm run validar` imprime
-   na `main` publicada. Os celulares não precisam atualizar: os nomes das
-   equipes chegam pela sala, que o telão cria com o config novo.
+   na `main` publicada. Os celulares com a versão 9 em cache veem a faixa "Há
+   uma versão nova do app: atualize a página".
 3. Ensaie uma sala de teste até o resultado de Jan–fev (roteiro, seção 0) e
    apague a sala no fim.
 4. Baixe o ZIP de novo para o pendrive (passo 11).

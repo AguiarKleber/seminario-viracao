@@ -85,7 +85,7 @@ ser obrigatórias:
 
 E a D-067: quando o dinheiro de uma proteção passa do que o trabalho daria num
 período comum, o motor marca o resultado, e as telas dizem "…, mais do que Bruna
-ganhava trabalhando num bimestre comum (R$ 1.400)". Não há chave nova: o "1
+ganhava trabalhando em um bimestre comum (R$ 1.400)". Não há chave nova: o "1
 salário mínimo" está no `rotulo` do efeito do auxílio, porque a tela usa o
 rótulo e o núcleo não escreve conteúdo.
 
@@ -313,7 +313,7 @@ hash do config não muda). O validador, com ele, também confere:
   motor: a carta que só sairia num caminho raro também conta). O jeito simples
   é uma carta por rodada, com `"rodadas": ["r1"]` e peso 1; os efeitos dela
   podem ter condição (`decidiu`, `indicador`): é assim que entra a
-  consequência que vem depois ("as costas travaram: duas puxadas seguidas");
+  consequência que vem depois ("as costas travaram: dois bimestres puxados seguidos");
 - **nenhum `multiplica` direto na renda** numa opção (sem condição, ou só com
   persona, opção ou rodada): o dinheiro da opção é a **soma** dos efeitos
   diretos dela, e o multiplica não tem valor fixo. Use `soma`;
@@ -341,9 +341,9 @@ bimestre em que ela acontece, com `decidiu` (e `opcao`, quando depende também d
 escolha do próprio bimestre, como as costas: `{ "decidiu": { "r1": "a" }, "opcao":
 "b" }`). O motor a nomeia (`deAntes`), e as telas a mostram no resultado com o
 motivo: o `rotulo` até os dois-pontos. Dois efeitos de mesmo motivo viram uma
-linha com a soma ("as costas travaram (2 puxadas seguidas): 7 dias parado" e
-"…: fisioterapia, 4 sessões" → "As costas travaram (2 puxadas seguidas)
-−R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
+linha com a soma ("as costas travaram (2 bimestres puxados seguidos): 7 dias
+parado" e "…: fisioterapia, 4 sessões" → "As costas travaram (2 bimestres
+puxados seguidos) −R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
 nome. Custo fixo (`fixo`) e proteção não são nomeados: use `soma` simples ou
 `categoria: "gasto"`. O jogo do dia, opção por opção, está em
 [jogo-simples.md](jogo-simples.md).
@@ -432,7 +432,7 @@ celular; os `longos`, nas legendas do telão.
   },
   "basico": {
     "itens": [
-      { "rotulo": "comida (cesta básica × 2,5)", "valor": 2098, "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026…" },
+      { "rotulo": "comida (2,5 cestas básicas)", "valor": 2098, "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026…" },
       { "rotulo": "aluguel (2 quartos)", "valor": 1300, "fonte": "QuintoAndar, lido em 29/09/2026…" },
       { "rotulo": "luz", "valor": 162, "fonte": "CEEE Equatorial, tarifa B1…" }
     ]

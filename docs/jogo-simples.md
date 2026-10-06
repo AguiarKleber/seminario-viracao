@@ -7,8 +7,8 @@ pedidos de 06/10 de manhã (D-079), **as opções ficam às cegas** (sem o dinhe
 ao lado), cada uma com uma **mini-história**, e depois do resultado de cada
 bimestre vem **uma tela de dados reais** do tema dele. Arquivo:
 [`config.json`](../config.json), versão `2026-10-06-v4.2-simples` (o hash é o
-que `npm run validar` imprimir; em 06/10, com as equipes em uma palavra,
-`01b25320`). O conteúdo de 6
+que `npm run validar` imprimir; em 06/10 à tarde, com as equipes em uma
+palavra e a revisão textual, `aa6a613c`). O conteúdo de 6
 personagens, com cartas sorteadas, ficou no git e congelado em
 `test/fixtures/config-real-v31.json`.
 
@@ -22,8 +22,8 @@ personagens, com cartas sorteadas, ficou no git e congelado em
   Verde, Azul, Vermelho e Rosa, em uma palavra (nota depois da D-079).
   Todas jogam o mesmo Jonas; o que muda entre elas é a combinação de escolhas.
 - **Cada opção** mostra a letra, o rótulo e a **mini-história** (o campo
-  `narrativa`): o que é, por quê e o que impacta, numa frase de até 111
-  caracteres. No telão, ela corre na mesma linha do rótulo, depois de um
+  `narrativa`): o que é, por quê e o que impacta, em uma frase de até 116
+  caracteres (até 120, o teto do validador). No telão, ela corre na mesma linha do rótulo, depois de um
   travessão, e cada opção cabe em duas linhas em 1024×768 (cinco mini-histórias
   e a situação de quatro bimestres foram encurtadas em 06/10 para caber, sem
   tirar fato nem fonte). **O dinheiro não aparece na opção** (às cegas, D-079): ele aparece
@@ -58,7 +58,7 @@ filha de 6 anos. Ninguém com carteira (D-062). Três valores foram recontados e
 | Parcela da moto | −480 | Fipe set/2026 (CG 160 Start, R$ 18.598), 80% em 48× a 1,97% a.m. (BCB, SGS 25471) = R$ 482 |
 | Faxinas e revenda da companheira ✱ | +1.600 | Duas faxinas por semana × R$ 150 (GetNinjas; Famyle): 2 × 52 ÷ 12 = 8,67 por mês, R$ 1.300 (eram 8, o mês arredondado para 4 semanas) + R$ 300 de revenda (ABEVD, jan/2026, conta nossa) |
 | Básico da casa | −3.928 | comida R$ 2.098 (DIEESE/Conab, cesta de POA ago/2026 × 2,5); aluguel ✱ R$ 1.200 (QuintoAndar: o piso da faixa do Sarandi, R$ 1.192; era R$ 1.300 na mesma faixa); luz R$ 162 (CEEE, ANEEL 3.547/2025); água R$ 119 (DMAE); gás R$ 89 (ANP); ônibus da companheira ✱ R$ 95 (a ida e a volta das faxinas, 18 passagens de R$ 5,30; eram 30, sem conta); celular R$ 75 (estimativa); remédios R$ 90 (estimativa, POF) |
-| **Falta num mês comum** | **−128** | **−R$ 256 por bimestre**, antes de qualquer escolha (antes da D-079, −R$ 392) |
+| **Falta em um mês comum** | **−128** | **−R$ 256 por bimestre**, antes de qualquer escolha (antes da D-079, −R$ 392). O telão diz só "Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.", sem o valor (pedido do Kleber de 06/10 à tarde) |
 
 ## Os seis bimestres
 
@@ -74,11 +74,11 @@ votou) está marcada com *. A coluna "Dinheiro" não aparece na tela da decisão
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A ⚑ | 12 horas por dia no sol | Rodar 12 horas por dia, sete dias, no calor de 39 °C: mais entregas, menos sono e quase nada de casa. | +R$ 1.040 | 12 h por dia no sol: chega em casa e a filha de férias já dormiu | +20 h por semana a ~53% do ganho-hora (D-024, estimativa da calibragem): R$ 520 × 2 |
-| B | Atrasar a parcela da moto | Empurrar a parcela da moto de fevereiro para março: alivia agora, volta com multa e juros e arrisca a moto. | +R$ 480 | O banco liga todo dia, e em março a parcela volta com multa e juros | A parcela de R$ 480; volta em mar–abr (−R$ 500, K4) |
-| C * | Jornada de sempre | Manter as cerca de 45 horas por semana de sempre, no sol, sem esticar e sem parar nos dias mais quentes. | R$ 0 | Roda no sol como sempre: chega exausto, e a conta segue sem fechar | PNAD 2025: 44,9 h por semana |
-| D | Parar das 10h às 16h | A Defesa Civil pede para evitar esforço das 10h às 16h no calor: parar poupa o corpo e perde o pico do almoço. | −R$ 110 | Volta inteiro para a filha, e o pico do almoço fica para quem aguentou o sol | Defesa Civil de POA (08/02/2025); OIT: 6 dias × 40% do dia × 50% (R$ 107) |
-| E | Pagar o IPVA em janeiro | O IPVA da moto tem desconto se pago até 30/01: pagar agora sai do cheque especial, que cobra juros todo mês. | −R$ 330 | Paga a moto adiantado no cheque especial: o ano já começa no vermelho | Sefaz-RS: 3% de antecipação; R$ 340 × 0,97 (volta +R$ 340 em mar–abr, K3) |
+| A ⚑ | 12 horas por dia no sol | Rodar 12 horas por dia, todo dia, no calor de 39 °C: mais entregas, menos sono e quase sem tempo em casa. | +R$ 1.040 | 12 h por dia no sol: chega em casa e a filha de férias já dormiu | +20 h por semana a ~53% do ganho-hora (D-024, estimativa da calibragem): R$ 520 × 2 |
+| B | Atrasar a parcela da moto | Empurrar a parcela de fevereiro para março: alivia agora, mas ela volta com multa e juros e arrisca a moto. | +R$ 480 | O banco liga todo dia, e em março a parcela volta com multa e juros | A parcela de R$ 480; volta em mar–abr (−R$ 500, K4) |
+| C * | Jornada de sempre | Manter cerca de 45 horas por semana, como sempre, no sol, sem esticar e sem parar nos dias mais quentes. | R$ 0 | Roda no sol como sempre: chega exausto, e a conta segue sem fechar | PNAD 2025: 44,9 h por semana |
+| D | Parar das 10h às 16h | A Defesa Civil recomenda evitar esforço das 10h às 16h no calor: parar poupa o corpo, mas custa o pico do almoço. | −R$ 110 | Volta inteiro para a filha, e o pico do almoço fica para quem aguentou o sol | Defesa Civil de POA (08/02/2025); OIT: 6 dias × 40% do dia × 50% (R$ 107) |
+| E | Pagar o IPVA em janeiro | O IPVA da moto tem desconto se for pago até 30/01: pagar agora usa o cheque especial, que cobra juros todo mês. | −R$ 330 | Paga o IPVA adiantado no cheque especial: o ano já começa no vermelho | Sefaz-RS: 3% de antecipação; R$ 340 × 0,97 (volta +R$ 340 em mar–abr, K3) |
 
 ### Mar–abr: a lei que saiu de pauta
 
@@ -91,9 +91,9 @@ e gasolina **−R$ 60** (ANP, R$ 6,38 e 6,52; conta: R$ 63).
 | --- | --- | --- | --- | --- | --- |
 | A | Parar no dia da greve | 14/04: greve nacional contra a lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca bloqueio. | −R$ 540 | Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
 | B ⚑ | Rodar também no 99Food | O 99Food chegou com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito. | +R$ 900 | Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo | +15% do bimestre (estimativa, R$ 804) + bônus de entrada (R$ 100, Jornal do Brás) |
-| C | Pegar um empréstimo | Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano. | dívida (D-065): +R$ 1.500 | 12 parcelas: duas dívidas pagas com a mesma entrega | BCB, SGS 25464: 6,39% a.m.; Price, 12 × R$ 182,76 |
+| C | Pegar um empréstimo | Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano. | dívida (D-065): +R$ 1.500 | 12 parcelas: a mesma entrega agora paga a moto e o empréstimo | BCB, SGS 25464: 6,39% a.m.; Price, 12 × R$ 182,76 |
 | D * | Aceitar até entrega ruim | O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila. | +R$ 160 | Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo | +3% do bimestre (estimativa, R$ 161); regra de recusa do iFood (7 seguidas = 15 minutos fora) |
-| E | Trocar iFood pelo 99Food | Largar o iFood pelo bônus do 99Food: paga mais por corrida, sem saber quantos pedidos virão. | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | R$ 5 acima do mínimo do iFood em 20 corridas (Jornal do Brás). **Estimativa sem fonte:** o mesmo volume |
+| E | Trocar iFood pelo 99Food | Largar o iFood pelo bônus do 99Food, que paga mais por corrida, sem saber quantos pedidos virão. | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | R$ 5 acima do mínimo do iFood em 20 corridas (Jornal do Brás). **Estimativa sem fonte:** o mesmo volume |
 
 **O empréstimo é dívida, e não renda (D-065).** O dinheiro entra na conta e a
 dívida também; daí em diante, duas parcelas por bimestre (R$ 366), e no fim do
@@ -106,11 +106,11 @@ R$ 6,25 e 6,21; conta: R$ 26).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Pneu novo antes da chuva | O pneu traseiro está quase no fim, com 13 mil km: na chuva, careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
-| B | Parar nos dias de alerta | O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho. | −R$ 180 | Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco | INMET via O Tempo (27/09/2026); 2 × R$ 89,33 |
-| C ⚑ | Rodar de madrugada | Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
+| A | Pneu novo antes da chuva | O pneu traseiro está quase no fim (13 mil km): careca, ele derrapa na chuva e dá multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
+| B | Parar nos dias de alerta | A meteorologia dá alerta laranja de temporal, com vento de 100 km/h: parar é seguro, mas não rende. | −R$ 180 | Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco | INMET via O Tempo (27/09/2026); 2 × R$ 89,33 |
+| C ⚑ | Rodar de madrugada | Com chuva, o app paga um extra por entrega: rodar até de madrugada rende mais, no frio e no escuro. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
 | D * | Jornada de sempre | Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal. | R$ 0 | Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno | — |
-| E | Comprar capa, bota e luva | Kit de chuva para moto (capa, bota, luva e balaclava): chega seco e protegido, com dinheiro que sai do mercado. | −R$ 280 | O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez | R$ 262,99 a R$ 278,90 (Mercado Livre, set/2026, B) |
+| E | Comprar capa, bota e luva | Kit de chuva para moto (capa, bota, luva e balaclava): ele chega seco e protegido, mas o dinheiro sai do mercado. | −R$ 280 | O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez | R$ 262,99 a R$ 278,90 (Mercado Livre, set/2026, B) |
 
 ### Jul–ago: a regra nova do app
 
@@ -119,7 +119,7 @@ licenciamento vence em 31/07: **−R$ 110** (Detran-RS via AutoPapo, R$ 114,09).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A ⚑ | Entrar no +Entregas | O iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega. | +R$ 540 | +Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete | O iFood diz +10% a +30%; usado +10% (CUT-RS, 27/07/2026) |
+| A ⚑ | Entrar no +Entregas | O +Entregas promete mais ganho e quase não aceita recusa; os entregadores dizem que ele paga R$ 3 por entrega. | +R$ 540 | +Entregas: 12 horas na rua, todos os dias, e a filha só o vê de capacete | O iFood diz +10% a +30%; usado +10% (CUT-RS, 27/07/2026) |
 | B | Ir ao protesto de 27/07 | 27/07: entregadores marcham no Centro contra o +Entregas; quem vai perde meio dia e arrisca o bloqueio. | −R$ 490 | Do protesto para cinco dias bloqueado: a filha estranha o pai em casa de dia | Meio dia (−R$ 40) e 5 dias de bloqueio branco (−R$ 450, K1) |
 | C * | Adiar a revisão da moto | A revisão da moto está vencida, com 20 mil km no ano: adiar alivia o mês e deixa a moto mais perto de quebrar. | +R$ 100 | Adia a revisão e roda com a moto pedindo socorro, atento a cada barulho | Metade de um mês da manutenção de R$ 200 (Sindimoto-SP); a moto quebra em set–out (K5) |
 | D | Tirar uma semana de folga | A primeira semana de descanso do ano: no app não há férias pagas, e cada dia parado é um dia sem ganho. | −R$ 630 | Uma semana inteira com a filha, paga com o dinheiro que não entra | 7 dias do bimestre: R$ 625,33 |
@@ -135,8 +135,8 @@ furar; a Farroupilha lota o Harmonia. Sem efeito em dinheiro igual para todos.
 | --- | --- | --- | --- | --- | --- |
 | A * | Jornada de sempre | Nem parar nem furar: seguir a rotina no mês do breque geral e do Acampamento Farroupilha. | R$ 0 | Nem para nem fura: segue cansado, longe da filha, como em todo bimestre | — |
 | B | Recusar o que não paga | Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa. | −R$ 270 | Recusa o que não paga, e o celular passa horas em silêncio na esquina | −5% do bimestre (estimativa); regra de recusa do iFood (7 seguidas = 15 minutos fora) |
-| C | Parar no dia do breque | 01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio. | −R$ 540 | Para no breque com o país, e o app responde com cinco dias de bloqueio | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
-| D ⚑ | Furar o breque pelo bônus | O concorrente paga bônus a quem furar; rodar as noites da Farroupilha rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
+| C | Parar no dia do breque | 01/09: o breque pede R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio. | −R$ 540 | Adere ao breque com o país, e o app responde com cinco dias de bloqueio | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
+| D ⚑ | Furar o breque pelo bônus | Outro app paga bônus a quem furar; rodar nas noites da Farroupilha rende, mas pega mal com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
 | E | Folgar no 20 de Setembro | Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro. | −R$ 90 | Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro | Feriado estadual (Lei RS 4.850/1964); 1 dia do bimestre |
 
 ### Nov–dez: Natal e nenhum 13º
@@ -149,7 +149,7 @@ nesta casa, ninguém.
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A | Pedir ajuda à família (nova, D-079) | Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, a rede é a família. | +R$ 300 | A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa | **Estimativa sem fonte do valor:** a mãe, aposentada com 1 salário mínimo (R$ 1.621, Decreto 12.797/2025), dá R$ 300, menos de um quinto do que recebe. UFBA (Siqueira et al., 2025): entre os entregadores que se afastaram depois de um acidente, a ajuda da família foi o apoio mais citado (38,3%) |
+| A | Pedir ajuda à família (nova, D-079) | Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, resta a família. | +R$ 300 | A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa | **Estimativa sem fonte do valor:** a mãe, aposentada com 1 salário mínimo (R$ 1.621, Decreto 12.797/2025), dá R$ 300, menos de um quinto do que recebe. UFBA (Siqueira et al., 2025): entre os entregadores que se afastaram depois de um acidente, a ajuda da família foi o apoio mais citado (38,3%) |
 | B ⚑ | Sem folga até o Natal | Dezembro começa com 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso. | +R$ 1.040 | Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado | O mesmo +20 h por semana de jan–fev (D-024) |
 | C | Folgar na semana do Natal | Uma semana com a família no Natal, sem férias pagas, justo em dezembro, quando os pedidos sobem. | −R$ 630 | Uma semana de Natal com a filha, e os pedidos de dezembro vão para outro | 7 dias do bimestre |
 | D * | Jornada de sempre | Seguir a rotina até o fim do ano, sem 13º, sem férias e sem um dia a mais de folga. | R$ 0 | Rotina de sempre até o fim do ano, sem 13º e sem um dia a mais com a filha | — |
@@ -182,7 +182,7 @@ na vida, são risco.
 | K2 | **Duas opções puxadas seguidas** (⚑ num bimestre e ⚑ no seguinte) | No bimestre da segunda | **As costas travam:** 7 dias parado (−R$ 630) e 4 sessões de fisioterapia (−R$ 600) = **−R$ 1.230** | Carta "Dor" do config de 05/10: Souza et al. (Physis, 2024); Doctoralia POA (4 × R$ 150). O "sempre, na segunda seguida" é estimativa sem fonte (regra decidida pelo Kleber) |
 | K3 | Pagar o IPVA em janeiro (jan–fev E) | Mar–abr | O IPVA não vence de novo: +R$ 340 | Sefaz-RS (um IPVA por ano) |
 | K4 | Atrasar a parcela da moto (jan–fev B) | Mar–abr | A parcela volta com multa de 2%, mora de 1% e um mês dos juros do contrato: −R$ 500 | CDC, art. 52, § 1º; BCB SGS 25471; Decreto-Lei 911/1969 |
-| K5 | Adiar a revisão (jul–ago C, o padrão) | Set–out | **A moto quebra:** 3 dias parado (−R$ 270) e relação e pneu (−R$ 520) = −R$ 790; com o pneu trocado em mai–jun (A), só a relação (−R$ 290) = −R$ 560 | Carta "A moto quebrou" do config de 05/10: relação R$ 294 + pneu R$ 228 (lojas, B) |
+| K5 | Adiar a revisão (jul–ago C, o padrão) | Set–out | **A moto quebra:** 3 dias parado (−R$ 270) e kit da corrente (a relação) e pneu (−R$ 520) = −R$ 790; com o pneu trocado em mai–jun (A), só o kit da corrente (−R$ 290) = −R$ 560 | Carta "A moto quebrou" do config de 05/10: relação R$ 294 + pneu R$ 228 (lojas, B) |
 
 O crédito pessoal (mar–abr C) não é consequência: é a dívida da tabela Price,
 que o motor cobra nos bimestres seguintes (D-065).
@@ -199,22 +199,22 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
 
 **Dados: calor e jornada** (depois de jan–fev)
 - *Contexto:* No app não há jornada fixa nem pausa garantida: no calor, é o
-  entregador quem decide sozinho entre poupar o corpo e perder o pico do almoço.
+  entregador quem decide sozinho entre poupar o corpo e aproveitar o pico do almoço.
 - 44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por
-  mês já sem a gasolina.
+  mês, já sem a gasolina.
 - Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12%
   menos por hora.
-- Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto
-  Alegre chegou a 39,5 °C.
+- Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade de
+  trabalho; Porto Alegre chegou a 39,5 °C.
 - *Fonte:* IBGE, PNAD 2025, p. 7 e 10; OIT, "Trabalhar num planeta mais quente"
   (2019); Correio Braziliense (02/2025).
 
 **Dados: a greve de 14/04 e a lei** (depois de mar–abr)
-- *Contexto:* O PLP 152/2025 criaria o "plataformizado" (nem CLT, nem autônomo)
-  com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de
-  14/04/2026 convocada contra o texto, saiu de pauta.
+- *Contexto:* A lei dos apps (PLP 152/2025) criaria o "plataformizado" (nem CLT,
+  nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a
+  greve de 14/04/2026 contra o texto, a lei saiu de pauta.
 - R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do
-  iFood é R$ 7,50, que ele mesmo define.
+  iFood é R$ 7,50, valor que o próprio iFood define.
 - 1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como
   entregadores.
 - 72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais
@@ -223,13 +223,13 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   Brasil de Fato (29/04/2025); IBGE, PNAD 2025, p. 3, 4 e 8.
 
 **Dados: chuva e acidentes** (depois de mai–jun)
-- *Contexto:* Na chuva, a moto freia pior e a promoção paga mais: é quando o
-  entregador mais se arrisca. Acidentado e sem INSS, ele depende do seguro do
-  app (de 7 a 30 dias parado) e da família.
-- 22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa
-  financiada pelas plataformas.
-- Dos acidentados parados 15 dias ou mais, só 20% tiveram INSS; entre os que
-  pararam, a ajuda da família foi o apoio mais citado (38,3%).
+- *Contexto:* Na chuva, a moto freia pior e o app paga mais por entrega: é
+  quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende da
+  família e do seguro do app, que paga de 7 a 30 dias parado.
+- 22% dos entregadores de moto sofreram acidente em 3 meses, segundo uma
+  pesquisa financiada pelas plataformas.
+- Dos acidentados parados por 15 dias ou mais, só 20% receberam do INSS; entre
+  os que pararam, a família foi o apoio mais citado (38,3%).
 - Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores
   ficaram ativos na 1ª semana.
 - *Fonte:* Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025
@@ -240,10 +240,10 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
 - *Contexto:* Gestão por algoritmo: é o app, e não um chefe, que distribui os
   pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso,
   como o +Entregas.
-- +Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no
-  máximo 2 recusas.
+- +Entregas: o iFood promete de 10% a 30% a mais de ganho, mas exige 90% do tempo
+  online e no máximo 2 recusas.
 - A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7
-  recusas seguidas tiram o entregador 15 minutos do app.
+  recusas seguidas deixam o entregador 15 minutos fora do app.
 - 47,4% dos entregadores dizem que bônus e promoções que mudam o preço
   influenciam a jornada deles.
 - *Fonte:* iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles
@@ -258,14 +258,14 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   fim dos bloqueios sem explicação.
 - 31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois,
   o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.
-- 01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do
+- 01/09/2026: breque geral para pedir R$ 10 por corrida de até 4 km e o fim do
   +Entregas; até agora, sem reajuste.
 - *Fonte:* Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025);
   Metrópoles (01/09/2026).
 
 **Dados: fim de ano sem 13º** (depois de nov–dez)
 - *Contexto:* O 13º é um salário a mais no fim do ano, direito de quem tem
-  carteira (Lei 4.090/1962). Quem trabalha por app é "conta própria": sem 13º,
+  carteira assinada (Lei 4.090/1962). Quem trabalha por app é "conta própria": sem 13º,
   sem férias pagas e, em 2 de cada 3 casos, sem INSS.
 - 86,8% de quem trabalha por app é "conta própria"; só 4,5% têm carteira
   assinada.
@@ -278,19 +278,21 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
 
 **Fim: quem é o patrão?** (o último bloco, P7)
 - *Contexto:* No papel, o entregador é autônomo. Patrão é quem decide o preço,
-  quem trabalha e as regras, e no app quem decide é a plataforma.
+  as regras e quem trabalha; no app, quem decide é a plataforma.
 - 78,3% dos entregadores dizem que o app define sozinho quanto recebem por
-  entrega; 70,8%, quem atendem.
+  entrega; 70,8% dizem que ele define sozinho quem atendem.
 - 23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou
   bloqueio do app.
-- Cerca de 92% do delivery passou pelo iFood no 1º tri/2025 (amostra de Open
-  Finance); de cada pedido com entrega, cobra 26,2% do restaurante.
-- *Fonte:* IBGE, PNAD 2025, p. 13-14; Klavi, via Giro News (07/10/2025; a Klavi
-  mede transações numa amostra de Open Finance); iFood, Portal do Parceiro (2026:
+- Cerca de 92% do delivery passou pelo iFood no 1º trimestre de 2025; o iFood
+  cobra do restaurante 26,2% de cada pedido com entrega.
+- *Fonte:* IBGE, PNAD 2025, p. 13-14; Klavi, amostra de Open Finance, via Giro
+  News (07/10/2025; a Klavi mede transações em uma amostra de Open Finance; até a
+  revisão textual de 06/10, a ressalva ia no item); iFood, Portal do Parceiro (2026:
   Plano Entrega, 23% + 3,2% de pagamento online).
 
-No roteiro de 120 minutos, o mapa do seminário, o debrief e os caminhos têm só o
-contexto, sem itens.
+No roteiro de 120 minutos, o mapa do seminário, a conversa em grupos ("Conversa
+em grupos: o mapa do patrão", que era "Debrief: …" até a revisão textual de
+06/10) e os caminhos têm só o contexto, sem itens.
 
 ## Os números (as 15.625 combinações, no motor do jogo)
 
@@ -352,8 +354,9 @@ R$ 7.000, para você confirmar:
 1. **Três valores da casa foram recontados**: as faxinas (duas por semana são
    8,67 por mês, e não 8: +R$ 100), o ônibus da companheira (as idas e voltas
    das faxinas, 18 passagens, e não 30: −R$ 64) e o aluguel (o piso da mesma
-   faixa do QuintoAndar no Sarandi, R$ 1.200, e não R$ 1.300). Num mês comum,
-   falta R$ 128, e não R$ 392.
+   faixa do QuintoAndar no Sarandi, R$ 1.200, e não R$ 1.300). Em um mês comum,
+   falta R$ 128, e não R$ 392 (o telão não mostra mais o valor: nota de 06/10 à
+   tarde, depois da D-079).
 2. **O bloqueio depois da greve, do protesto e do breque passou de 7 para 5
    dias** (D-072 continua: o bloqueio existe; muda a duração, que a fonte diz não
    ser clara).

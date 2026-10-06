@@ -766,3 +766,21 @@ do jogo. O config passa à versão `2026-10-06-v4.2-simples`, e as regras
 continuam v4. O que o telão faz pelo nome comprido (não quebrar no hífen, o
 nome numa linha no Fim) fica; a fixture `test/fixtures/config-simples.json`
 mantém os nomes compostos, para o e2e seguir medindo o caso mais largo.
+
+**Nota de 06/10 à tarde: o mês comum sem valor e a revisão textual das telas
+(versão 10 do site).** Pedido do Kleber, com o print da versão 9. Em "Conheça
+o Jonas", "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
+bimestre)" passa a "Em um mês comum, a conta não fecha: falta dinheiro para
+pagar as contas e sustentar a casa." (sem valor; o número continua nas linhas
+de cima e no roteiro). E todo texto de tela, no telão e no celular, foi revisto:
+sem "num/numa", com concordância, regência e crase, frases diretas, sem jargão
+nem sigla solta ("a lei dos apps (PLP 152/2025)", "greve dos
+entregadores", "juros" no lugar de "mora", "placar" e "Conversa em grupos" no
+lugar de "debrief") e o mesmo nome para a mesma coisa ("o básico da casa",
+"carteira assinada", "Equipe Laranja"). Nenhum número, fato, data ou fonte muda
+(260 fecham, melhor +R$ 1.714, pior −R$ 6.783). **A confirmar com o Kleber:** as
+notas "(até 06/10 de manhã, …; D-079)" nas fontes do aluguel, do ônibus e das
+faxinas, que o celular mostra, ficaram, porque a D-079 pede as recontas
+declaradas na fonte de cada valor. O Fim e o título do bloco de conversa em
+grupos ficaram em um commit à parte, porque os pedidos novos mexem neles. O config continua `2026-10-06-v4.2-simples`
+(hash `aa6a613c`), e as regras, v4.
