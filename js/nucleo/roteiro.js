@@ -78,14 +78,16 @@
   }
 
   // A palavra de cada passo no item que junta o fim do seminário. Com o roteiro
-  // de 60 min: "debrief, termômetro, medição, fechamento" (rascunho, seção 7,
-  // item 15). O placar final é o debrief do jogo; a enquete "depois" e o
-  // comparativo são a medição do antes e depois; o último bloco, o fechamento.
+  // de 60 min: "placar, termômetro, medição, fechamento" (rascunho, seção 7,
+  // item 15). O placar final era "debrief" até a revisão textual de 06/10:
+  // jargão em inglês, projetado para a turma no "Mapa do seminário". A enquete
+  // "depois" e o comparativo são a medição do antes e depois; o último bloco, o
+  // fechamento.
   // Um bloco no meio (o roteiro de 120 min tem dois depois do placar) entra pela
   // primeira palavra do título: "Caminhos: convidado…" vira "caminhos".
   function palavraDoFinal(config, passo, ehUltimoBloco) {
     switch (passo.tipo) {
-      case 'placarFinal': return 'debrief';
+      case 'placarFinal': return 'placar';
       case 'comparativo': return 'medição';
       case 'enquete': {
         if (passo.momento === 'depois') return 'medição';

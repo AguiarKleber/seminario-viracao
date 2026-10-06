@@ -73,6 +73,9 @@ let contagem;
 const opcoesDe = (r) => cfg.rodadas[r].ordemOpcoes;
 const letraDe = (r, op) => LETRAS[opcoesDe(r).indexOf(op)];
 const lido = (t) => String(t).replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+// "Laranja, Azul e Verde": a lista de equipes da consequ\u00eancia termina com "e"
+// (revis\u00e3o textual de 06/10; antes, "Laranja, Azul, Verde").
+const juntarComE = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} e ${xs.at(-1)}` : xs[0] || '');
 function usarConfig(texto, nome) {
   TEXTO_CONFIG = texto;
   const validacao = V.validarConfig.validarTexto(TEXTO_CONFIG);
@@ -466,7 +469,7 @@ async function jogar(nome) {
       const grupos = H.consequenciasDaRodada(EQUIPES.map((eq) => ({ equipeId: eq, deAntes: esperado[eq][k].deAntes })));
       assert.deepEqual(lidoTela.antes.map((g) => [g.motivo, Number(g.valor), g.equipes]), grupos.map((g) => [g.motivo, g.valor, g.equipes.join(' ')]), `${onde}: as consequências de antes`);
       for (const [i, g] of grupos.entries()) {
-        assert.equal(lido(lidoTela.antes[i].texto), lido(`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}: ${g.equipes.map((eq) => cfg.equipes[eq].nome).join(', ')}`), `${onde}: o texto da consequência`);
+        assert.equal(lido(lidoTela.antes[i].texto), lido(`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}: ${juntarComE(g.equipes.map((eq) => cfg.equipes[eq].nome))}`), `${onde}: o texto da consequência`);
       }
       if (grupos.length > 0) consequenciasVistas += 1;
       assert.equal(lidoTela.eventos, 1, `${onde}: o evento do mês uma vez`);

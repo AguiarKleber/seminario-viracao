@@ -2045,7 +2045,7 @@
     const eq = app.config.equipes[id];
     if (!eq) return;
     if (abertas.has(id)) {
-      if (eq.obrigatoria) return avisar(`${eq.nome} sempre joga (equipe obrigatória).`);
+      if (eq.obrigatoria) return avisar(`A Equipe ${eq.nome} sempre joga (é obrigatória).`);
       if (abertas.size <= min) return avisar(`O mínimo é de ${min} equipes.`);
       abertas.delete(id);
     } else {
@@ -2874,9 +2874,9 @@
     const consequencias = N().historia.consequenciasDaRodada(itens.map(({ eq, r }) => ({ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) })));
     if (consequencias.length > 0) {
       const nomeDa = (eq) => app.config.equipes[eq]?.nome || eq;
-      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas de antes' }, consequencias.map((g) => el('li', {
+      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas anteriores' }, consequencias.map((g) => el('li', {
         dados: { motivo: g.motivo, valor: String(g.valor), equipes: g.equipes.join(' ') },
-      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${g.equipes.map(nomeDa).join(', ')}`]))));
+      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${juntarOpcoes(g.equipes.map(nomeDa))}`]))));
     }
     // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
     // transborda (medido depois do desenho), as faixas se aproximam; a letra
@@ -3006,6 +3006,9 @@
 
   function tituloSaldo(naoFecharam, total) {
     if (naoFecharam === 0) return total === 1 ? 'A equipe fechou as contas' : `As ${total} equipes fecharam as contas`;
+    // Revisão textual de 06/10: quando nenhuma fecha (o caso mais provável no
+    // jogo simples), "6 de 6 equipes não fecharam as contas" lia mal em voz alta.
+    if (naoFecharam === total) return total === 1 ? 'A equipe não fechou as contas' : `Nenhuma das ${total} equipes fechou as contas`;
     return `${naoFecharam} de ${total} equipes não ${naoFecharam === 1 ? 'fechou' : 'fecharam'} as contas`;
   }
 
@@ -3509,7 +3512,7 @@
     const { el } = D();
     const n = hist.reduce((t, x) => t + x, 0);
     return el('div', { classe: 'painel-distribuicao' }, [
-      el('p', { classe: 'painel-titulo' }, [G().amostra(estilo === 'antes' ? 'antes' : 'depois'), ` ${titulo} · n = ${n}`]),
+      el('p', { classe: 'painel-titulo' }, [G().amostra(estilo === 'antes' ? 'antes' : 'depois'), ` ${titulo} · ${n} ${n === 1 ? 'resposta' : 'respostas'}`]),
       grafico('grafico-histograma', (largura, altura, fonte) => G().histograma({ largura, altura, fonte, series: [{ hist, estilo }] })),
       G().rotulosEscala(['', '', '', '', ''], { soNumeros: true }),
     ]);
@@ -3532,8 +3535,15 @@
     if (pc.caso === 'pareado') {
       const tr = depois.transicao[a];
       const soUmaVez = (tr.soAntes || 0) + (tr.soDepois || 0);
-      const frase = `Dos ${tr.pares} que responderam as duas vezes: ${tr.mais} foram para mais concordância, ${tr.igual} ficaram, ${tr.menos} foram para menos.`;
-      s.appendChild(el('p', { classe: 'frase-comparativo' }, [frase, soUmaVez > 0 ? el('span', { classe: 'texto-secundario', texto: ` Mais ${soUmaVez} ${soUmaVez === 1 ? 'respondeu' : 'responderam'} só uma vez.` }) : null]));
+      // Revisão textual de 06/10: era "Dos 12 que responderam as duas vezes: 1
+      // foram para mais concordância, 5 ficaram, 6 foram para menos." (sem
+      // concordância com 1, e o "ficaram" solto). Os pares são pelo menos
+      // minPareados (podeComparar; 5 no config do dia), mas um config com 1
+      // também tem de sair certo.
+      const passaram = (n, sentido) => `${n} ${n === 1 ? 'passou' : 'passaram'} a concordar ${sentido}`;
+      const quem = tr.pares === 1 ? 'Da 1 pessoa que respondeu antes e depois' : `Das ${tr.pares} pessoas que responderam antes e depois`;
+      const frase = `${quem}: ${passaram(tr.mais, 'mais')}, ${tr.igual} não ${tr.igual === 1 ? 'mudou' : 'mudaram'} e ${passaram(tr.menos, 'menos')}.`;
+      s.appendChild(el('p', { classe: 'frase-comparativo' }, [frase, soUmaVez > 0 ? el('span', { classe: 'texto-secundario', texto: soUmaVez === 1 ? ' Outra pessoa respondeu só uma vez.' : ` Outras ${soUmaVez} pessoas responderam só uma vez.` }) : null]));
       s.appendChild(el('p', { classe: 'legenda' }, [G().amostra('antes'), ' antes ', G().amostra('depois'), ' depois']));
       const hAntes = somaLinhas(tr.matriz);
       const hDepois = somaColunas(tr.matriz);

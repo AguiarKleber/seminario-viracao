@@ -1695,7 +1695,7 @@
       const mostradas = corrompidas.slice(0, 10).join(', ') + (corrompidas.length > 10 ? ` e mais ${corrompidas.length - 10}` : '');
       erros.push({
         caminho: `(arquivo) linha ${mostradas}`,
-        mensagem: 'acento corrompido ("Ã©", "â€"): o arquivo foi regravado com a codificação errada, como faz o PowerShell 5.1. Volte à versão anterior ou corrija num editor em UTF-8',
+        mensagem: 'acento corrompido ("Ã©", "â€"): o arquivo foi regravado com a codificação errada, como faz o PowerShell 5.1. Volte à versão anterior ou corrija em um editor em UTF-8',
       });
     }
     let bruto;

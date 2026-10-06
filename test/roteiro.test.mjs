@@ -318,7 +318,7 @@ test('linhaDoTempo: se não couber, os passos depois do último mês viram um it
 
   // confere
   assert.equal(agrupado, true);
-  assert.deepEqual(itens.at(-1), { tipo: 'final', indices: [10, 11, 12, 13, 14], palavras: ['debrief', 'termômetro', 'medição', 'fechamento'] });
+  assert.deepEqual(itens.at(-1), { tipo: 'final', indices: [10, 11, 12, 13, 14], palavras: ['placar', 'termômetro', 'medição', 'fechamento'] });
   assert.deepEqual(itens.slice(0, -1).map((x) => x.indices), [[1], [2], [3], [4], [5], [6], [7], [8], [9]]);
 });
 
@@ -337,14 +337,14 @@ test('linhaDoTempo: cabendo no limite, nada é agrupado', () => {
 test('linhaDoTempo: no grupo final, cada bloco entra pela primeira palavra do título, e o último é o fechamento', () => {
   // prepara: o roteiro de 120 min tem dois blocos entre o placar e o termômetro.
   const config = configComRoteiroLongo();
-  config.roteiros.longo.splice(11, 0, { tipo: 'bloco', titulo: 'Debrief e teoria: mapa do patrão' }, { tipo: 'bloco', titulo: 'Caminhos: convidado' });
+  config.roteiros.longo.splice(11, 0, { tipo: 'bloco', titulo: 'Conversa em grupos: o mapa do patrão' }, { tipo: 'bloco', titulo: 'Caminhos: convidado' });
   const lista = passos(config, 'longo');
 
   // age
   const { itens } = linhaDoTempo(config, lista, { maxItens: 12 });
 
   // confere
-  assert.deepEqual(itens.at(-1).palavras, ['debrief', 'caminhos', 'termômetro', 'medição', 'fechamento']);
+  assert.deepEqual(itens.at(-1).palavras, ['placar', 'conversa', 'caminhos', 'termômetro', 'medição', 'fechamento']);
 });
 
 test('linhaDoTempo: sem mês no roteiro, não há o que agrupar', () => {

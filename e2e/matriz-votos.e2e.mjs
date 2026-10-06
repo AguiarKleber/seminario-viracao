@@ -987,7 +987,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   await esperarTela(movido, 'decisao');
   await movido.p.waitForFunction(() => document.querySelector('[data-movido]'), null, { timeout: 15000 })
     .catch(() => { throw new Error(`${movido.nome}: movido depois de votar, o celular não avisou`); });
-  assert.match(await movido.p.textContent('[data-movido]'), new RegExp(`movido para a equipe 5 ${C.cfg.equipes[E5].nome}: o voto na equipe anterior não vale aqui`));
+  assert.match(await movido.p.textContent('[data-movido]'), new RegExp(`movido para a ${C.simples ? 'Equipe' : 'equipe 5'} ${C.cfg.equipes[E5].nome}: o voto na equipe anterior não vale aqui`));
   assert.equal(await movido.p.locator('.botao-opcao-aluno[data-meu-voto]').count(), 0, `${movido.nome}: na equipe nova, nenhuma opção marcada como voto`);
   await naTela(movido, `[data-detalhe="${plano1.get(movido)}"] .opcao-aviso`, 'o aviso de "movido" junto do botão');
   await capturar(movido, 'mes1-movido-depois-de-votar');
@@ -1114,7 +1114,7 @@ async function jogar({ C, site, navegador, vigiar }) {
   assert.deepEqual(Object.keys(naProrrogacao.empatadas || {}), [E2], 'só a equipe empatada vai para a prorrogação');
   await c5.ctx.setOffline(false);
   await esperarTela(c5, 'aguardando');
-  await c5.p.waitForFunction(() => /A votação fechou antes do seu voto chegar/.test(document.querySelector('.nota')?.textContent || ''), null, { timeout: 30000 })
+  await c5.p.waitForFunction(() => /A votação fechou antes de o seu voto chegar/.test(document.querySelector('.nota')?.textContent || ''), null, { timeout: 30000 })
     .catch(async (erro) => {
       throw new Error(`celular 5: o voto recusado depois do fechamento não foi avisado (notas ${JSON.stringify(await c5.p.$$eval('.nota', (ns) => ns.map((n) => n.textContent)))}; ${erro.message.split('\n')[0]})`);
     });
