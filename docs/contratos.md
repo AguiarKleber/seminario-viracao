@@ -189,6 +189,14 @@ normalizado, e o `mes` não ganha campos).
   contas do período (que têm o custo delas: multa, mora e o risco de corte e despejo pelas cartas) e corta a comida do que
   passar delas. A alternativa fica a uma chave de distância (`"cortarPrimeiro": "comida"`).
 
+**O formato simples** (decisão do Kleber de 05/10 à noite: um personagem só, 5 opções por bimestre, sem sorteio, o
+dinheiro na opção): `regras.formatoSimples` booleano, opcional; só `true` entra no normalizado (ausente ou `false`, o
+hash e as telas não mudam). O teto de opções por rodada subiu de 4 para 5 para todo config. Com ele, também é **erro**:
+equipes com mais de uma persona; mais de uma carta possível numa rodada para alguma equipe
+(`motor.cartasPossiveisNaRodada` > 1, conferido só sem outros erros); e um `multiplica` na renda num efeito direto de
+opção (sem `se`, ou com `se` só de `persona`, `opcao`, `rodada`). O anfitrião grava `resultado` (e não `sorteio`) ao
+apurar a rodada; o telão e o celular mudam as telas (como-editar-config, `regras.formatoSimples`).
+
 **Valores padrão aplicados pela normalização** (o JSON pode omitir):
 - `obrigatoria: false`, `efeitosGerais: []`, `ajustesDePeso: []`, `todoMes: []`, `inicial: {}`;
 - `cartas[].curto` é opcional (D-040): texto não vazio de até 12 caracteres (contados por letra),
@@ -262,6 +270,9 @@ injetada (`gerarSemente` no anfitrião, que no telão usa `crypto.getRandomValue
 | `caminhosDeCartas(config, equipeId, rodadaIds) → n` | esquema v3: o produto, rodada a rodada, do teto de cartas que podem sair para a equipe (as `rodadas` da carta, a parte fixa do `somenteSe` — `persona`, `equipe`, `rodada` — e peso > 0 ou algum ajuste com `soma > 0`; a parte que lê o estado conta como "pode"). Não depende da opção. `Infinity` acima do inteiro seguro |
 | `condicaoFixa(cond) → boolean` | a condição só lê `opcao`, `persona`, `equipe` e `rodada` (ou não existe): vale igual em qualquer estado. Usada pelo validador na garantia de carta possível |
 | `LIMITE_CAMINHOS` / `AMOSTRAS` | 200.000 caminhos (acima, o `decompor` simula) e 20.000 sorteios da simulação |
+| `cartasPossiveisNaRodada(config, equipeId, rodadaId) → n` | o teto de uma rodada só (a conta de `caminhosDeCartas`). O validador do formato simples exige no máximo 1 |
+| `enumerarCombinacoes(config, { equipeId, rodadas: [ids] }) → { total, fecham, melhor, pior, valores }` | formato simples (`regras.formatoSimples`, decisão do Kleber de 05/10): todas as combinações de opções das rodadas, na ordem dada (as do roteiro que foram jogadas), em profundidade e na ordem das opções; `fecham` conta patrimônio ≥ 0; `melhor`/`pior` = `{ opcoes: [ids], valor }` (empate: a primeira na ordem); `valores`, `Float64Array` do maior para o menor. Só com uma carta possível por rodada (com mais, lança). 15.625 combinações (6 × 5 opções): ~60–90 ms no Node, ~150 ms no navegador |
+| `lugarEntre(valores, valor) → n` | 1 + quantos valores são maiores (empate divide o lugar); busca binária |
 
 - `Historico = { [rodadaId]: { decisao, carta } }`: o que a equipe decidiu e tirou nas rodadas anteriores (o
   mesmo formato de `resultados/{r}/{eq}`). É o que `decidiu`/`sorteou` leem. Omitido, vale `{}`: toda
@@ -631,7 +642,7 @@ rede de segurança. Nos métodos abaixo, "prazo novo" é `agora + tempo da etapa
 | `criarSala() → Promise<estado>` | recusa se a sala já existe; grava a `meta` (sozinha) e depois `conteudo` + `estado` inicial (`geracao` 1, índice 0); a sala expira em 12 h |
 | `carregarSala() → Promise<estado>` | lê `meta` e `estado` do banco: recarregar o telão, ou assumir em outra máquina. Recusa (com erro claro, antes de assumir) se `meta.roteiro` não é o `nomeRoteiro`, se `meta.hashConfig` não é o `validarConfig.hash(config)` local, ou se `estado.tipo` não bate com o passo `estado.indice`. Se `meta.hostUid` não é o `uid`, grava `meta/hostUid` = `uid` sozinho, antes de qualquer transição: a regra só aceita com o PIN (PIN_OK), e sem ele a recusa vem aqui |
 | `avancar()` | próximo passo. Na enquete `uma_por_vez` em votação, vai para a próxima afirmação (prazo novo); se estava pausada, continua pausada, com `restanteMs = enqueteSeg` inteiro e sem `prazo`. No `sorteio`, vai para o `resultado`. **Nunca fecha votação**: com `votando`, `decidindo`, `prorrogacao` ou `fechando`, lança erro |
-| `encerrar()` | fechamento em duas fases (abaixo). Também conclui um `fechando` interrompido (telão que caiu no meio) |
+| `encerrar()` | fechamento em duas fases (abaixo). Também conclui um `fechando` interrompido (telão que caiu no meio). No formato simples (`regras.formatoSimples`), a rodada apurada grava `resultado` em vez de `sorteio` (a semente, o resultado, o placar e o `geracao + 1` não mudam) |
 | `desfazer()` | só no passo atual: rodada em `sorteio` ou `resultado` volta a `decidindo` (prazo novo, mesmo `abertoEm`, `forcadas` mantidas); enquete `apurada` volta a `votando`. Em `fechando` (a apuração lançou erro e o `encerrar` não conclui), volta à votação com prazo novo, sem apagar nada: enquete a `votando`, rodada a `prorrogacao` se há `empatadas`, senão a `decidindo`. Com a enquete em `votando` ou a rodada em `decidindo`, **desfaz a abertura** (D-037, abaixo); a `prorrogacao` não. Nos outros casos, lança erro |
 | `pularPara(indice)` | só para a frente, e nunca com votação aberta ou em `fechando` |
 | `maisTempo(seg)` | só com votação aberta; o fim do cronômetro vira `max(fim, agora) + seg` (`prazo = max(prazo − folga, agora) + seg + folga`); pausado, soma no `restanteMs` |
@@ -749,7 +760,7 @@ Entradas de `telaDoAluno`:
 | `situacao` | `bloco` com equipe e equipes travadas (D-006); `placarFinal` (com `final: true`, `placar` e `historia`) | `{ equipe, persona, indicadores, mes, divida, narrativa: [opção, carta], periodo, resumo, titulo?, final, placar?, historia? }` |
 | `decisao` | `decidindo` | `{ rodada, contexto, opcoes: [{ id, rotulo, votos }], meuVoto, podeVotar, motivo: null|"entrouDepois"|"pausado", forcada, prazo, pausado, restanteMs, periodo, situacao }` |
 | `prorrogacao` | `prorrogacao` com a própria equipe empatada | igual a `decisao`, só com as opções empatadas |
-| `sorteando` | `sorteio` (não revela a carta), ou `resultado` ainda sem o nó | `{ equipe, rodada }` |
+| `sorteando` | `sorteio` (não revela a carta), ou `resultado` ainda sem o nó. No formato simples, nunca: o `sorteio` mostra o `resultado`, e o `resultado` sem o nó é a `aguardando` com `motivo: 'votacaoEncerrada'`. A `decisao` leva `dinheiro: { valor, emprestimo }` em cada opção (historia.dinheiroDaOpcao) só no formato simples | `{ equipe, rodada }` |
 | `resultado` | `resultado` | `{ equipe, rodada, origem, decisao, carta, delta, indicadores, mes, divida, cartaCusto, deAntes, protecaoDoMes, periodo }` |
 | `comparativo` | `comparativo` | `{ enquete, afirmacoes: [{ id, texto, antes, depois }] }`, só os votos do próprio aparelho |
 | `fim` | `fim` | `{ equipe, placar, historia, resumo, periodo }` |
@@ -804,6 +815,11 @@ celular e no `test/carregar-nucleo.mjs`.
 | `historiaDaEquipe(conteudo, equipeId, resultados) → [{ rodadaId, titulo, rotulo, opcao: { rotulo, narrativa }, carta: { titulo, narrativa, tom }, mes, cartaCusto, deAntes, protecaoDoMes, saldoAcumulado, divida }]` | um item por rodada com resultado da equipe, na ordem das rodadas do config (D-045), com qualquer número de rodadas; `rotulo` (esquema v3) é o nome curto, `rotuloDaRodada(titulo, posição no config)`; a `opcao` vem com o texto da persona da equipe (`textoDaOpcao`, D-054); `narrativa`, `tom`, `mes` e `cartaCusto` ausentes viram `null`; `deAntes` ausente vira `[]`; `protecaoDoMes` é o de `protecaoDoResultado` (D-059); `saldoAcumulado` é `patrimonioDe(depois)` e `divida` é `dividaTotal(depois)` (esquema v2.2: o resumo mês a mês), `null` sem o `depois` |
 | `dividaTotal(valores) → { chequeEspecial, emprestimo, contasAtrasadas?, total } \| null` | esquema v2.2, a partir dos indicadores (o `depois` ou o placar): `chequeEspecial` = renda negativa com o sinal trocado (0 se não é negativa), `emprestimo` = o saldo devedor (0 sem o indicador), `total` = a soma. É a "dívida" da tela. `null` sem a renda. Esquema v3.1 (D-066): com o indicador `contas_atrasadas` nos valores, `contasAtrasadas` entra no objeto, **fora** do `total` (revisão da F6c: o telão escrevia "dívida R$ 3.000" e o celular, "Dívida hoje R$ 7.811", para a mesma equipe; agora as duas telas escrevem o `total`, o banco e o empréstimo, e as contas atrasadas à parte). O patrimônio (`patrimonioDe`) desconta os três |
 | `faltouNaMesaDe(valores) → n \| null` | D-066: o acumulado de `faltou_na_mesa`, ou `null` sem o indicador. Não é dívida |
+| `formatoSimples(conteudo) → boolean` | `regras.formatoSimples === true` (decisão do Kleber de 05/10 à noite) |
+| `dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) → { valor, emprestimo }` | formato simples: a soma dos `soma.renda` dos efeitos diretos da opção (sem condição, ou só com `persona`, `opcao`, `rodada` valendo); o empréstimo à parte; condição de equipe, indicador ou histórico fica de fora (é a consequência, a surpresa do resultado) |
+| `textoDoDinheiro(dinheiro, moeda, periodo) → string` | "+R$ 900 no bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre", "+R$ 1.500 emprestado" (e " · −R$ X no bimestre" se a opção também mexe na renda) |
+| `dinheiroDaFamilia(valores) → { situacao: 'tem' \| 'devendo', valor } \| null` / `textoDaFamilia(valores, moeda)` | o patrimônio (`patrimonioDe`) em reais inteiros: "tem R$ X" ou "devendo R$ X" |
+| `primeiraFrase(texto) → string \| null` | a primeira frase (o evento do mês no resultado do formato simples) |
 | `fraseAcimaDoTrabalho(protecao, nome, moeda, periodo?) → string \| null` | D-067, de `protecaoDoResultado`: "Auxílio do INSS (45 dias): R$ 2.431, mais do que Bruna ganhava trabalhando num bimestre comum (R$ 1.400)." O nome do que pagou vem dos itens da proteção (o config); o "1 salário mínimo" fica no rótulo do efeito ou na fala do apresentador (o núcleo não escreve conteúdo). `null` sem `acimaDoTrabalho` |
 | `fraseDoLimite(mes, moeda) → string \| null` | D-066: "O limite do cheque especial acabou: R$ X de contas ficaram atrasadas (multa de R$ M), a casa ficou sem R$ S do que não se paga depois e R$ Y de comida não deu para comprar." (o "ficou sem" só com `mes.ficouSem` > 0) e/ou "Pagou R$ Z de contas atrasadas."; `null` sem nada disso ou em sala sem o limite |
 | `periodo(conteudo) → { meses, nome, noPeriodo, doPeriodo }` | esquema v3: `regras.mesesPorRodada` (inteiro ≥ 1, senão 1) e o nome do período: 1 "mês", 2 "bimestre", 3 "trimestre", 6 "semestre", outro "período de N meses"; `noPeriodo` = "no " + nome, `doPeriodo` = "do " + nome |
