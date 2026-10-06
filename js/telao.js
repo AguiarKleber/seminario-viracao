@@ -1981,9 +1981,10 @@
   // D-079 (teste do Kleber de 06/10, prints 3, 4 e 7): o bloco de dados diz o
   // que é o tópico (contexto), até 3 números (itens) e de onde vêm (fonte),
   // tudo do config. Desde a D-080, "Caminhos" (4 itens, um por caminho) e a
-  // "Conversa em grupos" (os passos da atividade) usam a mesma tela. A tela só com isso: a trilha do seminário e o placar
-  // resumido saíam juntos e poluíam (pedido G1; no print 3, "Dados: gestão por
-  // algoritmo" era só o título e a trilha, sem dado nenhum). O "Mapa do
+  // "Conversa em grupos" (os passos da atividade) usam a mesma tela. A tela só
+  // com isso: a trilha do seminário e o placar resumido saíam juntos e
+  // poluíam (pedido G1; no print 3, "Dados: gestão por algoritmo" era só o
+  // título e a trilha, sem dado nenhum). O "Mapa do
   // seminário" continua com a linha por extenso, que é o conteúdo dele, depois
   // do contexto. O bloco sem contexto nem itens (um config de antes) fica como
   // era, com a trilha e o placar resumido.
@@ -2875,7 +2876,7 @@
           el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
         ]),
         consequencias.length > 0 ? el('p', {
-          classe: 'simples-obs', 'aria-label': 'Por causa de escolhas anteriores',
+          classe: 'simples-obs',
           dados: { motivos: consequencias.map((g) => g.motivo).join(' | '), valores: consequencias.map((g) => g.valor).join(' ') },
         }, consequencias.map((g, i) => [
           i > 0 ? ' · ' : null,
