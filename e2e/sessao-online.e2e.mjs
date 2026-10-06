@@ -708,7 +708,7 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   const nome = config.personas[config.equipes.e1.persona].nome;
   const per = H.periodo(config);
   // A conta de um bimestre com o limite: "o básico custa R$ Y no bimestre (R$ F
-  // de comida não foi comprada)" e "multa e mora das contas atrasadas R$ M". E
+  // de comida não foi comprada)" e "multa e juros das contas atrasadas R$ M". E
   // ela fecha: entrou + proteção − gastos − (básico − comida não comprada) −
   // juros − multa − mora = saldo do bimestre (contratos, seção 3).
   async function trechosDaConta(m) {
@@ -762,7 +762,7 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   for (const x of [
     `Dívida total ${await moeda(totalDaTela)}`,
     `Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite · juros de 8% ao mês`,
-    `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e mora de 1% ao mês`,
+    `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e juros de 1% ao mês`,
   ]) assert.ok(lido.divida.texto.includes(x), `placar final: "${x}" em "${lido.divida.texto}"`);
   assert.ok(!lido.divida.texto.includes('Faltou na mesa'), 'o que faltou na mesa não entra na dívida');
   // Sem caixa (o banco no limite), o "faltou" da frase do topo é a própria
@@ -1247,7 +1247,7 @@ async function jogar({ site, navegador, vigiar }) {
   const inclui = (texto, trecho) => String(texto).toLocaleLowerCase('pt-BR').includes(String(trecho).toLocaleLowerCase('pt-BR'));
   // O dinheiro formatado pelo próprio celular (o mesmo Viracao.formatar da tela).
   const moedaNa = (c, v) => c.p.evaluate((x) => globalThis.Viracao.formatar.moeda(x), v);
-  // "Entrou R$ X · gastos R$ G · o básico da família custa R$ Y · faltou R$ Z"
+  // "Entrou R$ X · gastos R$ G · o básico da casa custa R$ Y · faltou R$ Z"
   // (D-044, D-052), com os números do mês que o telão gravou em
   // resultados/{r}/{eq}.mes. Os gastos e os juros só aparecem quando existem.
   async function conferirContaDoMes(c, mes, onde) {
@@ -1699,7 +1699,7 @@ async function jogar({ site, navegador, vigiar }) {
   const basicoE1 = listaDe(personaDe(E1).basico.itens).reduce((soma, i) => soma + i.valor, 0);
   {
     const texto = await cel[0].p.textContent('#tela');
-    assert.ok(inclui(texto, `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'persona: o total do básico da casa');
+    assert.ok(inclui(texto, `o básico da casa custa ${await moedaNa(cel[0], basicoE1)}`), 'persona: o total do básico da casa');
     for (const i of listaDe(personaDe(E1).basico.itens)) assert.ok(texto.includes(i.rotulo) && texto.includes(i.fonte), `persona: o item "${i.rotulo}" do básico, com a fonte`);
   }
   await conferirCelular(cel[0], 'persona');
@@ -1707,7 +1707,7 @@ async function jogar({ site, navegador, vigiar }) {
   await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
   await esperarTela(cel[0], 'situacao');
   await conferirFamilia(cel[0], E1, 'situação antes do primeiro mês');
-  assert.ok(inclui(await cel[0].p.textContent('#tela'), `o básico da família custa ${await moedaNa(cel[0], basicoE1)}`), 'situação: o básico antes do primeiro mês');
+  assert.ok(inclui(await cel[0].p.textContent('#tela'), `o básico da casa custa ${await moedaNa(cel[0], basicoE1)}`), 'situação: o básico antes do primeiro mês');
   assert.equal(await cel[0].p.locator('.conta-mes').count(), 0, 'antes do primeiro mês não há conta do mês');
   await conferirCelular(cel[0], 'situacao-bloco');
 
