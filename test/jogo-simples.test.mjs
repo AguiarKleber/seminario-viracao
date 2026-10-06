@@ -125,7 +125,7 @@ test('config.json do dia: as costas travam na segunda puxada seguida (−R$ 1.23
   const motivo = (a) => H.consequenciasDaRodada([{ equipeId: 'e1', deAntes: a.deAntes }]);
   // A (12 h no sol) e B (dois apps) seguidas: as costas travam em mar–abr.
   const puxadas = jogar(cfg, 'ABDCAD').resultados;
-  assert.deepEqual(motivo(puxadas[1]), [{ motivo: 'as costas travaram (2 puxadas seguidas)', valor: -1230, equipes: ['e1'] }]);
+  assert.deepEqual(motivo(puxadas[1]), [{ motivo: 'as costas travaram (2 bimestres puxados seguidos)', valor: -1230, equipes: ['e1'] }]);
   // A e depois D (aceitar até entrega ruim): nada.
   assert.deepEqual(motivo(jogar(cfg, 'ADDCAD').resultados[1]), []);
   // As seis puxadas (A, B, C, A, D, B): as costas travam em todo bimestre depois do primeiro.

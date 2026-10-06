@@ -90,7 +90,7 @@
       "basico": {
         "itens": [
           {
-            "rotulo": "comida (cesta básica × 2,5)",
+            "rotulo": "comida (2,5 cestas básicas)",
             "valor": 2098,
             "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 2,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)",
             "comida": true
@@ -119,7 +119,7 @@
           {
             "rotulo": "ônibus da companheira",
             "valor": 95,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95 (até 06/10 de manhã, 30 passagens, estimativa sem conta; reconta da D-079). Que ela não pegue outro ônibus no mês (a revenda vai a pé ou na moto do Jonas): estimativa sem fonte",
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95 (até 06/10 de manhã, 30 passagens, estimativa sem conta; reconta da D-079). Estimativa sem fonte: ela não pega outro ônibus no mês (a revenda vai a pé ou na moto do Jonas)",
             "semAtraso": true
           },
           {
@@ -138,7 +138,7 @@
       "outraRenda": {
         "rotulo": "faxinas e revenda da companheira",
         "valor": 1600,
-        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300 (até 06/10 de manhã, 8 por mês, o mês arredondado para 4 semanas; reconta da D-079). DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Três dias por semana na mesma casa gera vínculo (LC 150/2015), por isso a diarista fica em até 2 por cliente. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. D-062: ninguém com carteira na casa"
+        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300 (até 06/10 de manhã, 8 por mês, o mês arredondado para 4 semanas; reconta da D-079). DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Trabalhar três dias por semana na mesma casa já gera vínculo de emprego (Lei Complementar 150/2015); por isso, a diarista vai no máximo duas vezes por semana à mesma casa. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. Ninguém na casa tem carteira assinada"
       },
       "todoMes": [
         {
@@ -153,7 +153,7 @@
             "renda": -480
           },
           "fixo": true,
-          "rotulo": "parcela da moto",
+          "rotulo": "a parcela da moto",
           "fonte": "Tabela Fipe set/2026 (CG 160 Start 2026, R$ 18.598), 80% financiado em 48x a 1,97% a.m. (BCB, SGS 25471, jun/2026) = R$ 482"
         }
       ],
@@ -217,14 +217,14 @@
       "texto": "39 °C às 14h, a filha de férias e o IPVA com desconto até 30/01.",
       "padrao": "c",
       "contexto": {
-        "motoboy": "A parcela da moto vence dia 5, o IPVA tem desconto até 30/01, e às 14h faz 39 °C. A filha está de férias."
+        "motoboy": "A parcela da moto vence no dia 5, o IPVA tem desconto até 30/01, e às 14h faz 39 °C. A filha está de férias."
       },
       "efeitosGerais": [],
       "opcoes": [
         {
           "id": "a",
           "rotulo": "12 horas por dia no sol",
-          "narrativa": "Rodar 12 horas por dia, sete dias, no calor de 39 °C: mais entregas, menos sono e quase nada de casa.",
+          "narrativa": "Rodar 12 horas por dia, todo dia, no calor de 39 °C: mais entregas, menos sono e quase sem tempo em casa.",
           "impacto": "12 h por dia no sol: chega em casa e a filha de férias já dormiu",
           "efeitos": [
             {
@@ -239,7 +239,7 @@
         {
           "id": "b",
           "rotulo": "Atrasar a parcela da moto",
-          "narrativa": "Empurrar a parcela da moto de fevereiro para março: alivia agora, volta com multa e juros e arrisca a moto.",
+          "narrativa": "Empurrar a parcela de fevereiro para março: alivia agora, mas ela volta com multa e juros e arrisca a moto.",
           "impacto": "O banco liga todo dia, e em março a parcela volta com multa e juros",
           "efeitos": [
             {
@@ -254,14 +254,14 @@
         {
           "id": "c",
           "rotulo": "Jornada de sempre",
-          "narrativa": "Manter as cerca de 45 horas por semana de sempre, no sol, sem esticar e sem parar nos dias mais quentes.",
+          "narrativa": "Manter cerca de 45 horas por semana, como sempre, no sol, sem esticar e sem parar nos dias mais quentes.",
           "impacto": "Roda no sol como sempre: chega exausto, e a conta segue sem fechar",
           "efeitos": []
         },
         {
           "id": "d",
           "rotulo": "Parar das 10h às 16h",
-          "narrativa": "A Defesa Civil pede para evitar esforço das 10h às 16h no calor: parar poupa o corpo e perde o pico do almoço.",
+          "narrativa": "A Defesa Civil recomenda evitar esforço das 10h às 16h no calor: parar poupa o corpo, mas custa o pico do almoço.",
           "impacto": "Volta inteiro para a filha, e o pico do almoço fica para quem aguentou o sol",
           "efeitos": [
             {
@@ -269,15 +269,15 @@
                 "renda": -110
               },
               "rotulo": "parou das 10h às 16h nos dias de calor forte",
-              "fonte": "Defesa Civil de Porto Alegre (08/02/2025): evitar esforço das 10h às 16h; 39,5 °C em 11/02/2025 (Correio Braziliense). 6 dias de calor extremo no bimestre (estimativa: em fev/2025, três dias passaram de 37 °C numa semana) × 40% do dia × 50%: a OIT (\"Trabalhar num planeta mais quente\") estima que, entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade, e a hora no sol rende menos; das 10h às 16h fica o pico do almoço (R$ 107). R$ 110 na tela e no jogo"
+              "fonte": "Defesa Civil de Porto Alegre (08/02/2025): evitar esforço das 10h às 16h; 39,5 °C em 11/02/2025 (Correio Braziliense). 6 dias de calor extremo no bimestre (estimativa: em fev/2025, três dias passaram de 37 °C em uma semana) × 40% do dia × 50%: a OIT (\"Trabalhar num planeta mais quente\") estima que, entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade, e a hora no sol rende menos; das 10h às 16h fica o pico do almoço (R$ 107). R$ 110 na tela e no jogo"
             }
           ]
         },
         {
           "id": "e",
           "rotulo": "Pagar o IPVA em janeiro",
-          "narrativa": "O IPVA da moto tem desconto se pago até 30/01: pagar agora sai do cheque especial, que cobra juros todo mês.",
-          "impacto": "Paga a moto adiantado no cheque especial: o ano já começa no vermelho",
+          "narrativa": "O IPVA da moto tem desconto se for pago até 30/01: pagar agora usa o cheque especial, que cobra juros todo mês.",
+          "impacto": "Paga o IPVA adiantado no cheque especial: o ano já começa no vermelho",
           "efeitos": [
             {
               "soma": {
@@ -335,7 +335,7 @@
           "soma": {
             "renda": -630
           },
-          "rotulo": "as costas travaram (2 puxadas seguidas): 7 dias parado",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
           "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
         },
         {
@@ -349,7 +349,7 @@
             "renda": -600
           },
           "categoria": "gasto",
-          "rotulo": "as costas travaram (2 puxadas seguidas): fisioterapia, 4 sessões",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
           "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
         }
       ],
@@ -395,7 +395,7 @@
           "id": "c",
           "rotulo": "Pegar um empréstimo",
           "narrativa": "Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano.",
-          "impacto": "12 parcelas: duas dívidas pagas com a mesma entrega",
+          "impacto": "12 parcelas: a mesma entrega agora paga a moto e o empréstimo",
           "efeitos": [
             {
               "emprestimo": {
@@ -426,7 +426,7 @@
         {
           "id": "e",
           "rotulo": "Trocar iFood pelo 99Food",
-          "narrativa": "Largar o iFood pelo bônus do 99Food: paga mais por corrida, sem saber quantos pedidos virão.",
+          "narrativa": "Largar o iFood pelo bônus do 99Food, que paga mais por corrida, sem saber quantos pedidos virão.",
           "impacto": "Troca de app pelo bônus: começa do zero, sem saber se o pedido vem",
           "efeitos": [
             {
@@ -446,7 +446,7 @@
       "texto": "Chove forte, o Guaíba sobe e o frio chega.",
       "padrao": "d",
       "contexto": {
-        "motoboy": "O pneu traseiro está quase no fim, com 13 mil km no ano, e a promoção de chuva paga de R$ 3 a R$ 12 por entrega."
+        "motoboy": "O pneu traseiro está quase no fim, com 13 mil km no ano. Com chuva, o app paga de R$ 3 a R$ 12 a mais por entrega."
       },
       "efeitosGerais": [
         {
@@ -459,7 +459,7 @@
           "soma": {
             "renda": -630
           },
-          "rotulo": "as costas travaram (2 puxadas seguidas): 7 dias parado",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
           "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
         },
         {
@@ -473,7 +473,7 @@
             "renda": -600
           },
           "categoria": "gasto",
-          "rotulo": "as costas travaram (2 puxadas seguidas): fisioterapia, 4 sessões",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
           "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
         }
       ],
@@ -481,7 +481,7 @@
         {
           "id": "a",
           "rotulo": "Pneu novo antes da chuva",
-          "narrativa": "O pneu traseiro está quase no fim, com 13 mil km: na chuva, careca derrapa e é multa grave; trocar custa agora.",
+          "narrativa": "O pneu traseiro está quase no fim (13 mil km): careca, ele derrapa na chuva e dá multa grave; trocar custa agora.",
           "impacto": "Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado",
           "efeitos": [
             {
@@ -497,7 +497,7 @@
         {
           "id": "b",
           "rotulo": "Parar nos dias de alerta",
-          "narrativa": "O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho.",
+          "narrativa": "A meteorologia dá alerta laranja de temporal, com vento de 100 km/h: parar é seguro, mas não rende.",
           "impacto": "Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco",
           "efeitos": [
             {
@@ -512,7 +512,7 @@
         {
           "id": "c",
           "rotulo": "Rodar de madrugada",
-          "narrativa": "Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro.",
+          "narrativa": "Com chuva, o app paga um extra por entrega: rodar até de madrugada rende mais, no frio e no escuro.",
           "impacto": "Rodando de madrugada na chuva: a companheira acordada esperando a moto",
           "efeitos": [
             {
@@ -534,7 +534,7 @@
         {
           "id": "e",
           "rotulo": "Comprar capa, bota e luva",
-          "narrativa": "Kit de chuva para moto (capa, bota, luva e balaclava): chega seco e protegido, com dinheiro que sai do mercado.",
+          "narrativa": "Kit de chuva para moto (capa, bota, luva e balaclava): ele chega seco e protegido, mas o dinheiro sai do mercado.",
           "impacto": "O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez",
           "efeitos": [
             {
@@ -568,7 +568,7 @@
           "soma": {
             "renda": -630
           },
-          "rotulo": "as costas travaram (2 puxadas seguidas): 7 dias parado",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
           "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
         },
         {
@@ -582,7 +582,7 @@
             "renda": -600
           },
           "categoria": "gasto",
-          "rotulo": "as costas travaram (2 puxadas seguidas): fisioterapia, 4 sessões",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
           "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
         }
       ],
@@ -590,8 +590,8 @@
         {
           "id": "a",
           "rotulo": "Entrar no +Entregas",
-          "narrativa": "O iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega.",
-          "impacto": "+Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete",
+          "narrativa": "O +Entregas promete mais ganho e quase não aceita recusa; os entregadores dizem que ele paga R$ 3 por entrega.",
+          "impacto": "+Entregas: 12 horas na rua, todos os dias, e a filha só o vê de capacete",
           "efeitos": [
             {
               "soma": {
@@ -674,10 +674,10 @@
     {
       "id": "r5",
       "titulo": "Set–out: breque geral",
-      "texto": "Breque geral em 01/09, e o concorrente paga bônus a quem furar.",
+      "texto": "Greve dos entregadores em 01/09, e outro app paga bônus a quem furar.",
       "padrao": "a",
       "contexto": {
-        "motoboy": "Breque geral dia 1º: furar fica marcado entre os colegas, aderir custa o dia. O Acampamento Farroupilha recebe 1,1 milhão de visitantes."
+        "motoboy": "Breque geral no dia 1º: quem fura fica marcado entre os colegas, e quem adere perde o dia. O Acampamento Farroupilha recebe 1,1 milhão de visitantes."
       },
       "efeitosGerais": [
         {
@@ -708,7 +708,7 @@
             }
           },
           "categoria": "gasto",
-          "rotulo": "a moto quebrou (revisão adiada): relação e pneu",
+          "rotulo": "a moto quebrou (revisão adiada): kit da corrente e pneu",
           "fonte": "Kit de relação Honda R$ 294 + pneu traseiro R$ 228 (lojas, B; a carta \"A moto quebrou\" do config de 05/10) = R$ 522, R$ 520 na tela"
         },
         {
@@ -722,7 +722,7 @@
             }
           },
           "categoria": "gasto",
-          "rotulo": "a moto quebrou (revisão adiada): relação, o pneu era novo",
+          "rotulo": "a moto quebrou (revisão adiada): kit da corrente; o pneu era novo",
           "fonte": "Kit de relação Honda R$ 294 (lojas, B), R$ 290 na tela. Quem trocou o pneu em mai–jun (opção A) não paga o pneu de novo: com 13.520 km de uso até aqui, ele ainda não chegou ao fim (15 a 20 mil km, Sindimoto-SP via AutoPapo)"
         },
         {
@@ -735,7 +735,7 @@
           "soma": {
             "renda": -630
           },
-          "rotulo": "as costas travaram (2 puxadas seguidas): 7 dias parado",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
           "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
         },
         {
@@ -749,7 +749,7 @@
             "renda": -600
           },
           "categoria": "gasto",
-          "rotulo": "as costas travaram (2 puxadas seguidas): fisioterapia, 4 sessões",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
           "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
         }
       ],
@@ -779,8 +779,8 @@
         {
           "id": "c",
           "rotulo": "Parar no dia do breque",
-          "narrativa": "01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio.",
-          "impacto": "Para no breque com o país, e o app responde com cinco dias de bloqueio",
+          "narrativa": "01/09: o breque pede R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio.",
+          "impacto": "Adere ao breque com o país, e o app responde com cinco dias de bloqueio",
           "efeitos": [
             {
               "soma": {
@@ -801,7 +801,7 @@
         {
           "id": "d",
           "rotulo": "Furar o breque pelo bônus",
-          "narrativa": "O concorrente paga bônus a quem furar; rodar as noites da Farroupilha rende e queima com os colegas.",
+          "narrativa": "Outro app paga bônus a quem furar; rodar nas noites da Farroupilha rende, mas pega mal com os colegas.",
           "impacto": "Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra",
           "efeitos": [
             {
@@ -843,7 +843,7 @@
       "texto": "Dezembro começa com 16% mais pedidos; 13º, só com carteira.",
       "padrao": "d",
       "contexto": {
-        "motoboy": "Dezembro começa com 16% mais pedidos no iFood. Quem tem carteira recebe o 13º até dia 20; aqui, ninguém. A conta de luz pode subir 24%."
+        "motoboy": "Dezembro começa com 16% mais pedidos no iFood. Quem tem carteira assinada recebe o 13º até o dia 20; nesta casa, ninguém tem. A conta de luz pode subir 24%."
       },
       "efeitosGerais": [
         {
@@ -856,7 +856,7 @@
           "soma": {
             "renda": -630
           },
-          "rotulo": "as costas travaram (2 puxadas seguidas): 7 dias parado",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
           "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
         },
         {
@@ -870,7 +870,7 @@
             "renda": -600
           },
           "categoria": "gasto",
-          "rotulo": "as costas travaram (2 puxadas seguidas): fisioterapia, 4 sessões",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
           "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
         }
       ],
@@ -878,7 +878,7 @@
         {
           "id": "a",
           "rotulo": "Pedir ajuda à família",
-          "narrativa": "Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, a rede é a família.",
+          "narrativa": "Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, resta a família.",
           "impacto": "A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa",
           "efeitos": [
             {
@@ -1054,7 +1054,7 @@
       "id": "natal",
       "titulo": "Natal sem 13º",
       "curto": "Natal",
-      "narrativa": "Dezembro encheu de pedidos, e a conta de luz subiu. O 13º não veio, porque ninguém aqui tem carteira.",
+      "narrativa": "Dezembro encheu de pedidos, e a conta de luz subiu. O 13º não veio, porque ninguém nesta casa tem carteira assinada.",
       "peso": 1,
       "rodadas": [
         "r6"
