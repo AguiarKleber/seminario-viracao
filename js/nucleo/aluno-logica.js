@@ -106,6 +106,19 @@
 
   const personaDe = (conteudo, equipeId) => em(conteudo, 'equipes', equipeId, 'persona');
 
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite). Lido do conteúdo aqui mesmo, e não do historia.js: a decisão e o
+  // resultado não podem depender da ordem de carga.
+  const simples = (conteudo) => em(conteudo, 'regras', 'formatoSimples') === true;
+
+  // O dinheiro da opção (historia.dinheiroDaOpcao, a mesma conta do telão),
+  // buscado na hora da chamada. Sem o historia.js, null: a opção sai sem a
+  // linha do dinheiro, e o voto continua funcionando.
+  function dinheiroDe(conteudo, rodadaId, opcaoId, personaId) {
+    const H = raiz.Viracao.historia;
+    return H && H.dinheiroDaOpcao ? H.dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) : null;
+  }
+
   // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
   // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
   // itens, a mesma conta do motor (que o celular não carrega).
@@ -248,6 +261,7 @@
     const rodada = em(conteudo, 'rodadas', estado.rodada);
     if (!rodada) return aguardando('telao');
     const sub = estado.subfase;
+    const semSorteio = simples(conteudo);
     const infoRodada = { id: estado.rodada, titulo: rodada.titulo, texto: rodada.texto };
     const empatadas = em(estado, 'empatadas', equipeId);
     if (sub === 'decidindo' || (sub === 'prorrogacao' && empatadas)) {
@@ -273,9 +287,14 @@
         // decisão deixava de ser um dilema.
         // D-073: o impacto (o custo humano) vai junto do rótulo, só
         // quando a opção o tem: num config sem ele, as opções ficam iguais.
+        // Formato simples (decisão do Kleber de 05/10 à noite): o dinheiro que
+        // a opção move ({ valor, emprestimo }, historia.dinheiroDaOpcao), a
+        // mesma conta da linha do telão. Só nele: as opções de um config sem
+        // a chave ficam iguais.
         opcoes: visiveis.map((o) => {
           const { rotulo, impacto } = textoOpcao(conteudo, estado.rodada, o, personaDe(conteudo, equipeId));
-          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }) };
+          const dinheiro = semSorteio ? dinheiroDe(conteudo, estado.rodada, o, personaDe(conteudo, equipeId)) : null;
+          return { id: o, rotulo, votos: contagem[o] || 0, ...(impacto === null ? {} : { impacto }), ...(dinheiro ? { dinheiro } : {}) };
         }),
         meuVoto: em(decisoesDaEquipe, uid),
         podeVotar: motivo === null,
@@ -291,8 +310,10 @@
     if (sub === 'fechando') return aguardando('votacaoEncerrada');
     const res = em(resultados, estado.rodada, equipeId);
     // No sorteio o resultado já está gravado, mas o celular não revela antes do
-    // telão: a sala vê as fatias girarem junto.
-    if (sub === 'sorteio' || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
+    // telão: a sala vê as fatias girarem junto. No formato simples não há
+    // sorteio (o anfitrião vai direto ao resultado), e um "sorteio" que chegue
+    // assim mesmo (sala de antes, outra versão do telão) mostra o resultado.
+    if ((sub === 'sorteio' && !semSorteio) || !res) return tela('sorteando', { equipe: resumoEquipe(conteudo, equipeId), rodada: infoRodada });
     const opcao = textoOpcao(conteudo, estado.rodada, res.decisao, personaDe(conteudo, equipeId));
     const carta = em(conteudo, 'cartas', res.carta) || {};
     return tela('resultado', {

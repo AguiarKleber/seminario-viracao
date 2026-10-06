@@ -456,9 +456,92 @@
     return frases.length > 0 ? frases.join(' ') : null;
   }
 
+  // ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
+  //
+  // No teste dele, o jogo de 6 personagens com sorteio de cartas e várias telas
+  // de placar ficou complexo demais para explicar em aula. Com
+  // regras.formatoSimples: um personagem só (o Jonas) para todas as equipes, 5
+  // opções por bimestre, o evento do mês igual para todos (sem sorteio) e o
+  // dinheiro na própria opção. O telão e o celular perguntam aqui, e não cada
+  // um ao config.
+  function formatoSimples(conteudo) {
+    return em(conteudo, 'regras', 'formatoSimples') === true;
+  }
+
+  // Um id ou uma lista de ids (a Condicao do config).
+  const contem = (valor, id) => (typeof valor === 'string' ? valor === id : lista(valor).includes(id));
+
+  // O efeito é direto quando vale sempre que a equipe escolhe a opção: sem
+  // condição, ou com condição só de persona, opção ou rodada, valendo aqui.
+  // Condição de equipe, de indicador ou de histórico (decidiu, sorteou) é
+  // consequência, que depende do caminho: fica de fora da linha da opção.
+  function efeitoDireto(se, { rodadaId, opcaoId, personaId }) {
+    if (se == null) return true;
+    if (typeof se !== 'object') return false;
+    for (const [chave, valor] of Object.entries(se)) {
+      if (chave === 'persona' && contem(valor, personaId)) continue;
+      if (chave === 'opcao' && contem(valor, opcaoId)) continue;
+      if (chave === 'rodada' && contem(valor, rodadaId)) continue;
+      return false;
+    }
+    return true;
+  }
+
+  // O dinheiro que a opção move, para a linha embaixo dela ("+R$ 900 no
+  // bimestre"): a soma das somas na renda dos efeitos diretos da opção (o
+  // trabalho, o custo fixo, o gasto, a proteção), como o motor os soma, uma vez
+  // por período. O empréstimo vai à parte: é dívida, e não renda (o motor o
+  // deixa fora do saldo do período). O que vem depois, encadeado (a condição
+  // de histórico ou de estado, nos efeitos da opção, nos gerais da rodada ou na
+  // carta), fica de fora de propósito: é a surpresa do resultado. O multiplica
+  // não entra: o validador o recusa como efeito direto no formato simples,
+  // porque não tem valor fixo. { valor, emprestimo }; opção que não existe dá
+  // os dois 0.
+  function dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
+    let valor = 0;
+    let emprestimo = 0;
+    for (const efeito of lista(em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId, 'efeitos'))) {
+      if (!efeito || typeof efeito !== 'object' || !efeitoDireto(efeito.se, { rodadaId, opcaoId, personaId })) continue;
+      if (efeito.emprestimo) emprestimo += Number(efeito.emprestimo.valor) || 0;
+      else valor += Number(em(efeito, 'soma', 'renda')) || 0;
+    }
+    return { valor: valor + 0, emprestimo };
+  }
+
+  // A linha do dinheiro da opção, a mesma no telão e no celular: "+R$ 900 no
+  // bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre"; com empréstimo,
+  // "+R$ 1.500 emprestado" e, se a opção também mexe na renda, o valor depois
+  // ("+R$ 1.500 emprestado · −R$ 90 no bimestre"). A moeda vem da tela.
+  function textoDoDinheiro(dinheiro, moeda, per) {
+    if (!dinheiro) return null;
+    const noPeriodo = per && typeof per.noPeriodo === 'string' ? per.noPeriodo : 'no mês';
+    const doPeriodo = `${moeda(dinheiro.valor, { sinal: true })} ${noPeriodo}`;
+    if (!(dinheiro.emprestimo > 0)) return doPeriodo;
+    const emprestado = `+${moeda(dinheiro.emprestimo)} emprestado`;
+    return Math.round(dinheiro.valor) !== 0 ? `${emprestado} · ${doPeriodo}` : emprestado;
+  }
+
+  // O dinheiro da família no fim de um período: o patrimônio (o caixa menos a
+  // dívida total: o cheque especial, o empréstimo e as contas atrasadas), em
+  // reais inteiros. { situacao: 'tem' | 'devendo', valor (sempre ≥ 0) }; null
+  // sem a renda (sala sem resultado). O "tem R$ X" e o "devendo R$ X" das duas
+  // telas saem daqui.
+  function dinheiroDaFamilia(valores) {
+    const p = patrimonioDe(valores);
+    if (p === null) return null;
+    const r = Math.round(p) + 0;
+    return r < 0 ? { situacao: 'devendo', valor: -r } : { situacao: 'tem', valor: r };
+  }
+
+  function textoDaFamilia(valores, moeda) {
+    const d = dinheiroDaFamilia(valores);
+    return d ? `${d.situacao === 'devendo' ? 'devendo' : 'tem'} ${moeda(d.valor)}` : null;
+  }
+
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
     nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
+    formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
   };
 })(globalThis);

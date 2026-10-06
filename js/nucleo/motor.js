@@ -1089,9 +1089,77 @@
     };
   }
 
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite): sem sorteio, o patrimônio do fim depende só das escolhas, e dá para
+  // contar TODAS as combinações de opções das rodadas jogadas (5^6 = 15.625 com
+  // 6 bimestres de 5 opções). É a página "Das N combinações possíveis, X fecham
+  // o ano" do placar final: mostra que, mesmo escolhendo, faltou dinheiro.
+  // A árvore é percorrida em profundidade, na ordem das opções do config: as
+  // combinações que coincidem até uma rodada dividem o período já calculado
+  // (19.530 chamadas do aplicar para 15.625 caminhos de 6 rodadas, em vez de
+  // 93.750). Determinística: a mesma ordem dá o mesmo resultado em qualquer
+  // tela, e no empate a primeira combinação na ordem fica com o melhor e o pior.
+  // rodadas: os ids, na ordem em que o anfitrião as aplica (as do roteiro que
+  // foram jogadas: uma rodada pulada no dia não entra, como no estadoAntes).
+  // Só com UMA carta possível em cada rodada (o validador garante no formato
+  // simples). Com mais, lança: com sorteio, uma combinação não tem um valor só.
+  // Devolve { total, fecham (patrimônio do fim ≥ 0), melhor e pior ({ opcoes:
+  // [ids], valor }), valores (Float64Array, do maior para o menor) }.
+  function enumerarCombinacoes(config, { equipeId, rodadas }) {
+    const ordem = lista(rodadas);
+    const valores = [];
+    let fecham = 0;
+    let melhor = null;
+    let pior = null;
+    const caminho = [];
+    function descer(k, estado, historico) {
+      if (k === ordem.length) {
+        const v = patrimonio(estado);
+        valores.push(v);
+        if (v >= 0) fecham += 1;
+        if (!melhor || v > melhor.valor) melhor = { opcoes: caminho.slice(), valor: v };
+        if (!pior || v < pior.valor) pior = { opcoes: caminho.slice(), valor: v };
+        return;
+      }
+      const rodadaId = ordem[k];
+      const rodada = exigir(config.rodadas, rodadaId, 'Rodada');
+      const opcoes = lista(rodada.ordemOpcoes).length > 0 ? lista(rodada.ordemOpcoes) : Object.keys(rodada.opcoes || {});
+      for (const opcaoId of opcoes) {
+        const baralho = chances(config, { equipeId, rodadaId, opcaoId, estado, historico });
+        if (baralho.length !== 1) {
+          throw new Error(`Para contar as combinações, cada rodada precisa de uma carta só (o formato simples); a rodada "${rodadaId}" tem ${baralho.length} para a equipe "${equipeId}".`);
+        }
+        const carta = baralho[0].carta;
+        const depois = aplicar(config, { equipeId, rodadaId, opcaoId, cartaId: carta, estado, historico }).depois;
+        caminho.push(opcaoId);
+        descer(k + 1, depois, { ...historico, [rodadaId]: { decisao: opcaoId, carta } });
+        caminho.pop();
+      }
+    }
+    descer(0, estadoInicial(config, equipeId), {});
+    // Crescente pelo sort numérico do Float64Array, e depois invertida.
+    const ordenados = Float64Array.from(valores).sort().reverse();
+    return { total: valores.length, fecham, melhor, pior, valores: ordenados };
+  }
+
+  // O lugar de um patrimônio entre os da enumeração (valores do maior para o
+  // menor): 1 + quantos são maiores. Empate divide o lugar ("12º" para todas as
+  // combinações de mesmo valor). Busca binária: são 15.625 valores.
+  function lugarEntre(valores, valor) {
+    let baixo = 0;
+    let alto = valores.length;
+    while (baixo < alto) {
+      const meio = (baixo + alto) >> 1;
+      if (valores[meio] > valor) baixo = meio + 1;
+      else alto = meio;
+    }
+    return baixo + 1;
+  }
+
   V.motor = {
     estadoInicial, condicaoVale, chances, resolverRodada, aplicar, consolidarDecisao, decompor, historicoDe, totalBasico, mesComum,
-    patrimonio, mesesPorRodada, caminhosDeCartas, condicaoFixa, LIMITE_CAMINHOS, AMOSTRAS,
+    patrimonio, mesesPorRodada, caminhosDeCartas, cartasPossiveisNaRodada, condicaoFixa, LIMITE_CAMINHOS, AMOSTRAS,
+    enumerarCombinacoes, lugarEntre,
     trabalhoComum, protecaoAcimaDoTrabalho, limiteDe, comidaDoBasico, semAtrasoDoBasico,
     // Cópia: a tabela do cache não pode ser alterada por quem chama.
     cronograma: (valor, parcelas, taxaMes) => cronograma(valor, parcelas, taxaMes).map((p) => ({ ...p })),

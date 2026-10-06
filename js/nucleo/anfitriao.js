@@ -473,7 +473,14 @@
         if (res.protecaoAcimaDoTrabalho) daRodada[eq].protecaoAcimaDoTrabalho = res.protecaoAcimaDoTrabalho;
       }
       const placar = calcularPlacar({ ...(resultados || {}), [r]: daRodada }, e);
-      return gravarComEstado({ ...e, subfase: 'sorteio', empatadas: null, restanteMs: null }, {
+      // O formato simples (decisão do Kleber de 05/10 à noite) não tem sorteio:
+      // a carta é o evento do mês, a mesma para todas as equipes, e o
+      // fechamento vai direto ao resultado. Só a subfase muda: a semente, o
+      // resultado, o placar e a gravação única com geracao + 1 são os mesmos
+      // (as regras v4 aceitam qualquer texto em estado/subfase, e o avançar e o
+      // desfazer já tratam o "resultado").
+      const depoisDeApurar = config.regras?.formatoSimples === true ? 'resultado' : 'sorteio';
+      return gravarComEstado({ ...e, subfase: depoisDeApurar, empatadas: null, restanteMs: null }, {
         [cam('resultados', r)]: daRodada,
         [cam('placar')]: placar,
       });

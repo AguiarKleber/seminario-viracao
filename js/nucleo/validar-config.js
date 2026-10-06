@@ -128,7 +128,7 @@
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
     regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
       'jurosDividaMes', 'jurosFonte', 'pisoTrabalho', 'mesesPorRodada',
-      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro'],
+      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro', 'formatoSimples'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
     persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
@@ -636,6 +636,13 @@
       if (m !== undefined) n.mesesPorRodada = m;
     }
     divida(r, g, n);
+    // O formato simples (decisão do Kleber de 05/10 à noite): um personagem só,
+    // sem sorteio (uma carta só por rodada: o evento do mês, igual para todas
+    // as equipes), o dinheiro na própria opção e o placar pelo caminho de cada
+    // equipe. false some na normalização, como o protege: o hash e as telas de
+    // um config sem a chave não mudam. As conferências dele estão em
+    // conferirFormatoSimples.
+    if (tem(g, 'formatoSimples') && booleano(r, g, 'formatoSimples', 'regras', false) === true) n.formatoSimples = true;
     // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
     // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
     if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
@@ -1360,6 +1367,59 @@
     }
   }
 
+  // O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+  // noite). Todas as equipes jogam o mesmo jogo, e só as escolhas mudam: é o que
+  // deixa o placar comparar o caminho de cada equipe com todas as combinações
+  // possíveis (motor.enumerarCombinacoes). Por isso:
+  // - um personagem só: todas as equipes com a mesma persona (a tela chama a
+  //   equipe pela cor, e o "Conheça o Jonas" mostra uma casa só);
+  // - sem sorteio: em cada rodada, para cada equipe, no máximo UMA carta pode
+  //   sair (o evento do mês). A conta é o teto do motor
+  //   (motor.cartasPossiveisNaRodada: a parte que lê o estado conta como
+  //   "pode"), e não o estado: uma segunda carta que só saísse num caminho raro
+  //   viraria sorteio na frente da turma. Nenhuma carta é o erro de sempre
+  //   (conferirCartasPossiveis);
+  // - o dinheiro da opção (historia.dinheiroDaOpcao) é a soma dos efeitos
+  //   diretos dela. Um "multiplica" direto na renda não tem valor fixo (depende
+  //   do que entrou antes no período), e a linha da opção mostraria um número
+  //   que o resultado não confirma. O multiplica com condição de estado ou de
+  //   histórico (a consequência que vem depois) continua valendo: ele é a
+  //   surpresa, e não aparece na linha.
+  // As duas primeiras conferências leem só o normalizado; a das cartas precisa
+  // do motor e roda, como a conferência de carta possível, só sem outros erros.
+  function conferirFormatoSimples(r, cfg) {
+    if (cfg.regras.formatoSimples !== true) return;
+    const personas = [...new Set(cfg.ordem.equipes.map((id) => cfg.equipes[id]?.persona).filter((p) => typeof p === 'string'))];
+    if (personas.length > 1) {
+      r.erro('equipes', `no formato simples, todas as equipes jogam com a mesma persona; há ${personas.length} (${personas.join(', ')})`);
+    }
+    for (const rodadaId of cfg.ordem.rodadas) {
+      const rodada = cfg.rodadas[rodadaId];
+      for (const opcaoId of rodada?.ordemOpcoes || []) {
+        (rodada.opcoes[opcaoId]?.efeitos || []).forEach((efeito, i) => {
+          if (efeito?.multiplica === undefined || !Object.hasOwn(efeito.multiplica, 'renda')) return;
+          if (efeito.se && !Object.keys(efeito.se).every((k) => k === 'persona' || k === 'opcao' || k === 'rodada')) return;
+          r.erro(`rodadas.${rodadaId}.opcoes.${opcaoId}.efeitos[${i}]`, 'no formato simples, a opção não multiplica a renda direto: o dinheiro mostrado na opção é a soma dos efeitos dela; use "soma"');
+        });
+      }
+    }
+    if (r.erros.length > 0) return;
+    const M = raiz.Viracao.motor;
+    if (!M) {
+      r.aviso('cartas', 'motor não carregado: a conferência de uma carta por rodada do formato simples foi pulada');
+      return;
+    }
+    for (const rodadaId of cfg.ordem.rodadas) {
+      for (const equipeId of cfg.ordem.equipes) {
+        const n = M.cartasPossiveisNaRodada(cfg, equipeId, rodadaId);
+        if (n > 1) {
+          r.erro(`rodadas.${rodadaId}`, `no formato simples, só uma carta pode sair em cada rodada (o evento do mês, sem sorteio); para a equipe ${equipeId}, podem sair ${n}`);
+          break;
+        }
+      }
+    }
+  }
+
   // Pelo menos uma carta possível em cada persona × opção × rodada, em TODO estado
   // alcançável: somenteSe e ajustesDePeso leem indicadores, então um baralho pode
   // ficar vazio só depois de um mês ruim. As rodadas seguem a ordem de CADA
@@ -1543,6 +1603,7 @@
     conferirDivida(r, cfg, idx);
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
+    conferirFormatoSimples(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.
     if (r.erros.length === 0) conferirCartasPossiveis(r, cfg, idx);
     const ok = r.erros.length === 0;

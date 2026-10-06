@@ -481,7 +481,40 @@ function analisar(cfg, hash) {
   conferirDivida(cfg, perfis, finaisPorPerfil, avisar, estimado);
   const falhas = conferirContaDoMes(cfg, perfis, antesPorPerfil, ctx, avisar);
   conferirTextosPorPersona(cfg, avisar);
+  conferirFormatoSimples(cfg);
   return { avisos: totalAvisos, falhas };
+}
+
+// (l) O formato simples (regras.formatoSimples; decisão do Kleber de 05/10 à
+// noite): o dinheiro que cada opção mostra (historia.dinheiroDaOpcao, a mesma
+// linha do telão e do celular) e as combinações possíveis de cada roteiro
+// (motor.enumerarCombinacoes, a mesma conta da última página do placar):
+// quantas fecham, a melhor e a pior. Sem sorteio, é tudo exato. Config sem a
+// chave: nada.
+function conferirFormatoSimples(cfg) {
+  if (cfg.regras.formatoSimples !== true) return;
+  const H = V.historia;
+  const equipeId = cfg.ordem.equipes[0];
+  const persona = cfg.equipes[equipeId].persona;
+  const per = H.periodo(cfg);
+  // A mesma forma do formatar.moeda das telas: o "+" só com { sinal: true }.
+  const reais = (v, { sinal = false } = {}) => `${Math.round(v) < 0 ? '−' : sinal && Math.round(v) > 0 ? '+' : ''}R$ ${Math.abs(Math.round(v)).toLocaleString('pt-BR')}`;
+  console.log('\n== (l) Formato simples: o dinheiro de cada opção e as combinações possíveis (decisão do Kleber de 05/10) ==');
+  for (const r of cfg.ordem.rodadas) {
+    const linhas = cfg.rodadas[r].ordemOpcoes.map((o, i) => `${LETRAS[i]} ${H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, o, persona), reais, per)}`);
+    console.log(`  ${r}: ${linhas.join(' · ')}`);
+  }
+  const vistos = new Set();
+  for (const [nome, passos] of Object.entries(cfg.roteiros)) {
+    const rodadas = passos.filter((p) => p.tipo === 'rodada').map((p) => p.rodada);
+    if (rodadas.length === 0 || vistos.has(rodadas.join())) continue;
+    vistos.add(rodadas.join());
+    const t0 = performance.now();
+    const e = M.enumerarCombinacoes(cfg, { equipeId, rodadas });
+    const ms = performance.now() - t0;
+    const letras = (c) => c.opcoes.map((o, i) => LETRAS[cfg.rodadas[rodadas[i]].ordemOpcoes.indexOf(o)]).join('');
+    console.log(`  roteiro ${nome}: ${e.total.toLocaleString('pt-BR')} combinações, ${e.fecham.toLocaleString('pt-BR')} fecham (patrimônio ≥ 0) · melhor ${letras(e.melhor)} ${reais(e.melhor.valor, { sinal: true })} · pior ${letras(e.pior)} ${reais(e.pior.valor, { sinal: true })} · ${ms.toFixed(0)} ms`);
+  }
 }
 
 // (k) D-073 e D-075 (teste do Kleber de 05/10): a linha do custo humano embaixo de

@@ -1,0 +1,580 @@
+{
+ "versao": "teste-simples",
+ "titulo": "Seminário da Viração (fixture do formato simples)",
+ "tempos": {
+  "enqueteSeg": 60,
+  "decisaoSeg": 120,
+  "decisaoMinSeg": 45,
+  "prorrogacaoSeg": 20,
+  "gracaSeg": 5
+ },
+ "regras": {
+  "desempate": "prorrogacao-depois-moeda",
+  "cartaPor": "equipe",
+  "mostrarChances": "no_sorteio",
+  "placarPadrao": "efeitoDecisoes",
+  "alvoPorEquipe": 3,
+  "minPareados": 5,
+  "destacarCartas": 2,
+  "jurosDividaMes": 0.0743,
+  "jurosFonte": "taxa ilustrativa de teste",
+  "pisoTrabalho": true,
+  "mesesPorRodada": 2,
+  "limiteChequeEspecial": 2000,
+  "limiteFonte": "limite ilustrativo de teste",
+  "multaAtraso": 0.08,
+  "moraMes": 0.01,
+  "atrasoFonte": "multa e mora ilustrativas de teste",
+  "cortarPrimeiro": "contas",
+  "formatoSimples": true
+ },
+ "escala": {
+  "curtos": [
+   "Discordo muito",
+   "Discordo",
+   "Neutro",
+   "Concordo",
+   "Concordo muito"
+  ],
+  "longos": [
+   "Discordo totalmente",
+   "Discordo",
+   "Nem concordo nem discordo",
+   "Concordo",
+   "Concordo totalmente"
+  ]
+ },
+ "indicadores": [
+  {
+   "id": "renda",
+   "nome": "Saldo acumulado",
+   "formato": "moeda",
+   "inicial": 0,
+   "min": -100000,
+   "max": 100000
+  },
+  {
+   "id": "energia",
+   "nome": "Energia",
+   "formato": "inteiro",
+   "inicial": 8,
+   "min": 0,
+   "max": 10
+  },
+  {
+   "id": "emprestimo",
+   "nome": "Empréstimo a pagar",
+   "formato": "moeda",
+   "inicial": 0,
+   "min": 0,
+   "max": 100000
+  },
+  {
+   "id": "contas_atrasadas",
+   "nome": "Contas atrasadas",
+   "formato": "moeda",
+   "inicial": 0,
+   "min": 0,
+   "max": 200000
+  },
+  {
+   "id": "faltou_na_mesa",
+   "nome": "Faltou na mesa",
+   "formato": "moeda",
+   "inicial": 0,
+   "min": 0,
+   "max": 200000
+  }
+ ],
+ "personas": [
+  {
+   "id": "motoboy",
+   "nome": "Jonas",
+   "descricao": "Motoboy, 34 anos, entrega por aplicativo com moto financiada.",
+   "familia": {
+    "descricao": "Jonas, a companheira, que faz faxina, e a filha de 6 anos.",
+    "pessoas": 3
+   },
+   "basico": {
+    "itens": [
+     {
+      "rotulo": "comida",
+      "valor": 2098,
+      "fonte": "valor ilustrativo de teste",
+      "comida": true
+     },
+     {
+      "rotulo": "aluguel",
+      "valor": 1300,
+      "fonte": "valor ilustrativo de teste"
+     },
+     {
+      "rotulo": "luz e água",
+      "valor": 281,
+      "fonte": "valor ilustrativo de teste"
+     },
+     {
+      "rotulo": "gás, ônibus e remédio",
+      "valor": 338,
+      "fonte": "valor ilustrativo de teste",
+      "semAtraso": true
+     },
+     {
+      "rotulo": "celular",
+      "valor": 75,
+      "fonte": "valor ilustrativo de teste"
+     }
+    ]
+   },
+   "outraRenda": {
+    "rotulo": "faxinas da companheira",
+    "valor": 1500,
+    "fonte": "valor ilustrativo de teste"
+   },
+   "inicial": {
+    "energia": 7
+   },
+   "todoMes": [
+    {
+     "soma": {
+      "renda": 2680
+     },
+     "rotulo": "entregas do mês",
+     "fonte": "valor ilustrativo de teste"
+    },
+    {
+     "soma": {
+      "renda": -480
+     },
+     "fixo": true,
+     "rotulo": "parcela da moto",
+     "fonte": "valor ilustrativo de teste"
+    }
+   ],
+   "fonte": "valor ilustrativo de teste"
+  }
+ ],
+ "equipes": [
+  {
+   "id": "e1",
+   "nome": "Laranja",
+   "cor": "#E69F00",
+   "forma": "circulo",
+   "persona": "motoboy",
+   "obrigatoria": true
+  },
+  {
+   "id": "e2",
+   "nome": "Azul-céu",
+   "cor": "#56B4E9",
+   "forma": "triangulo",
+   "persona": "motoboy",
+   "obrigatoria": true
+  },
+  {
+   "id": "e3",
+   "nome": "Verde-azulado",
+   "cor": "#009E73",
+   "forma": "quadrado",
+   "persona": "motoboy"
+  },
+  {
+   "id": "e4",
+   "nome": "Azul",
+   "cor": "#0072B2",
+   "forma": "losango",
+   "persona": "motoboy"
+  },
+  {
+   "id": "e5",
+   "nome": "Vermelhão",
+   "cor": "#D55E00",
+   "forma": "estrela",
+   "persona": "motoboy"
+  },
+  {
+   "id": "e6",
+   "nome": "Roxo-rosado",
+   "cor": "#CC79A7",
+   "forma": "cruz",
+   "persona": "motoboy"
+  }
+ ],
+ "rodadas": [
+  {
+   "id": "r1",
+   "titulo": "Jan–fev: quanto trabalhar no calor?",
+   "texto": "Janeiro abre com 39 °C na rua e a filha de férias.",
+   "padrao": "c",
+   "contexto": {
+    "motoboy": "A parcela da moto vence dia 5, e às 14h faz 39 °C."
+   },
+   "efeitosGerais": [],
+   "opcoes": [
+    {
+     "id": "a",
+     "rotulo": "12 horas por dia, 7 dias, no sol",
+     "narrativa": "Escolhi: 12 horas por dia, 7 dias, no sol. Foi o que deu para fazer.",
+     "impacto": "12 h por dia no sol: chega em casa e a filha de férias já dormiu",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": 1040
+       },
+       "rotulo": "12 horas por dia, 7 dias, no sol",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "b",
+     "rotulo": "Abrir o MEI",
+     "narrativa": "Escolhi: abrir o mei. Foi o que deu para fazer.",
+     "impacto": "O DAS sai todo mês antes do mercado; se cair da moto, o INSS paga",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -170
+       },
+       "rotulo": "Abrir o MEI",
+       "fonte": "valor ilustrativo de teste",
+       "fixo": true
+      }
+     ],
+     "protege": true
+    },
+    {
+     "id": "c",
+     "rotulo": "Jornada de sempre",
+     "narrativa": "Escolhi: jornada de sempre. Foi o que deu para fazer.",
+     "impacto": "Sem rede nenhuma: um tombo da moto, e a casa perde a maior renda",
+     "efeitos": []
+    },
+    {
+     "id": "d",
+     "rotulo": "Parar das 10h às 16h no calor forte",
+     "narrativa": "Escolhi: parar das 10h às 16h no calor forte. Foi o que deu para fazer.",
+     "impacto": "Volta inteiro para a filha, e o pico do almoço fica para os outros",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -110
+       },
+       "rotulo": "Parar das 10h às 16h no calor forte",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "e",
+     "rotulo": "Pagar o IPVA já em janeiro",
+     "narrativa": "Escolhi: pagar o ipva já em janeiro. Foi o que deu para fazer.",
+     "impacto": "Paga a moto adiantado no cheque especial: o ano já começa no vermelho",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -330
+       },
+       "rotulo": "Pagar o IPVA já em janeiro",
+       "fonte": "valor ilustrativo de teste",
+       "categoria": "gasto"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r2",
+   "titulo": "Mar–abr: a lei que saiu de pauta",
+   "texto": "Greve nacional, e a lei sai de pauta.",
+   "padrao": "d",
+   "efeitosGerais": [],
+   "opcoes": [
+    {
+     "id": "a",
+     "rotulo": "Parar no dia da greve",
+     "narrativa": "Escolhi: parar no dia da greve. Foi o que deu para fazer.",
+     "impacto": "Uma semana bloqueado depois da greve: em casa, olhando o celular que não toca",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -720
+       },
+       "rotulo": "Parar no dia da greve",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "b",
+     "rotulo": "Rodar também no segundo app",
+     "narrativa": "Escolhi: rodar também no segundo app. Foi o que deu para fazer.",
+     "impacto": "Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": 2400
+       },
+       "rotulo": "Rodar também no segundo app",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "c",
+     "rotulo": "Pegar R$ 1.500 no crédito pessoal",
+     "narrativa": "Peguei o empréstimo para fechar o mês.",
+     "impacto": "Mais uma parcela além da moto: duas dívidas pagas com a mesma entrega",
+     "efeitos": [
+      {
+       "emprestimo": {
+        "valor": 1500,
+        "parcelas": 12,
+        "taxaMes": 0.0639,
+        "fonte": "valor ilustrativo de teste"
+       },
+       "rotulo": "empréstimo pessoal",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "d",
+     "rotulo": "Aceitar toda entrega, até a ruim",
+     "narrativa": "Escolhi: aceitar toda entrega, até a ruim. Foi o que deu para fazer.",
+     "impacto": "Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": 160
+       },
+       "rotulo": "Aceitar toda entrega, até a ruim",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "e",
+     "rotulo": "Trocar de aplicativo pelo bônus",
+     "narrativa": "Escolhi: trocar de aplicativo pelo bônus. Foi o que deu para fazer.",
+     "impacto": "Troca de app pelo bônus: começa do zero, sem saber se o pedido vem",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": 100
+       },
+       "rotulo": "Trocar de aplicativo pelo bônus",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r3",
+   "titulo": "Mai–jun: chuva, frio e o Guaíba",
+   "texto": "Chuva forte, o rio sobe e o frio chega.",
+   "padrao": "d",
+   "efeitosGerais": [],
+   "opcoes": [
+    {
+     "id": "a",
+     "rotulo": "Entrar na associação",
+     "narrativa": "Escolhi: entrar na associação. Foi o que deu para fazer.",
+     "impacto": "Um dia na assembleia em vez de rodar ou de ficar com a filha",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -150
+       },
+       "rotulo": "Entrar na associação",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "b",
+     "rotulo": "Parar nos dias de alerta de temporal",
+     "narrativa": "Escolhi: parar nos dias de alerta de temporal. Foi o que deu para fazer.",
+     "impacto": "Fica em casa no alerta: a filha dorme sabendo que o pai está seco",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -180
+       },
+       "rotulo": "Parar nos dias de alerta de temporal",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "c",
+     "rotulo": "Rodar de madrugada, na chuva",
+     "narrativa": "Escolhi: rodar de madrugada, na chuva. Foi o que deu para fazer.",
+     "impacto": "Rodando de madrugada na chuva: a companheira acordada esperando a moto",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": 800
+       },
+       "rotulo": "Rodar de madrugada, na chuva",
+       "fonte": "valor ilustrativo de teste"
+      }
+     ]
+    },
+    {
+     "id": "d",
+     "rotulo": "Jornada de sempre, na chuva",
+     "narrativa": "Escolhi: jornada de sempre, na chuva. Foi o que deu para fazer.",
+     "impacto": "Roda molhado do almoço ao jantar e chega em casa gelado",
+     "efeitos": []
+    },
+    {
+     "id": "e",
+     "rotulo": "Comprar capa, bota e luva de chuva",
+     "narrativa": "Escolhi: comprar capa, bota e luva de chuva. Foi o que deu para fazer.",
+     "impacto": "O dinheiro da roupa sai do mercado, e ele chega seco em casa",
+     "efeitos": [
+      {
+       "soma": {
+        "renda": -280
+       },
+       "rotulo": "Comprar capa, bota e luva de chuva",
+       "fonte": "valor ilustrativo de teste",
+       "categoria": "gasto"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "cartas": [
+  {
+   "id": "calor",
+   "titulo": "O calor de janeiro",
+   "narrativa": "A gasolina subiu e o asfalto ferve às 14h.",
+   "peso": 1,
+   "rodadas": [
+    "r1"
+   ],
+   "efeitos": [
+    {
+     "soma": {
+      "renda": -30
+     },
+     "fixo": true,
+     "rotulo": "gasolina mais cara",
+     "fonte": "valor ilustrativo de teste"
+    }
+   ]
+  },
+  {
+   "id": "pauta",
+   "titulo": "A lei saiu de pauta",
+   "narrativa": "A greve parou a cidade, e a lei ficou para depois.",
+   "peso": 1,
+   "rodadas": [
+    "r2"
+   ],
+   "efeitos": [
+    {
+     "soma": {
+      "renda": -340
+     },
+     "categoria": "gasto",
+     "rotulo": "IPVA da moto",
+     "fonte": "valor ilustrativo de teste"
+    },
+    {
+     "se": {
+      "decidiu": {
+       "r1": "a"
+      }
+     },
+     "soma": {
+      "renda": -1230
+     },
+     "rotulo": "as costas travaram: o bimestre puxado cobrou",
+     "fonte": "valor ilustrativo de teste"
+    }
+   ]
+  },
+  {
+   "id": "chuva",
+   "titulo": "A chuva de maio",
+   "narrativa": "Choveu a semana inteira, e o frio chegou.",
+   "peso": 1,
+   "rodadas": [
+    "r3"
+   ],
+   "efeitos": [
+    {
+     "soma": {
+      "renda": -30
+     },
+     "fixo": true,
+     "rotulo": "gasolina",
+     "fonte": "valor ilustrativo de teste"
+    }
+   ]
+  }
+ ],
+ "enquetes": [],
+ "referencias": [
+  {
+   "id": "clt",
+   "nome": "Jonas com carteira assinada",
+   "renda": -4000,
+   "persona": "motoboy",
+   "fonte": "valor ilustrativo de teste"
+  }
+ ],
+ "roteiros": {
+  "60min": [
+   {
+    "tipo": "lobby",
+    "alvoSeg": 120
+   },
+   {
+    "tipo": "formarEquipes",
+    "alvoSeg": 120
+   },
+   {
+    "tipo": "personas",
+    "alvoSeg": 120
+   },
+   {
+    "tipo": "rodada",
+    "rodada": "r1",
+    "alvoSeg": 210
+   },
+   {
+    "tipo": "bloco",
+    "titulo": "Dados: quem trabalha por aplicativo",
+    "alvoSeg": 120
+   },
+   {
+    "tipo": "rodada",
+    "rodada": "r2",
+    "alvoSeg": 210
+   },
+   {
+    "tipo": "bloco",
+    "titulo": "Dados: a lei que saiu de pauta",
+    "alvoSeg": 120
+   },
+   {
+    "tipo": "rodada",
+    "rodada": "r3",
+    "alvoSeg": 210
+   },
+   {
+    "tipo": "placarFinal",
+    "alvoSeg": 240
+   },
+   {
+    "tipo": "fim"
+   }
+  ]
+ }
+}
