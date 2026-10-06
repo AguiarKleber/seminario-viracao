@@ -294,7 +294,7 @@
     {
       "id": "r2",
       "titulo": "Mar–abr: a lei que saiu de pauta",
-      "texto": "O 99Food chega, o IPVA vence em 30/04, e no dia da greve a lei dos aplicativos sai de pauta.",
+      "texto": "O 99Food chega, o IPVA vence e a lei dos apps sai de pauta.",
       "padrao": "d",
       "contexto": {
         "motoboy": "O 99Food chegou pagando R$ 250 por 20 corridas, e o IPVA vence em 30/04. A lei que saiu de pauta prometia R$ 8,50 por entrega."
@@ -379,7 +379,7 @@
         {
           "id": "b",
           "rotulo": "Rodar também no 99Food",
-          "narrativa": "O 99Food chegou à cidade com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito.",
+          "narrativa": "O 99Food chegou com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito.",
           "impacto": "Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo",
           "efeitos": [
             {
@@ -426,7 +426,7 @@
         {
           "id": "e",
           "rotulo": "Trocar iFood pelo 99Food",
-          "narrativa": "Largar o iFood pelo bônus do 99Food, recém-chegado: paga mais por corrida, sem saber quantos pedidos virão.",
+          "narrativa": "Largar o iFood pelo bônus do 99Food: paga mais por corrida, sem saber quantos pedidos virão.",
           "impacto": "Troca de app pelo bônus: começa do zero, sem saber se o pedido vem",
           "efeitos": [
             {
@@ -512,7 +512,7 @@
         {
           "id": "c",
           "rotulo": "Rodar de madrugada",
-          "narrativa": "Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio, no escuro e no molhado.",
+          "narrativa": "Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro.",
           "impacto": "Rodando de madrugada na chuva: a companheira acordada esperando a moto",
           "efeitos": [
             {
@@ -552,7 +552,7 @@
     {
       "id": "r4",
       "titulo": "Jul–ago: a regra nova do app",
-      "texto": "O iFood lança o +Entregas, e em 27 de julho os entregadores protestam no Centro.",
+      "texto": "O iFood lança o +Entregas; em 27/07, protesto no Centro.",
       "padrao": "c",
       "contexto": {
         "motoboy": "No +Entregas, o iFood diz que se ganha de 10% a 30% a mais; os entregadores dizem que é R$ 3 por entrega e 12 horas na rua."
@@ -590,7 +590,7 @@
         {
           "id": "a",
           "rotulo": "Entrar no +Entregas",
-          "narrativa": "+Entregas: o iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega.",
+          "narrativa": "O iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega.",
           "impacto": "+Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete",
           "efeitos": [
             {
@@ -674,7 +674,7 @@
     {
       "id": "r5",
       "titulo": "Set–out: breque geral",
-      "texto": "Breque geral em 1º de setembro, e o concorrente paga até R$ 9 a mais a quem furar.",
+      "texto": "Breque geral em 01/09, e o concorrente paga bônus a quem furar.",
       "padrao": "a",
       "contexto": {
         "motoboy": "Breque geral dia 1º: furar fica marcado entre os colegas, aderir custa o dia. O Acampamento Farroupilha recebe 1,1 milhão de visitantes."
@@ -823,7 +823,7 @@
         {
           "id": "e",
           "rotulo": "Folgar no 20 de Setembro",
-          "narrativa": "Feriado de 20 de Setembro com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro.",
+          "narrativa": "Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro.",
           "impacto": "Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro",
           "efeitos": [
             {
@@ -840,7 +840,7 @@
     {
       "id": "r6",
       "titulo": "Nov–dez: Natal e nenhum 13º",
-      "texto": "Dezembro tem 16% mais pedidos, e o 13º só vem para quem tem carteira.",
+      "texto": "Dezembro tem 16% mais pedidos, e 13º só para quem tem carteira.",
       "padrao": "d",
       "contexto": {
         "motoboy": "Dezembro tem 16% mais pedidos no iFood. Quem tem carteira recebe o 13º até dia 20; aqui, ninguém. A conta de luz pode subir 24%."
