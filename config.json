@@ -285,7 +285,7 @@
               },
               "categoria": "gasto",
               "rotulo": "IPVA pago em janeiro, com 3% de desconto",
-              "fonte": "Sefaz-RS, IPVA 2026: vencimento em 30/04/2026, 2% do valor da moto (~R$ 17 mil, Tabela Fipe): R$ 340. Pagar até 30/01 dá 3% de desconto pela antecipação (2% em fevereiro, 1% em março); os 22,4% do anúncio somam o Bom Motorista (15%) e o Bom Cidadão (5%), que valem também no vencimento e o jogo não dá ao Jonas. R$ 340 × 0,97 = R$ 329,80, R$ 330 na tela. Em mar–abr, quem pagou não paga os R$ 340 (efeito geral de mar–abr)"
+              "fonte": "Sefaz-RS, IPVA 2026: vencimento em 30/04/2026, 2% do valor venal da moto (~R$ 17 mil, estimativa sem fonte, a mesma do IPVA de mar–abr: a CG 160 de 2025; a parcela da moto usa o preço da 2026 na Fipe, R$ 18.598): R$ 340. Pagar até 30/01 dá 3% de desconto pela antecipação (2% em fevereiro, 1% em março); os 22,4% do anúncio somam o Bom Motorista (15%) e o Bom Cidadão (5%), que valem também no vencimento e o jogo não dá ao Jonas. R$ 340 × 0,97 = R$ 329,80, R$ 330 na tela. Em mar–abr, quem pagou não paga os R$ 340 (efeito geral de mar–abr)"
             }
           ]
         }
@@ -490,7 +490,7 @@
               },
               "categoria": "gasto",
               "rotulo": "pneu traseiro novo",
-              "fonte": "Pneu traseiro da CG 160: R$ 228 (lojas, B; o mesmo da carta \"A moto quebrou\" do config de 05/10), R$ 230 na tela. O pneu traseiro dura de 15 a 20 mil km, e a moto roda 6.760 km por bimestre (130 km por dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025): 13.520 km no fim de abril. Pneu careca é infração grave, R$ 195,23 e 5 pontos (CTB, art. 230, XVIII). Se a moto quebrar em set–out (revisão adiada), o pneu já está pago"
+              "fonte": "Pneu traseiro da CG 160: R$ 228 (lojas, B; o mesmo da carta \"A moto quebrou\" do config de 05/10), R$ 230 na tela. O pneu traseiro dura de 15 a 20 mil km, e a moto roda 6.760 km por bimestre (130 km por dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025): 13.520 km no fim de abril. Pneu careca é infração grave, R$ 195,23 e 5 pontos (CTB, art. 230, XVIII). Se a moto quebrar em set–out (revisão adiada), o pneu já está pago. Simplificação a decidir (revisão de 06/10): a retirada da PNAD já desconta a manutenção média (fonte de jul–ago C), e o pneu é cobrado aqui à parte; quem não troca não paga o pneu no ano (estimativa sem fonte de quando ele entraria na manutenção média)"
             }
           ]
         },
@@ -505,7 +505,7 @@
                 "renda": -180
               },
               "rotulo": "2 dias parado no alerta de temporal",
-              "fonte": "Só de maio a outubro, a estação dos temporais e das cheias (cheia de jun/2025 com o Guaíba a 3,01 m, Agência Brasil; alerta de 22 e 23/09/2026 na Ilha da Pintada). INMET, via O Tempo (27/09/2026): alerta laranja, vento de 100 km/h e granizo em Porto Alegre. Metrópoles (01/08/2025): promoção de chuva de R$ 3 a R$ 12 por entrega. Valores: estimativa (2 dias × ~11 entregas × ~R$ 7). Jonas: 2 dias de trabalho do bimestre, 2 × R$ 89,33 = R$ 178,67, R$ 180 na tela"
+              "fonte": "Só de maio a outubro, a estação dos temporais e das cheias (cheia de jun/2025 com o Guaíba a 3,01 m, Agência Brasil; alerta de 22 e 23/09/2026 na Ilha da Pintada). INMET, via O Tempo (27/09/2026): alerta laranja, vento de 100 km/h e granizo em Porto Alegre. Metrópoles (01/08/2025): promoção de chuva de R$ 3 a R$ 12 por entrega. Jonas: 2 dias de trabalho do bimestre, 2 × R$ 89,33 = R$ 178,67, R$ 180 na tela"
             }
           ]
         },
@@ -916,7 +916,7 @@
                 "renda": -630
               },
               "rotulo": "uma semana de folga no Natal",
-              "fonte": "Uma semana (7 dias) sem ganho: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela"
+              "fonte": "Uma semana (7 dias) sem ganho: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Simplificação (revisão de 06/10): é a semana média do ano, e o +R$ 430 de dezembro (evento do mês) fica inteiro; uma semana de dezembro valeria (R$ 2.680 + R$ 430) ÷ 30 × 7 = R$ 725,67"
             }
           ]
         },

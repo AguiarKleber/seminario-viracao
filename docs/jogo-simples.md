@@ -5,7 +5,7 @@ decidiu em 05/10 à noite (D-078): **um personagem só**, o Jonas, para as 6
 equipes; **6 bimestres com 5 opções** cada; **sem sorteio**; **o dinheiro na
 própria opção**. Arquivo: [`config.json`](../config.json), versão
 `2026-10-06-v4-simples` (o hash é o que `npm run validar` imprimir; em 06/10,
-`3283181b`). O conteúdo anterior (6 personagens, cartas sorteadas) ficou no git
+`0b49ddc3`). O conteúdo anterior (6 personagens, cartas sorteadas) ficou no git
 e congelado em `test/fixtures/config-real-v31.json`.
 
 > **Princípio do Kleber:** "quanto menos explicação do que colocamos, mais

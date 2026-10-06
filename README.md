@@ -29,7 +29,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
 | 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 7 do site (12 meses, 6 personagens, cartas sorteadas: PR #7), testada pelo Kleber em 05/10 |
 | Jogo simples | Branch `claude/jogo-simples`, **ainda não fundida nem publicada**: versão 8 do site, com o formato simples (D-078: só o Jonas, 5 opções por bimestre, sem sorteio, o dinheiro na opção), a consequência de antes à vista no resultado, o fim da rodada sem o JSON automático e os ajustes de tela de 05/10 (D-072 a D-077: rever a tela anterior, a barra oculta fina, o mapa sem o gancho, o saldo do bimestre, as escolhas da equipe no celular). **As regras não mudam** (continuam v4) |
-| Conteúdo | `config.json` versão `2026-10-06-v4-simples` (o hash é o que `npm run validar` imprimir; em 06/10, `3283181b`). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
+| Conteúdo | `config.json` versão `2026-10-06-v4-simples` (o hash é o que `npm run validar` imprimir; em 06/10, `0b49ddc3`). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
 
 **Para publicar (06/10, até as 12h):** só o site muda, e as regras ficam como
 estão (v4), sem nenhum passo no console do Firebase.
