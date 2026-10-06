@@ -708,6 +708,23 @@ de R$ 7.000** (detalha a D-078 e muda partes dela, da D-072 e da D-060).
     assinada" vai a −R$ 11.947. Num mês comum, falta R$ 128 (faltavam R$ 392).
 - **As regras do Firebase não mudam** (continuam v4). O config passa à versão
   `2026-10-06-v4.1-simples`.
+- **Como ficou na tela (versão 9 do site, 06/10 à tarde).** Medido no telão
+  em 1024×768 e 1920×1080, offline com as 6 equipes e online com a faixa de
+  entrada, e no celular em 360×740:
+  - a mini-história corre na mesma linha do rótulo, depois de um travessão.
+    Numa linha própria, cada opção ia a três linhas e a decisão passava
+    ~200 px de 1024×768. Para caber, a situação do bimestre ficou em uma linha
+    (mar–abr, jul–ago, set–out e nov–dez encurtadas) e cada opção em duas
+    (cinco mini-histórias encurtadas), sem tirar fato nem fonte;
+  - na célula da equipe da decisão, só a cor ("Laranja", como na tabela do
+    caminho do placar), sem o "Equipe": "Equipe Verde-azulado" quebrava em
+    duas linhas. **A confirmar com o Kleber** (a regra de 05/10 é a equipe
+    pela cor em toda tela; a cor continua lá);
+  - o bloco de dados mostra só o contexto, os itens e a fonte: sem a trilha do
+    seminário e sem o placar resumido. O "Mapa do seminário" mantém a linha;
+  - no validador, `contexto` até 220 letras, cada item até 140, até 3 itens,
+    `fonte` até 200 e, no formato simples, a mini-história até 120: acima
+    disso, aviso (não bloqueia a sala).
 
 **Deixam de valer:** da D-078, "o valor em dinheiro aparece na opção" e
 "nenhuma das 15.625 combinações fecha o ano"; da D-072, a semana de bloqueio

@@ -27,19 +27,19 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | Já feito | Situação |
 | --- | --- |
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
-| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 7 do site (12 meses, 6 personagens, cartas sorteadas: PR #7), testada pelo Kleber em 05/10 |
-| Jogo simples | Branch `claude/jogo-simples`, **ainda não fundida nem publicada**: versão 8 do site, com o formato simples (D-078: só o Jonas, 5 opções por bimestre, sem sorteio, o dinheiro na opção), a consequência de antes à vista no resultado, o fim da rodada sem o JSON automático e os ajustes de tela de 05/10 (D-072 a D-077: rever a tela anterior, a barra oculta fina, o mapa sem o gancho, o saldo do bimestre, as escolhas da equipe no celular). **As regras não mudam** (continuam v4) |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 8 do site (o jogo simples, D-078: só o Jonas, 5 opções por bimestre, sem sorteio, o dinheiro na opção; PR #8), testada pelo Kleber em 06/10 de manhã |
+| Ajustes de 06/10 | Branch `claude/ajustes-0610`, **ainda não fundida nem publicada**: versão 9 do site (D-079: a decisão às cegas, com a mini-história ao lado do rótulo; um bloco de dados com contexto, números e fonte depois de cada bimestre, sem a trilha; o Fim com os dados do setor; sem entrevistas; o placar sem a lista de posições; a enquete sem "mediana · média · n"). **As regras não mudam** (continuam v4) |
 | Conteúdo | `config.json` versão `2026-10-06-v4.1-simples` (D-079: opções às cegas com mini-história, um bloco de dados depois de cada bimestre, sem entrevistas, o pior caso abaixo de R$ 7.000; o hash é o que `npm run validar` imprimir). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
 
-**Para publicar (06/10, até as 12h):** só o site muda, e as regras ficam como
+**Para publicar (antes do seminário de 07/10):** só o site muda, e as regras ficam como
 estão (v4), sem nenhum passo no console do Firebase.
-1. Sem nenhuma sala aberta, funda o PR da `claude/jogo-simples` na `main` (o
+1. Sem nenhuma sala aberta, funda o PR da `claude/ajustes-0610` na `main` (o
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
 2. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
    repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, o bloco 1, a
    versão `2026-10-06-v4.1-simples` e o mesmo hash que `npm run validar` imprime
-   na `main` publicada. Os celulares com a versão 7 em cache veem a faixa "Há
+   na `main` publicada. Os celulares com a versão 8 em cache veem a faixa "Há
    uma versão nova do app: atualize a página".
 3. Ensaie uma sala de teste até o resultado de Jan–fev (roteiro, seção 0) e
    apague a sala no fim.

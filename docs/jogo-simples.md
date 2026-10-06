@@ -7,8 +7,8 @@ pedidos de 06/10 de manhã (D-079), **as opções ficam às cegas** (sem o dinhe
 ao lado), cada uma com uma **mini-história**, e depois do resultado de cada
 bimestre vem **uma tela de dados reais** do tema dele. Arquivo:
 [`config.json`](../config.json), versão `2026-10-06-v4.1-simples` (o hash é o
-que `npm run validar` imprimir; nesta branch, `5bc4782f`, que muda quando o
-validador passar a conhecer os campos novos dos blocos). O conteúdo de 6
+que `npm run validar` imprimir; em 06/10, depois dos ajustes de tela,
+`c4f99ae7`). O conteúdo de 6
 personagens, com cartas sorteadas, ficou no git e congelado em
 `test/fixtures/config-real-v31.json`.
 
@@ -22,7 +22,10 @@ personagens, com cartas sorteadas, ficou no git e congelado em
   Jonas; o que muda entre elas é a combinação de escolhas.
 - **Cada opção** mostra a letra, o rótulo e a **mini-história** (o campo
   `narrativa`): o que é, por quê e o que impacta, numa frase de até 111
-  caracteres. **O dinheiro não aparece na opção** (às cegas, D-079): ele aparece
+  caracteres. No telão, ela corre na mesma linha do rótulo, depois de um
+  travessão, e cada opção cabe em duas linhas em 1024×768 (cinco mini-histórias
+  e a situação de quatro bimestres foram encurtadas em 06/10 para caber, sem
+  tirar fato nem fonte). **O dinheiro não aparece na opção** (às cegas, D-079): ele aparece
   no resultado, no saldo do bimestre. No celular, a opção traz também a linha do
   custo humano (D-073). Os valores das tabelas abaixo são para o apresentador:
   em relação à jornada de sempre, arredondados a R$ 10.
@@ -86,10 +89,10 @@ e gasolina **−R$ 60** (ANP, R$ 6,38 e 6,52; conta: R$ 63).
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
 | A | Parar no dia da greve | 14/04: greve nacional no dia em que a lei dos apps (R$ 8,50 por entrega) ia a voto; quem para fica fora do app. | −R$ 540 | Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
-| B ⚑ | Rodar também no 99Food | O 99Food chegou à cidade com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito. | +R$ 900 | Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo | +15% do bimestre (estimativa, R$ 804) + bônus de entrada (R$ 100, Jornal do Brás) |
+| B ⚑ | Rodar também no 99Food | O 99Food chegou com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito. | +R$ 900 | Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo | +15% do bimestre (estimativa, R$ 804) + bônus de entrada (R$ 100, Jornal do Brás) |
 | C | Empréstimo de R$ 1.500 | Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano. | dívida (D-065) | 12 parcelas de R$ 183: duas dívidas pagas com a mesma entrega | BCB, SGS 25464: 6,39% a.m.; Price, 12 × R$ 182,76 |
 | D * | Aceitar até entrega ruim | O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila. | +R$ 160 | Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo | +3% do bimestre (estimativa, R$ 161); regras de recusa do iFood e da 99 |
-| E | Trocar iFood pelo 99Food | Largar o iFood pelo bônus do 99Food, recém-chegado: paga mais por corrida, sem saber quantos pedidos virão. | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | R$ 5 acima do mínimo do iFood em 20 corridas (Jornal do Brás). **Estimativa sem fonte:** o mesmo volume |
+| E | Trocar iFood pelo 99Food | Largar o iFood pelo bônus do 99Food: paga mais por corrida, sem saber quantos pedidos virão. | +R$ 100 | Troca de app pelo bônus: começa do zero, sem saber se o pedido vem | R$ 5 acima do mínimo do iFood em 20 corridas (Jornal do Brás). **Estimativa sem fonte:** o mesmo volume |
 
 **O empréstimo é dívida, e não renda (D-065).** O dinheiro entra na conta e a
 dívida também; daí em diante, duas parcelas por bimestre (R$ 366), e no fim do
@@ -104,7 +107,7 @@ R$ 6,25 e 6,21; conta: R$ 26).
 | --- | --- | --- | --- | --- | --- |
 | A | Pneu novo antes da chuva | O pneu traseiro está no fim, com 13 mil km: na chuva, pneu careca derrapa e é multa grave; trocar custa agora. | −R$ 230 | Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado | Pneu traseiro R$ 228 (lojas, B); 6.760 km por bimestre (Sindimoto-SP via AutoPapo); CTB, art. 230, XVIII |
 | B | Parar nos dias de alerta | O INMET avisa alerta laranja de temporal, com vento de 100 km/h: ficar em casa é seguro e são dias sem ganho. | −R$ 180 | Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco | INMET via O Tempo (27/09/2026); 2 × R$ 89,33 |
-| C ⚑ | Rodar de madrugada | Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio, no escuro e no molhado. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
+| C ⚑ | Rodar de madrugada | Com chuva, o app paga promoção por entrega: rodar até de madrugada rende mais, no frio e no escuro. | +R$ 800 | Rodando de madrugada na chuva: a companheira acordada esperando a moto | +15% do bimestre (estimativa); promoção de chuva de R$ 3 a R$ 12 (Metrópoles, 01/08/2025) |
 | D * | Jornada de sempre | Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal. | R$ 0 | Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno | — |
 | E | Comprar capa, bota e luva | Kit de chuva para moto (capa, bota, luva e balaclava): chega seco e protegido, com dinheiro que sai do mercado. | −R$ 280 | O dinheiro da roupa sai do mercado, e ele chega seco em casa pela primeira vez | R$ 262,99 a R$ 278,90 (Mercado Livre, set/2026, B) |
 
@@ -115,7 +118,7 @@ licenciamento vence em 31/07: **−R$ 110** (Detran-RS via AutoPapo, R$ 114,09).
 
 | | Opção | Mini-história (na tela) | Dinheiro | Custo humano (celular) | Fonte do valor |
 | --- | --- | --- | --- | --- | --- |
-| A ⚑ | Entrar no +Entregas | +Entregas: o iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega. | +R$ 540 | +Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete | O iFood diz +10% a +30%; usado +10% (CUT-RS, 27/07/2026) |
+| A ⚑ | Entrar no +Entregas | O iFood promete mais ganho e quase não aceita recusa; entregadores dizem que paga R$ 3 por entrega. | +R$ 540 | +Entregas: 12 horas na rua, sete dias, e a filha só o vê de capacete | O iFood diz +10% a +30%; usado +10% (CUT-RS, 27/07/2026) |
 | B | Ir ao protesto de 27/07 | 27/07: entregadores marcham no Centro contra o +Entregas; quem vai perde meio dia e arrisca o bloqueio. | −R$ 490 | Do protesto para cinco dias bloqueado: a filha estranha o pai em casa de dia | Meio dia (−R$ 40) e 5 dias de bloqueio branco (−R$ 450, K1) |
 | C * | Adiar a revisão da moto | A revisão da moto está vencida, com 20 mil km no ano: adiar alivia o mês e deixa a moto mais perto de quebrar. | +R$ 100 | Adia a revisão e roda com a moto pedindo socorro, atento a cada barulho | Metade de um mês da manutenção de R$ 200 (Sindimoto-SP); a moto quebra em set–out (K5) |
 | D | Tirar uma semana de folga | A primeira semana de descanso do ano: no app não há férias pagas, e cada dia parado é um dia sem ganho. | −R$ 630 | Uma semana inteira com a filha, paga com o dinheiro que não entra | 7 dias do bimestre: R$ 625,33 |
@@ -133,7 +136,7 @@ furar; a Farroupilha lota o Harmonia. Sem efeito em dinheiro igual para todos.
 | B | Recusar o que não paga | Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa. | −R$ 270 | Recusa o que não paga, e o celular passa horas em silêncio na esquina | −5% do bimestre (estimativa); regras de recusa da 99 e do iFood |
 | C | Parar no dia do breque | 01/09: breque geral por R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio. | −R$ 540 | Para no breque com o país, e o app responde com cinco dias de bloqueio | 1 dia (−R$ 90) e 5 dias de bloqueio branco (−R$ 450, K1) |
 | D ⚑ | Furar o breque pelo bônus | Furar o breque pelo bônus de até R$ 9 e rodar as noites da Farroupilha: rende e queima com os colegas. | +R$ 820 | Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra | Bônus de até R$ 9 × ~17 entregas (Metrópoles; Correio Braziliense) + Farroupilha, +25% de um mês (estimativa) |
-| E | Folgar no 20 de Setembro | Feriado de 20 de Setembro com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro. | −R$ 90 | Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro | Feriado estadual (Lei RS 4.850/1964); 1 dia do bimestre |
+| E | Folgar no 20 de Setembro | Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro. | −R$ 90 | Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro | Feriado estadual (Lei RS 4.850/1964); 1 dia do bimestre |
 
 ### Nov–dez: Natal e nenhum 13º
 

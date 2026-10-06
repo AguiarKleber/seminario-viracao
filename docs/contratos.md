@@ -66,9 +66,12 @@ exibição fica num array de strings.
   - qualquer chave fora dessas é erro.
 - `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto"|"protecao", emprestimo?: { valor, parcelas, taxaMes, fonte } }`, com
   `soma` **ou** `multiplica` **ou** `emprestimo`, só um deles (`fixo` e `categoria`: esquema v2.1; `emprestimo`: esquema v2.2, abaixo).
-- `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada? }`
+- `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada?, contexto?, itens?, fonte? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
-  - `momento` ∈ `antes | depois | unico`.
+  - `momento` ∈ `antes | depois | unico`;
+  - D-079: `contexto` (texto), `itens` (lista de 1 a 3 textos) e `fonte` (texto), só no `bloco`. Tipo
+    errado é erro; contexto acima de 220 letras, item acima de 140, mais de 3 itens e fonte acima de 200 são
+    aviso; num passo de outro tipo, aviso e descartados. Ausentes, não entram no normalizado.
 
 **Esquema v2 (D-041 a D-048)**, conferido pelo validador:
 - `persona.familia = { descricao, pessoas }` (obrigatória): texto não vazio e inteiro ≥ 1. Chave a mais
@@ -1036,7 +1039,14 @@ canal e o localStorage, antes e depois).
 - O modo acaba sozinho quando o passo atual volta para o passo revisto ou para antes dele (o desfazer, outra
   máquina) e ao encerrar a sessão.
 
-**Linha do tempo (D-042; rascunho, seção 7, item 15):** todo passo `bloco` mostra
+**O bloco de dados (D-079, teste do Kleber de 06/10):** o `bloco` com `contexto` ou `itens`
+(`.tela-bloco.bloco-com-conteudo`) mostra, depois do título, `p.bloco-contexto`, `ul.bloco-itens` (um
+`li.bloco-item` por item) e `p.bloco-fonte` ("Fontes: " + a fonte, no pé da tela), e nada mais: sem a linha
+do tempo e sem o placar resumido. Medido depois do desenho, se transborda, `data-aperto="1"` (entrelinhas e
+vãos menores, a letra nos 28 px). O "Mapa do seminário" com `contexto` mostra o contexto e, embaixo, a
+linha por extenso. A linha do tempo abaixo vale para o bloco sem contexto nem itens.
+
+**Linha do tempo (D-042; rascunho, seção 7, item 15):** todo passo `bloco` sem contexto nem itens mostra
 `nav.linha-tempo` com os itens de `roteiro.linhaDoTempo(config, passos, { maxItens: 16 })`: um
 item por passo do roteiro, menos `lobby` e `fim`; com mais de 16, os passos depois da última
 rodada viram um item `final` só, com o nome do que ele junta ("Debrief, termômetro, medição,

@@ -212,8 +212,10 @@ caminho fez com o dinheiro da família."
 - **O placar final tem 3 páginas** (o Espaço passa): o caminho de cada equipe;
   quanto sobrou ou ficou devendo, com a linha "Jonas com carteira assinada"; e
   "Das 15.625 combinações possíveis, 260 fecham o ano", com a melhor e a pior,
-  sem a lista de posições de cada equipe (D-079). O comparativo da enquete sai
-  sem a linha "mediana · média · n".
+  sem a lista de posições de cada equipe (D-079). O resultado de cada enquete
+  sai sem a linha "mediana · média · n" embaixo do gráfico.
+- **Na decisão, a célula de cada equipe diz só a cor** ("Laranja"): com a
+  mini-história nas 5 opções, é o que deixa a tela caber em 1024×768.
 - **O último bloco, "Fim: quem é o patrão?",** mostra quem manda, com dados do
   setor; leia e abra a conversa.
 - **O telão não baixa o JSON sozinho** (muda a D-015). Se quiser o arquivo,
