@@ -2,7 +2,7 @@
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
 // motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
 // igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
-// encadeadas, e as 15.625 combinações (260 fecham o ano, todas sem bimestre de descanso; D-079).
+// encadeadas, e as 15.625 combinações (260 fecham o ano, todas com ao menos uma opção puxada; D-079).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -130,7 +130,7 @@ test('config.json do dia: as consequências encadeadas (o IPVA já pago, a parce
 
 // D-079 (06/10, de manhã): o pior caso tinha de ficar abaixo de R$ 7.000 de dívida (era
 // R$ 10.906). A casa foi recontada e o bloqueio passou a 5 dias; com isso, 260 combinações
-// fecham o ano, todas sem bimestre de descanso.
+// fecham o ano, e nenhuma delas sem ao menos uma opção puxada.
 test('config.json do dia: das 15.625 combinações, 260 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
   const cfg = configDoDia().config;
   const c = M.enumerarCombinacoes(cfg, { equipeId: 'e1', rodadas: cfg.ordem.rodadas });
