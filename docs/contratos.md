@@ -1525,8 +1525,8 @@ anfitrião: quem decide é o telão.
     a frase inteira, depois das opções, ficava abaixo da dobra em 360×740, e uma
     linha a mais antes das opções empurrava a letra D para fora da primeira tela).
     Depois das opções, a dica inteira ("Toque numa opção para ler a explicação; o
-    voto só vale no “Votar nesta”") e a situação completa (família, conta do
-    último mês e indicadores), fechada.
+    voto só vale no “Votar nesta”") e a situação completa (família, a dívida por
+    partes, conta do último mês e indicadores), fechada.
   - **Tocar para ler, votar no botão (D-055):** tocar numa opção
     (`.botao-opcao-aluno[data-opcao]`, com `aria-expanded`) abre a explicação
     dela **sem votar**; tocar de novo fecha, e tocar noutra troca a aberta (uma por
@@ -1573,15 +1573,20 @@ anfitrião: quem decide é o telão.
     quando é maior que 0, e nenhuma linha se as três forem 0 ou sem `cartaCusto`.
     `data-dias-parado`, `data-renda-perdida` e `data-gastos` repetem os valores.
     Mesma forma para toda carta: a grave não ganha destaque.
-  - **Dívida (esquema v2.2):** é o cheque especial (o saldo acumulado negativo)
-    **mais** o empréstimo a pagar, por `historia.dividaTotal` a partir dos
-    indicadores do fim do mês. No teste de 30/09, o Jonas pegou R$ 1.500 e a tela
+  - **Dívida (esquema v2.2; pedido do Kleber de 05/10, item 3):** a "dívida total" é o cheque especial (o saldo
+    acumulado negativo) **mais** o empréstimo a pagar **mais**, com o limite (D-066), as contas atrasadas, a partir
+    das partes de `historia.dividaTotal` nos indicadores do fim do mês. A soma é feita no celular
+    (`totalDaDivida`), pelas partes, e não pelo `total` do núcleo (que ainda deixa as contas atrasadas fora): o
+    número é o mesmo da linha única "dívida total" do telão. No teste de 30/09, o Jonas pegou R$ 1.500 e a tela
     disse "Dívida R$ 1". Sem dívida, sem a linha nem o bloco.
-    - Na decisão (`.pressao .divida`, uma linha): "Dívida R$ D · juros de J% ao
-      mês" só com cheque especial; com empréstimo, "Dívida R$ D, com R$ E de
-      empréstimo".
-    - Nas telas de situação, resultado e fim (`div.divida`, com `data-divida`,
-      `data-cheque` e `data-emprestimo`): "Dívida hoje R$ D", "Cheque especial R$ C ·
+    - Na decisão (`p.divida.divida-curta` em `.pressao`, `data-divida` = o total): só "Dívida total R$ D", numa
+      linha em 360 px (texto corrido, `display: block`). No teste do Kleber de 05/10, a linha herdava o flex em
+      coluna da caixa `.divida` e saía empilhada em cinco; e as versões com o resto ("…, com R$ E de
+      empréstimo", "· juros de J% ao mês") medem de 312 a 357 px para os 300 px da linha. As partes, com as
+      taxas, ficam no bloco da dívida dentro da situação recolhida (`details.situacao-resumo`), depois das opções.
+    - Nas telas de situação, resultado e fim, e na situação recolhida da decisão (`div.divida`, com
+      `data-divida` = a dívida total, `data-banco` = cheque especial + empréstimo, `data-cheque` e
+      `data-emprestimo`): "Dívida total R$ D", "Cheque especial R$ C ·
       juros de J% ao mês", "Empréstimo a T% ao mês: fica devendo R$ E em N parcelas" (T de
       `mes.taxaEmprestimo`; sem ela, "Empréstimo: fica devendo…") e "a
       próxima: R$ P · R$ T no total, com os juros" (do `mes` gravado:
@@ -1601,7 +1606,8 @@ anfitrião: quem decide é o telão.
       rótulo é o título da rodada até os dois-pontos, "Mês 1", por `historia.rotuloDaRodada`).
       **Esquema v3 (D-060):** com `regras.mesesPorRodada` = 2, "Bimestre · Saldo do bimestre · Ficou com",
       uma linha por bimestre ("Jan–fev" … "Nov–dez", 6 no jogo de 12 meses), `aria-label` "Resumo por
-      bimestre", inteiro em 360×740 no placar final. O período sai de `historia.periodo` (a regra do telão),
+      bimestre", inteiro em 360×740 nos blocos (no placar final, desde 05/10, o topo são as escolhas do ano; ver
+      "Placar final" abaixo). O período sai de `historia.periodo` (a regra do telão),
       e as outras telas dizem o mesmo: "Saldo do bimestre" e "A conta do bimestre em detalhe" no resultado,
       "o básico da família custa R$ X no bimestre" na conta (o `mes.basico` já é o do bimestre), "(… no
       bimestre)" na variação dos indicadores, "A história bimestre a bimestre" e, na persona e na situação
@@ -1631,15 +1637,16 @@ anfitrião: quem decide é o telão.
       "Como ficou" (energia e proteção, com a variação do mês).
   - **Limite do cheque especial (D-066, esquema v3.1).** Tudo isto só aparece com `regras.limiteChequeEspecial`
     no config (o `mes` gravado tem `contasAtrasadas`); sem ele, as telas ficam iguais, atributo por atributo.
-    - **Dívida** (`div.divida`, nas telas de situação, resultado e fim): o total de `historia.dividaTotal` é o banco e
-      o empréstimo, escrito "Dívida no banco R$ D" (revisão da F6c: o mesmo número que o telão chama de dívida; antes,
-      "Dívida hoje" somava as contas atrasadas). Na decisão, a linha curta "Dívida R$ D" usa o mesmo D, e as contas atrasadas ficam na situação (numa linha só, elas quebravam em 360 px e empurravam a confirmação do voto para baixo da dobra). "Cheque especial R$ C de R$ L do limite · juros de J% ao mês" (L de
+    - **Dívida** (`div.divida`, nas telas de situação, resultado e fim): "Dívida total R$ D", com as contas
+      atrasadas dentro do D (pedido de 05/10, item 3; de 30/09 a 05/10, pela revisão da F6c, era "Dívida no banco",
+      sem elas, e as contas atrasadas vinham só como parte). Na decisão, a linha curta "Dívida total R$ D" usa o
+      mesmo D. Embaixo, as partes: "Cheque especial R$ C de R$ L do limite · juros de J% ao mês" (L de
       `regras.limiteChequeEspecial`) e uma parte nova, `.divida-parte[data-parte="atrasadas"]`: "Contas
       atrasadas R$ A · multa de M% e mora de R% ao mês" (`regras.multaAtraso` e `regras.moraMes`), só com A > 0.
       `data-atrasadas` e `data-limite` repetem os valores (só com o limite). Com empréstimo, o "Dinheiro em
       caixa" do resumo é o patrimônio mais o empréstimo **e** as contas atrasadas.
     - **O que faltou na mesa** (`p.faltou-mesa`, `data-faltou-na-mesa` = o acumulado): à parte da dívida (não
-      é dívida e não entra no "ficou com"). No resumo (situação, placar final e fim), dentro do cartão, embaixo
+      é dívida e não entra no "ficou com"). No resumo (situação dos blocos e fim), dentro do cartão, embaixo
       da dívida: "Faltou na mesa: R$ X de comida que não deu para comprar, até agora." (o acumulado da última
       linha); no resultado, à vista depois da dívida, com `data-no-periodo` = o do bimestre: "Faltou na mesa:
       R$ Y de comida que não deu para comprar neste bimestre (R$ X até agora)." (sem o parêntese quando Y = X;
@@ -1665,13 +1672,41 @@ anfitrião: quem decide é o telão.
     apresentador.
   - **Antes do primeiro mês**, a situação mostra o básico, a família e os
     indicadores, sem resumo nem conta do mês.
-  - **Placar final:** o resumo mês a mês e a dívida no topo; "Escolha ou
-    sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte ·
-    = Terminaram com", as variações sempre com + ou −, o total do fim em
-    `.placar-total`, igual ao último "Ficou com"), sem "piloto automático" nem
-    "efeito das decisões" (D-041); o pior caso; e a história recolhida ("A
-    história mês a mês", `data-recolhido="historia"`). A decisão sem voto aparece
-    como "ninguém votou: ficou o de sempre".
+  - **Placar final** (o mesmo em todas as páginas do placar do telão, que o celular não distingue; aluno e
+    espectador, este com a equipe que está vendo). **Pedido do Kleber de 05/10 (item 4):** o topo são as escolhas
+    do ano, para a turma ver que, mesmo podendo escolher, faltou muito dinheiro. Título "As escolhas de vocês"
+    (kicker "Placar final") e, de cima para baixo:
+    - a frase `p.escolhas-frase` ("Vocês escolheram em todos os 6 bimestres, e ainda faltou R$ X."): X é o
+      patrimônio do placar da equipe (`historia.patrimonioDe(placar/{eq})`, o "faltou R$ X" da barra do telão e o
+      "Terminaram com" do "Escolha ou sorte?"; sem placar, o "ficou com" do último bimestre). "Escolheram" conta as
+      rodadas com origem diferente de `piloto` (o "ninguém votou" não é escolha): com uma delas, "em 5 dos 6
+      bimestres"; sem nenhuma, "A equipe não votou em nenhum bimestre, e faltou R$ X."; uma rodada só, "no bimestre
+      jogado". Sem faltar (X ≥ 0 arredondado): "… e fecharam as contas: sobrou R$ X." (sem nenhum voto, "A equipe
+      não votou em nenhum bimestre e fechou as contas: sobrou R$ X."). O texto sai de `partesDaFrase`. `data-resultado` =
+      `faltou`|`fechou`, `data-valor` (o patrimônio arredondado), `data-escolheram` e `data-total`; no `faltou`,
+      a borda grossa (nunca só cor, D-016);
+    - o cartão `section.escolhas-ano`: o cabeçalho `.escolhas-cabecalho` ("Bimestre · escolha · carta" e "Saldo do
+      bimestre": o número colorido é o saldo do bimestre) e uma `li.escolha` por rodada jogada, na ordem
+      (`data-rodada`, `data-saldo-mes`, `data-opcao` = o id da decisão, `data-letra`, `data-origem`, `data-carta`
+      = o id da carta): na primeira linha, o nome curto (`.escolha-mes`, `historia.rotuloDaRodada`) e o saldo
+      (`.valor-saldo.saldo-mes`, com o sinal e a cor, como no resumo); embaixo, de ponta a ponta, "B · rótulo"
+      (`.escolha-opcao`: a letra pela `ordemOpcoes` da rodada e o rótulo do jeito da persona, D-054, com a origem
+      entre parênteses quando não foi o voto simples, os mesmos textos do `descreverDecisao`: "ninguém votou: ficou
+      o de sempre", "empate decidido na moeda", "decidida na prorrogação", "registrada pelo apresentador") e
+      "Carta: título" (`.escolha-carta`, o título da `historiaDaEquipe`: com o `tituloPor` da carta no config, D-075,
+      o do jeito da persona; o e2e refaz o rótulo e o título direto do config). A letra, a origem e a carta saem de
+      `resultados/{r}/{eq}`, que o celular já ouve; nenhuma leitura nova (as regras v4 ficam como estão). No fim do cartão,
+      `p.faltou-mesa.faltou-mesa-ano` ("Faltou na mesa no ano: R$ M de comida que não deu para comprar (fora do
+      saldo)."), M = `historia.faltouNaMesaDe(placar/{eq})`, inclusive R$ 0, com o "no ano" do telão (12 meses
+      jogados; 1, "no mês"; senão "em N meses"); sala sem o limite, sem a linha;
+    - a dívida de hoje (`div.divida`, a do último bimestre: "Dívida total R$ D" e as partes);
+    - "Escolha ou sorte?" contado como história ("Se não mudassem nada · As escolhas · A sorte · = Terminaram com",
+      as variações sempre com + ou −, o total do fim em `.placar-total`), sem "piloto automático" nem "efeito das
+      decisões" (D-041); o pior caso; a história recolhida ("A história mês a mês", `data-recolhido="historia"`);
+      a família e os indicadores sem dinheiro.
+    Em 360×740, o título e as duas primeiras linhas aparecem sem rolar (com o config real, as seis não cabem
+    juntas: os rótulos vão a duas linhas). O resumo "Saldo · Ficou com" saiu do placar final (de 29/09 a 05/10 era
+    o topo dele); continua nos blocos e no fim.
   - **Fim:** o resumo mês a mês e a dívida (no lugar do "Saldo acumulado" do
     placar, que era o caixa), o pior caso e a história da própria equipe,
     recolhida, mês a mês (`.historia-mes`, com
@@ -1688,6 +1723,11 @@ anfitrião: quem decide é o telão.
   No sessionStorage, além das marcas da recarga do SDK, `espectador` (a sala do modo espectador, sem o PIN).
 - `Viracao.aluno` (só leitura, para o e2e): `versaoApp`, `uid()`, `sala()`,
   `tela()`, `pendentes()`, `envios()` e `espectador()` (`{ equipe }` no modo espectador, ou `null`).
+  E `textos`, as contas puras dos pedidos de 05/10, conferidas no `test/aluno-textos.test.mjs` (o `js/aluno.js`
+  carrega no Node sem DOM): `totalDaDivida(d) → número` (a dívida total, de `historia.dividaTotal`; `0` com
+  `null`), `partesDaFrase(origens, patrimonio, nomeDoPeriodo) → { antes, reais, depois, resultado, valor,
+  escolheram, total } | null` (a frase do placar final, com o valor em negrito entre `antes` e `depois`; `null`
+  sem rodada ou sem patrimônio) e `quandoDosMeses(n)` ("no ano", "no mês", "em N meses").
 
 ### Ferramentas
 

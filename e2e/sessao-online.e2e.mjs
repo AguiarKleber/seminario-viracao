@@ -38,7 +38,13 @@
 // 14. o limite do cheque especial (D-066) e a proteção acima do trabalho
 //    (D-067), numa sala de 6 bimestres com a fixture v3.1: a dívida com o
 //    limite e as contas atrasadas, o que faltou na mesa à parte, a multa e a
-//    mora na conta, e a frase da proteção acima do trabalho.
+//    mora na conta, e a frase da proteção acima do trabalho;
+// 15. os pedidos do Kleber de 05/10 no celular: no placar final, as escolhas
+//    da equipe em cada bimestre (a letra e o rótulo da opção, a carta e o
+//    saldo), com "Vocês escolheram em todos os N bimestres, e ainda faltou
+//    R$ X" no topo e o que faltou na mesa no ano embaixo (conferirEscolhas), e
+//    a "Dívida total" (cheque especial, empréstimo e contas atrasadas) em todas
+//    as telas, numa linha só na decisão.
 // Capturas do celular em e2e/capturas/celular-*.png (as antigas são apagadas no
 // começo: uma captura nova muda a numeração das seguintes).
 //
@@ -272,7 +278,7 @@ async function sessao() {
 async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela, entrarComoEspectador, corDoToken }) {
   const V = await carregarNucleo();
   const config = normalizar(V, lerConfigTesteV3());
-  const { anf, canal, relogio, indiceDe } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
+  const { anf, canal, relogio, indiceDe, passos } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
   // A equipe 1 paga o MEI no bimestre 1 e pega o empréstimo no 2 (a dívida e a
   // proteção aparecem); as outras variam.
   const ativas = ['e1', 'e3', 'e5'];
@@ -366,38 +372,14 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
   await administrador('PUT', `salas/${codigo}/membros/${uid}/equipe`, 'e1');
   await esperarTela(aluno, 'situacao');
 
-  // O resumo por bimestre (D-065): "Bimestre · Saldo do bimestre · Ficou com",
-  // 6 linhas com o nome curto de cada uma ("Jan–fev"), o valor com o sinal e a
-  // cor dele, inteiro na primeira tela de 360×740.
+  // Pedido do Kleber de 05/10 (item 4): no placar final, as escolhas da
+  // equipe em cada um dos 6 bimestres, com a frase "Vocês escolheram em todos
+  // os 6 bimestres, e ainda faltou R$ X" no topo. O resumo "Saldo · Ficou com"
+  // saiu daqui e é conferido num bloco, mais abaixo.
   const esperada = V.historia.historiaDaEquipe(config, 'e1', resultados);
   assert.equal(esperada.length, 6);
-  const lido = await aluno.p.evaluate(() => {
-    const r = document.querySelector('.resumo-meses');
-    const valor = (n) => ({ texto: n.textContent, sinal: n.dataset.sinal, cor: getComputedStyle(n).color });
-    return r ? {
-      baixo: r.getBoundingClientRect().bottom,
-      rotulo: r.getAttribute('aria-label'),
-      cabecalho: Array.from(r.querySelectorAll('thead th'), (n) => n.textContent),
-      linhas: Array.from(r.querySelectorAll('tbody tr'), (tr) => ({ rodada: tr.dataset.rodada, nome: tr.querySelector('th').textContent, saldo: valor(tr.querySelector('.saldo-mes')), ficou: valor(tr.querySelector('.saldo-ficou')) })),
-    } : null;
-  });
-  assert.ok(lido, 'o resumo por bimestre aparece');
-  assert.deepEqual(lido.cabecalho, ['Bimestre', 'Saldo do bimestre', 'Ficou com'], 'as colunas falam em bimestre');
-  assert.equal(lido.rotulo, 'Resumo por bimestre');
-  assert.deepEqual(lido.linhas.map((l) => l.nome), ['Jan–fev', 'Mar–abr', 'Mai–jun', 'Jul–ago', 'Set–out', 'Nov–dez'], 'uma linha por bimestre, com o nome curto');
-  assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId));
-  const cor = { positivo: await corDoToken(aluno, '--positivo'), negativo: await corDoToken(aluno, '--negativo') };
-  for (const [i, h] of esperada.entries()) {
-    for (const [campo, valor] of [['saldo', h.mes.saldoMes], ['ficou', h.saldoAcumulado]]) {
-      const l = lido.linhas[i][campo];
-      const r = Math.round(valor);
-      const sinal = r > 0 ? 'positivo' : r < 0 ? 'negativo' : 'zero';
-      assert.equal(l.texto, await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), valor), `${h.rodadaId}, ${campo}: o valor com o sinal`);
-      assert.equal(l.sinal, sinal, `${h.rodadaId}, ${campo}: data-sinal`);
-      if (r !== 0) assert.equal(l.cor, cor[sinal], `${h.rodadaId}, ${campo}: verde se positivo, vermelho se negativo`);
-    }
-  }
-  assert.ok(lido.baixo <= 740, `o resumo dos 6 bimestres cabe em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+  const escolhas = await conferirEscolhas(aluno, { H: V.historia, config, equipe: 'e1', resultados, placar: placar.e1, onde: 'placar final de 6 bimestres' });
+  assert.deepEqual(escolhas.lido.linhas.map((l) => l.textoMes), ['Jan–fev', 'Mar–abr', 'Mai–jun', 'Jul–ago', 'Set–out', 'Nov–dez'], 'uma linha por bimestre, com o nome curto');
   // O placar de 6 bimestres é estimado (simulação do motor): a tela diz.
   assert.ok(await aluno.p.locator('.nota-estimado').count() >= 1, 'a nota de estimado no "Escolha ou sorte?"');
   assert.ok((await aluno.p.$$eval('h2.subtitulo', (ns) => ns.map((n) => n.textContent))).includes('Escolha ou sorte? (estimado)'));
@@ -422,9 +404,11 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
   assert.deepEqual(await esp.p.$$eval('#barra-espectador [data-ver-equipe]:disabled', (bs) => bs.map((b) => b.dataset.verEquipe)), ['e2', 'e4', 'e6'], 'as equipes fechadas ficam apagadas no seletor');
   await esp.p.click('[data-ver-equipe="e3"]');
   await esp.p.waitForFunction(() => globalThis.Viracao.aluno.espectador()?.equipe === 'e3');
-  await esp.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6);
-  const linhasE3 = await esp.p.$$eval('.resumo-meses tbody tr', (ts) => ts.map((t) => Number(t.dataset.saldoMes)));
-  assert.deepEqual(linhasE3, V.historia.historiaDaEquipe(config, 'e3', resultados).map((h) => h.mes.saldoMes), 'a equipe 3, no seletor');
+  // As escolhas da equipe que o espectador está vendo (pedido de 05/10, item 4).
+  await esp.p.waitForFunction(() => document.querySelectorAll('.escolhas-ano .escolha').length === 6);
+  const linhasE3 = await esp.p.$$eval('.escolhas-ano .escolha', (ls) => ls.map((l) => ({ saldo: Number(l.dataset.saldoMes), opcao: l.dataset.opcao })));
+  assert.deepEqual(linhasE3, V.historia.historiaDaEquipe(config, 'e3', resultados).map((h) => ({ saldo: h.mes.saldoMes, opcao: resultados[h.rodadaId].e3.decisao })), 'a equipe 3, no seletor: as escolhas e o saldo dela');
+  await conferirEscolhas(esp, { H: V.historia, config, equipe: 'e3', resultados, placar: placar.e3, onde: 'espectador na equipe 3' });
   await conferirCelular(esp, 'bimestres-espectador');
   assert.equal((await administrador('GET', `salas/${codigo}/membros`))[await esp.p.evaluate(() => globalThis.Viracao.aluno.uid())], undefined, 'o espectador não é membro');
   // Revisão do voto (achado 3): o apresentador fecha a equipe que o espectador
@@ -461,6 +445,46 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
   const conta = await aluno.p.textContent('.conta-mes .conta-linha');
   assert.ok(conta.includes(`o básico da família custa ${await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v), mes.basico)} no bimestre`), `a conta diz "no bimestre" (${conta})`);
   await conferirCelular(aluno, 'bimestres-resultado');
+  // O resumo por bimestre (D-065) num bloco: "Bimestre · Saldo do bimestre ·
+  // Ficou com", 6 linhas com o nome curto de cada uma ("Jan–fev"), o valor com
+  // o sinal e a cor dele, inteiro na primeira tela de 360×740. Até 05/10 era
+  // conferido no placar final, que agora mostra as escolhas (pedido do Kleber,
+  // item 4). A situação dos blocos mostra o último resultado gravado, qualquer
+  // que seja o bloco: serve o primeiro depois do primeiro bimestre.
+  const umBloco = passos.findIndex((p, i) => i > indiceDe('rodada', { rodada: 'r1' }) && p.tipo === 'bloco');
+  assert.ok(umBloco >= 0, 'o roteiro tem um bloco depois do primeiro bimestre');
+  await administrador('PUT', `salas/${codigo}/estado`, { ...estado, geracao: estado.geracao + 3, indice: umBloco, tipo: 'bloco', rodada: null, subfase: null });
+  await esperarTela(aluno, 'situacao');
+  await aluno.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6, null, { timeout: 20000 });
+  await aluno.p.evaluate(() => globalThis.scrollTo(0, 0));
+  const lido = await aluno.p.evaluate(() => {
+    const r = document.querySelector('.resumo-meses');
+    const valor = (n) => ({ texto: n.textContent, sinal: n.dataset.sinal, cor: getComputedStyle(n).color });
+    return r ? {
+      baixo: r.getBoundingClientRect().bottom,
+      rotulo: r.getAttribute('aria-label'),
+      cabecalho: Array.from(r.querySelectorAll('thead th'), (n) => n.textContent),
+      linhas: Array.from(r.querySelectorAll('tbody tr'), (tr) => ({ rodada: tr.dataset.rodada, nome: tr.querySelector('th').textContent, saldo: valor(tr.querySelector('.saldo-mes')), ficou: valor(tr.querySelector('.saldo-ficou')) })),
+    } : null;
+  });
+  assert.ok(lido, 'o resumo por bimestre aparece no bloco');
+  assert.deepEqual(lido.cabecalho, ['Bimestre', 'Saldo do bimestre', 'Ficou com'], 'as colunas falam em bimestre');
+  assert.equal(lido.rotulo, 'Resumo por bimestre');
+  assert.deepEqual(lido.linhas.map((l) => l.nome), ['Jan–fev', 'Mar–abr', 'Mai–jun', 'Jul–ago', 'Set–out', 'Nov–dez'], 'uma linha por bimestre, com o nome curto');
+  assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId));
+  const cor = { positivo: await corDoToken(aluno, '--positivo'), negativo: await corDoToken(aluno, '--negativo') };
+  for (const [i, h] of esperada.entries()) {
+    for (const [campo, valor] of [['saldo', h.mes.saldoMes], ['ficou', h.saldoAcumulado]]) {
+      const l = lido.linhas[i][campo];
+      const r = Math.round(valor);
+      const sinal = r > 0 ? 'positivo' : r < 0 ? 'negativo' : 'zero';
+      assert.equal(l.texto, await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), valor), `${h.rodadaId}, ${campo}: o valor com o sinal`);
+      assert.equal(l.sinal, sinal, `${h.rodadaId}, ${campo}: data-sinal`);
+      if (r !== 0) assert.equal(l.cor, cor[sinal], `${h.rodadaId}, ${campo}: verde se positivo, vermelho se negativo`);
+    }
+  }
+  assert.ok(lido.baixo <= 740, `o resumo dos 6 bimestres cabe em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+  await conferirCelular(aluno, 'bimestres-bloco-resumo');
   await aluno.ctx.close();
   // Revisão do voto (achado 2): o espectador reconecta e, antes de o servidor
   // confirmar o "apague ao cair" do pedido, a sala é encerrada (a meta nula
@@ -496,6 +520,8 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
 // sala é montada pelo núcleo, como a da fixture, com as seis equipes jogando as
 // 6 rodadas; o celular entra na equipe que termina mais no vermelho (os
 // valores mais largos). Sem um config.json válido de 6 bimestres, pula.
+// Desde 05/10 (pedido do Kleber, item 4), o placar final mostra as escolhas
+// do ano (conferirEscolhas), e o resumo é conferido no último bloco do roteiro.
 async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela }) {
   const V = await carregarNucleo();
   const lido = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
@@ -505,7 +531,7 @@ async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conf
     return;
   }
   const config = lido.config;
-  const { anf, canal, relogio, indiceDe } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
+  const { anf, canal, relogio, indiceDe, passos } = montarSessao(V, { config, sementes: [101, 202, 303, 404, 505, 606] });
   const equipes = lista(config.ordem.equipes);
   await anf.criarSala();
   await anf.pularPara(indiceDe('formarEquipes'));
@@ -553,7 +579,20 @@ async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conf
   assert.ok(uid, 'o celular entrou na sala de 6 bimestres do config real');
   await administrador('PUT', `salas/${codigo}/membros/${uid}/equipe`, equipe);
   await esperarTela(aluno, 'situacao');
-  await aluno.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6);
+  // Pedido do Kleber de 05/10 (item 4): no placar final, as escolhas do ano,
+  // com os valores mais largos do config real.
+  await conferirEscolhas(aluno, { H: V.historia, config, equipe, resultados, placar: placar[equipe], onde: 'placar final do config real' });
+  await conferirCelular(aluno, 'bimestres-real-placar-final');
+  // O resumo de 6 linhas, que até 05/10 era conferido no placar final, agora
+  // num bloco: o último do roteiro, depois do placar e do comparativo, é onde a
+  // turma o vê com os 6 bimestres (a situação mostra o último resultado gravado).
+  const estado = await administrador('GET', `salas/${codigo}/estado`);
+  const ultimoBloco = passos.findLastIndex((p) => p.tipo === 'bloco');
+  assert.ok(ultimoBloco > indiceDe('rodada', { rodada: lista(config.ordem.rodadas).at(-1) }), 'o roteiro real tem um bloco depois do último bimestre');
+  await administrador('PUT', `salas/${codigo}/estado`, { ...estado, geracao: estado.geracao + 1, indice: ultimoBloco, tipo: 'bloco', rodada: null, subfase: null });
+  await esperarTela(aluno, 'situacao');
+  await aluno.p.waitForFunction(() => document.querySelectorAll('.resumo-meses tbody tr').length === 6, null, { timeout: 20000 });
+  await aluno.p.evaluate(() => globalThis.scrollTo(0, 0));
   const tela = await aluno.p.evaluate(() => {
     const r = document.querySelector('.resumo-meses');
     return {
@@ -579,10 +618,10 @@ async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conf
   }
   assert.ok(tela.direita <= 360 && tela.larguraPagina <= 360, `o resumo cabe na largura de 360 px (direita ${Math.round(tela.direita)}, página ${tela.larguraPagina})`);
   assert.ok(tela.baixo <= 740, `o resumo dos 6 bimestres do config real cabe em 360×740 sem rolar (termina em ${Math.round(tela.baixo)} px)`);
-  await conferirCelular(aluno, 'bimestres-real-placar-final');
+  await conferirCelular(aluno, 'bimestres-real-bloco-resumo');
   await ctx.close();
   await administrador('DELETE', `salas/${codigo}`);
-  console.log(`Resumo de 6 bimestres com o config.json real (equipe ${equipe}, até ${tela.linhas.at(-1).ficou}): cabe em 360×740.`);
+  console.log(`Config.json real (equipe ${equipe}): as escolhas dos 6 bimestres no placar final e o resumo até ${tela.linhas.at(-1).ficou} no último bloco, em 360×740.`);
 }
 
 // ---------- D-066 e D-067 no celular: o limite do cheque especial e a proteção acima do trabalho ----------
@@ -678,51 +717,47 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
     return partes.filter(Boolean).join(' ') || null;
   }
 
-  // 1. Placar final: o resumo por bimestre e a dívida de hoje com o limite (o
-  // banco parado em R$ 1.500 "de R$ 1.500 do limite", as contas atrasadas com a
-  // multa e a mora do config) e, à parte, o que faltou na mesa até agora (não é
-  // dívida). Tudo na primeira tela de 360×740.
+  // 1. Placar final (pedido do Kleber de 05/10, item 4): as escolhas dos 6
+  // bimestres, a frase do "faltou" e, embaixo delas, o que faltou na mesa no
+  // ano (não é dívida). Depois, a dívida de hoje com o limite (item 3): a
+  // "Dívida total", com o banco parado em R$ 1.500 "de R$ 1.500 do limite" e as
+  // contas atrasadas com a multa e a mora do config.
   const esperada = H.historiaDaEquipe(config, 'e1', resultados);
   const ultimo = res('r6');
   const d = H.dividaTotal(ultimo.depois);
   assert.ok(d.contasAtrasadas > 0 && d.chequeEspecial === 1500, `a dívida de hoje tem o banco e as contas atrasadas (${JSON.stringify(d)})`);
+  assert.equal(esperada.at(-1).saldoAcumulado, ultimo.depois.renda - ultimo.depois.contas_atrasadas - (ultimo.depois.emprestimo || 0), 'o patrimônio do último bimestre desconta as contas atrasadas');
+  const placar = await administrador('GET', `salas/${codigo}/placar`);
+  const escolhas = await conferirEscolhas(aluno, { H, config, equipe: 'e1', resultados, placar: placar.e1, onde: 'placar final com o limite' });
+  const mesaFim = H.faltouNaMesaDe(ultimo.depois);
+  assert.ok(mesaFim > 0, 'a equipe 1 terminou com comida cortada');
+  assert.equal(H.faltouNaMesaDe(placar.e1), mesaFim, 'o "faltou na mesa no ano" do placar é o acumulado do último bimestre');
+  assert.ok(escolhas.lido.mesa, 'o que faltou na mesa no ano aparece embaixo das escolhas');
   const lido = await aluno.p.evaluate(() => {
-    const r = document.querySelector('.resumo-meses');
-    const div = r?.querySelector('.divida');
-    const mesa = r?.querySelector('.faltou-mesa');
-    return r ? {
-      baixo: r.getBoundingClientRect().bottom,
-      direita: document.documentElement.scrollWidth,
-      ficou: Array.from(r.querySelectorAll('tbody tr'), (tr) => tr.querySelector('.saldo-ficou').textContent),
-      divida: div ? { ...div.dataset, texto: div.textContent } : null,
-      mesa: mesa ? { ...mesa.dataset, texto: mesa.textContent } : null,
-    } : null;
+    const div = document.querySelector('div.divida');
+    const escolhas = document.querySelector('.escolhas-ano');
+    // 4 = DOCUMENT_POSITION_FOLLOWING: a dívida vem depois das escolhas.
+    return { divida: div ? { ...div.dataset, texto: div.textContent, depoisDasEscolhas: Boolean(escolhas && (escolhas.compareDocumentPosition(div) & 4)) } : null };
   });
-  assert.ok(lido, 'o resumo por bimestre aparece');
-  for (const [i, h] of esperada.entries()) {
-    assert.equal(lido.ficou[i], await aluno.p.evaluate((v) => globalThis.Viracao.formatar.moeda(v, { sinal: true }), h.saldoAcumulado), `${h.rodadaId}: "ficou com" é o patrimônio, com as contas atrasadas descontadas`);
-  }
-  assert.equal(esperada.at(-1).saldoAcumulado, ultimo.depois.renda - ultimo.depois.contas_atrasadas - (ultimo.depois.emprestimo || 0), 'o último "ficou com" desconta as contas atrasadas');
   assert.ok(lido.divida, 'a dívida de hoje aparece');
-  assert.deepEqual([Number(lido.divida.divida), Number(lido.divida.cheque), Number(lido.divida.atrasadas), Number(lido.divida.limite)], [d.total, d.chequeEspecial, d.contasAtrasadas, 1500], 'a dívida é a do banco; as contas atrasadas, num atributo próprio');
-  // Revisão da F6c: "Dívida no banco" é o mesmo número que o telão chama de
-  // dívida (o banco e o empréstimo); as contas atrasadas vêm à parte, com nome
-  // próprio, e não somadas num "Dívida hoje".
-  assert.equal(d.total, d.chequeEspecial + d.emprestimo, 'o total é o banco e o empréstimo');
-  assert.ok(!lido.divida.texto.includes('Dívida hoje'), `com o limite, nenhum total chamado "Dívida hoje" (${lido.divida.texto})`);
+  assert.ok(lido.divida.depoisDasEscolhas, 'a dívida vem depois das escolhas');
+  // Pedido do Kleber de 05/10 (item 3): a "Dívida total" soma o banco, o
+  // empréstimo e as contas atrasadas, o mesmo número da linha única do telão;
+  // as partes continuam embaixo, cada uma com o seu nome. Antes (revisão da
+  // F6c), o total era "Dívida no banco", sem as contas atrasadas.
+  const totalDaTela = d.chequeEspecial + d.emprestimo + d.contasAtrasadas;
+  assert.deepEqual([Number(lido.divida.divida), Number(lido.divida.banco), Number(lido.divida.cheque), Number(lido.divida.atrasadas), Number(lido.divida.limite)],
+    [totalDaTela, d.chequeEspecial + d.emprestimo, d.chequeEspecial, d.contasAtrasadas, 1500], 'a dívida total soma o banco, o empréstimo e as contas atrasadas; as partes, nos atributos próprios');
+  assert.ok(!/Dívida hoje|Dívida no banco/.test(lido.divida.texto), `nenhum total com o nome de antes (${lido.divida.texto})`);
   for (const x of [
-    `Dívida no banco ${await moeda(d.total)}`,
+    `Dívida total ${await moeda(totalDaTela)}`,
     `Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite · juros de 8% ao mês`,
     `Contas atrasadas ${await moeda(d.contasAtrasadas)} · multa de 10% e mora de 1% ao mês`,
   ]) assert.ok(lido.divida.texto.includes(x), `placar final: "${x}" em "${lido.divida.texto}"`);
-  const mesaFim = H.faltouNaMesaDe(ultimo.depois);
-  assert.ok(mesaFim > 0, 'a equipe 1 terminou com comida cortada');
-  assert.ok(lido.mesa, 'o que faltou na mesa aparece no resumo, à parte da dívida');
-  assert.equal(Number(lido.mesa.faltouNaMesa), mesaFim);
-  assert.equal(lido.mesa.texto, `Faltou na mesa: ${await moeda(mesaFim)} de comida que não deu para comprar, até agora.`);
   assert.ok(!lido.divida.texto.includes('Faltou na mesa'), 'o que faltou na mesa não entra na dívida');
-  assert.ok(lido.direita <= 360, `sem rolagem lateral (${lido.direita} px)`);
-  assert.ok(lido.baixo <= 740, `o resumo, a dívida com o limite e o que faltou na mesa cabem em 360×740 sem rolar (termina em ${Math.round(lido.baixo)} px)`);
+  // Sem caixa (o banco no limite), o "faltou" da frase do topo é a própria
+  // dívida total: a sala lê o mesmo número nos dois lugares.
+  if (ultimo.depois.renda <= 0) assert.equal(escolhas.valor, Math.round(-totalDaTela) + 0, 'o "faltou" da frase é a dívida total');
   await conferirCelular(aluno, 'limite-placar-final');
 
   // 2. A história bimestre a bimestre: a conta com a comida cortada, a multa e
@@ -785,6 +820,9 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   const d4 = H.dividaTotal(res('r4').depois);
   assert.ok(t.divida.visivel && !t.divida.noRecolhido, 'Jul–ago: a dívida à vista');
   assert.equal(Number(t.divida.dados.atrasadas), d4.contasAtrasadas);
+  // Pedido de 05/10 (item 3): o número de cima é a dívida total, com as contas atrasadas.
+  assert.equal(Number(t.divida.dados.divida), d4.chequeEspecial + d4.emprestimo + d4.contasAtrasadas);
+  assert.ok(t.divida.texto.startsWith(`Dívida total ${await moeda(d4.chequeEspecial + d4.emprestimo + d4.contasAtrasadas)}`), t.divida.texto);
   assert.ok(t.divida.texto.includes(`Contas atrasadas ${await moeda(d4.contasAtrasadas)}`), t.divida.texto);
   assert.ok(t.divida.texto.includes(`Cheque especial ${await moeda(1500)} de ${await moeda(1500)} do limite`), t.divida.texto);
   assert.ok(t.mesa && t.mesa.visivel && !t.mesa.noRecolhido, 'Jul–ago: o que faltou na mesa à vista');
@@ -847,6 +885,136 @@ async function limiteNoCelular({ navegador, site, vigiar, versaoApp, conferirCel
   await ctx.close();
   await administrador('DELETE', `salas/${codigo}`);
   console.log(`D-066 e D-067 no celular: a dívida com o limite (banco em R$ 1.500, R$ ${d.contasAtrasadas} em contas atrasadas), o que faltou na mesa à parte (R$ ${mesaFim}), a multa e a mora na conta e a proteção acima do trabalho, em 360×740.`);
+}
+
+// ---------- As escolhas do ano no placar final (pedido do Kleber de 05/10, item 4) ----------
+// Quando o telão chega ao placar final ("Quanto sobrou, e quanto ficou
+// devendo", e as páginas seguintes), o celular mostra o que a equipe escolheu
+// em cada bimestre, para a turma ver que, mesmo podendo escolher, faltou muito
+// dinheiro. Confere, a partir do banco (os resultados e o placar da equipe) e
+// das funções puras do núcleo:
+// - o título "As escolhas de vocês" e a frase do topo, "Vocês escolheram em
+//   todos os N bimestres, e ainda faltou R$ X" (X = o patrimônio do placar, o
+//   "faltou" da barra do telão; o "ninguém votou" não conta como escolha; sem
+//   faltar, "… e fecharam as contas: sobrou R$ X.");
+// - uma linha por bimestre, na ordem: o nome curto, a letra e o rótulo da opção
+//   do jeito da persona (D-054), com a origem quando não foi o voto simples
+//   (D-041), a carta e o saldo do bimestre com o sinal e a cor (verde ou
+//   vermelho, os tokens do telão), nenhum valor quebrado;
+// - embaixo, o que faltou na mesa no ano (só com o limite, D-066);
+// - o título e as duas primeiras linhas na primeira tela de 360×740, sem
+//   rolagem lateral, e sem o resumo "Saldo · Ficou com" (saiu do placar final).
+// H: Viracao.historia do Node; placar: o placar da equipe.
+async function conferirEscolhas(c, { H, config, equipe, resultados, placar, onde }) {
+  const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
+  const esperada = H.historiaDaEquipe(config, equipe, resultados).filter((h) => Number.isFinite(h.mes?.saldoMes));
+  assert.ok(esperada.length > 0, `${onde}: a equipe jogou`);
+  await c.p.evaluate(() => globalThis.scrollTo(0, 0));
+  await c.p.waitForFunction((n) => document.querySelectorAll('.escolhas-ano .escolha').length === n, esperada.length, { timeout: 10000 });
+  const lido = await c.p.evaluate(() => {
+    const r = document.querySelector('.escolhas-ano');
+    const f = document.querySelector('.escolhas-frase');
+    const h1 = document.querySelector('#tela h1');
+    const m = r.querySelector('.faltou-mesa');
+    const css = getComputedStyle(document.documentElement);
+    const rgb = (token) => {
+      const hex = css.getPropertyValue(token).trim();
+      const [a, b, d] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      return `rgb(${a}, ${b}, ${d})`;
+    };
+    return {
+      titulo: h1.textContent,
+      tituloTopo: h1.getBoundingClientRect().top,
+      frase: f ? { texto: f.textContent, ...f.dataset } : null,
+      cabecalho: Array.from(r.querySelectorAll('.escolhas-cabecalho span'), (n) => n.textContent),
+      linhas: Array.from(r.querySelectorAll('.escolha'), (li) => {
+        const s = li.querySelector('.saldo-mes');
+        return {
+          ...li.dataset,
+          baixo: li.getBoundingClientRect().bottom,
+          textoMes: li.querySelector('.escolha-mes').textContent,
+          textoOpcao: li.querySelector('.escolha-opcao').textContent,
+          textoCarta: li.querySelector('.escolha-carta').textContent,
+          saldo: { texto: s.textContent, sinal: s.dataset.sinal, cor: getComputedStyle(s).color, quebrado: s.getClientRects().length > 1 || s.scrollWidth > s.clientWidth + 1 },
+        };
+      }),
+      mesa: m ? { texto: m.textContent, ...m.dataset } : null,
+      larguraPagina: document.documentElement.scrollWidth,
+      cores: { positivo: rgb('--positivo'), negativo: rgb('--negativo'), zero: getComputedStyle(document.body).color },
+      temResumo: Boolean(document.querySelector('.resumo-meses')),
+    };
+  });
+  const moeda = (v, sinal = false) => c.p.evaluate(([x, s]) => globalThis.Viracao.formatar.moeda(x, { sinal: s }), [v, sinal]);
+  const per = H.periodo(config);
+  const plural = per.nome === 'mês' ? 'meses' : per.nome.replace(/^(\S+)/, '$1s');
+  const origens = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
+  assert.equal(lido.titulo, 'As escolhas de vocês', `${onde}: o título`);
+  assert.equal(lido.temResumo, false, `${onde}: o resumo "Saldo · Ficou com" saiu do placar final`);
+
+  // A frase do topo.
+  const res = (h) => resultados[h.rodadaId][equipe];
+  const escolheram = esperada.filter((h) => res(h).origem !== 'piloto').length;
+  const total = esperada.length;
+  const valor = Math.round(H.patrimonioDe(placar)) + 0;
+  let quem = `Vocês escolheram em todos os ${total} ${plural}`;
+  if (total === 1 && escolheram === 1) quem = `Vocês escolheram no ${per.nome} jogado`;
+  else if (escolheram === 0) quem = `A equipe não votou em nenhum ${per.nome}`;
+  else if (escolheram < total) quem = `Vocês escolheram em ${escolheram} dos ${total} ${plural}`;
+  // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam".
+  const fim = valor < 0 ? `${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}${await moeda(-valor)}.` : ` e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou ${await moeda(valor)}.`;
+  assert.ok(lido.frase, `${onde}: a frase do topo aparece`);
+  assert.equal(lido.frase.texto, `${quem}${fim}`, `${onde}: a frase do topo`);
+  assert.deepEqual([lido.frase.resultado, Number(lido.frase.valor), Number(lido.frase.escolheram), Number(lido.frase.total)], [valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total], `${onde}: os atributos da frase`);
+
+  // Uma linha por bimestre.
+  assert.deepEqual(lido.cabecalho, [`${per.nome.charAt(0).toLocaleUpperCase('pt-BR')}${per.nome.slice(1)} · escolha · carta`, `Saldo ${per.doPeriodo}`], `${onde}: o cabeçalho diz que o número colorido é o saldo ${per.doPeriodo}`);
+  assert.deepEqual(lido.linhas.map((l) => l.rodada), esperada.map((h) => h.rodadaId), `${onde}: uma linha por ${per.nome} jogado, na ordem`);
+  // O rótulo e o título refeitos aqui direto do config, do jeito da persona
+  // da equipe (rotuloPor, D-054; tituloPor da carta, D-075), e não só pela
+  // historiaDaEquipe: no teste do Kleber de 05/10, seis equipes com "O
+  // instrumento de trabalho quebrou" pareciam repetição. Sem tituloPor no
+  // config, o título comum.
+  const persona = config.equipes[equipe]?.persona;
+  for (const [i, h] of esperada.entries()) {
+    const l = lido.linhas[i];
+    const r = res(h);
+    const ordem = lista(config.rodadas[h.rodadaId].ordemOpcoes).length > 0 ? lista(config.rodadas[h.rodadaId].ordemOpcoes) : Object.keys(config.rodadas[h.rodadaId].opcoes);
+    const letra = 'ABCDEFGHIJ'[ordem.indexOf(r.decisao)];
+    const opcao = config.rodadas[h.rodadaId].opcoes[r.decisao];
+    const rotulo = opcao.rotuloPor?.[persona] ?? opcao.rotulo;
+    const carta = config.cartas[r.carta];
+    const tituloCarta = carta.tituloPor?.[persona] ?? carta.titulo;
+    assert.equal(l.textoMes, h.rotulo, `${onde}, ${h.rodadaId}: o nome curto`);
+    assert.deepEqual([l.opcao, l.letra, l.origem, l.carta], [r.decisao, letra, r.origem, r.carta], `${onde}, ${h.rodadaId}: a letra, a origem e a carta nos atributos`);
+    assert.equal(h.opcao.rotulo, rotulo, `${onde}, ${h.rodadaId}: a história traz o rótulo da persona`);
+    assert.equal(l.textoOpcao, `${letra} · ${rotulo}${origens[r.origem] ? ` (${origens[r.origem]})` : ''}`, `${onde}, ${h.rodadaId}: a letra e o rótulo da persona`);
+    assert.equal(l.textoCarta, `Carta: ${tituloCarta}`, `${onde}, ${h.rodadaId}: a carta, com o título da persona quando há`);
+    assert.equal(Number(l.saldoMes), h.mes.saldoMes);
+    const arredondado = Math.round(h.mes.saldoMes);
+    const sinal = arredondado > 0 ? 'positivo' : arredondado < 0 ? 'negativo' : 'zero';
+    assert.equal(l.saldo.texto, await moeda(h.mes.saldoMes, true), `${onde}, ${h.rodadaId}: o saldo com o sinal`);
+    assert.equal(l.saldo.sinal, sinal, `${onde}, ${h.rodadaId}: data-sinal`);
+    assert.equal(l.saldo.cor, lido.cores[sinal], `${onde}, ${h.rodadaId}: verde se positivo, vermelho se negativo`);
+    assert.equal(l.saldo.quebrado, false, `${onde}, ${h.rodadaId}: o saldo numa linha só (${l.saldo.texto})`);
+  }
+
+  // O que faltou na mesa no ano, embaixo (só com o limite).
+  const mesa = H.faltouNaMesaDe(placar);
+  if (mesa === null) assert.equal(lido.mesa, null, `${onde}: sala sem o limite, sem o "faltou na mesa"`);
+  else {
+    const meses = H.mesesJogados(config, esperada);
+    const quando = meses === 12 ? 'no ano' : meses === 1 ? 'no mês' : `em ${meses} meses`;
+    assert.ok(lido.mesa, `${onde}: o que faltou na mesa aparece embaixo das escolhas`);
+    assert.equal(Number(lido.mesa.faltouNaMesa), Math.round(mesa));
+    assert.equal(lido.mesa.texto, `Faltou na mesa ${quando}: ${await moeda(Math.round(mesa))} de comida que não deu para comprar (fora do saldo).`, `${onde}: o "faltou na mesa" do ano`);
+  }
+
+  // O título e as duas primeiras linhas sem rolar; nada sai pela lateral.
+  assert.ok(lido.tituloTopo >= 0, `${onde}: o título à vista`);
+  const segunda = lido.linhas[Math.min(1, lido.linhas.length - 1)];
+  assert.ok(segunda.baixo <= 740, `${onde}: o título e as duas primeiras linhas cabem em 360×740 sem rolar (a segunda termina em ${Math.round(segunda.baixo)} px)`);
+  assert.ok(lido.larguraPagina <= 360, `${onde}: sem rolagem lateral (${lido.larguraPagina} px)`);
+  return { esperada, lido, valor };
 }
 
 async function esperarNoBanco(caminho, esperado, esperaMs = 5000) {
@@ -1176,21 +1344,27 @@ async function jogar({ site, navegador, vigiar }) {
   // 30/09, o Jonas pegou R$ 1.500 no mês 2 e o celular disse "Dívida R$ 1": a
   // soma é refeita aqui (historia.dividaTotal, a mesma função pura do núcleo),
   // e o texto é conferido parte por parte. Sem dívida, sem o bloco.
+  // Pedido do Kleber de 05/10 (item 3): o número de cima é a "Dívida total", o
+  // cheque especial, o empréstimo E as contas atrasadas, o mesmo da linha única
+  // do telão; as partes continuam embaixo. Antes era "Dívida no banco", sem as
+  // contas atrasadas (revisão da F6c). A soma é pelas partes, como no celular.
   async function conferirDivida(c, res, onde) {
     const lido = await c.p.evaluate(() => {
-      const n = document.querySelector('.divida');
+      const n = document.querySelector('div.divida');
       return n ? { ...n.dataset, texto: n.textContent } : null;
     });
     const d = C.historia.dividaTotal(res.depois);
     assert.ok(d, `${onde}: o telão gravou o "depois" do mês`);
-    if (!(d.total > 0) && !(d.contasAtrasadas > 0)) {
+    const total = d.chequeEspecial + d.emprestimo + (d.contasAtrasadas || 0);
+    if (!(total > 0)) {
       assert.equal(lido, null, `${onde}: sem dívida, sem o bloco da dívida`);
       return d;
     }
     assert.ok(lido, `${onde}: a dívida aparece`);
-    assert.deepEqual([Number(lido.divida), Number(lido.cheque), Number(lido.emprestimo)], [d.total, d.chequeEspecial, d.emprestimo], `${onde}: a dívida é o cheque especial mais o empréstimo`);
-    // Com o limite (revisão da F6c), "Dívida no banco" e as contas atrasadas à parte.
-    const trechos = [`${d.contasAtrasadas !== undefined ? 'dívida no banco' : 'dívida hoje'} ${await moedaNa(c, d.total)}`];
+    assert.deepEqual([Number(lido.divida), Number(lido.banco), Number(lido.cheque), Number(lido.emprestimo)], [total, d.chequeEspecial + d.emprestimo, d.chequeEspecial, d.emprestimo],
+      `${onde}: a dívida total é o cheque especial, o empréstimo e as contas atrasadas`);
+    assert.ok(!/dívida no banco|dívida hoje/i.test(lido.texto), `${onde}: nenhum total com o nome de antes (${lido.texto})`);
+    const trechos = [`dívida total ${await moedaNa(c, total)}`];
     if (d.contasAtrasadas > 0) trechos.push(`contas atrasadas ${await moedaNa(c, d.contasAtrasadas)}`);
     // Com as casas da fonte (7,43%), refeito aqui, e não pelo formatador da página.
     const juros = `${(C.cfg.regras.jurosDividaMes * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
@@ -2204,13 +2378,38 @@ async function jogar({ site, navegador, vigiar }) {
       const [Q1] = C.opcoesDe(R3);
       await esperarTela(cel[0], 'decisao');
       await esperarTela(caio, 'decisao');
-      // Na decisão, a dívida numa linha: a soma, com a parte do empréstimo.
+      // Na decisão, a dívida numa linha só: "Dívida total R$ D" (pedido de
+      // 05/10, item 3: o cheque especial, o empréstimo e as contas atrasadas).
+      // No teste do Kleber de 05/10, a linha saía empilhada em cinco ("Dívida" /
+      // "R$ 2.625" / ", com" / "R$ 625" / "de empréstimo"), pelo flex em coluna
+      // da caixa .divida: a altura dela tem de ser a de uma linha de texto.
       {
         const d = C.historia.dividaTotal(res2[E1].depois);
-        const linha = await cel[0].p.textContent('.pressao .divida');
-        // Com o limite, o total é o banco e o empréstimo, o mesmo "dívida" do telão (revisão da F6c).
-        const esperado = `dívida ${await moedaNa(cel[0], d.total)}, com ${await moedaNa(cel[0], d.emprestimo)} de empréstimo`;
-        assert.ok(inclui(linha, esperado), `decisão do mês 3: "${esperado}" em "${linha}"`);
+        const total = d.chequeEspecial + d.emprestimo + (d.contasAtrasadas || 0);
+        const linha = await cel[0].p.evaluate(() => {
+          const n = document.querySelector('.pressao .divida');
+          const s = getComputedStyle(n);
+          const umaLinha = parseFloat(s.lineHeight) + parseFloat(s.paddingTop) + parseFloat(s.paddingBottom) + parseFloat(s.borderTopWidth) + parseFloat(s.borderBottomWidth);
+          return { texto: n.textContent, divida: Number(n.dataset.divida), altura: n.getBoundingClientRect().height, umaLinha, direita: n.getBoundingClientRect().right };
+        });
+        assert.equal(linha.texto, `Dívida total ${await moedaNa(cel[0], total)}`, 'decisão do mês 3: a linha curta é a dívida total');
+        assert.equal(linha.divida, total);
+        assert.ok(linha.altura <= linha.umaLinha + 1, `decisão do mês 3: a linha da dívida não quebra em 360 px (altura ${linha.altura}, uma linha ${linha.umaLinha})`);
+        assert.ok(linha.direita <= 360, `decisão do mês 3: a linha da dívida cabe na largura (${linha.direita} px)`);
+        // As partes ficam na situação recolhida, depois das opções.
+        const partes = await cel[0].p.evaluate(() => {
+          const caixa = document.querySelector('details.situacao-resumo');
+          const aberta = caixa.open;
+          caixa.open = true;
+          const n = caixa.querySelector('div.divida');
+          const lido = n ? { ...n.dataset, texto: n.textContent } : null;
+          caixa.open = aberta;
+          return lido;
+        });
+        assert.ok(partes, 'decisão do mês 3: a dívida por partes na situação recolhida');
+        assert.equal(Number(partes.divida), total);
+        if (d.emprestimo > 0) assert.ok(inclui(partes.texto, `fica devendo ${await moedaNa(cel[0], d.emprestimo)}`), `decisão do mês 3: o empréstimo nas partes ("${partes.texto}")`);
+        if (d.chequeEspecial > 0) assert.ok(inclui(partes.texto, `cheque especial ${await moedaNa(cel[0], d.chequeEspecial)}`), `decisão do mês 3: o cheque especial nas partes ("${partes.texto}")`);
       }
       await votarNa(cel[0], Q1);
       await temNota(cel[0], /registrado/);
@@ -2269,10 +2468,14 @@ async function jogar({ site, navegador, vigiar }) {
     const c = await cel[0].p.evaluate((p) => globalThis.Viracao.historia.escolhaOuSorte(p), placarE1);
     assert.deepEqual(lidos, [c.piloto, c.escolhas, c.sorte, c.total], 'escolha ou sorte: os valores de historia.escolhaOuSorte');
     assert.equal(lidos[0] + lidos[1] + lidos[2], lidos[3], 'escolha ou sorte: as parcelas somam o total mostrado');
-    // O "terminaram com" é o patrimônio: o mesmo "ficou com" da última linha
-    // do resumo mês a mês (D-065).
-    const { esperada } = await conferirResumo(cel[0], E1, 'placar final', { naDobra: true });
-    assert.equal(c.total, Math.round(esperada.at(-1).saldoAcumulado), 'escolha ou sorte: o total é o último "ficou com" do resumo');
+    // Pedido do Kleber de 05/10 (item 4): no topo do placar final, as escolhas
+    // de cada mês jogado e a frase "Vocês escolheram…, e ainda faltou R$ X"
+    // (o resumo "Saldo · Ficou com" saiu daqui). O "faltou" da frase é o
+    // patrimônio, o mesmo "Terminaram com" do "Escolha ou sorte?".
+    const escolhas = await conferirEscolhas(cel[0], { H: C.historia, config: C.cfg, equipe: E1, resultados: resultadosDaSala, placar: placarE1, onde: 'placar final' });
+    assert.equal(escolhas.valor, c.total, 'a frase do topo e o "Terminaram com" dão o mesmo número');
+    // A dívida de hoje logo depois das escolhas (item 3: a dívida total).
+    await conferirDivida(cel[0], resultadosDaSala[escolhas.esperada.at(-1).rodadaId][E1], 'placar final, a dívida de hoje');
     await conferirRecolhido(cel[0], 'historia', '.historia-mes', 'placar final');
     await conferirSemDinheiroNosIndicadores(cel[0], 'placar final');
     // Rascunho, seção 7, item 11: os totais sem sinal de variação (nunca "+"),

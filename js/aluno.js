@@ -2011,10 +2011,11 @@
 
   // ----- A dívida da família (D-046; esquema v2.2, D-065)
   //
-  // Duas dívidas: o cheque especial (o saldo acumulado negativo, com os juros do
-  // config) e o empréstimo a pagar. A "dívida" das telas é a soma
-  // (historia.dividaTotal). No teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e
-  // o celular disse "Dívida R$ 1", porque olhava só o cheque especial.
+  // Três dívidas: o cheque especial (o saldo acumulado negativo, com os juros do
+  // config), o empréstimo a pagar e, com o limite (D-066), as contas atrasadas.
+  // A "dívida" das telas é a soma das três (totalDaDivida, pedido de 05/10). No
+  // teste de 30/09, o Jonas pegou R$ 1.500 no mês 2 e o celular disse "Dívida
+  // R$ 1", porque olhava só o cheque especial.
 
   const valoresDe = (indicadores) => Object.fromEntries(lista(indicadores).map((i) => [i.id, i.valor]));
 
@@ -2035,28 +2036,33 @@
     return { jurosMes: r.jurosDividaMes, limite: r.limiteChequeEspecial, multaAtraso: r.multaAtraso, moraMes: r.moraMes };
   }
 
-  // Na decisão, uma linha só (a dobra de 360×740 não tem espaço): "Dívida R$ D ·
-  // juros de J% ao mês" quando é só o cheque especial, e "Dívida R$ D, com R$ E
-  // de empréstimo" quando há empréstimo (os juros dele são outros).
-  // Com o limite (D-066), o D é o do telão: o banco e o empréstimo, sem as
-  // contas atrasadas (revisão da F6c: o telão escrevia "dívida R$ 3.000" e o
-  // celular, "Dívida R$ 7.811", para a mesma equipe). As contas atrasadas
-  // ficam na situação, logo abaixo das opções (blocoDivida): na mesma linha,
-  // "· contas atrasadas R$ 4.811" quebrava em duas em 360 px e empurrava a
-  // confirmação do voto para baixo da dobra (matriz de votos, r4).
-  const temAtrasadas = (divida) => divida?.contasAtrasadas > 0;
+  // Pedido do Kleber depois do teste de 05/10 (item 3): a dívida das telas é uma
+  // só, a "dívida total" = cheque especial + empréstimo + contas atrasadas, o
+  // mesmo número da linha única do telão. Antes (revisão da F6c), o total era só
+  // o banco e o empréstimo, e as contas atrasadas vinham numa linha à parte: no
+  // telão, "dívida R$ 2.000" e "contas atrasadas R$ 5.880" lado a lado, e a sala
+  // não somava. A soma é feita aqui, pelas partes, e não pelo total do núcleo
+  // (historia.dividaTotal ainda deixa as contas atrasadas fora do total): assim
+  // o celular dá o mesmo número com qualquer uma das duas definições lá.
+  const totalDaDivida = (d) => (Number(d?.chequeEspecial) || 0) + (Number(d?.emprestimo) || 0) + (Number(d?.contasAtrasadas) || 0);
+
+  // Na decisão, uma linha só, "Dívida total R$ D" (a dobra de 360×740 não tem
+  // espaço). No teste de 05/10, a linha curta saía quebrada em cinco ("Dívida" /
+  // "R$ 2.625" / ", com" / "R$ 625" / "de empréstimo"), porque o <p> herdava o
+  // flex em coluna da caixa .divida; e nem sem isso ela cabia: "Dívida R$ 2.625,
+  // com R$ 625 de empréstimo" mede 312 px para os 300 px da linha em 360 px, e
+  // com o "total" e as contas atrasadas, até 357 px. As partes (cheque especial,
+  // empréstimo, contas atrasadas, com as taxas) ficam na situação recolhida,
+  // depois das opções (blocoDivida), e no resultado.
   function linhaDivida(divida) {
-    if (!divida || !(divida.total > 0)) return null;
+    const total = totalDaDivida(divida);
+    if (!(total > 0)) return null;
     const { el } = D();
-    const moeda = (v) => el('b', { texto: F().moeda(v) });
-    let resto = [];
-    if (divida.emprestimo > 0) resto = [', com ', moeda(divida.emprestimo), ' de empréstimo'];
-    else if (Number.isFinite(divida.jurosMes)) resto = [' · juros de ', el('b', { texto: F().taxa(divida.jurosMes) }), ' ao mês'];
-    return el('p', { classe: 'divida', dados: { divida: String(divida.total) } }, ['Dívida ', moeda(divida.total), ...resto]);
+    return el('p', { classe: 'divida divida-curta', dados: { divida: String(total) } }, ['Dívida total ', el('b', { texto: F().moeda(total) })]);
   }
 
   // Nas telas de situação, resultado e fim, a dívida por partes, debaixo do
-  // saldo: "Dívida hoje R$ 1.501", "Cheque especial R$ 1 · juros de 7,43% ao
+  // saldo: "Dívida total R$ 1.501", "Cheque especial R$ 1 · juros de 7,43% ao
   // mês", "Empréstimo a 6,39% ao mês: fica devendo R$ 1.500 em 12 parcelas" e "a
   // próxima: R$ 183 · R$ 2.192 no total, com os juros" (11 × 183 + 179). A taxa
   // do empréstimo vem do mês gravado (taxaEmprestimo): sem ela, só a taxa do
@@ -2064,11 +2070,13 @@
   // mês dos indicadores). Com empréstimo e caixa positivo, o caixa aparece: sem
   // ele, "ficou com −R$ 1.000" ao lado de "dívida R$ 1.500" não fechava.
   // Sem dívida, sem o bloco.
-  // Com o limite (D-066; revisão da F6c), o total é "Dívida no banco" (o
-  // cheque especial e o empréstimo, o mesmo número que o telão chama de
-  // dívida), e as contas atrasadas vêm numa linha com nome próprio, fora dele.
+  // Pedido de 05/10 (item 3): o número de cima é a "Dívida total" (o cheque
+  // especial, o empréstimo e as contas atrasadas, totalDaDivida), o mesmo da
+  // linha única do telão, e as partes ficam embaixo, como já estavam. Antes era
+  // "Dívida no banco" (revisão da F6c), sem as contas atrasadas.
   function blocoDivida(divida, mes) {
-    if (!divida || !(divida.total > 0 || temAtrasadas(divida))) return null;
+    const total = totalDaDivida(divida);
+    if (!divida || !(total > 0)) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
     const partes = [];
@@ -2103,13 +2111,15 @@
       if (divida.caixa > 0) partes.push(el('p', { classe: 'divida-nota', texto: `Dinheiro em caixa: ${F().moeda(divida.caixa)}` }));
     }
     // data-atrasadas e data-limite só com o limite: a sala sem ele fica igual.
+    // data-divida é a dívida total; data-banco, o cheque especial e o
+    // empréstimo (o total de antes de 05/10), para a conferência do e2e.
     const doLimite = {
       ...(divida.contasAtrasadas !== undefined ? { atrasadas: divida.contasAtrasadas } : {}),
       ...(Number.isFinite(divida.limite) ? { limite: divida.limite } : {}),
     };
     return el('div', {
-      classe: 'divida', dados: { divida: divida.total, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo, ...doLimite },
-    }, [el('p', { classe: 'divida-total' }, [divida.contasAtrasadas !== undefined ? 'Dívida no banco ' : 'Dívida hoje ', moeda(divida.total)]), ...partes]);
+      classe: 'divida', dados: { divida: total, banco: divida.chequeEspecial + divida.emprestimo, cheque: divida.chequeEspecial, emprestimo: divida.emprestimo, ...doLimite },
+    }, [el('p', { classe: 'divida-total' }, ['Dívida total ', moeda(total)]), ...partes]);
   }
 
   // ----- O resumo mês a mês (D-065)
@@ -2168,11 +2178,6 @@
       el('td', {}, [valorSaldo(h.saldoAcumulado, 'saldo-ficou')]),
     ]));
     const ultimo = meses.at(-1);
-    // O caixa é o patrimônio mais o que ele desconta: o empréstimo e, com o
-    // limite (D-066), as contas atrasadas.
-    const divida = ultimo.divida && Number.isFinite(ultimo.saldoAcumulado)
-      ? { ...ultimo.divida, caixa: ultimo.saldoAcumulado + ultimo.divida.emprestimo + (ultimo.divida.contasAtrasadas || 0), ...regrasDaDivida() }
-      : null;
     // Esquema v3: "Bimestre · Saldo do bimestre · Ficou com", uma linha por
     // bimestre (6 no jogo de 12 meses); com rodadas mensais, como antes.
     const p = periodo();
@@ -2183,10 +2188,133 @@
         ])]),
         el('tbody', {}, linhas),
       ]),
-      blocoDivida(divida, ultimo.mes),
+      blocoDivida(dividaDoUltimo(ultimo), ultimo.mes),
       // D-066: o que faltou na mesa até aqui, embaixo da dívida e fora dela.
       linhaMesa(ultimo.faltouNaMesa),
     ]);
+  }
+
+  // A dívida de hoje, a do último mês jogado da história. O caixa é o
+  // patrimônio mais o que ele desconta: o empréstimo e, com o limite (D-066),
+  // as contas atrasadas. null em sala sem o "depois".
+  function dividaDoUltimo(ultimo) {
+    if (!ultimo?.divida || !Number.isFinite(ultimo.saldoAcumulado)) return null;
+    return { ...ultimo.divida, caixa: ultimo.saldoAcumulado + ultimo.divida.emprestimo + (ultimo.divida.contasAtrasadas || 0), ...regrasDaDivida() };
+  }
+
+  // ----- As escolhas do ano, no placar final (pedido do Kleber de 05/10, item 4)
+  //
+  // Quando o telão chega ao placar final ("Quanto sobrou, e quanto ficou
+  // devendo", e as páginas seguintes), o celular mostra o que a equipe escolheu
+  // em cada bimestre, para a turma ver que, mesmo podendo escolher, faltou muito
+  // dinheiro: no topo, "Vocês escolheram em todos os 6 bimestres, e ainda faltou
+  // R$ X"; uma linha por bimestre com o nome curto, a letra e o rótulo da opção
+  // (do jeito da persona, D-054), a carta e o saldo do bimestre (verde ou
+  // vermelho, sempre com o sinal, como no resumo); embaixo, o que faltou na mesa
+  // no ano. Tudo do que o celular já ouve (resultados/{r}/{eq} e placar/{eq}):
+  // nenhuma leitura nova. O resumo "Saldo · Ficou com" sai do placar final (o
+  // saldo de cada bimestre está aqui, e o "ficou com" do fim, na frase de cima);
+  // nos blocos e no fim, ele continua.
+
+  // "bimestres", "meses": o nome do período no plural, para a frase.
+  const pluralDoPeriodo = (nome) => (nome === 'mês' ? 'meses' : nome.replace(/^(\S+)/, '$1s'));
+  // O que entra entre parênteses depois da opção, quando a escolha não foi o
+  // voto simples da equipe (D-041: "ninguém votou: ficou o de sempre", e nunca
+  // "piloto automático"). O mesmo texto do descreverDecisao.
+  const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
+
+  // A frase do topo, em partes e sem DOM (o test/aluno-textos.test.mjs confere
+  // cada caso): { antes, reais, depois } (o valor em negrito no meio) e os
+  // atributos { resultado, valor, escolheram, total }; null sem o patrimônio ou
+  // sem rodada. origens: a origem de cada rodada jogada, na ordem; nome: o do
+  // período ("bimestre").
+  // "Escolheram" conta as rodadas decididas pela equipe: o "ninguém votou"
+  // (origem piloto) não é escolha, e a frase não pode dizer "em todos" quando
+  // a equipe ficou calada numa delas. O "faltou" é o patrimônio do placar
+  // (historia.patrimonioDe, o mesmo "faltou R$ X" da barra do telão).
+  function partesDaFrase(origens, patrimonio, nome) {
+    const total = lista(origens).length;
+    if (!Number.isFinite(patrimonio) || total === 0) return null;
+    const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
+    let quem;
+    if (escolheram === total) quem = total === 1 ? `Vocês escolheram no ${nome} jogado` : `Vocês escolheram em todos os ${total} ${pluralDoPeriodo(nome)}`;
+    else if (escolheram > 0) quem = `Vocês escolheram em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
+    else quem = `A equipe não votou em nenhum ${nome}`;
+    const valor = Math.round(patrimonio) + 0;
+    const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
+    if (valor < 0) return { antes: `${quem}${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}`, reais: -valor, depois: '.', ...atributos };
+    // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
+    // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
+    return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
+  }
+
+  // A frase na tela; sem placar, o "ficou com" do último bimestre.
+  function fraseDasEscolhas(meses, patrimonio) {
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome);
+    if (!f) return null;
+    const { el } = D();
+    return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },
+      [f.antes, el('b', { texto: F().moeda(f.reais) }), f.depois]);
+  }
+
+  // "no ano" com os 12 meses jogados, "no mês" com 1, senão "em N meses": a
+  // mesma regra do "Faltou na mesa no ano" do telão (linhaDaMesaNoAno).
+  const quandoDosMeses = (meses) => (meses === 12 ? 'no ano' : meses === 1 ? 'no mês' : `em ${meses} meses`);
+
+  // "Faltou na mesa no ano: R$ X de comida que não deu para comprar (fora do
+  // saldo)." O mesmo número e o mesmo "no ano" do telão (linhaDaMesaNoAno, pela
+  // conta de historia.mesesJogados), inclusive R$ 0: quem comeu todos os meses
+  // também é informação. Sala sem o limite (sem o indicador): sem a linha.
+  function linhaMesaDoAno(historia, placar) {
+    const H = N().historia;
+    const doPlacar = H?.faltouNaMesaDe?.(placar) ?? null;
+    const valor = doPlacar ?? lista(historia).at(-1)?.faltouNaMesa ?? null;
+    if (!Number.isFinite(valor)) return null;
+    const meses = H?.mesesJogados ? H.mesesJogados(app.dados.conteudo, historia) : lista(historia).length * periodo().meses;
+    const quando = quandoDosMeses(meses);
+    const { el } = D();
+    const reais = Math.round(valor) + 0;
+    return el('p', { classe: 'faltou-mesa faltou-mesa-ano', dados: { faltouNaMesa: reais } },
+      [`Faltou na mesa ${quando}: `, el('b', { texto: F().moeda(reais) }), ' de comida que não deu para comprar (fora do saldo).']);
+  }
+
+  // A lista do ano e a frase de cima. d: os dados da situação final (equipe e
+  // placar). null sem nenhum bimestre jogado.
+  function blocoEscolhas(historia, d) {
+    const equipeId = d.equipe?.id;
+    const meses = lista(historia).filter((h) => Number.isFinite(h?.mes?.saldoMes)).map((h) => {
+      // A letra e a origem não vêm na história (historiaDaEquipe manda o texto
+      // da opção, e não o id): saem do resultado gravado pelo telão.
+      const res = tem(app.dados.resultados?.[h.rodadaId], equipeId) ? app.dados.resultados[h.rodadaId][equipeId] : null;
+      return { h, decisao: typeof res?.decisao === 'string' ? res.decisao : null, origem: res?.origem ?? null, carta: res?.carta ?? null };
+    });
+    if (meses.length === 0) return null;
+    const { el } = D();
+    const p = periodo();
+    const linhas = meses.map(({ h, decisao, origem, carta }, i) => {
+      const letra = decisao ? letraDe(h.rodadaId, decisao) : '?';
+      const sufixo = ORIGENS_DA_DECISAO[origem];
+      return el('li', { classe: 'escolha', dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, opcao: decisao || '', letra, origem: origem || '', carta: carta || '' } }, [
+        el('span', { classe: 'escolha-mes', texto: h.rotulo || rotuloDoMes(h.titulo, i) }),
+        valorSaldo(h.mes.saldoMes, 'saldo-mes'),
+        el('span', { classe: 'escolha-opcao' }, [el('b', { classe: 'escolha-letra', texto: letra }), ` · ${h.opcao?.rotulo || decisao || ''}`, sufixo ? ` (${sufixo})` : null]),
+        el('span', { classe: 'escolha-carta' }, ['Carta: ', h.carta?.titulo || '']),
+      ]);
+    });
+    const ultimo = meses.at(-1).h;
+    const doPlacar = N().historia?.patrimonioDe?.(d.placar);
+    const patrimonio = Number.isFinite(doPlacar) ? doPlacar : ultimo.saldoAcumulado;
+    return [
+      fraseDasEscolhas(meses, patrimonio),
+      el('section', { classe: 'escolhas-ano', 'aria-label': `As escolhas de vocês, ${p.nome} a ${p.nome}`, dados: { linhas: String(linhas.length) } }, [
+        // O cabeçalho das duas colunas, como o da tabela do resumo: o número
+        // colorido de cada linha é o saldo do bimestre (pedido de 05/10, item 3:
+        // tem de ficar claro que o valor colorido é o saldo do bimestre).
+        el('p', { classe: 'escolhas-cabecalho' }, [el('span', { texto: `${maiuscula(p.nome)} · escolha · carta` }), el('span', { texto: `Saldo ${p.doPeriodo}` })]),
+        el('ol', { classe: 'escolhas-lista' }, linhas),
+        linhaMesaDoAno(historia, d.placar),
+      ]),
+    ];
   }
 
   // O detalhe recolhido (toque para abrir), com o mesmo marcador "▸ ver /
@@ -2279,8 +2407,7 @@
     const base = `${letraDe(rodadaId, decisao.id)} · ${decisao.rotulo || decisao.id}`;
     // "piloto automático" saiu das telas (D-041; rascunho, seção 7, item 14):
     // no ensaio, soava como a opção boa de quem não votou.
-    const origens = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
-    return origens[origem] ? `${base} (${origens[origem]})` : base;
+    return ORIGENS_DA_DECISAO[origem] ? `${base} (${ORIGENS_DA_DECISAO[origem]})` : base;
   }
 
   // A situação da persona nos blocos e no placar final (D-065). De cima para
@@ -2289,28 +2416,35 @@
   // e os indicadores que não são dinheiro (energia, proteção). No teste de
   // 30/09, a conta do mês, a origem, o que veio de antes, a proteção, a carta,
   // a narrativa e os indicadores vinham todos abertos, um depois do outro.
+  // No placar final (pedido de 05/10, item 4), o topo são as escolhas do ano
+  // (blocoEscolhas), e não o resumo; a dívida de hoje vem logo depois delas.
   function telaSituacao(alvo, d) {
     const { el, acrescentar } = D();
     const nome = d.persona?.nome || 'sua persona';
     // No placar final a história vem pronta; nos blocos, a telaDoAluno manda só
     // o último mês, e o resumo sai dos resultados do banco (a mesma função).
     const historia = d.final ? lista(d.historia) : historiaDaSala(d.equipe?.id);
-    const resumo = resumoMesAMes(historia);
     const filhos = [
       el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
-      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? `A situação de ${nome}` : (d.titulo || `A situação de ${nome}`)),
+      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? 'As escolhas de vocês' : (d.titulo || `A situação de ${nome}`)),
     ];
-    if (resumo) filhos.push(resumo);
-    else if (!d.final) {
-      filhos.push(linhaBasico(d.persona), linhaDivida(dividaDe(valoresDe(d.indicadores))),
-        el('p', { classe: 'texto-2', texto: 'Ainda não houve rodada: este é o ponto de partida.' }));
-    }
     if (d.final) {
-      // "Escolha ou sorte?" e o pior caso logo depois do resumo: são o fecho da
-      // aula. A história inteira fica recolhida (D-045, D-065).
+      // As escolhas e a dívida de hoje no topo; "Escolha ou sorte?" e o pior
+      // caso logo depois: são o fecho da aula. A história inteira fica
+      // recolhida (D-045, D-065).
       const jaEstimado = N().historia.escolhaOuSorte(d.placar)?.estimado === true;
-      filhos.push(blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
-    } else if (d.mes) {
+      const ultimo = lista(historia).filter((h) => Number.isFinite(h?.mes?.saldoMes)).at(-1);
+      filhos.push(blocoEscolhas(historia, d), ultimo ? blocoDivida(dividaDoUltimo(ultimo), ultimo.mes) : null,
+        blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
+    } else {
+      const resumo = resumoMesAMes(historia);
+      if (resumo) filhos.push(resumo);
+      else {
+        filhos.push(linhaBasico(d.persona), linhaDivida(dividaDe(valoresDe(d.indicadores))),
+          el('p', { classe: 'texto-2', texto: 'Ainda não houve rodada: este é o ponto de partida.' }));
+      }
+    }
+    if (!d.final && d.mes) {
       // O último mês, recolhido: a conta (D-044, D-052), a decisão e a carta, com
       // a narrativa em primeira pessoa (D-006). Carta grave: só o texto, sem
       // destaque nenhum (arquitetura, seção 8, "tema sensível").
@@ -2415,10 +2549,12 @@
     // as opções. O texto da rodada fica no telão: no celular, ele empurrava as
     // opções para baixo da dobra (revisão de 29/09). A situação completa fica fechada depois das opções,
     // para os botões de voto subirem na tela.
-    // A dívida é a soma do cheque especial com o empréstimo (esquema v2.2): no
-    // teste de 30/09, o Jonas decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500
-    // emprestados. Só a linha muda; o voto não.
-    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(s ? dividaDe(valoresDe(s.indicadores)) : null)].filter(Boolean);
+    // A dívida é a soma do cheque especial, do empréstimo e das contas
+    // atrasadas (esquema v2.2; pedido de 05/10): no teste de 30/09, o Jonas
+    // decidiu o mês 3 lendo "Dívida R$ 1" com R$ 1.500 emprestados. Só a linha
+    // muda; o voto não. As partes vão na situação recolhida, embaixo.
+    const divida = s ? dividaDe(valoresDe(s.indicadores)) : null;
+    const pressao = [linhaBasico(s?.persona, { curta: true }), linhaDivida(divida)].filter(Boolean);
     const aviso = botao('Mais opções abaixo ↓', () => rolarAteUltimaOpcao(), { classe: 'aviso-rolagem', dados: { avisoRolagem: '1' } });
     aviso.hidden = true;
     // Movido de equipe depois de votar (avisarSeMovido): a nota fica acima das
@@ -2448,7 +2584,10 @@
       el('p', { classe: 'texto-2', texto: `Toque numa opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome || 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
       s ? el('details', { classe: 'situacao-resumo' }, [
         el('summary', { texto: `Situação de ${persona || 'sua persona'}` }),
-        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), contaDoMes(s.mes, s.persona)]),
+        // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
+        // total, e o cheque especial, o empréstimo e as contas atrasadas, com
+        // as taxas, ficam aqui, fora da dobra.
+        el('div', { classe: 'situacao-corpo' }, [linhaFamilia(s.persona), blocoDivida(divida, s.mes), contaDoMes(s.mes, s.persona)]),
         listaIndicadores(s.indicadores),
       ]) : null,
       aviso,
@@ -2767,6 +2906,10 @@
     envios: () => resumoEnvios(),
     // D-064: a equipe que o espectador vê, ou null fora do modo espectador.
     espectador: () => (app.espectador ? { equipe: app.espectador.equipe } : null),
+    // As contas puras das telas de 05/10 (a dívida total, a frase das escolhas
+    // e o "no ano"), para o teste unitário, que roda no Node sem DOM: não leem
+    // nem mudam o estado.
+    textos: { totalDaDivida, partesDaFrase, quandoDosMeses },
   };
 
   if (typeof document !== 'undefined') {
