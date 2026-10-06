@@ -2883,12 +2883,16 @@
     // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
     // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
     // celular de cada equipe): no teste com a faixa de entrada, as linhas das
-    // consequências ficavam por cima da última equipe.
+    // consequências ficavam por cima da última equipe. O terceiro e o quarto
+    // valem também sem consequência (revisão de 06/10): com a faixa de entrada
+    // em 1024×768, seis opções de duas linhas ("Rodar também no segundo app",
+    // na fixture) deixavam a sexta equipe embaixo da faixa, e o evento seguia
+    // na tela.
     app.depoisDeMedir.push(() => {
       const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
       if (transborda()) s.dataset.aperto = '1';
       if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
-      if (s.dataset.aperto === '2' && consequencias.length > 0 && transborda()) s.dataset.aperto = '3';
+      if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
     });
   }
