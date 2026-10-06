@@ -1076,40 +1076,14 @@
     }
     if (!anterior || anterior.enquete !== e.enquete || anterior.momento !== e.momento) app.ui.afirmacaoManual = 0;
     religarOuvintesDoPasso(e);
-    baixarAoFimDaRodada(e);
   }
 
-  // D-015: ao fim de cada rodada, o telão baixa sozinho um JSON pequeno com o
-  // estado, o seguro para o caso "travou e caiu a internet". Uma vez por
-  // apuração (rodada + geracao), guardado no localStorage para recarregar a
-  // página não baixar de novo.
-  // No formato simples, o fechamento vai direto ao "resultado" (não há sorteio):
-  // é nele que a rodada termina, e o seguro sai uma vez, como no sorteio.
-  function baixarAoFimDaRodada(e) {
-    const fimDaRodada = simples() ? 'resultado' : 'sorteio';
-    if (e.tipo !== 'rodada' || e.subfase !== fimDaRodada) return;
-    const marca = `${e.rodada}:${e.geracao}`;
-    const baixados = lista(lerLocal(chaveBaixados(app.sala)));
-    if (baixados.includes(marca)) return;
-    gravarLocal(chaveBaixados(app.sala), [...baixados, marca]);
-    esperarEspelhoDaRodada(e).then(() => salvarEstado(e.rodada)).catch(mostrarErro);
-  }
-
-  // O espelho (o ouvinte da sala inteira) chega depois do ouvinte do estado.
-  // Salvar no instante em que o estado vira "sorteio" gravava o arquivo com a
-  // rodada ainda "fechando" e sem o resultado: os três arquivos do teste de
-  // 30/09 saíram assim, e carregar um deles refaria a rodada sem nenhum voto
-  // (os votos ficam fora do arquivo). Espera o espelho alcançar a geração do
-  // sorteio e trazer o resultado da rodada, por até 10 s. Offline não há
-  // espelho: o salvarEstado lê o canal local, que já está consistente.
-  async function esperarEspelhoDaRodada(e) {
-    if (typeof app.lerEspelho !== 'function') return;
-    for (let i = 0; i < 50; i += 1) {
-      const esp = app.lerEspelho();
-      if (esp && (esp.estado?.geracao || 0) >= e.geracao && esp.resultados?.[e.rodada]) return;
-      await new Promise((r) => setTimeout(r, 200));
-    }
-  }
+  // D-015 dizia que, ao fim de cada rodada, o telão baixava sozinho um JSON com
+  // o estado. Desde a D-078 (pedido do Kleber de 05/10, depois de testar a
+  // versão no ar: "não baixar o JSON a cada rodada"), o seguro é só o manual:
+  // o "Salvar estado" da barra do apresentador, online e offline. Online, a
+  // sala continua no Firebase e se retoma com o PIN; o download que pipocava a
+  // cada bimestre, na frente da turma, saiu.
 
   // ---------- Salvar e carregar estado ----------
 
@@ -2833,12 +2807,31 @@
       ]));
     }
     s.appendChild(grade);
+    // D-078: a consequência de uma escolha de antes (as costas que travam, a
+    // moto que quebra, o IPVA que já estava pago), com o motivo, embaixo das
+    // faixas: uma linha por motivo, com as equipes juntas
+    // (historia.consequenciasDaRodada). Sem ela, o saldo de uma equipe caía
+    // R$ 1.230 e ninguém sabia por quê. Bimestre sem consequência, sem a lista.
+    const consequencias = N().historia.consequenciasDaRodada(itens.map(({ eq, r }) => ({ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) })));
+    if (consequencias.length > 0) {
+      const nomeDa = (eq) => app.config.equipes[eq]?.nome || eq;
+      s.appendChild(el('ul', { classe: 'simples-antes', 'aria-label': 'Por causa de escolhas de antes' }, consequencias.map((g) => el('li', {
+        dados: { motivo: g.motivo, valor: String(g.valor), equipes: g.equipes.join(' ') },
+      }, [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) }), `: ${g.equipes.map(nomeDa).join(', ')}`]))));
+    }
     // Seis equipes com a faixa de entrada embaixo (online): só quando a lista
     // transborda (medido depois do desenho), as faixas se aproximam; a letra
-    // fica nos 28 px.
+    // fica nos 28 px. Com as linhas das consequências (D-078), um terceiro
+    // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
+    // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
+    // celular de cada equipe): no teste com a faixa de entrada, as linhas das
+    // consequências ficavam por cima da última equipe.
     app.depoisDeMedir.push(() => {
-      if (grade.scrollHeight > grade.clientHeight + 1) s.dataset.aperto = '1';
-      if (s.dataset.aperto && grade.scrollHeight > grade.clientHeight + 1) s.dataset.aperto = '2';
+      const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
+      if (transborda()) s.dataset.aperto = '1';
+      if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
+      if (s.dataset.aperto === '2' && consequencias.length > 0 && transborda()) s.dataset.aperto = '3';
+      if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
     });
   }
 

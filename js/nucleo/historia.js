@@ -446,6 +446,37 @@
     return /^.*?[.!?](?=\s|$)/s.exec(limpo)?.[0] ?? limpo;
   }
 
+  // Formato simples (D-078): a consequência que vem de uma escolha de antes (as
+  // costas que travam na segunda puxada seguida, a moto que quebra porque a
+  // revisão ficou para depois, o IPVA que já estava pago) aparece no resultado
+  // do bimestre em que acontece, com o motivo. Sem isso, o saldo de uma equipe
+  // caía R$ 1.230 e ninguém na sala sabia por quê. O motivo é o rótulo do efeito
+  // até os dois-pontos ("as costas travaram: 7 dias parado" e "as costas
+  // travaram: fisioterapia" viram um motivo só, com a soma); as equipes com o
+  // mesmo motivo e o mesmo valor ficam juntas, numa linha: no telão de
+  // 1024×768 não cabe uma linha a mais por equipe. Entrada: [{ equipeId,
+  // deAntes }] (o deAntes do resultado, o que o motor nomeia); saída, na ordem em
+  // que os motivos aparecem: [{ motivo, valor, equipes: [ids] }].
+  function consequenciasDaRodada(itens) {
+    const grupos = [];
+    for (const { equipeId, deAntes } of lista(itens)) {
+      const porMotivo = new Map();
+      for (const x of lista(deAntes)) {
+        if (!x || typeof x.rotulo !== 'string' || !Number.isFinite(x.valor)) continue;
+        const motivo = x.rotulo.split(':')[0].trim();
+        porMotivo.set(motivo, (porMotivo.get(motivo) || 0) + x.valor);
+      }
+      for (const [motivo, soma] of porMotivo) {
+        const valor = Math.round(soma) + 0;
+        if (valor === 0) continue;
+        const grupo = grupos.find((g) => g.motivo === motivo && g.valor === valor);
+        if (grupo) grupo.equipes.push(equipeId);
+        else grupos.push({ motivo, valor, equipes: [equipeId] });
+      }
+    }
+    return grupos;
+  }
+
   // A linha curta de um mês na história do telão (D-045; rascunho, seção 7,
   // item 12): a primeira frase da narrativa da opção e a da carta, em primeira
   // pessoa. As narrativas inteiras (de 90 a 150 letras cada) davam quatro
@@ -543,5 +574,6 @@
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
     nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
     formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
+    consequenciasDaRodada,
   };
 })(globalThis);

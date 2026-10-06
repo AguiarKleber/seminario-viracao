@@ -2802,6 +2802,7 @@
           valorSaldo(mes.saldoMes),
         ])
         : null,
+      linhaConsequencia(d.deAntes),
       linhaDaFamilia(valoresDe(d.indicadores)),
       recolhido(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
         d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
@@ -2809,6 +2810,18 @@
       ]),
     ]));
     return 'resultado';
+  }
+
+  // D-078: a consequência de uma escolha de antes, à vista e não só no detalhe
+  // recolhido ("Por causa de antes: As costas travaram −R$ 1.230"), o mesmo
+  // agrupamento do telão (historia.consequenciasDaRodada: o motivo é o rótulo
+  // até os dois-pontos). Sem consequência, null.
+  function linhaConsequencia(deAntes) {
+    const grupos = N().historia?.consequenciasDaRodada?.([{ equipeId: '', deAntes }]) || [];
+    if (grupos.length === 0) return null;
+    const { el } = D();
+    const partes = grupos.map((g) => [`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) })]);
+    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, ['Por causa de antes: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   function telaResultado(alvo, d) {

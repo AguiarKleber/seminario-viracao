@@ -94,7 +94,7 @@ function usarConfig(texto, nome) {
       const baralho = M.chances(cfg, { equipeId: eq, rodadaId: r, opcaoId, estado, historico });
       assert.equal(baralho.length, 1, `${r}/${eq}: uma carta só`);
       const a = M.aplicar(cfg, { equipeId: eq, rodadaId: r, opcaoId, cartaId: baralho[0].carta, estado, historico });
-      esperado[eq].push({ rodada: r, opcao: opcaoId, carta: baralho[0].carta, saldo: Math.round(a.mes.saldoMes) + 0, familia: H.dinheiroDaFamilia(a.depois) });
+      esperado[eq].push({ rodada: r, opcao: opcaoId, carta: baralho[0].carta, saldo: Math.round(a.mes.saldoMes) + 0, familia: H.dinheiroDaFamilia(a.depois), deAntes: a.deAntes });
       historico[r] = { decisao: opcaoId, carta: baralho[0].carta };
       estado = a.depois;
     }
@@ -161,6 +161,24 @@ async function confirmarModal() {
   await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => !document.getElementById('modal').open);
+}
+// Com o config.json do dia (D-078), o roteiro tem a enquete de entrada antes da
+// formação e blocos de dados entre as rodadas, que a fixture não tem: passa por
+// eles (a enquete, sem contagem: Enter e a confirmação) até o teste valer.
+async function avancarAte(teste, descricao) {
+  for (let i = 0; i < 12; i += 1) {
+    const e = await estado();
+    if (teste(e)) return e;
+    if (e.tipo === 'enquete' && e.subfase === 'votando') {
+      await page.keyboard.press('Enter');
+      await confirmarModal();
+      await esperarEstado((x) => x.subfase === 'apurada', `enquete ${e.enquete} apurada`);
+      continue;
+    }
+    await avancar();
+    await esperarEstado((x) => x.indice !== e.indice || x.subfase !== e.subfase, `sair do passo ${e.indice}`);
+  }
+  return esperarEstado(teste, descricao);
 }
 
 // Os critérios do visual, os mesmos do e2e do telão (telao-offline.e2e.mjs).
@@ -299,7 +317,7 @@ async function jogar(nome) {
     new MutationObserver(() => globalThis.__telas.push(document.body.dataset.tela)).observe(document.body, { attributes: true, attributeFilter: ['data-tela'] });
   });
 
-  await avancarPara((e) => e.tipo === 'formarEquipes', 'formação das equipes');
+  await avancarAte((e) => e.tipo === 'formarEquipes', 'formação das equipes');
   await esperarTela('formar-equipes');
   assert.equal(await page.locator('.cartao-equipe .equipe-persona').count(), 0, 'na formação, sem o personagem (todas são o Jonas)');
   await conferirTela('formacao');
@@ -324,16 +342,12 @@ async function jogar(nome) {
     });
   }
 
+  let consequenciasVistas = 0;
   const sorteiosNaTela = async () => (await page.evaluate(() => globalThis.__telas)).filter((t) => t === 'rodada-sorteio').length;
   const geracaoAntes = {};
   for (const [k, r] of RODADAS.entries()) {
     // A rodada (com o bloco no meio, como no roteiro).
-    for (let i = 0; i < 4; i += 1) {
-      const e = await estado();
-      if (e.tipo === 'rodada' && e.rodada === r) break;
-      await avancar();
-      await esperarEstado((x) => x.indice !== e.indice || x.subfase !== e.subfase, `sair do passo ${e.indice}`);
-    }
+    await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r, `${r}`);
     await esperarEstado((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `${r} aberta`);
     await esperarTela('rodada-decidindo');
     // 2. A decisão com as 5 opções e o dinheiro de cada uma.
@@ -371,9 +385,10 @@ async function jogar(nome) {
     assert.equal(e.geracao, geracaoAntes[r] + 2, `${r}: "fechando" e o resultado, sem o passo do sorteio`);
     await esperarTela('rodada-resultado');
     assert.equal(await sorteiosNaTela(), 0, `${r}: a tela do sorteio nunca apareceu`);
-    // O seguro do fim da rodada sai no resultado (D-015), uma vez.
-    for (let i = 0; i < 60 && downloads.length <= baixadosAntes; i += 1) await page.waitForTimeout(50);
-    assert.equal(downloads.length, baixadosAntes + 1, `${r}: o JSON do fim da rodada foi baixado uma vez`);
+    // D-078 (pedido do Kleber de 05/10, que muda a D-015): o fim da rodada não
+    // baixa mais o JSON sozinho; o seguro é o "Salvar estado" da barra, à mão.
+    await page.waitForTimeout(1500);
+    assert.equal(downloads.length, baixadosAntes, `${r}: nenhum JSON baixado sozinho no fim da rodada`);
     const conferirResultado = async (onde) => {
       const lidoTela = await page.evaluate(() => ({
         evento: document.querySelector('.evento-do-mes')?.dataset.carta,
@@ -385,8 +400,17 @@ async function jogar(nome) {
           familia: n.querySelector('.simples-familia-valor').textContent,
         })),
         texto: document.getElementById('palco').textContent,
+        antes: Array.from(document.querySelectorAll('.simples-antes li'), (n) => ({ ...n.dataset, texto: n.textContent })),
       }));
       const carta = esperado[EQUIPES[0]][k].carta;
+      // D-078: a consequência de uma escolha de antes, com o motivo, uma linha
+      // por motivo e valor (historia.consequenciasDaRodada, sobre o deAntes do motor).
+      const grupos = H.consequenciasDaRodada(EQUIPES.map((eq) => ({ equipeId: eq, deAntes: esperado[eq][k].deAntes })));
+      assert.deepEqual(lidoTela.antes.map((g) => [g.motivo, Number(g.valor), g.equipes]), grupos.map((g) => [g.motivo, g.valor, g.equipes.join(' ')]), `${onde}: as consequências de antes`);
+      for (const [i, g] of grupos.entries()) {
+        assert.equal(lido(lidoTela.antes[i].texto), lido(`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}: ${g.equipes.map((eq) => cfg.equipes[eq].nome).join(', ')}`), `${onde}: o texto da consequência`);
+      }
+      if (grupos.length > 0) consequenciasVistas += 1;
       assert.equal(lidoTela.eventos, 1, `${onde}: o evento do mês uma vez`);
       assert.equal(lidoTela.evento, carta);
       assert.equal(lidoTela.eventoTitulo, H.textoDaCarta(cfg, carta, PERSONA).titulo);
@@ -408,7 +432,7 @@ async function jogar(nome) {
   }
 
   // 4. O placar final em três páginas.
-  await avancarPara((e) => e.tipo === 'placarFinal', 'placar final');
+  await avancarAte((e) => e.tipo === 'placarFinal', 'placar final');
   await esperarTela('placar-final');
   const ordem = [...EQUIPES].sort((a, b) => esperado[b].final - esperado[a].final || EQUIPES.indexOf(a) - EQUIPES.indexOf(b));
   await conferirTela('placar-caminho', async (onde) => {
@@ -494,7 +518,7 @@ async function jogar(nome) {
   }
   // Não há uma quarta página: o Espaço segue o roteiro.
   await avancarPara((e) => e.tipo !== 'placarFinal', 'o passo depois do placar');
-  console.log(`  ${RODADAS.length} rodadas × ${opcoesDe(RODADAS[0]).length} opções; ${contagem.total} combinações, ${contagem.fecham} fecham; contagem no navegador: ${msNoNavegador} ms`);
+  console.log(`  ${RODADAS.length} rodadas × ${opcoesDe(RODADAS[0]).length} opções; ${contagem.total} combinações, ${contagem.fecham} fecham; contagem no navegador: ${msNoNavegador} ms; telas de resultado com consequência de antes: ${consequenciasVistas}`);
 }
 
 // Parte 1: o config pedido (a fixture de 3 rodadas, por padrão).

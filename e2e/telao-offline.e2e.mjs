@@ -2,9 +2,10 @@
 // baixar navegador): `npm run e2e`. Fica fora do `npm run check` (arquitetura,
 // seção 13) porque depende de um navegador na máquina.
 //
-// O conteúdo vem do config.json da raiz; outro arquivo entra por
-// `VIRACAO_CONFIG=caminho npm run e2e` ou `npm run e2e -- --config caminho`
-// (a fixture v2 dos testes, enquanto o config.json está em reescrita). Tudo o
+// O conteúdo vem do config de 05/10 com sorteio e 6 personas, congelado em
+// test/fixtures/config-real-v31.json (desde 06/10, D-078, o config.json da raiz
+// é o jogo simples, conferido pelo telao-simples.e2e.mjs); outro arquivo entra por
+// `VIRACAO_CONFIG=caminho npm run e2e` ou `npm run e2e -- --config caminho`. Tudo o
 // que o teste precisa do conteúdo (passos, equipes, opções, afirmações) sai do
 // próprio config: o conteúdo muda até o congelamento, e o teste não pode quebrar
 // porque uma rodada ganhou uma opção. Sem um bloco "Mapa do seminário" no
@@ -106,7 +107,10 @@ const RE_MAPA = /^mapa do semin[aá]rio\b/i;
 function caminhoDoConfig() {
   const i = process.argv.indexOf('--config');
   const arg = i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
-  return resolve(RAIZ, process.env.VIRACAO_CONFIG || arg || 'config.json');
+  // Desde 06/10 (D-078), o config.json é o jogo simples, que tem o e2e próprio
+  // (telao-simples.e2e.mjs). Este percorre o jogo com sorteio e 6 personas: o
+  // config de 05/10, congelado em test/fixtures/config-real-v31.json.
+  return resolve(RAIZ, process.env.VIRACAO_CONFIG || arg || join('test', 'fixtures', 'config-real-v31.json'));
 }
 
 const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
@@ -1622,12 +1626,9 @@ for (const r of RODADAS) {
     assert.ok((await page.locator('.linha-graves').allTextContents()).every((x) => /^decisão [A-D] · cartas graves \d+%$/.test(x)));
     await page.waitForTimeout(3000);
     assert.equal(await contorno(), 'rgb(242, 242, 242)', 'contornada depois que os ponteiros param');
-    // Achado 9: o salvamento automático não cobre o título com um aviso.
-    for (let k = 0; k < 40 && downloads.length <= baixadosAntes; k += 1) await page.waitForTimeout(50);
-    assert.ok(downloads.length > baixadosAntes, 'o JSON automático foi baixado');
-    const aviso = await page.evaluate(() => ({ visivel: !document.getElementById('aviso').hidden, texto: document.getElementById('aviso').textContent }));
-    assert.ok(!(aviso.visivel && /automaticamente/.test(aviso.texto)), `o salvamento automático não avisa na tela: "${aviso.texto}"`);
-    assert.match(await page.textContent('[data-barra-salvo]'), new RegExp(`^estado salvo às \\d{2}:\\d{2} \\(${r}\\)$`));
+    // D-078 (pedido do Kleber de 05/10, que muda a D-015): o fim da rodada não
+    // baixa mais o JSON sozinho; o seguro é o "Salvar estado" da barra, à mão.
+    assert.equal(downloads.length, baixadosAntes, 'nenhum JSON baixado sozinho no fim da rodada');
     await conferirTela('rodada-sorteio', { esperarMs: 3200 });
     const curtosVistos = await conferirRotulosFatias();
     const aprovados = new Set(Object.values(configNode.cartas).map((c) => c.curto).filter(Boolean));
@@ -1670,11 +1671,11 @@ for (const r of RODADAS) {
   }
   await page.waitForTimeout(300);
 }
-// D-015: um download automático do estado ao fim de cada rodada (uma apuração
-// por rodada, mais a primeira refeita).
+// D-078 (pedido do Kleber de 05/10, que muda a D-015): nenhum download
+// automático do estado nas rodadas; o seguro é o "Salvar estado", à mão.
 await page.waitForTimeout(500);
 const automaticos = downloads.slice(downloadsAntesR).filter((d) => new RegExp(`viracao-estado-.*-(${RODADAS.join('|')})-`).test(d.suggestedFilename()));
-assert.equal(automaticos.length, RODADAS.length + 1, `um JSON automático por apuração de rodada (vieram ${automaticos.length})`);
+assert.equal(automaticos.length, 0, `nenhum JSON automático nas rodadas (vieram ${automaticos.length})`);
 
 // Pedido 6 do Kleber (05/10), modo revendo, no resultado do último bimestre
 // (onde o Espaço avançaria e o Ctrl+Z abriria a confirmação do desfazer): ←

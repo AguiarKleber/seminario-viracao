@@ -192,7 +192,10 @@ function soCartasDeParadaNoMes1(texto) {
 // quebrar porque uma equipe trocou de nome.
 async function conteudoDoTeste() {
   const V = await carregarNucleo();
-  let textoConfig = readFileSync(join(RAIZ, 'config.json'), 'utf8');
+  // Desde 06/10 (D-078), o config.json é o jogo simples, conferido com celulares
+  // pelo simples-online.e2e.mjs; este percorre o jogo com sorteio e 6 personas, o
+  // config de 05/10 congelado em test/fixtures/config-real-v31.json.
+  let textoConfig = readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8');
   let origem = 'config.json';
   let r = V.validarConfig.validarTexto(textoConfig);
   // E2E_FIXTURE=1 força a fixture mesmo com o config.json válido: é ela que passa
@@ -524,7 +527,9 @@ async function bimestresNoCelular({ navegador, site, vigiar, versaoApp, conferir
 // do ano (conferirEscolhas), e o resumo é conferido no último bloco do roteiro.
 async function bimestresRealNoCelular({ navegador, site, vigiar, versaoApp, conferirCelular, esperarTela }) {
   const V = await carregarNucleo();
-  const lido = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  // D-078: o config de 05/10 com sorteio (o config.json do dia é o jogo simples,
+  // com o próprio e2e).
+  const lido = V.validarConfig.validarTexto(readFileSync(join(RAIZ, 'test', 'fixtures', 'config-real-v31.json'), 'utf8'));
   const lista = (x) => (Array.isArray(x) ? x : Object.values(x || {}));
   if (!lido.ok || lista(lido.config.ordem.rodadas).length !== 6 || lido.config.regras.mesesPorRodada !== 2) {
     console.log('Resumo de 6 bimestres com o config.json real: pulado (o config.json não tem 6 rodadas de 2 meses ou não passa no validador).');
@@ -1998,11 +2003,13 @@ async function jogar({ site, navegador, vigiar }) {
   await espectadorIgualA(esp, bia, 'equipe 2, depois do voto da Bia');
   assert.equal(await esp.p.textContent(`${opcao(OC)} .opcao-votos`), '1 voto', 'o espectador vê o voto da Bia na contagem');
 
-  // D-015: o seguro do fim da rodada. No teste de 30/09 os três arquivos saíram
-  // com a rodada ainda "fechando" e sem o resultado (o telão salvava antes de o
-  // espelho da sala alcançar o sorteio); carregar um deles refaria a rodada
-  // sem nenhum voto. O arquivo baixado tem de trazer o resultado da rodada.
-  const baixandoRodada = telao.waitForEvent('download', { timeout: 30000 });
+  // D-078 (pedido do Kleber de 05/10, que muda a D-015): o fim da rodada não
+  // baixa mais o JSON sozinho. O seguro é o "Salvar estado" da barra, à mão; o
+  // arquivo traz o resultado da rodada (no teste de 30/09, o automático saía com
+  // a rodada ainda "fechando" e sem o resultado) e nenhum voto individual.
+  let baixouSozinho = 0;
+  const contarDownload = () => { baixouSozinho += 1; };
+  telao.on('download', contarDownload);
   await telao.keyboard.press('Enter');
   // Ainda no tempo mínimo de conversa: o telão pede confirmação.
   await telao.waitForFunction(() => document.getElementById('modal').open);
@@ -2010,12 +2017,23 @@ async function jogar({ site, navegador, vigiar }) {
   await telao.keyboard.press('Tab');
   await telao.keyboard.press('Enter');
   await esperarEstado((e) => e.subfase === 'sorteio', 'sorteio', 20000);
+  await telao.waitForTimeout(3000);
+  telao.off('download', contarDownload);
+  assert.equal(baixouSozinho, 0, 'nenhum JSON baixado sozinho no fim da rodada');
   {
-    const salvo = JSON.parse(readFileSync(await (await baixandoRodada).path(), 'utf8'));
-    assert.ok(salvo.dados.resultados?.[R], 'o seguro do fim da rodada traz o resultado da rodada');
-    assert.ok(['sorteio', 'resultado'].includes(salvo.dados.estado.subfase), `o seguro do fim da rodada não sai no meio do fechamento (${salvo.dados.estado.subfase})`);
-    for (const k of ['votosEnquete', 'decisoes', 'presenca', 'membros']) assert.ok(!(k in salvo.dados), `o seguro não leva ${k}`);
-    console.log('Seguro do fim da rodada: baixado com o resultado da rodada, sem voto individual.');
+    await mouseNaBorda(300);
+    await telao.waitForFunction(() => !document.getElementById('barra').hidden);
+    const baixando = telao.waitForEvent('download', { timeout: 15000 });
+    await telao.click('#barra [data-acao="salvar"]');
+    const salvo = JSON.parse(readFileSync(await (await baixando).path(), 'utf8'));
+    assert.ok(salvo.dados.resultados?.[R], 'o "Salvar estado" depois do fechamento traz o resultado da rodada');
+    assert.ok(['sorteio', 'resultado'].includes(salvo.dados.estado.subfase), `o "Salvar estado" não sai no meio do fechamento (${salvo.dados.estado.subfase})`);
+    for (const k of ['votosEnquete', 'decisoes', 'presenca', 'membros']) assert.ok(!(k in salvo.dados), `o estado salvo não leva ${k}`);
+    // O foco sai do botão (o Espaço seguinte avança, e não salva de novo), e a barra se esconde.
+    await telao.evaluate(() => document.activeElement?.blur());
+    await telao.mouse.move(520, 300);
+    await telao.waitForFunction(() => document.getElementById('barra').hidden, null, { timeout: 5000 });
+    console.log('Fim da rodada: nenhum JSON automático; o "Salvar estado" traz o resultado da rodada, sem voto individual.');
   }
   for (const c of cel) await esperarTela(c, 'sorteando');
   await conferirCelular(cel[0], 'sorteando');

@@ -836,10 +836,17 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
 .tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
 .tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
-.tela-rodada-resultado[data-aperto="2"] { gap: calc(var(--espaco) * .5); }
-.tela-rodada-resultado[data-aperto="2"] h1 { font-size: calc(var(--corpo) * 1.1); }
-.tela-rodada-resultado[data-aperto="2"] .grade-simples { row-gap: 4px; }
-.tela-rodada-resultado[data-aperto="2"] .resultado-simples .resultado-saldo { font-size: 1.1em; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .grade-simples { row-gap: 4px; }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
+/* D-078: a consequência de uma escolha de antes, uma linha por motivo, com as
+   equipes juntas. O terceiro aperto (só com elas) tira a frase do evento do
+   mês; o quarto, se ainda faltar altura, o evento inteiro (ele está no celular). */
+.simples-antes { flex: none; display: flex; flex-direction: column; gap: .1em; padding: .1em .6em; border-left: 6px solid var(--texto-2); line-height: 1.15; }
+.simples-antes b { font-weight: 800; }
+.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"]) .evento-linha { display: none; }
+.tela-rodada-resultado[data-aperto="4"] .evento-do-mes { display: none; }
 
 /* Placar, página 1: "O caminho de cada equipe". Em cada célula, a letra em
    cima e o saldo do bimestre embaixo (lado a lado, seis bimestres não cabiam

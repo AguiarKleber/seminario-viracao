@@ -23,7 +23,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { administrador, PIN_EMULADOR, RAIZ, rodarNoEmulador } from '../bin/emulador.mjs';
 import { servir } from '../bin/servir.mjs';
 import { carregarNucleo } from '../test/carregar-nucleo.mjs';
@@ -31,10 +31,17 @@ import { carregarNucleo } from '../test/carregar-nucleo.mjs';
 const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const SDK_CDN = 'https://www.gstatic.com/firebasejs/12.19.0/';
 const UA_CELULAR = 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36';
-const TEXTO_CONFIG = readFileSync(join(RAIZ, 'test', 'fixtures', 'config-simples.json'), 'utf8');
+// A fixture por padrão; `npm run e2e:online:simples -- --config config.json` joga o
+// config do dia (D-078), com a enquete de entrada antes da formação e os blocos
+// de dados entre as rodadas.
+const ARG_CONFIG = (() => {
+  const i = process.argv.indexOf('--config');
+  return i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
+})();
+const TEXTO_CONFIG = readFileSync(ARG_CONFIG ? resolve(RAIZ, ARG_CONFIG) : join(RAIZ, 'test', 'fixtures', 'config-simples.json'), 'utf8');
 
 if (!process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
-  process.exitCode = await rodarNoEmulador('node e2e/simples-online.e2e.mjs');
+  process.exitCode = await rodarNoEmulador(`node e2e/simples-online.e2e.mjs${ARG_CONFIG ? ` --config ${ARG_CONFIG}` : ''}`);
 } else {
   await sessao();
 }
@@ -137,9 +144,22 @@ async function jogar({ site, navegador, vigiar }) {
     ultimoAvanco = Date.now();
     await esperarEstado((e) => e.indice !== antes.indice || e.subfase !== antes.subfase, `sair do passo ${antes.indice}`);
   }
+  // A enquete (a de entrada, no config do dia) é encerrada sem votos: Enter e,
+  // se o telão pedir, a confirmação.
   async function avancarAte(teste, descricao) {
-    for (let i = 0; i < 6; i += 1) {
-      if (teste(await estado())) return;
+    for (let i = 0; i < 10; i += 1) {
+      const e = await estado();
+      if (teste(e)) return;
+      if (e.tipo === 'enquete' && e.subfase === 'votando') {
+        await telao.keyboard.press('Enter');
+        await telao.waitForTimeout(800);
+        if (await telao.evaluate(() => document.getElementById('modal').open)) {
+          await telao.keyboard.press('Tab');
+          await telao.keyboard.press('Enter');
+        }
+        await esperarEstado((x) => x.subfase === 'apurada', `enquete ${e.enquete} apurada`);
+        continue;
+      }
       await avancar();
     }
     await esperarEstado(teste, descricao);
@@ -164,13 +184,28 @@ async function jogar({ site, navegador, vigiar }) {
           if (r.width > 0 && r.height > 0 && (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1)) vazados.push(`${n.tagName.toLowerCase()}.${n.getAttribute('class') || ''}`);
         }
       }
-      return { rola: se.scrollHeight > innerHeight + 1 || se.scrollWidth > innerWidth + 1, fora: fora.slice(0, 5), vazados: vazados.slice(0, 5), faixa: !document.getElementById('faixa').hidden };
+      // Texto sobre texto (D-078): as linhas das consequências chegaram a ficar
+      // por cima da última equipe, dentro do palco e sem sair de caixa nenhuma.
+      // O mesmo critério do telao-simples.e2e.mjs: a faixa do meio de cada folha.
+      const folhas = [...document.querySelectorAll('#palco *')].filter((n) => n.children.length === 0 && n.textContent.trim() && n.getClientRects().length > 0);
+      const meio = folhas.map((n) => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top + r.height * 0.25, bottom: r.bottom - r.height * 0.25 }; });
+      const sobrepostos = [];
+      for (let i = 0; i < meio.length; i += 1) {
+        for (let j = i + 1; j < meio.length; j += 1) {
+          const a = meio[i];
+          const b = meio[j];
+          const area = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+          if (area > 4 && !folhas[i].contains(folhas[j]) && !folhas[j].contains(folhas[i])) sobrepostos.push(`"${folhas[i].textContent.trim().slice(0, 20)}" × "${folhas[j].textContent.trim().slice(0, 20)}"`);
+        }
+      }
+      return { rola: se.scrollHeight > innerHeight + 1 || se.scrollWidth > innerWidth + 1, fora: fora.slice(0, 5), vazados: vazados.slice(0, 5), sobrepostos: sobrepostos.slice(0, 5), faixa: !document.getElementById('faixa').hidden };
     });
     await telao.screenshot({ path: join(CAPTURAS, `online-simples-telao-${nome}.png`) });
     assert.equal(m.faixa, true, `${nome}: a faixa de entrada está embaixo`);
     assert.equal(m.rola, false, `${nome}: o telão rola`);
     assert.deepEqual(m.fora, [], `${nome}: elemento fora do palco (com a faixa de entrada)`);
     assert.deepEqual(m.vazados, [], `${nome}: elemento fora da própria caixa`);
+    assert.deepEqual(m.sobrepostos, [], `${nome}: texto sobre texto`);
   }
 
   // ---------- Celulares (360×740) ----------
@@ -265,9 +300,12 @@ async function jogar({ site, navegador, vigiar }) {
       assert.ok(votar.topo >= 0 && votar.baixo <= 740 + 1 && !votar.coberto, `o "Votar nesta" da última opção fica à vista (${JSON.stringify(votar)})`);
       await conferirCelular(c0, 'decisao-ultima-aberta');
     }
-    // Cada celular vota (a primeira, a segunda e a terceira opção).
+    // Cada celular vota: a Ana e a Bia, a primeira e a segunda opção (somando uma
+    // a cada rodada); o Caio começa pela quinta, para que, com o config do dia,
+    // mar–abr tenha as três consequências de uma vez (as costas da Ana, a parcela
+    // da Bia e o IPVA já pago do Caio), o pior caso de altura no telão.
     for (const [i, c] of cel.entries()) {
-      const op = cfg.rodadas[r].ordemOpcoes[(i + k) % 5];
+      const op = cfg.rodadas[r].ordemOpcoes[((i === 2 ? 4 : i) + k) % 5];
       const aberta = await c.p.evaluate((o) => Boolean(document.querySelector(`[data-detalhe="${o}"]`)), op);
       if (!aberta) await c.p.click(`.botao-opcao-aluno[data-opcao="${op}"]`);
       await c.p.click(`[data-detalhe="${op}"] [data-votar]`);
@@ -299,6 +337,18 @@ async function jogar({ site, navegador, vigiar }) {
     assert.equal(t.situacao, d.situacao);
     assert.equal(lido(t.familia), lido(`Dinheiro da família: ${d.situacao} ${F.moeda(d.valor)}`), `${r}: o dinheiro da família`);
     assert.deepEqual([t.indicadores, t.divida, t.mesa], [0, 0, 0], `${r}: sem indicadores, sem o detalhe da dívida, sem a mesa`);
+    // D-078: a consequência de uma escolha de antes, à vista no celular e embaixo
+    // das faixas no telão (com a faixa de entrada, o pior caso de altura).
+    {
+      const grupos = H.consequenciasDaRodada([{ equipeId: 'e1', deAntes: gravado.deAntes || [] }]);
+      const linha = await c0.p.evaluate(() => document.querySelector('.consequencia-linha')?.textContent ?? null);
+      if (grupos.length === 0) assert.equal(linha, null, `${r}: sem consequência, sem a linha`);
+      else {
+        assert.equal(lido(linha), lido(`Por causa de antes: ${grupos.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}`).join(' · ')}`), `${r}: a consequência no celular`);
+        await conferirCelular(c0, `resultado-consequencia-${r}`);
+      }
+      if (await telao.locator('.simples-antes li').count() > 0) await conferirTelao(`resultado-consequencia-${r}`);
+    }
     if (k === 0) {
       await conferirCelular(c0, 'resultado');
       await conferirTelao('resultado');
