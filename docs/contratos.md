@@ -1567,7 +1567,11 @@ anfitrião: quem decide é o telão.
     rolagem e mudança de tamanho. Com uma opção aberta, a tela pode passar da
     dobra: logo depois de abrir (e só aí: a contagem ao vivo redesenha a tela a cada
     voto), a opção rola para a vista (`scroll-margin` desconta o topo fixo e o
-    aviso), e o aviso some enquanto cobriria o "Votar nesta".
+    aviso), e o aviso some enquanto cobriria o "Votar nesta". Desde 06/10, toda vez que
+    a frase da opção aberta MUDA ("Enviando…", "guardado: vai sozinho quando o
+    apresentador retomar", a recusa, o motivo do botão apagado), ela rola para a vista
+    (`retornoAVista`, aluno.js): na matriz de votos com o jogo simples, a frase da pausa
+    nasceu abaixo da tela, porque esse estágio não pedia a rolagem.
   - **Conta do mês** (`.conta-mes`, no resultado e na situação dos blocos): "Entrou
     R$ X · gastos R$ G · o básico da família custa R$ Y · juros da dívida R$ J"
     (gastos e juros só quando existem) e, em destaque, "Faltou R$ Z" ou "Sobrou
@@ -1850,5 +1854,14 @@ anfitrião: quem decide é o telão.
   dele falha sem ser recusa e fica guardado no aparelho, e a recarga tem de voltar à sala e reenviar o voto
   (revisão do voto da F6b, achado 1). Todo o resto da matriz (servidor, telão,
   apuração) continua conferido igual: o voto dos alunos não sente o espectador.
-  Capturas `e2e/capturas/votos-*.png`. `--sem-espera` encolhe as esperas longas para depurar o próprio
-  teste, e não vale como verificação.
+  **Jogo simples (D-078, 06/10):** a matriz roda três sessões: o `config.json` do dia (o Jonas nas 6 equipes,
+  5 opções por bimestre e a apuração direto no resultado, sem sorteio), o config de 05/10 com sorteio
+  (`test/fixtures/config-real-v31.json`) e a fixture de 6 bimestres. No formato simples, o Enter da apuração
+  tem de deixar o telão no `resultado` (sem o Espaço do sorteio), e cada celular guarda as telas que desenhou
+  (um `MutationObserver` no `data-tela`, por `addInitScript`): nenhum pode ter passado pelo "Sorteando…". Nas três,
+  toda opção de toda rodada tem de ser tocada num celular e contada numa apuração conferida: a equipe 5 vota na
+  quinta opção no mês 1, a equipe 6 na quinta no mês 2 e na última rodada, e nas rodadas do meio cada equipe
+  vota numa opção, girando a cada rodada (antes, todas votavam na primeira). Os tropeços do espectador ficam na
+  primeira sessão.
+  Capturas `e2e/capturas/votos-*.png` (as do config de 05/10 com `votos-v31-`, as da fixture com `votos-v3-`).
+  `--sem-espera` encolhe as esperas longas para depurar o próprio teste, e não vale como verificação.

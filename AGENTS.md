@@ -90,7 +90,8 @@ npm run check          # validador do config + ESLint + testes sem rede: antes d
 npm test               # só os testes sem rede
 npm run emulador       # regras reais + canal-firebase + simulador contra o emulador (JDK 21)
 npm run e2e            # telão offline por file:// no Playwright (Chrome/Edge instalados)
-npm run e2e:online     # telão e 3 celulares contra o emulador, com o config.json
+npm run e2e:online     # telão e 3 celulares contra o emulador: o jogo de sorteio (config de 05/10) e o config.json do dia
+npm run e2e:votos      # a matriz de votos pela tela: o config.json do dia (5 opções, sem sorteio) e as fixtures com sorteio
 npm run e2e:online:fixture   # o mesmo com a fixture: passa sempre pela frase da proteção (D-059)
 npm run simular -- --memoria      # 20 alunos simulados, sem rede
 ```
