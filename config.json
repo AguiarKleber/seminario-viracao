@@ -1296,13 +1296,13 @@
       {
         "tipo": "bloco",
         "titulo": "Fim: quem é o patrão?",
-        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, quem trabalha e as regras, e no app quem decide é a plataforma.",
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, as regras e quem trabalha; no app, quem decide é a plataforma.",
         "itens": [
-          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8%, quem atendem.",
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8% dizem que ele define sozinho quem atendem.",
           "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
-          "Cerca de 92% do delivery passou pelo iFood no 1º tri/2025 (amostra de Open Finance); de cada pedido com entrega, cobra 26,2% do restaurante."
+          "Cerca de 92% do delivery passou pelo iFood no 1º trimestre de 2025; o iFood cobra do restaurante 26,2% de cada pedido com entrega."
         ],
-        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, amostra de Open Finance, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
         "alvoSeg": 150
       },
       {
@@ -1443,7 +1443,7 @@
       },
       {
         "tipo": "bloco",
-        "titulo": "Debrief: mapa do patrão em grupos",
+        "titulo": "Conversa em grupos: o mapa do patrão",
         "alvoSeg": 600,
         "contexto": "Em grupos: em cada bimestre, quem decidiu o preço, a regra e a punição? Marquem no mapa quem manda no trabalho do Jonas."
       },
@@ -1473,13 +1473,13 @@
       {
         "tipo": "bloco",
         "titulo": "Fim: quem é o patrão?",
-        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, quem trabalha e as regras, e no app quem decide é a plataforma.",
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, as regras e quem trabalha; no app, quem decide é a plataforma.",
         "itens": [
-          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8%, quem atendem.",
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8% dizem que ele define sozinho quem atendem.",
           "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
-          "Cerca de 92% do delivery passou pelo iFood no 1º tri/2025 (amostra de Open Finance); de cada pedido com entrega, cobra 26,2% do restaurante."
+          "Cerca de 92% do delivery passou pelo iFood no 1º trimestre de 2025; o iFood cobra do restaurante 26,2% de cada pedido com entrega."
         ],
-        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, amostra de Open Finance, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
         "alvoSeg": 240
       },
       {
