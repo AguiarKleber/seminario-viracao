@@ -232,7 +232,7 @@
                 "renda": 1040
               },
               "rotulo": "horas a mais (as piores do dia)",
-              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses. Kauã: menos, porque já pedala de 9 a 12 h por dia (Aliança Bike, 2019). Bruna: mais posts, mais publis (estimativa sem fonte)"
+              "fonte": "Estimativa: +20 h por semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses: R$ 520 por mês × 2 = R$ 1.040"
             }
           ]
         },
@@ -269,7 +269,7 @@
                 "renda": -110
               },
               "rotulo": "parou das 10h às 16h nos dias de calor forte",
-              "fonte": "Defesa Civil de Porto Alegre (08/02/2025): evitar esforço das 10h às 16h; 39,5 °C em 11/02/2025 (Correio Braziliense). 6 dias de calor extremo no bimestre (estimativa: em fev/2025, três dias passaram de 37 °C numa semana) × 40% do dia × 50%: a OIT (\"Trabalhar num planeta mais quente\") estima que, entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade, e a hora no sol rende menos; das 10h às 16h fica o pico do almoço. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Defesa Civil de Porto Alegre (08/02/2025): evitar esforço das 10h às 16h; 39,5 °C em 11/02/2025 (Correio Braziliense). 6 dias de calor extremo no bimestre (estimativa: em fev/2025, três dias passaram de 37 °C numa semana) × 40% do dia × 50%: a OIT (\"Trabalhar num planeta mais quente\") estima que, entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade, e a hora no sol rende menos; das 10h às 16h fica o pico do almoço (R$ 107). R$ 110 na tela e no jogo"
             }
           ]
         },
@@ -365,7 +365,7 @@
                 "renda": -90
               },
               "rotulo": "um dia parado na greve",
-              "fonte": "Um dia sem ganho (1/60 do bimestre). PLP 152/2025: em 14/04/2026, dia da greve nacional de motoristas e entregadores de aplicativo, com \"protestos em Brasília e diferentes capitais\", o projeto saiu da pauta da Câmara; o governo federal também retirou o apoio (Diário do Transporte, 14/04/2026). A votação foi cancelada por \"um impasse entre o relator e o governo federal, que retirou o apoio à proposta\", e \"não tem nova data\" (Mobile Time, 14/04/2026). O projeto trazia R$ 8,50 por entrega e criava o trabalhador \"plataformizado\", que \"não se enquadra na Consolidação das Leis do Trabalho (CLT), mas também deixa de ser considerado totalmente autônomo\" (O Tempo, 08/04/2026). Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Um dia sem ganho (1/60 do bimestre). PLP 152/2025: em 14/04/2026, dia da greve nacional de motoristas e entregadores de aplicativo, com \"protestos em Brasília e diferentes capitais\", o projeto saiu da pauta da Câmara; o governo federal também retirou o apoio (Diário do Transporte, 14/04/2026). A votação foi cancelada por \"um impasse entre o relator e o governo federal, que retirou o apoio à proposta\", e \"não tem nova data\" (Mobile Time, 14/04/2026). O projeto trazia R$ 8,50 por entrega e criava o trabalhador \"plataformizado\", que \"não se enquadra na Consolidação das Leis do Trabalho (CLT), mas também deixa de ser considerado totalmente autônomo\" (O Tempo, 08/04/2026) Um dia do bimestre: R$ 89,33, R$ 90 na tela e no jogo"
             },
             {
               "soma": {
@@ -387,7 +387,7 @@
                 "renda": 900
               },
               "rotulo": "dois apps ao mesmo tempo",
-              "fonte": "Estimativa: +15% da renda do bimestre. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app. 99 e iFood: o seguro de cada app só cobre a corrida ou a entrega dele. Jonas: o 99Food chegou a Porto Alegre em 17/03/2026 com R$ 250 garantidos por 20 corridas de moto (Jornal do Brás, 23/03/2026): R$ 12,50 por corrida, R$ 5 acima do mínimo de R$ 7,50 do iFood, R$ 100 a mais (conta nossa). Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Estimativa: +15% da renda do bimestre (R$ 5.360 × 15% = R$ 804) mais o bônus de entrada do 99Food em Porto Alegre (desde 17/03/2026: R$ 250 garantidos por 20 corridas de moto, R$ 12,50 cada, R$ 5 acima do mínimo de R$ 7,50 do iFood; Jornal do Brás, 23/03/2026: R$ 100) = R$ 904, R$ 900 na tela e no jogo. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app. 99 e iFood: o seguro de cada app só cobre a corrida ou a entrega dele"
             }
           ]
         },
@@ -419,7 +419,7 @@
                 "renda": 160
               },
               "rotulo": "aceitou até as entregas ruins",
-              "fonte": "Estimativa: +3% da renda do bimestre (as corridas e entregas ruins rendem pouco; na bicicleta, a entrega longe não compensa: nada). iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas; 99: finalizar menos de 70% das corridas = 5, 10 e 15 dias fora. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Estimativa: +3% da renda do bimestre (R$ 5.360 × 3% = R$ 161, R$ 160 na tela e no jogo): as entregas ruins rendem pouco. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas; 99: finalizar menos de 70% das corridas = 5, 10 e 15 dias fora"
             }
           ]
         },
@@ -520,7 +520,7 @@
                 "renda": 800
               },
               "rotulo": "madrugadas na chuva",
-              "fonte": "Estimativa: +15% da renda do bimestre (o rascunho v2 usava +20% de um mês; no bimestre, as madrugadas não rendem o mesmo nos dois meses). Promoção de chuva de R$ 3 a R$ 12 por entrega (Metrópoles, 01/08/2025). Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Estimativa: +15% da renda do bimestre (R$ 804, R$ 800 na tela e no jogo; o rascunho v2 usava +20% de um mês, e no bimestre as madrugadas não rendem o mesmo nos dois meses). Promoção de chuva de R$ 3 a R$ 12 por entrega (Metrópoles, 01/08/2025)"
             }
           ]
         },
@@ -598,7 +598,7 @@
                 "renda": 540
               },
               "rotulo": "no +Entregas",
-              "fonte": "O iFood diz que se ganha de 10% a 30% a mais; os entregadores dizem que ganham menos (CUT-RS, 27/07/2026: \"12 horas na rua, sete dias na semana, para ganhar três pila por entrega\", Acergs). Usado +10% da renda do bimestre, a ponta de baixo do que o iFood diz. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "O iFood diz que se ganha de 10% a 30% a mais; os entregadores dizem que ganham menos (CUT-RS, 27/07/2026: \"12 horas na rua, sete dias na semana, para ganhar três pila por entrega\", Acergs). Usado +10% da renda do bimestre, a ponta de baixo do que o iFood diz: R$ 536, R$ 540 na tela e no jogo"
             }
           ]
         },
@@ -635,7 +635,7 @@
                 "renda": 100
               },
               "rotulo": "revisão da moto adiada",
-              "fonte": "A retirada da PNAD já desconta a manutenção média (Notas técnicas v1.5, p. 35-36): adiar a revisão devolve ao caixa parte de um mês dela (estimativa: o que dá para adiar, e não pneu e óleo). Moto: R$ 200 por mês (Sindimoto-SP, via AutoPapo, 08/11/2025); carro: R$ 615 por mês (Cebrap/Amobitec 2025, financiado pelas plataformas); bicicleta: corrente de R$ 60 a 120 e pastilha de R$ 50 a 150 (Velodrome, B). A conta volta na carta \"Quebrou\", mais provável daqui em diante. No jogo simples, a conta volta sempre: em set–out a moto quebra (efeito geral de set–out)"
+              "fonte": "A retirada da PNAD já desconta a manutenção média (Notas técnicas v1.5, p. 35-36): adiar a revisão devolve ao caixa metade de um mês dela (estimativa: o que dá para adiar, e não pneu e óleo). Moto: R$ 200 por mês (Sindimoto-SP, via AutoPapo, 08/11/2025): R$ 100. No jogo simples, a conta volta sempre: em set–out a moto quebra (efeito geral de set–out); na vida, é risco"
             }
           ]
         },
@@ -772,7 +772,7 @@
                 "renda": -270
               },
               "rotulo": "recusou o que não pagava",
-              "fonte": "Estimativa: −5% da renda do bimestre. 99: finalizar menos de 70% das corridas = 5, 10 e 15 dias fora (página oficial); iFood: 7 recusas seguidas = 15 minutos fora (Metrópoles, 01/08/2025); YouPix/Brunch 2023: 70% das criadoras aceitaram valor abaixo do que pediram. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Estimativa: −5% da renda do bimestre (R$ 268, R$ 270 na tela e no jogo). 99: finalizar menos de 70% das corridas = 5, 10 e 15 dias fora (página oficial); iFood: 7 recusas seguidas = 15 minutos fora (Metrópoles, 01/08/2025)"
             }
           ]
         },
@@ -787,7 +787,7 @@
                 "renda": -90
               },
               "rotulo": "um dia parado no breque",
-              "fonte": "Um dia sem ganho (1/60 do bimestre). Breque geral de 01/09/2026: R$ 10 por corrida de até 4 km, R$ 2,50 por km, fim do +Entregas e transparência nos bloqueios (Metrópoles, 01/09/2026). Até agora, sem reajuste. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Um dia sem ganho (1/60 do bimestre). Breque geral de 01/09/2026: R$ 10 por corrida de até 4 km, R$ 2,50 por km, fim do +Entregas e transparência nos bloqueios (Metrópoles, 01/09/2026). Até agora, sem reajuste Um dia do bimestre: R$ 89,33, R$ 90 na tela e no jogo"
             },
             {
               "soma": {
@@ -809,14 +809,14 @@
                 "renda": 150
               },
               "rotulo": "bônus do concorrente no dia do breque",
-              "fonte": "Metrópoles (01/09/2026) e Correio Braziliense (31/08/2026): durante o breque, 99Food e Keeta ofereceram até R$ 9 a mais por entrega (visto em São Paulo). Estimativa: Jonas ~17 entregas, Kauã ~10"
+              "fonte": "Metrópoles (01/09/2026) e Correio Braziliense (31/08/2026): durante o breque, 99Food e Keeta ofereceram até R$ 9 a mais por entrega (visto em São Paulo). Estimativa: ~17 entregas no dia × R$ 9 = R$ 153, R$ 150 no jogo"
             },
             {
               "soma": {
                 "renda": 670
               },
               "rotulo": "noites e fins de semana da Farroupilha",
-              "fonte": "Acampamento Farroupilha de 29/08 a 20/09/2026, mais de 1,1 milhão de visitantes no Parque Harmonia (Jornal do Comércio, 09/2026): sem número de ganho. Estimativa: +25% de um mês para quem roda (três semanas de acampamento, noites e fins de semana) e +20% para a Rose e a Daiane (a Bruna, 2 publis de R$ 200, na ponta de baixo da tabela de nano do Estado de Minas, B). Jonas: 25% de R$ 2.680 = R$ 670"
+              "fonte": "Acampamento Farroupilha de 29/08 a 20/09/2026, mais de 1,1 milhão de visitantes no Parque Harmonia (Jornal do Comércio, 09/2026): sem número de ganho. Estimativa: +25% de um mês para quem roda (três semanas de acampamento, noites e fins de semana): 25% de R$ 2.680 = R$ 670"
             }
           ]
         },
@@ -886,7 +886,7 @@
                 "renda": 170
               },
               "rotulo": "cortou carne, fruta e remédio",
-              "fonte": "Estimativa: ~4% da comida da casa (cesta × adultos), nos 2 meses; o remédio cortado entra como mais chance de adoecer. Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+              "fonte": "Estimativa: ~4% da comida da casa nos 2 meses (R$ 2.098 × 2 × 4% = R$ 168, R$ 170 na tela e no jogo). Ação da Cidadania/UFRJ (2024): 32% dos entregadores em insegurança alimentar. O remédio cortado não tem efeito no jogo (sem sorteio, ninguém adoece): fica na fala do apresentador"
             }
           ]
         },
@@ -901,7 +901,7 @@
                 "renda": 1040
               },
               "rotulo": "horas a mais (as piores do dia)",
-              "fonte": "Estimativa: +20 h/semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses. Kauã: menos, porque já pedala de 9 a 12 h por dia (Aliança Bike, 2019). Bruna: mais posts, mais publis (estimativa sem fonte)"
+              "fonte": "Estimativa: +20 h por semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses: R$ 520 por mês × 2 = R$ 1.040"
             }
           ]
         },
@@ -962,7 +962,7 @@
           },
           "fixo": true,
           "rotulo": "gasolina mais cara",
-          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,30 (jan) e 6,18 (fev) em jan–fev de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). Jonas: 130 km/dia ÷ 40 km/L × 26 dias = 84,5 L/mês (AutoPapo, 08/11/2025); Marcos: R$ 1.987 de combustível por mês ÷ R$ 6 = 330 L/mês (Cebrap/Amobitec 2025, financiado pelas plataformas). Conta nossa, nos 2 meses: Jonas R$ 28, Marcos R$ 108. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,30 (jan) e 6,18 (fev) em jan–fev de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 28, R$ 30 no jogo"
         }
       ],
       "fonte": "O evento de jan–fev, igual para todas as equipes (jogo simples, sem sorteio)"
@@ -983,7 +983,7 @@
           },
           "fixo": true,
           "rotulo": "gasolina mais cara",
-          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,38 (mar) e 6,52 (abr, o maior preço de 2024 a 2026) em mar–abr de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). Jonas: 130 km/dia ÷ 40 km/L × 26 dias = 84,5 L/mês (AutoPapo, 08/11/2025); Marcos: R$ 1.987 de combustível por mês ÷ R$ 6 = 330 L/mês (Cebrap/Amobitec 2025, financiado pelas plataformas). Conta nossa, nos 2 meses: Jonas R$ 63, Marcos R$ 247. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,38 (mar) e 6,52 (abr, o maior preço de 2024 a 2026) em mar–abr de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 63, R$ 60 no jogo"
         },
         {
           "soma": {
@@ -991,7 +991,7 @@
           },
           "fixo": true,
           "rotulo": "IPVA da moto",
-          "fonte": "Sefaz-RS, calendário do IPVA 2026 (ipva.rs.gov.br/lista/649): \"o vencimento ocorrerá no dia 30 de abril de 2026\" (30/04/2026); 2% para moto e 3% para carro. Pagar antes dá desconto (até 22,4% até 30/01, 21,6% até 27/02 e 20,8% até 31/03, já somados o Bom Motorista e o Bom Cidadão), e o parcelamento só pôde ser pedido de 02 a 30/01, com parcelas até junho; a casa está no vermelho desde janeiro e não tem como adiantar: o jogo cobra à vista no vencimento. No vencimento, o desconto chega a 20% (Bom Motorista e Bom Cidadão), mas depende de não ter multa e do cadastro na Nota Fiscal Gaúcha: não entrou (escolha nossa, a validar). Valor venal estimado (sem fonte): CG 160 de 2025 ~R$ 17 mil (a 2026 vale R$ 18.598 na Fipe de set/2026); carro popular de 2016 ~R$ 50 mil. Pode estar em parte dentro da retirada da PNAD (a validar)"
+          "fonte": "Sefaz-RS, calendário do IPVA 2026 (ipva.rs.gov.br/lista/649): \"o vencimento ocorrerá no dia 30 de abril de 2026\"; 2% para moto. Valor venal estimado (sem fonte): CG 160 de 2025 ~R$ 17 mil (a 2026 vale R$ 18.598 na Fipe de set/2026): R$ 340. No vencimento, o desconto chega a 20% (Bom Motorista e Bom Cidadão), mas depende de não ter multa e do cadastro na Nota Fiscal Gaúcha: não entrou (escolha nossa, a validar). Quem pagou em janeiro (jan–fev, opção E) recebe os R$ 340 de volta no efeito geral de mar–abr: o IPVA é um só por ano. Pode estar em parte dentro da retirada da PNAD (a validar)"
         }
       ],
       "fonte": "O evento de mar–abr, igual para todas as equipes. PLP 152/2025 fora de pauta em 14/04/2026, dia da greve nacional (Diário do Transporte e Mobile Time, 14/04/2026)"
@@ -1012,7 +1012,7 @@
           },
           "fixo": true,
           "rotulo": "gasolina mais cara",
-          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,25 (mai) e 6,21 (jun) em mai–jun de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). Jonas: 130 km/dia ÷ 40 km/L × 26 dias = 84,5 L/mês (AutoPapo, 08/11/2025); Marcos: R$ 1.987 de combustível por mês ÷ R$ 6 = 330 L/mês (Cebrap/Amobitec 2025, financiado pelas plataformas). Conta nossa, nos 2 meses: Jonas R$ 26, Marcos R$ 102. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,25 (mai) e 6,21 (jun) em mai–jun de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 26, R$ 30 no jogo"
         }
       ],
       "fonte": "O evento de mai–jun, igual para todas as equipes. Na enchente de 2024, só 66% dos entregadores trabalharam (config de 05/10)"
@@ -1033,7 +1033,7 @@
           },
           "fixo": true,
           "rotulo": "licenciamento da moto",
-          "fonte": "AutoPapo (Detran-RS, 2026): licenciamento de R$ 114,09 até 31/07, sem parcelar, e só com as multas quitadas. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "AutoPapo (Detran-RS, 2026): licenciamento de R$ 114,09 até 31/07, sem parcelar, e só com as multas quitadas. R$ 110 no jogo"
         }
       ],
       "fonte": "O evento de jul–ago, igual para todas as equipes. CUT-RS (27/07/2026): o +Entregas paga R$ 3 por entrega"
@@ -1065,7 +1065,7 @@
             "renda": 430
           },
           "rotulo": "dezembro: 16% mais pedidos",
-          "fonte": "Jonas e Kauã: iFood, release de 30/10/2023, dezembro de 2022 com pedidos 16% acima da média (é a demanda; a renda proporcional é conta nossa, confiança baixa). Marcos: IPCA (SIDRA 7060), \"transporte por aplicativo\" em Porto Alegre, +19,88% em dez/2024 e +17,75% em dez/2025 (preço do passageiro; usada metade de 20% de um mês). Rose: Folha Vitória (13/12/2024), expectativa de +20% a 70% no faturamento dos salões no fim de ano (outra UF, B). Daiane: Agência Sebrae MA (26/03/2024), até +35%. A data é certa: entra para todo mundo. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "iFood, release de 30/10/2023: dezembro de 2022 com pedidos 16% acima da média (é a demanda; a renda proporcional é conta nossa, confiança baixa): R$ 2.680 × 16% = R$ 428,80, R$ 430 no jogo. A data é certa: entra para todas as equipes (a opção E de nov–dez, o temporário com carteira, já desconta esses R$ 430 na conta dela)"
         },
         {
           "soma": {
@@ -1073,7 +1073,7 @@
           },
           "categoria": "gasto",
           "rotulo": "luz 24% mais cara em dezembro",
-          "fonte": "Sul21 (08/2026): a CEEE Equatorial propõe +24,24% na baixa tensão a partir de 22/11/2026, ainda em consulta pública (não é definitivo). Um mês, sobre a conta de luz do básico. Na tela, arredondado a R$ 10 (o valor da opção é o que o jogo cobra)"
+          "fonte": "Sul21 (08/2026): a CEEE Equatorial propõe +24,24% na baixa tensão a partir de 22/11/2026, ainda em consulta pública (não é definitivo). Um mês, sobre a conta de luz do básico: R$ 162 × 24,24% = R$ 39,27, R$ 40 no jogo"
         }
       ],
       "fonte": "O evento de nov–dez, igual para todas as equipes. Quem tem carteira recebe o 13º até 20/12 (Lei 4.749/1965); nesta casa, ninguém (D-062)"
