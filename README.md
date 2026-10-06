@@ -19,7 +19,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/decisoes.md](docs/decisoes.md) | O que foi decidido e por quê (D-001 em diante) |
 | [docs/arquitetura.md](docs/arquitetura.md) | Como o sistema funciona |
 | [docs/contratos.md](docs/contratos.md) | O que cada módulo do código espera do outro |
-| [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo, cada um com a fonte |
+| [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo de 6 personagens (até 05/10), cada um com a fonte; as fontes do Jonas vêm dele |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
 ## Onde estamos (06/10)
