@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-06-v4.2-simples",
+  "versao": "2026-10-06-v4.3-simples",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -929,16 +929,17 @@
         },
         {
           "id": "e",
-          "rotulo": "Temporário com carteira",
-          "narrativa": "Vaga temporária de motoboy com carteira até o Natal: horário fixo, salário, 13º, férias e INSS no lugar do app.",
-          "impacto": "Carteira por dois meses: horário fixo, 13º e férias, e menos dinheiro no fim",
+          "rotulo": "Presente para a filha",
+          "narrativa": "A filha de 6 anos pediu um brinquedo ao Papai Noel: o presente tira dinheiro das contas, mas alegra o Natal dela.",
+          "impacto": "A filha abre o presente no Natal, e o dinheiro sai das contas de dezembro",
           "efeitos": [
             {
               "soma": {
-                "renda": -1230
+                "renda": -170
               },
-              "rotulo": "temporário com carteira no lugar do app",
-              "fonte": "A mesma base da linha \"Jonas com carteira assinada\" do placar (D-056): CAGED ago/2025–jul/2026, salário-base médio de motoboy R$ 1.763,45 + 30% de periculosidade (Lei 12.997/2014) = R$ 2.292,49; líquido R$ 2.110,48 (INSS 2026, Portaria MPS/MF 13/2026; IR isento). Dois meses: R$ 4.220,96. Na saída: 13º proporcional de 2/12 (Constituição, art. 7º, VIII; Lei 4.090/1962), R$ 382,08, líquido R$ 351,74; férias proporcionais com 1/3 (Lei 6.019/1974, art. 12, c), R$ 509,44, sem INSS. Menos a manutenção da moto, que com carteira sai do salário (R$ 261 por mês, como na linha do placar): R$ 4.560,14. O app no mesmo bimestre: R$ 5.360 + R$ 430 de dezembro = R$ 5.790. Diferença: −R$ 1.229,86, R$ 1.230 na tela. O FGTS (8%, R$ 367 nos 2 meses) vai para a conta vinculada, não para o caixa. Que exista a vaga: Asserttem (via Fetracom, 2025), 535 mil temporários no fim de 2025, +7,5%, com o RS entre os que mais contratam; não achei o número de vagas de motoboy temporário (estimativa sem fonte de que ele consiga uma)"
+              "categoria": "gasto",
+              "rotulo": "presente de Natal da filha",
+              "fonte": "Fecomércio-RS, Pesquisa de Final de Ano 2025 (385 consumidores de 8 cidades do RS, de 14 a 26/10/2025; via Sindilojas Gravataí, 10/12/2025): cada presente de Natal custa em média R$ 166,93 (R$ 742,43 por pessoa, 4,4 presentes), e o brinquedo é o 2º presente mais comprado (46,6%). Um presente, o da filha: R$ 170 no jogo. Entrou no lugar de \"Temporário com carteira\" (pedido do Kleber de 06/10 à tarde: a opção pedia explicação, porque pagava menos no caixa e os benefícios não apareciam; D-080). Não é opção puxada (não põe horas na rua)"
             }
           ]
         }
@@ -1065,7 +1066,7 @@
             "renda": 430
           },
           "rotulo": "dezembro começa com 16% mais pedidos",
-          "fonte": "iFood, release de 30/10/2023: nos 12 primeiros dias de dezembro de 2022, pedidos 16% acima da média dos meses anteriores do ano (é a demanda; estender os 16% ao mês inteiro e à renda é estimativa sem fonte, confiança baixa): R$ 2.680 × 16% = R$ 428,80, R$ 430 no jogo. A data é certa: entra para todas as equipes (a opção E de nov–dez, o temporário com carteira, já desconta esses R$ 430 na conta dela)"
+          "fonte": "iFood, release de 30/10/2023: nos 12 primeiros dias de dezembro de 2022, pedidos 16% acima da média dos meses anteriores do ano (é a demanda; estender os 16% ao mês inteiro e à renda é estimativa sem fonte, confiança baixa): R$ 2.680 × 16% = R$ 428,80, R$ 430 no jogo. A data é certa: entra para todas as equipes"
         },
         {
           "soma": {

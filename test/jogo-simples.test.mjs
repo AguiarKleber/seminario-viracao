@@ -2,7 +2,7 @@
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
 // motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
 // igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
-// encadeadas, e as 15.625 combinações (260 fecham o ano, todas com ao menos uma opção puxada; D-079).
+// encadeadas, e as 15.625 combinações (281 fecham o ano, todas com ao menos uma opção puxada; D-079 e D-080).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -146,15 +146,18 @@ test('config.json do dia: as consequências encadeadas (o IPVA já pago, a parce
 
 // D-079 (06/10, de manhã): o pior caso tinha de ficar abaixo de R$ 7.000 de dívida (era
 // R$ 10.906). A casa foi recontada e o bloqueio passou a 5 dias; com isso, 260 combinações
-// fecham o ano, e nenhuma delas sem ao menos uma opção puxada.
-test('config.json do dia: das 15.625 combinações, 260 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
+// fechavam o ano, e nenhuma delas sem ao menos uma opção puxada. D-080 (06/10, à tarde):
+// "Presente para a filha" (−R$ 170) entra no lugar de "Temporário com carteira"
+// (−R$ 1.230) em nov–dez E; 281 fecham, e a pior passa de DAECCE (−R$ 6.783) a DAECCC.
+test('config.json do dia: das 15.625 combinações, 281 fecham o ano; a melhor é ADCEDA (sem nenhum bimestre de descanso), a pior deve menos de R$ 7.000, e o padrão termina devendo R$ 3.291', () => {
   const cfg = configDoDia().config;
   const c = M.enumerarCombinacoes(cfg, { equipeId: 'e1', rodadas: cfg.ordem.rodadas });
   assert.equal(c.total, 15625);
-  assert.equal(c.fecham, 260);
+  assert.equal(c.fecham, 281);
   assert.equal(c.melhor.opcoes.map((o, k) => 'ABCDE'[cfg.rodadas[cfg.ordem.rodadas[k]].ordemOpcoes.indexOf(o)]).join(''), 'ADCEDA');
   assert.equal(Math.round(c.melhor.valor), 1714);
-  assert.equal(Math.round(c.pior.valor), -6783);
+  assert.equal(c.pior.opcoes.map((o, k) => 'ABCDE'[cfg.rodadas[cfg.ordem.rodadas[k]].ordemOpcoes.indexOf(o)]).join(''), 'DAECCC');
+  assert.equal(Math.round(c.pior.valor), -6135);
   assert.ok(c.pior.valor > -7000, 'o pior caso deve menos de R$ 7.000 (pedido do Kleber, D-079)');
   assert.equal(jogar(cfg, 'CDDCAD').final, -3291);
   // A linha "Jonas com carteira assinada" do placar (referencias.clt), refeita no motor em 06/10
