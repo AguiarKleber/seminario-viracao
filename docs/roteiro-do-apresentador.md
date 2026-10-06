@@ -245,7 +245,7 @@ entre parênteses, as consequências que podem aparecer naquele bimestre):
 | Mai–jun | (As costas.) "O pneu e a capa só custam no jogo; na rua, é o que separa voltar para casa ou não." |
 | Jul–ago | (As costas.) "O +Entregas paga R$ 3 por entrega e pede quase nenhuma recusa. Quem adiou a revisão ganhou R$ 100 agora." |
 | Set–out | (A moto, as costas.) "Quem adiou a revisão viu a moto quebrar: no jogo, sempre. Furar o breque rendeu; parar custou cinco dias de bloqueio. Quem paga a conta da organização?" |
-| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém aqui tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem pediu ajuda à família fechou melhor: sem INSS nem 13º, a rede é a família." |
+| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém aqui tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem pediu ajuda à família ganhou sem pôr hora a mais na rua: sem INSS nem 13º, a rede é a família." |
 
 **No placar:**
 - **Página 1, o caminho:** "Mesma casa, mesmo Jonas: a diferença entre as equipes
