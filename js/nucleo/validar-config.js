@@ -40,7 +40,7 @@
   // com o custo humano, do jeito do personagem ("12 h por dia no sol: chega em
   // casa e os filhos já dormiram"), sem chance e sem porcentagem. Vai embaixo
   // do botão do celular e no telão. O teto de 90 letras veio com a decisão: é
-  // uma linha, e não um parágrafo, e são até 4 opções na mesma tela do celular
+  // uma linha, e não um parágrafo, e são até 5 opções na mesma tela do celular
   // (o mesmo motivo do teto do contexto, acima).
   const MAX_IMPACTO = 90;
   // D-075 (teste do Kleber de 05/10): a carta com o título do jeito do personagem
@@ -60,9 +60,15 @@
   // uma proteção (o INSS pago ao MEI, a ajuda da associação, a liminar).
   const CATEGORIAS_EFEITO = new Set(['gasto', 'protecao']);
   // D-043: 4 opções por mês, cada uma um dilema. Uma só não é decisão, e mais de
-  // 4 não cabe nos botões do celular nem na conversa de 120 s.
+  // 4 não cabia nos botões do celular nem na conversa de 120 s.
+  // Decisão do Kleber de 05/10 à noite (o formato simples, regras.formatoSimples):
+  // um personagem só, o Jonas, para todas as equipes, e 5 opções por bimestre.
+  // Com um personagem só, a tela não precisa mais dos textos de seis ofícios, e
+  // as 5 opções (letra, rótulo, dinheiro e custo humano) cabem em 360×740 com a
+  // dobra "Mais opções abaixo" (e2e:online). O teto vale para todo config: o de
+  // 4 opções continua válido.
   const MIN_OPCOES = 2;
-  const MAX_OPCOES = 4;
+  const MAX_OPCOES = 5;
   // Acima disto a conferência de "carta possível" desiste com ERRO, em vez de
   // travar o telão enumerando estados (sem a conferência, não há a garantia).
   const MAX_ESTADOS = 20000;
