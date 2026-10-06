@@ -777,7 +777,10 @@ seu `id`, como no `config.json` atual.)
 
 Opcional. Cada referência vira uma linha de comparação na página 1 do placar
 final ("quanto faltou para o básico"), e não uma equipe. O valor precisa de fonte
-e de validação (D-005).
+e de validação (D-005). **O config do dia (`v4.3-simples`) não tem referência**
+(`"referencias": []`): a linha "Jonas com carteira assinada" saiu do placar na
+D-080 ("não agrega em nada"), e o telão desenha a página sem ela. O texto abaixo
+vale para quem quiser pôr uma linha de volta.
 - `renda`: o saldo do jogo inteiro (12 meses no config atual), na mesma conta
   das equipes: desde o esquema v2, com a mesma casa (outra renda, básico e
   juros); no esquema v3, com os juros compostos no bimestre, e o 13º e o terço de
@@ -848,7 +851,10 @@ e sem o placar resumido):
 
 - `contexto`: o que é o tópico e como impacta o setor, em 1 ou 2 frases (até
   220 letras);
-- `itens`: de 1 a 3 números com fonte, um por linha (até 140 letras cada);
+- `itens`: de 1 a 4 textos, um por linha (até 140 letras cada): nos blocos de
+  dados, até 3 números com fonte; em "Caminhos", 4 (um por caminho; D-080, o
+  teto do validador, medido em 1024×768 com a faixa de entrada); na "Conversa
+  em grupos", os passos da atividade;
 - `fonte`: de onde vêm os itens, no pé da tela (até 200 letras).
 
 O telão escreve o rótulo "Fontes: " antes da `fonte`. Tipo errado é erro

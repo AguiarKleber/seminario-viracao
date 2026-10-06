@@ -784,3 +784,58 @@ faxinas, que o celular mostra, ficaram, porque a D-079 pede as recontas
 declaradas na fonte de cada valor. O Fim e o título do bloco de conversa em
 grupos ficaram em um commit à parte, porque os pedidos novos mexem neles. O config continua `2026-10-06-v4.2-simples`
 (hash `aa6a613c`), e as regras, v4.
+
+## 06/10/2026 (à tarde): os pedidos depois da versão 9
+
+Pedidos do Kleber de 06/10 à tarde, com a versão 9 no ar e os prints dela. O
+princípio dele vale para todos: "quanto menos explicações tivermos que dar,
+melhor". O conteúdo, com as fontes, está em [jogo-simples.md](jogo-simples.md).
+
+**D-080. Os pedidos de 06/10 à tarde: as equipes em uma palavra, o mês comum sem
+valor, a revisão textual, o presente da filha, a consequência na faixa da
+equipe, "Caminhos" e a conversa com itens, o bloco das outras plataformas e o
+placar sem a linha da carteira** (junta as duas notas acima e muda partes da
+D-079, da D-070 e da D-056).
+- **As equipes em uma palavra e o mês comum sem valor** (as duas notas acima):
+  Laranja, Celeste, Verde, Azul, Vermelho e Rosa; e "Em um mês comum, a conta
+  não fecha: falta dinheiro para pagar as contas e sustentar a casa.".
+- **A revisão textual de todo texto de tela** (a nota acima): sem "num/numa",
+  com concordância, regência e crase, frases diretas e o mesmo nome para a
+  mesma coisa, sem mudar fato, número, data nem fonte.
+- **Nov–dez E: "Presente para a filha" no lugar de "Temporário com carteira".**
+  O temporário pedia explicação (punha menos dinheiro no caixa, e os
+  benefícios não apareciam no jogo). O presente se entende sozinho: a filha de
+  6 anos pediu um brinquedo ao Papai Noel, −R$ 170 (Fecomércio-RS, Pesquisa de
+  Final de Ano 2025: R$ 166,93 por presente). É gasto, não é opção puxada e não
+  pede regra nova. A pesquisa da convenção coletiva dos motoboys, oferecida para o
+  temporário, não foi feita: o Kleber disse que não precisava.
+- **A linha "Jonas com carteira assinada" sai do placar final** (página 2):
+  "não agrega em nada". A referência sai do config (`referencias` vazia); o
+  telão já desenhava a página sem a linha quando não havia referência. Muda a
+  D-070 e a D-056 no jogo simples.
+- **A consequência de uma escolha de antes vira observação na faixa da equipe
+  atingida** (print 2): embaixo da opção, em letra secundária, com o motivo e o
+  valor ("As costas travaram (2 bimestres puxados seguidos) −R$ 1.230"). Era
+  uma lista embaixo das faixas, com o nome das equipes. Para seis equipes com
+  observação caberem com a faixa de entrada em 1280×720 (o pior caso: mar–abr,
+  com as costas, a parcela e o IPVA), um quinto aperto deixa cada linha da
+  faixa com a altura da letra. Nada abaixo de 28 px. O celular já mostrava a
+  linha "Por causa de escolhas anteriores" para a equipe, e não muda.
+- **"Caminhos" e a "Conversa em grupos" mostram os itens na tela** (prints 3 e
+  4), como os blocos de dados: em "Caminhos", um item por caminho, com um dado
+  e a fonte (regulação, proteção, organização e educação); na conversa, os
+  três passos da atividade. São quatro caminhos, e o validador passa a aceitar
+  até 4 itens sem aviso (medido em 1024×768 e 1280×720 com a faixa de entrada).
+- **Um bloco novo logo antes do Fim, nos dois roteiros: "Dados: e nos outros
+  aplicativos?"** (print 1: enriquecer o Fim com outras modalidades, como a
+  Uber): os motoristas de app, com a renda e a hora, quem define o preço da
+  corrida e o INSS (IBGE, PNAD 2025, conferido no PDF). O Fim fica com os dados
+  que já tinha. O tempo saiu, no roteiro de 60 min, do placar final, do
+  termômetro e do comparativo (30 s de cada); no de 120, do "Mapa do seminário"
+  e de "Caminhos" (2 min de cada).
+- **Os números** (`npm run combinacoes`): 281 das 15.625 combinações fecham o
+  ano (eram 260), todas com ao menos uma opção puxada; a melhor continua
+  A-D-C-E-D-A (+R$ 1.714); a pior passa a D-A-E-C-C-C, devendo R$ 6.135 (era
+  D-A-E-C-C-E, R$ 6.783); o padrão continua −R$ 3.291.
+- **O config passa à versão `2026-10-06-v4.3-simples`**; o site continua na
+  versão 10, e as regras do Firebase, v4.

@@ -5,10 +5,13 @@ o Kleber decidiu em 05/10 à noite (D-078): **um personagem só**, o Jonas, para
 as 6 equipes; **6 bimestres com 5 opções** cada; **sem sorteio**. Com os
 pedidos de 06/10 de manhã (D-079), **as opções ficam às cegas** (sem o dinheiro
 ao lado), cada uma com uma **mini-história**, e depois do resultado de cada
-bimestre vem **uma tela de dados reais** do tema dele. Arquivo:
-[`config.json`](../config.json), versão `2026-10-06-v4.2-simples` (o hash é o
-que `npm run validar` imprimir; em 06/10 à tarde, com as equipes em uma
-palavra e a revisão textual, `aa6a613c`). O conteúdo de 6
+bimestre vem **uma tela de dados reais** do tema dele. Com os pedidos de 06/10
+à tarde (D-080), nov–dez E passa a ser o presente da filha, a consequência
+aparece na faixa da equipe, "Caminhos" e a conversa em grupos ganham itens, um
+bloco das outras plataformas entra antes do Fim e o placar perde a linha da
+carteira. Arquivo: [`config.json`](../config.json), versão
+`2026-10-06-v4.3-simples` (o hash é o que `npm run validar` imprimir; em 06/10
+à tarde, depois da D-080, `1a35eb30`). O conteúdo de 6
 personagens, com cartas sorteadas, ficou no git e congelado em
 `test/fixtures/config-real-v31.json`.
 
@@ -34,7 +37,10 @@ personagens, com cartas sorteadas, ficou no git e congelado em
   licenciamento, dezembro) e aparece uma vez, no alto do resultado.
 - **O que vem depois** de uma escolha (as costas, a moto que quebra, o IPVA já
   pago, a parcela atrasada) aparece no resultado do bimestre em que acontece,
-  com o motivo.
+  com o motivo e o valor, como **observação na faixa da equipe atingida**,
+  embaixo da opção, em letra secundária ("As costas travaram (2 bimestres
+  puxados seguidos) −R$ 1.230"; D-080; até a versão 9, era uma lista embaixo
+  das faixas, com o nome das equipes).
 - **Depois do resultado, os dados do tema** do bimestre (seção "Os blocos de
   dados"): um contexto de uma ou duas frases e até 3 números com fonte.
 - **O número do placar** é o **dinheiro da família**: o que tem na conta menos o
@@ -153,23 +159,19 @@ nesta casa, ninguém.
 | B ⚑ | Sem folga até o Natal | Dezembro começa com 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso. | +R$ 1.040 | Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado | O mesmo +20 h por semana de jan–fev (D-024) |
 | C | Folgar na semana do Natal | Uma semana com a família no Natal, sem férias pagas, justo em dezembro, quando os pedidos sobem. | −R$ 630 | Uma semana de Natal com a filha, e os pedidos de dezembro vão para outro | 7 dias do bimestre |
 | D * | Jornada de sempre | Seguir a rotina até o fim do ano, sem 13º, sem férias e sem um dia a mais de folga. | R$ 0 | Rotina de sempre até o fim do ano, sem 13º e sem um dia a mais com a filha | — |
-| E | Temporário com carteira | Vaga temporária de motoboy com carteira até o Natal: horário fixo, salário, 13º, férias e INSS no lugar do app. | −R$ 1.230 | Carteira por dois meses: horário fixo, 13º e férias, e menos dinheiro no fim | A conta abaixo |
+| E | Presente para a filha (nova, D-080) | A filha de 6 anos pediu um brinquedo ao Papai Noel: o presente tira dinheiro das contas, mas alegra o Natal dela. | −R$ 170 | A filha abre o presente no Natal, e o dinheiro sai das contas de dezembro | Fecomércio-RS, Pesquisa de Final de Ano 2025 (385 consumidores de 8 cidades do RS, 14 a 26/10/2025; via Sindilojas Gravataí, 10/12/2025): R$ 166,93 por presente (R$ 742,43 por pessoa, 4,4 presentes); o brinquedo é o 2º presente mais comprado (46,6%) |
 
 **"Pedir ajuda à família" entrou no lugar de "Cortar comida e remédio"** (pedido
 do Kleber de 06/10: o básico para sobreviver não é opção realista). Não é opção
 puxada. Com ela, nenhuma combinação corta comida.
 
-**A conta do temporário** (a mesma base da linha "Jonas com carteira assinada"):
-CAGED ago/2025–jul/2026, salário-base médio de motoboy R$ 1.763,45 + 30% de
-periculosidade (Lei 12.997/2014) = R$ 2.292,49; líquido R$ 2.110,48 (INSS 2026,
-IR isento). Dois meses: R$ 4.220,96. Na saída: 13º proporcional de 2/12
-(Constituição, art. 7º, VIII; Lei 4.090/1962), líquido R$ 351,74, e férias
-proporcionais com 1/3 (Lei 6.019/1974, art. 12, c), R$ 509,44. Menos a manutenção
-da moto, que com carteira sai do salário (R$ 261 por mês): R$ 4.560,14. O app no
-mesmo bimestre: R$ 5.360 + R$ 430 de dezembro = R$ 5.790. Diferença: −R$ 1.229,86.
-O FGTS (R$ 367 nos 2 meses) vai para a conta vinculada, não para o caixa. **Que a
-vaga exista:** Asserttem (via Fetracom, 2025), 535 mil temporários no fim de 2025;
-não achei o número de vagas de motoboy temporário (estimativa sem fonte).
+**"Presente para a filha" entrou no lugar de "Temporário com carteira"** (pedido
+do Kleber de 06/10 à tarde, D-080: o temporário pedia explicação, porque punha
+menos dinheiro no caixa e os benefícios, o 13º, as férias, o INSS e o FGTS, não
+apareciam no jogo). O presente se entende sozinho: é gasto, não é opção puxada e
+não pede regra nova. O valor é um presente médio do Natal no RS (R$ 166,93),
+R$ 170 no jogo. O temporário era −R$ 1.230 (a conta, com o CAGED e a CLT, está
+no git, no commit anterior ao b921bc6).
 
 ## As consequências (sempre, sem sorteio)
 
@@ -290,9 +292,57 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
   revisão textual de 06/10, a ressalva ia no item); iFood, Portal do Parceiro (2026:
   Plano Entrega, 23% + 3,2% de pagamento online).
 
-No roteiro de 120 minutos, o mapa do seminário, a conversa em grupos ("Conversa
-em grupos: o mapa do patrão", que era "Debrief: …" até a revisão textual de
-06/10) e os caminhos têm só o contexto, sem itens.
+**Dados: e nos outros aplicativos?** (logo antes do Fim, nos dois roteiros; D-080,
+print 1 do Kleber: o Fim enriquecido com outras modalidades de trabalho por app)
+- *Contexto:* Não é só no delivery: 941 mil pessoas trabalham em apps de
+  passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e
+  reparos.
+- Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora,
+  R$ 14,40, contra R$ 16 de quem dirige sem app.
+- 80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto
+  recebem por corrida; 60,8%, quais passageiros atendem.
+- Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas
+  sem app, 59,2%.
+- *Fonte:* IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025
+  (publ. set/2026), p. 3 (os apps de faxina, cuidado e reparos), 4 (941 mil e
+  300 mil, no trabalho principal), 9 (renda, horas, hora e previdência dos
+  condutores de automóvel) e 13 (80,2% e 60,8%). Conferido no PDF do IBGE em
+  06/10 à tarde.
+
+No roteiro de 120 minutos (D-080, prints 3 e 4 do Kleber), a conversa em grupos
+e os caminhos passam a mostrar itens, como os blocos de dados; o mapa do
+seminário continua só com o contexto e a linha do tempo.
+
+**Conversa em grupos: o mapa do patrão** (depois do placar; era "Debrief: …" até
+a revisão textual de 06/10)
+- *Contexto:* Cada equipe volta ao ano do Jonas e responde: quem manda no
+  trabalho dele?
+- Repassem os seis bimestres: o que a equipe escolheu e o que aconteceu com o
+  Jonas.
+- Em cada bimestre, quem decidiu o preço, a regra e a punição: o Jonas, o app,
+  o cliente ou o governo?
+- Marquem no mapa quem manda em quê, e uma pessoa por equipe conta a resposta à
+  turma.
+
+**Caminhos: regulação, proteção, organização e educação** (um item por caminho;
+são 4, e o validador passou a aceitar até 4 itens sem aviso, medido em 1024×768
+e 1280×720 com a faixa de entrada)
+- *Contexto:* Quatro caminhos em debate para quem trabalha por app. Qual deles
+  teria mudado o ano do Jonas?
+- Regulação: a lei dos apps (PLP 152/2025) fixaria R$ 8,50 por entrega; saiu de
+  pauta em 14/04/2026, sem nova data.
+- Proteção: só 19,4% dos motoboys de app contribuem para o INSS; o seguro do
+  iFood só paga a partir de 7 dias parado.
+- Organização: em julho de 2026, com o apoio do sindicato do RS, a Justiça
+  mandou a Uber desbloquear dois motoristas.
+- Educação: quem trabalha por app e tem diploma ganha 20,2% menos que os outros
+  diplomados; muitos fazem trabalho abaixo da formação.
+- *Fonte:* O Tempo (08/04/2026); Mobile Time (14/04/2026); IBGE, PNAD Contínua:
+  Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 (com
+  superior completo, R$ 5.133 contra R$ 6.432; o IBGE aponta como hipótese a
+  ocupação abaixo da qualificação, como a de motorista de app) e 10; iFood,
+  seguro de acidentes (2026); CUT (23/07/2026: duas liminares contra a Uber no
+  RS, com o Simtrapli-RS, o sindicato dos motoristas de aplicativo).
 
 ## Os números (as 15.625 combinações, no motor do jogo)
 
@@ -300,21 +350,21 @@ Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor joga
 todas: `npm run combinacoes` (cerca de 0,1 s; o validador, seção l, dá o total,
 as que fecham, a melhor e a pior; o telão conta no navegador).
 
-| Medida | Agora (v4.1, D-079) | Antes (v4, 06/10 de madrugada) |
-| --- | --- | --- |
-| Fecham o ano (dinheiro da família ≥ R$ 0) | **260** (1,7%) | nenhuma |
-| Melhor combinação | **A-D-C-E-D-A: +R$ 1.714** (12 h no sol, aceitar até entrega ruim, madrugada na chuva, promoções da noite, furar o breque, pedir ajuda à família: nenhum bimestre de descanso) | A-D-C-E-D-A: −R$ 2.429 |
-| Pior combinação | **D-A-E-C-C-E: devendo R$ 6.783** (R$ 2.000 de cheque especial e R$ 4.783 de contas atrasadas) | D-A-E-C-C-E: devendo R$ 10.906 |
-| Mediana / média | −R$ 2.904 / −R$ 2.903 | −R$ 7.084 / −R$ 7.074 |
-| Percentis | 10%: −R$ 4.687 · 25%: −R$ 3.862 · 75%: −R$ 1.951 · 90%: −R$ 1.134 | 10%: −R$ 8.793 · 90%: −R$ 5.372 |
-| Os padrões (ninguém votou), C-D-D-C-A-D | −R$ 3.291, 9.363º de 15.625 | −R$ 7.294 |
-| Acima de −R$ 1.000 / −R$ 2.000 / −R$ 3.000 | 1.302 / 4.057 / 8.199 | — |
-| Comida cortada | Nenhuma combinação | 3.125 (por escolha, nov–dez A) |
-| "Jonas com carteira assinada" (a linha do placar) | −R$ 11.947 (refeita no motor com a casa nova) | −R$ 15.498 |
+| Medida | Agora (v4.3, D-080) | v4.1 (D-079, com o temporário) | v4 (06/10 de madrugada) |
+| --- | --- | --- | --- |
+| Fecham o ano (dinheiro da família ≥ R$ 0) | **281** (1,8%) | 260 (1,7%) | nenhuma |
+| Melhor combinação | **A-D-C-E-D-A: +R$ 1.714** (12 h no sol, aceitar até entrega ruim, madrugada na chuva, promoções da noite, furar o breque, pedir ajuda à família: nenhum bimestre de descanso) | A-D-C-E-D-A: +R$ 1.714 | A-D-C-E-D-A: −R$ 2.429 |
+| Pior combinação | **D-A-E-C-C-C: devendo R$ 6.135** (R$ 2.000 de cheque especial e R$ 4.135 de contas atrasadas) | D-A-E-C-C-E: devendo R$ 6.783 | D-A-E-C-C-E: devendo R$ 10.906 |
+| Mediana / média | −R$ 2.727 / −R$ 2.677 | −R$ 2.904 / −R$ 2.903 | −R$ 7.084 / −R$ 7.074 |
+| Percentis | 10%: −R$ 4.280 · 25%: −R$ 3.564 · 75%: −R$ 1.793 · 90%: −R$ 1.048 | 10%: −R$ 4.687 · 90%: −R$ 1.134 | 10%: −R$ 8.793 · 90%: −R$ 5.372 |
+| Os padrões (ninguém votou), C-D-D-C-A-D | −R$ 3.291, 10.549º de 15.625 | −R$ 3.291, 9.363º | −R$ 7.294 |
+| Acima de −R$ 1.000 / −R$ 2.000 / −R$ 3.000 | 1.458 / 4.605 / 9.220 | 1.302 / 4.057 / 8.199 | — |
+| Comida cortada | Nenhuma combinação | Nenhuma | 3.125 (por escolha, nov–dez A) |
+| "Jonas com carteira assinada" (a linha do placar) | **saiu do placar** (D-080) | −R$ 11.947 | −R$ 15.498 |
 
-**Quem fecha o ano:** as 260 têm ao menos uma opção puxada (de 1 a 4), e
+**Quem fecha o ano:** as 281 têm ao menos uma opção puxada (de 1 a 4), e
 nenhuma combinação sem puxada fecha. A melhor não descansa nenhum bimestre e
-termina pedindo ajuda à família.
+termina pedindo ajuda à família. Com o presente da filha (nov–dez E), 23 fecham.
 
 **A média de cada opção** (o fim do ano de quem a escolheu, nas 3.125
 combinações que a contêm) e **em quantas das 3.125 combinações das outras
@@ -322,12 +372,12 @@ rodadas ela é a melhor do bimestre**:
 
 | Bimestre | A | B | C | D | E | Melhor em |
 | --- | --- | --- | --- | --- | --- | --- |
-| Jan–fev | −1.822 | −3.079 | −3.117 | −3.316 | −3.182 | A 2.500 · B 625 |
-| Mar–abr | −3.769 | −2.210 | −3.050 | −2.695 | −2.791 | B 2.000 · D 1.125 |
-| Mai–jun | −3.080 | −3.061 | −2.364 | −2.807 | −3.202 | C 2.000 · D 1.125 |
-| Jul–ago | −2.486 | −3.189 | −3.294 | −3.360 | −2.185 | A 2.000 · E 1.125 |
-| Set–out | −2.780 | −3.084 | −3.388 | −2.381 | −2.882 | D 2.000 · A 1.125 |
-| Nov–dez | −2.419 | −1.926 | −3.399 | −2.730 | −4.041 | B 2.500 · A 625 |
+| Jan–fev | −1.600 | −2.852 | −2.889 | −3.088 | −2.954 | A 2.500 · B 625 |
+| Mar–abr | −3.541 | −1.985 | −2.824 | −2.469 | −2.564 | B 2.000 · D 1.125 |
+| Mai–jun | −2.854 | −2.835 | −2.139 | −2.581 | −2.975 | C 2.000 · D 1.125 |
+| Jul–ago | −2.261 | −2.961 | −3.067 | −3.133 | −1.962 | A 2.000 · E 1.125 |
+| Set–out | −2.554 | −2.857 | −3.160 | −2.158 | −2.655 | D 2.000 · A 1.125 |
+| Nov–dez | −2.419 | −1.926 | −3.399 | −2.730 | −2.910 | B 2.500 · A 625 |
 
 **Nenhuma opção domina em dinheiro**: a melhor de cada bimestre depende do resto
 do caminho (o mesmo desenho de antes da D-079). Na média, a puxada ainda é a
@@ -343,7 +393,7 @@ conhece `contexto`, `itens` e `fonte` desde o commit 43507ba; acima dos limites,
 só aviso); e 8 avisos de equilíbrio: (c)
 a opção de maior média é "dominante" pelo critério da média em cada bimestre (A,
 B, C, E, D, B); (e) as decisões explicam 100% da variância (não há sorteio); (g)
-o Jonas fecha em 1,7% das combinações, abaixo da faixa de 5% a 10% da D-058, que
+o Jonas fecha em 1,8% das combinações, abaixo da faixa de 5% a 10% da D-058, que
 a D-078 já tinha tirado do jogo simples.
 
 ## Para o Kleber
@@ -360,7 +410,7 @@ R$ 7.000, para você confirmar:
 2. **O bloqueio depois da greve, do protesto e do breque passou de 7 para 5
    dias** (D-072 continua: o bloqueio existe; muda a duração, que a fonte diz não
    ser clara).
-3. **Com isso, 260 combinações fecham o ano** (1,7%), todas com ao menos uma
+3. **Com isso, 260 combinações fecham o ano** (1,7%; 281 depois da D-080), todas com ao menos uma
    opção puxada; a melhor termina com R$ 1.714. A placa do placar passa a "Das
    15.625 combinações possíveis, 260 fecham o ano". Só com o bloqueio e as
    costas mais leves o pior caso não descia de R$ 9.800 (as opções do pior
@@ -371,10 +421,9 @@ R$ 7.000, para você confirmar:
 
 **Ainda em aberto** (nada disto muda número de tela):
 
-5. **A linha "Jonas com carteira assinada" (−R$ 11.947) continua abaixo de todas
-   as 15.625 combinações.** Com carteira, ele leva R$ 2.110 líquidos e paga a
-   manutenção da moto; no app, R$ 2.680 já sem a manutenção. Fica, ou sai do
-   placar?
+5. ~~A linha "Jonas com carteira assinada" fica, ou sai do placar?~~ **Saiu**
+   (D-080: "não agrega em nada"), e com ela o temporário com carteira de
+   nov–dez, que usava a mesma conta.
 6. **A regra das costas tem duas brechas:** jul–ago E ("Pegar promoções da
    noite") e mar–abr D ("Aceitar até entrega ruim") são mais tempo na rua, e a
    regra não as marca como puxadas. A mini-história nova das duas já não fala em
@@ -407,7 +456,8 @@ R$ 7.000, para você confirmar:
   a `narrativa` da opção: uma frase só, com ponto final (a história da equipe
   corta na primeira frase).
 - **Os blocos de dados e o Fim:** os passos `bloco` dos dois roteiros, com
-  `contexto` (até ~220 caracteres), `itens` (1 a 3, até ~140 cada) e `fonte`.
+  `contexto` (até ~220 caracteres), `itens` (1 a 3 nos blocos de dados; até 4,
+  o teto do validador desde a D-080, em "Caminhos"; até ~140 cada) e `fonte`.
 - **Conferir:** `npm run validar` (sem erros), `npm run combinacoes` (os números
   acima), `npm test` (o `test/jogo-simples.test.mjs` confere o config do dia com
   o motor, inclusive o pior caso abaixo de R$ 7.000) e `npm run e2e` (o telão,

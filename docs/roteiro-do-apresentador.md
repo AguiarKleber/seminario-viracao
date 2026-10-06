@@ -9,7 +9,8 @@ seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 06/10.
 
 **Para 07/10, vale a [seção 0](#0-o-jogo-simples-de-0710-d-078-e-d-079): o jogo
-simples (D-078) com os ajustes de 06/10 de manhã (D-079).** Os blocos logo
+simples (D-078) com os ajustes de 06/10 de manhã (D-079) e de 06/10 à tarde
+(D-080).** Os blocos logo
 abaixo são o histórico das versões; onde as seções 5.5 a
 5.7 e a 5.11 falam de personas, cartas sorteadas, "Escolha ou sorte?" ou do pior
 caso, vale a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
@@ -183,7 +184,10 @@ rascunho, seção 8, item 15.
 ## 0. O jogo simples de 07/10 (D-078 e D-079)
 
 Decisão do Kleber de 05/10 à noite (D-078), com os ajustes que ele pediu em
-06/10 de manhã, depois de testar a versão no ar (D-079). O conteúdo inteiro,
+06/10 de manhã, depois de testar a versão no ar (D-079), e os de 06/10 à tarde
+(D-080: o presente da filha no lugar do temporário com carteira, a consequência
+na faixa da equipe, os itens de "Caminhos" e da conversa em grupos, o bloco das
+outras plataformas e o placar sem a linha da carteira). O conteúdo inteiro,
 com os valores e as fontes, está em [jogo-simples.md](jogo-simples.md).
 
 **Em uma frase, para a turma:** "Todo mundo é o Jonas, motoboy do iFood. Cada
@@ -197,9 +201,10 @@ caminho fez com o dinheiro da família."
    título e a mini-história de cada opção, sem dizer valores.
 2. **Resultado.** O Enter encerra e vai direto ao resultado (sem sorteio): o
    evento do mês, uma vez no alto, e por equipe a letra, o saldo do bimestre e
-   o dinheiro da família; embaixo, quando há, as consequências de antes ("As
-   costas travaram (2 bimestres puxados seguidos) −R$ 1.230: Laranja e Azul"). Diga a frase
-   da tabela abaixo.
+   o dinheiro da família. Na faixa da equipe que uma escolha de antes atingiu,
+   embaixo da opção, vem a observação, em letra secundária ("As costas travaram
+   (2 bimestres puxados seguidos) −R$ 1.230"; D-080). Diga a frase da tabela
+   abaixo.
 3. **Dados do tema** (1:30 no roteiro de 60 min; 5:30 no de 120). Espaço: o
    telão mostra o contexto do tópico e até 3 números com fonte. Leia o contexto
    e um número; os slides são opcionais.
@@ -212,20 +217,28 @@ caminho fez com o dinheiro da família."
   Jan–fev.
 - **Sem a etapa "Entrevistas"** nos dois roteiros (D-079).
 - **O placar final tem 3 páginas** (o Espaço passa): o caminho de cada equipe;
-  quanto sobrou ou ficou devendo, com a linha "Jonas com carteira assinada"; e
-  "Das 15.625 combinações possíveis, 260 fecham o ano", com a melhor e a pior,
+  quanto sobrou ou ficou devendo (sem a linha "Jonas com carteira assinada",
+  que saiu na D-080); e
+  "Das 15.625 combinações possíveis, 281 fecham o ano", com a melhor e a pior,
   sem a lista de posições de cada equipe (D-079). O resultado de cada enquete
   sai sem a linha "mediana · média · n" embaixo do gráfico.
 - **Na decisão, a célula de cada equipe diz só a cor** ("Laranja"): com a
   mini-história nas 5 opções, é o que deixa a tela caber em 1024×768.
 - **O último bloco, "Fim: quem é o patrão?",** mostra quem manda, com dados do
-  setor; leia e abra a conversa.
+  setor; leia e abra a conversa. Logo antes, **"Dados: e nos outros
+  aplicativos?"** (D-080) mostra a mesma lógica fora do delivery: os
+  motoristas da Uber e da 99, com a renda, quem define o preço e o INSS (IBGE).
+- **No roteiro de 120 min,** a "Conversa em grupos: o mapa do patrão" mostra os
+  três passos da atividade, e "Caminhos" mostra um item por caminho
+  (regulação, proteção, organização e educação), cada um com um dado e a fonte
+  (D-080). Leia o item e pergunte qual caminho teria mudado o ano do Jonas.
 - **O telão não baixa o JSON sozinho** (muda a D-015). Se quiser o arquivo,
   barra oculta → **Salvar estado** (por exemplo, depois de Mar–abr e de
   Set–out). Online, a sala fica no Firebase e se retoma com o PIN (seção 9).
 - Com seis equipes e a faixa de entrada aberta, o telão aperta a tela para
-  caber: no resultado, pode esconder o evento do mês; na decisão, numa tela
-  baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
+  caber: no resultado, pode esconder o evento do mês e, com a observação em
+  muitas equipes, deixar cada linha da faixa com a altura da letra; na decisão,
+  numa tela baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
   formar as equipes (barra → **Entrada aberta**) e tudo volta.
 
 **O que dizer uma vez, em "Conheça o Jonas"** (e não explicar mais que isso):
@@ -248,19 +261,18 @@ entre parênteses, as consequências que podem aparecer naquele bimestre):
 | Mai–jun | (As costas.) "O pneu e a capa só custam no jogo; na rua, é o que separa voltar para casa ou não." |
 | Jul–ago | (As costas.) "O +Entregas paga R$ 3 por entrega e pede quase nenhuma recusa. Quem adiou a revisão ganhou R$ 100 agora." |
 | Set–out | (A moto, as costas.) "Quem adiou a revisão viu a moto quebrar: no jogo, sempre. Furar o breque rendeu; parar custou cinco dias de bloqueio. Quem paga a conta da organização?" |
-| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém nesta casa tem 13º. O temporário com carteira põe menos dinheiro no caixa, e dá 13º, férias e INSS. Quem pediu ajuda à família ganhou sem pôr hora a mais na rua: sem INSS nem 13º, o apoio vem da família." |
+| Nov–dez | (As costas.) "Dezembro tem mais pedidos, e ninguém nesta casa tem 13º. O presente da filha custou R$ 170, o preço médio de um presente de Natal no RS. Quem pediu ajuda à família ganhou sem pôr hora a mais na rua: sem INSS nem 13º, o apoio vem da família." |
 
 **No placar:**
 - **Página 1, o caminho:** "Mesma casa, mesmo Jonas: a diferença entre as equipes
   é só o caminho."
-- **Página 2, quanto sobrou:** sobre a linha da carteira (D-070): "Com carteira,
-  o Jonas põe menos dinheiro no caixa: R$ 2.110 líquidos, e a manutenção da moto
-  sai do bolso dele. O que a linha não mede: INSS desde o primeiro dia, FGTS,
-  férias, auxílio-doença e hora para acabar."
-- **Página 3, as combinações:** "Das 15.625 combinações possíveis, 260 fecham o
+- **Página 2, quanto sobrou:** "É o dinheiro da família no fim do ano: o que tem
+  na conta menos o que deve." Sem a linha "Jonas com carteira assinada" desde a
+  D-080 (pedido do Kleber: "não agrega em nada").
+- **Página 3, as combinações:** "Das 15.625 combinações possíveis, 281 fecham o
   ano, e nenhuma sem mais horas na rua. A melhor não descansa nenhum bimestre: 12
   h no sol, madrugada, noites, fura o breque e, no fim, pede ajuda à família. A
-  pior termina devendo R$ 6.783." Ligue com o termômetro de entrada (D-074):
+  pior termina devendo R$ 6.135." Ligue com o termômetro de entrada (D-074):
   "Quem fechou, fechou como? Então é falta de administração?"
 
 **Se perguntarem por que as costas sempre travam:** "No jogo, sempre; na vida, é um
@@ -1303,6 +1315,11 @@ básico")
 
 ### 5.11 Bloco final e Fim
 
+- **"Dados: e nos outros aplicativos?"** (D-080), logo antes do Fim: o
+  contexto (941 mil pessoas em apps de passageiros, 300 mil em apps de faxina,
+  cuidado e reparos) e três números dos motoristas de app (a renda e a hora, o
+  app que define o preço da corrida, o INSS). Leia o contexto e um número:
+  "Não é só o motoboy."
 - **"Fim: quem é o patrão?"** mostra no telão o contexto e três números de
   quem manda (o app define o preço, a ameaça de bloqueio, o iFood no delivery;
   D-079). Leia e abra a conversa (D-014): texto livre da turma nunca aparece no
@@ -1321,9 +1338,11 @@ básico")
 
 **O roteiro gira em torno do jogo** (D-060, D-078, D-079). As seis rodadas somam
 28 min; com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo
-ocupa 38 min e meio dos 60. Depois de cada rodada vem um bloco de dados do tema
+ocupa 38 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-06-v4.2-simples`).
+(versão `2026-10-06-v4.3-simples`). Na D-080, o bloco das outras plataformas
+(1:30) entrou antes do Fim, e o tempo saiu do placar final (6:00 → 5:30), do
+termômetro (3:00 → 2:30) e do comparativo (2:00 → 1:30).
 
 **Cada rodada tem 4:40:** a leitura das 5 opções (o título e a mini-história, sem
 valores), 120 s de decisão (o mínimo de conversa é 45 s), o Enter e o resultado,
@@ -1349,12 +1368,13 @@ rodadas.
 | 14 | 37:20 | Bloco: Dados: o que é o breque (1:30) | Como o bloco 6 |
 | 15 | 38:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:40) | Como a rodada 1. É o fim do ano |
 | 16 | 43:30 | Bloco: Dados: fim de ano sem 13º (1:30) | Como o bloco 6 |
-| 17 | 45:00 | Placar final (6:00) | 3 páginas: o caminho, quanto sobrou e as 15.625 combinações (seção 0) |
-| 18 | 51:00 | Termômetro (3:00), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
-| 19 | 54:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
-| 20 | 55:30 | Comparativo (2:00) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
-| 21 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
-| 22 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 17 | 45:00 | Placar final (5:30) | 3 páginas: o caminho, quanto sobrou e as 15.625 combinações (seção 0) |
+| 18 | 50:30 | Termômetro (2:30), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
+| 19 | 53:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
+| 20 | 54:30 | Comparativo (1:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
+| 21 | 56:00 | Bloco: Dados: e nos outros aplicativos? (1:30) | O contexto e um número: os motoristas da Uber e da 99 (5.11) |
+| 22 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
+| 23 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 7. Minuto a minuto: 120 min
 
@@ -1369,29 +1389,30 @@ blocos de dados, e nunca as rodadas.
 | --- | --- | --- | --- |
 | 1 | 0:00 | Lobby (2:30) | QR na tela (5.1) |
 | 2 | 2:30 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra (5.2) |
-| 3 | 4:00 | Bloco: Mapa do seminário (6:30) | A linha do tempo no telão é o mapa: os meses e os blocos de dados (5.3) |
-| 4 | 10:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
-| 5 | 12:30 | Conheça o Jonas (3:00) | As duas frases da seção 0 |
-| 6 | 15:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (5:30) | (seção 0) |
-| 7 | 21:00 | Bloco: Dados: calor e jornada (5:30) | O contexto e os números da tela; os slides, se quiser |
-| 8 | 26:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (5:30) | (seção 0) |
-| 9 | 32:00 | Bloco: Dados: a greve de 14/04 e a lei (5:30) | Como o bloco 7 |
-| 10 | 37:30 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (5:30) | (seção 0) |
-| 11 | 43:00 | Bloco: Dados: chuva e acidentes (5:30) | Como o bloco 7 |
-| 12 | 48:30 | Rodada 4 · Jul–ago: a regra nova do app (5:30) | (seção 0) |
-| 13 | 54:00 | Bloco: Dados: gestão por algoritmo (5:30) | Como o bloco 7 |
-| 14 | 59:30 | Rodada 5 · Set–out: breque geral (5:30) | (seção 0) |
-| 15 | 65:00 | Bloco: Dados: o que é o breque (5:30) | Como o bloco 7 |
-| 16 | 70:30 | Rodada 6 · Nov–dez: Natal e nenhum 13º (5:30) | (seção 0) |
-| 17 | 76:00 | Bloco: Dados: fim de ano sem 13º (5:30) | Como o bloco 7 |
-| 18 | 81:30 | Placar final (6:00) | 3 páginas (seção 0) |
-| 19 | 87:30 | Bloco: Conversa em grupos: o mapa do patrão (10:00) | Atividade em grupos, com a pergunta da tela |
-| 20 | 97:30 | Bloco: Caminhos: regulação, proteção, organização e educação (8:30) | Slides |
-| 21 | 106:00 | Termômetro (6:00), 3 afirmações | (5.8) |
-| 22 | 112:00 | Enquete de entrada · depois (1:30) | (5.9) |
-| 23 | 113:30 | Comparativo (2:30) | (5.10) |
-| 24 | 116:00 | Bloco: Fim: quem é o patrão? (4:00) | Os três números de quem manda e a conversa (5.11) |
-| 25 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 3 | 4:00 | Bloco: Mapa do seminário (4:30) | A linha do tempo no telão é o mapa: os meses e os blocos de dados (5.3) |
+| 4 | 8:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
+| 5 | 10:30 | Conheça o Jonas (3:00) | As duas frases da seção 0 |
+| 6 | 13:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (5:30) | (seção 0) |
+| 7 | 19:00 | Bloco: Dados: calor e jornada (5:30) | O contexto e os números da tela; os slides, se quiser |
+| 8 | 24:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (5:30) | (seção 0) |
+| 9 | 30:00 | Bloco: Dados: a greve de 14/04 e a lei (5:30) | Como o bloco 7 |
+| 10 | 35:30 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (5:30) | (seção 0) |
+| 11 | 41:00 | Bloco: Dados: chuva e acidentes (5:30) | Como o bloco 7 |
+| 12 | 46:30 | Rodada 4 · Jul–ago: a regra nova do app (5:30) | (seção 0) |
+| 13 | 52:00 | Bloco: Dados: gestão por algoritmo (5:30) | Como o bloco 7 |
+| 14 | 57:30 | Rodada 5 · Set–out: breque geral (5:30) | (seção 0) |
+| 15 | 63:00 | Bloco: Dados: o que é o breque (5:30) | Como o bloco 7 |
+| 16 | 68:30 | Rodada 6 · Nov–dez: Natal e nenhum 13º (5:30) | (seção 0) |
+| 17 | 74:00 | Bloco: Dados: fim de ano sem 13º (5:30) | Como o bloco 7 |
+| 18 | 79:30 | Placar final (6:00) | 3 páginas (seção 0) |
+| 19 | 85:30 | Bloco: Conversa em grupos: o mapa do patrão (10:00) | Atividade em grupos: os três passos da tela |
+| 20 | 95:30 | Bloco: Caminhos: regulação, proteção, organização e educação (6:30) | Os quatro caminhos da tela, um dado de cada; qual teria mudado o ano do Jonas? |
+| 21 | 102:00 | Termômetro (6:00), 3 afirmações | (5.8) |
+| 22 | 108:00 | Enquete de entrada · depois (1:30) | (5.9) |
+| 23 | 109:30 | Comparativo (2:30) | (5.10) |
+| 24 | 112:00 | Bloco: Dados: e nos outros aplicativos? (4:00) | O contexto e os três números dos motoristas de app (5.11) |
+| 25 | 116:00 | Bloco: Fim: quem é o patrão? (4:00) | Os três números de quem manda e a conversa (5.11) |
+| 26 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 8. Se a rede cair
 
