@@ -1179,11 +1179,11 @@
         "tipo": "bloco",
         "titulo": "Dados: calor e jornada",
         "alvoSeg": 90,
-        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e perder o pico do almoço.",
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e aproveitar o pico do almoço.",
         "itens": [
-          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês já sem a gasolina.",
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês, já sem a gasolina.",
           "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
-          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto Alegre chegou a 39,5 °C."
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade de trabalho; Porto Alegre chegou a 39,5 °C."
         ],
         "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\" (2019); Correio Braziliense (02/2025)"
       },
@@ -1196,9 +1196,9 @@
         "tipo": "bloco",
         "titulo": "Dados: a greve de 14/04 e a lei",
         "alvoSeg": 90,
-        "contexto": "O PLP 152/2025 criaria o \"plataformizado\" (nem CLT, nem autônomo) com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 convocada contra o texto, saiu de pauta.",
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem CLT, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
         "itens": [
-          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, que ele mesmo define.",
+          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
           "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
           "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
         ],
@@ -1213,10 +1213,10 @@
         "tipo": "bloco",
         "titulo": "Dados: chuva e acidentes",
         "alvoSeg": 90,
-        "contexto": "Na chuva, a moto freia pior e a promoção paga mais: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende do seguro do app (de 7 a 30 dias parado) e da família.",
+        "contexto": "Na chuva, a moto freia pior e o app paga mais por entrega: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende da família e do seguro do app, que paga de 7 a 30 dias parado.",
         "itens": [
-          "22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa financiada pelas plataformas.",
-          "Dos acidentados parados 15 dias ou mais, só 20% tiveram INSS; entre os que pararam, a ajuda da família foi o apoio mais citado (38,3%).",
+          "22% dos entregadores de moto sofreram acidente em 3 meses, segundo uma pesquisa financiada pelas plataformas.",
+          "Dos acidentados parados por 15 dias ou mais, só 20% receberam do INSS; entre os que pararam, a família foi o apoio mais citado (38,3%).",
           "Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores ficaram ativos na 1ª semana."
         ],
         "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024); iFood, seguro de acidentes (2026)"
@@ -1232,8 +1232,8 @@
         "alvoSeg": 90,
         "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
         "itens": [
-          "+Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no máximo 2 recusas.",
-          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas tiram o entregador 15 minutos do app.",
+          "+Entregas: o iFood promete de 10% a 30% a mais de ganho, mas exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas deixam o entregador 15 minutos fora do app.",
           "47,4% dos entregadores dizem que bônus e promoções que mudam o preço influenciam a jornada deles."
         ],
         "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles (01/08/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
@@ -1251,7 +1251,7 @@
         "itens": [
           "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
           "31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
-          "01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+          "01/09/2026: breque geral para pedir R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
         ],
         "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025); Metrópoles (01/09/2026)"
       },
@@ -1264,7 +1264,7 @@
         "tipo": "bloco",
         "titulo": "Dados: fim de ano sem 13º",
         "alvoSeg": 90,
-        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira assinada (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
         "itens": [
           "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
           "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
@@ -1344,11 +1344,11 @@
         "tipo": "bloco",
         "titulo": "Dados: calor e jornada",
         "alvoSeg": 330,
-        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e perder o pico do almoço.",
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e aproveitar o pico do almoço.",
         "itens": [
-          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês já sem a gasolina.",
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês, já sem a gasolina.",
           "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
-          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade; Porto Alegre chegou a 39,5 °C."
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade de trabalho; Porto Alegre chegou a 39,5 °C."
         ],
         "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\" (2019); Correio Braziliense (02/2025)"
       },
@@ -1361,9 +1361,9 @@
         "tipo": "bloco",
         "titulo": "Dados: a greve de 14/04 e a lei",
         "alvoSeg": 330,
-        "contexto": "O PLP 152/2025 criaria o \"plataformizado\" (nem CLT, nem autônomo) com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 convocada contra o texto, saiu de pauta.",
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem CLT, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
         "itens": [
-          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, que ele mesmo define.",
+          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
           "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
           "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
         ],
@@ -1378,10 +1378,10 @@
         "tipo": "bloco",
         "titulo": "Dados: chuva e acidentes",
         "alvoSeg": 330,
-        "contexto": "Na chuva, a moto freia pior e a promoção paga mais: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende do seguro do app (de 7 a 30 dias parado) e da família.",
+        "contexto": "Na chuva, a moto freia pior e o app paga mais por entrega: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende da família e do seguro do app, que paga de 7 a 30 dias parado.",
         "itens": [
-          "22% dos entregadores de moto sofreram acidente em 3 meses, numa pesquisa financiada pelas plataformas.",
-          "Dos acidentados parados 15 dias ou mais, só 20% tiveram INSS; entre os que pararam, a ajuda da família foi o apoio mais citado (38,3%).",
+          "22% dos entregadores de moto sofreram acidente em 3 meses, segundo uma pesquisa financiada pelas plataformas.",
+          "Dos acidentados parados por 15 dias ou mais, só 20% receberam do INSS; entre os que pararam, a família foi o apoio mais citado (38,3%).",
           "Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores ficaram ativos na 1ª semana."
         ],
         "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024); iFood, seguro de acidentes (2026)"
@@ -1397,8 +1397,8 @@
         "alvoSeg": 330,
         "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
         "itens": [
-          "+Entregas: o iFood promete de 10% a 30% a mais; exige 90% do tempo online e no máximo 2 recusas.",
-          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas tiram o entregador 15 minutos do app.",
+          "+Entregas: o iFood promete de 10% a 30% a mais de ganho, mas exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas deixam o entregador 15 minutos fora do app.",
           "47,4% dos entregadores dizem que bônus e promoções que mudam o preço influenciam a jornada deles."
         ],
         "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles (01/08/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
@@ -1416,7 +1416,7 @@
         "itens": [
           "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
           "31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
-          "01/09/2026: breque geral por R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+          "01/09/2026: breque geral para pedir R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
         ],
         "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025); Metrópoles (01/09/2026)"
       },
@@ -1429,7 +1429,7 @@
         "tipo": "bloco",
         "titulo": "Dados: fim de ano sem 13º",
         "alvoSeg": 330,
-        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira assinada (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
         "itens": [
           "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
           "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
