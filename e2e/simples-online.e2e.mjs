@@ -405,9 +405,12 @@ async function jogar({ site, navegador, vigiar }) {
       escolhas: Array.from(document.querySelectorAll('.escolha'), (n) => n.dataset.letra),
       pior: document.querySelectorAll('.pior-caso').length, sorte: document.querySelectorAll('.placar-historia').length,
       indicadores: document.querySelectorAll('#tela .indicadores').length,
+      mesa: document.querySelectorAll('#tela .faltou-mesa').length,
     }));
     assert.deepEqual(t.escolhas, RODADAS.map((_, k) => 'ABCDE'[k % 5]), 'o celular mostra as escolhas da equipe');
-    assert.deepEqual([t.pior, t.sorte, t.indicadores], [0, 0, 0], 'sem o pior caso, sem "Escolha ou sorte?", sem indicadores');
+    // Sem a linha do que faltou na mesa, como no telão: com o config do dia, ela
+    // dizia "R$ 0" embaixo de "Cortar comida e remédio" (revisão de 06/10).
+    assert.deepEqual([t.pior, t.sorte, t.indicadores, t.mesa], [0, 0, 0, 0], 'sem o pior caso, sem "Escolha ou sorte?", sem indicadores, sem o "faltou na mesa"');
   }
   await conferirCelular(cel[0], 'placar');
   for (const pagina of ['caminho', 'saldo', 'combinacoes']) {

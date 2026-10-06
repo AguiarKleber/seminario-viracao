@@ -2347,7 +2347,12 @@
         // tem de ficar claro que o valor colorido é o saldo do bimestre).
         el('p', { classe: 'escolhas-cabecalho' }, [el('span', { texto: `${maiuscula(p.nome)} · escolha${simples() ? '' : ' · carta'}` }), el('span', { texto: `Saldo ${p.doPeriodo}` })]),
         el('ol', { classe: 'escolhas-lista' }, linhas),
-        linhaMesaDoAno(historia, d.placar),
+        // Formato simples: sem a linha do que faltou na mesa, como no telão
+        // (pedido do Kleber). Ela dizia "R$ 0" até para quem escolheu "Cortar
+        // comida" em nov–dez: o corte por escolha entra como renda, e esse
+        // indicador só conta a comida que o limite do banco deixou sem comprar
+        // (zero nas 15.625 combinações; revisão de 06/10).
+        simples() ? null : linhaMesaDoAno(historia, d.placar),
       ]),
     ];
   }
