@@ -2331,8 +2331,15 @@
       celula.insertBefore(el('span', { classe: 'equipe-empate', texto: `entre ${ops.map((op) => letraDe(rodada, op)).join(' e ')}` }), celula.children[1] || null);
       return celula;
     });
-    s.appendChild(el('ol', { classe: 'opcoes opcoes-compactas' }, ordemOpcoes(rodada).map((op) => el('li', {}, [
-      el('b', { classe: 'letra', texto: letraDe(rodada, op) }), el('span', { texto: rodada.opcoes[op].rotulo }),
+    // Formato simples: a lista como a da decisão, com o rótulo da persona e o
+    // dinheiro de cada opção (D-078). Só pelo rótulo, o telão do empate
+    // escondia o valor que os celulares da equipe empatada mostravam (revisão
+    // de 06/10). O dinheiro fica na mesma linha: a lista não cresce.
+    const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
+    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
+      el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
+      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
+      linhaDoDinheiro(e.rodada, op, personaId),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, celulas));
     app.depoisDeMedir.push(() => apertarDecisao(s));
