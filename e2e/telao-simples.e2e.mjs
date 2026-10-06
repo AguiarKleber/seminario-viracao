@@ -8,14 +8,15 @@
 // quando o conteúdo do Jonas entrar). Tudo o que o teste espera sai do próprio
 // config e do motor, recalculado aqui no Node.
 //
-// O que prova, com as seis equipes abertas, em 1024×768 e em 1920×1080 (sem
+// O que prova, com as seis equipes abertas, em 1024×768, 1280×720 e 1920×1080 (sem
 // rolagem, nada abaixo de 28 px, nada fora da tela, nada cortado e nenhum
 // controle de operador na projeção, como o e2e do telão):
 // 1. "Conheça o Jonas" no lugar das personas: uma casa só, com a falta de um
 //    mês comum (motor.mesComum);
-// 2. a decisão com as 5 opções, cada uma com a letra, o rótulo e a linha do
-//    dinheiro ("+R$ 900 no bimestre", historia.dinheiroDaOpcao), e a equipe
-//    pela cor ("Equipe Laranja") em toda tela;
+// 2. a decisão com as 5 opções, cada uma com a letra, o rótulo e a
+//    mini-história (a narrativa), sem nenhum dinheiro (D-079: às cegas), e a
+//    equipe pela cor ("Equipe Laranja") em toda tela; na célula da decisão e
+//    na tabela do caminho, só a cor ("Laranja");
 // 3. o fechamento sem sorteio: do "decidindo" ao "resultado" direto (o telão
 //    nunca desenha a tela do sorteio), e o resultado com o evento do mês uma
 //    vez no topo e, por equipe, só a opção, o saldo do bimestre e o dinheiro
@@ -23,9 +24,12 @@
 // 4. o placar final em três páginas: o caminho de cada equipe (a tabela das
 //    letras e dos saldos, da melhor para a pior), "Quanto sobrou, ou ficou
 //    devendo" (as barras, com a linha da referência e sem a do que faltou na
-//    mesa) e "Das N combinações possíveis" (a melhor, a pior e o lugar de cada
-//    equipe, iguais a motor.enumerarCombinacoes), com o tempo da contagem no
-//    navegador.
+//    mesa) e "Das N combinações possíveis" (a melhor e a pior, iguais a
+//    motor.enumerarCombinacoes, sem a lista do lugar de cada equipe, D-079),
+//    com o tempo da contagem no navegador;
+// 5. com o config.json do dia (D-079), cada bloco com contexto: o contexto,
+//    os itens e a fonte do config, sem a trilha do seminário e sem o placar
+//    resumido, cabendo nos dois tamanhos.
 /* global document, innerWidth, innerHeight, NodeFilter, getComputedStyle, SVGElement, requestAnimationFrame, MutationObserver */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
@@ -40,7 +44,9 @@ const F = globalThis.Viracao.formatar;
 
 const CAPTURAS = join(RAIZ, 'e2e', 'capturas');
 const URL_TELAO = pathToFileURL(join(RAIZ, 'telao', 'index.html')).href;
-const TAMANHOS = [[1024, 768], [1920, 1080]];
+// 1280×720 (revisão de 06/10): o projetor 16:9 de 720p, ou o notebook 1920×1080
+// com escala de 150% no Windows; é o mais baixo dos tamanhos comuns.
+const TAMANHOS = [[1024, 768], [1280, 720], [1920, 1080]];
 const MIN_FONTE = 28;
 const ROTEIRO = '60min';
 const LETRAS = 'ABCDEFGHIJ';
@@ -166,16 +172,20 @@ async function confirmarModal() {
 // formação e blocos de dados entre as rodadas, que a fixture não tem: passa por
 // eles (a enquete, sem contagem: Enter e a confirmação) até o teste valer.
 async function avancarAte(teste, descricao) {
-  for (let i = 0; i < 12; i += 1) {
+  for (let i = 0; i < 30; i += 1) {
     const e = await estado();
     if (teste(e)) return e;
+    if (e.tipo === 'bloco' && PASSOS[e.indice]?.contexto) await conferirBlocoDeDados(e.indice);
     if (e.tipo === 'enquete' && e.subfase === 'votando') {
       await page.keyboard.press('Enter');
       await confirmarModal();
       await esperarEstado((x) => x.subfase === 'apurada', `enquete ${e.enquete} apurada`);
       continue;
     }
-    await avancar();
+    // O comparativo tem uma página por afirmação, e o Espaço só sai dele
+    // depois da última (a página é da tela, e não do estado).
+    const paginas = e.tipo === 'comparativo' ? (cfg.enquetes[e.enquete]?.ordemAfirmacoes?.length ?? 1) : 1;
+    for (let p = 0; p < paginas; p += 1) await avancar();
     await esperarEstado((x) => x.indice !== e.indice || x.subfase !== e.subfase, `sair do passo ${e.indice}`);
   }
   return esperarEstado(teste, descricao);
@@ -220,13 +230,14 @@ async function medir() {
     const folhas = [...document.querySelectorAll('#palco *')].filter((n) => n.children.length === 0 && n.textContent.trim() && n.getClientRects().length > 0);
     // Só a faixa do meio de cada caixa: a caixa de uma linha de texto passa da
     // entrelinha (1,1 a 1,25), e as de duas linhas seguidas sempre se tocam.
-    const caixas = folhas.map((n) => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top + r.height * 0.25, bottom: r.bottom - r.height * 0.25 }; });
+    // Uma caixa por linha de cada folha (getClientRects): a mini-história da
+    // opção (D-079) corre na mesma linha do rótulo, e a caixa inteira dela,
+    // de duas linhas, cobria o rótulo sem que nenhuma letra se cruzasse.
+    const caixas = folhas.map((n) => [...n.getClientRects()].map((r) => ({ left: r.left, right: r.right, top: r.top + r.height * 0.25, bottom: r.bottom - r.height * 0.25 })));
     const sobrepostos = [];
     for (let i = 0; i < caixas.length; i += 1) {
       for (let j = i + 1; j < caixas.length; j += 1) {
-        const a = caixas[i];
-        const b = caixas[j];
-        const area = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        const area = Math.max(0, ...caixas[i].flatMap((a) => caixas[j].map((b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)))));
         if (area > 4 && !folhas[i].contains(folhas[j]) && !folhas[j].contains(folhas[i])) sobrepostos.push(`"${folhas[i].textContent.trim().slice(0, 20)}" × "${folhas[j].textContent.trim().slice(0, 20)}"`);
       }
     }
@@ -244,7 +255,13 @@ async function medir() {
         }
       }
     }
-    return { rolagem, pequenos, fora: fora.slice(0, 6), cortados, sobrepostos: sobrepostos.slice(0, 6), vazados: vazados.slice(0, 6) };
+    // G1 (revisão de 06/10): no Fim, na tabela do caminho e na célula da
+    // decisão, o nome da equipe numa linha só. Em 1024×768, "Equipe / Verde- /
+    // azulado" ia a três linhas no Fim e "Verde- / azulado" a duas na tabela.
+    const quebrados = [...document.querySelectorAll('#palco :is(.placar-fim, .tabela-caminho, .equipe-status) .equipe-nome')]
+      .filter((n) => n.getClientRects().length > 1 || n.getBoundingClientRect().height > parseFloat(getComputedStyle(n).fontSize) * 1.8)
+      .map((n) => n.textContent.trim());
+    return { rolagem, pequenos, fora: fora.slice(0, 6), cortados, sobrepostos: sobrepostos.slice(0, 6), vazados: vazados.slice(0, 6), quebrados };
   }, MIN_FONTE);
 }
 
@@ -260,17 +277,44 @@ async function controlesNaProjecao() {
   }, SELETORES_OPERADOR);
 }
 
-// A equipe pela cor em toda tela ("Equipe Laranja"); na tabela do caminho,
-// só a cor (a coluna já se chama "Equipe").
+// A equipe pela cor em toda tela ("Equipe Laranja"); na tabela do caminho
+// (a coluna já se chama "Equipe") e na célula da decisão (D-079: com a
+// mini-história nas opções, "Equipe Verde-azulado" quebrava em duas linhas e
+// a tela não cabia), só a cor.
 async function conferirRotulos(onde) {
   const rotulos = await page.evaluate(() => Array.from(document.querySelectorAll('#palco .equipe[data-equipe]'), (n) => ({
-    equipe: n.dataset.equipe, nome: n.querySelector('.equipe-nome')?.textContent ?? '', tabela: Boolean(n.closest('.tabela-caminho')),
+    equipe: n.dataset.equipe, nome: n.querySelector('.equipe-nome')?.textContent ?? '', curto: Boolean(n.closest('.tabela-caminho, .equipe-status')),
     forma: Boolean(n.querySelector('svg.forma')),
   })));
   for (const r of rotulos) {
     assert.ok(r.forma, `${onde}/${r.equipe}: a forma na frente`);
-    assert.equal(r.nome, r.tabela ? cfg.equipes[r.equipe].nome : `Equipe ${cfg.equipes[r.equipe].nome}`, `${onde}/${r.equipe}: a equipe pela cor`);
+    assert.equal(r.nome, r.curto ? cfg.equipes[r.equipe].nome : `Equipe ${cfg.equipes[r.equipe].nome}`, `${onde}/${r.equipe}: a equipe pela cor`);
   }
+}
+
+// D-079: o bloco de dados com o contexto, os itens e a fonte do config, e
+// nada mais (sem a trilha do seminário e sem o placar resumido), cabendo.
+let blocosDeDados = 0;
+async function conferirBlocoDeDados(indice) {
+  const p = PASSOS[indice];
+  await esperarTela('bloco');
+  await conferirTela(`bloco-${String(indice).padStart(2, '0')}`, async (onde) => {
+    const t = await page.evaluate(() => ({
+      h1: document.querySelector('#palco h1')?.textContent,
+      contexto: document.querySelector('#palco .bloco-contexto')?.textContent ?? null,
+      itens: Array.from(document.querySelectorAll('#palco .bloco-item'), (n) => n.textContent),
+      fonte: document.querySelector('#palco .bloco-fonte')?.textContent ?? null,
+      trilha: document.querySelectorAll('#palco .linha-tempo').length,
+      placar: document.querySelectorAll('#palco .placar-resumido').length,
+    }));
+    assert.equal(t.h1, p.titulo, `${onde}: o título`);
+    assert.equal(t.contexto, p.contexto, `${onde}: o contexto`);
+    assert.deepEqual(t.itens, p.itens || [], `${onde}: os itens`);
+    assert.equal(t.fonte, p.fonte ? `Fontes: ${p.fonte}` : null, `${onde}: a fonte`);
+    assert.equal(t.trilha, 0, `${onde}: sem a trilha do seminário`);
+    assert.equal(t.placar, 0, `${onde}: sem o placar resumido`);
+  });
+  blocosDeDados += 1;
 }
 
 async function conferirTela(nome, aoMedir = null) {
@@ -289,6 +333,7 @@ async function conferirTela(nome, aoMedir = null) {
     assert.deepEqual(m.cortados, [], `${onde}: texto cortado com reticências`);
     assert.deepEqual(m.sobrepostos, [], `${onde}: texto sobreposto`);
     assert.deepEqual(m.vazados, [], `${onde}: elemento fora da própria caixa`);
+    assert.deepEqual(m.quebrados, [], `${onde}: nome de equipe em mais de uma linha`);
     assert.deepEqual(await controlesNaProjecao(), [], `${onde}: controle de operador na projeção`);
     await conferirRotulos(onde);
     if (aoMedir) await aoMedir(onde);
@@ -350,20 +395,28 @@ async function jogar(nome) {
     await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r, `${r}`);
     await esperarEstado((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'decidindo', `${r} aberta`);
     await esperarTela('rodada-decidindo');
-    // 2. A decisão com as 5 opções e o dinheiro de cada uma.
+    // 2. A decisão com as 5 opções e a mini-história de cada uma, às cegas
+    // (D-079): nenhum dinheiro na tela da decisão.
     const conferirDecisao = async (onde) => {
       const opcoes = await page.evaluate(() => Array.from(document.querySelectorAll('ol.opcoes > li'), (li) => ({
         opcao: li.dataset.opcao, letra: li.querySelector('.letra').textContent, rotulo: li.querySelector('.opcao-rotulo')?.textContent,
-        dinheiro: li.querySelector('.opcao-dinheiro')?.textContent, sinal: li.querySelector('.opcao-dinheiro')?.dataset.sinal,
+        narrativa: li.querySelector('.opcao-narrativa')?.textContent ?? null, dinheiro: li.querySelectorAll('.opcao-dinheiro').length,
       })));
       assert.equal(opcoes.length, opcoesDe(r).length, `${onde}: todas as opções`);
       opcoes.forEach((o, i) => {
         const op = opcoesDe(r)[i];
+        const texto = H.textoDaOpcao(cfg, r, op, PERSONA);
         assert.equal(o.opcao, op);
         assert.equal(o.letra, LETRAS[i]);
-        assert.equal(o.rotulo, H.textoDaOpcao(cfg, r, op, PERSONA).rotulo, `${onde}/${op}: o rótulo`);
-        assert.equal(lido(o.dinheiro), lido(H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, op, PERSONA), F.moeda, PERIODO)), `${onde}/${op}: a linha do dinheiro`);
+        assert.equal(o.rotulo, texto.rotulo, `${onde}/${op}: o rótulo`);
+        assert.equal(o.narrativa, texto.narrativa ? ` — ${texto.narrativa}` : null, `${onde}/${op}: a mini-história`);
+        assert.equal(o.dinheiro, 0, `${onde}/${op}: sem a linha do dinheiro`);
       });
+      const textoDaTela = await page.evaluate(() => document.querySelector('ol.opcoes').textContent);
+      for (const op of opcoesDe(r)) {
+        const linha = H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, op, PERSONA), F.moeda, PERIODO);
+        assert.ok(!lido(textoDaTela).includes(lido(linha)), `${onde}/${op}: o dinheiro da opção ("${linha}") não aparece`);
+      }
     };
     if (k === 0) {
       assert.equal(opcoesDe(r).length, 5, 'a fixture tem 5 opções por rodada');
@@ -486,7 +539,8 @@ async function jogar(nome) {
       ms: document.querySelector('.tela').dataset.msCombinacoes,
       melhor: { ...document.querySelector('.combinacao-melhor').dataset },
       pior: { ...document.querySelector('.combinacao-pior').dataset },
-      equipes: Array.from(document.querySelectorAll('.combinacao-equipe'), (n) => ({ ...n.dataset })),
+      equipes: document.querySelectorAll('#palco .combinacao-equipe, #palco .combinacao-lugar').length,
+      texto: document.getElementById('palco').textContent,
     }));
     msNoNavegador = Number(t.ms);
     const letrasDe = (opcoes) => opcoes.map((o, i) => letraDe(RODADAS[i], o)).join('');
@@ -495,18 +549,28 @@ async function jogar(nome) {
     assert.equal(lido(t.h1), lido(`Das ${F.inteiro(contagem.total)} combinações possíveis, ${quantas}`), `${onde}: o título`);
     assert.deepEqual([t.melhor.letras, Number(t.melhor.valor)], [letrasDe(contagem.melhor.opcoes), Math.round(contagem.melhor.valor)], `${onde}: a melhor`);
     assert.deepEqual([t.pior.letras, Number(t.pior.valor)], [letrasDe(contagem.pior.opcoes), Math.round(contagem.pior.valor)], `${onde}: a pior`);
-    assert.deepEqual(t.equipes.map((x) => x.equipe), ordem);
-    for (const x of t.equipes) {
-      assert.equal(x.letras, esperado[x.equipe].map((y) => letraDe(y.rodada, y.opcao)).join(''), `${onde}/${x.equipe}: as letras`);
-      assert.equal(Number(x.lugar), M.lugarEntre(contagem.valores, esperado[x.equipe].final), `${onde}/${x.equipe}: o lugar`);
-    }
+    // D-079 (print 6 do Kleber): sem a lista do lugar de cada equipe.
+    assert.equal(t.equipes, 0, `${onde}: sem a lista de posições`);
+    assert.ok(!/\d+º de /.test(t.texto), `${onde}: nenhum "Nº de N"`);
   });
   assert.ok(msNoNavegador < 1000, `a contagem das combinações no navegador levou ${msNoNavegador} ms`);
   // O modo revendo (pedido 6 do Kleber, 05/10): ← revê o resultado do último
-  // bimestre, no formato simples, só no telão; → volta ao placar.
+  // bimestre, no formato simples, só no telão; → volta ao placar. Com o
+  // config.json do dia (D-079), o passo antes do placar é o bloco de dados do
+  // último bimestre: o primeiro ← revê o bloco (com o contexto), o segundo, o
+  // resultado.
   {
     const antes = await estado();
     await page.keyboard.press('ArrowLeft');
+    await page.waitForFunction(() => document.body.dataset.tela === 'revendo');
+    const iAnterior = PASSOS.findLastIndex((p, k) => k < antes.indice && p.tipo !== 'enquete');
+    if (PASSOS[iAnterior]?.tipo === 'bloco') {
+      if (PASSOS[iAnterior].contexto) {
+        await page.waitForFunction(() => document.querySelector('#palco .bloco-contexto') !== null);
+        assert.equal(await page.textContent('#palco .bloco-contexto'), PASSOS[iAnterior].contexto, 'revendo: o bloco de dados com o contexto');
+      }
+      await page.keyboard.press('ArrowLeft');
+    }
     await page.waitForFunction(() => document.body.dataset.tela === 'revendo' && document.querySelectorAll('.resultado-simples').length > 0);
     assert.equal(await page.locator('.resultado-simples').count(), EQUIPES.length, 'revendo: o resultado do último bimestre, no formato simples');
     assert.equal(await page.locator('.grafico-fatias').count(), 0, 'revendo: sem sorteio');
@@ -518,7 +582,10 @@ async function jogar(nome) {
   }
   // Não há uma quarta página: o Espaço segue o roteiro.
   await avancarPara((e) => e.tipo !== 'placarFinal', 'o passo depois do placar');
-  console.log(`  ${RODADAS.length} rodadas × ${opcoesDe(RODADAS[0]).length} opções; ${contagem.total} combinações, ${contagem.fecham} fecham; contagem no navegador: ${msNoNavegador} ms; telas de resultado com consequência de antes: ${consequenciasVistas}`);
+  // Até o fim do roteiro: com o config.json do dia, passa pelo bloco "Fim:
+  // quem é o patrão?" (D-079), conferido como os blocos de dados.
+  await avancarAte((e) => e.tipo === 'fim', 'o fim do roteiro');
+  console.log(`  ${RODADAS.length} rodadas × ${opcoesDe(RODADAS[0]).length} opções; ${contagem.total} combinações, ${contagem.fecham} fecham; contagem no navegador: ${msNoNavegador} ms; telas de resultado com consequência de antes: ${consequenciasVistas}; blocos de dados conferidos: ${blocosDeDados}`);
 }
 
 // Parte 1: o config pedido (a fixture de 3 rodadas, por padrão).
@@ -543,5 +610,5 @@ if (!process.argv.some((a) => a.startsWith('--config'))) {
   await jogar('6r');
 }
 assert.deepEqual(errosDaPagina, [], 'nenhum erro na página');
-console.log('OK: o formato simples no telão offline (1024×768 e 1920×1080).');
+console.log('OK: o formato simples no telão offline (1024×768, 1280×720 e 1920×1080).');
 await navegador.close();

@@ -92,6 +92,10 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
    número ficam na frente. */
 .equipe-nome { white-space: normal; }
 .equipe-quem, .equipe-oficio { white-space: nowrap; }
+/* Formato simples: a cor inteira ("Verde-azulado"), sem quebrar no hífen.
+   inline-block: a caixa fica do tamanho da entrelinha; inline, com a
+   entrelinha 1 do aperto do resultado, ela passava da faixa da equipe. */
+.equipe-cor { display: inline-block; white-space: nowrap; }
 
 /* ---------- Gráficos medidos ---------- */
 
@@ -231,13 +235,30 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .resumo-texto { font-weight: 600; }
 .resumo-dados { display: flex; align-items: center; gap: 1.2em; }
 .resumo-dados .grafico { height: 1.9em; min-height: 0; }
-.resumo-estat { flex: none; white-space: nowrap; }
-.mediana { font-size: 1.35em; }
-.media { color: var(--texto-2); }
+/* Só o "sem votos" (D-079: sem a linha "mediana · média · n"). */
+.resumo-estat { flex: none; white-space: nowrap; color: var(--texto-2); }
 
 /* ---------- Bloco ---------- */
 
 .tela-bloco { justify-content: flex-start; }
+
+/* D-079 (teste do Kleber de 06/10): o bloco de dados com o contexto do tópico,
+   até 3 números e a fonte. O contexto um pouco maior (é o que se lê primeiro);
+   cada número com um fio à esquerda, sem marcador nem caixa (pedido G1: menos
+   poluído); a fonte em cinza, no corpo mínimo de 28 px. O aperto (telao.js,
+   telaBloco): só quando a tela transborda, entrelinhas e vãos menores. */
+.bloco-contexto { font-size: calc(var(--corpo) * 1.08); line-height: 1.3; max-width: 46em; }
+.bloco-itens { display: flex; flex-direction: column; gap: calc(var(--espaco) * .9); }
+.bloco-item { padding-left: .6em; border-left: 6px solid var(--foco); line-height: 1.25; max-width: 48em; }
+/* O respiro embaixo da fonte: colada ao pé da tela, a caixa do <b> (mais alta
+   que a entrelinha) passava 2 px da tela, e o aperto ligava sem precisar. */
+.bloco-fonte { margin-top: auto; padding-bottom: .15em; color: var(--texto-2); line-height: 1.2; }
+.bloco-fonte b { color: var(--texto-2); font-weight: 700; }
+.bloco-mapa .bloco-fonte { margin-top: 0; }
+.tela-bloco[data-aperto] { gap: calc(var(--espaco) * .6); }
+.tela-bloco[data-aperto] .bloco-contexto, .tela-bloco[data-aperto] .bloco-item { line-height: 1.15; }
+.tela-bloco[data-aperto] .bloco-itens { gap: calc(var(--espaco) * .5); }
+.tela-bloco[data-aperto] .bloco-fonte { line-height: 1.1; }
 
 /* Linha do tempo do seminário (D-042). Discreta nos blocos: uma trilha de
    marcas, com o mês do jogo escrito dentro da dele, e uma linha de texto. A cor
@@ -358,6 +379,13 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 .opcoes { display: flex; flex-direction: column; gap: .25em; }
 .opcoes li { display: flex; align-items: baseline; gap: .6em; }
 .opcoes-compactas { color: var(--texto-2); }
+/* D-079 (teste do Kleber de 06/10, print 1: "que greve? por quê? o que
+   impacta?"): no formato simples, a mini-história em cinza, na mesma linha
+   corrida do rótulo em negrito, e nenhum dinheiro na opção (a escolha é às
+   cegas; o saldo aparece no resultado). */
+.opcao-textos { min-width: 0; line-height: 1.22; }
+.opcao-textos .opcao-rotulo { font-weight: 700; }
+.opcao-narrativa { color: var(--texto-2); }
 .letra {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 1.35em; height: 1.35em;
@@ -390,9 +418,23 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    de entrada passavam ~96 px de 1024×768. Entrelinhas e vãos menores; a letra
    fica nos 28 px. */
 .tela[data-aperto] .situacao { line-height: 1.15; }
+/* D-079: com a mini-história nas 5 opções, também os vãos entre o cabeçalho,
+   a situação, as opções e as equipes encolhem pela metade. */
+.tela-rodada-decidindo[data-aperto], .tela-rodada-prorrogacao[data-aperto] { gap: calc(var(--espaco) * .5); }
+.tela[data-aperto] .opcao-textos { line-height: 1.15; }
 .tela[data-aperto] .opcoes { gap: 0; line-height: 1.15; }
 .tela[data-aperto] .equipes-status { gap: 6px 1.5vw; }
 .tela[data-aperto] .equipe-status { line-height: 1.08; padding-top: .15em; padding-bottom: .15em; }
+/* O segundo aperto (telao.js, apertarDecisao; revisão de 06/10): online, em
+   1280×720 com a faixa de entrada, a segunda fileira de equipes ficava 39 px
+   embaixo da faixa. O andamento sobe para a linha do nome ("Laranja 2 de 3"),
+   sem a palavra "decidiram"; onde não couber, quebra como antes. Com a
+   margem da célula e os vãos um pouco menores, "3 Verde-azulado 2 de 2" cabe
+   numa linha em 1280 de largura (não cabia por ~10 px). */
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] { gap: calc(var(--espaco) * .3); }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .equipe-status { gap: .1em .3em; padding-left: .4em; padding-right: .4em; }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .equipe-andamento { flex-basis: auto; }
+:is(.tela-rodada-decidindo, .tela-rodada-prorrogacao)[data-aperto="2"] .andamento-palavra { display: none; }
 
 /* ---------- Sorteio e placar: linhas alinhadas com o gráfico ---------- */
 
@@ -669,6 +711,12 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
 /* ---------- Fim ---------- */
 
 .placar-fim { margin-top: auto; }
+/* G1 (teste do Kleber de 06/10: telas complementares menos poluídas): em duas
+   colunas, "Equipe Verde-azulado" quebrava em três linhas em 1024×768 ao lado
+   do "devendo R$ 3.791". Uma coluna só, com o nome inteiro numa linha e o
+   valor perto dele; a tela do Fim tem altura de sobra para as seis linhas. */
+.placar-fim .resumido-lista { grid-template-columns: minmax(0, 1fr); max-width: 30em; }
+.placar-fim .equipe-nome { white-space: nowrap; }
 
 /* ---------- Modo revendo (pedido 6 do Kleber, 05/10) ----------
  * O telão mostra um passo que já passou, só na projeção (telao.js,
@@ -778,17 +826,16 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 }
 
 /* ---------- O formato simples (decisão do Kleber de 05/10 à noite) ----------
- * Um personagem só, 5 opções por bimestre com o dinheiro na própria opção, o
- * evento do mês igual para todas as equipes (sem sorteio) e o placar pelo
- * caminho de cada equipe (telao.js, simples()). Nada abaixo do corpo (28 px em
- * 1024×768); o e2e (telao-simples) prova seis equipes em 1024×768 e 1920×1080. */
+ * Um personagem só, 5 opções por bimestre com a mini-história e sem o dinheiro
+ * (D-079: às cegas), o evento do mês igual para todas as equipes (sem sorteio)
+ * e o placar pelo caminho de cada equipe (telao.js, simples()). Nada abaixo do
+ * corpo (28 px em 1024×768); o e2e (telao-simples) prova seis equipes em
+ * 1024×768 e 1920×1080. */
 
-/* A decisão: a letra, o rótulo e, à direita, o dinheiro da opção ("+R$ 900 no
-   bimestre"), que nunca quebra; o rótulo comprido quebra antes dele. */
-.opcoes-com-dinheiro li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6em; }
-.opcao-dinheiro { white-space: nowrap; font-weight: 700; text-align: right; }
-.opcao-dinheiro[data-sinal="negativo"] { color: var(--negativo); }
-.opcao-dinheiro[data-sinal="positivo"] { color: var(--positivo); }
+/* A decisão: a letra alinhada com a primeira linha do rótulo (o rótulo e a
+   mini-história correm juntos, em duas linhas). */
+.opcoes-simples li { align-items: flex-start; }
+.opcoes-simples .letra { margin-top: .05em; }
 
 /* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
    (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */
@@ -866,18 +913,14 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 .tela-placar-final[data-aperto] .tabela-caminho { line-height: 1; }
 .tela-placar-final[data-aperto] .tabela-caminho th, .tela-placar-final[data-aperto] .tabela-caminho td { padding-top: 0; padding-bottom: 0; }
 
-/* Placar, página 3: as combinações possíveis. A melhor e a pior, e uma linha
-   por equipe: as letras dela e o lugar entre todas. */
-.combinacoes-extremos { display: flex; flex-direction: column; gap: .1em; color: var(--texto-2); }
+/* Placar, página 3: as combinações possíveis, só a melhor e a pior (D-079:
+   sem a lista do lugar de cada equipe), maiores e no meio da tela. */
+.combinacoes-extremos {
+  flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center;
+  gap: calc(var(--espaco) * 1.5); font-size: calc(var(--corpo) * 1.3); line-height: 1.2; color: var(--texto-2);
+}
 .combinacoes-extremos b { color: var(--texto); }
 .combinacao-letras { letter-spacing: .06em; white-space: nowrap; }
-.combinacoes-equipes { display: flex; flex-direction: column; gap: calc(var(--espaco) * .5); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
-.combinacao-equipe {
-  display: grid; grid-template-columns: minmax(0, 1fr) max-content max-content; align-items: baseline; column-gap: 1.2em;
-  padding-bottom: calc(var(--espaco) * .3); border-bottom: 1px solid var(--linha); line-height: 1.15;
-}
-.combinacao-lugar { color: var(--texto-2); white-space: nowrap; text-align: right; }
-.combinacao-lugar b { color: var(--texto); }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }

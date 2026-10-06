@@ -4,11 +4,11 @@
 //
 // Sobe o bin/servir.mjs e o emulador (projeto demo-seminario), e joga a
 // fixture test/fixtures/config-simples.json (servida no lugar do config.json)
-// com o telão de verdade em 1024×768, com a faixa de entrada aberta embaixo (o
-// pior caso de altura), e 3 celulares de verdade em 360×740:
+// com o telão de verdade em 1024×768 e em 1280×720, com a faixa de entrada
+// aberta embaixo (o pior caso de altura), e 3 celulares de verdade em 360×740:
 // 1. "Conheça o Jonas" no celular, sem o ponto de partida dos indicadores;
-// 2. a decisão: as 5 opções com a letra, o rótulo, o dinheiro ("+R$ 900 no
-//    bimestre") e o custo humano; a dobra "Mais opções abaixo" aparece enquanto
+// 2. a decisão: as 5 opções com a letra, o rótulo e o custo humano, sem o
+//    dinheiro (D-079: às cegas); a dobra "Mais opções abaixo" aparece enquanto
 //    a última opção está abaixo da tela e some quando ela aparece; aberta a
 //    última opção, o "Votar nesta" fica à vista (e não atrás do aviso);
 // 3. o fechamento sem sorteio: o celular vai da decisão ao resultado sem
@@ -165,8 +165,18 @@ async function jogar({ site, navegador, vigiar }) {
     await esperarEstado(teste, descricao);
   }
   // O telão com a faixa de entrada: nada rola, nada sai do palco nem da
-  // própria caixa (a faixa do resultado, a linha das combinações).
+  // própria caixa (a faixa do resultado, a linha das combinações). Em 1024×768
+  // e em 1280×720 (revisão de 06/10): no projetor 16:9 de 720p, a segunda
+  // fileira de equipes da decisão ficava 39 px embaixo da faixa, e só em
+  // 1024×768 o e2e não via.
   async function conferirTelao(nome) {
+    for (const [largura, altura] of [[1280, 720], [1024, 768]]) {
+      await telao.setViewportSize({ width: largura, height: altura });
+      await telao.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a, [largura, altura]);
+      await medirTelao(largura === 1024 ? nome : `${nome}-${largura}x${altura}`);
+    }
+  }
+  async function medirTelao(nome) {
     await telao.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     const m = await telao.evaluate(() => {
       const se = document.scrollingElement;
@@ -188,13 +198,13 @@ async function jogar({ site, navegador, vigiar }) {
       // por cima da última equipe, dentro do palco e sem sair de caixa nenhuma.
       // O mesmo critério do telao-simples.e2e.mjs: a faixa do meio de cada folha.
       const folhas = [...document.querySelectorAll('#palco *')].filter((n) => n.children.length === 0 && n.textContent.trim() && n.getClientRects().length > 0);
-      const meio = folhas.map((n) => { const r = n.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top + r.height * 0.25, bottom: r.bottom - r.height * 0.25 }; });
+      // Uma caixa por linha de cada folha (getClientRects): a mini-história
+      // corre na mesma linha do rótulo (D-079).
+      const meio = folhas.map((n) => [...n.getClientRects()].map((r) => ({ left: r.left, right: r.right, top: r.top + r.height * 0.25, bottom: r.bottom - r.height * 0.25 })));
       const sobrepostos = [];
       for (let i = 0; i < meio.length; i += 1) {
         for (let j = i + 1; j < meio.length; j += 1) {
-          const a = meio[i];
-          const b = meio[j];
-          const area = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+          const area = Math.max(0, ...meio[i].flatMap((a) => meio[j].map((b) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)))));
           if (area > 4 && !folhas[i].contains(folhas[j]) && !folhas[j].contains(folhas[i])) sobrepostos.push(`"${folhas[i].textContent.trim().slice(0, 20)}" × "${folhas[j].textContent.trim().slice(0, 20)}"`);
         }
       }
@@ -275,17 +285,18 @@ async function jogar({ site, navegador, vigiar }) {
     await esperarEstado((e) => e.subfase === 'decidindo', `${r} decidindo`);
     for (const c of cel) await esperarTela(c, 'decisao');
     const c0 = cel[0];
-    // 2. As 5 opções, com o dinheiro e o custo humano.
+    // 2. As 5 opções, com o custo humano e sem o dinheiro (D-079: às cegas).
     const opcoes = await c0.p.evaluate(() => Array.from(document.querySelectorAll('.botao-opcao-aluno'), (b) => ({
       opcao: b.dataset.opcao, letra: b.querySelector('.opcao-letra')?.textContent, rotulo: b.querySelector('.opcao-rotulo')?.textContent,
-      dinheiro: b.querySelector('.opcao-dinheiro')?.textContent ?? null, impacto: b.querySelector('.opcao-impacto')?.textContent ?? null,
+      dinheiro: b.querySelectorAll('.opcao-dinheiro').length, texto: b.textContent, impacto: b.querySelector('.opcao-impacto')?.textContent ?? null,
     })));
     assert.equal(opcoes.length, cfg.rodadas[r].ordemOpcoes.length, `${r}: as opções no celular`);
     for (const [i, o] of opcoes.entries()) {
       const op = cfg.rodadas[r].ordemOpcoes[i];
       assert.equal(o.opcao, op);
       assert.equal(o.letra, 'ABCDE'[i]);
-      assert.equal(lido(o.dinheiro), lido(H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, op, PERSONA), F.moeda, H.periodo(cfg))), `${r}/${op}: o dinheiro no celular`);
+      assert.equal(o.dinheiro, 0, `${r}/${op}: sem a linha do dinheiro no celular`);
+      assert.ok(!lido(o.texto).includes(lido(H.textoDoDinheiro(H.dinheiroDaOpcao(cfg, r, op, PERSONA), F.moeda, H.periodo(cfg)))), `${r}/${op}: o dinheiro da opção não aparece`);
       assert.equal(o.impacto, H.textoDaOpcao(cfg, r, op, PERSONA).impacto, `${r}/${op}: o custo humano no celular`);
     }
     assert.ok(!(await c0.p.locator('#tela .indicadores').count()), `${r}: a decisão sem os indicadores`);
@@ -421,5 +432,5 @@ async function jogar({ site, navegador, vigiar }) {
       await telao.keyboard.press('Space');
     }
   }
-  console.log('OK: o formato simples com celulares (telão em 1024×768 com a faixa de entrada; celulares em 360×740).');
+  console.log('OK: o formato simples com celulares (telão em 1024×768 e 1280×720 com a faixa de entrada; celulares em 360×740).');
 }

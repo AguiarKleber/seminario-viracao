@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '8';
+  const VERSAO_APP = '9';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -306,12 +306,16 @@
   // chamada pela cor, "Equipe Laranja", com a forma e o número na frente, em
   // toda tela (a formação inclusive). curto: só a cor ("Laranja"), na tabela
   // do caminho de cada equipe, onde a coluna já se chama "Equipe".
+  // A cor vai num pedaço inteiro (.equipe-cor, sem quebra): numa coluna
+  // estreita, o rótulo quebra entre "Equipe" e a cor, e não no hífen
+  // ("Equipe Verde- / azulado" na formação das equipes em 1024×768, revisão
+  // de 06/10).
   function rotuloEquipe(id, classe, { cor = false, curto = false } = {}) {
     const equipe = app.config.equipes[id];
     const rotulo = G().rotuloEquipe(equipe, numeroEquipe(id), { classe });
     if (simples()) {
       const nome = rotulo.querySelector('.equipe-nome');
-      if (nome && !curto) nome.textContent = `Equipe ${equipe.nome}`;
+      if (nome) D().acrescentar(D().limpar(nome), [curto ? null : 'Equipe ', D().el('span', { classe: 'equipe-cor', texto: equipe.nome })]);
       return rotulo;
     }
     const persona = personaDaEquipe(id);
@@ -1787,14 +1791,14 @@
     for (const a of ordem) {
       const hist = lista(ap.histogramas?.[a]);
       const r = N().enquete.resumo(hist.length === 5 ? hist : [0, 0, 0, 0, 0]);
-      const estat = r.n === 0
-        ? [el('span', { texto: 'sem votos' })]
-        : [el('span', {}, ['mediana ', el('b', { classe: 'mediana', texto: F().decimal(r.mediana) })]), el('span', { classe: 'media', texto: ` · média ${F().decimal(r.media)} · n = ${r.n}` })];
+      // Sem a linha "mediana · média · n" embaixo do gráfico (teste do Kleber
+      // de 06/10, print 8, D-079): as três partes já dizem o resultado, e a
+      // linha só poluía. Sem votos, o gráfico vazio leva o "sem votos".
       linhas.appendChild(el('div', { classe: 'resumo-linha', dados: { afirmacao: a } }, [
         el('p', { classe: 'resumo-texto', texto: enq.afirmacoes[a].texto }),
         el('div', { classe: 'resumo-dados' }, [
           r.n === 0 ? el('div', { classe: 'grafico grafico-vazio' }) : grafico('grafico-partes', (largura, altura, fonte) => G().tresPartes({ largura, altura, fonte, resumo: r })),
-          el('p', { classe: 'resumo-estat' }, estat),
+          r.n === 0 ? el('p', { classe: 'resumo-estat', texto: 'sem votos' }) : null,
         ]),
       ]));
     }
@@ -1974,14 +1978,40 @@
     return el('nav', { classe: 'linha-tempo', 'aria-label': 'Linha do tempo do seminário' }, [trilha, seguir]);
   }
 
+  // D-079 (teste do Kleber de 06/10, prints 3, 4 e 7): o bloco de dados diz o
+  // que é o tópico (contexto), até 3 números (itens) e de onde vêm (fonte),
+  // tudo do config. A tela só com isso: a trilha do seminário e o placar
+  // resumido saíam juntos e poluíam (pedido G1; no print 3, "Dados: gestão por
+  // algoritmo" era só o título e a trilha, sem dado nenhum). O "Mapa do
+  // seminário" continua com a linha por extenso, que é o conteúdo dele, depois
+  // do contexto. O bloco sem contexto nem itens (um config de antes) fica como
+  // era, com a trilha e o placar resumido.
+  const temConteudo = (passo) => Boolean(passo?.contexto || passo?.itens?.length);
+
+  function conteudoDoBloco(passo) {
+    const { el } = D();
+    return [
+      passo.contexto ? el('p', { classe: 'bloco-contexto', texto: passo.contexto }) : null,
+      passo.itens?.length ? el('ul', { classe: 'bloco-itens' }, passo.itens.map((item) => el('li', { classe: 'bloco-item', texto: item }))) : null,
+      passo.fonte ? el('p', { classe: 'bloco-fonte' }, [el('b', { texto: 'Fontes: ' }), passo.fonte]) : null,
+    ];
+  }
+
   function telaBloco(s, e) {
     const passo = passoDe(e);
     const mapa = ehMapa(passo);
+    const conteudo = temConteudo(passo);
     if (mapa) s.classList.add('bloco-mapa');
+    if (conteudo) s.classList.add('bloco-com-conteudo');
     s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
-    s.appendChild(linhaDoTempo(e, { mapa }));
+    if (conteudo) D().acrescentar(s, conteudoDoBloco(passo));
+    if (mapa || !conteudo) s.appendChild(linhaDoTempo(e, { mapa }));
     // Revisto (modo revendo), o placar de quando o bloco estava na tela.
-    if (!mapa && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    if (!mapa && !conteudo && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    // Com a faixa de entrada embaixo (online), o bloco mais longo pode passar
+    // de 1024×768: só quando a tela transborda (medida depois do desenho), as
+    // entrelinhas e os vãos diminuem (data-aperto), com a letra nos 28 px.
+    if (conteudo) app.depoisDeMedir.push(() => { if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1'; });
   }
 
   // ---------- Tela: formar equipes ----------
@@ -2254,9 +2284,13 @@
     executar(() => app.anf.decidirPorEquipe(eq, atual === opcao ? null : opcao), vista());
   }
 
+  // Formato simples (D-079): na célula, só a cor ("Laranja", como na tabela do
+  // caminho), sem o "Equipe": com a mini-história nas 5 opções, a decisão não
+  // cabia em 1024×768, e "Equipe Verde-azulado" quebrava em duas linhas na
+  // célula. Fora do formato simples, o personagem, como antes (curto não muda).
   function celulaEquipe(e, eq, rodada, opcoesVisiveis) {
     const { el, botao } = D();
-    const filhos = [rotuloEquipe(eq)];
+    const filhos = [rotuloEquipe(eq, null, { curto: true })];
     const forcada = e.forcadas?.[eq] ?? null;
     if (app.modo === 'offline') {
       filhos.push(el('div', { classe: 'botoes-opcao', role: 'group', 'aria-label': `Decisão da equipe ${numeroEquipe(eq)}, ${nomeDoPersonagem(eq)}` },
@@ -2268,26 +2302,32 @@
       filhos.push(el('span', { classe: 'equipe-andamento', texto: 'decidida pelo apresentador' }));
     } else {
       const { decidiram, total } = contagemDecisoes(e, eq);
-      filhos.push(el('span', { classe: 'equipe-andamento' }, [el('b', { texto: `${decidiram} de ${total}` }), ' decidiram']));
+      // "decidiram" num span próprio: o segundo aperto (apertarDecisao) o
+      // esconde para o andamento caber na linha do nome.
+      filhos.push(el('span', { classe: 'equipe-andamento' }, [el('b', { texto: `${decidiram} de ${total}` }), el('span', { classe: 'andamento-palavra', texto: ' decidiram' })]));
     }
     return el('div', { classe: ['equipe-status', equipeDecidiu(e, eq) ? 'decidida' : null], dados: { equipe: eq } }, filhos);
   }
 
-  // Formato simples: a linha do dinheiro de cada opção ("+R$ 900 no
-  // bimestre"), a soma dos efeitos diretos dela para a persona
-  // (historia.dinheiroDaOpcao, a mesma conta do celular). O que vem depois,
-  // encadeado, não aparece: é a surpresa do resultado. Em verde ou vermelho,
-  // sempre com o sinal (a cor nunca vai sozinha); o empréstimo, neutro (é
-  // dívida). Sem o formato simples, null.
-  function linhaDoDinheiro(rodadaId, op, personaId) {
-    if (!simples()) return null;
+  // D-079 (teste do Kleber de 06/10): a escolha é às cegas. Até a versão 8, o
+  // formato simples punha o dinheiro de cada opção ao lado do rótulo ("+R$ 900
+  // no bimestre"), e a turma escolhia pelo número, sem ler o dilema. No lugar
+  // dele, a mini-história (a narrativa do config: o que é, por quê, o que
+  // impacta), na mesma linha corrida do rótulo, depois de um travessão. Numa
+  // linha própria embaixo do rótulo, cada opção ia a três linhas, e as 5
+  // opções com as 6 equipes passavam ~200 px de 1024×768. O saldo continua no
+  // resultado.
+  function textosDaOpcao(rodadaId, op, personaId, { comNarrativa }) {
     const { el } = D();
-    const dinheiro = N().historia.dinheiroDaOpcao(app.config, rodadaId, op, personaId);
-    const sinal = dinheiro.emprestimo > 0 && Math.round(dinheiro.valor) === 0 ? 'zero' : sinalDoSaldo(dinheiro.valor);
-    return el('span', {
-      classe: 'opcao-dinheiro', dados: { dinheiro: String(dinheiro.valor), emprestimo: String(dinheiro.emprestimo), sinal },
-      texto: N().historia.textoDoDinheiro(dinheiro, F().moeda, periodo()),
-    });
+    const rodada = app.config.rodadas[rodadaId];
+    if (!simples()) return [el('span', { classe: 'opcao-rotulo', texto: rodada.opcoes[op].rotulo })];
+    // No formato simples, o texto do jeito da persona (D-054), a única.
+    const { rotulo, narrativa } = N().historia.textoDaOpcao(app.config, rodadaId, op, personaId);
+    if (!comNarrativa || !narrativa) return [el('span', { classe: 'opcao-rotulo', texto: rotulo })];
+    return [el('span', { classe: 'opcao-textos' }, [
+      el('span', { classe: 'opcao-rotulo', texto: rotulo }),
+      el('span', { classe: 'opcao-narrativa', texto: ` — ${narrativa}` }),
+    ])];
   }
 
   function telaRodadaDecidindo(s, e) {
@@ -2296,12 +2336,10 @@
     const { n, total } = posicaoRodada(e.rodada);
     s.appendChild(cabecalho(`Rodada ${n} de ${total} · decisão`, rodada.titulo, { cronometro: true }));
     s.appendChild(el('p', { classe: 'situacao', texto: rodada.texto }));
-    // No formato simples, o rótulo do jeito da persona (D-054), a única.
     const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
-    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
+    s.appendChild(el('ol', { classe: ['opcoes', simples() ? 'opcoes-simples' : null] }, ordemOpcoes(rodada).map((op) => el('li', { dados: { opcao: op } }, [
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
-      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
-      linhaDoDinheiro(e.rodada, op, personaId),
+      ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: true }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
     app.depoisDeMedir.push(() => apertarDecisao(s));
@@ -2313,8 +2351,18 @@
   // tela transborda (medida depois do desenho), a situação, as opções e as
   // células se aproximam (data-aperto): entrelinhas e vãos menores, com a
   // letra nos 28 px.
+  // O segundo aperto (revisão de 06/10): online, em 1280×720 com a faixa de
+  // entrada aberta (projetor 16:9 de 720p, ou notebook 1920×1080 com escala de
+  // 150%), o primeiro não bastava. Com a mini-história, cada opção vai a duas
+  // linhas, e a segunda fileira de equipes ficava 39 px embaixo da faixa, com
+  // o "N de M decidiram" que diz ao apresentador quando encerrar. Só então o
+  // andamento sobe para a linha do nome ("Laranja 2 de 3"), sem a palavra
+  // "decidiram"; onde não couber, quebra como antes. O QR da faixa não
+  // encolhe: com 72 px, não era lido do fundo da sala (revisão da F2).
   function apertarDecisao(s) {
-    if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1';
+    const transborda = () => s.scrollHeight > s.clientHeight + 1;
+    if (transborda()) s.dataset.aperto = '1';
+    if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
   }
 
   function telaProrrogacao(s, e) {
@@ -2324,22 +2372,20 @@
     const celulas = ativas(e).map((eq) => {
       const empatadas = e.empatadas?.[eq];
       if (!empatadas) {
-        return el('div', { classe: 'equipe-status decidida', dados: { equipe: eq } }, [rotuloEquipe(eq), el('span', { classe: 'equipe-andamento', texto: 'decidida' })]);
+        return el('div', { classe: 'equipe-status decidida', dados: { equipe: eq } }, [rotuloEquipe(eq, null, { curto: true }), el('span', { classe: 'equipe-andamento', texto: 'decidida' })]);
       }
       const ops = ordemOpcoes(rodada).filter((op) => empatadas[op] === true);
       const celula = celulaEquipe(e, eq, rodada, ops);
       celula.insertBefore(el('span', { classe: 'equipe-empate', texto: `entre ${ops.map((op) => letraDe(rodada, op)).join(' e ')}` }), celula.children[1] || null);
       return celula;
     });
-    // Formato simples: a lista como a da decisão, com o rótulo da persona e o
-    // dinheiro de cada opção (D-078). Só pelo rótulo, o telão do empate
-    // escondia o valor que os celulares da equipe empatada mostravam (revisão
-    // de 06/10). O dinheiro fica na mesma linha: a lista não cresce.
+    // Formato simples: o rótulo da persona, compacto, sem a mini-história (as
+    // equipes empatadas já a leram na decisão) e sem dinheiro (D-079: às cegas,
+    // como nos celulares).
     const personaId = app.config.equipes[ativas(e)[0] ?? equipesOrdem()[0]]?.persona;
-    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas', simples() ? 'opcoes-com-dinheiro' : null] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
+    s.appendChild(el('ol', { classe: ['opcoes', 'opcoes-compactas'] }, ordemOpcoes(rodada).map((op) => el('li', {}, [
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
-      el('span', { classe: 'opcao-rotulo', texto: simples() ? N().historia.textoDaOpcao(app.config, e.rodada, op, personaId).rotulo : rodada.opcoes[op].rotulo }),
-      linhaDoDinheiro(e.rodada, op, personaId),
+      ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: false }),
     ]))));
     s.appendChild(el('div', { classe: 'equipes-status' }, celulas));
     app.depoisDeMedir.push(() => apertarDecisao(s));
@@ -2837,12 +2883,16 @@
     // aperto tira a frase do evento do mês (o título dele fica) e, se ainda
     // assim as faixas não couberem, um quarto tira o evento inteiro (ele está no
     // celular de cada equipe): no teste com a faixa de entrada, as linhas das
-    // consequências ficavam por cima da última equipe.
+    // consequências ficavam por cima da última equipe. O terceiro e o quarto
+    // valem também sem consequência (revisão de 06/10): com a faixa de entrada
+    // em 1024×768, seis opções de duas linhas ("Rodar também no segundo app",
+    // na fixture) deixavam a sexta equipe embaixo da faixa, e o evento seguia
+    // na tela.
     app.depoisDeMedir.push(() => {
       const transborda = () => grade.scrollHeight > grade.clientHeight + 1;
       if (transborda()) s.dataset.aperto = '1';
       if (s.dataset.aperto && transborda()) s.dataset.aperto = '2';
-      if (s.dataset.aperto === '2' && consequencias.length > 0 && transborda()) s.dataset.aperto = '3';
+      if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
     });
   }
@@ -3143,13 +3193,14 @@
   // Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor
   // conta todas (5^6 = 15.625 com 6 bimestres de 5 opções): é a resposta direta
   // para "mesmo escolhendo, faltou dinheiro". A melhor e a pior combinação
-  // (letras e o dinheiro da família no fim) e, para cada equipe, em que lugar a
-  // combinação dela ficou entre todas (empate divide o lugar). Todas as
-  // equipes jogam o mesmo Jonas (o validador garante uma persona só), e a
-  // contagem é a da primeira equipe do placar.
+  // (letras e o dinheiro da família no fim), só. Até a versão 8, uma linha por
+  // equipe com o lugar dela entre todas ("975º de 15.625"); o Kleber pediu
+  // para tirar (teste de 06/10, print 6, D-079): as letras e o saldo de cada
+  // equipe já estão na página 1. Todas as equipes jogam o mesmo Jonas (o
+  // validador garante uma persona só), e a contagem é a da primeira equipe do
+  // placar.
   function paginaCombinacoes(s, lado) {
     const { el } = D();
-    const ordenadas = equipesPorSaldo();
     const rodadas = rodadasJogadas();
     const c = contarCombinacoes(equipesDoPlacar()[0], rodadas);
     s.dataset.msCombinacoes = String(Math.round(c.ms));
@@ -3163,17 +3214,6 @@
       `${rotulo} `, el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ` · ${familia(x.valor)}`,
     ]);
     s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [extremo('A melhor:', c.melhor, 'combinacao-melhor'), extremo('A pior:', c.pior, 'combinacao-pior')]));
-    s.appendChild(el('ol', { classe: 'combinacoes-equipes' }, ordenadas.map((eq) => {
-      const opcoes = rodadas.map((r) => app.dados.resultados?.[r]?.[eq]?.decisao);
-      const jogou = opcoes.every((o) => typeof o === 'string');
-      const valor = patrimonioNoPlacar(eq);
-      const lugar = jogou ? N().motor.lugarEntre(c.valores, valor) : null;
-      return el('li', { classe: 'combinacao-equipe', dados: { equipe: eq, lugar: lugar === null ? '' : String(lugar), letras: jogou ? letras(opcoes).replace(/ /g, '') : '' } }, [
-        rotuloEquipe(eq),
-        jogou ? el('b', { classe: 'combinacao-letras', texto: letras(opcoes) }) : null,
-        el('span', { classe: 'combinacao-lugar' }, lugar === null ? ['—'] : [el('b', { texto: `${F().inteiro(lugar)}º` }), ` de ${F().inteiro(c.total)}`]),
-      ]);
-    })));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.

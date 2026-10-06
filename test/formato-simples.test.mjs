@@ -272,7 +272,10 @@ test('anfitrião: no formato simples, avançar sai do resultado para o passo seg
 
 // ---------- Celular ----------
 
-test('celular: a decisão leva o dinheiro de cada opção só no formato simples; o "sorteio" vira resultado', async () => {
+// D-079 (teste do Kleber de 06/10): a escolha é às cegas. Até a versão 8, a
+// decisão do formato simples levava o dinheiro de cada opção ({ valor,
+// emprestimo }); agora nenhuma opção leva, em formato nenhum.
+test('celular: a decisão não leva o dinheiro da opção (às cegas, D-079); o "sorteio" vira resultado', async () => {
   // Arrange
   const config = normalizar(V, lerSimples());
   const brutoComum = lerSimples();
@@ -292,11 +295,10 @@ test('celular: a decisão leva o dinheiro de cada opção só no formato simples
 
   // Assert
   assert.equal(decisao.tipo, 'decisao');
-  assert.deepEqual(decisao.dados.opcoes.map((o) => o.dinheiro), [
-    { valor: -720, emprestimo: 0 }, { valor: 2400, emprestimo: 0 }, { valor: 0, emprestimo: 1500 }, { valor: 160, emprestimo: 0 }, { valor: 100, emprestimo: 0 },
-  ]);
+  assert.equal(decisao.dados.opcoes.length, 5);
+  assert.ok(decisao.dados.opcoes.every((o) => !Object.hasOwn(o, 'dinheiro')), 'formato simples: nenhum dinheiro na opção');
   assert.ok(decisao.dados.opcoes.every((o) => typeof o.impacto === 'string'), 'o custo humano vai junto');
-  assert.ok(decisaoComum.dados.opcoes.every((o) => !Object.hasOwn(o, 'dinheiro')), 'sem a chave, as opções ficam iguais');
+  assert.ok(decisaoComum.dados.opcoes.every((o) => !Object.hasOwn(o, 'dinheiro')), 'sem a chave, também sem dinheiro');
   assert.equal(noSorteio.tipo, 'resultado');
   assert.equal(noSorteioComum.tipo, 'sorteando');
   // O estado "resultado" chega antes do resultado (dois ouvintes): no formato

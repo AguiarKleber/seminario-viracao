@@ -303,9 +303,10 @@ dono entrou com o despejo" só saem com contas atrasadas. Nenhum `soma` ou
 
 `"formatoSimples": true` liga o jogo simples: **um personagem só** (o Jonas)
 para todas as equipes, **até 5 opções** por bimestre, **sem sorteio** (a carta
-de cada bimestre é o evento do mês, igual para todas as equipes) e **o dinheiro
-na própria opção**. Ausente ou `false`, tudo continua como antes (o hash do
-config não muda). O validador, com ele, também confere:
+de cada bimestre é o evento do mês, igual para todas as equipes) e **a escolha
+às cegas**, com a mini-história da opção (D-079; até a versão 8, o dinheiro
+aparecia na própria opção). Ausente ou `false`, tudo continua como antes (o
+hash do config não muda). O validador, com ele, também confere:
 
 - todas as equipes com a **mesma persona**;
 - **no máximo uma carta possível** em cada rodada, para cada equipe (o teto do
@@ -314,18 +315,26 @@ config não muda). O validador, com ele, também confere:
   podem ter condição (`decidiu`, `indicador`): é assim que entra a
   consequência que vem depois ("as costas travaram: duas puxadas seguidas");
 - **nenhum `multiplica` direto na renda** numa opção (sem condição, ou só com
-  persona, opção ou rodada): a linha de dinheiro da opção é a **soma** dos
-  efeitos diretos dela, e o multiplica não tem valor fixo. Use `soma`.
+  persona, opção ou rodada): o dinheiro da opção é a **soma** dos efeitos
+  diretos dela, e o multiplica não tem valor fixo. Use `soma`;
+- a **mini-história** (`narrativa`) de até **120 letras** (aviso acima disso).
 
-**A linha do dinheiro** ("+R$ 900 no bimestre", no telão e no celular) é a
-soma dos `soma.renda` dos efeitos diretos da opção: os sem condição e os com
-condição só de persona, opção ou rodada. O que tem condição de histórico ou de
-estado, e tudo o que está nos efeitos gerais e na carta, **não aparece**: é a
-surpresa do resultado. O empréstimo aparece à parte ("+R$ 1.500 emprestado"),
-porque é dívida: ele não entra no saldo do bimestre nem no dinheiro da família.
-Para o número da opção e o do resultado baterem, ponha na opção o valor que a
-tela deve mostrar. A seção (l) do `npm run validar` lista a linha de cada opção
-e conta as combinações de cada roteiro (quantas fecham, a melhor e a pior).
+**A mini-história** (D-079, teste do Kleber de 06/10) é a `narrativa` da opção:
+uma frase com o que é, por quê e o que impacta ("14/04: greve nacional contra a
+lei dos apps, que fixava R$ 8,50 por entrega e não R$ 10; quem para arrisca
+bloqueio"), sem o dinheiro
+do Jonas. No telão, ela corre na mesma linha do rótulo, depois de um travessão,
+e cada opção precisa caber em **duas linhas** em 1024×768; a situação do
+bimestre (`texto` da rodada), em **uma**. Medido em 06/10: rótulo e
+mini-história somando até ~125 letras cabem em duas linhas; a situação, até
+~64 letras. No celular, a mini-história aparece ao tocar na opção.
+
+**O dinheiro da opção** (historia.dinheiroDaOpcao) não aparece mais em tela
+nenhuma: a escolha é às cegas, e o saldo só aparece no resultado. Ele continua
+sendo a soma dos `soma.renda` dos efeitos diretos da opção (os sem condição e
+os com condição só de persona, opção ou rodada; o empréstimo, à parte) e serve
+para calibrar: a seção (l) do `npm run validar` lista o de cada opção e conta
+as combinações de cada roteiro (quantas fecham, a melhor e a pior).
 
 **A consequência que vem depois** (D-078): ponha-a nos `efeitosGerais` do
 bimestre em que ela acontece, com `decidiu` (e `opcao`, quando depende também da
@@ -346,7 +355,8 @@ o saldo do bimestre e o dinheiro da família ("tem R$ X" ou "devendo R$ X": o
 caixa menos o cheque especial, o empréstimo e as contas atrasadas); o celular
 esconde a energia, a proteção e o detalhe da dívida; o placar final tem três
 páginas: o caminho de cada equipe, "Quanto sobrou, ou ficou devendo" e "Das N
-combinações possíveis, X fecham o ano". Os testes: `npm run e2e:simples` (o
+combinações possíveis, X fecham o ano" (só a melhor e a pior, D-079). Na célula
+da equipe da decisão, só a cor ("Laranja"). Os testes: `npm run e2e:simples` (o
 telão, sem celulares) e `npm run e2e:online:simples` (com celulares, no
 emulador); os dois aceitam outro config com `-- --config caminho` só no
 primeiro.
@@ -807,7 +817,7 @@ validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 | --- | --- | --- |
 | `lobby` | — | Entrada na sala, com o QR |
 | `enquete` | `enquete`, `momento` (`antes`, `depois` ou `unico`) | Uma votação de enquete |
-| `bloco` | `titulo` | Um trecho da apresentação. O telão fica na espera, com o título e a linha do tempo do seminário; o título aparece também no celular |
+| `bloco` | `titulo`; opcionais `contexto`, `itens` e `fonte` (D-079) | Um trecho da apresentação. Sem contexto nem itens, o telão fica na espera, com o título e a linha do tempo do seminário; com eles, o bloco de dados (veja abaixo). O título aparece também no celular |
 | `formarEquipes` | — | Formação das equipes. Ao sair dele, as equipes travam |
 | `personas` | — | As personas em jogo, com a casa de cada uma |
 | `rodada` | `rodada` | Uma rodada do jogo (um mês, ou um bimestre com `mesesPorRodada` 2): decisão, sorteio e resultado |
@@ -818,8 +828,30 @@ validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 - `alvoSeg`: o tempo-alvo do passo, em segundos. Alimenta o atraso na barra do
   apresentador; nada fecha por tempo.
 - `opcional`: marca o passo como opcional no "Pular para…". Serve também para um
-  bloco (as "Entrevistas" do config de 12 meses): nada é pulado sozinho, só
-  aparece "(opcional)" na lista do "Pular para…".
+  bloco: nada é pulado sozinho, só aparece "(opcional)" na lista do "Pular
+  para…".
+
+**O bloco de dados (D-079, teste do Kleber de 06/10).** Três campos opcionais
+do passo `bloco` viram a tela inteira, e nada mais (sem a trilha do seminário
+e sem o placar resumido):
+
+```json
+{ "tipo": "bloco", "titulo": "Dados: o que é o breque", "alvoSeg": 90,
+  "contexto": "Breque é a greve dos entregadores de app: …",
+  "itens": ["01/07/2020: o primeiro Breque dos Apps …", "31/03/2025: …", "01/09/2026: …"],
+  "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (29/04/2025); Metrópoles (01/09/2026)" }
+```
+
+- `contexto`: o que é o tópico e como impacta o setor, em 1 ou 2 frases (até
+  220 letras);
+- `itens`: de 1 a 3 números com fonte, um por linha (até 140 letras cada);
+- `fonte`: de onde vêm os itens, no pé da tela (até 200 letras).
+
+O telão escreve o rótulo "Fontes: " antes da `fonte`. Tipo errado é erro
+(itens que não são lista de textos, lista vazia); passar dos tamanhos é aviso,
+porque só aperta a tela (medido em 1024×768 com a faixa de entrada). Os três
+num passo de outro tipo são descartados, com aviso. O "Mapa do seminário" com
+`contexto` mostra o contexto em cima da linha por extenso.
 
 **A linha do tempo (D-042)** sai do roteiro, sem campo próprio: ela lista os
 passos `bloco` e `rodada` na ordem do roteiro (as rodadas como "mês 1", "mês 2"…; com
