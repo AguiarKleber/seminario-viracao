@@ -2457,7 +2457,11 @@ async function jogar({ site, navegador, vigiar }) {
         return n ? { parcela: Number(n.dataset.parcela), texto: n.textContent } : null;
       });
       assert.equal(linha?.parcela, m.parcela, 'a conta do mês 3 traz a parcela');
-      const esperado = `Parcela do empréstimo ${await moedaNa(cel[0], m.parcela)}: ${await moedaNa(cel[0], m.jurosEmprestimo)} de juros (já na conta) e ${await moedaNa(cel[0], m.amortizacao)} que abatem a dívida.`;
+      // Com rodadas de mais de um mês, a soma das parcelas do período
+      // ("Parcelas do empréstimo no bimestre"; leitura final de 06/10).
+      const per = C.historia.periodo(C.cfg);
+      const nomeDaParcela = per.meses > 1 ? `Parcelas do empréstimo ${per.noPeriodo}` : 'Parcela do empréstimo';
+      const esperado = `${nomeDaParcela} ${await moedaNa(cel[0], m.parcela)}: ${await moedaNa(cel[0], m.jurosEmprestimo)} de juros (já na conta) e ${await moedaNa(cel[0], m.amortizacao)} que abatem a dívida.`;
       assert.ok(linha.texto.includes(esperado), `"${esperado}" em "${linha.texto}"`);
       await conferirContaDoMes(cel[0], m, 'resultado do mês 3');
       await conferirDivida(cel[0], res3[E1], 'resultado do mês 3');

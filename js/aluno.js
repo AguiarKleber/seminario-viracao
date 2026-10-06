@@ -1977,17 +1977,23 @@
   // o mês do empréstimo mostrava "faltou R$ 1.034" com o caixa em −R$ 1, e
   // ninguém entendia de onde vinha a diferença. Sem empréstimo no mês (ou sala
   // antiga, sem os campos), sem a linha.
+  // Leitura final de 06/10: "não conta como sobra do mês" virou "não entra no
+  // saldo do bimestre", o nome do período que o resto da tela usa; e, com
+  // rodadas de mais de um mês, o valor é a soma das parcelas do período (duas
+  // de R$ 182,76 por bimestre no config do dia): "Parcelas do empréstimo no
+  // bimestre R$ 366", e não "Parcela … R$ 366", que não concordava.
   function linhaEmprestimo(mes) {
     const entrada = Number(mes?.emprestimo) || 0;
     const parcela = Number(mes?.parcela) || 0;
     if (entrada <= 0 && parcela <= 0) return null;
     const { el } = D();
     const moeda = (v) => el('b', { texto: F().moeda(v) });
+    const per = periodo();
     const partes = [];
-    if (entrada > 0) partes.push(['Empréstimo de ', moeda(entrada), ': o dinheiro entrou no caixa, mas é dívida, e não conta como sobra do mês.']);
+    if (entrada > 0) partes.push(['Empréstimo de ', moeda(entrada), `: o dinheiro entrou no caixa, mas é dívida, e não entra no saldo ${per.doPeriodo}.`]);
     if (parcela > 0) {
       partes.push([
-        entrada > 0 ? ' ' : '', 'Parcela do empréstimo ', moeda(parcela), ': ', moeda(Number(mes.jurosEmprestimo) || 0),
+        entrada > 0 ? ' ' : '', per.meses > 1 ? `Parcelas do empréstimo ${per.noPeriodo} ` : 'Parcela do empréstimo ', moeda(parcela), ': ', moeda(Number(mes.jurosEmprestimo) || 0),
         ' de juros (já na conta) e ', moeda(Number(mes.amortizacao) || 0), ' que abatem a dívida.',
       ]);
     }
@@ -2009,13 +2015,20 @@
   // +R$ 2.431". Já estão somados na conta de cima; a linha diz de onde vieram,
   // porque sem ela os 25 dias e o INSS sumiam dentro do trabalho (revisão de
   // 29/09, 2ª rodada, achado 10). Sem nada (ou sala antiga), sem a linha.
+  // No formato simples (leitura final de 06/10), o mesmo nome da linha à vista
+  // ("Por causa de escolhas anteriores"), e não "meses", porque o jogo é por
+  // bimestre; e o ": " do rótulo vira ", " só aqui, na hora de mostrar, senão
+  // saíam dois-pontos em sequência ("(já na conta): as costas travaram (…): 7
+  // dias parado"). O config continua com os dois-pontos: é por eles que o
+  // historia.consequenciasDaRodada agrupa o motivo.
   function linhaDeAntes(itens) {
     const validos = lista(itens).filter((x) => x && typeof x.rotulo === 'string' && Number.isFinite(x.valor));
     if (validos.length === 0) return null;
     const { el } = D();
-    const partes = validos.map((x) => [`${x.rotulo} `, el('b', { texto: F().moeda(x.valor, { sinal: true }) })]);
+    const soUm = simples();
+    const partes = validos.map((x) => [`${soUm ? x.rotulo.replaceAll(': ', ', ') : x.rotulo} `, el('b', { texto: F().moeda(x.valor, { sinal: true }) })]);
     return el('p', { classe: 'conta-de-antes', dados: { deAntes: String(validos.length) } },
-      ['Veio dos meses anteriores (já na conta): ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+      [soUm ? 'Por causa de escolhas anteriores (já na conta): ' : 'Veio dos meses anteriores (já na conta): ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   // D-052: "O que a carta custou: 20 dias parado · renda perdida R$ X · gastos
@@ -2268,7 +2281,10 @@
   // (origem piloto) não é escolha, e a frase não pode dizer "em todos" quando
   // a equipe ficou calada numa delas. O "faltou" é o patrimônio do placar
   // (historia.patrimonioDe, o mesmo "faltou R$ X" da barra do telão).
-  function partesDaFrase(origens, patrimonio, nome) {
+  // opcoes.simples: no formato simples o telão diz "devendo R$ X", e o próprio
+  // celular, "A família está devendo R$ X." (leitura final de 06/10); por isso,
+  // "e a família ainda ficou devendo R$ X", e não "e ainda faltou R$ X".
+  function partesDaFrase(origens, patrimonio, nome, opcoes = {}) {
     const total = lista(origens).length;
     if (!Number.isFinite(patrimonio) || total === 0) return null;
     const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
@@ -2278,7 +2294,12 @@
     else quem = `A equipe não votou em nenhum ${nome}`;
     const valor = Math.round(patrimonio) + 0;
     const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
-    if (valor < 0) return { antes: `${quem}${escolheram > 0 ? ', e ainda faltou ' : ', e faltou '}`, reais: -valor, depois: '.', ...atributos };
+    if (valor < 0) {
+      const falta = opcoes.simples
+        ? (escolheram > 0 ? ', e a família ainda ficou devendo ' : ', e a família ficou devendo ')
+        : (escolheram > 0 ? ', e ainda faltou ' : ', e faltou ');
+      return { antes: `${quem}${falta}`, reais: -valor, depois: '.', ...atributos };
+    }
     // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
     // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
     return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
@@ -2286,7 +2307,7 @@
 
   // A frase na tela; sem placar, o "ficou com" do último bimestre.
   function fraseDasEscolhas(meses, patrimonio) {
-    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome);
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples() });
     if (!f) return null;
     const { el } = D();
     return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },

@@ -257,6 +257,9 @@ async function jogar({ site, navegador, vigiar }) {
   }
   const cel = [await novoCelular('Ana'), await novoCelular('Bia'), await novoCelular('Caio')];
   const EQUIPES_CEL = ['e1', 'e2', 'e3'];
+  // Quantas vezes o detalhe da conta mostrou o que veio de antes e as parcelas
+  // do empréstimo (leitura final de 06/10), para o log.
+  const vistos = { deAntes: 0, parcelas: 0, emprestimo: 0 };
 
   // Formação: cada celular numa equipe; as seis ficam abertas (as sem
   // celular jogam no padrão).
@@ -377,6 +380,34 @@ async function jogar({ site, navegador, vigiar }) {
       assert.equal(await telao.locator('.simples-antes').count(), 0, `${r}: sem a lista embaixo das faixas`);
       if (await telao.locator('.simples-obs').count() > 0) await conferirTelao(`resultado-consequencia-${r}`);
     }
+    // Leitura final de 06/10: no detalhe recolhido da conta ("A conta do
+    // bimestre em detalhe"), o que veio de antes com o mesmo nome da linha à
+    // vista e sem dois-pontos em sequência (o ": " do rótulo vira ", " na
+    // tela), e o empréstimo pelo nome do período: "não entra no saldo do
+    // bimestre" e "Parcelas do empréstimo no bimestre R$ 366" (duas parcelas).
+    for (const [i, c] of cel.entries()) {
+      const g = await administrador('GET', `salas/${sala}/resultados/${r}/${EQUIPES_CEL[i]}`);
+      const lidos = await c.p.evaluate(() => ({
+        deAntes: document.querySelector('.conta-de-antes')?.textContent ?? null,
+        emprestimo: document.querySelector('.conta-emprestimo')?.textContent ?? null,
+      }));
+      const itens = (Array.isArray(g.deAntes) ? g.deAntes : Object.values(g.deAntes || {})).filter((x) => x && typeof x.rotulo === 'string' && Number.isFinite(x.valor));
+      if (itens.length === 0) assert.equal(lidos.deAntes, null, `${r}, ${c.nome}: sem nada de antes, sem a linha no detalhe`);
+      else {
+        assert.equal(lido(lidos.deAntes), lido(`Por causa de escolhas anteriores (já na conta): ${itens.map((x) => `${x.rotulo.replaceAll(': ', ', ')} ${F.moeda(x.valor, { sinal: true })}`).join(' · ')}`), `${r}, ${c.nome}: o que veio de antes, no detalhe`);
+        assert.ok(!/: [^:]*: /.test(lidos.deAntes), `${r}, ${c.nome}: sem dois-pontos em sequência ("${lido(lidos.deAntes)}")`);
+        vistos.deAntes += 1;
+      }
+      const m = g.mes || {};
+      if (m.emprestimo > 0) {
+        assert.ok(lido(lidos.emprestimo).includes(lido(`Empréstimo de ${F.moeda(m.emprestimo)}: o dinheiro entrou no caixa, mas é dívida, e não entra no saldo do bimestre.`)), `${r}, ${c.nome}: a linha do empréstimo ("${lido(lidos.emprestimo)}")`);
+        vistos.emprestimo += 1;
+      }
+      if (m.parcela > 0) {
+        assert.ok(lido(lidos.emprestimo).includes(lido(`Parcelas do empréstimo no bimestre ${F.moeda(m.parcela)}: ${F.moeda(m.jurosEmprestimo)} de juros (já na conta) e ${F.moeda(m.amortizacao)} que abatem a dívida.`)), `${r}, ${c.nome}: a linha das parcelas ("${lido(lidos.emprestimo)}")`);
+        vistos.parcelas += 1;
+      }
+    }
     // A entrada fechada e reaberta com o resultado na tela (o roteiro manda
     // reabrir quando chega um atrasado), em mar–abr, com as três consequências:
     // a tela se refaz nas duas vezes. Antes (revisão de 06/10), reabrir punha a
@@ -436,5 +467,6 @@ async function jogar({ site, navegador, vigiar }) {
       await telao.keyboard.press('Space');
     }
   }
+  console.log(`  o detalhe da conta no celular: o que veio de antes em ${vistos.deAntes} tela(s), o empréstimo em ${vistos.emprestimo}, as parcelas em ${vistos.parcelas}`);
   console.log('OK: o formato simples com celulares (telão em 1024×768 e 1280×720 com a faixa de entrada; celulares em 360×740).');
 }
