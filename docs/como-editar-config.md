@@ -327,6 +327,18 @@ Para o número da opção e o do resultado baterem, ponha na opção o valor que
 tela deve mostrar. A seção (l) do `npm run validar` lista a linha de cada opção
 e conta as combinações de cada roteiro (quantas fecham, a melhor e a pior).
 
+**A consequência que vem depois** (D-078): ponha-a nos `efeitosGerais` do
+bimestre em que ela acontece, com `decidiu` (e `opcao`, quando depende também da
+escolha do próprio bimestre, como as costas: `{ "decidiu": { "r1": "a" }, "opcao":
+"b" }`). O motor a nomeia (`deAntes`), e as telas a mostram no resultado com o
+motivo: o `rotulo` até os dois-pontos. Dois efeitos de mesmo motivo viram uma
+linha com a soma ("as costas travaram (2 puxadas seguidas): 7 dias parado" e
+"…: fisioterapia, 4 sessões" → "As costas travaram (2 puxadas seguidas)
+−R$ 1.230"). Na carta, o efeito com condição também vale, mas não aparece com
+nome. Custo fixo (`fixo`) e proteção não são nomeados: use `soma` simples ou
+`categoria: "gasto"`. O jogo do dia, opção por opção, está em
+[jogo-simples.md](jogo-simples.md).
+
 **O que muda nas telas:** a equipe pela cor ("Equipe Laranja"); "Conheça o
 Jonas" no lugar das personas; o fechamento vai direto ao resultado (sem a tela
 do sorteio); o resultado mostra o evento do mês uma vez e, por equipe, a opção,

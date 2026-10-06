@@ -1190,7 +1190,7 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 - **Rodada:** o apresentador clica na opção de cada equipe.
 
 **Seguro contra "travou e caiu a internet":**
-- "Salvar estado (JSON)" fica sempre na barra, e um download automático acontece ao fim de cada rodada (aceito em D-015). O automático não avisa na tela, só na barra ("estado salvo às …"), porque acontece ao abrir o sorteio.
+- "Salvar estado (JSON)" fica sempre na barra. Até 05/10, um download automático acontecia ao fim de cada rodada (D-015); desde a D-078 (pedido do Kleber: "não baixar o JSON a cada rodada"), o seguro é só o manual. Online, a sala continua no Firebase e se retoma com o PIN.
 - O modo offline tem "Carregar estado", porque o pendrive por `file://` é outra origem e não enxerga o `localStorage` do site.
 - O telão mostra o hash do config em uso, para comparar com o do pendrive.
 

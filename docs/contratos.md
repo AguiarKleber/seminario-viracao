@@ -820,6 +820,7 @@ celular e no `test/carregar-nucleo.mjs`.
 | `textoDoDinheiro(dinheiro, moeda, periodo) → string` | "+R$ 900 no bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre", "+R$ 1.500 emprestado" (e " · −R$ X no bimestre" se a opção também mexe na renda) |
 | `dinheiroDaFamilia(valores) → { situacao: 'tem' \| 'devendo', valor } \| null` / `textoDaFamilia(valores, moeda)` | o patrimônio (`patrimonioDe`) em reais inteiros: "tem R$ X" ou "devendo R$ X" |
 | `primeiraFrase(texto) → string \| null` | a primeira frase (o evento do mês no resultado do formato simples) |
+| `consequenciasDaRodada([{ equipeId, deAntes }]) → [{ motivo, valor, equipes: [ids] }]` | D-078: a consequência de uma escolha de antes, para a tela. O motivo é o `rotulo` do item do `deAntes` até os dois-pontos ("as costas travaram (2 puxadas seguidas): 7 dias parado" e "…: fisioterapia, 4 sessões" viram um motivo, com a soma); motivo com soma 0 some; equipes de mesmo motivo **e** mesmo valor ficam juntas; a ordem é a de aparição. O telão (resultado do formato simples) escreve uma linha por grupo embaixo das faixas ("As costas travaram (2 puxadas seguidas) −R$ 1.230: Laranja, Azul"); o celular, à vista, "Por causa de antes: …" |
 | `fraseAcimaDoTrabalho(protecao, nome, moeda, periodo?) → string \| null` | D-067, de `protecaoDoResultado`: "Auxílio do INSS (45 dias): R$ 2.431, mais do que Bruna ganhava trabalhando num bimestre comum (R$ 1.400)." O nome do que pagou vem dos itens da proteção (o config); o "1 salário mínimo" fica no rótulo do efeito ou na fala do apresentador (o núcleo não escreve conteúdo). `null` sem `acimaDoTrabalho` |
 | `fraseDoLimite(mes, moeda) → string \| null` | D-066: "O limite do cheque especial acabou: R$ X de contas ficaram atrasadas (multa de R$ M), a casa ficou sem R$ S do que não se paga depois e R$ Y de comida não deu para comprar." (o "ficou sem" só com `mes.ficouSem` > 0) e/ou "Pagou R$ Z de contas atrasadas."; `null` sem nada disso ou em sala sem o limite |
 | `periodo(conteudo) → { meses, nome, noPeriodo, doPeriodo }` | esquema v3: `regras.mesesPorRodada` (inteiro ≥ 1, senão 1) e o nome do período: 1 "mês", 2 "bimestre", 3 "trimestre", 6 "semestre", outro "período de N meses"; `noPeriodo` = "no " + nome, `doPeriodo` = "do " + nome |
@@ -1273,8 +1274,8 @@ Também no `telao.js`: `app.lerEspelho` (só online, ligado pela seção 10)
 devolve uma cópia da árvore da sala mantida localmente; alimenta "Continuar sem
 celulares" e "Salvar estado".
 
-**Estado salvo** ("Salvar estado", download automático ao fim de cada rodada,
-D-015, e "Carregar estado"):
+**Estado salvo** ("Salvar estado" e "Carregar estado"; o download automático ao fim de cada rodada da
+D-015 saiu com a D-078, a pedido do Kleber: o seguro é o "Salvar estado", à mão):
 `{ formato: "viracao-estado", versaoApp, sala, salvoEm, dados }`, com `dados` = o nó
 `salas/{S}` **sem** `votosEnquete`, `decisoes`, `presenca` e `membros` (nenhum voto
 individual sai do banco, AGENTS.md regra 8). Carregar recria o canal-local com

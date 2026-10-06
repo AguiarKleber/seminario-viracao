@@ -5,12 +5,15 @@ trabalho em plataformas. Até 20 alunos usam o próprio celular, e um telão
 acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 
 - **Enquetes de 1 a 5**, com comparação antes e depois.
-- **Jogo da Viração**: 6 equipes, cada uma com um personagem num trabalho de
-  plataforma, vivendo 12 meses em 6 rodadas bimestrais intercaladas com a
-  apresentação, e cartas de evento sorteadas por probabilidade.
+- **Jogo da Viração**: 6 equipes jogam o mesmo personagem, o Jonas, motoboy do
+  iFood, durante 12 meses em 6 rodadas bimestrais intercaladas com a
+  apresentação. Cada bimestre tem 5 opções, com o dinheiro na própria opção, e
+  o evento do mês é igual para todos, sem sorteio: no fim, compara-se o que cada
+  combinação de escolhas fez com o dinheiro da família (D-078).
 
 | Documento | Para quê |
 | --- | --- |
+| [docs/jogo-simples.md](docs/jogo-simples.md) | O jogo de 07/10: o Jonas, os 6 bimestres, as 30 opções com valor e fonte, as consequências e os números das 15.625 combinações |
 | [docs/roteiro-do-apresentador.md](docs/roteiro-do-apresentador.md) | Véspera, dia da aula minuto a minuto, teclas, rede caída, teste no eduroam |
 | [docs/como-editar-config.md](docs/como-editar-config.md) | Cada campo do `config.json`, a linguagem de efeitos e o validador |
 | [docs/decisoes.md](docs/decisoes.md) | O que foi decidido e por quê (D-001 em diante) |
@@ -19,53 +22,31 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo, cada um com a fonte |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (05/10)
+## Onde estamos (06/10)
 
 | Já feito | Situação |
 | --- | --- |
-| 1. Projeto no Firebase | Criado: `seminario-viracao`, plano Spark |
-| 2. Realtime Database | Criado em `us-central1`, no modo bloqueado |
-| 3. Login anônimo | Ativado |
-| 4. `conexao.json` | Preenchido com as chaves do projeto |
-| 5. PIN do apresentador | Gravado no console, em `privado/pinApresentador` |
-| 6 a 8. Regras, GitHub Pages e telão | Regras **v3** publicadas; a `main` (até o PR #6, versão 6 do site, com as correções do teste de 30/09) está no ar |
-| Doze meses | Branch `claude/doze-meses`, **ainda não fundida nem publicada**: versão 7 do site e **regras v4** (D-060 a D-067, esquemas v3 e v3.1): 12 meses em 6 rodadas bimestrais, seis personagens (um por equipe), ninguém de carteira assinada, o risco que cresce com os meses, o modo espectador do apresentador no celular, o limite do cheque especial com as contas atrasadas e o que faltou na mesa (D-066) e a frase do auxílio acima do trabalho (D-067) |
-| Conteúdo | `config.json` versão `2026-10-05-v3.1`, com a D-069 (gás, ônibus e remédio ficam sem) e a D-068 (despejo e corte de luz prováveis com o atraso), aprovadas em 05/10 (o hash é o que `npm run validar` imprimir no dia; em 05/10, `472f94a0`), **rascunho a validar** (D-005). O de 3 meses (v2.2, o do teste de 30/09) ficou em `test/fixtures/config-real-v22.json`, e o de 12 meses sem o limite, em `test/fixtures/config-real-v3.json`. As perguntas em aberto estão no [rascunho](docs/rascunho-conteudo.md), seção 8 |
+| 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 7 do site (12 meses, 6 personagens, cartas sorteadas: PR #7), testada pelo Kleber em 05/10 |
+| Jogo simples | Branch `claude/jogo-simples`, **ainda não fundida nem publicada**: versão 8 do site, com o formato simples (D-078: só o Jonas, 5 opções por bimestre, sem sorteio, o dinheiro na opção), a consequência de antes à vista no resultado, o fim da rodada sem o JSON automático e os ajustes de tela de 05/10 (D-072 a D-077: rever a tela anterior, a barra oculta fina, o mapa sem o gancho, o saldo do bimestre, as escolhas da equipe no celular). **As regras não mudam** (continuam v4) |
+| Conteúdo | `config.json` versão `2026-10-06-v4-simples` (o hash é o que `npm run validar` imprimir; em 06/10, `3283181b`). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
 
-**Os doze meses** (branch `claude/doze-meses`, versão 7 do site) vêm depois das
-correções do teste de 30/09 (PR #6, já no ar). O que muda para quem conduz está
-no [roteiro do apresentador](docs/roteiro-do-apresentador.md), no começo; o que
-muda no código, na [arquitetura](docs/arquitetura.md), itens 43 a 52.
+**Para publicar (06/10, até as 12h):** só o site muda, e as regras ficam como
+estão (v4), sem nenhum passo no console do Firebase.
+1. Sem nenhuma sala aberta, funda o PR da `claude/jogo-simples` na `main` (o
+   GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
+   and deployment" em verde).
+2. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
+   repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, o bloco 1, a
+   versão `2026-10-06-v4-simples` e o mesmo hash que `npm run validar` imprime
+   na `main` publicada. Os celulares com a versão 7 em cache veem a faixa "Há
+   uma versão nova do app: atualize a página".
+3. Ensaie uma sala de teste até o resultado de Jan–fev (roteiro, seção 0) e
+   apague a sala no fim.
+4. Baixe o ZIP de novo para o pendrive (passo 11).
 
-**Publicar o site v7 e as regras v4 juntos.** O site no ar (versão 6) grava
-`regrasVersao = "v3"`, e as regras publicadas hoje só aceitam `"v3"`. O site
-v7 grava `"v4"`, e as regras v4 só aceitam `"v4"` (é a amarração que prova que
-as regras certas estão no ar). Por isso **as duas coisas sobem na mesma sessão,
-uma logo depois da outra**: o telão v6 com as regras v4, ou o v7 com as v3,
-mostra `REGRAS ABERTAS ou DESATUALIZADAS` e não cria a sala (e, com as v3, o
-modo espectador recusa o PIN certo). A ordem, sem nenhuma sala aberta e nunca
-no dia da aula:
-1. Funda o PR na `main` (o GitHub Pages leva de 1 a 3 minutos para publicar).
-2. Na mesma hora, publique as regras v4 (passo 6), copiando o
-   `firebase/regras.json` da `main`. Confira a linha com `'v4'`.
-3. Espere a aba Actions mostrar "pages build and deployment" em verde.
-4. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
-   repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, e o hash do
-   bloco 1 tem de ser o mesmo que `npm run validar` imprime na `main`
-   publicada (não um hash copiado daqui: qualquer troca de texto no config muda
-   o hash).
-5. Com a sala de teste do passo 8 aberta, entre pelo **Sou apresentador** num
-   celular (roteiro, seção 4): ele tem de mostrar as equipes. "O PIN não
-   confere" com o PIN certo quer dizer regras v3 ainda no ar: volte ao item 2.
-
-Entre os itens 1 e 3, o site no ar ainda pode ser o v6 com as regras v4 já
-publicadas: nesse intervalo de minutos, ninguém deve criar sala. Os celulares
-com a versão 6 em cache veem a faixa "Há uma versão nova do app: atualize a
-página".
-
-Em seguida vêm o congelamento (06/10) e o seminário (07/10). O conteúdo de 12
-meses ainda tem perguntas em aberto (rascunho, seção 8), e o roteiro lista as
-que mudam o que dizer na aula.
+Uma sala criada com o config de 6 personagens não se retoma com o novo (o hash
+muda): crie a sala da aula só depois da publicação.
 
 ## Como funciona
 
@@ -459,14 +440,16 @@ deixa o pendrive carregar o estado salvo pelo telão online.
 | `npm run check` | Validador do config + ESLint + testes sem rede. Rode antes de cada commit |
 | `npm test` | Só os testes sem rede |
 | `npm run lint` | Só o ESLint |
-| `npm run validar` | Validador do `config.json` e as conferências de equilíbrio do jogo, de (a) a (j). Com 6 rodadas, as conferências são estimadas por simulação determinística (a mesma saída a cada execução) e levam cerca de 2 minutos e meio |
+| `npm run validar` | Validador do `config.json` e as conferências de equilíbrio do jogo, de (a) a (l). No jogo simples, leva uns 2 segundos; a seção (l) dá o dinheiro de cada opção e as combinações (quantas fecham, a melhor e a pior) |
+| `npm run combinacoes` | O jogo simples no motor, todas as 15.625 combinações: a mediana, a média, o padrão, a média de cada opção, se alguma domina e quantas vezes cada consequência aparece (os números de docs/jogo-simples.md) |
 | `npm run servir` | Site em `http://127.0.0.1:8080/` (outra porta: `npm run servir -- 8181`) |
 | `node bin/emulador.mjs "node bin/servir.mjs"` | Emulador + site, para ensaiar à mão (JDK 21) |
 | `npm run emulador` | Testes contra o emulador: regras reais, `canal-firebase` e simulador (JDK 21) |
-| `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados |
-| `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador; nunca fala com o projeto real |
+| `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados: o jogo com sorteio (o config de 05/10, congelado), o formato simples com a fixture e com o `config.json` do dia |
+| `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador, com o jogo de sorteio (o config de 05/10, congelado); nunca fala com o projeto real |
+| `npm run e2e:online:dia` | O jogo simples do `config.json` do dia com o telão (com a faixa de entrada) e 3 celulares, contra o emulador (`npm run e2e:online:simples`: o mesmo com a fixture) |
 | `npm run e2e:online:fixture` | O mesmo, com a fixture de teste no lugar do `config.json`: é o que passa sempre por "a proteção pagou" no celular (D-059). Rode junto com o anterior |
-| `npm run e2e:votos` | A matriz de votos: a sessão inteira, com as 6 rodadas do `config.json` e depois com a fixture de 6 bimestres, com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, e um celular no modo espectador, contra o emulador. Demora bastante (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
+| `npm run e2e:votos` | A matriz de votos: a sessão inteira, com as 6 rodadas do config de 05/10 (sorteio; congelado em `test/fixtures/config-real-v31.json`) e depois com a fixture de 6 bimestres, com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, e um celular no modo espectador, contra o emulador. Demora bastante (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
 | `npm run simular -- --memoria` | 20 alunos simulados, sem rede |
 | `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador (acrescente `--rajada --quedas --recargas` para as perturbações) |
 | `npm run versao` | Sobe o `?v=` e a versão do app juntos |
