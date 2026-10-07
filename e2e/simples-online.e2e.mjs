@@ -18,8 +18,12 @@
 //    dívida; a situação do bloco seguinte, idem;
 // 5. o placar final: o celular mostra as escolhas da equipe, sem "Escolha ou
 //    sorte?" e sem o pior caso; o telão, as três páginas, cabendo em 1024×768
-//    com a faixa de entrada.
-/* global document, innerHeight, innerWidth, MutationObserver, requestAnimationFrame */
+//    com a faixa de entrada;
+// 6. com o config do dia, cada bloco com itens (os de dados entre os
+//    bimestres, o das outras plataformas e o Fim) cabendo em 1024×768 e em
+//    1280×720 com a faixa de entrada, e o vão entre os itens nunca menor que o
+//    espaço (pedido do Kleber de 06/10 à noite, print 3).
+/* global document, getComputedStyle, innerHeight, innerWidth, MutationObserver, requestAnimationFrame */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
@@ -124,6 +128,7 @@ async function jogar({ site, navegador, vigiar }) {
     new MutationObserver(() => globalThis.__telas.push(document.body.dataset.tela)).observe(document.body, { attributes: true, attributeFilter: ['data-tela'] });
   });
   console.log(`Sala ${sala} (formato simples) criada.`);
+  const PASSOS_SALA = V.roteiro.passos(cfg, (await administrador('GET', `salas/${sala}/meta`)).roteiro);
 
   const estado = () => telao.evaluate(() => globalThis.Viracao.telao.estado());
   async function esperarEstado(teste, descricao, timeout = 15000) {
@@ -216,6 +221,30 @@ async function jogar({ site, navegador, vigiar }) {
     assert.deepEqual(m.fora, [], `${nome}: elemento fora do palco (com a faixa de entrada)`);
     assert.deepEqual(m.vazados, [], `${nome}: elemento fora da própria caixa`);
     assert.deepEqual(m.sobrepostos, [], `${nome}: texto sobre texto`);
+  }
+
+  // Pedido do Kleber de 06/10 à noite (print 3): mais espaço entre os dados
+  // dos blocos (o vão dos itens passou de .9 a 1,5 × o espaço, com o aperto em
+  // dois degraus). Com a faixa de entrada, o pior caso de altura: o bloco cabe
+  // (conferirTelao) e o vão entre os itens não fica menor que o espaço
+  // (--espaco); antes do pedido, era .9 × o espaço, e o aperto o levava a .5.
+  const blocosComFaixa = new Set();
+  async function conferirBlocoNoTelao(passo) {
+    await telao.waitForFunction((titulo) => document.body.dataset.tela === 'bloco' && document.querySelector('#palco h1')?.textContent === titulo, passo.titulo);
+    const nome = `bloco-${String(PASSOS_SALA.indexOf(passo)).padStart(2, '0')}`;
+    for (const [largura, altura] of [[1280, 720], [1024, 768]]) {
+      await telao.setViewportSize({ width: largura, height: altura });
+      await telao.waitForFunction(([l, a]) => innerWidth === l && innerHeight === a, [largura, altura]);
+      await medirTelao(largura === 1024 ? nome : `${nome}-${largura}x${altura}`);
+      const b = await telao.evaluate(() => ({
+        itens: Array.from(document.querySelectorAll('#palco .bloco-item'), (n) => n.textContent),
+        vao: parseFloat(getComputedStyle(document.querySelector('#palco .bloco-itens')).rowGap),
+        espaco: Math.min(32, Math.max(10, innerHeight * 0.018)),
+      }));
+      assert.deepEqual(b.itens, passo.itens, `${nome} em ${largura}×${altura}: os itens do config`);
+      assert.ok(b.vao >= b.espaco - 0.01, `${nome} em ${largura}×${altura}: o vão entre os itens (${b.vao} px) é menor que o espaço (${b.espaco} px)`);
+    }
+    blocosComFaixa.add(passo);
   }
 
   // Abre ou fecha a entrada pela barra (tecla H), como o apresentador, e espera
@@ -431,7 +460,8 @@ async function jogar({ site, navegador, vigiar }) {
     // O bloco seguinte: a situação, com o mesmo dinheiro da família.
     if (k < RODADAS.length - 1) {
       await avancar();
-      await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
+      const noBloco = await esperarEstado((e) => e.tipo === 'bloco', 'bloco');
+      if (PASSOS_SALA[noBloco.indice]?.itens) await conferirBlocoNoTelao(PASSOS_SALA[noBloco.indice]);
       await esperarTela(c0, 'situacao');
       const s = await c0.p.evaluate(() => ({
         familia: document.querySelector('.familia-dinheiro')?.textContent, indicadores: document.querySelectorAll('#tela .indicadores').length, divida: document.querySelectorAll('#tela .divida').length,
@@ -467,6 +497,22 @@ async function jogar({ site, navegador, vigiar }) {
       await telao.keyboard.press('Space');
     }
   }
+  // Os blocos com itens que o jogo não mostrou com a faixa (o do último
+  // bimestre, logo antes do placar; "Dados: e nos outros aplicativos?", com 4
+  // itens, e o Fim, depois dele, no config do dia): o estado pula para cada
+  // um, como o sessao-online.e2e.mjs faz, sem passar pelas enquetes do meio.
+  {
+    let e = await administrador('GET', `salas/${sala}/estado`);
+    for (const [indice, p] of PASSOS_SALA.entries()) {
+      if (p.tipo !== 'bloco' || !p.itens || blocosComFaixa.has(p)) continue;
+      e = { ...e, geracao: e.geracao + 1, indice, tipo: 'bloco', rodada: null, subfase: null };
+      await administrador('PUT', `salas/${sala}/estado`, e);
+      await conferirBlocoNoTelao(p);
+    }
+  }
+  const comItens = PASSOS_SALA.filter((p) => p.tipo === 'bloco' && p.itens);
+  assert.equal(blocosComFaixa.size, comItens.length, 'todo bloco com itens conferido com a faixa de entrada');
+  console.log(`  blocos com itens conferidos no telão com a faixa de entrada: ${blocosComFaixa.size} de ${comItens.length}`);
   console.log(`  o detalhe da conta no celular: o que veio de antes em ${vistos.deAntes} tela(s), o empréstimo em ${vistos.emprestimo}, as parcelas em ${vistos.parcelas}`);
   console.log('OK: o formato simples com celulares (telão em 1024×768 e 1280×720 com a faixa de entrada; celulares em 360×740).');
 }

@@ -9,9 +9,12 @@ bimestre vem **uma tela de dados reais** do tema dele. Com os pedidos de 06/10
 à tarde (D-080), nov–dez E passa a ser o presente da filha, a consequência
 aparece na faixa da equipe, "Caminhos" e a conversa em grupos ganham itens, um
 bloco das outras plataformas entra antes do Fim e o placar perde a linha da
-carteira. Arquivo: [`config.json`](../config.json), versão
-`2026-10-06-v4.3-simples` (o hash é o que `npm run validar` imprimir; em 06/10
-à noite, depois da leitura final da D-080, `9265c896`). O conteúdo de 6
+carteira. Com os pedidos de 06/10 à noite (D-080, última nota), os números dos
+motoristas de app vão em linguagem simples, a página 3 do placar diz o que são
+a melhor e a pior sequência, e os dados dos blocos ganham mais espaço entre si.
+Arquivo: [`config.json`](../config.json), versão
+`2026-10-06-v4.4-simples` (o hash é o que `npm run validar` imprimir; em 06/10
+à noite, depois dos pedidos da noite, `57a8d00b`). O conteúdo de 6
 personagens, com cartas sorteadas, ficou no git e congelado em
 `test/fixtures/config-real-v31.json`.
 
@@ -193,7 +196,12 @@ que o motor cobra nos bimestres seguintes (D-065).
 
 No roteiro, cada rodada é seguida de um bloco "Dados: …" do tema do bimestre
 (P2 e P4 da D-079): **contexto** (o que é, em 1 ou 2 frases), até **3 itens**
-com número real e **fonte**. Os números novos vêm do informativo do IBGE
+com número real (4 no das outras plataformas, uma ideia por item) e **fonte**.
+No telão, o vão entre os itens é 1,5 vez o espaço da tela (era 0,9 até o
+pedido de 06/10 à noite, print 3: "aumentar um pouco o espaçamento entre os
+dados"). Se o bloco não couber, o telão aperta em dois degraus: primeiro o vão
+volta a 1 espaço e a entrelinha do contexto fecha um pouco; depois, o aperto de
+sempre, com o vão em 0,8 (era 0,5). Os números novos vêm do informativo do IBGE
 "Trabalho por meio de plataformas digitais 2025" (PNAD Contínua, 3º tri/2025,
 publ. set/2026), o mesmo da renda do Jonas; as páginas estão na fonte de cada
 bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
@@ -295,14 +303,20 @@ bloco. Todos ficam no `config.json` (`roteiros`, campos `contexto`, `itens` e
 **Dados: e nos outros aplicativos?** (logo antes do Fim, nos dois roteiros; D-080,
 print 1 do Kleber: o Fim enriquecido com outras modalidades de trabalho por app)
 - *Contexto:* Não é só no delivery: 941 mil pessoas trabalham em apps de
-  passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e
-  reparos.
-- Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora,
-  R$ 14,40, contra R$ 16 de quem dirige sem app.
-- 80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto
-  recebem por corrida; 60,8%, quais passageiros atendem.
-- Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas
-  sem app, 59,2%.
+  transporte de passageiros, como a Uber e a 99. Outras 300 mil trabalham em
+  apps de faxina, cuidado e reparos.
+- Motorista de app ganha R$ 2.873 por mês e trabalha 45,9 horas por semana.
+- Por hora, ganha menos que quem dirige sem app: R$ 14,40 contra R$ 16.
+- 8 em cada 10 (80,2%) dizem que o app decide sozinho quanto recebem por
+  corrida. 6 em cada 10 (60,8%) dizem que ele escolhe os passageiros.
+- Só 1 em cada 4 motoristas de app (25,5%) contribui para o INSS. Entre os
+  motoristas sem app, são 6 em cada 10 (59,2%).
+- *Por que assim:* até a versão 10, eram 3 itens com dois dados cada, ligados
+  por ponto e vírgula ("R$ 2.873 por mês em 45,9 horas por semana; por hora,
+  R$ 14,40, contra R$ 16…"; "80,2% …; 60,8%, quais passageiros atendem"), e o
+  Kleber achou confuso (06/10 à noite, print 1). Agora são 4 itens, uma ideia
+  por item, com a proporção fácil ao lado do número exato. Os números e a fonte
+  não mudaram.
 - *Fonte:* IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025
   (publ. set/2026), p. 3 (os apps de faxina, cuidado e reparos), 4 (941 mil e
   300 mil, no trabalho principal), 9 (renda, horas, hora e previdência dos
@@ -350,7 +364,7 @@ Sem sorteio, cada combinação de escolhas tem um resultado só, e o motor joga
 todas: `npm run combinacoes` (cerca de 0,1 s; o validador, seção l, dá o total,
 as que fecham, a melhor e a pior; o telão conta no navegador).
 
-| Medida | Agora (v4.3, D-080) | v4.1 (D-079, com o temporário) | v4 (06/10 de madrugada) |
+| Medida | Agora (v4.3 e v4.4, D-080) | v4.1 (D-079, com o temporário) | v4 (06/10 de madrugada) |
 | --- | --- | --- | --- |
 | Fecham o ano (dinheiro da família ≥ R$ 0) | **281** (1,8%) | 260 (1,7%) | nenhuma |
 | Melhor combinação | **A-D-C-E-D-A: +R$ 1.714** (12 h no sol, aceitar até entrega ruim, madrugada na chuva, promoções da noite, furar o breque, pedir ajuda à família: nenhum bimestre de descanso) | A-D-C-E-D-A: +R$ 1.714 | A-D-C-E-D-A: −R$ 2.429 |
@@ -457,7 +471,8 @@ R$ 7.000, para você confirmar:
   corta na primeira frase).
 - **Os blocos de dados e o Fim:** os passos `bloco` dos dois roteiros, com
   `contexto` (até ~220 caracteres), `itens` (1 a 3 nos blocos de dados; até 4,
-  o teto do validador desde a D-080, em "Caminhos"; até ~140 cada) e `fonte`.
+  o teto do validador desde a D-080, em "Caminhos" e no das outras
+  plataformas; até ~140 cada) e `fonte`.
 - **Conferir:** `npm run validar` (sem erros), `npm run combinacoes` (os números
   acima), `npm test` (o `test/jogo-simples.test.mjs` confere o config do dia com
   o motor, inclusive o pior caso abaixo de R$ 7.000) e `npm run e2e` (o telão,

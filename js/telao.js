@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '10';
+  const VERSAO_APP = '11';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -2013,7 +2013,20 @@
     // Com a faixa de entrada embaixo (online), o bloco mais longo pode passar
     // de 1024×768: só quando a tela transborda (medida depois do desenho), as
     // entrelinhas e os vãos diminuem (data-aperto), com a letra nos 28 px.
-    if (conteudo) app.depoisDeMedir.push(() => { if (s.scrollHeight > s.clientHeight + 1) s.dataset.aperto = '1'; });
+    // Dois degraus desde o pedido do Kleber de 06/10 à noite (print 3: mais
+    // espaço entre os dados). Com um aperto só, o vão maior fazia "Dados: a
+    // greve de 14/04" (que cabia com o vão de antes, sem sobra) e "Caminhos"
+    // em 1920×1080 caírem no aperto inteiro, com MENOS espaço entre os itens
+    // do que antes do pedido. O primeiro degrau só encolhe o vão dos itens e a
+    // entrelinha do contexto; o segundo é o aperto de sempre.
+    if (conteudo) {
+      app.depoisDeMedir.push(() => {
+        for (const degrau of ['1', '2']) {
+          if (s.scrollHeight <= s.clientHeight + 1) return;
+          s.dataset.aperto = degrau;
+        }
+      });
+    }
   }
 
   // ---------- Tela: formar equipes ----------
@@ -3212,6 +3225,13 @@
   // equipe já estão na página 1. Todas as equipes jogam o mesmo Jonas (o
   // validador garante uma persona só), e a contagem é a da primeira equipe do
   // placar.
+  // Pedido do Kleber de 06/10 à noite (print 2): "A melhor: A D C E D A · tem
+  // R$ 1.714" não dizia o que eram as duas linhas. Agora um subtítulo com as
+  // palavras dele ("a melhor e a pior sequência de alternativas para conseguir
+  // renda"), cada linha diz "Melhor sequência"/"Pior sequência" e, embaixo das
+  // letras, uma frase inteira sobre a família no fim do período. A frase vai
+  // na linha de baixo, e não depois de um "·": inteira em uma linha só, ela
+  // passava da largura de 1024×768 e quebrava no meio do valor.
   function paginaCombinacoes(s, lado) {
     const { el } = D();
     const rodadas = rodadasJogadas();
@@ -3222,11 +3242,21 @@
     const quantas = c.fecham === 0 ? `nenhuma fecha ${fechar}` : c.fecham === 1 ? `1 fecha ${fechar}` : `${F().inteiro(c.fecham)} fecham ${fechar}`;
     s.appendChild(cabecalho('Placar final', `Das ${F().inteiro(c.total)} combinações possíveis, ${quantas}`, { extra: lado }));
     const letras = (opcoes) => opcoes.map((o, i) => letraDe(app.config.rodadas[rodadas[i]], o)).join(' ');
-    const familia = (v) => N().historia.textoDaFamilia({ renda: v }, F().moeda);
+    const periodoJogado = meses === 12 ? 'o ano' : meses === 1 ? 'o mês' : `os ${meses} meses`;
+    const familia = (v) => {
+      const d = N().historia.dinheiroDaFamilia({ renda: v });
+      return `A família termina ${periodoJogado} ${d.situacao === 'devendo' ? 'devendo' : 'com'} ${F().moeda(d.valor)}`;
+    };
     const extremo = (rotulo, x, classe) => el('p', { classe: ['combinacao-extremo', classe], dados: { letras: letras(x.opcoes).replace(/ /g, ''), valor: String(Math.round(x.valor) + 0) } }, [
-      `${rotulo} `, el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ` · ${familia(x.valor)}`,
+      el('span', { classe: 'combinacao-rotulo', texto: rotulo }), ' ',
+      el('b', { classe: 'combinacao-letras', texto: letras(x.opcoes) }), ' ',
+      el('span', { classe: 'combinacao-familia', texto: familia(x.valor) }),
     ]);
-    s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [extremo('A melhor:', c.melhor, 'combinacao-melhor'), extremo('A pior:', c.pior, 'combinacao-pior')]));
+    s.appendChild(el('div', { classe: 'combinacoes-extremos' }, [
+      el('p', { classe: 'combinacoes-subtitulo', texto: 'A melhor e a pior sequência de alternativas para conseguir renda' }),
+      extremo('Melhor sequência:', c.melhor, 'combinacao-melhor'),
+      extremo('Pior sequência:', c.pior, 'combinacao-pior'),
+    ]));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
