@@ -126,7 +126,7 @@ test('config.json do dia: válido, sem nenhum aviso sobre o roteiro ou sobre o t
   assert.deepEqual(doRoteiro, [], listar(doRoteiro));
 });
 
-test('config.json do dia: depois de cada bimestre, um bloco de dados com contexto, 1 a 3 itens e fonte; o das outras plataformas e o Fim, idem; sem "Entrevistas"', () => {
+test('config.json do dia: depois de cada bimestre, um bloco de dados com contexto, 1 a 3 itens e fonte; o Fim, idem; o das outras plataformas, com 4 itens; sem "Entrevistas"', () => {
   for (const [nome, passos] of Object.entries(dia.config.roteiros)) {
     assert.ok(!passos.some((p) => /entrevista/i.test(p.titulo || '')), `${nome}: sem a etapa "Entrevistas"`);
     passos.forEach((p, k) => {
@@ -139,7 +139,10 @@ test('config.json do dia: depois de cada bimestre, um bloco de dados com context
     assert.equal(comDados.length, 8, `${nome}: 6 blocos de dados, o das outras plataformas (D-080) e o Fim`);
     for (const p of comDados) {
       assert.ok(p.contexto, `${nome}/${p.titulo}: o contexto`);
-      assert.ok(p.itens?.length >= 1 && p.itens.length <= 3, `${nome}/${p.titulo}: de 1 a 3 itens`);
+      // O das outras plataformas tem 4 (pedido do Kleber de 06/10 à noite: uma
+      // ideia por item); o teto do validador é 4 (D-080). Os outros, até 3.
+      const teto = p.titulo === 'Dados: e nos outros aplicativos?' ? 4 : 3;
+      assert.ok(p.itens?.length >= 1 && p.itens.length <= teto, `${nome}/${p.titulo}: de 1 a ${teto} itens`);
       assert.ok(p.fonte, `${nome}/${p.titulo}: a fonte`);
     }
   }
@@ -175,11 +178,38 @@ test('config.json do dia: "Dados: e nos outros aplicativos?" logo antes do Fim, 
     const iFim = passos.findIndex((p) => /^Fim:/.test(p.titulo || ''));
     const antes = passos[iFim - 1];
     assert.equal(antes.titulo, 'Dados: e nos outros aplicativos?', `${nome}: o bloco antes do Fim`);
-    assert.equal(antes.itens.length, 3, `${nome}: três números`);
+    assert.equal(antes.itens.length, 4, `${nome}: quatro itens`);
     assert.match(antes.fonte, /^IBGE, PNAD Contínua/, `${nome}: a fonte`);
     const soma = passos.reduce((s, p) => s + (p.alvoSeg || 0), 0);
     assert.equal(soma, Number(nome.replace('min', '')) * 60, `${nome}: os tempos-alvo somam o roteiro inteiro`);
   }
+});
+
+// Pedido do Kleber de 06/10 à noite (print 1): os itens dos motoristas de app
+// ficaram confusos ("R$ 2.873 por mês em 45,9 horas por semana; por hora,
+// R$ 14,40, contra R$ 16…"; "80,2% …; 60,8%, quais passageiros atendem").
+// Reescritos em linguagem simples, uma ideia por item, sem ponto e vírgula
+// encadeando dois dados, e com a proporção fácil ("8 em cada 10") ao lado do
+// número exato. Os números e a fonte não mudam: todos os oito continuam lá,
+// cada um uma vez só, nos dois roteiros.
+test('config.json do dia: os motoristas de app em linguagem simples, com os mesmos números do IBGE', () => {
+  const numeros = ['R$ 2.873', '45,9 horas', 'R$ 14,40', 'R$ 16', '80,2%', '60,8%', '25,5%', '59,2%'];
+  const textos = [];
+  for (const [nome, passos] of Object.entries(dia.config.roteiros)) {
+    const bloco = passos.find((p) => p.titulo === 'Dados: e nos outros aplicativos?');
+    textos.push(JSON.stringify([bloco.contexto, bloco.itens, bloco.fonte]));
+    const itens = bloco.itens.join(' | ');
+    for (const n of numeros) assert.equal(itens.split(n).length - 1, 1, `${nome}: "${n}" uma vez nos itens`);
+    for (const item of bloco.itens) assert.ok(!item.includes(';'), `${nome}: sem ponto e vírgula em "${item}"`);
+    assert.ok(!/;/.test(bloco.contexto), `${nome}: o contexto sem ponto e vírgula`);
+    assert.match(bloco.contexto, /941 mil/, `${nome}: o contexto com os 941 mil`);
+    assert.match(bloco.contexto, /300 mil/, `${nome}: o contexto com os 300 mil`);
+    for (const proporcao of ['8 em cada 10 (80,2%)', '6 em cada 10 (60,8%)', '1 em cada 4 motoristas de app (25,5%)', '6 em cada 10 (59,2%)']) {
+      assert.ok(itens.includes(proporcao), `${nome}: "${proporcao}"`);
+    }
+    assert.equal(bloco.fonte, 'IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13', `${nome}: a mesma fonte`);
+  }
+  assert.equal(new Set(textos).size, 1, 'o mesmo bloco nos dois roteiros');
 });
 
 test('config.json do dia: cada opção tem a mini-história, de até 120 letras (cabe em duas linhas na decisão do telão)', () => {

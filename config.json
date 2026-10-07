@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-06-v4.3-simples",
+  "versao": "2026-10-06-v4.4-simples",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -1290,11 +1290,12 @@
         "tipo": "bloco",
         "titulo": "Dados: e nos outros aplicativos?",
         "alvoSeg": 90,
-        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e reparos.",
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de transporte de passageiros, como a Uber e a 99. Outras 300 mil trabalham em apps de faxina, cuidado e reparos.",
         "itens": [
-          "Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora, R$ 14,40, contra R$ 16 de quem dirige sem app.",
-          "80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto recebem por corrida; 60,8%, quais passageiros atendem.",
-          "Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas sem app, 59,2%."
+          "Motorista de app ganha R$ 2.873 por mês e trabalha 45,9 horas por semana.",
+          "Por hora, ganha menos que quem dirige sem app: R$ 14,40 contra R$ 16.",
+          "8 em cada 10 (80,2%) dizem que o app decide sozinho quanto recebem por corrida. 6 em cada 10 (60,8%) dizem que ele escolhe os passageiros.",
+          "Só 1 em cada 4 motoristas de app (25,5%) contribui para o INSS. Entre os motoristas sem app, são 6 em cada 10 (59,2%)."
         ],
         "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
       },
@@ -1491,11 +1492,12 @@
         "tipo": "bloco",
         "titulo": "Dados: e nos outros aplicativos?",
         "alvoSeg": 240,
-        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de passageiros, como a Uber e a 99, e 300 mil em apps de faxina, cuidado e reparos.",
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de transporte de passageiros, como a Uber e a 99. Outras 300 mil trabalham em apps de faxina, cuidado e reparos.",
         "itens": [
-          "Motorista de app: R$ 2.873 por mês em 45,9 horas por semana; por hora, R$ 14,40, contra R$ 16 de quem dirige sem app.",
-          "80,2% dos motoristas de app dizem que o aplicativo define sozinho quanto recebem por corrida; 60,8%, quais passageiros atendem.",
-          "Só 25,5% dos motoristas de app contribuem para o INSS; entre os motoristas sem app, 59,2%."
+          "Motorista de app ganha R$ 2.873 por mês e trabalha 45,9 horas por semana.",
+          "Por hora, ganha menos que quem dirige sem app: R$ 14,40 contra R$ 16.",
+          "8 em cada 10 (80,2%) dizem que o app decide sozinho quanto recebem por corrida. 6 em cada 10 (60,8%) dizem que ele escolhe os passageiros.",
+          "Só 1 em cada 4 motoristas de app (25,5%) contribui para o INSS. Entre os motoristas sem app, são 6 em cada 10 (59,2%)."
         ],
         "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
       },
