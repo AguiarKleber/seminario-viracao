@@ -777,7 +777,7 @@ seu `id`, como no `config.json` atual.)
 
 Opcional. Cada referência vira uma linha de comparação na página 1 do placar
 final ("quanto faltou para o básico"), e não uma equipe. O valor precisa de fonte
-e de validação (D-005). **O config do dia (`v4.3-simples`) não tem referência**
+e de validação (D-005). **O config do dia (`v4.4-simples`) não tem referência**
 (`"referencias": []`): a linha "Jonas com carteira assinada" saiu do placar na
 D-080 ("não agrega em nada"), e o telão desenha a página sem ela. O texto abaixo
 vale para quem quiser pôr uma linha de volta.

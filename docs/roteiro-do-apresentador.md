@@ -220,7 +220,12 @@ caminho fez com o dinheiro da família."
   quanto sobrou ou ficou devendo (sem a linha "Jonas com carteira assinada",
   que saiu na D-080); e
   "Das 15.625 combinações possíveis, 281 fecham o ano", com a melhor e a pior,
-  sem a lista de posições de cada equipe (D-079). O resultado de cada enquete
+  sem a lista de posições de cada equipe (D-079). Desde o pedido de 06/10 à
+  noite, um subtítulo diz o que são as duas linhas ("A melhor e a pior
+  sequência de alternativas para conseguir renda"), e cada uma traz as letras
+  e, embaixo, como a família termina o ano ("Melhor sequência: A D C E D A",
+  "A família termina o ano com R$ 1.714"; "Pior sequência: D A E C C C", "A
+  família termina o ano devendo R$ 6.135"). O resultado de cada enquete
   sai sem a linha "mediana · média · n" embaixo do gráfico.
 - **Na decisão, a célula de cada equipe diz só a cor** ("Laranja"): com a
   mini-história nas 5 opções, é o que deixa a tela caber em 1024×768.
@@ -1317,10 +1322,15 @@ básico")
 ### 5.11 Bloco final e Fim
 
 - **"Dados: e nos outros aplicativos?"** (D-080), logo antes do Fim: o
-  contexto (941 mil pessoas em apps de passageiros, 300 mil em apps de faxina,
-  cuidado e reparos) e três números dos motoristas de app (a renda e a hora, o
-  app que define o preço da corrida, o INSS). Leia o contexto e um número:
-  "Não é só o motoboy."
+  contexto (941 mil pessoas em apps de transporte de passageiros, 300 mil em
+  apps de faxina, cuidado e reparos) e quatro itens dos motoristas de app, uma
+  ideia por item (pedido de 06/10 à noite): "Motorista de app ganha R$ 2.873
+  por mês e trabalha 45,9 horas por semana."; "Por hora, ganha menos que quem
+  dirige sem app: R$ 14,40 contra R$ 16."; "8 em cada 10 (80,2%) dizem que o
+  app decide sozinho quanto recebem por corrida. 6 em cada 10 (60,8%) dizem que
+  ele escolhe os passageiros."; e "Só 1 em cada 4 motoristas de app (25,5%)
+  contribui para o INSS. Entre os motoristas sem app, são 6 em cada 10
+  (59,2%).". Leia o contexto e um número: "Não é só o motoboy."
 - **"Fim: quem é o patrão?"** mostra no telão o contexto e três números de
   quem manda (o app define o preço, a ameaça de bloqueio, o iFood no delivery;
   D-079). Leia e abra a conversa (D-014): texto livre da turma nunca aparece no
@@ -1341,7 +1351,7 @@ básico")
 28 min; com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo
 ocupa 38 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-06-v4.3-simples`). Na D-080, o bloco das outras plataformas
+(versão `2026-10-06-v4.4-simples`). Na D-080, o bloco das outras plataformas
 (1:30) entrou antes do Fim, e o tempo saiu do placar final (6:00 → 5:30), do
 termômetro (3:00 → 2:30) e do comparativo (2:00 → 1:30).
 
@@ -1411,7 +1421,7 @@ blocos de dados, e nunca as rodadas.
 | 21 | 102:00 | Termômetro (6:00), 3 afirmações | (5.8) |
 | 22 | 108:00 | Enquete de entrada · depois (1:30) | (5.9) |
 | 23 | 109:30 | Comparativo (2:30) | (5.10) |
-| 24 | 112:00 | Bloco: Dados: e nos outros aplicativos? (4:00) | O contexto e os três números dos motoristas de app (5.11) |
+| 24 | 112:00 | Bloco: Dados: e nos outros aplicativos? (4:00) | O contexto e os quatro itens dos motoristas de app (5.11) |
 | 25 | 116:00 | Bloco: Fim: quem é o patrão? (4:00) | Os três números de quem manda e a conversa (5.11) |
 | 26 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 

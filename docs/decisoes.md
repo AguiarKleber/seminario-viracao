@@ -850,3 +850,14 @@ D-079, da D-070 e da D-056).
   config passa a `9265c896`, e a versão não muda.
 - **O config passa à versão `2026-10-06-v4.3-simples`**; o site continua na
   versão 10, e as regras do Firebase, v4.
+- **Os pedidos de 06/10 à noite (prints 1 a 3):** os motoristas de app em
+  linguagem simples, em 4 itens com uma ideia cada e a proporção fácil ao lado
+  do número ("8 em cada 10 (80,2%)"), sem ponto e vírgula e com os mesmos
+  números e a mesma fonte; na página 3 do placar, o subtítulo "A melhor e a pior
+  sequência de alternativas para conseguir renda" e as linhas "Melhor
+  sequência"/"Pior sequência", com "A família termina o ano com R$ 1.714" e
+  "… devendo R$ 6.135" embaixo das letras; e o vão entre os dados dos blocos de
+  0,9 para 1,5 vez o espaço, com o aperto em dois degraus (o vão nunca fica
+  menor que o de antes, nem em "Caminhos" com a faixa de entrada). Config
+  `2026-10-06-v4.4-simples` (hash `57a8d00b`), versão 11 do site, regras v4;
+  os números das combinações não mudam (281 fecham, +R$ 1.714 e −R$ 6.135).
