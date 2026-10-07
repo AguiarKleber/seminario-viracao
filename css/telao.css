@@ -248,17 +248,25 @@ body.arrastando .zona-arquivo { border-color: var(--foco); }
    poluído); a fonte em cinza, no corpo mínimo de 28 px. O aperto (telao.js,
    telaBloco): só quando a tela transborda, entrelinhas e vãos menores. */
 .bloco-contexto { font-size: calc(var(--corpo) * 1.08); line-height: 1.3; max-width: 46em; }
-.bloco-itens { display: flex; flex-direction: column; gap: calc(var(--espaco) * .9); }
+/* O vão entre os itens: era .9 × espaço até o pedido do Kleber de 06/10 à
+   noite (print 3: "aumentar um pouco o espaçamento entre os dados"). */
+.bloco-itens { display: flex; flex-direction: column; gap: calc(var(--espaco) * 1.5); }
 .bloco-item { padding-left: .6em; border-left: 6px solid var(--foco); line-height: 1.25; max-width: 48em; }
 /* O respiro embaixo da fonte: colada ao pé da tela, a caixa do <b> (mais alta
    que a entrelinha) passava 2 px da tela, e o aperto ligava sem precisar. */
 .bloco-fonte { margin-top: auto; padding-bottom: .15em; color: var(--texto-2); line-height: 1.2; }
 .bloco-fonte b { color: var(--texto-2); font-weight: 700; }
 .bloco-mapa .bloco-fonte { margin-top: 0; }
-.tela-bloco[data-aperto] { gap: calc(var(--espaco) * .6); }
-.tela-bloco[data-aperto] .bloco-contexto, .tela-bloco[data-aperto] .bloco-item { line-height: 1.15; }
-.tela-bloco[data-aperto] .bloco-itens { gap: calc(var(--espaco) * .5); }
-.tela-bloco[data-aperto] .bloco-fonte { line-height: 1.1; }
+/* O aperto em dois degraus (telao.js, telaBloco). O primeiro só tira o que
+   sobrou do vão novo e a folga da entrelinha do contexto; o segundo é o
+   aperto de antes do pedido, com o vão dos itens um pouco maior (.8 em vez de
+   .5: "Caminhos", o bloco mais longo, ainda cabe com a faixa de entrada). */
+.tela-bloco[data-aperto] .bloco-contexto { line-height: 1.2; }
+.tela-bloco[data-aperto] .bloco-itens { gap: var(--espaco); }
+.tela-bloco[data-aperto="2"] { gap: calc(var(--espaco) * .6); }
+.tela-bloco[data-aperto="2"] .bloco-contexto, .tela-bloco[data-aperto="2"] .bloco-item { line-height: 1.15; }
+.tela-bloco[data-aperto="2"] .bloco-itens { gap: calc(var(--espaco) * .8); }
+.tela-bloco[data-aperto="2"] .bloco-fonte { line-height: 1.1; }
 
 /* Linha do tempo do seminário (D-042). Discreta nos blocos: uma trilha de
    marcas, com o mês do jogo escrito dentro da dele, e uma linha de texto. A cor
@@ -937,6 +945,12 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 }
 .combinacoes-extremos b { color: var(--texto); }
 .combinacao-letras { letter-spacing: .06em; white-space: nowrap; }
+/* Pedido do Kleber de 06/10 à noite (print 2): o subtítulo diz o que são as
+   duas linhas, e a frase da família vai embaixo das letras, inteira em uma
+   linha (depois de um "·", ela quebrava no meio do valor em 1024×768). A
+   frase em .8em de 1,3 × corpo dá 29 px no menor tamanho, acima dos 28 px. */
+.combinacoes-subtitulo { font-size: .85em; font-weight: 650; color: var(--texto); text-wrap: balance; }
+.combinacao-familia { display: block; font-size: .8em; }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }

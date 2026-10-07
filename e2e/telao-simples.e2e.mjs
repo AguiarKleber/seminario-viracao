@@ -27,7 +27,9 @@
 //    devendo" (as barras, com a linha da referência só se o config tiver uma,
 //    e sem a do que faltou na mesa) e "Das N combinações possíveis" (a melhor e a pior, iguais a
 //    motor.enumerarCombinacoes, sem a lista do lugar de cada equipe, D-079),
-//    com o tempo da contagem no navegador;
+//    com o tempo da contagem no navegador, o subtítulo "A melhor e a pior
+//    sequência de alternativas para conseguir renda" e, embaixo das letras de
+//    cada uma, como a família termina o ano (pedido de 06/10 à noite);
 // 5. com o config.json do dia (D-079), cada bloco com contexto: o contexto,
 //    os itens e a fonte do config, sem a trilha do seminário e sem o placar
 //    resumido, cabendo nos dois tamanhos.
@@ -307,6 +309,8 @@ async function conferirBlocoDeDados(indice) {
       fonte: document.querySelector('#palco .bloco-fonte')?.textContent ?? null,
       trilha: document.querySelectorAll('#palco .linha-tempo').length,
       placar: document.querySelectorAll('#palco .placar-resumido').length,
+      vao: document.querySelector('#palco .bloco-itens') ? parseFloat(getComputedStyle(document.querySelector('#palco .bloco-itens')).rowGap) : null,
+      espaco: Math.min(32, Math.max(10, innerHeight * 0.018)),
     }));
     assert.equal(t.h1, p.titulo, `${onde}: o título`);
     assert.equal(t.contexto, p.contexto, `${onde}: o contexto`);
@@ -314,6 +318,10 @@ async function conferirBlocoDeDados(indice) {
     assert.equal(t.fonte, p.fonte ? `Fontes: ${p.fonte}` : null, `${onde}: a fonte`);
     assert.equal(t.trilha, 0, `${onde}: sem a trilha do seminário`);
     assert.equal(t.placar, 0, `${onde}: sem o placar resumido`);
+    // Pedido do Kleber de 06/10 à noite (print 3): mais espaço entre os dados.
+    // O vão era .9 × o espaço; agora é 1,5 × e, no aperto, nunca menos que o
+    // espaço nos blocos de dados (o e2e:online confere com a faixa de entrada).
+    if (t.vao !== null) assert.ok(t.vao >= t.espaco - 0.01, `${onde}: o vão entre os itens (${t.vao} px) é menor que o espaço (${t.espaco} px)`);
   });
   blocosDeDados += 1;
 }
@@ -551,6 +559,17 @@ async function jogar(nome) {
       ms: document.querySelector('.tela').dataset.msCombinacoes,
       melhor: { ...document.querySelector('.combinacao-melhor').dataset },
       pior: { ...document.querySelector('.combinacao-pior').dataset },
+      subtitulo: document.querySelector('#palco .combinacoes-subtitulo')?.textContent ?? null,
+      linhas: Array.from(document.querySelectorAll('#palco .combinacao-extremo'), (n) => ({
+        rotulo: n.querySelector('.combinacao-rotulo')?.textContent,
+        letras: n.querySelector('.combinacao-letras')?.textContent,
+        familia: n.querySelector('.combinacao-familia')?.textContent,
+        // A frase da família na linha de baixo das letras, inteira (pedido de
+        // 06/10 à noite: com o "·" na mesma linha, quebrava no meio do valor).
+        // (A caixa do <b> das letras passa da entrelinha: compara com o meio dela.)
+        embaixo: (() => { const l = n.querySelector('.combinacao-letras').getBoundingClientRect(); return n.querySelector('.combinacao-familia').getBoundingClientRect().top >= l.top + l.height / 2; })(),
+        umaLinha: n.querySelector('.combinacao-familia').getClientRects().length === 1,
+      })),
       equipes: document.querySelectorAll('#palco .combinacao-equipe, #palco .combinacao-lugar').length,
       texto: document.getElementById('palco').textContent,
     }));
@@ -561,6 +580,18 @@ async function jogar(nome) {
     assert.equal(lido(t.h1), lido(`Das ${F.inteiro(contagem.total)} combinações possíveis, ${quantas}`), `${onde}: o título`);
     assert.deepEqual([t.melhor.letras, Number(t.melhor.valor)], [letrasDe(contagem.melhor.opcoes), Math.round(contagem.melhor.valor)], `${onde}: a melhor`);
     assert.deepEqual([t.pior.letras, Number(t.pior.valor)], [letrasDe(contagem.pior.opcoes), Math.round(contagem.pior.valor)], `${onde}: a pior`);
+    // Pedido do Kleber de 06/10 à noite (print 2): o subtítulo diz o que são as
+    // duas linhas, e cada uma diz qual sequência é e como a família termina.
+    assert.equal(t.subtitulo, 'A melhor e a pior sequência de alternativas para conseguir renda', `${onde}: o subtítulo`);
+    const meses = RODADAS.length * PERIODO.meses;
+    const periodoJogado = meses === 12 ? 'o ano' : meses === 1 ? 'o mês' : `os ${meses} meses`;
+    const linhaEsperada = (rotulo, x) => {
+      const d = H.dinheiroDaFamilia({ renda: x.valor });
+      return { rotulo, letras: letrasDe(x.opcoes).split('').join(' '), familia: lido(`A família termina ${periodoJogado} ${d.situacao === 'devendo' ? 'devendo' : 'com'} ${F.moeda(d.valor)}`) };
+    };
+    assert.deepEqual(t.linhas.map(({ rotulo, letras, familia }) => ({ rotulo, letras, familia: lido(familia) })),
+      [linhaEsperada('Melhor sequência:', contagem.melhor), linhaEsperada('Pior sequência:', contagem.pior)], `${onde}: as duas linhas`);
+    for (const l of t.linhas) assert.deepEqual([l.embaixo, l.umaLinha], [true, true], `${onde}/${l.rotulo}: a frase da família embaixo das letras, em uma linha só`);
     // D-079 (print 6 do Kleber): sem a lista do lugar de cada equipe.
     assert.equal(t.equipes, 0, `${onde}: sem a lista de posições`);
     assert.ok(!/\d+º de /.test(t.texto), `${onde}: nenhum "Nº de N"`);
