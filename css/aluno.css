@@ -532,6 +532,33 @@ body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .op
 .recolhido .historia-mes { background: var(--superficie-2); }
 .situacao-resumo .indicadores { border: 0; border-top: 1px solid var(--linha); border-radius: 0 0 var(--raio) var(--raio); }
 
+/* ---------- Modo individual: os dados do bloco e a turma ----------
+   Pedido do Kleber de 13/10, 21h (prints 3 e 4): o bloco de dados também no
+   celular, com o texto inteiro do telão. Na letra do celular (18 px) e com
+   espaço entre os itens, como o telão ganhou em 06/10: em 360×740, cada item
+   de até 140 caracteres vai a quatro ou cinco linhas, e a tela rola. O ano do
+   próprio aluno vem embaixo, depois de um título com um fio por cima. */
+.dados-contexto { font-size: 18px; line-height: 1.45; }
+.dados-itens {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 12px 14px;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.dados-item { padding-left: 12px; border-left: 3px solid var(--linha-forte); line-height: 1.4; overflow-wrap: anywhere; }
+.dados-fonte { font-size: 14px; color: var(--texto-2); overflow-wrap: anywhere; }
+.subtitulo-seu-ano { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--linha-forte); }
+/* "Das 18 pessoas da turma, 3 fecharam o ano com dinheiro sobrando e 15
+   terminaram devendo." Logo abaixo da frase do próprio ano: sem ranking e sem
+   nome, só a contagem. */
+.turma-fim {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 14px;
+  border-left: 4px solid var(--texto-2);
+  background: var(--superficie);
+  border-radius: 0 var(--raio) var(--raio) 0;
+}
+.turma-frase { font-size: 17px; font-weight: 600; line-height: 1.35; }
+
 @media (min-width: 600px) {
   body.aluno { font-size: 19px; }
   h1 { font-size: 30px; }

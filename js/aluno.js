@@ -174,7 +174,9 @@
   // acento ou um emoji não ficar cortado ao meio). Vazio vira null: o nome é
   // obrigatório.
   function limparNome(texto) {
-    const t = String(texto ?? '').replace(/\p{C}/gu, '').replace(/\s+/g, ' ').trim();
+    // Primeiro o espaço (a quebra de linha colada vira espaço), depois o resto
+    // dos caracteres de controle.
+    const t = String(texto ?? '').replace(/\s+/g, ' ').replace(/\p{C}/gu, '').trim();
     const cortado = Array.from(t).slice(0, NOME_MAX).join('').trim();
     return cortado === '' ? null : cortado;
   }
@@ -1576,6 +1578,11 @@
     pausado: 'Pausado pelo apresentador: o voto volta a valer quando ele retomar.',
     espectador: 'Modo espectador: não vota.',
   };
+  // Modo individual: não há conversa da equipe para acompanhar, e quem não vota
+  // fica com a opção de sempre (a apuração da vaga sem voto).
+  const motivoSemVoto = (motivo) => (individual() && motivo === 'entrouDepois'
+    ? 'Você entrou depois de esta decisão abrir: nesta, fica a opção de sempre. O seu voto vale na próxima.'
+    : MOTIVOS_SEM_VOTO[motivo]);
 
   function desenharTela(alvo, tela) {
     const d = tela.dados;
@@ -1626,8 +1633,11 @@
     const [titulo, texto] = textosDaEspera(d);
     const { el, acrescentar } = D();
     const kicker = d.titulo || app.dados.conteudo?.titulo || 'Seminário da Viração';
+    // Modo individual: o bloco de dados também aqui, no lugar do "acompanhe a
+    // apresentação" (o celular do apresentador, sem vaga, cai nesta tela).
+    const bloco = individual() && d.motivo === 'apresentacao' ? partesDoBloco(d.bloco) : null;
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { motivo: d.motivo } }, [
-      cabecalho(kicker, titulo), el('p', { classe: 'texto', texto }), notaDaRecusaDaEtapa() || nota(app.ui.nota),
+      bloco || [cabecalho(kicker, titulo), el('p', { classe: 'texto', texto })], notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'aguardando';
   }
@@ -2415,6 +2425,11 @@
   // voto simples da equipe (D-041: "ninguém votou: ficou o de sempre", e nunca
   // "piloto automático"). O mesmo texto do descreverDecisao.
   const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
+  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa.
+  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou o de sempre' };
+  const origensDaDecisao = () => (individual() ? ORIGENS_INDIVIDUAL : ORIGENS_DA_DECISAO);
+  // "Decisão:" nas telas da equipe; "A sua escolha:" no modo individual.
+  const rotuloDecisao = () => (individual() ? 'A sua escolha: ' : 'Decisão: ');
 
   // A frase do topo, em partes e sem DOM (o test/aluno-textos.test.mjs confere
   // cada caso): { antes, reais, depois } (o valor em negrito no meio) e os
@@ -2428,30 +2443,68 @@
   // opcoes.simples: no formato simples o telão diz "devendo R$ X", e o próprio
   // celular, "A família está devendo R$ X." (leitura final de 06/10); por isso,
   // "e a família ainda ficou devendo R$ X", e não "e ainda faltou R$ X".
+  // opcoes.individual (modo individual, decisão do Kleber de 13/10 à noite):
+  // na 2ª pessoa do singular ("Você escolheu em todos os 6 bimestres, e a
+  // família ainda ficou devendo R$ X."), e quem fecha as contas é a família,
+  // com voto ou sem ele.
   function partesDaFrase(origens, patrimonio, nome, opcoes = {}) {
     const total = lista(origens).length;
     if (!Number.isFinite(patrimonio) || total === 0) return null;
     const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
+    const sujeito = opcoes.individual ? 'Você escolheu' : 'Vocês escolheram';
     let quem;
-    if (escolheram === total) quem = total === 1 ? `Vocês escolheram no ${nome} jogado` : `Vocês escolheram em todos os ${total} ${pluralDoPeriodo(nome)}`;
-    else if (escolheram > 0) quem = `Vocês escolheram em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
-    else quem = `A equipe não votou em nenhum ${nome}`;
+    if (escolheram === total) quem = total === 1 ? `${sujeito} no ${nome} jogado` : `${sujeito} em todos os ${total} ${pluralDoPeriodo(nome)}`;
+    else if (escolheram > 0) quem = `${sujeito} em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
+    else quem = opcoes.individual ? `Você não votou em nenhum ${nome}` : `A equipe não votou em nenhum ${nome}`;
     const valor = Math.round(patrimonio) + 0;
     const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
     if (valor < 0) {
-      const falta = opcoes.simples
+      const falta = opcoes.simples || opcoes.individual
         ? (escolheram > 0 ? ', e a família ainda ficou devendo ' : ', e a família ficou devendo ')
         : (escolheram > 0 ? ', e ainda faltou ' : ', e faltou ');
       return { antes: `${quem}${falta}`, reais: -valor, depois: '.', ...atributos };
     }
+    if (opcoes.individual) return { antes: `${quem}, e a família fechou as contas: sobrou `, reais: valor, depois: '.', ...atributos };
     // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
     // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
     return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
   }
 
+  // Modo individual (pedido do Kleber de 13/10, 21h): no placar final, o
+  // celular diz quantas pessoas da turma fecharam o ano com dinheiro sobrando e
+  // quantas terminaram devendo, sem ranking e sem nome. turma é o
+  // historia.fimDoAnoDaTurma (a régua do telão: R$ 0 ou mais é "sobrando");
+  // null sem ninguém que tenha jogado o ano inteiro. Sem DOM: o
+  // test/aluno-individual.test.mjs confere cada caso.
+  function fraseDaTurma(turma) {
+    const pessoas = turma?.pessoas;
+    if (!Number.isInteger(pessoas) || pessoas <= 0) return null;
+    const positivos = Number(turma.positivos) || 0;
+    const negativos = Number(turma.negativos) || 0;
+    if (pessoas === 1) {
+      return `Na turma, 1 pessoa jogou o ano inteiro e terminou ${positivos === 1 ? 'com dinheiro sobrando' : 'devendo'}.`;
+    }
+    // "nenhuma fechou", "1 fechou", "3 fecharam": "pessoa" é feminino.
+    const quantas = (n, um, varios) => (n === 0 ? `nenhuma ${um}` : n === 1 ? `1 ${um}` : `${n} ${varios}`);
+    return `Das ${pessoas} pessoas da turma, ${quantas(positivos, 'fechou', 'fecharam')} o ano com dinheiro sobrando e ${quantas(negativos, 'terminou', 'terminaram')} devendo.`;
+  }
+
+  function linhaDaTurma(turma) {
+    const texto = fraseDaTurma(turma);
+    if (!texto) return null;
+    const { el } = D();
+    // Quem entrou no meio do ano fica fora da conta, e a tela diz (a mesma
+    // frase do telão), para a soma bater com a sala.
+    const depois = N().historia?.fraseDosQueEntraramDepois?.(turma) ?? null;
+    return el('div', { classe: 'turma-fim', dados: { pessoas: turma.pessoas, positivos: turma.positivos, negativos: turma.negativos } }, [
+      el('p', { classe: 'turma-frase', texto }),
+      depois ? el('p', { classe: 'texto-2', texto: depois }) : null,
+    ]);
+  }
+
   // A frase na tela; sem placar, o "ficou com" do último bimestre.
   function fraseDasEscolhas(meses, patrimonio) {
-    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples() });
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples(), individual: individual() });
     if (!f) return null;
     const { el } = D();
     return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },
@@ -2494,7 +2547,7 @@
     const p = periodo();
     const linhas = meses.map(({ h, decisao, origem, carta }, i) => {
       const letra = decisao ? letraDe(h.rodadaId, decisao) : '?';
-      const sufixo = ORIGENS_DA_DECISAO[origem];
+      const sufixo = origensDaDecisao()[origem];
       return el('li', { classe: 'escolha', dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, opcao: decisao || '', letra, origem: origem || '', carta: carta || '' } }, [
         el('span', { classe: 'escolha-mes', texto: h.rotulo || rotuloDoMes(h.titulo, i) }),
         valorSaldo(h.mes.saldoMes, 'saldo-mes'),
@@ -2508,7 +2561,7 @@
     const patrimonio = Number.isFinite(doPlacar) ? doPlacar : ultimo.saldoAcumulado;
     return [
       fraseDasEscolhas(meses, patrimonio),
-      el('section', { classe: 'escolhas-ano', 'aria-label': `As escolhas de vocês, ${p.nome} a ${p.nome}`, dados: { linhas: String(linhas.length) } }, [
+      el('section', { classe: 'escolhas-ano', 'aria-label': `As ${individual() ? 'suas escolhas' : 'escolhas de vocês'}, ${p.nome} a ${p.nome}`, dados: { linhas: String(linhas.length) } }, [
         // O cabeçalho das duas colunas, como o da tabela do resumo: o número
         // colorido de cada linha é o saldo do bimestre (pedido de 05/10, item 3:
         // tem de ficar claro que o valor colorido é o saldo do bimestre).
@@ -2578,7 +2631,7 @@
       // (historia.historiaDaEquipe, D-054).
       return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
         el('p', { classe: 'kicker', texto: h.titulo || '' }),
-        el('p', {}, ['Decisão: ', el('b', { texto: h.opcao?.rotulo || '' })]),
+        el('p', {}, [rotuloDecisao(), el('b', { texto: h.opcao?.rotulo || '' })]),
         h.opcao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.opcao.narrativa }) : null,
         el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
         h.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.carta.narrativa }) : null,
@@ -2599,15 +2652,25 @@
     // Formato simples: "Conheça o Jonas", como o telão (todas as equipes jogam
     // com ele), sem o ponto de partida dos indicadores (energia, proteção).
     const soUm = simples();
+    // Modo individual: sem a linha da vaga, e o texto de quem decide sozinho.
+    const sozinho = individual();
+    let kicker = soUm ? 'Todas as equipes jogam com o mesmo personagem' : 'A persona da sua equipe';
+    let comoSeJoga = 'Nas rodadas, a equipe decide junto. Vale a opção mais votada.';
+    if (sozinho) {
+      kicker = 'O personagem do jogo';
+      comoSeJoga = app.espectador
+        ? 'Cada pessoa escolhe sozinha, no próprio celular. O telão mostra só os totais da turma.'
+        : `Em cada ${periodo().nome}, a escolha é sua: ninguém vê o seu voto, e o telão mostra só os totais da turma.`;
+    }
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
-      cabecalho(soUm ? 'Todas as equipes jogam com o mesmo personagem' : 'A persona da sua equipe', soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
+      cabecalho(kicker, soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
       el('p', { classe: 'texto', texto: persona.descricao || '' }),
       linhaFamilia(persona),
       detalheBasico(persona),
       soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
       soUm ? null : listaIndicadores(d.indicadores),
-      el('p', { classe: 'texto-2', texto: 'Nas rodadas, a equipe decide junto. Vale a opção mais votada.' }),
+      el('p', { classe: 'texto-2', texto: comoSeJoga }),
     ]));
     return 'persona';
   }
@@ -2617,7 +2680,27 @@
     const base = `${letraDe(rodadaId, decisao.id)} · ${decisao.rotulo || decisao.id}`;
     // "piloto automático" saiu das telas (D-041; rascunho, seção 7, item 14):
     // no ensaio, soava como a opção boa de quem não votou.
-    return ORIGENS_DA_DECISAO[origem] ? `${base} (${ORIGENS_DA_DECISAO[origem]})` : base;
+    const origens = origensDaDecisao();
+    return origens[origem] ? `${base} (${origens[origem]})` : base;
+  }
+
+  // Modo individual (pedido do Kleber de 13/10, 21h, prints 3 e 4): o bloco de
+  // dados também no celular, ao mesmo tempo que no telão, com o título, o
+  // contexto, os itens e a fonte do passo do roteiro congelado na sala
+  // (alunoLogica, dados.bloco). Até a versão 11, o celular mostrava só o
+  // título, e quem estava longe do telão não lia os números. Cabe em 360×740
+  // com rolagem: o texto é o do telão, inteiro, na letra do celular.
+  function partesDoBloco(bloco) {
+    if (!bloco) return null;
+    const { el } = D();
+    return [
+      cabecalho('O mesmo do telão', bloco.titulo || ''),
+      bloco.contexto ? el('p', { classe: 'dados-contexto', texto: bloco.contexto }) : null,
+      lista(bloco.itens).length > 0
+        ? el('ul', { classe: 'dados-itens', dados: { itens: String(lista(bloco.itens).length) } }, lista(bloco.itens).map((t) => el('li', { classe: 'dados-item', texto: t })))
+        : null,
+      bloco.fonte ? el('p', { classe: 'dados-fonte', texto: `Fonte: ${bloco.fonte}` }) : null,
+    ];
   }
 
   // A situação da persona nos blocos e no placar final (D-065). De cima para
@@ -2634,10 +2717,21 @@
     // No placar final a história vem pronta; nos blocos, a telaDoAluno manda só
     // o último mês, e o resumo sai dos resultados do banco (a mesma função).
     const historia = d.final ? lista(d.historia) : historiaDaSala(d.equipe?.id);
+    // Modo individual: sem a linha da vaga (o número dela não diz nada a
+    // ninguém) e, nos blocos de dados, o texto do telão no topo; o ano do
+    // próprio aluno vem logo depois, com um título que separa um do outro.
+    const sozinho = individual();
+    const bloco = sozinho && !d.final ? partesDoBloco(d.bloco) : null;
+    let titulo = d.final ? 'As escolhas de vocês' : (d.titulo || `A situação de ${nome}`);
+    if (sozinho && d.final) titulo = 'As suas escolhas';
     const filhos = [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
-      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? 'As escolhas de vocês' : (d.titulo || `A situação de ${nome}`)),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
+      bloco || cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', titulo),
     ];
+    if (bloco) {
+      const todas = ordemDe(app.dados.conteudo, 'rodadas').length;
+      filhos.push(el('h2', { classe: 'subtitulo subtitulo-seu-ano', texto: historia.length > 0 && historia.length >= todas ? 'O seu ano' : 'O seu ano até aqui' }));
+    }
     if (d.final) {
       // As escolhas e a dívida de hoje no topo; "Escolha ou sorte?" e o pior
       // caso logo depois: são o fecho da aula. A história inteira fica
@@ -2647,8 +2741,13 @@
       // Formato simples: as escolhas do ano (a frase de cima já diz quanto
       // sobrou ou faltou) e a história recolhida. Sem "Escolha ou sorte?" (não
       // há sorte), sem o pior caso e sem o detalhe da dívida.
-      if (simples()) filhos.push(blocoEscolhas(historia, d), blocoHistoria(historia, d.persona?.nome));
-      else {
+      // Modo individual: logo abaixo da frase do próprio ano, quantas pessoas
+      // da turma fecharam o ano e quantas terminaram devendo, sem ranking e
+      // sem nome (o voto é secreto).
+      if (simples()) {
+        const [frase, escolhas] = blocoEscolhas(historia, d) || [];
+        filhos.push(frase, sozinho ? linhaDaTurma(d.turma) : null, escolhas, blocoHistoria(historia, d.persona?.nome));
+      } else {
         filhos.push(blocoEscolhas(historia, d), ultimo ? blocoDivida(dividaDoUltimo(ultimo), ultimo.mes) : null,
           blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
       }
@@ -2668,7 +2767,7 @@
       filhos.push(recolhido(`mes:${d.mes.rodada}`, `${rotulo}: a conta em detalhe`, [
         contaDoMes(d.mes, d.persona),
         el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
-          el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
+          el('p', {}, [rotuloDecisao(), el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
           el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
           linhaCustoCarta(d.mes.cartaCusto),
           ...lista(d.narrativa).map((t) => el('blockquote', { classe: 'narrativa', texto: t })),
@@ -2718,6 +2817,7 @@
     const enviando = emVoo(envio);
     const escolhido = enviando || guardadoNoAparelho(envio) ? envio.pendente.opcao : d.meuVoto;
     const personaId = personaIdDaEquipe(membro.equipe);
+    const sozinho = individual();
     const aberta = d.opcoes.some((op) => op.id === app.ui.aberta) ? app.ui.aberta : null;
     const eqNova = app.ui.movido?.rodada === d.rodada.id && !escolhido ? app.dados.conteudo?.equipes?.[app.ui.movido.para] : null;
     const eqNovaTexto = eqNova
@@ -2757,13 +2857,24 @@
           op.impacto ? el('span', { classe: 'opcao-impacto', texto: op.impacto }) : null,
           minha ? el('span', { classe: 'opcao-seu-voto', texto: marca }) : null,
         ]),
-        el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
+        // Modo individual: sem a contagem. Numa vaga de uma pessoa, ela só
+        // diria "1 voto" na própria escolha, que já leva o "✓ seu voto".
+        sozinho ? null : el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
       ]);
       return el('div', { classe: ['opcao-aluno', estaAberta ? 'aberta' : null], dados: { opcaoBloco: op.id } }, [
         b, estaAberta ? detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase, movido: eqNovaTexto }) : null,
       ]);
     });
-    const forcada = d.forcada ? `O apresentador registrou a decisão da equipe: ${letraDe(d.rodada.id, d.forcada)}.` : null;
+    // Modo individual: o apresentador só registra uma escolha sem celulares
+    // (anfitriao.decidirPelaTurma), e ela é a da turma, de mão levantada.
+    const forcada = d.forcada
+      ? `O apresentador registrou a ${sozinho ? 'escolha da turma' : 'decisão da equipe'}: ${letraDe(d.rodada.id, d.forcada)}.`
+      : null;
+    // A dica do toque que não vota (D-055), depois das opções. No modo
+    // individual, sem os votos da equipe: a escolha é só de quem vota.
+    const dica = sozinho
+      ? 'Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. A escolha é só sua, ninguém vê o seu voto, e dá para mudar até o apresentador encerrar. Sem voto, fica a opção de sempre.'
+      : `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${d.situacao?.equipe?.nome ? `Equipe ${d.situacao.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.`;
     const s = d.situacao;
     const persona = s?.persona?.nome;
     // A ordem é o que se lê antes de votar: o aperto da casa no topo (D-043) e
@@ -2801,12 +2912,12 @@
       pressao.length > 0 ? el('div', { classe: 'pressao' }, pressao) : null,
       movido,
       el('div', { classe: 'opcoes-aluno', role: 'group', 'aria-label': `Opções da rodada (${opcoes.length})` }, opcoes),
-      nota(d.motivo ? MOTIVOS_SEM_VOTO[d.motivo] : null),
+      nota(d.motivo ? motivoSemVoto(d.motivo) : null),
       nota(forcada),
       notaDoEnvio(envio, escolhido ? `Seu voto: ${letraDe(d.rodada.id, escolhido)} · registrado.` : null) || nota(app.ui.nota),
       // A dica do toque que não vota (D-055) fica aqui, depois das opções: acima
       // delas, a linha a mais empurrava a letra D para baixo da dobra em 360×740.
-      el('p', { classe: 'texto-2', texto: `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome ? `Equipe ${s.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
+      el('p', { classe: 'texto-2', texto: dica }),
       s ? el('details', { classe: 'situacao-resumo' }, [
         el('summary', { texto: `Situação de ${persona || 'sua persona'}` }),
         // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
@@ -2838,7 +2949,7 @@
       // só aparecia numa nota embaixo da lista (fora da tela em 360×740), o
       // botão ficava igual, e o "Votar nesta" parecia quebrado. O mesmo para o
       // botão apagado (entrou depois, pausado): sem o motivo à vista, parecia defeito.
-      if (!d.podeVotar) aviso = avisoDaOpcao(MOTIVOS_SEM_VOTO[d.motivo], 'info');
+      if (!d.podeVotar) aviso = avisoDaOpcao(motivoSemVoto(d.motivo), 'info');
       else if (envio?.estagio === 'recusado' && envio.pendente.opcao === op.id) {
         const r = recusaParaTela(envio);
         aviso = avisoDaOpcao(r.texto, r.tipo);
@@ -2979,15 +3090,18 @@
     const { el, acrescentar } = D();
     const mes = d.mes;
     const persona = personaDaEquipe(d.equipe?.id);
+    // Modo individual: na 2ª pessoa ("O seu saldo do bimestre", "A sua
+    // escolha"), e sem a linha da vaga.
+    const sozinho = individual();
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { tom: 'normal', carta: d.carta?.id || '' } }, [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(`${d.rodada?.titulo || 'Rodada'} · o que aconteceu`, d.carta?.titulo || ''),
       notaDaRecusaDaEtapa(),
       d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
-      el('p', { classe: 'decisao-linha' }, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
+      el('p', { classe: 'decisao-linha' }, [rotuloDecisao(), el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
       Number.isFinite(mes?.saldoMes)
         ? el('p', { classe: 'saldo-destaque', dados: { saldoMes: mes.saldoMes, sinal: sinalDe(mes.saldoMes) } }, [
-          el('span', { classe: 'saldo-rotulo', texto: `Saldo ${periodo().doPeriodo}` }),
+          el('span', { classe: 'saldo-rotulo', texto: `${sozinho ? 'O seu saldo' : 'Saldo'} ${periodo().doPeriodo}` }),
           valorSaldo(mes.saldoMes),
         ])
         : null,
@@ -3012,7 +3126,9 @@
     if (grupos.length === 0) return null;
     const { el } = D();
     const partes = grupos.map((g) => [`${g.motivo} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) })]);
-    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, ['Por causa de escolhas anteriores: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+    // Modo individual: as escolhas anteriores são as do próprio aluno.
+    const rotulo = individual() ? 'Por causa das suas escolhas anteriores: ' : 'Por causa de escolhas anteriores: ';
+    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, [rotulo, partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   function telaResultado(alvo, d) {
@@ -3107,12 +3223,16 @@
   // história recolhida. Antes, a primeira linha era "Saldo acumulado da sua
   // equipe", o caixa gravado no placar: com o empréstimo, ele dizia R$ 1.500 a
   // mais do que a família tinha. O "ficou com" da última linha é o patrimônio.
+  // Modo individual: sem a linha da vaga, e com a frase da turma (quantas
+  // pessoas fecharam o ano), a mesma do placar final.
   function telaFim(alvo, d) {
     const { el, acrescentar } = D();
+    const sozinho = individual();
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
-      d.equipe ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
+      d.equipe && !sozinho ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
       resumoMesAMes(d.historia),
+      sozinho ? linhaDaTurma(d.turma) : null,
       // Formato simples: sem sorte, o pior caso é o próprio caminho jogado.
       simples() ? null : blocoPiorCaso(d.piorCaso),
       blocoHistoria(d.historia, personaDaEquipe(d.equipe?.id)?.nome),
@@ -3203,9 +3323,10 @@
     // D-064: a equipe que o espectador vê, ou null fora do modo espectador.
     espectador: () => (app.espectador ? { equipe: app.espectador.equipe } : null),
     // As contas puras das telas de 05/10 (a dívida total, a frase das escolhas
-    // e o "no ano"), para o teste unitário, que roda no Node sem DOM: não leem
-    // nem mudam o estado.
-    textos: { totalDaDivida, partesDaFrase, quandoDosMeses },
+    // e o "no ano") e as do modo individual (o nome limpo e a frase da turma),
+    // para o teste unitário, que roda no Node sem DOM: não leem nem mudam o
+    // estado.
+    textos: { totalDaDivida, partesDaFrase, quandoDosMeses, limparNome, fraseDaTurma },
   };
 
   if (typeof document !== 'undefined') {
