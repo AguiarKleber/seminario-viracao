@@ -39,11 +39,11 @@ caso, vale a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
 **Revisão do conteúdo de 29/09 (D-050 a D-057, esquema v2.1, versão 4 do
 site).** O que muda para quem conduz:
 - o resultado diz **o custo real da carta**: "20 dias parado · renda perdida
-  R$ 1.787 · gastos R$ 1.650" (D-052). O conserto, o remédio e a multa saem numa
+  R$ 1.787 · gastos R$ 1.650" (D-052). O conserto, o remédio e a multa saem em uma
   linha própria, "gastos", fora do "entrou";
 - o que vem do mês anterior aparece com nome: "+25 dias da fratura −R$ 2.233",
   "INSS (45 dias) +R$ 2.431", a multa do aluguel, o saldo do empréstimo;
-- no celular, **tocar numa opção abre a explicação e não vota**; o voto só vale
+- no celular, **tocar em uma opção abre a explicação e não vota**; o voto só vale
   no botão **"Votar nesta"** (D-055);
 - a mesma opção vem dita do jeito de cada ofício (D-054): a equipe da Daiane lê
   "Aceitar toda encomenda", e a do Jonas, "Aceitar tudo o que vier". A letra é a
@@ -108,7 +108,7 @@ seminário de 07/10. O que muda para quem conduz:
   as rodadas, em blocos curtos de dados (seções 6 e 7). A decisão tem **90 s**
   no cronômetro, e as entrevistas, opcionais, somam 4 min (60 min) ou 20 min
   (120 min). Marcado como "vamos testar";
-- **seis personagens, um por equipe, cada um num trabalho** (D-061): Jonas
+- **seis personagens, um por equipe, cada um em um trabalho** (D-061): Jonas
   (motoboy do iFood), Rose (manicure por app), Marcos (motorista de app), Bruna
   (influenciadora, a personagem nova), Kauã (entregador de bicicleta) e Daiane
   (doces no Instagram). Nenhuma persona se repete, e as equipes do Jonas e da
@@ -384,7 +384,7 @@ caminho fez com o dinheiro da família."
 - Com seis equipes e a faixa de entrada aberta, o telão aperta a tela para
   caber: no resultado, pode esconder o evento do mês e, com a observação em
   muitas equipes, deixar cada linha da faixa com a altura da letra; na decisão,
-  numa tela baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
+  em uma tela baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
   formar as equipes (barra → **Entrada aberta**) e tudo volta.
 
 **O que dizer uma vez, em "Conheça o Jonas"** (e não explicar mais que isso):
@@ -432,9 +432,9 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 - O notebook, com o Chrome ou o Edge atualizado, e o carregador.
 - O cabo ou adaptador para o projetor.
 - O pendrive com a pasta do ZIP (README, passo 11).
-- O PIN do apresentador, de memória ou num papel que fica com você. Nunca na tela.
+- O PIN do apresentador, de memória ou em um papel que fica com você. Nunca na tela.
 - Papel e caneta, para anotar o código da sala.
-- Os slides, prontos para abrir numa janela própria. Eles são o material
+- Os slides, prontos para abrir em uma janela própria. Eles são o material
   complementar: o telão mostra a linha do tempo, e o conteúdo de cada trecho
   está nos slides (D-042).
 - O plano B em papel da trilha: cartões coloridos ou mão levantada.
@@ -520,7 +520,7 @@ Chegue 30 minutos antes.
      Win+Shift+→ antes de pôr em tela cheia.
 3. **Antes de a turma ver a tela** (projetor ainda desligado, ou com a imagem em
    branco pelo botão do projetor), abra
-   `https://aguiarkleber.github.io/seminario-viracao/telao/` numa janela própria
+   `https://aguiarkleber.github.io/seminario-viracao/telao/` em uma janela própria
    do Chrome ou do Edge, o mesmo navegador configurado na véspera: economia de
    memória desligada para o site e downloads automáticos permitidos (seção 2).
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
@@ -645,7 +645,7 @@ celulares, as letras da decisão de cada equipe (o que ela anunciou). A abertura
   afirmação sem contagem e a primeira contagem à mão por cima de votos de
   celular;
 - sem conexão (selo em **Reconectando…**), os comandos são recusados na hora,
-  com aviso, e não ficam numa fila: repita quando o selo voltar a
+  com aviso, e não ficam em uma fila: repita quando o selo voltar a
   **Conectado** (seção 8).
 
 **O cronômetro é só visual.** Nada fecha sozinho: quem encerra é você (D-010).
@@ -681,7 +681,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 
 **O que ele mostra**
 - No topo, uma fileira de botões, um por equipe, com a forma e o número. Tocar
-  num deles troca a tela para a daquela equipe. A equipe fechada na formação
+  em um deles troca a tela para a daquela equipe. A equipe fechada na formação
   fica apagada: ela não tem tela de aluno. Ao entrar, ele mostra a primeira
   equipe aberta.
 - No lugar do crachá, o selo **modo espectador**.
@@ -707,7 +707,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   sala, ele é um membro: recarregar volta direto à sala como aluno (a tela de
   aluno não tem saída), e o **Sou apresentador** recusa com o aviso do passo 4,
   porque o registro de aluno continuaria contando no "k de m" da equipe. Use
-  outro aparelho, ou abra o endereço do aluno numa **aba anônima** deste celular
+  outro aparelho, ou abra o endereço do aluno em uma **aba anônima** deste celular
   (o login anônimo é outro) e entre pelo **Sou apresentador**; feche a aba de
   aluno. O registro de aluno que ficou sai da contagem com **Remover inativos**,
   depois de 2 min sem sinal (seção 10). **No jogo individual, não:** o aparelho
@@ -716,7 +716,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   nunca entre como aluno com o seu celular; use o **Sou apresentador** desde o
   começo.
 - **Nunca no navegador do telão.** Não abra o modo espectador no notebook, no
-  mesmo navegador (e no mesmo perfil) do telão, nem numa aba ao lado dele: as
+  mesmo navegador (e no mesmo perfil) do telão, nem em uma aba ao lado dele: as
   duas páginas têm o mesmo login anônimo e o mesmo pedido de PIN, e uma apaga o
   da outra. O telão apaga o pedido ao criar ou retomar a sala, e o espectador
   pode ficar sem a contagem até regravá-lo, na próxima recusa; o espectador que
@@ -786,7 +786,7 @@ slides.
     "Placar, termômetro, medição, fechamento" no roteiro de 60 min ("Placar,
     conversa, caminhos, termômetro, medição, fechamento" no de 120; até a revisão
     textual de 06/10, o placar era "Debrief"). Nada some da linha,
-    que fica com 18 itens. Num bloco que fica dentro desse item (o "Fim: quem é
+    que fica com 18 itens. Em um bloco que fica dentro desse item (o "Fim: quem é
     o patrão?", por exemplo), a linha diz "é o último trecho".
   - No bloco **"Mapa do seminário"** (só no roteiro de 120 min), a linha do
     tempo é o próprio conteúdo: todos os trechos por extenso, em colunas, sem o
@@ -799,20 +799,20 @@ slides.
     com" é o que a família tem, já descontado o empréstimo a pagar: é o do
     bimestre anterior mais o saldo do bimestre. Os valores vão sempre com + ou
     −, em verde quando positivos e em vermelho quando negativos (o zero fica sem
-    cor, "R$ 0"). As seis linhas cabem inteiras num celular de 360×740;
+    cor, "R$ 0"). As seis linhas cabem inteiras em um celular de 360×740;
   - logo embaixo, a **dívida**: "Dívida no banco R$ D" (o cheque especial e o
     empréstimo, o mesmo número que o telão chama de "dívida") e, quando há, o
     cheque especial ("Cheque especial R$ C de R$ 2.000 do limite · juros de
     7,43% ao mês"), o empréstimo ("fica devendo R$ E em N parcelas · a próxima:
-    R$ P") e, numa linha própria, fora do banco, as contas atrasadas ("Contas
+    R$ P") e, em uma linha própria, fora do banco, as contas atrasadas ("Contas
     atrasadas R$ A · multa de 8% e mora de 1% ao mês"). Embaixo, à parte,
     porque não é dívida: "Faltou na mesa: R$ X de comida que não deu para
     comprar, até agora.";
-  - o resumo e a dívida cabem inteiros num celular de 360×740, sem rolar. O
+  - o resumo e a dívida cabem inteiros em um celular de 360×740, sem rolar. O
     resto fica recolhido: "▸ ver" abre a conta do último bimestre, por exemplo
     "Mar–abr: a conta em detalhe" (entrou, gastos, básico, juros, a multa e a
     mora das contas atrasadas, o que o limite fez, a decisão, a carta e o que
-    aconteceu, em primeira pessoa). A família vem numa linha só.
+    aconteceu, em primeira pessoa). A família vem em uma linha só.
   Antes do primeiro mês, a família, o básico e os indicadores, sem resumo.
 - **Faça:** Espaço entra no bloco; Alt+Tab para os slides; apresente; Alt+Tab de
   volta; Espaço vai ao próximo passo. Entre dois blocos seguidos, volte ao telão e
@@ -842,7 +842,7 @@ slides.
   Conte cerca de 3 pessoas por equipe: é o número que o "Me coloque" completa antes de passar para a próxima
   (`alvoPorEquipe`). As equipes marcadas "sempre joga" não fecham. Quando o telão
   mostrar "0 pessoas sem equipe", Espaço **trava as equipes**. Quem chegar depois
-  é posto numa equipe pelo próprio telão.
+  é posto em uma equipe pelo próprio telão.
 - **Diga:** "Toquem em 'Me coloque em uma equipe', ou escolham uma. Sentem junto
   com a sua equipe (D-018). Dá para trocar até eu travar."
 
@@ -857,7 +857,7 @@ slides.
   3. o mês comum, em vermelho: "a conta do mês não fecha: faltam R$ W" (ou, em
      verde, "a conta do mês fecha: sobram R$ W").
   Esse "faltam" é o de **um mês** comum, sem carta e sem decisão: o trabalho, a
-  outra renda e o básico. O jogo cobra dois meses por rodada, então num bimestre
+  outra renda e o básico. O jogo cobra dois meses por rodada, então em um bimestre
   comum a falta é o dobro. No config atual, todas as casas começam faltando: R$ 390
   (Marcos), R$ 392 (Jonas), R$ 1.122 (Kauã), R$ 1.232 (Bruna), R$ 1.932 (Rose) e
   R$ 2.146 (Daiane) por mês (o mês comum do motor; rascunho, seção 2). O e2e confere, com seis personas e
@@ -894,12 +894,12 @@ slides.
 - **Celular**, de cima para baixo: o cronômetro; o **contexto da família** naquele
   bimestre (o do Jonas em Jan–fev: "Às 14h faz 39 °C, a filha está de férias, e a parcela da moto vence dia 5."), diferente
   para cada persona; o básico do bimestre e a dívida; as 4 opções, cada uma com a contagem ao vivo da
-  equipe, com o texto do jeito do ofício da persona (D-054). **Tocar numa opção
+  equipe, com o texto do jeito do ofício da persona (D-054). **Tocar em uma opção
   abre a explicação dela e não vota**; o voto só vale no botão **"Votar
   nesta"**, logo abaixo da explicação (D-055). A opção com o voto do aluno diz
   "✓ seu voto" só depois que o servidor confirmou; antes, "enviando…" ou
   "guardado no aparelho". Se as opções não couberem na tela, o botão "Mais
-  opções abaixo ↓" leva até elas. A dívida da família aparece numa linha
+  opções abaixo ↓" leva até elas. A dívida da família aparece em uma linha
   curta: "Dívida R$ D · juros de J% ao mês" ou, com empréstimo, "Dívida R$ D,
   com R$ E de empréstimo". É a dívida no banco; as contas atrasadas ficam na
   tela da situação, para a linha não empurrar o "Votar nesta" para baixo.
@@ -924,7 +924,7 @@ slides.
     de vocês neste bimestre: está no celular."
   - "Não tem resposta certa. Cada opção tem um preço, e ele pode aparecer só no
     bimestre que vem, ou no fim do ano."
-  - "Toquem numa opção para ler o que ela quer dizer. Tocar não vota: o voto só
+  - "Toquem em uma opção para ler o que ela quer dizer. Tocar não vota: o voto só
     vale no botão 'Votar nesta'."
   - "Cada um vota no próprio celular e vê a contagem da equipe. Vale a opção mais
     votada, e dá para mudar até eu encerrar. Se ninguém votar, fica o de
@@ -934,7 +934,7 @@ slides.
   | Rodada | O dilema | A | B | C | D |
   | --- | --- | --- | --- | --- | --- |
   | Jan–fev: quanto trabalhar no calor? | material escolar e 39 °C | 12 horas por dia, 7 dias | Jornada de sempre e abrir o MEI (a proteção) | Jornada de sempre, sem pagar nada * | Parar nas horas de sol forte |
-  | Mar–abr: a lei que saiu de pauta | a greve de 14/04, o 99Food e o IPVA (vence em 30/04) | Parar no dia da greve | Rodar num segundo app | Pegar R$ 1.500 no crédito pessoal | Aceitar tudo o que vier * |
+  | Mar–abr: a lei que saiu de pauta | a greve de 14/04, o 99Food e o IPVA (vence em 30/04) | Parar no dia da greve | Rodar em um segundo app | Pegar R$ 1.500 no crédito pessoal | Aceitar tudo o que vier * |
   | Mai–jun: água, frio e Dia das Mães | a cheia e o frio | Entrar na associação | Manter o combinado: investir no trabalho * | Rodar até de madrugada, na chuva e no frio | Desistir do combinado |
   | Jul–ago: a regra nova do app | o +Entregas e o protesto de 27/07 | Entrar no +Entregas | Ir ao protesto | Adiar a manutenção e o remédio * | Tirar uma semana de folga |
   | Set–out: breque geral | o breque de 01/09 e a Farroupilha | Jornada de sempre * | Recusar o que não paga | Aderir ao breque | Furar o breque e rodar a Farroupilha |
@@ -1024,7 +1024,7 @@ explicar quando aparecer)
   simples; depois, o gás, o ônibus e o remédio, que não atrasam: a casa **fica
   sem** eles, sem multa (a tela diz "ficou sem R$ Z"); depois, **comida que não deu para comprar** ("faltou na mesa"), no
   máximo a comida do bimestre; e o que passar disso (um conserto, por exemplo)
-  atrasa também. Num bimestre bom, a folga até o limite paga primeiro as
+  atrasa também. Em um bimestre bom, a folga até o limite paga primeiro as
   contas atrasadas.
 - **Quanto, no config atual** (validador, conferência j, estimado): o banco
   termina o ano em R$ 2.000 nas seis casas. As contas atrasadas no fim, no
@@ -1033,7 +1033,7 @@ explicar quando aparecer)
   corta comida em quase todo bimestre; a Rose fica na beira, e qualquer carta
   ruim vira comida cortada (rascunho, seção 5.1).
 - **No telão**, a faixa da equipe diz "dívida R$ D" (o banco e o empréstimo) e,
-  numa linha embaixo, "contas atrasadas R$ Y · faltou na mesa R$ Z" (a comida
+  em uma linha embaixo, "contas atrasadas R$ Y · faltou na mesa R$ Z" (a comida
   deste bimestre). **No celular**, as mesmas três coisas com nome, e a conta
   recolhida diz o que o limite fez: "O limite do cheque especial acabou: R$ X
   de contas ficaram atrasadas (multa de R$ M) e R$ Y de comida não deu para
@@ -1058,7 +1058,7 @@ explicar quando aparecer)
   contas; depois que o despejo já saiu, o corte vai a ~40%. No jogo, a
   religação não quita a luz atrasada, e o corte pode voltar no bimestre
   seguinte. No padrão, de 37% (Jonas) a 76% (Daiane) das partidas tiram o
-  despejo; numa sala de 6 equipes, em média 3,8 tiram o despejo e 4 tiram o
+  despejo; em uma sala de 6 equipes, em média 3,8 tiram o despejo e 4 tiram o
   corte no ano. As regras e os custos têm fonte;
   **a chance é estimativa** (rascunho, seção 8, item 20).
 - **O que dizer:**
@@ -1176,7 +1176,7 @@ explicar quando aparecer)
   - **O que não está no telão:** entrou, gastos, multa e mora, básico, juros e
     o que veio do bimestre anterior. Ficam no celular de cada equipe e na história do
     placar final (seção 5.7).
-  - A carta aparece pelo título inteiro; se ele não couber numa linha, pelo nome
+  - A carta aparece pelo título inteiro; se ele não couber em uma linha, pelo nome
     curto ("Fratura"). As cartas de efeito mais forte entram animadas (quantas,
     diz o `destacarCartas` do config), sem contorno nem sombra a mais: um
     contorno sem legenda parecia "as equipes que ganharam". Carta grave nunca
@@ -1186,7 +1186,7 @@ explicar quando aparecer)
     mostrando). O e2e confere a tela em 1024×768 e 1920×1080: nada menor que
     28 px, sem rolagem e nenhum texto sobreposto.
 - **Celular:** a carta da equipe, com a narrativa em primeira pessoa; a decisão
-  numa linha; o **saldo do bimestre em destaque**, verde ou vermelho (no
+  em uma linha; o **saldo do bimestre em destaque**, verde ou vermelho (no
   vermelho, também com a borda grossa); a dívida; e "Como ficou" (energia e
   proteção). A conta fica recolhida em "▸ ver" ("A conta do bimestre em
   detalhe"): o que a carta custou (dias parado, renda perdida, gastos); "Entrou
@@ -1279,7 +1279,7 @@ O placar é uma sequência de páginas. **Espaço passa de uma para a outra**, e
 próxima página (2 de 15)"). Não há critério a trocar nem vencedor. Com 6 equipes
 são **15 páginas**: o saldo, "Escolha ou sorte?", "O pior que podia acontecer" e
 **duas páginas de história por equipe** (Jan–fev a Mai–jun e Jul–ago a
-Nov–dez: os seis bimestres numa página só passavam da altura do projetor). O
+Nov–dez: os seis bimestres em uma página só passavam da altura do projetor). O
 tempo-alvo do passo é de 4 min no roteiro de 60 min (5 min no de 120): demore
 nas três primeiras páginas e passe as histórias depressa, parando em uma ou duas
 equipes.
@@ -1327,7 +1327,7 @@ básico")
   - "A ordem não é de quem ganhou. É a fila de quanto cada família ficou
     devendo em um ano, e a comida que faltou está embaixo."
   - "A distância entre as casas é maior que a distância entre as escolhas: a
-    casa da Rose fica R$ 1.932 no vermelho num mês comum, antes de qualquer
+    casa da Rose fica R$ 1.932 no vermelho em um mês comum, antes de qualquer
     carta."
   - No config atual, é quase certo que **nenhuma equipe feche as contas**:
     nenhum caminho que a simulação achou termina com saldo ≥ R$ 0, e o mais
@@ -1569,7 +1569,7 @@ guardado no celular e é reenviado. Não feche o telão.
 - Enquanto o selo mostra **Reconectando…**, os comandos do telão (Espaço, Enter,
   +30 s…) são **recusados na hora**, com o aviso `Sem conexão com o serviço: o
   comando não foi enviado`. O aviso aparece logo acima da barra, que se abre
-  sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica numa
+  sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica em uma
   fila para sair depois: quando o selo voltar a **Conectado**, confira a tela e
   aperte de novo.
 - Se aparecer `O serviço não respondeu em 10 s`, **não aperte a tecla de
@@ -1703,7 +1703,7 @@ trabalhando, em plataformas.
   conta um fato, sem piada. Avise uma vez que as cartas graves foram
   dramatizadas para caber no jogo (D-030; em 12 meses, se o aviso continua é
   pergunta em aberto: rascunho, seção 8, item 14). A enchente de Mai–jun toca
-  numa memória recente de Porto Alegre: diga o fato, sem detalhe.
+  em uma memória recente de Porto Alegre: diga o fato, sem detalhe.
 - **Sem suavizar, e sem expor ninguém** (D-044). O jogo mostra o custo real, em
   dinheiro e em dias parados, com fonte, para a turma sentir a dúvida de quem
   vive isso. Não amenize o número ("é só um jogo"), mas também não o dirija a
@@ -1748,7 +1748,7 @@ comporta. O que o teste revelar é corrigido entre 01/10 e 05/10 (D-036).
 (o voto e as telas enxutas, D-065), e as decisões D-060 a D-064, a versão 7. A
 lista abaixo continua valendo para um novo ensaio antes de 07/10, com duas
 diferenças: a decisão agora tem 90 s (item 14), e vale conferir também o modo
-espectador num celular a mais (seção 4: entra com o PIN, troca de equipe, vê a
+espectador em um celular a mais (seção 4: entra com o PIN, troca de equipe, vê a
 contagem e não entra no "N conectados").
 
 **Leve:** o notebook com o carregador, o site já publicado, o PIN e 3 celulares.
@@ -1803,7 +1803,7 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
     aparece quando falta espaço? 90 s bastam para a equipe ler e conversar
     (eram 120 s no teste de 30/09; rascunho, seção 8, item 12)?
     Anote o modelo e o tamanho de tela de quem precisou rolar. **Tocar para ler
-    (D-055):** tocar numa opção abre a explicação sem votar? O "Votar nesta"
+    (D-055):** tocar em uma opção abre a explicação sem votar? O "Votar nesta"
     registra o voto, e a contagem da equipe muda? Alguém votou achando que o
     toque já votava?
 15. **O redesenho no projetor (D-041, D-042, D-047, "vamos testar"):** do fundo
