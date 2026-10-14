@@ -1329,9 +1329,11 @@
 
   // A rodada no espectador do modo individual: na decisão, as opções (a
   // mini-história ao tocar, sem voto) e "N de M já escolheram"; no resultado,
-  // o evento do bimestre, quantas pessoas ficaram com cada opção e as
-  // consequências de escolhas anteriores, por quantas pessoas. vaga: a de
-  // referência para o texto do personagem (o mesmo em todas).
+  // o evento do bimestre e, por opção, o mesmo resumo do telão (D-084,
+  // historia.resultadoPorOpcao): quantas pessoas, o saldo do bimestre e a
+  // família de quem a escolheu ("em média" quando variam) e as consequências
+  // de escolhas anteriores, com quantas dessas pessoas. vaga: a de referência
+  // para o texto do personagem (o mesmo em todas).
   function telaDaRodadaDaTurma(c, e, vaga) {
     const H = N().historia;
     const rodada = c.rodadas?.[e.rodada];
@@ -1352,7 +1354,7 @@
         },
       };
     }
-    const porOpcao = H.contagemPorOpcao(c, e.rodada, app.dados.resultados);
+    const porOpcao = H.resultadoPorOpcao(c, e.rodada, app.dados.resultados);
     if (e.subfase === 'fechando' || porOpcao.pessoas === 0) return { tipo: 'aguardando', dados: { motivo: 'votacaoEncerrada' } };
     // O evento do bimestre é o mesmo para todos no formato simples: o da
     // primeira vaga com resultado.
@@ -1360,7 +1362,7 @@
     const carta = algum ? { titulo: H.textoDaCarta(c, algum.carta, personaId).titulo, narrativa: c.cartas?.[algum.carta]?.narrativa ?? null } : null;
     return {
       tipo: 'turmaResultado',
-      dados: { rodada: info, carta, porOpcao, consequencias: H.consequenciasDaTurma(c, e.rodada, app.dados.resultados) },
+      dados: { rodada: info, carta, porOpcao },
     };
   }
 
@@ -3527,27 +3529,38 @@
 
   function telaTurmaResultado(alvo, d) {
     const { el, acrescentar } = D();
+    const H = N().historia;
     const moeda = (v) => F().moeda(v, { sinal: true });
-    const consequencias = lista(d.consequencias).map((g) => {
-      const valor = g.valores.length === 1 ? ` (${moeda(g.valores[0])})` : '';
-      return el('p', { classe: 'consequencia-linha', dados: { pessoas: g.pessoas } }, [
-        'Por causa de escolhas anteriores: ', `${g.motivo}${valor}, para `, el('b', { texto: F().pessoas(g.pessoas) }), '.',
-      ]);
-    });
+    const { doPeriodo } = periodo();
+    const emMedia = (media) => (media ? ' em média' : '');
+    // Embaixo de cada opção (D-084): o saldo do bimestre e a família de quem a
+    // escolheu e, uma por linha, as consequências, "a moto quebrou (revisão
+    // adiada) −R$ 790: 3 dessas pessoas". A opção que ninguém escolheu fica só
+    // com o 0.
+    const detalhes = (o) => [
+      o.saldo || o.familia ? el('p', { classe: 'turma-opcao-valores' }, [
+        o.saldo ? [`saldo ${doPeriodo} `, el('b', { texto: moeda(o.saldo.valor) }), emMedia(o.saldo.media)] : null,
+        o.saldo && o.familia ? ' · ' : null,
+        o.familia ? [`a família ${o.familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(o.familia.valor) }), emMedia(o.familia.media)] : null,
+      ]) : null,
+      ...lista(o.consequencias).map((g) => el('p', { classe: 'turma-opcao-antes', dados: { motivo: g.motivo, pessoas: g.pessoas, valor: g.valor } }, [
+        `${maiuscula(g.motivo)} `, el('b', { texto: moeda(g.valor) }), `: ${H.quantasDessas(g.pessoas, o.n)}`,
+      ])),
+    ];
     const { pessoas, semVoto } = d.porOpcao;
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'resultado', rodada: d.rodada.id } }, [
       cabecalho(`${d.rodada.titulo || 'Rodada'} · o que aconteceu`, d.carta?.titulo || ''),
       d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
       el('h2', { classe: 'subtitulo', texto: `O que as ${F().pessoas(pessoas)} escolheram` }),
-      el('ul', { classe: 'turma-opcoes' }, d.porOpcao.porOpcao.map((o) => el('li', { classe: 'turma-opcao', dados: { opcao: o.id, n: o.n } }, [
+      el('ul', { classe: 'turma-opcoes' }, d.porOpcao.porOpcao.map((o) => el('li', { classe: ['turma-opcao', o.n === 0 ? 'turma-opcao-zero' : null], dados: { opcao: o.id, n: o.n } }, [
         el('b', { classe: 'opcao-letra', texto: o.letra }),
         el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo || o.id }),
         el('b', { classe: 'turma-opcao-n', texto: String(o.n) }),
+        ...detalhes(o),
       ]))),
       semVoto > 0
         ? el('p', { classe: 'texto-2', texto: `${F().pessoas(semVoto)} não ${semVoto === 1 ? 'votou e ficou' : 'votaram e ficaram'} com a opção de sempre (já na conta acima).` })
         : null,
-      consequencias,
     ]));
     return 'turmaResultado';
   }

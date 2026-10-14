@@ -1306,16 +1306,27 @@ celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `
   ou, offline, se a escolha da turma está marcada. Não há prorrogação (o anfitrião vai direto à moeda); uma que chegue
   assim mesmo fica na tela da decisão. Na barra, "Decidir pela turma" (só offline; online, a escolha é de cada um) e
   "Mover aluno" desligado (o anfitrião recusa).
-- **Resultado** (`telaResultadoDaTurma`): o kicker "O que a turma escolheu · 20 pessoas", o título do bimestre, o
-  evento do mês (`.evento-do-mes`), e `ol.turma-opcoes` com uma `li.turma-opcao` por opção (`data-opcao`, `data-n`;
-  `.turma-opcao-zero` com 0): a letra, o rótulo, `.turma-barra` (a parte da turma) e `.turma-n` ("8 pessoas"), de
-  `historia.contagemPorOpcao`, em subgrid (as colunas alinhadas). Quem não votou está na contagem da opção de sempre,
-  e `p.turma-sem-voto` (`data-sem-voto`) diz "2 pessoas não escolheram e ficaram na C, a opção de sempre.". Se houver,
-  `.turma-antes`: "Por causa de escolhas anteriores:" e um `li.turma-antes-item` por motivo (`data-motivo`,
-  `data-pessoas`, `data-valores`) de `historia.consequenciasDaTurma`: "As costas travaram (2 bimestres puxados
-  seguidos): **3 pessoas** (−R$ 1.230 cada)" (dois valores: "−R$ 790 ou −R$ 560 cada"). O saldo de cada um fica no
-  celular dele. **Aperto**, só se transborda: 1 (vãos e entrelinhas menores), 2 (o título menor), 3 (sem a frase do
-  evento), 4 (sem o evento), os mesmos degraus 2 a 4 do resultado simples.
+- **Resultado** (`telaResultadoDaTurma`; D-084, pedido do Kleber de 13/10 à noite): o kicker "O que a turma
+  escolheu · 20 pessoas", o título do bimestre, o evento do mês (`.evento-do-mes`) e `div.turma-opcoes` (role list,
+  subgrid: as colunas alinhadas entre as opções): `.turma-colunas` com os nomes das duas colunas de dinheiro ("saldo
+  do bimestre" e "a família"), uma vez só, e um cartão `div.turma-opcao` por opção, de
+  `historia.resultadoPorOpcao` (`data-opcao`, `data-n`; com alguém, `data-saldo`, `data-saldo-media`,
+  `data-familia` "tem"/"devendo", `data-valor-familia`, `data-familia-media`; `.turma-opcao-zero` com 0, sem
+  valores): a letra, o rótulo (`.turma-opcao-rotulo`), `.turma-n` ("8 pessoas"), `.turma-saldo-opcao` e
+  `.turma-familia-opcao` (o valor, quando todos da opção têm o mesmo em reais inteiros; a média arredondada, com
+  `.turma-media` "em média", quando variam; ao lado do valor quando cabe, embaixo em telas até 1100 px) e, embaixo,
+  `p.turma-consequencias` com um `span.turma-antes-item` por motivo e valor (`data-motivo`, `data-pessoas`,
+  `data-valor`): "A moto quebrou (revisão adiada) **−R$ 790**: 3 dessas pessoas" ("1 pessoa" quando a opção tem
+  uma só; o mesmo motivo com outro valor vem junto e não se repete: "· **−R$ 560**: 1 dessas pessoas"). Quem não
+  votou está na opção de sempre, e `p.turma-sem-voto` (`data-sem-voto`) diz "2 pessoas não escolheram e ficaram na
+  C, a opção de sempre.". Nada por vaga nem nome. **Aperto**, só se transborda: 1 (vãos e entrelinhas menores), 2 (o
+  título menor), 3 (sem a frase do evento), 4 (sem o evento), 5 (entrelinha 1 e a borda fina), 6 (o motivo só com a
+  parte principal, sem o parêntese nem o que vem depois da vírgula: `.turma-motivo-resto` some) e 7 (sem o kicker,
+  o título no corpo e os nomes das colunas na linha dele). Medido (pior caso: as cinco opções com todas as
+  consequências possíveis, 11 linhas em mar–abr e em set–out, 20 pessoas): cabe em 1024×768 sem a faixa de entrada,
+  em 1280×720 e 1920×1080 com ela; em 1024×768 com a faixa, só o pior caso passa da altura, e a saída é fechar a
+  entrada. O celular do apresentador (modo espectador) mostra o mesmo resumo (`telaTurmaResultado`:
+  `.turma-opcao-valores` e `.turma-opcao-antes` embaixo de cada opção).
 - **Placar final** (pedidos de 13/10, 21h): três páginas, `fimDaTurma`, `escolhasDaTurma` e `combinacoes`; sem "O
   caminho de cada equipe" e sem nada por vaga.
   1. `fimDaTurma`, kicker "Quanto sobrou, ou ficou devendo": o título (`h1.fim-turma-frase`) é a frase de

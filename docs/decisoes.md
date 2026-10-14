@@ -1020,3 +1020,32 @@ abertura da seção 11 da arquitetura).
   R$ 6.135). O telão usa o único roteiro sem perguntar; com mais de um (os
   configs de teste), o bloco "Roteiro" volta. O motor e o validador continuam
   aceitando vários roteiros.
+
+**D-084. O resultado do bimestre, no modo individual, por opção** (muda a parte
+do resultado da D-081).
+- **O que o Kleber pediu:** uma linha por OPÇÃO, sem nome nem equipe: a letra,
+  o rótulo, "N pessoas", o saldo do bimestre e a família de quem escolheu
+  aquela opção (o valor, quando todos têm o mesmo; "em média", quando variam)
+  e, embaixo da opção, as consequências com quantas pessoas foram atingidas:
+  "a moto quebrou (revisão adiada) −R$ 790: 3 dessas pessoas". Opção sem
+  ninguém: "0 pessoas" ou omitir, o que coubesse e ficasse mais claro.
+- **Como ficou:** um cartão por opção, como as faixas das equipes (print do
+  resultado por equipe), com as colunas "saldo do bimestre" e "a família"
+  alinhadas e nomeadas uma vez, em cima. Os valores saem em reais inteiros,
+  como na tela de cada um; a média é arredondada. O mesmo motivo com dois
+  valores (a moto que quebra custa menos a quem trocou o pneu) fica junto:
+  "a moto quebrou (revisão adiada) −R$ 560: 1 dessas pessoas · −R$ 790: 2
+  dessas pessoas"; numa opção de uma pessoa só, "1 pessoa". **A opção que
+  ninguém escolheu fica, apagada, com "0 pessoas" e sem valores:** a turma
+  reconhece as cinco letras da decisão, e a soma das pessoas fecha com o total.
+  Quem não votou continua contado na opção de sempre, com a linha embaixo. O
+  celular do apresentador (modo espectador) mostra o mesmo resumo.
+- **Cabe com 20 pessoas** em 1024×768, 1280×720 com a faixa de entrada e
+  1920×1080, com os apertos de sempre (só quando transborda) e dois novos para
+  o pior caso: o motivo só com a parte principal ("a moto quebrou −R$ 790: 3
+  dessas pessoas") e, por último, sem a linha "O que a turma escolheu · 20
+  pessoas". Medido no pior caso possível do config (as cinco opções com todas
+  as consequências que o jogo permite, em mar–abr e em set–out): só em
+  1024×768 **com** a faixa de entrada ele passa da altura; aí, fechar a
+  entrada (a faixa sai) resolve.
+

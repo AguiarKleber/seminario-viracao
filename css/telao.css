@@ -942,8 +942,8 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
 .tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
 .tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) { gap: calc(var(--espaco) * .5); }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) h1 { font-size: calc(var(--corpo) * 1.1); }
 .tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .grade-simples { row-gap: 4px; }
 .tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
 /* D-078 e D-080: a consequência de uma escolha de antes, como observação na
@@ -956,8 +956,8 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .simples-obs { grid-column: 1 / -1; grid-row: 3; font-size: max(28px, .85em); color: var(--texto-2); line-height: 1.12; }
 .simples-obs b { display: inline-block; font-weight: 800; }
 .tela-rodada-resultado[data-aperto] .simples-obs { line-height: 1; }
-.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .evento-linha { display: none; }
-.tela-rodada-resultado:is([data-aperto="4"], [data-aperto="5"]) .evento-do-mes { display: none; }
+.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .evento-linha { display: none; }
+.tela-rodada-resultado:is([data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .evento-do-mes { display: none; }
 /* O quinto aperto (D-080), só se seis faixas com a observação ainda não couberem
    sem o evento: o pior caso medido é mar–abr com as seis equipes atingidas e a
    faixa de entrada em 1280×720 (cada faixa com três linhas passava 74 px). Cada
@@ -1019,29 +1019,79 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 .turma-decisao .botoes-opcao { gap: .5em; }
 .turma-decisao .botoes-opcao .botao-letra { min-width: 2.2em; padding: 0 .3em; }
 
-/* O resultado da turma: o evento do mês e, por opção, a letra, o rótulo, uma
-   barra da parte da turma e quantas pessoas (subgrid: as quatro colunas
-   alinhadas entre as opções); embaixo, quem não votou e o que veio de antes. */
+/* O resultado da turma (D-084): o evento do mês e uma linha por opção, em
+   cartões como as faixas das equipes do resultado simples, com as colunas
+   alinhadas entre as opções (subgrid): a letra, o rótulo, quantas pessoas, o
+   saldo do bimestre e a família de quem a escolheu (com "em média" embaixo,
+   quando os valores variam). Os nomes das duas colunas de dinheiro vão uma vez
+   só, em cima; repetidos em cada cartão, cinco opções não cabiam em 1024×768
+   com a faixa de entrada. Embaixo da opção, na largura do rótulo para a
+   direita, o que veio de antes, em letra secundária.
+   O "em média" vai ao lado do valor quando cabe (1280×720 e 1920×1080) e
+   embaixo dele quando não cabe (1024×768, onde o rótulo já quebra em duas
+   linhas): numa linha só para ele, cinco opções com consequência não cabiam
+   em 1280×720 com a faixa de entrada. */
 .turma-opcoes {
-  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(3em, 24%) max-content;
-  column-gap: .6em; row-gap: calc(var(--espaco) * .6);
+  display: grid; grid-template-columns: auto minmax(8em, 1fr) auto auto auto;
+  column-gap: .5em; row-gap: calc(var(--espaco) * .45);
 }
-.turma-opcao { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; line-height: 1.15; }
-.turma-opcao-rotulo { font-weight: 600; min-width: 0; }
-.turma-barra { display: block; height: .7em; border: 1px solid var(--linha-forte); border-radius: 4px; background: var(--superficie-2); overflow: hidden; }
-.turma-barra-cheia { display: block; height: 100%; background: var(--neutro); }
-.turma-n { text-align: right; white-space: nowrap; color: var(--texto-2); }
+.turma-colunas, .turma-opcao { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+.turma-colunas { padding: 0 .35em; border: 2px solid transparent; border-block: 0; color: var(--texto-2); line-height: 1.1; }
+.turma-coluna-saldo, .turma-coluna-familia { grid-row: 1; text-align: right; white-space: nowrap; }
+.turma-coluna-saldo { grid-column: 4; }
+.turma-coluna-familia { grid-column: 5; }
+.turma-opcao {
+  align-items: center; row-gap: 0;
+  /* A folga de cima e de baixo nunca some: com a entrelinha 1 (os últimos
+     apertos), o texto passa uns 0,17em da linha, e sem a folga ele encostava
+     na borda do cartão. */
+  padding: .15em .35em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  line-height: 1.12;
+}
+.turma-opcao > .letra { grid-column: 1; grid-row: 1; height: 1.2em; min-width: 1.2em; }
+.turma-opcao-rotulo { grid-column: 2; grid-row: 1; font-weight: 600; min-width: 0; }
+.turma-n { grid-column: 3; grid-row: 1; text-align: right; white-space: nowrap; color: var(--texto-2); }
 .turma-n b { color: var(--texto); font-weight: 800; }
-.turma-opcao-zero { color: var(--texto-2); }
+.turma-valor { grid-row: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; column-gap: .3em; text-align: right; }
+.turma-valor > * { white-space: nowrap; }
+/* Em 1024×768 o rótulo já quebra em duas linhas: o "em média" vai sempre
+   embaixo do valor, nas duas colunas (com a quebra decidida pela largura de
+   cada coluna, uma ficava ao lado e a outra embaixo). */
+@media (max-width: 1100px) {
+  .turma-valor { flex-direction: column; align-items: flex-end; }
+}
+.turma-saldo-opcao { grid-column: 4; }
+.turma-familia-opcao { grid-column: 5; }
+.turma-saldo-valor { font-weight: 800; }
+.turma-saldo-valor[data-sinal="negativo"] { color: var(--negativo); }
+.turma-saldo-valor[data-sinal="positivo"] { color: var(--positivo); }
+.turma-familia-valor b { font-weight: 800; }
+.turma-familia-valor[data-situacao="devendo"] b { color: var(--negativo); }
+.turma-media { color: var(--texto-2); font-size: max(28px, .8em); }
+.turma-consequencias { grid-column: 2 / -1; grid-row: 2; font-size: max(28px, .85em); color: var(--texto-2); line-height: 1.12; }
+.turma-consequencias b { display: inline-block; font-weight: 800; color: var(--texto); }
+.turma-opcao-zero { color: var(--texto-2); background: transparent; border-style: dashed; }
 .turma-opcao-zero .letra { border-color: var(--texto-2); }
+.turma-opcao-zero .turma-n b { color: var(--texto-2); }
 .turma-sem-voto { color: var(--texto-2); line-height: 1.15; }
-.turma-antes { display: flex; flex-direction: column; gap: .1em; line-height: 1.15; }
-.turma-antes-titulo { color: var(--texto-2); font-weight: 600; }
-.turma-antes-item b { font-weight: 800; }
 /* O aperto (telao.js, telaResultadoDaTurma): os degraus 2 a 4 são os do
-   resultado simples (o título menor; sem a frase do evento; sem o evento). */
+   resultado simples (o título menor; sem a frase do evento; sem o evento); o
+   quinto deixa a entrelinha mínima e os cartões sem folga. */
 .tela-rodada-resultado[data-aperto] .turma-opcoes { row-gap: 3px; }
-.tela-rodada-resultado[data-aperto] :is(.turma-opcao, .turma-antes, .turma-sem-voto) { line-height: 1.05; }
+.tela-rodada-resultado[data-aperto] :is(.turma-opcao, .turma-colunas, .turma-sem-voto, .turma-consequencias) { line-height: 1.05; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) :is(.turma-opcao, .turma-consequencias, .turma-colunas) { line-height: 1; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcao > .letra { height: 1em; min-width: 1em; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcoes { row-gap: 2px; }
+.tela-rodada-resultado:is([data-aperto="6"], [data-aperto="7"]) .turma-motivo-resto { display: none; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcao { border-width: 1px; }
+/* O sétimo: sem o kicker, o título no tamanho do corpo e os nomes das colunas
+   ("saldo do bimestre", "a família") na linha do título, à direita (os
+   títulos dos bimestres terminam antes das colunas, medido em 1024×768). */
+.tela-rodada-resultado[data-aperto="7"] .kicker { display: none; }
+.tela-rodada-resultado[data-aperto="7"] h1 { font-size: var(--corpo); }
+.tela-rodada-resultado[data-aperto="7"] .turma-colunas { margin-top: calc(var(--corpo) * -1.08 - var(--espaco) * .5); }
 
 /* "Quanto sobrou, ou ficou devendo" da turma: a frase com os números em
    destaque (verde para quem terminou com dinheiro sobrando, vermelho para quem

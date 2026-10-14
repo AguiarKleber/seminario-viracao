@@ -237,10 +237,16 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
    - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
      escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
      prorrogação: o Enter vai direto ao resultado.
-   - **Resultado.** O telão mostra quantas pessoas ficaram com cada opção,
-     quantas não votaram (e ficaram na opção de sempre) e quantas tiveram cada
-     consequência ("As costas travaram …: 3 pessoas"). No celular, cada um vê o
-     próprio saldo. Diga a frase do bimestre (tabela da seção 0), com "quem
+   - **Resultado.** O telão mostra uma linha por opção (D-084): quantas
+     pessoas, o saldo do bimestre e a família de quem a escolheu ("em média",
+     quando os valores variam) e, embaixo, as consequências de escolhas
+     anteriores, com quantas dessas pessoas ("a moto quebrou (revisão adiada)
+     −R$ 790: 3 dessas pessoas"); embaixo de tudo, quantas não votaram (e
+     ficaram na opção de sempre). Nenhum nome. No celular, cada um vê o próprio
+     saldo; o seu celular, no modo espectador, mostra o mesmo resumo do telão.
+     Se o projetor for 1024×768 e a tela ficar apertada demais, clique em
+     **Entrada aberta**, na barra, para fechar a entrada: a faixa do QR sai e
+     sobra espaço (quem chegar depois não entra até você abrir de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
      escolheu…" no lugar de "a equipe que…".
    - **Dados.** O bloco aparece no telão e no celular (com o "Li", também o
      botão "Li, pode seguir" e o "N de M leram"). Leia o contexto e um número.

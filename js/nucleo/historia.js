@@ -687,6 +687,63 @@
     return porMotivo;
   }
 
+  // O valor de um grupo de pessoas, em reais inteiros (cada um arredondado como
+  // a tela dele mostra): o de todos, quando é o mesmo; a média, quando varia.
+  // { valor, media } (media: true quando os valores variam); null sem ninguém.
+  function valorDoGrupo(valores) {
+    const inteiros = lista(valores).filter(Number.isFinite).map((v) => Math.round(v) + 0);
+    if (inteiros.length === 0) return null;
+    const media = inteiros.some((v) => v !== inteiros[0]);
+    return { valor: media ? Math.round(inteiros.reduce((s, v) => s + v, 0) / inteiros.length) + 0 : inteiros[0], media };
+  }
+
+  // D-084 (pedido do Kleber de 13/10 à noite): o resultado do bimestre no modo
+  // individual, uma linha por OPÇÃO, sem nome nem vaga. Para quem escolheu cada
+  // uma: quantas pessoas, o saldo do bimestre e o dinheiro da família no fim
+  // dele (o valor, quando todos têm o mesmo; a média, quando variam), e o que
+  // veio de uma escolha de antes, com quantas dessas pessoas foram atingidas
+  // ("a moto quebrou (revisão adiada) −R$ 790: 3 dessas pessoas"). Antes, o
+  // telão dava só a contagem por opção e as consequências da turma inteira
+  // juntas, e ninguém via o que cada escolha tinha dado. O motivo é o de
+  // consequenciasDaRodada (o rótulo até os dois-pontos), uma linha por valor:
+  // a moto que quebra custa menos a quem trocou o pneu. A opção que ninguém
+  // escolheu vem com n 0, sem saldo, sem família e sem consequência.
+  // { pessoas, semVoto, porOpcao: [{ id, letra, rotulo, n, saldo: { valor, media }
+  // | null, familia: { situacao: 'tem' | 'devendo', valor (≥ 0), media } | null,
+  // consequencias: [{ motivo, valor, pessoas }], o mesmo motivo junto }] }.
+  function resultadoPorOpcao(conteudo, rodadaId, resultados) {
+    const c = contagemPorOpcao(conteudo, rodadaId, resultados);
+    const daRodada = em(resultados, rodadaId) || {};
+    const vagas = ordemDe(conteudo, 'equipes').filter((v) => em(daRodada, v) !== null);
+    return {
+      pessoas: c.pessoas,
+      semVoto: c.semVoto,
+      porOpcao: c.porOpcao.map((o) => {
+        const deles = vagas.filter((v) => em(daRodada, v, 'decisao') === o.id);
+        const saldo = valorDoGrupo(deles.map((v) => em(daRodada, v, 'mes', 'saldoMes')));
+        const patrimonio = valorDoGrupo(deles.map((v) => patrimonioDe(em(daRodada, v, 'depois'))));
+        const familia = patrimonio === null ? null
+          : { situacao: patrimonio.valor < 0 ? 'devendo' : 'tem', valor: Math.abs(patrimonio.valor) + 0, media: patrimonio.media };
+        // O mesmo motivo com valores diferentes fica junto (na ordem em que o
+        // motivo aparece), para a tela não repetir o motivo: "a moto quebrou
+        // (revisão adiada) −R$ 560: 1 dessas pessoas · −R$ 790: 2 dessas pessoas".
+        const grupos = consequenciasDaRodada(deles.map((v) => ({ equipeId: v, deAntes: em(daRodada, v, 'deAntes') })));
+        const ordemMotivo = [...new Set(grupos.map((g) => g.motivo))];
+        const consequencias = grupos
+          .map((g, i) => ({ g, i }))
+          .sort((x, y) => ordemMotivo.indexOf(x.g.motivo) - ordemMotivo.indexOf(y.g.motivo) || x.i - y.i)
+          .map(({ g }) => ({ motivo: g.motivo, valor: g.valor, pessoas: g.equipes.length }));
+        return { ...o, saldo, familia, consequencias };
+      }),
+    };
+  }
+
+  // "3 dessas pessoas" (D-084): quantas, das que escolheram a opção, uma
+  // consequência atingiu. Com uma pessoa só na opção, "1 pessoa".
+  function quantasDessas(atingidas, naOpcao) {
+    return naOpcao === 1 ? '1 pessoa' : `${atingidas} dessas pessoas`;
+  }
+
   // A tabela bimestre × opção do placar final ("As escolhas da turma"): uma
   // linha por rodada apurada, na ordem do config, com o nome curto ("Jan–fev")
   // e a contagem de contagemPorOpcao. [{ rodadaId, rotulo, titulo, pessoas,
@@ -794,6 +851,7 @@
     formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
     consequenciasDaRodada,
     individual, vagasEmJogo, pessoasNaSala, contagemDaDecisao, contagemPorOpcao, consequenciasDaTurma, escolhasDaTurma,
+    resultadoPorOpcao, quantasDessas, valorDoGrupo,
     fimDoAnoDaTurma, fraseDoFimDaTurma, fraseDosQueEntraramDepois,
     contagemDeLidos,
   };

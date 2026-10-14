@@ -386,7 +386,7 @@ async function jogar({ site, navegador, vigiar, celulares }) {
         const a = M.aplicar(cfg, { equipeId: VAGAS[0], rodadaId: r, opcaoId, cartaId: baralho[0].carta, estado: est, historico });
         historico[r] = { decisao: opcaoId, carta: baralho[0].carta };
         est = a.depois;
-        return { opcao: opcaoId, carta: baralho[0].carta, deAntes: a.deAntes };
+        return { opcao: opcaoId, carta: baralho[0].carta, deAntes: a.deAntes, saldoMes: a.mes.saldoMes, depois: a.depois };
       });
       return [c.uid, { linhas, final: Math.round(M.patrimonio(est)) + 0 }];
     }));
@@ -456,18 +456,28 @@ async function jogar({ site, navegador, vigiar, celulares }) {
       const semVoto = alunos.length - votantes.length;
       const porVaga = Object.fromEntries(alunos.map((c) => [membros20[c.uid].equipe, { deAntes: caminhos.get(c.uid).linhas[k].deAntes }]));
       const grupos = H.consequenciasDaTurma(cfg, r, { [r]: porVaga });
+      // D-084: o resultado por opção, com os números do motor de cada aluno.
+      const esperado = H.resultadoPorOpcao(cfg, r, { [r]: Object.fromEntries(alunos.map((c) => {
+        const l = caminhos.get(c.uid).linhas[k];
+        return [membros20[c.uid].equipe, { decisao: l.opcao, mes: { saldoMes: l.saldoMes }, depois: l.depois, deAntes: l.deAntes }];
+      })) });
       const conferir = async (onde) => {
         const t = await telao.evaluate(() => ({
           kicker: document.querySelector('#palco .kicker')?.textContent ?? null,
           opcoes: Array.from(document.querySelectorAll('.turma-opcao'), (li) => [li.dataset.opcao, Number(li.dataset.n), li.querySelector('.turma-opcao-rotulo').textContent]),
+          numeros: Array.from(document.querySelectorAll('.turma-opcao'), (li) => [li.dataset.saldo ?? null, li.dataset.saldoMedia ?? null, li.dataset.familia ?? null, li.dataset.valorFamilia ?? null, li.dataset.familiaMedia ?? null]),
           semVoto: document.querySelector('.turma-sem-voto')?.textContent ?? null,
-          antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => [li.dataset.motivo, Number(li.dataset.pessoas)]),
+          antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => [li.closest('.turma-opcao').dataset.opcao, li.dataset.motivo, Number(li.dataset.pessoas), Number(li.dataset.valor)]),
         }));
         assert.equal(t.kicker, `O que a turma escolheu · ${F.pessoas(alunos.length)}`, `${onde}: quantas pessoas`);
         assert.deepEqual(t.opcoes, opcoesDe(r).map((op) => [op, n[op], H.textoDaOpcao(cfg, r, op, PERSONA).rotulo]), `${onde}: quantas pessoas em cada opção`);
         const padrao = letraDe(r, cfg.rodadas[r].padrao);
         assert.equal(t.semVoto, semVoto === 0 ? null : `${semVoto} pessoas não escolheram e ficaram na ${padrao}, a opção de sempre.`, `${onde}: quem não votou`);
-        assert.deepEqual(t.antes, grupos.map((g) => [g.motivo, g.pessoas]), `${onde}: o que veio de antes`);
+        assert.deepEqual(t.numeros, esperado.porOpcao.map((o) => (o.saldo
+          ? [String(o.saldo.valor), String(o.saldo.media), o.familia.situacao, String(o.familia.valor), String(o.familia.media)]
+          : [null, null, null, null, null])), `${onde}: o saldo e a família de cada opção`);
+        assert.deepEqual(t.antes, esperado.porOpcao.flatMap((o) => o.consequencias.map((g) => [o.id, g.motivo, g.pessoas, g.valor])), `${onde}: o que veio de antes, por opção`);
+        for (const g of grupos) assert.equal(t.antes.filter((a) => a[1] === g.motivo).reduce((s, a) => s + a[2], 0), g.pessoas, `${onde}: "${g.motivo}", para ${g.pessoas} pessoas`);
       };
       if (grupos.length > 0) comAntes += 1;
       // As telas mais altas: o primeiro resultado e os que têm consequência.

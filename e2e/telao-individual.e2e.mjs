@@ -95,7 +95,7 @@ function caminhoNoMotor(escolhas) {
     const a = M.aplicar(cfg, { equipeId: VAGAS[0], rodadaId: r, opcaoId, cartaId: baralho[0].carta, estado, historico });
     historico[r] = { decisao: opcaoId, carta: baralho[0].carta };
     estado = a.depois;
-    return { rodada: r, opcao: opcaoId, carta: baralho[0].carta, saldo: Math.round(a.mes.saldoMes) + 0, familia: H.dinheiroDaFamilia(a.depois), deAntes: a.deAntes };
+    return { rodada: r, opcao: opcaoId, carta: baralho[0].carta, saldo: Math.round(a.mes.saldoMes) + 0, saldoMes: a.mes.saldoMes, depois: a.depois, familia: H.dinheiroDaFamilia(a.depois), deAntes: a.deAntes };
   });
   return { linhas, final: Math.round(M.patrimonio(estado)) + 0 };
 }
@@ -584,8 +584,13 @@ async function parteDe20() {
     });
     return { n, semVoto };
   };
-  const consequenciasEsperadas = (k) => H.consequenciasDaTurma(cfg, RODADAS[k], {
-    [RODADAS[k]]: Object.fromEntries(VAGAS.map((v, i) => [v, { deAntes: caminhos[i].linhas[k].deAntes }])),
+  // D-084: o resultado por opção, com os números do motor de cada pessoa
+  // (calculados aqui, rodada a rodada, e não lidos da sala).
+  const porOpcaoEsperado = (k) => H.resultadoPorOpcao(cfg, RODADAS[k], {
+    [RODADAS[k]]: Object.fromEntries(VAGAS.map((v, i) => {
+      const l = caminhos[i].linhas[k];
+      return [v, { decisao: l.opcao, origem: naoVotou(i, k) ? 'piloto' : 'maioria', mes: { saldoMes: l.saldoMes }, depois: l.depois, deAntes: l.deAntes }];
+    })),
   });
 
   await abrirConfig();
@@ -598,9 +603,15 @@ async function parteDe20() {
     const t = await page.evaluate(() => ({
       kicker: document.querySelector('#palco .kicker')?.textContent ?? null,
       evento: document.querySelector('.evento-do-mes')?.dataset.carta,
-      opcoes: Array.from(document.querySelectorAll('.turma-opcao'), (li) => ({ opcao: li.dataset.opcao, n: Number(li.dataset.n), texto: li.textContent })),
+      opcoes: Array.from(document.querySelectorAll('.turma-opcao'), (li) => ({
+        opcao: li.dataset.opcao, n: Number(li.dataset.n), dados: { ...li.dataset },
+        rotulo: li.querySelector('.turma-opcao-rotulo')?.textContent ?? null, pessoas: li.querySelector('.turma-n')?.textContent ?? null,
+        saldo: li.querySelector('.turma-saldo-opcao')?.textContent ?? null, familia: li.querySelector('.turma-familia-opcao')?.textContent ?? null,
+        consequencias: li.querySelector('.turma-consequencias')?.textContent ?? null,
+      })),
+      colunas: document.querySelector('.turma-colunas')?.textContent ?? null,
       semVoto: document.querySelector('.turma-sem-voto')?.textContent ?? null,
-      antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => ({ motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), texto: li.textContent })),
+      antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => ({ opcao: li.closest('.turma-opcao').dataset.opcao, motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), valor: Number(li.dataset.valor) })),
       faixas: document.querySelectorAll('.resultado-simples').length,
     }));
     const c = contagem(k);
@@ -608,20 +619,46 @@ async function parteDe20() {
     assert.equal(t.kicker, `O que a turma escolheu · ${F.pessoas(VAGAS.length)}`, `${onde}: quantas pessoas`);
     assert.equal(t.evento, caminhos[0].linhas[k].carta, `${onde}: o evento do mês`);
     assert.deepEqual(t.opcoes.map((o) => [o.opcao, o.n]), opcoesDe(r).map((op) => [op, c.n[op]]), `${onde}: quantas pessoas em cada opção`);
+    // D-084: por opção, o rótulo, "N pessoas", o saldo do bimestre e a família
+    // de quem a escolheu (o valor, se todos têm o mesmo; "em média", se
+    // variam) e, embaixo, as consequências com quantas dessas pessoas.
+    assert.equal(lido(t.colunas), lido(`saldo ${PERIODO.doPeriodo}a família`), `${onde}: os nomes das colunas`);
+    const esperado = porOpcaoEsperado(k);
     for (const [i, o] of t.opcoes.entries()) {
-      const rotulo = H.textoDaOpcao(cfg, r, o.opcao, PERSONA).rotulo;
-      assert.equal(lido(o.texto), lido(`${LETRAS[i]}${rotulo}${o.n} ${o.n === 1 ? 'pessoa' : 'pessoas'}`), `${onde}: a linha da ${LETRAS[i]}`);
+      const e = esperado.porOpcao[i];
+      const deles = caminhos.filter((cam) => cam.linhas[k].opcao === o.opcao).map((cam) => cam.linhas[k]);
+      assert.equal(o.rotulo, H.textoDaOpcao(cfg, r, o.opcao, PERSONA).rotulo, `${onde}: o rótulo da ${LETRAS[i]}`);
+      assert.equal(lido(o.pessoas), `${o.n} ${o.n === 1 ? 'pessoa' : 'pessoas'}`, `${onde}: "N pessoas" da ${LETRAS[i]}`);
+      if (deles.length === 0) {
+        assert.deepEqual([o.saldo, o.familia, o.consequencias], [null, null, null], `${onde}: a ${LETRAS[i]}, sem ninguém, sem valores`);
+        continue;
+      }
+      // O "em média" conferido com os números de cada pessoa, contados aqui.
+      const saldos = new Set(deles.map((l) => l.saldo));
+      const familias = new Set(deles.map((l) => (l.familia.situacao === 'devendo' ? -l.familia.valor : l.familia.valor)));
+      assert.equal(e.saldo.media, saldos.size > 1, `${onde}: o saldo da ${LETRAS[i]} em média só quando varia`);
+      assert.equal(e.familia.media, familias.size > 1, `${onde}: a família da ${LETRAS[i]} em média só quando varia`);
+      if (saldos.size === 1) assert.equal(e.saldo.valor, [...saldos][0], `${onde}: o saldo de todos da ${LETRAS[i]}`);
+      assert.deepEqual([o.dados.saldo, o.dados.saldoMedia, o.dados.familia, o.dados.valorFamilia, o.dados.familiaMedia],
+        [String(e.saldo.valor), String(e.saldo.media), e.familia.situacao, String(e.familia.valor), String(e.familia.media)], `${onde}: os números da ${LETRAS[i]}`);
+      assert.equal(lido(o.saldo), lido(`${F.moeda(e.saldo.valor, { sinal: true })}${e.saldo.media ? ' em média' : ''}`), `${onde}: o saldo da ${LETRAS[i]}`);
+      assert.equal(lido(o.familia), lido(`${e.familia.situacao === 'devendo' ? 'devendo' : 'tem'} ${F.moeda(e.familia.valor)}${e.familia.media ? ' em média' : ''}`), `${onde}: a família da ${LETRAS[i]}`);
+      const frase = e.consequencias.map((g, j) => {
+        const repetido = j > 0 && e.consequencias[j - 1].motivo === g.motivo;
+        const motivo = j === 0 ? `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)}` : g.motivo;
+        return `${j > 0 ? ' · ' : ''}${repetido ? '' : `${motivo} `}${F.moeda(g.valor, { sinal: true })}: ${o.n === 1 ? '1 pessoa' : `${g.pessoas} dessas pessoas`}`;
+      }).join('');
+      assert.equal(o.consequencias === null ? null : lido(o.consequencias), e.consequencias.length === 0 ? null : lido(frase), `${onde}: as consequências da ${LETRAS[i]}`);
     }
     const padrao = letraDe(r, cfg.rodadas[r].padrao);
     assert.equal(t.semVoto === null ? null : lido(t.semVoto), c.semVoto === 0 ? null
       : lido(c.semVoto === 1 ? `1 pessoa não escolheu e ficou na ${padrao}, a opção de sempre.` : `${c.semVoto} pessoas não escolheram e ficaram na ${padrao}, a opção de sempre.`), `${onde}: quem não votou`);
-    const grupos = consequenciasEsperadas(k);
-    assert.deepEqual(t.antes.map((a) => [a.motivo, a.pessoas]), grupos.map((g) => [g.motivo, g.pessoas]), `${onde}: o que veio de antes, para quantas pessoas`);
-    for (const [j, a] of t.antes.entries()) {
-      const g = grupos[j];
-      assert.equal(lido(a.texto), lido(`${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)}: ${F.pessoas(g.pessoas)} (${g.valores.map((v) => F.moeda(v, { sinal: true })).join(' ou ')}${g.pessoas > 1 ? ' cada' : ''})`), `${onde}: a linha "${g.motivo}"`);
-    }
-    return { semVoto: c.semVoto, antes: grupos.length };
+    assert.deepEqual(t.antes, esperado.porOpcao.flatMap((o) => o.consequencias.map((g) => ({ opcao: o.id, motivo: g.motivo, pessoas: g.pessoas, valor: g.valor }))), `${onde}: o que veio de antes, por opção`);
+    // As pessoas atingidas por cada motivo, somadas pelas opções, batem com a
+    // conta da turma inteira (historia.consequenciasDaTurma).
+    const daTurma = H.consequenciasDaTurma(cfg, r, { [r]: Object.fromEntries(VAGAS.map((v, i) => [v, { deAntes: caminhos[i].linhas[k].deAntes }])) });
+    for (const g of daTurma) assert.equal(t.antes.filter((a) => a.motivo === g.motivo).reduce((s, a) => s + a.pessoas, 0), g.pessoas, `${onde}: "${g.motivo}", para ${g.pessoas} pessoas`);
+    return { semVoto: c.semVoto, antes: t.antes.length };
   };
   const vistos = { semVoto: 0, antes: 0 };
   const anotar = (x) => {

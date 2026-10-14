@@ -3197,59 +3197,92 @@
 
   // Modo individual (decisão do Kleber de 13/10 à noite): o resultado da turma,
   // sem nenhuma vaga nem nome (o voto é secreto e o tema é sensível). O evento
-  // do mês uma vez, no alto; quantas pessoas ficaram com cada opção (a letra, o
-  // rótulo, uma barra da parte da turma e o número; historia.contagemPorOpcao),
-  // com quem não votou contado na opção de sempre e dito em uma linha embaixo; e,
-  // se houver, o que veio de uma escolha de antes, para quantas pessoas
-  // (historia.consequenciasDaTurma: "As costas travaram (…): 3 pessoas
-  // (−R$ 1.230 cada)"). O saldo e o dinheiro da família de cada um ficam no
-  // celular dele.
+  // do mês uma vez, no alto, e, desde a D-084 (pedido do Kleber de 13/10 à
+  // noite, para 14/10), uma linha por OPÇÃO (historia.resultadoPorOpcao): a
+  // letra, o rótulo e quantas pessoas ficaram com ela; o saldo do bimestre e o
+  // dinheiro da família de quem a escolheu, nas colunas "saldo do bimestre" e
+  // "a família" (o valor, quando todos têm o mesmo; com "em média", ao lado ou
+  // embaixo, quando variam); e, embaixo da opção, o que veio de uma escolha de antes,
+  // com quantas dessas pessoas ("a moto quebrou (revisão adiada) −R$ 790: 3
+  // dessas pessoas"). Antes, o telão dava só a contagem e uma lista das
+  // consequências da turma inteira, e ninguém via o que cada escolha tinha
+  // dado. A opção que ninguém escolheu fica na lista, apagada, com "0 pessoas"
+  // e sem valores: a turma reconhece as cinco letras da decisão. Quem não votou
+  // está na opção de sempre, dito em uma linha embaixo.
   function telaResultadoDaTurma(s, e) {
     const { el } = D();
     const H = N().historia;
     const rodada = app.config.rodadas[e.rodada];
     const daRodada = app.dados.resultados?.[e.rodada] || {};
-    const c = H.contagemPorOpcao(app.config, e.rodada, app.dados.resultados);
+    const c = H.resultadoPorOpcao(app.config, e.rodada, app.dados.resultados);
+    const { doPeriodo } = periodo();
     s.appendChild(cabecalho(c.pessoas > 0 ? `O que a turma escolheu · ${F().pessoas(c.pessoas)}` : null, rodada.titulo));
     const primeira = equipesOrdem().find((v) => daRodada[v]);
     const evento = eventoDoMes(primeira ? { eq: primeira, r: daRodada[primeira] } : null);
     if (evento) s.appendChild(evento);
     if (c.pessoas === 0) return;
-    s.appendChild(el('ol', { classe: 'turma-opcoes', 'aria-label': 'Quantas pessoas escolheram cada opção' }, c.porOpcao.map((o) => el('li', {
-      classe: ['turma-opcao', o.n === 0 ? 'turma-opcao-zero' : null], dados: { opcao: o.id, n: String(o.n) },
-    }, [
-      el('b', { classe: 'letra', texto: o.letra }),
-      el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo }),
-      el('span', { classe: 'turma-barra', 'aria-hidden': 'true' }, [
-        el('span', { classe: 'turma-barra-cheia', estilo: { width: `${(o.n / c.pessoas) * 100}%` } }),
+    // O espaço antes do "em média" não ocupa lugar no flex (texto só de espaço
+    // não vira item), mas faz o texto ler "−R$ 936 em média", e não "−R$ 936em média".
+    const emMedia = (media) => (media ? [' ', el('span', { classe: 'turma-media', texto: 'em média' })] : null);
+    // O motivo em duas partes: o principal ("a moto quebrou") e o resto (" (revisão
+    // adiada)", ", com multa e juros"), que o último aperto esconde.
+    const motivoEmDuasPartes = (motivo) => {
+      const m = /^(.+?)((?: \(|, ).*)$/.exec(motivo);
+      return m ? [m[1], el('span', { classe: 'turma-motivo-resto', texto: m[2] })] : [motivo];
+    };
+    const linhas = c.porOpcao.map((o) => {
+      const dados = { opcao: o.id, n: String(o.n) };
+      if (o.saldo) Object.assign(dados, { saldo: String(o.saldo.valor), saldoMedia: String(o.saldo.media) });
+      if (o.familia) Object.assign(dados, { familia: o.familia.situacao, valorFamilia: String(o.familia.valor), familiaMedia: String(o.familia.media) });
+      return el('div', { classe: ['turma-opcao', o.n === 0 ? 'turma-opcao-zero' : null], role: 'listitem', dados }, [
+        el('b', { classe: 'letra', texto: o.letra }),
+        el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo }),
+        el('span', { classe: 'turma-n' }, [el('b', { texto: F().inteiro(o.n) }), o.n === 1 ? ' pessoa' : ' pessoas']),
+        o.saldo ? el('span', { classe: 'turma-valor turma-saldo-opcao', title: textoSaldo(o.saldo.valor) }, [
+          el('b', { classe: 'turma-saldo-valor', dados: { sinal: sinalDoSaldo(o.saldo.valor) }, texto: F().moeda(o.saldo.valor, { sinal: true }) }),
+          emMedia(o.saldo.media),
+        ]) : null,
+        o.familia ? el('span', { classe: 'turma-valor turma-familia-opcao' }, [
+          el('span', { classe: 'turma-familia-valor', dados: { situacao: o.familia.situacao } }, [`${o.familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(o.familia.valor) })]),
+          emMedia(o.familia.media),
+        ]) : null,
+        o.consequencias.length > 0 ? el('p', { classe: 'turma-consequencias' }, o.consequencias.map((g, i) => el('span', {
+          classe: 'turma-antes-item', dados: { motivo: g.motivo, pessoas: String(g.pessoas), valor: String(g.valor) },
+        }, [
+          i > 0 ? ' · ' : null,
+          // O mesmo motivo de novo (outro valor) não se repete.
+          ...(i > 0 && o.consequencias[i - 1].motivo === g.motivo ? [] : [...motivoEmDuasPartes(i === 0 ? maiuscula(g.motivo) : g.motivo), ' ']),
+          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+          `: ${H.quantasDessas(g.pessoas, o.n)}`,
+        ]))) : null,
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-opcoes', role: 'list', 'aria-label': `O que cada opção deu ${doPeriodo}` }, [
+      el('div', { classe: 'turma-colunas', 'aria-hidden': 'true' }, [
+        el('span', { classe: 'turma-coluna-saldo', texto: `saldo ${doPeriodo}` }),
+        el('span', { classe: 'turma-coluna-familia', texto: 'a família' }),
       ]),
-      el('span', { classe: 'turma-n' }, [el('b', { texto: F().inteiro(o.n) }), o.n === 1 ? ' pessoa' : ' pessoas']),
-    ]))));
+      ...linhas,
+    ]));
     if (c.semVoto > 0) {
       const letra = letraDe(rodada, rodada.padrao);
       s.appendChild(el('p', { classe: 'turma-sem-voto', dados: { semVoto: String(c.semVoto) } }, c.semVoto === 1
         ? `1 pessoa não escolheu e ficou na ${letra}, a opção de sempre.`
         : `${F().inteiro(c.semVoto)} pessoas não escolheram e ficaram na ${letra}, a opção de sempre.`));
     }
-    const grupos = H.consequenciasDaTurma(app.config, e.rodada, app.dados.resultados);
-    if (grupos.length > 0) {
-      s.appendChild(el('div', { classe: 'turma-antes' }, [
-        el('p', { classe: 'turma-antes-titulo', texto: 'Por causa de escolhas anteriores:' }),
-        el('ul', { classe: 'turma-antes-lista' }, grupos.map((g) => el('li', {
-          classe: 'turma-antes-item', dados: { motivo: g.motivo, pessoas: String(g.pessoas), valores: g.valores.join(' ') },
-        }, [
-          `${maiuscula(g.motivo)}: `, el('b', { texto: F().pessoas(g.pessoas) }),
-          ` (${g.valores.map((v) => F().moeda(v, { sinal: true })).join(' ou ')}${g.pessoas > 1 ? ' cada' : ''})`,
-        ]))),
-      ]));
-    }
     // Com a faixa de entrada embaixo (online), em 1024×768 e 1280×720: só
     // quando a tela transborda (medido depois do desenho), os vãos e as
-    // entrelinhas diminuem; depois, o título do mês encolhe; depois, sai a
-    // frase do evento (o título dele fica); por último, o evento inteiro (ele
-    // está no celular de cada um). A letra fica nos 28 px.
+    // entrelinhas diminuem (1); o título do mês encolhe (2); sai a frase do
+    // evento, e o título dele fica (3); sai o evento inteiro, que está no
+    // celular de cada um (4); a entrelinha fica a mínima (5); o motivo de cada
+    // consequência fica só com a parte principal, "a moto quebrou −R$ 790: 3
+    // dessas pessoas" (6); e sai a linha "O que a turma escolheu · 20 pessoas",
+    // que a soma das opções repete, e os nomes das colunas sobem para a linha
+    // do título (7). O pior caso medido: mar–abr com as cinco
+    // opções escolhidas e todas as consequências possíveis em cada uma (11
+    // linhas), em 1280×720 com a faixa de entrada. A letra fica nos 28 px.
     app.depoisDeMedir.push(() => {
-      for (const degrau of ['1', '2', '3', '4']) {
+      for (const degrau of ['1', '2', '3', '4', '5', '6', '7']) {
         if (s.scrollHeight <= s.clientHeight + 1) return;
         s.dataset.aperto = degrau;
       }

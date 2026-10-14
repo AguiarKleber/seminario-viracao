@@ -572,6 +572,13 @@ body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .op
 .turma-opcao .opcao-letra { width: 30px; height: 30px; font-size: 16px; }
 .turma-opcao-rotulo { font-size: 16px; line-height: 1.3; }
 .turma-opcao-n { font-size: 20px; min-width: 2ch; text-align: right; }
+/* D-084: embaixo da opção, o saldo e a família de quem a escolheu e as
+   consequências, como no telão, na largura do rótulo e do número. */
+.turma-opcao-valores, .turma-opcao-antes { grid-column: 2 / -1; margin-top: -6px; font-size: 15px; line-height: 1.35; }
+.turma-opcao-antes { color: var(--texto-2); }
+.turma-opcao-antes b, .turma-opcao-valores b { color: var(--texto); }
+.turma-opcao-zero { color: var(--texto-2); }
+.turma-opcoes .turma-opcao + .turma-opcao { padding-top: 6px; border-top: 1px solid var(--linha); }
 .turma-destaque {
   padding: 12px 14px;
   font-size: 19px; font-weight: 650; line-height: 1.35;

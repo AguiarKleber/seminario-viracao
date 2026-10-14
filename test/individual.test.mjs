@@ -459,6 +459,27 @@ test('o jogo individual: cada vaga apura o próprio voto, só as vagas ocupadas 
   const costas = H.consequenciasDaTurma(config, 'r2', resultados2);
   assert.equal(costas.length, 1);
   assert.deepEqual(costas, [{ motivo: 'as costas travaram (2 bimestres puxados seguidos)', pessoas: 2, valores: [-1230] }]);
+  // D-084: o mesmo resultado, por opção. As costas aparecem embaixo da opção de
+  // quem foi atingido, e a soma das pessoas atingidas é a da turma; o saldo e a
+  // família de cada opção são os das vagas que a escolheram.
+  const porOpcao2 = H.resultadoPorOpcao(config, 'r2', resultados2);
+  assert.equal(porOpcao2.pessoas, 5);
+  assert.deepEqual(porOpcao2.porOpcao.map((o) => [o.id, o.n]), H.contagemPorOpcao(config, 'r2', resultados2).porOpcao.map((o) => [o.id, o.n]));
+  const atingidas = porOpcao2.porOpcao.flatMap((o) => o.consequencias).filter((g) => g.motivo === costas[0].motivo);
+  assert.equal(atingidas.reduce((soma, g) => soma + g.pessoas, 0), 2, 'as 2 pessoas das costas, distribuídas pelas opções');
+  for (const o of porOpcao2.porOpcao) {
+    const deles = ['e1', 'e2', 'e3', 'e4', 'e5'].filter((v) => resultados2.r2[v].decisao === o.id);
+    assert.equal(o.n, deles.length, `${o.id}: quantas pessoas`);
+    if (deles.length === 0) {
+      assert.deepEqual([o.saldo, o.familia, o.consequencias], [null, null, []], `${o.id}: sem ninguém, sem valores`);
+      continue;
+    }
+    const saldos = deles.map((v) => Math.round(resultados2.r2[v].mes.saldoMes) + 0);
+    assert.equal(o.saldo.media, new Set(saldos).size > 1, `${o.id}: "em média" só quando os saldos variam`);
+    if (!o.saldo.media) assert.equal(o.saldo.valor, saldos[0], `${o.id}: o saldo de todos`);
+    const familias = deles.map((v) => H.dinheiroDaFamilia(resultados2.r2[v].depois));
+    if (!o.familia.media) assert.deepEqual({ situacao: o.familia.situacao, valor: o.familia.valor }, familias[0], `${o.id}: a família de todos`);
+  }
 
   // r3 e o placar final.
   await anf.avancar(); // bloco
@@ -650,6 +671,57 @@ test('decidirPelaTurma: só no modo individual e só com a decisão aberta', asy
 });
 
 // ---------- O resumo da turma (historia), puro ----------
+
+// D-084 (pedido do Kleber de 13/10 à noite): o resultado do bimestre por opção,
+// com números feitos à mão. A: duas pessoas com o mesmo saldo e a mesma família
+// depois do arredondamento (o valor, sem "em média") e a mesma consequência; B:
+// três pessoas com valores diferentes (a média, arredondada) e as costas de duas
+// delas (a de um efeito em duas partes, somadas, e a de um efeito só); C: ninguém.
+test('resultadoPorOpcao: por opção, quantas pessoas, o saldo e a família (o valor ou a média) e as consequências, com quantas dessas pessoas', () => {
+  const config = configIndividual();
+  const [a, b, c, d] = config.rodadas.r2.ordemOpcoes;
+  const depois = (renda, extra = {}) => ({ renda, emprestimo: 0, contas_atrasadas: 0, ...extra });
+  const moto = { rotulo: 'a moto quebrou (revisão adiada): conserto', valor: -790 };
+  const resultados = {
+    r2: {
+      e1: { decisao: a, origem: 'maioria', mes: { saldoMes: -1386.6 }, depois: depois(-3083), deAntes: [moto] },
+      e2: { decisao: a, origem: 'maioria', mes: { saldoMes: -1387.4 }, depois: depois(-3082.6), deAntes: [moto] },
+      e3: { decisao: b, origem: 'maioria', mes: { saldoMes: -100 }, depois: depois(500),
+        deAntes: [{ rotulo: 'as costas travaram: 7 dias parado', valor: -1000 }, { rotulo: 'as costas travaram: fisioterapia', valor: -230 }] },
+      e4: { decisao: b, origem: 'maioria', mes: { saldoMes: -300 }, depois: depois(-500, { emprestimo: 300 }) },
+      e5: { decisao: b, origem: 'piloto', mes: { saldoMes: -201 }, depois: depois(-1), deAntes: [{ rotulo: 'as costas travaram: 7 dias parado', valor: -1230 }] },
+      // D: a moto com dois valores e as costas no meio; o mesmo motivo fica junto.
+      e6: { decisao: d, origem: 'maioria', mes: { saldoMes: -10 }, depois: depois(-10), deAntes: [{ ...moto, valor: -560 }] },
+      e7: { decisao: d, origem: 'maioria', mes: { saldoMes: -10 }, depois: depois(-10), deAntes: [{ rotulo: 'as costas travaram: 7 dias parado', valor: -1230 }] },
+      e8: { decisao: d, origem: 'maioria', mes: { saldoMes: -10 }, depois: depois(-10), deAntes: [moto] },
+    },
+  };
+
+  const r = H.resultadoPorOpcao(config, 'r2', resultados);
+
+  assert.deepEqual([r.pessoas, r.semVoto], [8, 1]);
+  const [oa, ob, oc, od] = r.porOpcao;
+  assert.deepEqual([oa.id, oa.letra, oa.n, oa.saldo, oa.familia, oa.consequencias], [a, 'A', 2, { valor: -1387, media: false },
+    { situacao: 'devendo', valor: 3083, media: false }, [{ motivo: 'a moto quebrou (revisão adiada)', valor: -790, pessoas: 2 }]]);
+  // B: saldos −100, −300 e −201 (média −200,3); família +500, −800 e −1 (média −100,3).
+  assert.deepEqual([ob.id, ob.n, ob.saldo, ob.familia, ob.consequencias], [b, 3, { valor: -200, media: true },
+    { situacao: 'devendo', valor: 100, media: true }, [{ motivo: 'as costas travaram', valor: -1230, pessoas: 2 }]]);
+  assert.deepEqual([oc.id, oc.n, oc.saldo, oc.familia, oc.consequencias], [c, 0, null, null, []]);
+  assert.deepEqual([od.n, od.saldo, od.familia], [3, { valor: -10, media: false }, { situacao: 'devendo', valor: 10, media: false }]);
+  assert.deepEqual(od.consequencias, [
+    { motivo: 'a moto quebrou (revisão adiada)', valor: -560, pessoas: 1 },
+    { motivo: 'a moto quebrou (revisão adiada)', valor: -790, pessoas: 1 },
+    { motivo: 'as costas travaram', valor: -1230, pessoas: 1 },
+  ], 'o mesmo motivo junto, na ordem em que aparece');
+  assert.equal(oa.rotulo, H.textoDaOpcao(config, 'r2', a, 'motoboy').rotulo);
+  // A frase das pessoas atingidas.
+  assert.equal(H.quantasDessas(3, 5), '3 dessas pessoas');
+  assert.equal(H.quantasDessas(1, 4), '1 dessas pessoas');
+  assert.equal(H.quantasDessas(1, 1), '1 pessoa');
+  // Família em zero conta como "tem" (a régua do "fechou", patrimônio ≥ 0).
+  const zero = H.resultadoPorOpcao(config, 'r2', { r2: { e1: { decisao: a, mes: { saldoMes: 0 }, depois: depois(0) } } });
+  assert.deepEqual(zero.porOpcao[0].familia, { situacao: 'tem', valor: 0, media: false });
+});
 
 test('pessoasNaSala: conta quem tem vaga aberta, uma vez por vaga', () => {
   const cfg = configIndividual();

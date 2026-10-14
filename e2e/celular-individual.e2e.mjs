@@ -430,6 +430,12 @@ try {
   esperado[padrao] += 1;
   assert.deepEqual(contagem, esperado, 'quantas pessoas ficaram com cada opção (a que não votou, na de sempre)');
   assert.match(await textoDaTela(esp), /1 pessoa não votou e ficou com a opção de sempre/);
+  // D-084: o mesmo resumo do telão, por opção. As duas da B fizeram o mesmo
+  // caminho (o 1º bimestre): o valor, sem "em média"; a opção sem ninguém,
+  // sem valores.
+  const valoresB = lido(await esp.textContent('.turma-opcao[data-opcao="b"] .turma-opcao-valores'));
+  assert.match(valoresB, /^saldo do bimestre [+−]?R\$ [\d.]+ · a família (tem|devendo) R\$ [\d.]+$/, `a B no espectador: "${valoresB}"`);
+  assert.equal(await esp.locator('.turma-opcao[data-opcao="a"] .turma-opcao-valores').count(), 0, 'a A, sem ninguém, sem valores');
   await conferirLargura(esp, '14-espectador-resultado');
   await ate(esp, (e) => e.indice === r1 + 1, 'bloco (espectador)');
   await esperarTela(esp, 'aguardando', 'bloco no espectador');
