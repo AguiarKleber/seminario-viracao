@@ -368,6 +368,15 @@
     return bloco ? { bloco } : {};
   };
 
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10): no "Conheça o Jonas" e
+  // nos blocos, a tela diz se este aparelho já leu o passo atual (lido: true
+  // vira "Você já leu ✓"). meuLido é o lidos/{uid} que o celular lê (o índice
+  // do passo que ele leu, regras v5). Só quando o celular o passa: sem ele, a
+  // tela fica igual à de antes, campo a campo.
+  function comLido(entrada, estado) {
+    return entrada.meuLido === undefined ? {} : { lido: Number.isFinite(estado.indice) && entrada.meuLido === estado.indice };
+  }
+
   // Modo individual: o fim do ano da turma (historia.fimDoAnoDaTurma), para o
   // celular dizer "das 18 pessoas da turma, 3 terminaram com dinheiro
   // sobrando" sem ranking nem nome. Só no modo individual: a tela das equipes
@@ -409,9 +418,9 @@
         return formadas
           ? tela('situacao', {
             ...dadosSituacao(conteudo, equipeValida, resultados), titulo: tituloDoBloco(conteudo, estado, meta), final: false,
-            ...comBloco(conteudo, estado, meta),
+            ...comBloco(conteudo, estado, meta), ...comLido(entrada, estado),
           })
-          : aguardando('apresentacao', { titulo: tituloDoBloco(conteudo, estado, meta), ...comBloco(conteudo, estado, meta) });
+          : aguardando('apresentacao', { titulo: tituloDoBloco(conteudo, estado, meta), ...comBloco(conteudo, estado, meta), ...comLido(entrada, estado) });
       case 'formarEquipes':
         if (estado.equipesTravadas === true) return formadas ? tela('persona', dadosPersona(conteudo, equipeValida)) : aguardando('semEquipe');
         return tela('escolherEquipe', {
@@ -419,7 +428,7 @@
           minha: equipeValida,
         });
       case 'personas':
-        return equipeValida ? tela('persona', dadosPersona(conteudo, equipeValida)) : aguardando('semEquipe');
+        return equipeValida ? tela('persona', { ...dadosPersona(conteudo, equipeValida), ...comLido(entrada, estado) }) : aguardando('semEquipe');
       case 'rodada':
         return equipeValida ? telaRodada(conteudo, estado, entrada, equipeValida) : aguardando('semEquipe');
       case 'placarFinal':
