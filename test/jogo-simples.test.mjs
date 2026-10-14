@@ -114,7 +114,7 @@ test('config.json do dia: modo individual, com 20 vagas neutras, nenhuma obrigat
     assert.equal(cfg.equipes[eq].persona, 'motoboy');
     assert.notEqual(cfg.equipes[eq].obrigatoria, true, `${eq}: no modo individual nenhuma vaga é obrigatória`);
   }
-  assert.equal(cfg.versao, '2026-10-14-v5.2-individual');
+  assert.equal(cfg.versao, '2026-10-14-v5.3-individual');
 });
 
 // Sem a etapa de formar equipes (a vaga é dada pelo telão quando o aluno entra), e
@@ -188,4 +188,64 @@ test('config.json do dia: das 15.625 combinações, 281 fecham o ano; a melhor �
   assert.equal(Math.round(c.pior.valor), -6135);
   assert.ok(c.pior.valor > -7000, 'o pior caso deve menos de R$ 7.000 (pedido do Kleber, D-079)');
   assert.equal(jogar(cfg, 'CDDCAD').final, -3291);
+});
+
+// Revisão final de 14/10 (pedido do Kleber, 11h): o "Conheça o Jonas" mais
+// limpo. O celular mostra a conta do mês comum sem carregar o motor
+// (alunoLogica.contaDoMesComum); ela tem de bater com o motor.mesComum do
+// telão, número a número. E o config traz o nome curto de cada item do básico
+// e as fontes em uma linha (persona.fontesCurtas), sem as notas internas das
+// recontas (o histórico fica na D-079).
+test('config.json do dia: a conta do mês do celular é a mesma do motor.mesComum do telão', () => {
+  const cfg = configDoDia().config;
+  const m = M.mesComum(cfg, 'e1');
+  const c = V.alunoLogica.contaDoMesComum(cfg, 'e1');
+  assert.equal(c.trabalho, m.trabalho);
+  assert.equal(c.fixos.reduce((s, f) => s + f.valor, 0), m.custosFixos);
+  assert.equal(c.outraRenda, m.outraRenda);
+  assert.equal(c.basico, m.basico);
+  assert.equal(c.saldo, m.saldoMes);
+  assert.deepEqual([c.trabalho, c.fixos.map((f) => f.valor), c.outraRenda, c.basico, c.saldo], [2680, [480], 1600, 3928, -128]);
+  assert.equal(c.fontes.length, cfg.personas.motoboy.todoMes.length, 'a fonte do trabalho e a da parcela');
+});
+
+test('contaDoMesComum: um todoMes que o celular não sabe somar (condição, multiplicador) fica sem a conta', () => {
+  const cfg = structuredClone(configDoDia().config);
+  cfg.personas.motoboy.todoMes[0].se = { rodada: 'r1' };
+  assert.equal(V.alunoLogica.contaDoMesComum(cfg, 'e1'), null);
+  const cfg2 = structuredClone(configDoDia().config);
+  cfg2.personas.motoboy.todoMes[0].multiplica = { renda: 0.5 };
+  assert.equal(V.alunoLogica.contaDoMesComum(cfg2, 'e1'), null);
+});
+
+test('config.json do dia: o nome curto de cada item do básico, as fontes curtas e nenhuma nota interna das recontas', () => {
+  const cfg = configDoDia().config;
+  const p = cfg.personas.motoboy;
+  assert.deepEqual(p.basico.itens.map((i) => i.curto), ['comida', 'aluguel', 'luz', 'água', 'gás', 'ônibus', 'celular', 'remédios']);
+  assert.equal(p.fontesCurtas, 'IBGE (PNAD 2025), DIEESE/Conab, QuintoAndar, CEEE, DMAE, Tabela Fipe');
+  const fontes = [...p.basico.itens.map((i) => i.fonte), p.outraRenda.fonte];
+  for (const f of fontes) {
+    assert.doesNotMatch(f, /D-079|até 06\/10 de manhã|: B\)/, `sem nota interna: "${f.slice(0, 60)}…"`);
+  }
+  // Os números e a fonte de cada valor não mudaram.
+  assert.deepEqual(p.basico.itens.map((i) => i.valor), [2098, 1200, 162, 119, 89, 95, 75, 90]);
+  assert.equal(p.outraRenda.valor, 1600);
+  assert.match(p.basico.itens[1].fonte, /^QuintoAndar, lido em 29\/09\/2026/);
+});
+
+test('validador: "curto" e "fontesCurtas" são opcionais e, ausentes, não mudam o hash', () => {
+  const bruto = JSON.parse(readFileSync(join(RAIZ, 'config.json'), 'utf8'));
+  const com = V.validarConfig.validar(bruto);
+  assert.deepEqual(com.erros, []);
+  const sem = structuredClone(bruto);
+  delete sem.personas[0].fontesCurtas;
+  for (const i of sem.personas[0].basico.itens) delete i.curto;
+  const r = V.validarConfig.validar(sem);
+  assert.deepEqual(r.erros, []);
+  assert.equal(r.config.personas.motoboy.fontesCurtas, undefined);
+  assert.equal(r.config.personas.motoboy.basico.itens[0].curto, undefined);
+  assert.notEqual(V.validarConfig.hash(r.config), V.validarConfig.hash(com.config));
+  const errado = structuredClone(bruto);
+  errado.personas[0].basico.itens[0].curtoo = 'x';
+  assert.ok(V.validarConfig.validar(errado).erros.some((e) => /curtoo/.test(e.caminho + e.mensagem)), 'chave errada no item do básico é erro');
 });

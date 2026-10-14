@@ -1066,3 +1066,85 @@ do resultado da D-081).
   faixa de entrada e em 1920×1080; em 1024×768 com a faixa, como acima, fechar
   a entrada resolve.
 
+
+**Nota de 14/10, antes do seminário: a revisão final (versão 14).** A revisão
+adversarial da manhã (7 frentes, verificadas por céticos) e a triagem das 11h26
+não acharam nada que travasse a aula ou perdesse voto. Três decisões, do Kleber
+e da triagem:
+1. **Publicar hoje a versão 14**, se ela ficar pronta e verde até as 14h10.
+   Senão, fica a 13, e valem o roteiro e o plano.
+2. **Tirar do "Conheça o Jonas" as notas internas das fontes** ("(até 06/10 de
+   manhã…; D-079)", "(…; reconta da D-079)" e ": B"), porque o Kleber pediu a
+   tela mais limpa. O histórico das recontas continua na D-079. Isso resolve o
+   "a confirmar com o Kleber" da nota de 06/10 à tarde.
+3. **O "N de M já escolheram" continua contando só quem deu sinal no último
+   minuto**: mudar o núcleo no dia da aula é risco. A mitigação está no roteiro
+   (seção 00): conferir o M antes do Enter e esperar de 15 a 20 s se ele caiu.
+   Rever depois do seminário (M = todos com vaga, com "X sem conexão agora").
+
+O que a revisão final mudou:
+- **"Conheça o Jonas"** (pedido do Kleber, 11h: "poluída na parte dos custos
+  de vida"), no telão e no celular, sem tirar número nem fonte: a conta do mês
+  em quatro linhas grandes e alinhadas (o trabalho rende R$ 2.680, a parcela da
+  moto −R$ 480, as faxinas e a revenda +R$ 1.600, o básico −R$ 3.928) e a frase
+  do mês comum; o básico em uma linha curta, com o nome curto de cada item; e as
+  fontes em uma linha só, no pé ("Fontes: IBGE (PNAD 2025), DIEESE/Conab,
+  QuintoAndar, CEEE, DMAE, Tabela Fipe"). No celular, o básico item a item e as
+  fontes inteiras de cada valor abrem ao tocar em "ver", e o "Li, pode seguir"
+  fica à vista em 360×740 (era a ~2.000 px do topo). O config ganha dois campos
+  opcionais: `curto` (item do básico) e `fontesCurtas` (persona); ausentes, o
+  hash não muda. A conta do celular vem de `alunoLogica.contaDoMesComum` (o
+  celular não carrega o motor), e o teste confere com o `motor.mesComum`.
+- **Telão (C4):** os avisos da queda de rede em português e com o passo certo
+  ("a rede pode estar fora. Não repita agora", CONFLITO e PERMISSION_DENIED em
+  frases, a aba recém-fechada, a Rede restrita "depois de criar a sala" e o
+  modal do tempo mínimo sem "conversa"). Só texto.
+- **Celular (C5 e C6):** a faixa "Aguardando o telão…" some quando o próprio
+  celular está sem rede (fica só o selo "Reconectando…"); as telas de falha sem
+  a mensagem crua do erro e com o 4G como saída.
+- **Roteiro e README (C1 a C3):** as seções 8, 9 e 10 (nunca F5 sem internet,
+  não repetir a tecla na queda, a trava da aba fechada, o "Apurando…"), a
+  montagem (regras v5, Ctrl+0, a escala do Windows, Ctrl+− em 1024×768), as
+  teclas (← e o modo revendo; a barra pelo ponteiro), a fala do QR, a sala
+  cheia, o M do "N de M", a letra de quem não votar em mar–abr (D) e jul–ago
+  (C) e a tabela de 60 min recalculada do config.
+- **Números e versões:** config `2026-10-14-v5.3-individual` (hash
+  `69daf389`), versão 14 do site, as mesmas regras v5 (o
+  `firebase/regras.json` não mudou) e o mesmo jogo (281 das 15.625 combinações
+  fecham o ano; ADCEDA +R$ 1.714; DAECCC −R$ 6.135). Medido em 1024×768,
+  1280×720 (com e sem a faixa de entrada) e 1920×1080: cabe sem rolagem e sem
+  texto sobre texto; o básico e as fontes vão a duas linhas em 1024×768, sem
+  descer dos 28 px, e com a faixa de entrada o aperto de sempre põe a conta e
+  a frase no tamanho do corpo. No celular, em 360×740, o fundo do "Li, pode
+  seguir" fica a 730 px do topo (e2e). A bateria: `npm run check` (675
+  testes), `npm run e2e` e `npm run e2e:online`, verdes.
+
+O fechamento (das 13h22 às 14h): a leitura final das telas da versão 14 achou
+11 textos a corrigir. Nove foram corrigidos só no código das telas, sem mexer
+no config (o hash continua `69daf389`):
+- **telão:** "Em casa:" antes da família no "Conheça o Jonas", como no
+  celular; na sessão sem celulares, a enquete encerrada sem nenhuma contagem
+  diz "contagem por mão levantada" (e não "votos pelo celular"), o aviso diz
+  "As afirmações 1, 2 e 3", e o "Retomar a sessão" diz "Roteiro de 60 min";
+- **celular:** nas enquetes do modo individual, "O seu voto não fica ligado
+  ao seu nome: o telão mostra só os totais da turma." (a frase "nem o
+  apresentador" já tinha saído da entrada; no jogo por equipes, ela fica);
+  no formato simples, "O que isso custou:"; "(você não votou: ficou a opção
+  de sempre)"; nas fontes do "Conheça o Jonas", a do trabalho com o nome da
+  linha da conta, "o trabalho rende por mês"; e a entrada do espectador com
+  uma frase que vale para os dois modos e o botão **Entrar como espectador**.
+- **Ficam para depois do seminário** os dois que mexem no config: "= R$ 482
+  (R$ 480 no jogo)" na fonte da parcela da moto e "R$ 95,40 (R$ 95 na
+  conta)" na do ônibus. Mudariam o hash, citado no README, nos docs, no
+  roteiro, no plano de contingência e nos estados salvos das capturas do e2e,
+  no dia da aula. Ficam também as notas internas das fontes das rodadas, dos
+  efeitos e de `regras.atrasoFonte` e `regras.limiteFonte` ("D-024", "config
+  de 05/10", "6 casas"…), que nenhuma tela mostra.
+- **Docs:** o roteiro (o botão do espectador, a nota do espectador no jogo
+  individual, a seção 6 e a seção 11, "o voto não fica ligado ao nome"), a
+  arquitetura (a frase da privacidade) e o `contratos.md`
+  (`alunoLogica.contaDoMesComum`, `curto` e `fontesCurtas`).
+- **A cópia local de emergência** (`site-local-emergencia.zip`, os arquivos do
+  site da versão 14, sem testes nem docs) abriu por arquivo no Edge, carregou
+  o config pela barra (hash `69daf389`) e jogou o primeiro bimestre sem
+  celulares.

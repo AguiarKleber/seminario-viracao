@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '13';
+  const VERSAO_APP = '14';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -487,10 +487,13 @@
   function mostrarErroServico(erro, repetir, { espectador = false } = {}) {
     const texto = String(erro?.code || '') + ' ' + String(erro?.message || erro);
     let titulo = 'Sem acesso ao serviço';
-    let explicacao = `Não foi possível falar com o servidor (${String(erro?.message || erro)}). Tentando de novo a cada 10 s.`;
+    // Revisão final de 14/10 (C6): sem a mensagem crua do erro entre parênteses
+    // ("SEM_CONEXAO: …", "Failed to fetch dynamically imported module: …", os
+    // erros do Firebase em inglês) e com o que fazer: o 4G.
+    let explicacao = 'Não foi possível falar com o servidor. Tentando de novo a cada 10 s; se não entrar em 1 minuto, use os dados móveis (4G).';
     if (/too-many-requests/.test(texto)) {
       titulo = 'Muitas entradas nesta rede';
-      explicacao = 'O serviço limitou as contas novas desta rede por uma hora. Tente pelo 4G, ou espere alguns minutos.';
+      explicacao = 'Esta rede passou do limite de entradas novas do serviço. Desligue o Wi-Fi e entre pelos dados móveis (4G).';
     } else if (/conexao\.json|ligado ao serviço/.test(texto)) {
       titulo = 'Site ainda não configurado';
       explicacao = `${String(erro.message)}. Avise o apresentador: nesta aula as respostas serão por mão levantada.`;
@@ -504,7 +507,7 @@
       // O espectador volta ao campo do PIN desta sala, e não à entrada comum,
       // onde uma sala de aluno guardada no aparelho entraria direto como aluno.
       if (espectador) gravarSessao('espectador', sala);
-      explicacao = `Não foi possível baixar o app do servidor (${String(erro?.message || erro)}). A página recarrega sozinha em instantes para tentar de novo.`;
+      explicacao = 'Não foi possível baixar o app do servidor. A página recarrega sozinha em instantes para tentar de novo.';
       app.erro = { titulo, texto: explicacao, repetir: () => recarregarPara(sala, !espectador) };
       agendarRecarga(sala, !espectador);
     } else {
@@ -1519,7 +1522,10 @@
       if (c.textContent !== t) c.textContent = t;
     }
     const ft = app.el.faixaTelao;
-    const velho = pulsoVelho();
+    // Revisão final de 14/10 (C5): um celular mais de 30 s sem rede mostrava o
+    // selo "Reconectando…" e, junto, esta faixa dizendo que ele estava
+    // conectado (culpando o telão). Sem rede, quem fala é só o selo.
+    const velho = app.conectado === true && pulsoVelho();
     if (ft.hidden === velho) {
       ft.textContent = velho ? 'Aguardando o telão… (o seu celular está conectado)' : '';
       ft.hidden = !velho;
@@ -1564,7 +1570,13 @@
     return texto ? D().el('p', { classe: 'nota', dados: { tipo }, role: tipo === 'erro' ? 'alert' : 'status', texto }) : null;
   }
 
-  const privacidade = () => D().el('p', { classe: 'privacidade', texto: 'Ninguém, nem o apresentador, vê o seu voto: só os totais.' });
+  // No modo individual, a mesma garantia da entrada (revisão de 14/10, D-081,
+  // item 5): o voto de cada vaga pode ser lido, sem o nome; o que se garante é
+  // que ele não fica ligado à pessoa. Por equipes, a frase de sempre (o
+  // e2e/sessao-online confere).
+  const privacidade = () => D().el('p', { classe: 'privacidade', texto: individual()
+    ? 'O seu voto não fica ligado ao seu nome: o telão mostra só os totais da turma.'
+    : 'Ninguém, nem o apresentador, vê o seu voto: só os totais.' });
 
   function telaSimples(alvo, tipo, kicker, titulo, texto) {
     const { el, acrescentar } = D();
@@ -1611,7 +1623,9 @@
     if (app.pedindoPin && !app.embutido) {
       acrescentar(alvo, el('section', { classe: 'bloco', dados: { espectador: '1' } }, [
         cabecalho('Seminário da Viração', 'Modo espectador'),
-        el('p', { classe: 'texto-2', texto: 'Para o apresentador: com o PIN, este celular mostra a tela de qualquer equipe, como o aluno vê. Ele não vota e não entra na contagem.' }),
+        // Aqui o celular ainda não sabe o modo da sala: a frase vale para os
+        // dois (no individual, o espectador vê só o resumo da turma, D-081).
+        el('p', { classe: 'texto-2', texto: 'Para o apresentador: com o PIN, este celular acompanha a sala sem votar e sem entrar na contagem.' }),
         ...filhos.slice(1),
         ...camposDoEspectador(campo),
       ]));
@@ -1657,7 +1671,7 @@
       pin,
       el('p', { id: 'dica-pin', classe: 'texto-2', texto: 'O mesmo PIN do telão.' }),
       nota(app.aviso, 'erro'),
-      botao('Ver as equipes', ver, { classe: 'botao-primario botao-largo', dados: { acao: 'entrar-espectador' } }),
+      botao('Entrar como espectador', ver, { classe: 'botao-primario botao-largo', dados: { acao: 'entrar-espectador' } }),
       botao('Voltar', () => {
         // A marca da aba sai junto: deixada aqui, ela fazia a próxima recarga
         // voltar ao campo do PIN mesmo depois de o aparelho entrar como aluno.
@@ -2403,7 +2417,8 @@
   // R$ Y", com o cartaCusto que o telão gravou (o tempo parado custa quanto?).
   // Carta que não custou nada, e sala de antes do v2.1 (sem cartaCusto), ficam
   // sem a linha. A mesma forma para toda carta: a grave não ganha destaque
-  // (arquitetura, seção 8).
+  // (arquitetura, seção 8). No formato simples, "O que isso custou:", logo
+  // abaixo de "O que aconteceu:": lá a turma nunca vê a palavra "carta".
   function linhaCustoCarta(custo) {
     if (!custo) return null;
     const dias = Number(custo.diasParado) || 0;
@@ -2416,7 +2431,7 @@
     if (perdida > 0) partes.push(['renda perdida ', el('b', { texto: F().moeda(perdida) })]);
     if (gastos > 0) partes.push(['gastos ', el('b', { texto: F().moeda(gastos) })]);
     return el('p', { classe: 'carta-custo', dados: { diasParado: dias, rendaPerdida: perdida, gastos } },
-      ['O que a carta custou: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+      [simples() ? 'O que isso custou: ' : 'O que a carta custou: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   // ----- A dívida da família (D-046; esquema v2.2, D-065)
@@ -2639,8 +2654,9 @@
   // voto simples da equipe (D-041: "ninguém votou: ficou o de sempre", e nunca
   // "piloto automático"). O mesmo texto do descreverDecisao.
   const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
-  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa.
-  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou o de sempre' };
+  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa, e com
+  // "a opção de sempre", como a decisão e o telão dizem (leitura final de 14/10).
+  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou a opção de sempre' };
   const origensDaDecisao = () => (individual() ? ORIGENS_INDIVIDUAL : ORIGENS_DA_DECISAO);
   // "Decisão:" nas telas da equipe; "A sua escolha:" no modo individual.
   const rotuloDecisao = () => (individual() ? 'A sua escolha: ' : 'Decisão: ');
@@ -2876,18 +2892,74 @@
         ? 'Cada pessoa escolhe sozinha, no próprio celular. O telão mostra só os totais da turma.'
         : `Em cada ${periodo().nome}, a escolha é sua: o seu voto não fica ligado ao seu nome, e o telão mostra só os totais da turma.`;
     }
+    // Revisão final de 14/10: no "Conheça o Jonas", a conta do mês aberta e o
+    // resto recolhido (contaConheca); sem a conta (um todoMes que o celular
+    // não sabe somar), o básico item a item, como antes.
+    const conta = soUm && persona.contaDoMes ? contaConheca(persona) : null;
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(kicker, soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
       el('p', { classe: 'texto', texto: persona.descricao || '' }),
       linhaFamilia(persona),
-      detalheBasico(persona),
+      conta ? conta.conta : detalheBasico(persona),
       soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
       soUm ? null : listaIndicadores(d.indicadores),
       el('p', { classe: 'texto-2', texto: comoSeJoga }),
       sozinho ? blocoLido(d) : null,
+      conta ? conta.fontes : null,
     ]));
     return 'persona';
+  }
+
+  // Revisão final de 14/10 (pedido do Kleber, 11h): o "Conheça o Jonas" no
+  // celular estava poluído na parte dos custos (os 8 itens do básico, cada um
+  // com a fonte inteira, e a outra renda com um parágrafo de fonte): o "Li,
+  // pode seguir" ficava a ~2.000 px do topo, em 360×740. Agora, como no
+  // telão: a conta do mês em quatro linhas alinhadas e a frase do mês comum;
+  // o básico item a item em um "ver" que abre ao tocar; e, no pé, as fontes
+  // em uma linha curta, que abre as fontes inteiras de cada valor. Nenhum
+  // número nem fonte sai da tela: só muda o que vem aberto.
+  function contaConheca(persona) {
+    const { el } = D();
+    const c = persona.contaDoMes;
+    const itens = lista(persona.basico?.itens);
+    const outra = persona.outraRenda && persona.outraRenda.valor > 0 ? persona.outraRenda : null;
+    const linha = (rotulo, valor) => el('li', { classe: 'conheca-linha' }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
+    const fecha = c.saldo >= 0;
+    const conta = [
+      el('ul', { classe: 'conheca-conta', dados: { saldoMesComum: String(c.saldo) } }, [
+        linha('o trabalho rende por mês', F().moeda(c.trabalho)),
+        ...lista(c.fixos).map((f) => linha(f.rotulo || 'custo fixo', F().moeda(-f.valor))),
+        outra ? linha(outra.rotulo, F().moeda(outra.valor, { sinal: true })) : null,
+        linha('o básico da casa', F().moeda(-c.basico)),
+      ]),
+      // O mesmo texto do telão (telaConheca), sem o valor (pedido de 06/10).
+      el('p', { classe: 'conheca-mes', dados: { sinal: fecha ? 'positivo' : 'negativo' } }, fecha
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
+      recolhido('conheca-basico', 'O básico da casa, item a item', [
+        el('ul', { classe: 'basico-itens' }, itens.map((i) => el('li', { classe: 'basico-item' }, [
+          el('span', { classe: 'basico-rotulo', texto: i.rotulo }),
+          el('b', { classe: 'basico-valor', texto: F().moeda(i.valor) }),
+        ]))),
+        linhaBasico(persona),
+      ]),
+    ];
+    // As fontes inteiras, na ordem da conta: o trabalho e a parcela, a outra
+    // renda e cada item do básico.
+    const fonte = (rotulo, texto) => (texto ? el('p', { classe: 'fonte' }, [el('b', { texto: `${rotulo}: ` }), texto]) : null);
+    // A fonte do trabalho leva o nome da linha que ela explica, "o trabalho
+    // rende por mês" (leitura final de 14/10): o rótulo do config ("entregas
+    // do mês…") não está mais em nenhuma linha da conta. A dos custos fixos
+    // fica com o rótulo deles ("a parcela da moto").
+    const rotulosFixos = new Set(lista(c.fixos).map((f) => f.rotulo).filter(Boolean));
+    const fontes = recolhido('conheca-fontes', persona.fontesCurtas ? `Fontes: ${persona.fontesCurtas}` : 'As fontes de cada valor', [
+      ...lista(c.fontes).map((f) => fonte(rotulosFixos.has(f.rotulo) ? f.rotulo : 'o trabalho rende por mês', f.fonte)),
+      outra ? fonte(outra.rotulo, outra.fonte) : null,
+      ...itens.map((i) => fonte(i.rotulo, i.fonte)),
+    ]);
+    if (fontes) fontes.classList.add('recolhido-fontes');
+    return { conta: el('div', { classe: 'conheca' }, conta), fontes };
   }
 
   // [Li] "Li, pode seguir" (pedido do Kleber de 07/10), embaixo do "Conheça o

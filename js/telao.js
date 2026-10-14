@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '13';
+  const VERSAO_APP = '14';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -213,7 +213,9 @@
   function traduzirErro(msg) {
     const m = String(msg || '');
     if (/^ESTADO_MUDOU/.test(m)) return 'O estado mudou antes de o comando rodar: confira a tela e repita, se ainda quiser.';
-    if (/^SEM_RESPOSTA/.test(m)) return 'O serviço não respondeu em 10 s: o comando pode chegar quando a rede voltar. Confira a tela antes de repetir.';
+    // Revisão final de 14/10 (C4): "pode chegar quando a rede voltar" era falso
+    // quando a conexão caía, e levava ao 2º Enter (o telão preso em "Apurando…").
+    if (/^SEM_RESPOSTA/.test(m)) return 'O serviço não respondeu em 10 s: a rede pode estar fora. Não repita agora; quando a rede voltar, confira a tela e repita só se ela não mudou.';
     if (/^SEM_CONEXAO/.test(m)) return 'Sem conexão com o serviço: o telão relê o estado quando a rede voltar.';
     if (/^Votação aberta/.test(m)) return 'Votação aberta: quem fecha é o apresentador (Enter).';
     if (/^Nada para encerrar/.test(m)) return 'Não há votação aberta neste passo.';
@@ -221,6 +223,12 @@
     if (/^Fim do roteiro/.test(m)) return 'Este é o último passo do roteiro.';
     if (/^Não há votação aberta/.test(m)) return 'Não há votação aberta.';
     if (/^Encerre a votação/.test(m)) return 'Encerre a votação (Enter) antes de pular.';
+    // C4: na queda de rede, o projetor mostrava "CONFLITO: o estado da sala
+    // mudou em outra janela" (sem outra janela) e "PERMISSION_DENIED:
+    // Permission denied". O núcleo continua mandando o prefixo CONFLITO (o teste
+    // do anfitrião confere); só a frase da tela muda.
+    if (/^CONFLITO/.test(m)) return 'O estado da sala mudou enquanto o comando ia: a tela foi atualizada. Confira e repita, se ainda quiser.';
+    if (/PERMISSION_DENIED/.test(m)) return 'O servidor recusou o comando: o estado da sala mudou. Confira a tela e repita, se ainda quiser.';
     return m;
   }
 
@@ -759,7 +767,8 @@
   // que solta a trava e a pega de novo), em vez de recusar na hora.
   function travarAba(sala, { esperarMs = 0 } = {}) {
     if (!raiz.navigator.locks?.request) return Promise.resolve(() => {});
-    const recusa = () => new Error(`A sala ${sala} já está aberta em outra aba deste navegador: use aquela aba.`);
+    // C4: a trava da aba fechada leva até 25 s para sair, e aí não há "aquela aba".
+    const recusa = () => new Error(`A sala ${sala} já está aberta em outra aba deste navegador: use aquela aba. Se você acabou de fechar a aba do telão, espere 30 s e clique de novo em Retomar sala.`);
     const opcoes = esperarMs > 0 && raiz.AbortSignal?.timeout ? { signal: raiz.AbortSignal.timeout(esperarMs) } : { ifAvailable: true };
     return new Promise((resolver, rejeitar) => {
       raiz.navigator.locks.request(`viracao:telao:${sala}`, opcoes, (trava) => {
@@ -1000,7 +1009,7 @@
     if (!x) return;
     const problema = ['regras', 'indisponivel', 'semConexao', 'encerrado'].includes(online.fase);
     x.status.textContent = online.mensagem + (online.lento && online.fase !== 'semConexao'
-      ? ' A primeira conexão passou de 8 s: se os celulares não entrarem, ligue "Rede restrita" na barra.' : '');
+      ? ' A primeira conexão passou de 8 s: depois de criar a sala, se os celulares não entrarem, ligue "Rede restrita" na barra.' : '');
     x.status.classList.toggle('abertura-erro', problema);
     x.status.classList.toggle('abertura-ok', online.fase === 'pronto');
     x.status.setAttribute('role', online.fase === 'regras' ? 'alert' : 'status');
@@ -1425,11 +1434,13 @@
     let blocoRetomar = null;
     if (temUltima) {
       const outroConfig = app.hash && ultima.hashConfig !== app.hash;
+      // A chave interna do roteiro ("60min") vazava para a tela (leitura final de 14/10).
+      const rotuloRoteiro = /^[0-9]+min$/.test(String(ultima.roteiro)) ? `Roteiro de ${parseInt(ultima.roteiro, 10)} min` : `Roteiro ${ultima.roteiro}`;
       blocoRetomar = el('section', { classe: 'abertura-bloco abertura-retomar', id: 'bloco-retomar' }, [
         el('p', { classe: 'abertura-pergunta', texto: `Retomar a sessão de ${F().dataHora(ultima.criadaEm)}?` }),
         el('p', { classe: 'abertura-status', texto: outroConfig
           ? `Ela foi criada com outro config.json (${ultima.hashConfig}). Carregue o mesmo arquivo para retomar.`
-          : `Roteiro ${ultima.roteiro} · sem celulares.` }),
+          : `${rotuloRoteiro} · sem celulares.` }),
         el('div', { classe: 'abertura-acoes' }, [
           botao('Retomar', () => executar(retomarOffline),
             { classe: 'botao-primario', desabilitado: !app.config || outroConfig, dados: { acao: 'retomar' } }),
@@ -1949,7 +1960,11 @@
     const enq = app.config.enquetes[e.enquete];
     const ap = app.dados.enquetes?.[e.enquete]?.[e.momento];
     const ordem = ordemAfirmacoes(enq);
-    const metodo = ap?.metodo === 'manual' ? 'contagem por mão levantada' : 'votos pelo celular';
+    // Sem celulares e sem nenhuma contagem (o Enter confirmado no aviso), a
+    // apuração sai como "celular", mas nenhum voto chegou por ele: o rótulo é
+    // o da mão levantada, como o lobby dessa sessão diz (leitura final de 14/10).
+    const ninguem = !ordem.some((a) => Number(ap?.n?.[a]) > 0);
+    const metodo = ap?.metodo === 'manual' || (app.modo === 'offline' && ninguem) ? 'contagem por mão levantada' : 'votos pelo celular';
     if (!ap) {
       D().acrescentar(s, [cabecalho(kickerEnquete(e), 'Apurando…')]);
       return;
@@ -2360,8 +2375,14 @@
 
   // Formato simples: com um personagem só, a etapa das personas vira "Conheça
   // o Jonas": quem é, a casa, a renda, o básico e se a conta de um mês comum
-  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
-  // básico item a item vai numa linha corrida (o celular tem as fontes).
+  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda.
+  // Revisão final de 14/10 (pedido do Kleber, 11h: "poluída na parte dos
+  // custos"): a conta do mês em quatro linhas grandes e alinhadas, sem o
+  // "menos" na frente da parcela (o sinal já diz); o básico item a item em
+  // uma linha curta e discreta, com o nome curto de cada item (o "curto" do
+  // config: "água", e não "água e esgoto (…)"); e as fontes em uma linha só,
+  // no pé, com os nomes curtos (persona.fontesCurtas). As fontes inteiras de
+  // cada valor ficam no celular, no "ver" das fontes.
   function telaConheca(s, e) {
     const { el } = D();
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
@@ -2372,17 +2393,23 @@
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
     const itens = lista(p.basico?.itens).filter((i) => i && i.valor > 0);
+    // O nome curto do item; sem ele, o rótulo sem o parêntese ("comida (2,5
+    // cestas básicas)" vira "comida").
+    const curto = (i) => i.curto || String(i.rotulo || '').replace(/\s*\(.*\)\s*$/, '');
     const fecha = mes.saldoMes >= 0;
     s.appendChild(el('div', { classe: 'conheca' }, [
       el('p', { classe: 'conheca-quem', texto: p.descricao || '' }),
-      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'], texto: p.familia.descricao }) : null,
+      // "Em casa:" em negrito, como no celular: sem o rótulo, "Jonas, a
+      // companheira, …" ficava uma lista solta, que se lia como aposto (leitura
+      // final de 14/10). A descrição do config foi escrita para vir depois dele.
+      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'] }, [el('b', { texto: 'Em casa:' }), ` ${p.familia.descricao}`]) : null,
       el('ul', { classe: 'conheca-conta' }, [
         pedaco('o trabalho rende por mês', F().moeda(mes.trabalho), 'conheca-trabalho'),
-        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? `menos ${fixos.join(' e ')}` : 'menos os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
+        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? fixos.join(' e ') : 'os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
         outra ? pedaco(outra.rotulo, F().moeda(outra.valor, { sinal: true }), 'conheca-outra') : null,
         pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
       ]),
-      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(curto(i), i.valor)))) : null,
       // Sem o valor (pedido do Kleber de 06/10 à tarde, com o print da versão
       // 9): era "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
       // bimestre)". A frase diz só que a conta não fecha; os números ficam nas
@@ -2393,6 +2420,8 @@
         ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
         : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
+    // Fora da .conheca (que cresce e centraliza a conta): a linha fica no pé.
+    if (p.fontesCurtas) s.appendChild(el('p', { classe: ['bloco-fonte', 'conheca-fontes'] }, [el('b', { texto: 'Fontes: ' }), p.fontesCurtas]));
     // Com a faixa de entrada embaixo, em 1280×720, a frase do mês comum passava
     // da faixa (e2e individual-online, 13/10; nas equipes, o e2e online não
     // media esta tela). Só quando a tela transborda (medido depois do desenho):
@@ -4627,7 +4656,8 @@
     const ordem = ordemAfirmacoes(app.config.enquetes[e.enquete]);
     const zeradas = ordem.map((a, i) => (histManual(e, a).every((x) => x === 0) ? i + 1 : null)).filter(Boolean);
     if (zeradas.length === 0) return true;
-    const quais = zeradas.length === 1 ? `A afirmação ${zeradas[0]} está` : `As afirmações ${zeradas.join(', ')} estão`;
+    // "1, 2 e 3", com o "e" antes do último (leitura final de 14/10).
+    const quais = zeradas.length === 1 ? `A afirmação ${zeradas[0]} está` : `As afirmações ${zeradas.slice(0, -1).join(', ')} e ${zeradas.at(-1)} estão`;
     return confirmar(`${quais} sem contagem e ${zeradas.length === 1 ? 'vai' : 'vão'} para o resultado como "sem votos". Encerrar a enquete inteira assim mesmo?`,
       'Encerrar a enquete', { focarCancelar: true });
   }
@@ -4639,7 +4669,8 @@
       const falta = app.config.tempos.decisaoMinSeg - (agora() - e.abertoEm) / 1000;
       // O tempo mínimo protege a conversa da equipe (red team, falha 11), mas
       // quem decide é o apresentador: ele pode encerrar antes, confirmando.
-      if (falta > 0 && !(await confirmar(`Ainda no tempo mínimo de conversa (faltam ${F().relogio(falta * 1000)}). Encerrar a decisão agora?`, 'Encerrar agora', { focarCancelar: true }))) return;
+      // C4: no jogo individual não há conversa; o modal fala só do tempo mínimo.
+      if (falta > 0 && !(await confirmar(`Faltam ${F().relogio(falta * 1000)} para o tempo mínimo. Encerrar a decisão agora?`, 'Encerrar agora', { focarCancelar: true }))) return;
     }
     // O desfazer da abertura parou no meio: diante da tela parada, o Enter é o
     // gesto natural, e apuraria a votação aberta por engano (a rodada inteira no

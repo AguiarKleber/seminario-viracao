@@ -39,11 +39,11 @@ caso, vale a seção 0. As seções 6 e 7 (minuto a minuto) já estão refeitas.
 **Revisão do conteúdo de 29/09 (D-050 a D-057, esquema v2.1, versão 4 do
 site).** O que muda para quem conduz:
 - o resultado diz **o custo real da carta**: "20 dias parado · renda perdida
-  R$ 1.787 · gastos R$ 1.650" (D-052). O conserto, o remédio e a multa saem numa
+  R$ 1.787 · gastos R$ 1.650" (D-052). O conserto, o remédio e a multa saem em uma
   linha própria, "gastos", fora do "entrou";
 - o que vem do mês anterior aparece com nome: "+25 dias da fratura −R$ 2.233",
   "INSS (45 dias) +R$ 2.431", a multa do aluguel, o saldo do empréstimo;
-- no celular, **tocar numa opção abre a explicação e não vota**; o voto só vale
+- no celular, **tocar em uma opção abre a explicação e não vota**; o voto só vale
   no botão **"Votar nesta"** (D-055);
 - a mesma opção vem dita do jeito de cada ofício (D-054): a equipe da Daiane lê
   "Aceitar toda encomenda", e a do Jonas, "Aceitar tudo o que vier". A letra é a
@@ -108,7 +108,7 @@ seminário de 07/10. O que muda para quem conduz:
   as rodadas, em blocos curtos de dados (seções 6 e 7). A decisão tem **90 s**
   no cronômetro, e as entrevistas, opcionais, somam 4 min (60 min) ou 20 min
   (120 min). Marcado como "vamos testar";
-- **seis personagens, um por equipe, cada um num trabalho** (D-061): Jonas
+- **seis personagens, um por equipe, cada um em um trabalho** (D-061): Jonas
   (motoboy do iFood), Rose (manicure por app), Marcos (motorista de app), Bruna
   (influenciadora, a personagem nova), Kauã (entregador de bicicleta) e Daiane
   (doces no Instagram). Nenhuma persona se repete, e as equipes do Jonas e da
@@ -197,9 +197,9 @@ no próprio celular. Vocês decidem sozinhos o que ele faz em cada bimestre, e n
 fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 
 **Antes de a turma chegar:**
-1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
-   (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
-   `2026-10-14-v5.2-individual` está na barra do pé da tela inicial: pare o
+1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`.
+   A versão `2026-10-14-v5.3-individual` (hash `69daf389`, versão 14 do site)
+   está na barra do pé da tela inicial: pare o
    mouse na borda de baixo (ou aperte H). Não há mais o painel do config
    (D-082): ele só aparece quando o config falta ou tem problema.
 2. Digite o PIN e clique em **Criar sala com celulares**.
@@ -211,7 +211,13 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 
 **Na aula, passo a passo:**
 1. **O QR.** No lobby, o telão mostra o QR, o endereço e o código da sala. Diga:
-   "Leiam o QR com a câmera do celular, digitem o seu nome e toquem em Entrar."
+   "Leiam o QR com a câmera do celular e toquem em Entrar; depois digitem o seu
+   nome e toquem em Entrar de novo, ou em Ir, no teclado. Cada um entra uma vez
+   só, pelo navegador do próprio celular. Se aparecer Sem acesso ao serviço,
+   esperem uns 15 segundos sem fechar a página; se não entrar em 1 minuto, usem
+   o 4G. Se o celular ficar parado mais de meio minuto, joguem com o colega do
+   lado." Quem digitar o código à mão usa as letras maiúsculas. Não tente
+   consertar um aparelho diante da turma.
 2. **Os nomes.** Cada aluno digita o nome (até 20 letras). O nome fica só no
    celular dele: não vai para o servidor, e o telão nunca mostra nomes. Diga:
    "O seu nome fica só no seu celular, e o seu voto não fica ligado ao seu
@@ -224,19 +230,38 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
    - **Sala cheia.** Se um celular disser "A sala está cheia (20 pessoas)", já
      há 20 aparelhos na sala. Se a turma tem menos de 20 pessoas, há uma vaga
      presa: alguém entrou duas vezes, ou um celular entrou e saiu. Peça para
-     fecharem a aba repetida, espere 2 min e segure **Remover inativos**. A
-     vaga de quem está sem sinal há mais de 2 min e ainda não jogou nenhum
-     bimestre volta para quem está esperando (uma vaga por pessoa esperando).
+     fecharem a aba repetida e espere 2 min. Antes de segurar **Remover
+     inativos**, diga: "Todo mundo, desbloqueie o celular e deixe a tela do
+     jogo aberta por meio minuto" (sem isso, pode sair a vaga de um aluno com
+     o celular bloqueado, e não a da aba repetida). A vaga de quem está sem
+     sinal há mais de 2 min e ainda não jogou nenhum bimestre volta para quem
+     está esperando (uma vaga por pessoa esperando). Depois, pergunte se
+     alguém ainda vê "A sala está cheia"; se sim, segure de novo.
      Depois do 1º bimestre fechado, nenhuma vaga volta: quem sobrou acompanha
      pelo telão ou com um colega.
 4. **A enquete de entrada**, como sempre.
 5. **Conheça o Jonas.** Aparece no telão e no celular. Com o "Li" (regras v5),
    o celular tem o botão "Li, pode seguir", e ao lado do título o telão mostra
-   "12 de 20 leram": é só para você saber, e você avança quando quiser.
+   "12 de 20 leram": é só para você saber, e você avança quando quiser. No
+   celular (versão 14), a conta do mês vem aberta, e o básico item a item e as
+   fontes abrem ao tocar em "ver".
 6. **Cada bimestre** (os três tempos da seção 0):
    - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
      escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
      prorrogação: o Enter vai direto ao resultado.
+     **Antes do Enter, confira o M.** O M do "N de M já escolheram" conta só
+     quem deu sinal no último minuto: com o Wi-Fi oscilando, ele encolhe, e a
+     barra pode dizer "Todos já escolheram" com votos ainda presos nos
+     celulares. Compare o M com o "N pessoas na sala" do lobby (ou com o
+     "ativos / membros" da barra). Se ele caiu de repente, pergunte "alguém
+     está sem rede?" e espere de 15 a 20 s: o voto guardado chega sozinho.
+     Nunca encerre com "0 de 0 já escolheram" (se encerrou, Ctrl+Z, Tab e
+     Enter reabrem a decisão sem perder nada). Para decidir o Enter, vale o
+     telão, e não o seu celular.
+     **Em mar–abr e jul–ago, diga a letra de quem não votar**, porque ali a
+     opção de sempre não é a "Jornada de sempre": em mar–abr, "quem não votar
+     fica com a D, aceitar até entrega ruim"; em jul–ago, "quem não votar fica
+     com a C, adiar a revisão da moto".
    - **Resultado.** O telão mostra uma linha por opção (D-084): quantas
      pessoas, o saldo do bimestre e a família de quem a escolheu ("em média",
      quando os valores variam) e, embaixo, as consequências de escolhas
@@ -249,9 +274,10 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
      Nenhum nome. No celular, cada um vê o próprio saldo e, logo abaixo, a
      mesma linha do bloqueio, se parou; o seu celular, no modo espectador,
      mostra o mesmo resumo do telão.
-     Se o projetor for 1024×768 e a tela ficar apertada demais, clique em
-     **Entrada aberta**, na barra, para fechar a entrada: a faixa do QR sai e
-     sobra espaço (quem chegar depois não entra até você abrir de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
+     Projetor 1024×768: **Ctrl+−** (90%) na montagem (seção 3). Se ainda
+     cortar, feche a entrada (H → **Entrada aberta**) assim que todos
+     entrarem: a faixa do QR sai (quem chegar depois não entra até você abrir
+     de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
      escolheu…" no lugar de "a equipe que…".
    - **Dados.** O bloco aparece no telão e no celular (com o "Li", também o
      botão "Li, pode seguir" e o "N de M leram"). Leia o contexto e um número.
@@ -294,7 +320,9 @@ joga junto desde o início.
 
 **O seu celular** (modo espectador, D-064): com o PIN, mostra o mesmo resumo da
 turma que o telão ("N pessoas na sala", "N de M já escolheram", quantas pessoas
-ficaram com cada opção e o placar da turma), e nunca a tela de um aluno.
+ficaram com cada opção e o placar da turma), e nunca a tela de um aluno. O M
+do "N de M" do seu celular pode ser maior que o do telão, porque conta também
+quem está com o celular bloqueado: para decidir o Enter, vale o telão.
 
 ## 0. O jogo simples de 07/10 (D-078 e D-079)
 
@@ -356,7 +384,7 @@ caminho fez com o dinheiro da família."
 - Com seis equipes e a faixa de entrada aberta, o telão aperta a tela para
   caber: no resultado, pode esconder o evento do mês e, com a observação em
   muitas equipes, deixar cada linha da faixa com a altura da letra; na decisão,
-  numa tela baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
+  em uma tela baixa (1280×720), a célula vira "Laranja 2 de 3". Feche a entrada depois de
   formar as equipes (barra → **Entrada aberta**) e tudo volta.
 
 **O que dizer uma vez, em "Conheça o Jonas"** (e não explicar mais que isso):
@@ -404,9 +432,9 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 - O notebook, com o Chrome ou o Edge atualizado, e o carregador.
 - O cabo ou adaptador para o projetor.
 - O pendrive com a pasta do ZIP (README, passo 11).
-- O PIN do apresentador, de memória ou num papel que fica com você. Nunca na tela.
+- O PIN do apresentador, de memória ou em um papel que fica com você. Nunca na tela.
 - Papel e caneta, para anotar o código da sala.
-- Os slides, prontos para abrir numa janela própria. Eles são o material
+- Os slides, prontos para abrir em uma janela própria. Eles são o material
   complementar: o telão mostra a linha do tempo, e o conteúdo de cada trecho
   está nos slides (D-042).
 - O plano B em papel da trilha: cartões coloridos ou mão levantada.
@@ -421,14 +449,14 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 - [ ] O telão publicado abre sem aviso do config, e a barra do pé da tela
       (mouse parado na borda de baixo, ou H) diz "✓ config.json válido". Hash
       anotado: `________`.
-- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
+- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v5 conferidas.`, sem `REGRAS
       ABERTAS`. Se o `firebase/regras.json` mudou depois do teste, a versão
       subiu junto (v4, v5…), e as regras novas já foram publicadas (README,
       passo 6).
 - [ ] Uma sala de teste foi criada com o PIN e apagada (README, passo 8). Com
       ela aberta, o seu celular entrou pelo **Sou apresentador** e viu as
       equipes (seção 4). O PIN do celular é o mesmo do telão: se ele disse "O
-      PIN não confere" com o PIN certo, as regras publicadas não são as v4 (o
+      PIN não confere" com o PIN certo, as regras publicadas não são as v5 (o
       bloco **Com celulares** do telão também avisa); publique-as (README, passo 6).
 - [ ] A cota de contas anônimas está agendada para a aula, se o console oferecer
       (README, passo 9).
@@ -492,26 +520,32 @@ Chegue 30 minutos antes.
      Win+Shift+→ antes de pôr em tela cheia.
 3. **Antes de a turma ver a tela** (projetor ainda desligado, ou com a imagem em
    branco pelo botão do projetor), abra
-   `https://aguiarkleber.github.io/seminario-viracao/telao/` numa janela própria
+   `https://aguiarkleber.github.io/seminario-viracao/telao/` em uma janela própria
    do Chrome ou do Edge, o mesmo navegador configurado na véspera: economia de
    memória desligada para o site e downloads automáticos permitidos (seção 2).
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
 4. Confira a barra do pé da tela inicial (mouse parado na borda de baixo, ou
    H: config válido e o mesmo hash da véspera) e o bloco **Com celulares**
-   (`regras v4 conferidas`). O roteiro é o de 60 min, o único do config
+   (`regras v5 conferidas`). O roteiro é o de 60 min, o único do config
    (D-083): o telão não pergunta.
 5. Digite o PIN e clique em **Criar sala com celulares**. **Anote o código da
    sala no papel.** Se o notebook travar, é com ele que a sala é retomada.
-6. Aperte **F11** para a janela do telão ficar em tela cheia (D-007). Abra os
-   slides em **outra janela**, também em tela cheia. Teste o Alt+Tab duas vezes e
-   termine no telão.
+6. Aperte **Ctrl+0** (zoom de 100%) e depois **F11** para a janela do telão
+   ficar em tela cheia (D-007). Abra os slides em **outra janela**, também em
+   tela cheia. Teste o Alt+Tab duas vezes e termine no telão.
+   - Confira a escala do Windows em 100% (Configurações → Sistema → Tela →
+     Escala): com 125%, o telão corta embaixo, e fechar a entrada não resolve.
+   - Se o projetor for 1024×768 (imagem quase quadrada), aperte **Ctrl+−** uma
+     vez depois do F11 (zoom de 90%): com 100% e a entrada aberta, a faixa do QR
+     pode cobrir a última linha do resultado de 20 pessoas. Confira no 1º
+     resultado.
 7. Se o teste no eduroam mostrou que só a "rede restrita" funciona, abra o telão
    com `/telao/?lp=1` no fim do endereço, já no passo 3. O próprio telão passa a
    usar a conexão compatível, e o QR já sai com a **Rede restrita** ligada (o
    botão aparece marcado na barra). Veja a seção 13.
 8. Opcional: no seu celular, abra o endereço do aluno, toque em **Sou
    apresentador** (no fim da tela, antes de tocar em "Entrar"), digite o código
-   da sala e o PIN e toque em **Ver as equipes** (seção 4). Faça isso antes de a
+   da sala e o PIN e toque em **Entrar como espectador** (seção 4). Faça isso antes de a
    turma ver a tela: o PIN é digitado no celular, e nunca no projetor.
 9. Deixe o telão no lobby, com o QR grande, enquanto a turma chega.
 
@@ -528,10 +562,10 @@ ativa, o Espaço e as setas vão para os slides.
 | Ctrl+Z | Desfaz, com confirmação. Com a votação recém-aberta por um Espaço a mais, desfaz a abertura e volta à tela de antes, **se nenhum voto chegou** e, na rodada, se você não decidiu por nenhuma equipe (senão avisa "Já chegaram N votos" e a votação segue aberta). Uma rodada que já foi apurada e reaberta pelo Ctrl+Z não volta mais para trás. Se a rede falhar no meio, a tela mostra "Desfazendo a abertura…": dê Ctrl+Z de novo (o Enter pergunta antes de apurar) | Depois de encerrar uma rodada ou uma enquete; com enquete ou decisão aberta (não na prorrogação) |
 | F | Tela cheia da página (alternativa ao F11) | Qualquer hora |
 | H | Mostra ou esconde a barra. Mostrada pela tecla, ela também some sozinha em 3 s (fica enquanto você navega nela com Tab) | Qualquer hora |
-| 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes |
+| 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes (só no jogo por equipes) |
 | 1 a 5 | Soma 1 na coluna da escala; Shift + tecla desconta | Enquete sem celulares (mão levantada) |
 | ↑ e ↓ | Voltam ou avançam a afirmação que está sendo contada | Enquete sem celulares, com as afirmações juntas |
-| ← e PageUp | Nada, de propósito | — |
+| ← e PageUp | Mostram o passo anterior só no telão (modo revendo, com a faixa "Revendo: … · → volta"); os celulares não mudam. → volta ao passo atual; Espaço e Enter só saem do modo, sem rodar o comando. Serve para reprojetar o QR grande para quem chegou atrasado: ← até "Entrada na sala", depois → | Quando precisar |
 | F11 | Tela cheia da janela do navegador | Montagem |
 | Alt+Tab | Alterna entre o telão e os slides | Nos blocos |
 | Esc | Fecha a janela de confirmação ou de escolha | Com uma dessas janelas aberta |
@@ -545,7 +579,12 @@ encostado na borda de baixo da tela, e some 3 s depois do último movimento do
 mouse na borda ou sobre ela, mesmo com o mouse parado ali (mexer o mouse no meio
 da tela não a mostra). Aberta pelo H, ela também some em 3 s. Só a seguram uma
 janela de escolha aberta ou o foco do teclado dentro dela. As teclas funcionam
-com ela escondida. À esquerda, ela mostra:
+com ela escondida. **Tab só leva o foco:** Enter e Espaço continuam sendo
+Encerrar e Avançar mesmo com o foco em um botão (no teste, o Enter em **Salvar
+estado** abriu "Encerrar a enquete inteira"). Para usar um botão da barra,
+clique com o touchpad ou o mouse. Os botões "segure" (**Continuar sem
+celulares**, **Remover inativos** e **Encerrar jogo**) só respondem ao botão do
+mouse ou ao clique físico do touchpad, mantido por 2 s. À esquerda, ela mostra:
 - o passo e o atraso, por exemplo "passo 8 de 19 · +3 min de atraso";
 - o nome do passo;
 - "estado salvo às 14:05", depois do primeiro "Salvar estado" (desde a D-078,
@@ -606,7 +645,7 @@ celulares, as letras da decisão de cada equipe (o que ela anunciou). A abertura
   afirmação sem contagem e a primeira contagem à mão por cima de votos de
   celular;
 - sem conexão (selo em **Reconectando…**), os comandos são recusados na hora,
-  com aviso, e não ficam numa fila: repita quando o selo voltar a
+  com aviso, e não ficam em uma fila: repita quando o selo voltar a
   **Conectado** (seção 8).
 
 **O cronômetro é só visual.** Nada fecha sozinho: quem encerra é você (D-010).
@@ -625,13 +664,17 @@ aluno daquela equipe vê**: a situação, o contexto da família, as opções co
 contagem ao vivo da equipe, o resultado e a história. Serve para acompanhar uma
 equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 
+**No jogo individual (o de 14/10)**, ele mostra o resumo da turma, como o
+telão, e nunca a tela de uma pessoa: não há a fileira de botões das equipes
+(D-081).
+
 **Como entrar**
 1. No celular, abra o endereço do aluno (o do QR, ou
    `https://aguiarkleber.github.io/seminario-viracao/aluno/`). **Não toque em
    "Entrar"**: isso registraria o celular como aluno.
 2. No fim da tela, toque em **Sou apresentador**.
 3. Digite o código da sala (o do telão) e o PIN, o mesmo do telão, e toque em
-   **Ver as equipes**. Nesta tela, o "Ir" do teclado no campo do código só
+   **Entrar como espectador**. Nesta tela, o "Ir" do teclado no campo do código só
    passa ao campo do PIN: não entra como aluno. O PIN fica só na memória da
    página: nunca é guardado no aparelho.
 4. PIN errado: "O PIN não confere com o cadastrado no console. Confira e tente
@@ -642,7 +685,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 
 **O que ele mostra**
 - No topo, uma fileira de botões, um por equipe, com a forma e o número. Tocar
-  num deles troca a tela para a daquela equipe. A equipe fechada na formação
+  em um deles troca a tela para a daquela equipe. A equipe fechada na formação
   fica apagada: ela não tem tela de aluno. Ao entrar, ele mostra a primeira
   equipe aberta.
 - No lugar do crachá, o selo **modo espectador**.
@@ -668,7 +711,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   sala, ele é um membro: recarregar volta direto à sala como aluno (a tela de
   aluno não tem saída), e o **Sou apresentador** recusa com o aviso do passo 4,
   porque o registro de aluno continuaria contando no "k de m" da equipe. Use
-  outro aparelho, ou abra o endereço do aluno numa **aba anônima** deste celular
+  outro aparelho, ou abra o endereço do aluno em uma **aba anônima** deste celular
   (o login anônimo é outro) e entre pelo **Sou apresentador**; feche a aba de
   aluno. O registro de aluno que ficou sai da contagem com **Remover inativos**,
   depois de 2 min sem sinal (seção 10). **No jogo individual, não:** o aparelho
@@ -677,7 +720,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   nunca entre como aluno com o seu celular; use o **Sou apresentador** desde o
   começo.
 - **Nunca no navegador do telão.** Não abra o modo espectador no notebook, no
-  mesmo navegador (e no mesmo perfil) do telão, nem numa aba ao lado dele: as
+  mesmo navegador (e no mesmo perfil) do telão, nem em uma aba ao lado dele: as
   duas páginas têm o mesmo login anônimo e o mesmo pedido de PIN, e uma apaga o
   da outra. O telão apaga o pedido ao criar ou retomar a sala, e o espectador
   pode ficar sem a contagem até regravá-lo, na próxima recusa; o espectador que
@@ -686,7 +729,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 - Digite o PIN longe do projetor. Se o celular cair ou a aba fechar, o servidor
   apaga o pedido com o PIN sozinho.
 - Nas regras v3, o PIN não dava leitura nenhuma, e o modo espectador não
-  funciona: precisa das regras **v4** publicadas (README, passo 6).
+  funciona: precisa das regras **v5** publicadas (README, passo 6).
 
 ## 5. Como conduzir cada passo
 
@@ -704,8 +747,8 @@ slides.
   Espaço abre a enquete de entrada.
 - **Diga:** "Apontem a câmera do celular para o QR. Se não abrir, digitem o
   endereço que está ao lado dele; se pedir, o código é este aqui, em letras
-  grandes. Não tem nome nem cadastro: o celular
-  recebe só um crachá. Abram no navegador do celular; se abriu dentro do
+  grandes. Não tem cadastro: o celular pede só o seu nome, que fica no
+  aparelho. Abram no navegador do celular; se abriu dentro do
   Instagram, toquem em ⋯ e em 'Abrir no navegador'. Se o Wi-Fi não pegar, usem o
   4G. Deixem a página aberta."
 
@@ -747,7 +790,7 @@ slides.
     "Placar, termômetro, medição, fechamento" no roteiro de 60 min ("Placar,
     conversa, caminhos, termômetro, medição, fechamento" no de 120; até a revisão
     textual de 06/10, o placar era "Debrief"). Nada some da linha,
-    que fica com 18 itens. Num bloco que fica dentro desse item (o "Fim: quem é
+    que fica com 18 itens. Em um bloco que fica dentro desse item (o "Fim: quem é
     o patrão?", por exemplo), a linha diz "é o último trecho".
   - No bloco **"Mapa do seminário"** (só no roteiro de 120 min), a linha do
     tempo é o próprio conteúdo: todos os trechos por extenso, em colunas, sem o
@@ -760,20 +803,20 @@ slides.
     com" é o que a família tem, já descontado o empréstimo a pagar: é o do
     bimestre anterior mais o saldo do bimestre. Os valores vão sempre com + ou
     −, em verde quando positivos e em vermelho quando negativos (o zero fica sem
-    cor, "R$ 0"). As seis linhas cabem inteiras num celular de 360×740;
+    cor, "R$ 0"). As seis linhas cabem inteiras em um celular de 360×740;
   - logo embaixo, a **dívida**: "Dívida no banco R$ D" (o cheque especial e o
     empréstimo, o mesmo número que o telão chama de "dívida") e, quando há, o
     cheque especial ("Cheque especial R$ C de R$ 2.000 do limite · juros de
     7,43% ao mês"), o empréstimo ("fica devendo R$ E em N parcelas · a próxima:
-    R$ P") e, numa linha própria, fora do banco, as contas atrasadas ("Contas
+    R$ P") e, em uma linha própria, fora do banco, as contas atrasadas ("Contas
     atrasadas R$ A · multa de 8% e mora de 1% ao mês"). Embaixo, à parte,
     porque não é dívida: "Faltou na mesa: R$ X de comida que não deu para
     comprar, até agora.";
-  - o resumo e a dívida cabem inteiros num celular de 360×740, sem rolar. O
+  - o resumo e a dívida cabem inteiros em um celular de 360×740, sem rolar. O
     resto fica recolhido: "▸ ver" abre a conta do último bimestre, por exemplo
     "Mar–abr: a conta em detalhe" (entrou, gastos, básico, juros, a multa e a
     mora das contas atrasadas, o que o limite fez, a decisão, a carta e o que
-    aconteceu, em primeira pessoa). A família vem numa linha só.
+    aconteceu, em primeira pessoa). A família vem em uma linha só.
   Antes do primeiro mês, a família, o básico e os indicadores, sem resumo.
 - **Faça:** Espaço entra no bloco; Alt+Tab para os slides; apresente; Alt+Tab de
   volta; Espaço vai ao próximo passo. Entre dois blocos seguidos, volte ao telão e
@@ -788,7 +831,7 @@ slides.
   inteiro destas famílias, bimestre a bimestre. Entre um bimestre e outro, os
   dados que explicam o que aconteceu."
 
-### 5.4 Formação das equipes
+### 5.4 Formação das equipes (só no jogo por equipes)
 
 - **Telão:** os cartões das equipes (forma, número, nome e persona), quantos há
   em cada uma e "N pessoas sem equipe".
@@ -803,7 +846,7 @@ slides.
   Conte cerca de 3 pessoas por equipe: é o número que o "Me coloque" completa antes de passar para a próxima
   (`alvoPorEquipe`). As equipes marcadas "sempre joga" não fecham. Quando o telão
   mostrar "0 pessoas sem equipe", Espaço **trava as equipes**. Quem chegar depois
-  é posto numa equipe pelo próprio telão.
+  é posto em uma equipe pelo próprio telão.
 - **Diga:** "Toquem em 'Me coloque em uma equipe', ou escolham uma. Sentem junto
   com a sua equipe (D-018). Dá para trocar até eu travar."
 
@@ -818,7 +861,7 @@ slides.
   3. o mês comum, em vermelho: "a conta do mês não fecha: faltam R$ W" (ou, em
      verde, "a conta do mês fecha: sobram R$ W").
   Esse "faltam" é o de **um mês** comum, sem carta e sem decisão: o trabalho, a
-  outra renda e o básico. O jogo cobra dois meses por rodada, então num bimestre
+  outra renda e o básico. O jogo cobra dois meses por rodada, então em um bimestre
   comum a falta é o dobro. No config atual, todas as casas começam faltando: R$ 390
   (Marcos), R$ 392 (Jonas), R$ 1.122 (Kauã), R$ 1.232 (Bruna), R$ 1.932 (Rose) e
   R$ 2.146 (Daiane) por mês (o mês comum do motor; rascunho, seção 2). O e2e confere, com seis personas e
@@ -855,12 +898,12 @@ slides.
 - **Celular**, de cima para baixo: o cronômetro; o **contexto da família** naquele
   bimestre (o do Jonas em Jan–fev: "Às 14h faz 39 °C, a filha está de férias, e a parcela da moto vence dia 5."), diferente
   para cada persona; o básico do bimestre e a dívida; as 4 opções, cada uma com a contagem ao vivo da
-  equipe, com o texto do jeito do ofício da persona (D-054). **Tocar numa opção
+  equipe, com o texto do jeito do ofício da persona (D-054). **Tocar em uma opção
   abre a explicação dela e não vota**; o voto só vale no botão **"Votar
   nesta"**, logo abaixo da explicação (D-055). A opção com o voto do aluno diz
   "✓ seu voto" só depois que o servidor confirmou; antes, "enviando…" ou
   "guardado no aparelho". Se as opções não couberem na tela, o botão "Mais
-  opções abaixo ↓" leva até elas. A dívida da família aparece numa linha
+  opções abaixo ↓" leva até elas. A dívida da família aparece em uma linha
   curta: "Dívida R$ D · juros de J% ao mês" ou, com empréstimo, "Dívida R$ D,
   com R$ E de empréstimo". É a dívida no banco; as contas atrasadas ficam na
   tela da situação, para a linha não empurrar o "Votar nesta" para baixo.
@@ -885,7 +928,7 @@ slides.
     de vocês neste bimestre: está no celular."
   - "Não tem resposta certa. Cada opção tem um preço, e ele pode aparecer só no
     bimestre que vem, ou no fim do ano."
-  - "Toquem numa opção para ler o que ela quer dizer. Tocar não vota: o voto só
+  - "Toquem em uma opção para ler o que ela quer dizer. Tocar não vota: o voto só
     vale no botão 'Votar nesta'."
   - "Cada um vota no próprio celular e vê a contagem da equipe. Vale a opção mais
     votada, e dá para mudar até eu encerrar. Se ninguém votar, fica o de
@@ -895,7 +938,7 @@ slides.
   | Rodada | O dilema | A | B | C | D |
   | --- | --- | --- | --- | --- | --- |
   | Jan–fev: quanto trabalhar no calor? | material escolar e 39 °C | 12 horas por dia, 7 dias | Jornada de sempre e abrir o MEI (a proteção) | Jornada de sempre, sem pagar nada * | Parar nas horas de sol forte |
-  | Mar–abr: a lei que saiu de pauta | a greve de 14/04, o 99Food e o IPVA (vence em 30/04) | Parar no dia da greve | Rodar num segundo app | Pegar R$ 1.500 no crédito pessoal | Aceitar tudo o que vier * |
+  | Mar–abr: a lei que saiu de pauta | a greve de 14/04, o 99Food e o IPVA (vence em 30/04) | Parar no dia da greve | Rodar em um segundo app | Pegar R$ 1.500 no crédito pessoal | Aceitar tudo o que vier * |
   | Mai–jun: água, frio e Dia das Mães | a cheia e o frio | Entrar na associação | Manter o combinado: investir no trabalho * | Rodar até de madrugada, na chuva e no frio | Desistir do combinado |
   | Jul–ago: a regra nova do app | o +Entregas e o protesto de 27/07 | Entrar no +Entregas | Ir ao protesto | Adiar a manutenção e o remédio * | Tirar uma semana de folga |
   | Set–out: breque geral | o breque de 01/09 e a Farroupilha | Jornada de sempre * | Recusar o que não paga | Aderir ao breque | Furar o breque e rodar a Farroupilha |
@@ -985,7 +1028,7 @@ explicar quando aparecer)
   simples; depois, o gás, o ônibus e o remédio, que não atrasam: a casa **fica
   sem** eles, sem multa (a tela diz "ficou sem R$ Z"); depois, **comida que não deu para comprar** ("faltou na mesa"), no
   máximo a comida do bimestre; e o que passar disso (um conserto, por exemplo)
-  atrasa também. Num bimestre bom, a folga até o limite paga primeiro as
+  atrasa também. Em um bimestre bom, a folga até o limite paga primeiro as
   contas atrasadas.
 - **Quanto, no config atual** (validador, conferência j, estimado): o banco
   termina o ano em R$ 2.000 nas seis casas. As contas atrasadas no fim, no
@@ -994,7 +1037,7 @@ explicar quando aparecer)
   corta comida em quase todo bimestre; a Rose fica na beira, e qualquer carta
   ruim vira comida cortada (rascunho, seção 5.1).
 - **No telão**, a faixa da equipe diz "dívida R$ D" (o banco e o empréstimo) e,
-  numa linha embaixo, "contas atrasadas R$ Y · faltou na mesa R$ Z" (a comida
+  em uma linha embaixo, "contas atrasadas R$ Y · faltou na mesa R$ Z" (a comida
   deste bimestre). **No celular**, as mesmas três coisas com nome, e a conta
   recolhida diz o que o limite fez: "O limite do cheque especial acabou: R$ X
   de contas ficaram atrasadas (multa de R$ M) e R$ Y de comida não deu para
@@ -1019,7 +1062,7 @@ explicar quando aparecer)
   contas; depois que o despejo já saiu, o corte vai a ~40%. No jogo, a
   religação não quita a luz atrasada, e o corte pode voltar no bimestre
   seguinte. No padrão, de 37% (Jonas) a 76% (Daiane) das partidas tiram o
-  despejo; numa sala de 6 equipes, em média 3,8 tiram o despejo e 4 tiram o
+  despejo; em uma sala de 6 equipes, em média 3,8 tiram o despejo e 4 tiram o
   corte no ano. As regras e os custos têm fonte;
   **a chance é estimativa** (rascunho, seção 8, item 20).
 - **O que dizer:**
@@ -1137,7 +1180,7 @@ explicar quando aparecer)
   - **O que não está no telão:** entrou, gastos, multa e mora, básico, juros e
     o que veio do bimestre anterior. Ficam no celular de cada equipe e na história do
     placar final (seção 5.7).
-  - A carta aparece pelo título inteiro; se ele não couber numa linha, pelo nome
+  - A carta aparece pelo título inteiro; se ele não couber em uma linha, pelo nome
     curto ("Fratura"). As cartas de efeito mais forte entram animadas (quantas,
     diz o `destacarCartas` do config), sem contorno nem sombra a mais: um
     contorno sem legenda parecia "as equipes que ganharam". Carta grave nunca
@@ -1147,7 +1190,7 @@ explicar quando aparecer)
     mostrando). O e2e confere a tela em 1024×768 e 1920×1080: nada menor que
     28 px, sem rolagem e nenhum texto sobreposto.
 - **Celular:** a carta da equipe, com a narrativa em primeira pessoa; a decisão
-  numa linha; o **saldo do bimestre em destaque**, verde ou vermelho (no
+  em uma linha; o **saldo do bimestre em destaque**, verde ou vermelho (no
   vermelho, também com a borda grossa); a dívida; e "Como ficou" (energia e
   proteção). A conta fica recolhida em "▸ ver" ("A conta do bimestre em
   detalhe"): o que a carta custou (dias parado, renda perdida, gastos); "Entrou
@@ -1240,7 +1283,7 @@ O placar é uma sequência de páginas. **Espaço passa de uma para a outra**, e
 próxima página (2 de 15)"). Não há critério a trocar nem vencedor. Com 6 equipes
 são **15 páginas**: o saldo, "Escolha ou sorte?", "O pior que podia acontecer" e
 **duas páginas de história por equipe** (Jan–fev a Mai–jun e Jul–ago a
-Nov–dez: os seis bimestres numa página só passavam da altura do projetor). O
+Nov–dez: os seis bimestres em uma página só passavam da altura do projetor). O
 tempo-alvo do passo é de 4 min no roteiro de 60 min (5 min no de 120): demore
 nas três primeiras páginas e passe as histórias depressa, parando em uma ou duas
 equipes.
@@ -1288,7 +1331,7 @@ básico")
   - "A ordem não é de quem ganhou. É a fila de quanto cada família ficou
     devendo em um ano, e a comida que faltou está embaixo."
   - "A distância entre as casas é maior que a distância entre as escolhas: a
-    casa da Rose fica R$ 1.932 no vermelho num mês comum, antes de qualquer
+    casa da Rose fica R$ 1.932 no vermelho em um mês comum, antes de qualquer
     carta."
   - No config atual, é quase certo que **nenhuma equipe feche as contas**:
     nenhum caminho que a simulação achou termina com saldo ≥ R$ 0, e o mais
@@ -1467,11 +1510,15 @@ básico")
 
 ## 6. Minuto a minuto: 60 min
 
+**Para 14/10 (config `2026-10-14-v5.3-individual`):** não há formação das
+equipes (o jogo é individual), o lobby tem 3:00 e o "Conheça o Jonas", 3:30. A
+tabela abaixo foi recalculada do `roteiros.60min` do config, e a barra mostra
+os tempos e o atraso ao vivo.
+
 **O roteiro gira em torno do jogo** (D-060, D-078, D-079). As seis rodadas somam
-28 min; com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo
-ocupa 38 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
+28 min; com "Conheça o Jonas" e o placar final, o jogo ocupa 37 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-06-v4.4-simples`). Na D-080, o bloco das outras plataformas
+(a tabela vem do `2026-10-14-v5.3-individual`, como diz o começo da seção). Na D-080, o bloco das outras plataformas
 (1:30) entrou antes do Fim, e o tempo saiu do placar final (6:00 → 5:30), do
 termômetro (3:00 → 2:30) e do comparativo (2:00 → 1:30).
 
@@ -1483,29 +1530,28 @@ rodadas.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
-| 1 | 0:00 | Lobby (2:00) | QR na tela. "Apontem a câmera… sem nome, sem cadastro." (5.1) |
-| 2 | 2:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
-| 3 | 3:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque em uma equipe; sentem juntos." (5.4) |
-| 4 | 5:30 | Conheça o Jonas (2:30) | "Todo mundo é o Jonas." A casa e o mês comum que já não fecha (a tela não diz o valor: falta R$ 128). As duas frases da seção 0 |
-| 5 | 8:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:40) | Leia as 5 opções (título e mini-história, sem valores); 120 s; Enter depois do tempo mínimo; o resultado e a frase da seção 0 |
-| 6 | 12:40 | Bloco: Dados: calor e jornada (1:30) | Leia o contexto e um número da tela |
-| 7 | 14:10 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:40) | Como a rodada 1. O empréstimo (C) é dívida |
-| 8 | 18:50 | Bloco: Dados: a greve de 14/04 e a lei (1:30) | Como o bloco 6 |
-| 9 | 20:20 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (4:40) | Como a rodada 1 |
-| 10 | 25:00 | Bloco: Dados: chuva e acidentes (1:30) | Como o bloco 6 |
-| 11 | 26:30 | Rodada 4 · Jul–ago: a regra nova do app (4:40) | Como a rodada 1 |
-| 12 | 31:10 | Bloco: Dados: gestão por algoritmo (1:30) | Como o bloco 6 |
-| 13 | 32:40 | Rodada 5 · Set–out: breque geral (4:40) | Como a rodada 1 |
-| 14 | 37:20 | Bloco: Dados: o que é o breque (1:30) | Como o bloco 6 |
-| 15 | 38:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:40) | Como a rodada 1. É o fim do ano |
-| 16 | 43:30 | Bloco: Dados: fim de ano sem 13º (1:30) | Como o bloco 6 |
-| 17 | 45:00 | Placar final (5:30) | 3 páginas: o caminho, quanto sobrou e as 15.625 combinações (seção 0) |
-| 18 | 50:30 | Termômetro (2:30), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
-| 19 | 53:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
-| 20 | 54:30 | Comparativo (1:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
-| 21 | 56:00 | Bloco: Dados: e nos outros aplicativos? (1:30) | O contexto e um número: os motoristas da Uber e da 99 (5.11) |
-| 22 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
-| 23 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 1 | 0:00 | Lobby (3:00) | QR na tela. "Leiam o QR… toquem em Entrar; depois digitem o seu nome." (seção 00, passo 1) |
+| 2 | 3:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
+| 3 | 4:30 | Conheça o Jonas (3:30) | "Todo mundo é o Jonas." A casa e o mês comum que já não fecha (a tela não diz o valor: falta R$ 128). As duas frases da seção 0 |
+| 4 | 8:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:40) | Leia as 5 opções (título e mini-história, sem valores); 120 s; Enter depois do tempo mínimo; o resultado e a frase da seção 0 |
+| 5 | 12:40 | Bloco: Dados: calor e jornada (1:30) | Leia o contexto e um número da tela |
+| 6 | 14:10 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:40) | Como a rodada 1. O empréstimo (C) é dívida |
+| 7 | 18:50 | Bloco: Dados: a greve de 14/04 e a lei (1:30) | Como o bloco 5 |
+| 8 | 20:20 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (4:40) | Como a rodada 1 |
+| 9 | 25:00 | Bloco: Dados: chuva e acidentes (1:30) | Como o bloco 5 |
+| 10 | 26:30 | Rodada 4 · Jul–ago: a regra nova do app (4:40) | Como a rodada 1 |
+| 11 | 31:10 | Bloco: Dados: gestão por algoritmo (1:30) | Como o bloco 5 |
+| 12 | 32:40 | Rodada 5 · Set–out: breque geral (4:40) | Como a rodada 1 |
+| 13 | 37:20 | Bloco: Dados: o que é o breque (1:30) | Como o bloco 5 |
+| 14 | 38:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:40) | Como a rodada 1. É o fim do ano |
+| 15 | 43:30 | Bloco: Dados: fim de ano sem 13º (1:30) | Como o bloco 5 |
+| 16 | 45:00 | Placar final (5:30) | 3 páginas: quanto sobrou ("De N alunos…"), as escolhas da turma e as 15.625 combinações (seção 00) |
+| 17 | 50:30 | Termômetro (2:30), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
+| 18 | 53:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
+| 19 | 54:30 | Comparativo (1:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
+| 20 | 56:00 | Bloco: Dados: e nos outros aplicativos? (1:30) | O contexto e um número: os motoristas da Uber e da 99 (5.11) |
+| 21 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
+| 22 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 7. Minuto a minuto: 120 min
 
@@ -1517,18 +1563,25 @@ antiga está no histórico do git deste arquivo.
 
 ## 8. Se a rede cair
 
+**Sem internet, nunca aperte F5 nem Tentar de novo:** a página não volta, e o
+projetor mostra a página de erro do navegador. Segure **Continuar sem
+celulares** (com o mouse ou o clique do touchpad).
+
 **Queda curta.** O selo da barra passa a **Reconectando…**, e os celulares também
 avisam. Espere: a conexão volta sozinha, e o voto feito durante a queda fica
 guardado no celular e é reenviado. Não feche o telão.
 - Enquanto o selo mostra **Reconectando…**, os comandos do telão (Espaço, Enter,
   +30 s…) são **recusados na hora**, com o aviso `Sem conexão com o serviço: o
   comando não foi enviado`. O aviso aparece logo acima da barra, que se abre
-  sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica numa
+  sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica em uma
   fila para sair depois: quando o selo voltar a **Conectado**, confira a tela e
   aperte de novo.
-- Se aparecer `O serviço não respondeu em 10 s`, o comando saiu, mas a
-  confirmação não chegou: ele pode ser aplicado quando a rede voltar. Confira a
-  tela antes de repetir.
+- Se aparecer `O serviço não respondeu em 10 s`, **não aperte a tecla de
+  novo**: a rede pode estar fora mesmo com o selo em **Conectado**. Espere a
+  rede voltar (os celulares e o seu espectador voltam a responder). Se a tela
+  não mudou, aperte de novo, uma vez; se ficou em "Apurando…", siga a seção 9,
+  item 4. Na versão 14, o próprio aviso diz isso (`… a rede pode estar fora.
+  Não repita agora…`).
 - **Continuar sem celulares** e **Salvar estado** funcionam mesmo sem rede: saem
   da cópia local da sala.
 
@@ -1553,9 +1606,8 @@ guardado no celular e é reenviado. Não feche o telão.
      votado pelo celular. O Enter apura esses votos. A contagem à mão os
      substitui: a primeira tecla de contagem pede confirmação. A dica da barra
      repete isso e as teclas da contagem.
-3. Decisões: cada equipe anuncia a sua, e você clica na letra de cada equipe (A a
-   D). Sem celular, o contexto da família não chega às equipes: leia em voz alta
-   o de cada persona, se der tempo, ou siga só com a situação do mês.
+3. Decisões: a turma combina de mão levantada, e você clica na letra (A a E)
+   em **Escolha da turma**. Se der tempo, leia a situação do mês em voz alta.
 4. Clique em **Salvar estado** de vez em quando: desde a D-078, ele não é mais
    salvo sozinho no fim da rodada.
 5. Se o "depois" for por mão levantada e o "antes" foi pelo celular, o
@@ -1576,16 +1628,29 @@ do pé da tela) → **Começar sem celulares**.
 
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
-1. **Recarregue a página** (F5). No bloco **Com celulares**, o código da última sala já vem
+1. Se o selo diz **Reconectando…** ou os celulares estão sem rede, **não
+   recarregue**: siga a seção 8. Com a internet funcionando, **recarregue a
+   página** (F5). No bloco **Com celulares**, o código da última sala já vem
    preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
-   placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
-   até a página onde estava.
+   placar final, o telão volta à página 1 ("Quanto sobrou, ou ficou devendo"):
+   dê Espaço até a página onde estava. Se o F5 mostrar a página de erro do
+   navegador, a internet do notebook caiu: quando ela voltar, aperte F5 de novo
+   e clique em **Retomar sala**. Se não voltar, abra a cópia local (área de
+   trabalho ou pendrive), clique em **Carregar config.json** e depois em
+   **Carregar estado** (o JSON mais recente de Downloads).
 2. **O navegador ou o notebook morreu:** em outro navegador ou outro notebook,
    abra o telão, digite o PIN, digite o código da sala (o do papel) e clique em
    **Retomar sala**.
 3. Se aparecer `A sala … já está aberta em outra aba deste navegador`, feche a aba
-   repetida e use a outra.
-4. Se o telão ficou parado em "Apurando…", aperte **Enter** para concluir. Se não
+   repetida e use a outra. Se não há outra aba (você fechou a do telão sem
+   querer), a trava da aba fechada leva até 25 s para sair: espere 30 s e
+   clique de novo em **Retomar sala**. Se insistir, feche o navegador inteiro e
+   abra de novo (na janela normal, não pede PIN), ou use o outro navegador com
+   o PIN e o código anotado no papel.
+4. Se o telão ficou parado em "Apurando…", aperte **Enter**. Se ele voltar à
+   decisão com um aviso de recusa (`PERMISSION_DENIED` na versão 13; `O
+   servidor recusou o comando` na 14), aperte **Enter** de novo: os votos não se
+   perdem. Com a rede ainda fora, espere ela voltar antes. Só se nada disso
    concluir, **Ctrl+Z** volta à votação sem apagar nada.
 5. Se o telão antigo voltar a funcionar, ele fica **passivo**: o selo diz
    **Outra máquina assumiu**, aparece o aviso `Outra máquina assumiu esta sala
@@ -1603,25 +1668,29 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | O celular diz "Muitas entradas nesta rede" | Cota de contas anônimas daquele IP. O aluno usa o 4G (README, passo 9) |
 | O celular diz "Não foi possível baixar o app do servidor" | A rede bloqueou a CDN do Firebase. O celular recarrega a página sozinho, no máximo a cada 15 s, e volta à sala sem o aluno tocar em nada. Se não voltar, o aluno usa o 4G |
 | O bloco **Com celulares** do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
-| "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. Quem voltar depois entra de novo sozinho (com a entrada aberta), como quem chegou atrasado: não vota na decisão já aberta e pode cair noutra equipe (**Mover aluno** corrige) |
+| "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. No jogo individual, **Remover inativos** só devolve vaga com alguém esperando e antes do 1º bimestre fechado. Se o M do "N de M" cair de repente na decisão, alguém perdeu a rede: espere 15 a 20 s antes do Enter |
 | `Sem conexão com o serviço: o comando não foi enviado` | Espere o selo voltar a **Conectado** e aperte de novo (seção 8) |
 | O celular diz "Há uma versão nova do app: atualize a página" | O aluno recarrega a página. O voto guardado não se perde |
-| O celular mostra "Aguardando o telão…" | O telão está escondido ou sem rede. Volte ao telão (Alt+Tab); a faixa some sozinha |
+| O celular mostra "Aguardando o telão…" | O telão está escondido ou sem rede. Volte ao telão (Alt+Tab); a faixa some sozinha. Se o selo do próprio celular diz **Reconectando…**, o problema é a rede do aparelho: o voto fica guardado e sai sozinho (na versão 14, a faixa não aparece nesse caso) |
 | O celular diz "Você entrou depois de esta decisão abrir" | É a regra: ele vota na próxima decisão |
-| Aluno na equipe errada | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
-| Equipe sem celular, ou que anunciou em voz alta | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
-| O tempo acabou e a equipe ainda conversa | Espere: o voto vale até você apertar Enter, mesmo com "tempo esgotado". **+30 s** só mostra à turma mais 30 s no cronômetro |
+| Aluno na equipe errada (só no jogo por equipes) | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
+| Equipe sem celular, ou que anunciou em voz alta (só no jogo por equipes) | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
+| O tempo acabou e a equipe ainda conversa (só no jogo por equipes) | Espere: o voto vale até você apertar Enter, mesmo com "tempo esgotado". **+30 s** só mostra à turma mais 30 s no cronômetro |
 | Um aluno diz que tocou em "Votar nesta" e não contou | Peça para ele ler a frase logo abaixo do botão: ela diz por quê e o que fazer. "toque em “Votar nesta” de novo" quer dizer que basta tocar outra vez, com a votação aberta. Com a votação aberta, o voto só não conta por pausa (P), por ele ter saído da sala (**Remover inativos**), por ter entrado na sala depois de a decisão abrir ou por estar em outra equipe. "✓ seu voto" só aparece depois que o servidor confirmou |
-| O celular diz "Você foi movido para a equipe N…: o voto na equipe anterior não vale aqui. Vote de novo." | O aluno foi movido (**Mover aluno**) depois de votar: ele vota de novo, pela equipe nova. Com a decisão aberta, o telão pede confirmação antes de mover ("Mover e descartar o voto") |
+| O celular diz "Você foi movido para a equipe N…: o voto na equipe anterior não vale aqui. Vote de novo." (só no jogo por equipes) | O aluno foi movido (**Mover aluno**) depois de votar: ele vota de novo, pela equipe nova. Com a decisão aberta, o telão pede confirmação antes de mover ("Mover e descartar o voto") |
 | Espaço não avança, e aparece `Votação aberta: quem fecha é o apresentador (Enter)` | Enter primeiro, depois Espaço. O aviso aparece junto da barra, que se abre sozinha |
 | `Encerre a votação (Enter) antes de pular.` | Enter, depois **Pular para…** |
 | Um aviso sumiu antes de você ler, ou apertou uma tecla e nada parece ter acontecido | Aperte H: o aviso fica 15 s junto da barra (seção 4) |
 | Não acho **Exportar totais** nem **Apagar a sala** | Estão na barra (H), e não na tela do Fim. **Apagar a sala** só funciona no passo Fim |
-| O placar final "não avança" | Ele tem várias páginas (15 com seis equipes): cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
-| O seu celular, no modo espectador, diz "O PIN não confere" | Confira o PIN (é o do console, o mesmo do telão). Com o PIN certo, as regras publicadas não são as v4 (README, passo 6). O jogo segue sem o espectador |
-| O seu celular voltou ao campo do PIN | A página recarregou: o PIN só fica na memória. Digite de novo e toque em **Ver as equipes** |
-| Ao encerrar um bimestre do fim do ano (sobretudo Nov–dez) com 6 equipes, o telão congela alguns segundos, ou aparece `O serviço não respondeu em 10 s` | O placar estimado (seção 5.7) é calculado no próprio notebook, e o telão para enquanto isso; numa máquina lenta, passa dos 10 s em que o telão espera a confirmação, e o aviso sai mesmo com o comando já gravado. **Não aperte Enter de novo.** Espere a tela do sorteio; se ela não vier em meio minuto, siga a seção 9, item 4. A correção está para decisão |
+| O placar final "não avança" | Ele tem várias páginas (3 no jogo individual): cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
+| O seu celular, no modo espectador, diz "O PIN não confere" | Confira o PIN (é o do console, o mesmo do telão). Com o PIN certo, as regras publicadas não são as v5 (README, passo 6). O jogo segue sem o espectador |
+| O seu celular voltou ao campo do PIN | A página recarregou: o PIN só fica na memória. Digite de novo e toque em **Entrar como espectador** |
+| Ao encerrar um bimestre do fim do ano (sobretudo Nov–dez) com 6 equipes, o telão congela alguns segundos, ou aparece `O serviço não respondeu em 10 s` (só no jogo por equipes) | O placar estimado (seção 5.7) é calculado no próprio notebook, e o telão para enquanto isso; em uma máquina lenta, passa dos 10 s em que o telão espera a confirmação, e o aviso sai mesmo com o comando já gravado. **Não aperte Enter de novo.** Espere a tela do sorteio; se ela não vier em meio minuto, siga a seção 9, item 4. A correção está para decisão |
 | O seu celular aparece no "N conectados" ou tem crachá | Ele entrou como aluno, e não como espectador. Veja a seção 4, "Cuidados" |
+| O selo do telão está em **Reconectando…**, e os celulares já em **Conectado** | Troque para os slides e volte (Alt+Tab), ou minimize e restaure o navegador: ele reconecta na hora. Se não resolver, F5 e **Retomar sala**, com a internet funcionando |
+| A tela do telão está cortada embaixo ou à direita | Ctrl+0 (seção 3); em projetor 1024×768, Ctrl+− de novo |
+| Um celular diz "Sem acesso ao serviço" ou fica parado em "Entrando na sala…" | Esperar 15 s sem fechar a página; se não entrar em 1 minuto, usar o 4G. Parado em "Carregando…" (celular muito antigo): jogar com o colega do lado |
+| Aparece "Revendo: …" no alto do telão | Aperte →: volta ao passo atual (seção 4, a tecla ←) |
 
 ## 11. Cuidados com o tema
 
@@ -1638,7 +1707,7 @@ trabalhando, em plataformas.
   conta um fato, sem piada. Avise uma vez que as cartas graves foram
   dramatizadas para caber no jogo (D-030; em 12 meses, se o aviso continua é
   pergunta em aberto: rascunho, seção 8, item 14). A enchente de Mai–jun toca
-  numa memória recente de Porto Alegre: diga o fato, sem detalhe.
+  em uma memória recente de Porto Alegre: diga o fato, sem detalhe.
 - **Sem suavizar, e sem expor ninguém** (D-044). O jogo mostra o custo real, em
   dinheiro e em dias parados, com fonte, para a turma sentir a dúvida de quem
   vive isso. Não amenize o número ("é só um jogo"), mas também não o dirija a
@@ -1648,16 +1717,18 @@ trabalhando, em plataformas.
   competição, lembre isso.
 - **As personas não são pessoas reais.** Foram montadas a partir de pesquisas (a
   base é o artigo de Ludmila Abílio) e de dados públicos, com a fonte de cada
-  valor ao lado (D-005). Diga que as rendas da Rose, da Daiane, do Kauã e da
-  Bruna são estimativas; a do Kauã vem de um dado de São Paulo de 2019, corrigido
+  valor ao lado (D-005). No jogo individual de 14/10, só o Jonas aparece. No
+  jogo por equipes, diga que as rendas da Rose, da Daiane, do Kauã e da Bruna
+  são estimativas; a do Kauã vem de um dado de São Paulo de 2019, corrigido
   pela inflação, e a ressalva está no slide (D-028). A da Bruna é derivada de
   censos de criadores de conteúdo, que o IBGE não mede.
 - **"Faltou na mesa" é fome** (D-066). Alguém da turma pode conhecer isso de
   perto. Diga o número como fato ("R$ 900 de comida que não foi comprada"),
   sem piada nem "imaginem passar fome", e sem perguntar quem já passou.
 - **Raça e gênero** ficam fora das personas; o dado vai para o slide (D-033).
-- **O voto é secreto.** Ninguém, nem o apresentador, vê o voto de ninguém; a
-  enquete nunca é mostrada por equipe; o celular só mostra ao próprio aluno o que
+- **O voto é secreto.** O voto não fica ligado ao nome: o nome fica só no
+  celular do aluno, e o telão mostra só os totais da turma (D-081, revisão de
+  14/10, item 5); a enquete nunca é mostrada por equipe; o celular só mostra ao próprio aluno o que
   ele respondeu antes e depois.
 - **O comparativo é um retrato desta turma.** Nada de "a aula mudou a opinião de
   vocês": sem causalidade, sem conclusão de diferença de um ou dois votos.
@@ -1683,7 +1754,7 @@ comporta. O que o teste revelar é corrigido entre 01/10 e 05/10 (D-036).
 (o voto e as telas enxutas, D-065), e as decisões D-060 a D-064, a versão 7. A
 lista abaixo continua valendo para um novo ensaio antes de 07/10, com duas
 diferenças: a decisão agora tem 90 s (item 14), e vale conferir também o modo
-espectador num celular a mais (seção 4: entra com o PIN, troca de equipe, vê a
+espectador em um celular a mais (seção 4: entra com o PIN, troca de equipe, vê a
 contagem e não entra no "N conectados").
 
 **Leve:** o notebook com o carregador, o site já publicado, o PIN e 3 celulares.
@@ -1738,7 +1809,7 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
     aparece quando falta espaço? 90 s bastam para a equipe ler e conversar
     (eram 120 s no teste de 30/09; rascunho, seção 8, item 12)?
     Anote o modelo e o tamanho de tela de quem precisou rolar. **Tocar para ler
-    (D-055):** tocar numa opção abre a explicação sem votar? O "Votar nesta"
+    (D-055):** tocar em uma opção abre a explicação sem votar? O "Votar nesta"
     registra o voto, e a contagem da equipe muda? Alguém votou achando que o
     toque já votava?
 15. **O redesenho no projetor (D-041, D-042, D-047, "vamos testar"):** do fundo

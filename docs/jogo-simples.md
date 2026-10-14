@@ -31,7 +31,7 @@ personagens, com cartas sorteadas, ficou no git e congelado em
 
 ## O jogo individual (14/10, D-081)
 
-Config `2026-10-14-v5.2-individual` (hash `2b4b2233`; só o roteiro de 60 min desde a D-083; a linha do bloqueio desde a nota de 14/10 na D-084), versão 13 do site. A
+Config `2026-10-14-v5.3-individual` (hash `69daf389`; só o roteiro de 60 min desde a D-083; a linha do bloqueio desde a nota de 14/10 na D-084; o "Conheça o Jonas" mais limpo desde a revisão final de 14/10), versão 14 do site. A
 chave `regras.individual: true` liga o modo; sem ela, o jogo é por equipes,
 como abaixo.
 
@@ -127,6 +127,14 @@ Motoboy, 34 anos, iFood, moto financiada, Sarandi (Porto Alegre). Mora com a
 companheira, que faz faxina duas vezes por semana e revende cosméticos, e a
 filha de 6 anos. Ninguém com carteira (D-062). Três valores foram recontados em
 06/10 (D-079), marcados com ✱.
+
+Na tela (revisão final de 14/10, pedido do Kleber): a conta do mês em quatro
+linhas (o trabalho, a parcela da moto, as faxinas e a revenda, o básico), a
+frase do mês comum, o básico em uma linha curta, com o nome curto de cada item,
+e, no pé, "Fontes: IBGE (PNAD 2025), DIEESE/Conab, QuintoAndar, CEEE, DMAE,
+Tabela Fipe". No celular, o básico item a item e as fontes inteiras abrem ao
+tocar em "ver". As fontes do config não levam mais as notas das recontas: o ✱
+e o "eram…" desta tabela são o histórico, como na D-079.
 
 | Por mês | R$ | Fonte |
 | --- | --- | --- |

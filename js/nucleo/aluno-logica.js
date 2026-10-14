@@ -123,16 +123,51 @@
     const id = em(conteudo, 'equipes', equipeId, 'persona');
     const p = em(conteudo, 'personas', id) || {};
     // D-066: o item da comida vai marcado ("o que faltou na mesa" sai dele).
+    // O nome curto (revisão final de 14/10) só vai quando existe: o objeto de
+    // um config sem ele fica igual ao de antes.
     const itens = lista(em(p, 'basico', 'itens')).map((i) => ({
       rotulo: i.rotulo, valor: i.valor, fonte: i.fonte ?? null, ...(i.comida === true ? { comida: true } : {}),
+      ...(typeof i.curto === 'string' ? { curto: i.curto } : {}),
     }));
     const outra = em(p, 'outraRenda');
+    const conta = simples(conteudo) ? contaDoMesComum(conteudo, equipeId) : null;
     return {
       id, nome: p.nome, descricao: p.descricao,
       familia: p.familia ? { descricao: p.familia.descricao, pessoas: p.familia.pessoas } : null,
       basico: { total: itens.reduce((soma, i) => soma + (Number(i.valor) || 0), 0), itens },
       outraRenda: outra ? { rotulo: outra.rotulo, valor: outra.valor, fonte: outra.fonte ?? null } : null,
+      ...(conta ? { contaDoMes: conta } : {}),
+      ...(typeof p.fontesCurtas === 'string' ? { fontesCurtas: p.fontesCurtas } : {}),
     };
+  }
+
+  // Revisão final de 14/10 (pedido do Kleber, 11h): o "Conheça o Jonas" do
+  // celular mostra a conta de um mês comum em poucas linhas, como o telão (o
+  // trabalho, a parcela da moto, a outra renda e o básico). O celular não
+  // carrega o motor, então a conta sai aqui do todoMes da persona, e só quando
+  // ele é simples: cada efeito soma só na renda, sem condição, sem
+  // multiplicador e sem empréstimo; o que entra é trabalho, e o custo fixo sai.
+  // Qualquer outra coisa devolve null, e a tela fica sem a conta (nunca com
+  // um número diferente do telão). O teste confere com o motor.mesComum.
+  function contaDoMesComum(conteudo, equipeId) {
+    const p = em(conteudo, 'personas', em(conteudo, 'equipes', equipeId, 'persona'));
+    if (!p) return null;
+    let trabalho = 0;
+    const fixos = [];
+    const fontes = [];
+    for (const ef of lista(p.todoMes)) {
+      const soma = em(ef, 'soma') || {};
+      const renda = soma.renda;
+      if (!ef || ef.se || ef.multiplica || ef.emprestimo || Object.keys(soma).length !== 1 || !Number.isFinite(renda)) return null;
+      if (ef.fixo === true && renda < 0) fixos.push({ rotulo: ef.rotulo ?? null, valor: -renda });
+      else if (ef.fixo !== true && renda >= 0) trabalho += renda;
+      else return null;
+      if (ef.fonte) fontes.push({ rotulo: ef.rotulo ?? null, fonte: ef.fonte });
+    }
+    const outra = Number(em(p, 'outraRenda', 'valor')) > 0 ? Number(p.outraRenda.valor) : 0;
+    const basico = lista(em(p, 'basico', 'itens')).reduce((s, i) => s + (Number(i.valor) || 0), 0);
+    const custosFixos = fixos.reduce((s, f) => s + f.valor, 0);
+    return { trabalho, fixos, outraRenda: outra, basico, saldo: trabalho - custosFixos + outra - basico, fontes };
   }
 
   // D-046: "dívida: R$ X · juros de Y% ao mês". A dívida é o saldo negativo, e os
@@ -696,5 +731,6 @@
 
   V.alunoLogica = {
     telaDoAluno, sugerirEquipe, vagasParaAtribuir, pendenteAindaVale, motivoDaRecusa, cracha, codigoCracha, fimDoCronometro, FOLGA_DA_REGRA_MS,
+    contaDoMesComum,
   };
 })(globalThis);

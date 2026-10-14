@@ -887,22 +887,30 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .opcoes-simples .letra { margin-top: .05em; }
 
 /* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
-   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */
-.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho.
+   Sem encolher (flex-shrink 0): com a linha das fontes fora da .conheca, uma
+   .conheca que encolhia deixava a frase do mês por cima de "Fontes:" em
+   1024×768 com a faixa de entrada, sem a seção transbordar, e o aperto não
+   entrava (e2e individual-online, revisão final de 14/10). */
+.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 0 auto; justify-content: safe center; }
 .conheca-quem { font-size: calc(var(--corpo) * 1.1); line-height: 1.25; }
-.conheca-conta { display: grid; grid-template-columns: max-content max-content; gap: .1em 1.4em; }
+/* Revisão final de 14/10 (pedido do Kleber): a conta do mês é o que se lê de
+   longe, em letra maior; o básico item a item e as fontes vêm discretos, em
+   uma linha cada, sem descer dos 28 px. */
+.conheca-conta { display: grid; grid-template-columns: max-content max-content; gap: .1em 1.4em; font-size: calc(var(--corpo) * 1.15); }
 .conheca-linha { display: contents; }
 .conheca-linha > b { text-align: right; }
-.conheca-itens { line-height: 1.25; }
-.conheca-itens b { color: var(--texto); }
+.conheca-itens { font-size: max(28px, .8em); line-height: 1.25; }
+.conheca-itens b, .conheca-familia b { color: var(--texto); font-weight: 600; }
 .conheca-mes { font-size: calc(var(--corpo) * 1.1); }
+.tela-personas .conheca-fontes { margin-top: 0; font-size: max(28px, .72em); }
 /* O aperto (telao.js, telaConheca): só quando a tela transborda (a faixa de
    entrada em 1280×720). */
 .tela-personas[data-aperto] { gap: calc(var(--espaco) * .5); }
 .tela-personas[data-aperto] .conheca { gap: calc(var(--espaco) * .35); }
-.tela-personas[data-aperto] :is(.conheca-quem, .conheca-familia, .conheca-itens, .conheca-mes) { line-height: 1.12; }
+.tela-personas[data-aperto] :is(.conheca-quem, .conheca-familia, .conheca-itens, .conheca-mes, .conheca-fontes) { line-height: 1.12; }
 .tela-personas[data-aperto] .conheca-conta { gap: 0 1.4em; line-height: 1.12; }
-.tela-personas:is([data-aperto="2"], [data-aperto="3"]) :is(.conheca-quem, .conheca-mes) { font-size: var(--corpo); }
+.tela-personas:is([data-aperto="2"], [data-aperto="3"]) :is(.conheca-quem, .conheca-mes, .conheca-conta) { font-size: var(--corpo); }
 .tela-personas[data-aperto="3"] .conheca-itens { display: none; }
 
 /* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em

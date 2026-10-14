@@ -34,7 +34,7 @@
 // no celular do apresentador.
 // Em toda tela: nada passa da largura de 360 px. As capturas vão para
 // e2e/capturas/celular-individual-*.png.
-/* global document, innerWidth, requestAnimationFrame, Node */
+/* global document, innerWidth, requestAnimationFrame, Node, scrollY */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -287,6 +287,38 @@ try {
   assert.match(await textoDaTela(ana), /a escolha é sua/);
   await semVaga(ana, 'persona');
   await conferirLargura(ana, '03-persona');
+  // Revisão final de 14/10 (pedido do Kleber, 11h): a conta do mês em quatro
+  // linhas, com os números do config, e o "Li, pode seguir" à vista em
+  // 360×740, sem rolar (era a ~2.000 px do topo). O básico item a item e as
+  // fontes inteiras ficam recolhidos e abrem ao tocar; as fontes curtas
+  // aparecem na linha do pé.
+  {
+    await ana.waitForSelector('[data-acao="li"]', { timeout: 8000 });
+    const persona = JSON.parse(CONFIG_DIA).personas.find((p) => p.id === 'motoboy');
+    const tela = await ana.evaluate(() => {
+      const fundo = (q) => { const x = document.querySelector(q); return x ? Math.round(x.getBoundingClientRect().bottom + scrollY) : null; };
+      return {
+        li: fundo('[data-acao="li"]'),
+        conta: fundo('.conheca-conta'),
+        linhas: document.querySelectorAll('.conheca-conta .conheca-linha').length,
+        saldo: document.querySelector('.conheca-conta')?.dataset.saldoMesComum,
+        frase: document.querySelector('.conheca-mes')?.textContent,
+        recolhidos: Array.from(document.querySelectorAll('details.recolhido'), (d) => `${d.dataset.recolhido}:${d.open}`),
+        fontesCurtas: document.querySelector('.recolhido-fontes summary')?.textContent,
+        fontesInteiras: document.querySelectorAll('.recolhido-fontes .fonte').length,
+      };
+    });
+    const somaRenda = (fixo) => persona.todoMes.filter((t) => (t.fixo === true) === fixo).reduce((s, t) => s + t.soma.renda, 0);
+    const basico = persona.basico.itens.reduce((s, i) => s + i.valor, 0);
+    assert.equal(tela.linhas, 4, 'Conheça: a conta do mês em quatro linhas');
+    assert.equal(Number(tela.saldo), somaRenda(false) + somaRenda(true) + persona.outraRenda.valor - basico, 'Conheça: a conta do mês comum, a mesma do telão');
+    assert.equal(tela.frase, 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.');
+    assert.deepEqual(tela.recolhidos, ['conheca-basico:false', 'conheca-fontes:false'], 'Conheça: o básico e as fontes recolhidos');
+    assert.equal(lido(tela.fontesCurtas), lido(`Fontes: ${persona.fontesCurtas}`), 'Conheça: as fontes curtas no pé');
+    assert.equal(tela.fontesInteiras, persona.basico.itens.length + 1 + persona.todoMes.length, 'Conheça: a fonte inteira de cada valor, no "ver"');
+    assert.ok(tela.li <= 740, `Conheça: o "Li, pode seguir" à vista em 360×740 (o fundo do botão a ${tela.li} px do topo)`);
+    console.log(`  Conheça o Jonas: a conta termina a ${tela.conta} px e o "Li" a ${tela.li} px do topo, em 740`);
+  }
   await conferirLi(ana, 'persona', uidAna);
 
   // As 6 rodadas, com os blocos de dados depois de cada uma. Ana vota em
@@ -327,7 +359,7 @@ try {
     const decisao = lido(await ana.textContent('.decisao-linha'));
     assert.match(decisao, /^A sua escolha: /);
     if (op) assert.match(decisao, new RegExp(`^A sua escolha: ${op.toUpperCase()} · `));
-    else assert.match(decisao, /\(você não votou: ficou o de sempre\)$/);
+    else assert.match(decisao, /\(você não votou: ficou a opção de sempre\)$/);
     assert.equal(lido(await ana.textContent('.saldo-rotulo')), 'O seu saldo do bimestre');
     assert.equal(await ana.locator('.equipe-linha').count(), 0);
     await semVaga(ana, `resultado-${passo.rodada}`);

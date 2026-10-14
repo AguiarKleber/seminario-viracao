@@ -29,27 +29,29 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | Já feito | Situação |
 | --- | --- |
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
-| 6 a 8. Regras, GitHub Pages e telão | **Regras v5** e a `main` com a **versão 12** do site (o jogo individual, D-081, com o "Li, pode seguir"), no ar e funcionando |
-| A linha do bloqueio (nota de 14/10 na D-084) | Branch `claude/linha-bloqueio`, **ainda não fundida nem publicada**, na **versão 13** do site: na greve, no protesto e no breque, o resultado escreve embaixo da opção "Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas pessoas", e o celular de quem parou mostra a mesma linha logo abaixo do saldo. As regras continuam v5 |
-| Conteúdo | `config.json` versão `2026-10-14-v5.2-individual` (hash `2b4b2233`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes, só com o roteiro de 60 min (D-083) e com `"destaque": true` nos 5 dias de bloqueio. O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v5** e a `main` com a **versão 13** do site (`d0e7d05`: o jogo individual, D-081, com o "Li, pode seguir" e a linha do bloqueio da nota de 14/10 na D-084), no ar desde as 10h05 de 14/10. **Não há sinal de que o ZIP do pendrive foi refeito** depois da versão 11 (passo 11) |
+| A revisão final de 14/10 (nota depois da D-084) | Branch `claude/revisao-final`, **ainda não fundida nem publicada**, na **versão 14** do site: o "Conheça o Jonas" mais limpo (pedido do Kleber), os avisos de queda de rede do telão e dois textos do celular. As regras continuam v5 |
+| Conteúdo | `config.json` versão `2026-10-14-v5.3-individual` (hash `69daf389`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes, só com o roteiro de 60 min (D-083), com `"destaque": true` nos 5 dias de bloqueio e, desde a revisão final, o nome curto de cada item do básico e as fontes em uma linha no "Conheça o Jonas", sem as notas internas das recontas. O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
 
-**Para publicar a versão 13:** nenhum passo no console (as regras continuam v5).
+**Para publicar a versão 14:** nenhum passo no console (as regras continuam v5).
 1. **Antes de criar a sala da aula.** Uma sala criada com o config de antes
-   (`v5.1-individual`, o da versão 12) não se retoma com o novo (o hash muda):
+   (`v5.2-individual`, o da versão 13) não se retoma com o novo (o hash muda), e
+   uma sala da 13 com celulares da 14 mostra "Há uma versão nova do app":
    publique antes e crie a sala depois. Se a sala da aula já estiver criada,
-   não funda: a versão 12 continua valendo.
-2. Sem nenhuma sala aberta, funda o PR da `claude/linha-bloqueio` na `main` (o
+   não funda: a versão 13 continua valendo.
+2. Sem nenhuma sala aberta, funda o PR da `claude/revisao-final` na `main` (o
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
 3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto. O
    bloco **Com celulares** diz `regras v5 conferidas`; a barra do pé da tela
    inicial (o mouse parado na borda de baixo, ou a tecla H) mostra a versão
-   `2026-10-14-v5.2-individual` e o hash `2b4b2233`. Os celulares com a versão
-   12 em cache veem a faixa "Há uma versão nova do app: atualize a página".
-4. Baixe o ZIP de novo para o pendrive (passo 11).
+   `2026-10-14-v5.3-individual` e o hash `69daf389`. Os celulares com a versão
+   13 em cache veem a faixa "Há uma versão nova do app: atualize a página".
+4. Baixe o ZIP de novo para o pendrive (passo 11): um ZIP da versão 11 recusa
+   o estado salvo hoje.
 
-**Plano B:** reverter o merge na `main` volta à versão 12, com as mesmas regras
-v5.
+**Plano B:** reverter o merge na `main` volta à versão 13 (`d0e7d05`, hash
+`2b4b2233`), com as mesmas regras v5.
 
 ## Como funciona
 

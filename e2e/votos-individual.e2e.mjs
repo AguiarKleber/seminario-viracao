@@ -578,7 +578,7 @@ async function jogar({ site, navegador, vigiar }) {
       const linha = lido(await c.p.textContent('.decisao-linha'));
       const op = plano(c, k);
       if (op) assert.ok(linha.startsWith(`A sua escolha: ${letraDe(rId, op)} · ${H.textoDaOpcao(cfg, rId, op, PERSONA).rotulo}`), `${c.rotulo}, ${rId}: "${linha}"`);
-      else assert.match(linha, /\(você não votou: ficou o de sempre\)$/, `${c.rotulo}, ${rId}: sem voto`);
+      else assert.match(linha, /\(você não votou: ficou a opção de sempre\)$/, `${c.rotulo}, ${rId}: sem voto`);
       assert.equal(lido(await c.p.textContent('.saldo-rotulo')), 'O seu saldo do bimestre', `${c.rotulo}, ${rId}: o saldo`);
       // D-084, nota de 14/10: quem parou (na greve, no protesto, no breque) vê
       // a linha do bloqueio logo abaixo do saldo; os outros, nada.
