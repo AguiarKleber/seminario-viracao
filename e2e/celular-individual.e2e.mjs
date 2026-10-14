@@ -32,6 +32,9 @@
 // [Li] E o "Li, pode seguir": o botão no Jonas e nos blocos, o "Você já leu
 // ✓" depois do toque, o lidos/{uid} = o índice do passo, e o "N de M leram"
 // no celular do apresentador.
+// [Conta aberta] Pedido do Kleber de 14/10, 14h30: no resultado e em cada
+// bloco, a conta em detalhe aberta, visível sem tocar em nada, também em
+// 320×568, e nos blocos o "Li, pode seguir" acima dela.
 // Em toda tela: nada passa da largura de 360 px. As capturas vão para
 // e2e/capturas/celular-individual-*.png.
 /* global document, innerWidth, requestAnimationFrame, Node, scrollY */
@@ -241,6 +244,52 @@ async function conferirLi(p, nome, uid) {
   await conferirLargura(p, `li-${nome}`);
 }
 
+// [Conta aberta] Pedido do Kleber de 14/10, 14h30: a conta em detalhe do
+// formato simples fica aberta, sem summary e sem toque. O miolo de um
+// <details> fechado dá false no checkVisibility (o Chromium o esconde com
+// content-visibility); por isso o checkVisibility da conta do bimestre prova
+// que ela aparece sem tocar. comMes: a decisão e o que aconteceu, na conta do
+// bloco.
+async function conferirContaAberta(p, chave, titulo, nome, { comMes = false } = {}) {
+  const c = await p.evaluate((k) => {
+    const caixa = document.querySelector(`[data-conta-aberta="${k}"]`);
+    if (!caixa) return null;
+    const visivel = (q) => Boolean(caixa.querySelector(q)?.checkVisibility());
+    return {
+      tag: caixa.tagName.toLowerCase(),
+      titulo: caixa.querySelector('.conta-aberta-titulo')?.textContent ?? null,
+      tituloVisivel: visivel('.conta-aberta-titulo'),
+      dentroDeRecolhido: Boolean(caixa.closest('details')),
+      summaries: caixa.querySelectorAll('summary').length,
+      recolhidosDaConta: document.querySelectorAll('details[data-recolhido^="resultado:"], details[data-recolhido^="mes:"]').length,
+      conta: visivel('.conta-mes'), linha: visivel('.conta-mes .conta-linha'), saldo: visivel('.conta-mes .conta-saldo'),
+      mes: visivel('.mes'), mesTexto: caixa.querySelector('.mes')?.textContent ?? '',
+      topo: Math.round(caixa.getBoundingClientRect().top + scrollY),
+    };
+  }, chave);
+  assert.ok(c, `${nome}: a conta em detalhe aberta ("${chave}") está na tela`);
+  assert.equal(lido(c.titulo), titulo, `${nome}: o título da conta`);
+  assert.deepEqual([c.tag, c.dentroDeRecolhido, c.summaries, c.recolhidosDaConta], ['section', false, 0, 0], `${nome}: a conta aberta, sem recolhido e sem summary`);
+  assert.deepEqual([c.tituloVisivel, c.conta, c.linha, c.saldo], [true, true, true, true], `${nome}: o título e a conta do bimestre visíveis sem tocar`);
+  if (comMes) {
+    assert.equal(c.mes, true, `${nome}: a decisão e o que aconteceu visíveis sem tocar`);
+    assert.match(lido(c.mesTexto), /^A sua escolha: [A-E] · .+O que aconteceu: .+/, `${nome}: a decisão e o que aconteceu na conta`);
+  }
+  return c;
+}
+
+// [Conta aberta] A mesma tela em 320×568 (o celular mais estreito): sem
+// rolagem lateral e com a conta visível sem tocar; depois, de volta a 360×740.
+async function emTelaPequena(p, nome, conferir) {
+  await p.setViewportSize({ width: 320, height: 568 });
+  try {
+    await conferirLargura(p, `${nome}-320x568`);
+    await conferir();
+  } finally {
+    await p.setViewportSize({ width: 360, height: 740 });
+  }
+}
+
 // [Li] O "N de M leram" no celular do apresentador.
 async function esperarLeram(p, leram, total) {
   await p.waitForFunction(([n, m]) => document.querySelector('.lidos-contagem')?.textContent === `${n} de ${m} leram`, [leram, total], { timeout: 8000 });
@@ -356,6 +405,9 @@ try {
     await ana.evaluate(() => globalThis.__palco.passo()); // encerra
     await ate(ana, (e) => e.indice === indice && e.subfase === 'resultado', `resultado de ${passo.rodada}`);
     await esperarTela(ana, 'resultado', `resultado de ${passo.rodada}`);
+    // [Conta aberta] O resultado, mais alto com a conta aberta, chega no topo,
+    // e não na rolagem da decisão (Ana rolou até o voto).
+    assert.equal(await ana.evaluate(() => scrollY), 0, `resultado de ${passo.rodada}: a tela começa do topo`);
     const decisao = lido(await ana.textContent('.decisao-linha'));
     assert.match(decisao, /^A sua escolha: /);
     if (op) assert.match(decisao, new RegExp(`^A sua escolha: ${op.toUpperCase()} · `));
@@ -383,12 +435,18 @@ try {
       destaquesVistos += 1;
       console.log(`  ${passo.rodada}: "${lido(destaque.texto)}" (o fim da linha a ${destaque.base} px do topo, em 740)`);
     }
+    // [Conta aberta] A conta do bimestre em detalhe, aberta, embaixo da tela.
+    const contaResultado = `resultado:${passo.rodada}`;
+    await conferirContaAberta(ana, contaResultado, 'A conta do bimestre em detalhe', `resultado de ${passo.rodada}`);
     if (k === 0 || k === 1 || k === 2 || k === 4) await conferirLargura(ana, `06-resultado-${passo.rodada}`);
+    // Mar–abr é a tela mais alta do resultado (o bloqueio e a parcela atrasada).
+    if (k === 1) await emTelaPequena(ana, `06-resultado-${passo.rodada}`, () => conferirContaAberta(ana, contaResultado, 'A conta do bimestre em detalhe', `resultado de ${passo.rodada} em 320×568`));
 
     // O bloco de dados seguinte, com o texto do telão.
     const bloco = passos[indice + 1];
     await ate(ana, (e) => e.indice === indice + 1, `bloco depois de ${passo.rodada}`);
     await esperarTela(ana, 'situacao', `bloco ${bloco.titulo}`);
+    assert.equal(await ana.evaluate(() => scrollY), 0, `bloco ${k + 1}: a tela começa do topo`);
     assert.equal(lido(await ana.textContent('h1')), bloco.titulo);
     assert.equal(lido(await ana.textContent('.dados-contexto')), lido(bloco.contexto));
     assert.deepEqual((await ana.locator('.dados-item').allTextContents()).map(lido), bloco.itens.map(lido));
@@ -396,7 +454,16 @@ try {
     assert.equal(lido(await ana.textContent('.subtitulo-seu-ano')), k === rodadas.length - 1 ? 'O seu ano' : 'O seu ano até aqui');
     assert.equal(await ana.locator('.tabela-meses tbody tr').count(), k + 1, 'o resumo do próprio ano, uma linha por bimestre');
     await semVaga(ana, `bloco-${k + 1}`);
+    // [Conta aberta] O bimestre que acabou, com a conta, a decisão e o que
+    // aconteceu abertos (o print do Kleber era o de nov–dez), e o "Li, pode
+    // seguir" acima dela: a conta aberta não empurra o botão.
+    const tituloDaConta = `${['Jan–fev', 'Mar–abr', 'Mai–jun', 'Jul–ago', 'Set–out', 'Nov–dez'][k]}: a conta em detalhe`;
+    const contaBloco = await conferirContaAberta(ana, `mes:${passo.rodada}`, tituloDaConta, `bloco ${k + 1}`, { comMes: true });
+    const fundoDoLi = await ana.evaluate(() => { const b = document.querySelector('[data-acao="li"]'); return b ? Math.round(b.getBoundingClientRect().bottom + scrollY) : null; });
+    assert.ok(fundoDoLi !== null && fundoDoLi < contaBloco.topo, `bloco ${k + 1}: o "Li, pode seguir" acima da conta (o fundo do botão a ${fundoDoLi} px, a conta começa a ${contaBloco.topo} px)`);
+    console.log(`  bloco ${k + 1}: o "Li" termina a ${fundoDoLi} px do topo, e a conta aberta começa a ${contaBloco.topo} px`);
     await conferirLargura(ana, `07-bloco-${k + 1}`);
+    if (k === rodadas.length - 1) await emTelaPequena(ana, `07-bloco-${k + 1}`, () => conferirContaAberta(ana, `mes:${passo.rodada}`, tituloDaConta, `bloco ${k + 1} em 320×568`, { comMes: true }));
     await conferirLi(ana, `bloco-${k + 1}`, uidAna);
   }
 

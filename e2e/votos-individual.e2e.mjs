@@ -586,6 +586,9 @@ async function jogar({ site, navegador, vigiar }) {
       const destaque = await c.p.$eval('.destaque-linha', (x) => x.textContent).catch(() => null);
       assert.equal(destaque === null ? null : lido(destaque), destaques.length === 0 ? null
         : lido(destaques.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${g.valor < 0 ? '−' : '+'}R$ ${Math.abs(g.valor).toLocaleString('pt-BR')}`).join(' · ')), `${c.rotulo}, ${rId}: o destaque da opção`);
+      // [Conta aberta] Pedido do Kleber de 14/10, 14h30: a conta do bimestre
+      // em detalhe aberta, visível sem toque, e nenhum recolhido da conta.
+      assert.deepEqual(await c.p.evaluate((x) => [Boolean(document.querySelector(`section[data-conta-aberta="resultado:${x}"] .conta-mes`)?.checkVisibility()), document.querySelectorAll('details[data-recolhido^="resultado:"]').length], rId), [true, 0], `${c.rotulo}, ${rId}: a conta em detalhe aberta, sem toque`);
       await semVaga(c, `resultado de ${rId}`);
     }
     await esperarTela(esp, 'turmaResultado');
