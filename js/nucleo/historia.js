@@ -820,30 +820,6 @@
     return n === 1 ? '1 aluno entrou no meio do ano e não está nessa conta.' : `${n} alunos entraram no meio do ano e não estão nessa conta.`;
   }
 
-  // [Li] "N de M leram" (pedido do Kleber de 07/10), no "Conheça o Jonas" e nos
-  // blocos de dados: só informa, e o apresentador avança quando quiser. O
-  // celular grava lidos/{uid} = o índice do passo que leu (regras v5), e conta
-  // quem tem o índice do passo atual (estado.indice): o "li" de um passo que já
-  // passou não vale no seguinte. M é quem joga: o membro com equipe (ou vaga)
-  // aberta; sem equipesAbertas no estado (antes das equipes), todo membro. Com
-  // `ativos` (os uids com presença recente), quem sumiu sem ler sai do M, como
-  // no "N de M já escolheram", e M nunca fica menor que N. { leram, total }.
-  function contagemDeLidos(conteudo, { estado, membros, lidos, ativos } = {}) {
-    const indice = em(estado, 'indice');
-    const abertas = em(estado, 'equipesAbertas');
-    const ativo = (u) => ativos == null || (ativos instanceof Set ? ativos.has(u) : lista(ativos).includes(u));
-    let leram = 0;
-    let total = 0;
-    for (const [u, m] of Object.entries(membros || {})) {
-      if (!m || typeof m !== 'object') continue;
-      if (abertas !== null && !(typeof m.equipe === 'string' && em(abertas, m.equipe) === true)) continue;
-      const leu = Number.isFinite(indice) && em(lidos, u) === indice;
-      if (leu) leram += 1;
-      if (leu || ativo(u)) total += 1;
-    }
-    return { leram, total: Math.max(total, leram) };
-  }
-
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
@@ -853,6 +829,5 @@
     individual, vagasEmJogo, pessoasNaSala, contagemDaDecisao, contagemPorOpcao, consequenciasDaTurma, escolhasDaTurma,
     resultadoPorOpcao, quantasDessas, valorDoGrupo,
     fimDoAnoDaTurma, fraseDoFimDaTurma, fraseDosQueEntraramDepois,
-    contagemDeLidos,
   };
 })(globalThis);
