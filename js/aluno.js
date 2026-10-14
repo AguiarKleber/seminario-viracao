@@ -3511,7 +3511,8 @@
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'decisao', rodada: d.rodada.id } }, [
       cabecalho('Modo espectador · a decisão da turma', d.rodada.titulo, { lado: cronometro(d) }),
       d.contexto ? el('div', { classe: 'contexto-familia', role: 'note' }, [el('p', { classe: 'contexto-texto', texto: d.contexto })]) : null,
-      el('p', { classe: 'turma-contagem', dados: { escolheram, total } }, [el('b', { texto: `${escolheram} de ${total}` }), ' já escolheram']),
+      // "1 de 7 já escolheu", como no telão.
+      el('p', { classe: 'turma-contagem', dados: { escolheram, total } }, [el('b', { texto: `${escolheram} de ${total}` }), ` já ${escolheram === 1 ? 'escolheu' : 'escolheram'}`]),
       el('div', { classe: 'opcoes-aluno', role: 'group', 'aria-label': `Opções da rodada (${opcoes.length})` }, opcoes),
       nota('Modo espectador: não vota e não vê o voto de ninguém, só quantas pessoas já escolheram.'),
     ]));
