@@ -377,7 +377,11 @@ async function jogar(nome) {
   await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(TEXTO_CONFIG) });
   await page.waitForSelector('#hash-config');
   assert.equal(await page.textContent('#hash-config'), V.validarConfig.hash(cfg));
-  await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
+  // D-083: com um roteiro só no config (o do dia), a abertura não tem o bloco
+  // "Roteiro", e o telão usa esse; com mais de um (as fixtures), escolhe.
+  const radios = await page.locator('input[name="roteiro"]').count();
+  assert.equal(radios, Object.keys(cfg.roteiros).length > 1 ? Object.keys(cfg.roteiros).length : 0, 'o bloco "Roteiro" só com mais de um roteiro');
+  if (radios > 0) await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
   await page.click('[data-acao="comecar-offline"]');
   await esperarTela('lobby');
   // Toda tela que o telão desenhar, para provar que o sorteio nunca aparece.

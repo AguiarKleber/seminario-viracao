@@ -766,11 +766,10 @@ seu `id`, como no `config.json` atual.)
   No celular, é sempre uma afirmação por vez.
 - `afirmacoes[].texto`: até 110 caracteres. Acima disso, o validador avisa que
   pode não caber no celular sem rolagem.
-- No conteúdo validado em 28/09 há três enquetes: `entrada` (a do antes e
-  depois, com 3 afirmações, `todas`), `termometro` (t1, t2 e t3, no roteiro de
-  120 min) e `termometro_curto` (só t1 e t3, no roteiro de 60 min, D-032). Os
-  ids das afirmações valem dentro de cada enquete: o t1 das duas é o mesmo
-  texto, repetido de propósito.
+- No config do dia há duas enquetes: `entrada` (a do antes e depois, com 3
+  afirmações, `todas`) e `termometro_curto` (só t1 e t3, D-032). O `termometro`
+  de 3 frases (t1, t2 e t3) era do roteiro de 120 min e saiu com ele em 14/10
+  (D-083). Os ids das afirmações valem dentro de cada enquete.
 
 ### `referencias`
 
@@ -819,7 +818,9 @@ vale para quem quiser pôr uma linha de volta.
 }
 ```
 
-O apresentador escolhe o roteiro na abertura do telão (D-019). O nome usa
+Com mais de um roteiro, o apresentador escolhe na abertura do telão (D-019);
+com um só (o config do dia, desde a D-083: só o `60min`), o telão usa esse sem
+perguntar. O nome usa
 letras, algarismos, `_` ou `-`. Num nome como `60min`, o número vira teto: o
 validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 

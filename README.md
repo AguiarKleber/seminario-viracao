@@ -32,7 +32,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a **versão 11** do site (o jogo por equipes de 07/10), no ar e funcionando. Até o merge, é o plano B |
 | O jogo individual (D-081) | Branch `claude/individual`, **ainda não fundida nem publicada**, na **versão 12** do site: cada aluno entra com o nome (que fica só no celular dele), ganha uma vaga dada pelo telão (até 20) e joga o próprio Jonas; o telão mostra só o resumo da turma, sem nomes; o placar tem "Quanto sobrou, ou ficou devendo" (quantos terminaram com dinheiro sobrando e quantos devendo), "As escolhas da turma" e as combinações, sem "O caminho de cada equipe"; os blocos de dados e o Fim aparecem também no celular |
 | O "Li, pode seguir" (D-081) | Na mesma branch, em commits cuja mensagem começa por "[Li]". Exige as **regras v5** coladas no console. Sem elas, os commits [Li] são revertidos, e o resto funciona com as regras v4 |
-| Conteúdo | `config.json` versão `2026-10-14-v5-individual` (hash `39fd446e`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas e sem a formação de equipes. O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
+| Conteúdo | `config.json` versão `2026-10-14-v5.1-individual` (hash `b91b7dc3`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes e só com o roteiro de 60 min (D-083). O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
 
 **Para publicar (14/10 de manhã), com o "Li":** o site passa à versão 12, o
 `config.json` muda e as regras passam a v5.
@@ -47,7 +47,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
    repita o passo 8: o bloco **Com celulares** tem de dizer `regras v5
    conferidas`; a barra do pé da tela inicial (o mouse parado na borda de
-   baixo, ou a tecla H), a versão `2026-10-14-v5-individual` e o hash `39fd446e`. Os celulares com a
+   baixo, ou a tecla H), a versão `2026-10-14-v5.1-individual` e o hash `b91b7dc3`. Os celulares com a
    versão 11 em cache veem a faixa "Há uma versão nova do app: atualize a
    página".
 4. Ensaie com 3 ou 4 celulares ([roteiro](docs/roteiro-do-apresentador.md),

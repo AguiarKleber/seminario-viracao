@@ -168,7 +168,9 @@ async function jogar({ site, navegador, vigiar }) {
   await telao.waitForFunction(() => /regras v[0-9]+ conferidas/.test(document.getElementById('status-online')?.textContent || ''), null, { timeout: 30000 });
   await telao.waitForFunction(() => document.getElementById('hash-config'));
   assert.equal(await telao.textContent('#hash-config'), V.validarConfig.hash(cfg), 'o telão leu o config individual');
-  await telao.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
+  // D-083: com um roteiro só no config (o do dia), a abertura não tem o bloco
+  // "Roteiro", e o telão usa esse; com mais de um (as fixtures), escolhe.
+  if (await telao.locator('input[name="roteiro"]').count() > 0) await telao.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
   await telao.fill('#pin-apresentador', PIN_EMULADOR);
   await telao.click('[data-acao="criar-online"]');
   await telao.waitForFunction(() => document.body.dataset.tela === 'lobby', null, { timeout: 20000 });

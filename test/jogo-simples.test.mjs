@@ -114,16 +114,18 @@ test('config.json do dia: modo individual, com 20 vagas neutras, nenhuma obrigat
     assert.equal(cfg.equipes[eq].persona, 'motoboy');
     assert.notEqual(cfg.equipes[eq].obrigatoria, true, `${eq}: no modo individual nenhuma vaga é obrigatória`);
   }
-  assert.equal(cfg.versao, '2026-10-14-v5-individual');
+  assert.equal(cfg.versao, '2026-10-14-v5.1-individual');
 });
 
 // Sem a etapa de formar equipes (a vaga é dada pelo telão quando o aluno entra), e
-// os tempos refeitos para os roteiros continuarem fechando 60 e 120 minutos, com a
-// decisão de 120 s.
-test('config.json do dia: os dois roteiros sem "formarEquipes", com 60 e 120 minutos certos e a decisão de 120 s', () => {
+// os tempos refeitos para o roteiro continuar fechando 60 minutos, com a decisão
+// de 120 s. Desde a D-083 (pedido do Kleber de 13/10 à noite), o roteiro de 60
+// min é o único: o de 120 saiu do config.
+test('config.json do dia: só o roteiro de 60 min, sem "formarEquipes", com 60 minutos certos e a decisão de 120 s', () => {
   const cfg = configDoDia().config;
   assert.equal(cfg.tempos.decisaoSeg, 120);
-  for (const [nome, minutos] of [['60min', 60], ['120min', 120]]) {
+  assert.deepEqual(Object.keys(cfg.roteiros), ['60min'], 'um roteiro só (D-083)');
+  for (const [nome, minutos] of [['60min', 60]]) {
     const passos = V.roteiro.passos(cfg, nome);
     assert.equal(passos.some((p) => p.tipo === 'formarEquipes'), false, `${nome}: sem formar equipes`);
     assert.equal(passos.reduce((s, p) => s + (p.alvoSeg || 0), 0), minutos * 60, `${nome}: soma dos tempos-alvo`);

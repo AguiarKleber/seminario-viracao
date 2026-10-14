@@ -58,7 +58,9 @@ adversariais. A seção 15 lista o que os revisores mudaram.
    Assim o `canal-firebase`, as regras e o simulador são testados localmente. O
    JDK 21 está instalado (D-021).
 10. **Dois roteiros no config, `60min` e `120min`.** O apresentador escolhe um ao
-    criar a sala (D-019).
+    criar a sala (D-019). Desde a D-083 (14/10), o config do dia tem só o
+    `60min`, e a abertura não pergunta; com mais de um (as fixtures), o bloco
+    "Roteiro" volta.
 
 ### Redesenho de 29/09 (D-041 a D-048)
 

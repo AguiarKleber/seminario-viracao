@@ -234,8 +234,9 @@ async function medir() {
         }
       }
     }
-    // O texto dos blocos é conteúdo do config (a "Conversa em grupos" fala
-    // em equipe, e é o Kleber quem decide): fica fora da busca por "equipe".
+    // O texto dos blocos é conteúdo do config, e é o Kleber quem decide (até
+    // a D-083, a "Conversa em grupos" do roteiro de 120 min falava em
+    // equipe): fica fora da busca por "equipe".
     const noPalco = document.getElementById('palco');
     const semBlocos = [...noPalco.querySelectorAll('*')].filter((n) => n.children.length === 0 && !n.closest('.bloco-contexto, .bloco-itens, .bloco-fonte'))
       .map((n) => n.textContent).join(' ');
@@ -316,7 +317,11 @@ async function abrirConfig() {
   await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(TEXTO_CONFIG) });
   await page.waitForSelector('#hash-config');
   assert.equal(await page.textContent('#hash-config'), V.validarConfig.hash(cfg));
-  await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
+  // D-083: com um roteiro só no config (o do dia), a abertura não tem o bloco
+  // "Roteiro", e o telão usa esse; com mais de um (as fixtures), escolhe.
+  const radios = await page.locator('input[name="roteiro"]').count();
+  assert.equal(radios, Object.keys(cfg.roteiros).length > 1 ? Object.keys(cfg.roteiros).length : 0, 'o bloco "Roteiro" só com mais de um roteiro');
+  if (radios > 0) await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
 }
 
 // O placar, página 3: as combinações possíveis (a mesma do formato simples).

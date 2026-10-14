@@ -957,8 +957,9 @@ sem a chave nova, tudo continua como na D-080).
   `test/fixtures/config-equipes-v11.json`, e o motor continua sabendo jogar
   por equipes (é o config sem a chave `individual`).
 - **Para o Kleber decidir** (nada disto trava a publicação):
-  1. O bloco "Conversa em grupos: o mapa do patrão", do roteiro de 120 min,
-     ainda fala em "equipe" (a atividade é em grupos na sala, e não no app).
+  1. ~~O bloco "Conversa em grupos: o mapa do patrão", do roteiro de 120 min,
+     ainda fala em "equipe" (a atividade é em grupos na sala, e não no app).~~
+     Saiu com o roteiro de 120 min (D-083, abaixo).
   2. ~~Uma vaga ocupada por um aparelho que saiu (ou que entrou de novo por
      outro navegador) não se libera.~~ Desde a revisão de 14/10, a vaga presa
      volta com "Remover inativos" (abaixo). Continua valendo pedir que cada um
@@ -1006,3 +1007,16 @@ abertura da seção 11 da arquitetura).
   o site fora do ar; um erro no arquivo), um aviso aparece no meio da tela,
   com a lista inteira dos erros, e a barra fica aberta de vez: sem config,
   nenhuma sala é criada, e o botão não pode ficar escondido justamente aí.
+
+**D-083. Só o roteiro de 60 min** (muda a D-019 e a D-032).
+- **O que o Kleber pediu:** tirar o roteiro de 120 min do config. Com ele
+  saem os blocos que só ele tinha, o "Mapa do seminário", a "Conversa em
+  grupos: o mapa do patrão" e "Caminhos: regulação, proteção, organização e
+  educação", e a enquete "termometro" de 3 frases; fica o "termometro_curto"
+  (t1 e t3). Com um roteiro só, o bloco "Roteiro" sai da tela inicial.
+- **Como ficou:** o config passa a `2026-10-14-v5.1-individual` (hash
+  `b91b7dc3`), com o mesmo jogo (281 das 15.625 combinações fecham o ano; a
+  melhor, A-D-C-E-D-A, termina com +R$ 1.714; a pior, D-A-E-C-C-C, devendo
+  R$ 6.135). O telão usa o único roteiro sem perguntar; com mais de um (os
+  configs de teste), o bloco "Roteiro" volta. O motor e o validador continuam
+  aceitando vários roteiros.

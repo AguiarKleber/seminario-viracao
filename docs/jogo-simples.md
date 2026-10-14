@@ -31,7 +31,7 @@ personagens, com cartas sorteadas, ficou no git e congelado em
 
 ## O jogo individual (14/10, D-081)
 
-Config `2026-10-14-v5-individual` (hash `39fd446e`), versão 12 do site. A
+Config `2026-10-14-v5.1-individual` (hash `b91b7dc3`; só o roteiro de 60 min desde a D-083), versão 12 do site. A
 chave `regras.individual: true` liga o modo; sem ela, o jogo é por equipes,
 como abaixo.
 
@@ -390,9 +390,11 @@ print 1 do Kleber: o Fim enriquecido com outras modalidades de trabalho por app)
   condutores de automóvel) e 13 (80,2% e 60,8%). Conferido no PDF do IBGE em
   06/10 à tarde.
 
-No roteiro de 120 minutos (D-080, prints 3 e 4 do Kleber), a conversa em grupos
-e os caminhos passam a mostrar itens, como os blocos de dados; o mapa do
-seminário continua só com o contexto e a linha do tempo.
+**Saiu em 14/10 (D-083):** o roteiro de 120 minutos, e com ele os três blocos
+abaixo, que só ele tinha. Ficam aqui como registro do texto. No roteiro de 120
+minutos (D-080, prints 3 e 4 do Kleber), a conversa em grupos e os caminhos
+passavam a mostrar itens, como os blocos de dados; o mapa do seminário
+continuava só com o contexto e a linha do tempo.
 
 **Conversa em grupos: o mapa do patrão** (depois do placar; era "Debrief: …" até
 a revisão textual de 06/10)

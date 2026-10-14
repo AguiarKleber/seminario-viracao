@@ -12,7 +12,7 @@
 //   node bin/simular-alunos.mjs --sala K7Q2 --emulador     só alunos, numa sala aberta por um telão de verdade
 //   node bin/simular-alunos.mjs --sala K7Q2 --sim-tenho-certeza   contra o projeto REAL (conexao.json)
 //
-// Opções: --alunos N (20) · --rapido · --roteiro 60min|120min · --semente N · --config caminho (config.json)
+// Opções: --alunos N (20) · --rapido · --roteiro 60min (um roteiro do config) · --semente N · --config caminho (config.json)
 // Perturbações: --rajada · --quedas · --recargas · --derrubar-telao · --atacar
 //
 // O relatório confere, passo a passo, que os votos confirmados pelo servidor são

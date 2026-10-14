@@ -175,7 +175,7 @@ rascunho, seção 8, item 15.
 4. [Teclas, barra e celular do apresentador](#4-teclas-barra-e-celular-do-apresentador)
 5. [Como conduzir cada passo](#5-como-conduzir-cada-passo)
 6. [Minuto a minuto: 60 min](#6-minuto-a-minuto-60-min)
-7. [Minuto a minuto: 120 min](#7-minuto-a-minuto-120-min)
+7. [Minuto a minuto: 120 min](#7-minuto-a-minuto-120-min) (saiu em 14/10, D-083)
 8. [Se a rede cair](#8-se-a-rede-cair)
 9. [Se o telão travar](#9-se-o-telão-travar)
 10. [Problemas comuns](#10-problemas-comuns)
@@ -199,7 +199,7 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 **Antes de a turma chegar:**
 1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
    (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
-   `2026-10-14-v5-individual` está na barra do pé da tela inicial: pare o
+   `2026-10-14-v5.1-individual` está na barra do pé da tela inicial: pare o
    mouse na borda de baixo (ou aperte H). Não há mais o painel do config
    (D-082): ele só aparece quando o config falta ou tem problema.
 2. Digite o PIN e clique em **Criar sala com celulares**.
@@ -337,10 +337,8 @@ caminho fez com o dinheiro da família."
   setor; leia e abra a conversa. Logo antes, **"Dados: e nos outros
   aplicativos?"** (D-080) mostra a mesma lógica fora do delivery: os
   motoristas da Uber e da 99, com a renda, quem define o preço e o INSS (IBGE).
-- **No roteiro de 120 min,** a "Conversa em grupos: o mapa do patrão" mostra os
-  três passos da atividade, e "Caminhos" mostra um item por caminho
-  (regulação, proteção, organização e educação), cada um com um dado e a fonte
-  (D-080). Leia o item e pergunte qual caminho teria mudado o ano do Jonas.
+- **O roteiro de 120 min saiu em 14/10** (D-083), e com ele a "Conversa em
+  grupos: o mapa do patrão" e "Caminhos": o config tem só o de 60 min.
 - **O telão não baixa o JSON sozinho** (muda a D-015). Se quiser o arquivo,
   barra oculta → **Salvar estado** (por exemplo, depois de Mar–abr e de
   Set–out). Online, a sala fica no Firebase e se retoma com o PIN (seção 9).
@@ -489,8 +487,8 @@ Chegue 30 minutos antes.
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
 4. Confira a barra do pé da tela inicial (mouse parado na borda de baixo, ou
    H: config válido e o mesmo hash da véspera) e o bloco **Com celulares**
-   (`regras v4 conferidas`). No bloco **Roteiro**, escolha o roteiro: **60min**
-   ou **120min** (D-019).
+   (`regras v4 conferidas`). O roteiro é o de 60 min, o único do config
+   (D-083): o telão não pergunta.
 5. Digite o PIN e clique em **Criar sala com celulares**. **Anote o código da
    sala no papel.** Se o notebook travar, é com ele que a sala é retomada.
 6. Aperte **F11** para a janela do telão ficar em tela cheia (D-007). Abra os
@@ -1400,8 +1398,8 @@ básico")
 
 - **Afirmações (D-032):** no roteiro de 60 min, duas: t1 ("O aplicativo é o
   patrão.") e t3 ("Quem não prospera por conta própria é porque não se esforçou
-  o suficiente."). No de 120 min, três: t1, t2 ("Carteira assinada é coisa do
-  passado.") e t3.
+  o suficiente."). O de 120 min, com três (t1, t2 e t3), saiu em 14/10
+  (D-083).
 - **Telão:** uma afirmação por vez, com o gráfico **ao vivo**.
 - **Celular:** vota na afirmação da vez.
 - **Faça:** Espaço abre a primeira afirmação e, com a votação aberta, passa para a
@@ -1500,41 +1498,11 @@ rodadas.
 
 ## 7. Minuto a minuto: 120 min
 
-Os mesmos seis bimestres, com rodadas de 5:30 (os mesmos 120 s de decisão e mais
-tempo para ler as opções e comentar o resultado), um bloco de dados de 5:30
-depois de cada rodada, sem entrevistas, e o debrief em grupos depois do placar.
-As seis rodadas somam 33 min; com a formação das equipes, "Conheça o Jonas" e o
-placar final, o jogo ocupa 44 dos 120 min. Se atrasar, encurte o debrief e os
-blocos de dados, e nunca as rodadas.
-
-| # | Início | Passo (alvo) | Faça e diga |
-| --- | --- | --- | --- |
-| 1 | 0:00 | Lobby (2:30) | QR na tela (5.1) |
-| 2 | 2:30 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra (5.2) |
-| 3 | 4:00 | Bloco: Mapa do seminário (4:30) | A linha do tempo no telão é o mapa: os meses e os blocos de dados (5.3) |
-| 4 | 8:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
-| 5 | 10:30 | Conheça o Jonas (3:00) | As duas frases da seção 0 |
-| 6 | 13:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (5:30) | (seção 0) |
-| 7 | 19:00 | Bloco: Dados: calor e jornada (5:30) | O contexto e os números da tela; os slides, se quiser |
-| 8 | 24:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (5:30) | (seção 0) |
-| 9 | 30:00 | Bloco: Dados: a greve de 14/04 e a lei (5:30) | Como o bloco 7 |
-| 10 | 35:30 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (5:30) | (seção 0) |
-| 11 | 41:00 | Bloco: Dados: chuva e acidentes (5:30) | Como o bloco 7 |
-| 12 | 46:30 | Rodada 4 · Jul–ago: a regra nova do app (5:30) | (seção 0) |
-| 13 | 52:00 | Bloco: Dados: gestão por algoritmo (5:30) | Como o bloco 7 |
-| 14 | 57:30 | Rodada 5 · Set–out: breque geral (5:30) | (seção 0) |
-| 15 | 63:00 | Bloco: Dados: o que é o breque (5:30) | Como o bloco 7 |
-| 16 | 68:30 | Rodada 6 · Nov–dez: Natal e nenhum 13º (5:30) | (seção 0) |
-| 17 | 74:00 | Bloco: Dados: fim de ano sem 13º (5:30) | Como o bloco 7 |
-| 18 | 79:30 | Placar final (6:00) | 3 páginas (seção 0) |
-| 19 | 85:30 | Bloco: Conversa em grupos: o mapa do patrão (10:00) | Atividade em grupos: os três passos da tela |
-| 20 | 95:30 | Bloco: Caminhos: regulação, proteção, organização e educação (6:30) | Os quatro caminhos da tela, um dado de cada; qual teria mudado o ano do Jonas? |
-| 21 | 102:00 | Termômetro (6:00), 3 afirmações | (5.8) |
-| 22 | 108:00 | Enquete de entrada · depois (1:30) | (5.9) |
-| 23 | 109:30 | Comparativo (2:30) | (5.10) |
-| 24 | 112:00 | Bloco: Dados: e nos outros aplicativos? (4:00) | O contexto e os quatro itens dos motoristas de app (5.11) |
-| 25 | 116:00 | Bloco: Fim: quem é o patrão? (4:00) | Os três números de quem manda e a conversa (5.11) |
-| 26 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+**Saiu em 14/10 (D-083, pedido do Kleber de 13/10 à noite).** O config tem só o
+roteiro de 60 min (seção 6), e o telão usa esse sem perguntar. Com o de 120,
+saíram também os blocos que só ele tinha ("Mapa do seminário", "Conversa em
+grupos: o mapa do patrão" e "Caminhos") e o termômetro de 3 frases. A tabela
+antiga está no histórico do git deste arquivo.
 
 ## 8. Se a rede cair
 
