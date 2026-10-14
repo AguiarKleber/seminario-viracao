@@ -582,7 +582,9 @@
       return;
     }
     if (jaMembro) {
-      Object.assign(app, { fase: 'entrada', pedindoPin: true, sala: null, aviso: 'Este aparelho já entrou como aluno nesta sala e conta na equipe dele. Use outro aparelho para espiar as equipes.' });
+      // Sem falar em equipe: aqui o conteúdo ainda não chegou, e no modo
+      // individual (D-081) não há equipe nenhuma.
+      Object.assign(app, { fase: 'entrada', pedindoPin: true, sala: null, aviso: 'Este aparelho já entrou como aluno nesta sala. Use outro aparelho para o modo espectador.' });
       desenhar();
       return;
     }

@@ -1506,7 +1506,7 @@ anfitrião: quem decide é o telão.
     achado 14).
   - `entrar()`, lê `meta` (sem meta: "não há sala") e `membros/{uid}`. **Aparelho que já é membro da sala**
     (entrou como aluno e voltou à entrada) não vira espectador: fica na tela do PIN com "Este aparelho já entrou
-    como aluno nesta sala e conta na equipe dele. Use outro aparelho para espiar as equipes.", sem gravar o
+    como aluno nesta sala. Use outro aparelho para o modo espectador." (sem falar em equipe desde a D-081), sem gravar o
     pedido e sem apagar o próprio membro (depois da trava a regra nem deixaria; quem tira o aluno é o
     apresentador, pelo telão). Antes, ele virava um membro fantasma no "N de M" (F6b, achado 16).
   - Depois, nesta ordem: `apagarAoDesconectar(pedidosAnfitriao/{uid})`, **esperando a confirmação**; grava

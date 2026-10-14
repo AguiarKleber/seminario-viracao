@@ -603,8 +603,8 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
    página: nunca é guardado no aparelho.
 4. PIN errado: "O PIN não confere com o cadastrado no console. Confira e tente
    de novo." Código errado: "Não há sala com o código …". Celular que já entrou
-   como aluno nesta sala: "Este aparelho já entrou como aluno nesta sala e conta
-   na equipe dele. Use outro aparelho para espiar as equipes." (veja
+   como aluno nesta sala: "Este aparelho já entrou como aluno nesta sala. Use
+   outro aparelho para o modo espectador." (veja
    "Cuidados", abaixo).
 
 **O que ele mostra**
