@@ -2280,6 +2280,18 @@
         ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
         : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
+    // Com a faixa de entrada embaixo, em 1280×720, a frase do mês comum passava
+    // da faixa (e2e individual-online, 13/10; nas equipes, o e2e online não
+    // media esta tela). Só quando a tela transborda (medido depois do desenho):
+    // primeiro, entrelinhas e vãos menores; depois, quem é e a frase do mês no
+    // tamanho do corpo; por último, sai o básico item a item (o total fica na
+    // conta, e os itens estão no celular). A letra fica nos 28 px.
+    app.depoisDeMedir.push(() => {
+      for (const degrau of ['1', '2', '3']) {
+        if (s.scrollHeight <= s.clientHeight + 1) return;
+        s.dataset.aperto = degrau;
+      }
+    });
   }
 
   function telaPersonas(s, e) {

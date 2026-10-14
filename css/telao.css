@@ -855,6 +855,14 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .conheca-itens { line-height: 1.25; }
 .conheca-itens b { color: var(--texto); }
 .conheca-mes { font-size: calc(var(--corpo) * 1.1); }
+/* O aperto (telao.js, telaConheca): só quando a tela transborda (a faixa de
+   entrada em 1280×720). */
+.tela-personas[data-aperto] { gap: calc(var(--espaco) * .5); }
+.tela-personas[data-aperto] .conheca { gap: calc(var(--espaco) * .35); }
+.tela-personas[data-aperto] :is(.conheca-quem, .conheca-familia, .conheca-itens, .conheca-mes) { line-height: 1.12; }
+.tela-personas[data-aperto] .conheca-conta { gap: 0 1.4em; line-height: 1.12; }
+.tela-personas:is([data-aperto="2"], [data-aperto="3"]) :is(.conheca-quem, .conheca-mes) { font-size: var(--corpo); }
+.tela-personas[data-aperto="3"] .conheca-itens { display: none; }
 
 /* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em
    três colunas alinhadas entre as faixas (subgrid): a equipe e, embaixo, a
