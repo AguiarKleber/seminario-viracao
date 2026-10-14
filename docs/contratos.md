@@ -1332,6 +1332,15 @@ celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `
   3. `combinacoes`, a mesma do formato simples.
 - **Fim:** no lugar do placar resumido, `p.fim-turma-resumo` com a frase da turma. Nos blocos sem conteúdo, o placar
   resumido não aparece (seria uma linha por vaga).
+- **[Li] "N de M leram"** (pedido do Kleber de 07/10; regras v5): no "Conheça o Jonas" e nos blocos com contexto,
+  itens ou fonte (os que têm o botão "Li, pode seguir" no celular), o kicker ganha " · 17 de 20 leram" (`comLidos`),
+  e a seção leva `data-leram` e `data-total-lidos`. A conta é `historia.contagemDeLidos` com o nó `salas/{S}/lidos`
+  (ouvido só no modo individual; o telão é o anfitrião e lê a sala inteira) e os ativos: conta quem tem o índice do
+  passo atual (o "li" de um passo que já passou não vale), M é quem tem vaga aberta, e quem sumiu sem ler sai do M.
+  Só informa: quem avança é o apresentador. Só online, no passo atual (no modo revendo, nada) e com alguém na conta.
+  No kicker, e não ao lado do título, para não tirar altura nem largura dos blocos, que já apertam com a faixa de
+  entrada. Tudo do "Li" está nos commits que começam por "[Li]": revertidos, o telão volta a gravar `"v4"` e a tela,
+  ao kicker de antes.
 - **"A turma"** (offline, sem membro nenhum e no máximo uma vaga em jogo: `soATurma()`): o telão joga um caminho só.
   Antes da primeira apuração não há vaga aberta; o `decidirPelaTurma` (ou o fechamento, sem escolha) abre a `e1`. O
   resultado é a faixa do formato simples com `.turma-quem` "A turma" no lugar da equipe; o placar diz "A turma
@@ -1418,7 +1427,9 @@ a "4. Sem celulares"), que prepara o serviço uma vez por página:
    navegador guarda a falha do `import()` de um endereço para o documento inteiro), e o
    offline continua ali.
 3. `canalFirebase.criar({ sdk, conexao, longPolling: ?lp=1, emulador, ambienteLocal })` e `entrar()`.
-4. Autoteste: `autoteste/{uid}` tem de ser recusado e `regrasVersao/{uid} = REGRAS_VERSAO` (hoje `"v4"`)
+4. Autoteste: `autoteste/{uid}` tem de ser recusado e `regrasVersao/{uid} = REGRAS_VERSAO` (hoje `"v5"`,
+   com o "Li, pode seguir"; as regras v5 aceitam também o `"v4"` do telão da versão 11, o plano B; com as regras v4
+   ainda no console, este telão é recusado aqui, e é isso que avisa que as regras novas não foram coladas)
    tem de passar. Senão, "REGRAS ABERTAS ou DESATUALIZADAS: não use", e criar e
    retomar ficam desabilitados.
 5. Primeira conexão acima de 8 s: sugere a "Rede restrita".
