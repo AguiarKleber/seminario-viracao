@@ -1112,5 +1112,9 @@ O que a revisão final mudou:
   `69daf389`), versão 14 do site, as mesmas regras v5 (o
   `firebase/regras.json` não mudou) e o mesmo jogo (281 das 15.625 combinações
   fecham o ano; ADCEDA +R$ 1.714; DAECCC −R$ 6.135). Medido em 1024×768,
-  1280×720 (com e sem a faixa de entrada) e 1920×1080: cabe sem rolagem; o
-  básico e as fontes vão a duas linhas em 1024×768, sem descer dos 28 px.
+  1280×720 (com e sem a faixa de entrada) e 1920×1080: cabe sem rolagem e sem
+  texto sobre texto; o básico e as fontes vão a duas linhas em 1024×768, sem
+  descer dos 28 px, e com a faixa de entrada o aperto de sempre põe a conta e
+  a frase no tamanho do corpo. No celular, em 360×740, o fundo do "Li, pode
+  seguir" fica a 730 px do topo (e2e). A bateria: `npm run check` (675
+  testes), `npm run e2e` e `npm run e2e:online`, verdes.
