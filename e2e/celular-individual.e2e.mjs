@@ -298,7 +298,7 @@ try {
     await esperarTela(ana, 'decisao', `decisão de ${passo.rodada}`);
     assert.equal(await ana.locator('.opcao-aluno').count(), 5, '5 opções');
     assert.equal(await ana.locator('.opcao-votos').count(), 0, 'sem a contagem de votos (vaga de uma pessoa)');
-    assert.match(await textoDaTela(ana), /A escolha é só sua, ninguém vê o seu voto/);
+    assert.match(await textoDaTela(ana), /A escolha é só sua, o seu voto não fica ligado ao seu nome/);
     await semVaga(ana, `decisao-${passo.rodada}`);
     if (k === 0) await conferirLargura(ana, '04-decisao');
     const op = votosAna[k];

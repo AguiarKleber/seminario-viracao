@@ -1618,9 +1618,12 @@
     // Antes de entrar não se sabe o modo da sala: no individual (decisão do
     // Kleber de 13/10 à noite), o celular pede o nome logo depois. Até a versão
     // 11, a frase dizia "Sem nome e sem cadastro", o que lá seria falso; esta
-    // vale para os dois modos.
+    // vale para os dois modos. Revisão de 14/10 (achado 6): ela dizia também
+    // "ninguém, nem o apresentador, vê o seu voto", mas o voto de cada vaga
+    // pode ser lido (sem o nome, que nunca sai do celular); o que se garante
+    // é que o voto não fica ligado à pessoa.
     filhos.push(nota(app.aviso, 'erro'), entrar,
-      el('p', { classe: 'privacidade', texto: 'Sem cadastro: ninguém, nem o apresentador, vê o seu voto. O telão mostra só os totais da turma.' }));
+      el('p', { classe: 'privacidade', texto: 'Sem cadastro: o seu voto não fica ligado a você, e o telão mostra só os totais da turma.' }));
     // D-064: discreto, depois de tudo: o aluno não tem o que fazer aqui.
     if (!app.embutido) {
       filhos.push(botao('Sou apresentador', () => {
@@ -1878,7 +1881,7 @@
       campo,
       el('p', { id: 'dica-nome', classe: 'texto-2', texto: `Até ${NOME_MAX} letras. Ele aparece só no topo deste celular.` }),
       entrar,
-      el('p', { classe: 'privacidade', texto: 'O seu nome fica só neste celular: não vai para o servidor, e o telão nunca mostra nomes. Ninguém, nem o apresentador, vê o seu voto.' }),
+      el('p', { classe: 'privacidade', texto: 'O seu nome fica só neste celular: não vai para o servidor, e o telão nunca mostra nomes. Por isso, o seu voto não fica ligado ao seu nome.' }),
     ]));
     return 'nome';
   }
@@ -2869,7 +2872,7 @@
       kicker = 'O personagem do jogo';
       comoSeJoga = app.espectador
         ? 'Cada pessoa escolhe sozinha, no próprio celular. O telão mostra só os totais da turma.'
-        : `Em cada ${periodo().nome}, a escolha é sua: ninguém vê o seu voto, e o telão mostra só os totais da turma.`;
+        : `Em cada ${periodo().nome}, a escolha é sua: o seu voto não fica ligado ao seu nome, e o telão mostra só os totais da turma.`;
     }
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
@@ -3104,7 +3107,7 @@
     // A dica do toque que não vota (D-055), depois das opções. No modo
     // individual, sem os votos da equipe: a escolha é só de quem vota.
     const dica = sozinho
-      ? 'Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. A escolha é só sua, ninguém vê o seu voto, e dá para mudar até o apresentador encerrar. Sem voto, fica a opção de sempre.'
+      ? 'Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. A escolha é só sua, o seu voto não fica ligado ao seu nome, e dá para mudar até o apresentador encerrar. Sem voto, fica a opção de sempre.'
       : `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${d.situacao?.equipe?.nome ? `Equipe ${d.situacao.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.`;
     const s = d.situacao;
     const persona = s?.persona?.nome;
