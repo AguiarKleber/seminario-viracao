@@ -581,8 +581,7 @@ Só no Firebase:
   depois de 2 min 5 s foi recusado;
 - leitura: o aluno lê `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `enquetes` e `membros`; em `decisoes/{r}/{equipe}`, só a da própria equipe; em `votosEnquete`, só a própria folha; nunca `sementes`, `prorrogacoes`, `presenca` nem a sala inteira;
 - **regras v4 (D-064, o modo espectador):** quem tem PIN_OK (o mesmo da retomada: `privado/pinApresentador` existe e `pedidosAnfitriao/{uid}` é igual a ele, no dado atual) lê `decisoes/{r}/{equipe}` de **qualquer** equipe, uma por vez; nunca `decisoes/{r}` inteiro, a sala inteira, `sementes` nem o voto de enquete de outro. É só leitura: votar continua exigindo ser membro da equipe. Nas regras v3, o PIN não dava leitura nenhuma, e o celular do apresentador não via a contagem da equipe nem tinha como conferir o PIN (`pedidosAnfitriao` aceita qualquer texto de 8 a 32 caracteres);
-- **[Li] regras v5 (o "Li, pode seguir", D-081):** `salas/{s}/lidos/{uid}` guarda o número do passo que o aluno leu (`estado/indice`); só o próprio aluno, membro da sala, grava, e só o passo atual; o aluno lê só a própria folha, e quem tem PIN_OK lê `lidos` inteiro (o celular do apresentador conta "N de M leram"); o telão já lê a sala inteira;
-- `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v5"`; as regras v5 aceitam também o `"v4"` do telão da versão 11, o plano B); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
+- `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v4"`); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
   A versão fica em três lugares (`firebase/regras.json`, `REGRAS_VERSAO` em `js/telao.js` e em
   `js/canal/canal-local.js`) e presa ao conteúdo das regras: `test/regras.test.mjs` guarda o hash
   (sha256, 12 caracteres, do regras.json com a versão trocada por um marcador) de cada versão, e
