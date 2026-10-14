@@ -300,8 +300,6 @@ async function jogar({ site, navegador, vigiar, celulares }) {
       presenca: () => canal.gravar({ [s('presenca', uid)]: canal.marcadorDeHora() }).catch(() => {}),
       vaga: async () => (await canal.ler(s('membros', uid)))?.equipe ?? null,
       votar: async (r, op) => canal.gravar({ [s('decisoes', r, await c.vaga(), uid)]: op }),
-      // [Li] "Li, pode seguir": o índice do passo lido (regras v5).
-      ler: (indice) => canal.gravar({ [s('lidos', uid)]: indice }),
       // A conta que o celular faz para desenhar a tela (alunoLogica), com o
       // que ele pode ler.
       async tela() {
@@ -395,29 +393,8 @@ async function jogar({ site, navegador, vigiar, celulares }) {
     await avancarAte((e) => e.tipo === 'personas', 'personas');
     await telao.waitForFunction(() => document.body.dataset.tela === 'personas');
     await conferirTelao('conheca', async (onde) => {
-      // [Li] Com o "N de M leram" no kicker (ninguém leu ainda).
-      assert.equal(await telao.textContent('#palco .kicker'), `Todos jogam com o mesmo personagem · 0 de ${VAGAS.length} leram`, `${onde}: o kicker`);
+      assert.equal(await telao.textContent('#palco .kicker'), 'Todos jogam com o mesmo personagem', `${onde}: o kicker`);
     });
-    // [Li] "Li, pode seguir": o celular grava lidos/{uid} = o índice do passo
-    // (regras v5), e o telão conta "N de M leram", sem ninguém de fora da conta
-    // (o 21º, sem vaga, pode gravar, e não conta) e sem o "li" de outro passo.
-    async function conferirLidos(nome) {
-      const indice = (await estado()).indice;
-      const lidos = () => telao.evaluate(() => ({ leram: document.querySelector('.tela')?.dataset.leram, total: document.querySelector('.tela')?.dataset.totalLidos }));
-      await telao.waitForFunction((n) => document.querySelector('.tela')?.dataset.totalLidos === n, String(VAGAS.length));
-      assert.deepEqual(await lidos(), { leram: '0', total: String(VAGAS.length) }, `${nome}: ninguém leu este passo ainda (o "li" do passo anterior não vale)`);
-      const leram = alunos.slice(0, 12);
-      await Promise.all(leram.map((c) => c.ler(indice)));
-      await vigesimoPrimeiro.ler(indice);
-      await assert.rejects(alunos[12].ler(indice + 1), NEGADO, `${nome}: o "li" de outro passo é recusado`);
-      await telao.waitForFunction(() => document.querySelector('.tela')?.dataset.leram === '12');
-      assert.ok((await telao.textContent('#palco .kicker')).endsWith(` · 12 de ${VAGAS.length} leram`), `${nome}: "12 de 20 leram" no kicker`);
-      await conferirTelao(`${nome}-lidos`);
-      await Promise.all(alunos.slice(12).map((c) => c.ler(indice)));
-      await telao.waitForFunction((n) => document.querySelector('.tela')?.dataset.leram === n, String(VAGAS.length));
-      assert.deepEqual(await lidos(), { leram: String(VAGAS.length), total: String(VAGAS.length) }, `${nome}: todos leram`);
-    }
-    await conferirLidos('conheca');
 
     let comAntes = 0;
     for (const [k, r] of RODADAS.entries()) {
@@ -487,13 +464,6 @@ async function jogar({ site, navegador, vigiar, celulares }) {
       const gravados = await todos[0].canal.ler(s('resultados', r));
       assert.ok(gravados, `${r}: o resultado gravado (admin: ${JSON.stringify(await administrador('GET', `salas/${sala}/resultados`, undefined)).slice(0, 80)})`);
       for (const c of alunos) assert.equal(gravados[membros20[c.uid].equipe]?.decisao, caminhos.get(c.uid).linhas[k].opcao, `${r}: a decisão gravada do aluno ${c.i}`);
-      // [Li] O bloco de dados depois do 1º bimestre, com o "N de M leram".
-      if (k === 0 && PASSOS[(await estado()).indice + 1]?.tipo === 'bloco') {
-        await avancar();
-        await esperarEstado((e) => e.tipo === 'bloco', 'o bloco de dados depois do 1º bimestre');
-        await telao.waitForFunction(() => document.body.dataset.tela === 'bloco');
-        await conferirLidos('bloco');
-      }
     }
 
     // 7. O placar.

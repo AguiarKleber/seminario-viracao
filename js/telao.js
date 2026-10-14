@@ -59,7 +59,7 @@
     reservaAberta: false,
     modo: null, canal: null, anf: null, sala: null, nomeRoteiro: null, passos: null,
     estado: null,
-    dados: { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null, lidos: null },
+    dados: { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null },
     // Estado de interface (entra na chave do desenho): nada disto vai ao banco.
     // pagina: a página do comparativo e a do placar final (D-041).
     ui: { pagina: 0, afirmacaoManual: 0, lp: false },
@@ -1018,7 +1018,7 @@
     const c = canal || await abrirCanal(modo, { sala });
     const passos = N().roteiro.passos(app.config, nomeRoteiro);
     Object.assign(app, { modo, canal: c, sala, nomeRoteiro, passos, estado: null, chaveDesenho: null, chavePasso: null });
-    app.dados = { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null, lidos: null };
+    app.dados = { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null };
     app.ui = { pagina: 0, afirmacaoManual: 0, lp: false };
     app.inicioPasso = lerLocal(chavePassoLocal(sala));
     app.passivo = false;
@@ -1102,9 +1102,6 @@
   function ligarOuvintes() {
     desligarOuvintes();
     for (const no of ['meta', 'membros', 'presenca', 'resultados', 'placar', 'enquetes']) ouvir(no, no);
-    // [Li] O "Li, pode seguir" de cada aluno (regras v5): o telão é o anfitrião
-    // e lê a sala inteira. Só no modo individual: nas equipes, nada muda.
-    if (individual()) ouvir('lidos', 'lidos');
     // O estado também é ouvido, e não só recebido do anfitrião: outra janela (ou
     // outra máquina, online) pode tê-lo mudado. O anfitrião descobre no próximo
     // comando (CONFLITO); a tela, já.
@@ -1634,9 +1631,9 @@
         if (e.subfase === 'votando') return { id: 'enquete-votando', desenhar: telaEnqueteVotando, chave: chaveEnqueteVotando };
         if (e.subfase === 'fechando') return telaDoFechando(e);
         return { id: 'enquete-apurada', desenhar: telaEnqueteApurada, chave: () => app.dados.enquetes?.[e.enquete]?.[e.momento] ?? null };
-      case 'bloco': return { id: 'bloco', desenhar: telaBloco, chave: () => [app.dados.placar, contagemDosLidos(e)] };
+      case 'bloco': return { id: 'bloco', desenhar: telaBloco, chave: () => app.dados.placar };
       case 'formarEquipes': return { id: 'formar-equipes', desenhar: telaFormarEquipes, chave: chaveMembrosPorEquipe };
-      case 'personas': return { id: 'personas', desenhar: telaPersonas, chave: () => contagemDosLidos(e) };
+      case 'personas': return { id: 'personas', desenhar: telaPersonas };
       case 'rodada':
         // No modo individual não há prorrogação (o anfitrião vai direto à
         // moeda: a vaga é de uma pessoa); uma que chegue assim mesmo (sala de
@@ -2171,33 +2168,6 @@
   // era, com a trilha e o placar resumido.
   const temConteudo = (passo) => Boolean(passo?.contexto || passo?.itens?.length);
 
-  // [Li] "N de M leram" (pedido do Kleber de 07/10; regras v5): no "Conheça o
-  // Jonas" e nos blocos com conteúdo, o celular de cada aluno tem o botão "Li,
-  // pode seguir", que grava lidos/{uid} = o índice do passo. O telão só
-  // informa, discreto, no kicker ("Apresentação · 17 de 20 leram"): quem avança
-  // é o apresentador, quando quiser. Na linha do kicker, e não ao lado do
-  // título, para não tirar altura nem largura da tela (os blocos de dados já
-  // apertam com a faixa de entrada). Só online, no modo individual, no passo
-  // atual (revisto, o passo já passou) e com alguém na conta: M é quem joga,
-  // e quem sumiu sem ler sai dele (historia.contagemDeLidos, com os ativos).
-  function contagemDosLidos(e) {
-    if (!individual() || app.modo !== 'online' || !e || e.revisto) return null;
-    const passo = passoDe(e);
-    const comBotao = passo?.tipo === 'personas' || (passo?.tipo === 'bloco' && (temConteudo(passo) || Boolean(passo.fonte)));
-    if (!comBotao) return null;
-    const c = N().historia.contagemDeLidos(app.config, { estado: e, membros: app.dados.membros, lidos: app.dados.lidos, ativos: ativosAgora() });
-    return c.total > 0 ? c : null;
-  }
-
-  // O kicker com o "N de M leram", e os números na seção (o e2e lê).
-  function comLidos(s, e, kicker) {
-    const c = contagemDosLidos(e);
-    if (!c) return kicker;
-    s.dataset.leram = String(c.leram);
-    s.dataset.totalLidos = String(c.total);
-    return `${kicker} · ${F().inteiro(c.leram)} de ${F().inteiro(c.total)} ${c.leram === 1 ? 'leu' : 'leram'}`;
-  }
-
   function conteudoDoBloco(passo) {
     const { el } = D();
     return [
@@ -2213,7 +2183,7 @@
     const conteudo = temConteudo(passo);
     if (mapa) s.classList.add('bloco-mapa');
     if (conteudo) s.classList.add('bloco-com-conteudo');
-    s.appendChild(cabecalho(comLidos(s, e, 'Apresentação'), passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
+    s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
     if (conteudo) D().acrescentar(s, conteudoDoBloco(passo));
     if (mapa || !conteudo) s.appendChild(linhaDoTempo(e, { mapa }));
     // Revisto (modo revendo), o placar de quando o bloco estava na tela. No modo
@@ -2367,7 +2337,7 @@
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
     const p = personaDaEquipe(primeira);
     const mes = N().motor.mesComum(app.config, primeira);
-    s.appendChild(cabecalho(comLidos(s, e, individual() ? 'Todos jogam com o mesmo personagem' : 'Todas as equipes jogam com o mesmo personagem'), `Conheça o ${p.nome || 'personagem'}`));
+    s.appendChild(cabecalho(individual() ? 'Todos jogam com o mesmo personagem' : 'Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
     const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
