@@ -213,7 +213,9 @@
   function traduzirErro(msg) {
     const m = String(msg || '');
     if (/^ESTADO_MUDOU/.test(m)) return 'O estado mudou antes de o comando rodar: confira a tela e repita, se ainda quiser.';
-    if (/^SEM_RESPOSTA/.test(m)) return 'O serviço não respondeu em 10 s: o comando pode chegar quando a rede voltar. Confira a tela antes de repetir.';
+    // Revisão final de 14/10 (C4): "pode chegar quando a rede voltar" era falso
+    // quando a conexão caía, e levava ao 2º Enter (o telão preso em "Apurando…").
+    if (/^SEM_RESPOSTA/.test(m)) return 'O serviço não respondeu em 10 s: a rede pode estar fora. Não repita agora; quando a rede voltar, confira a tela e repita só se ela não mudou.';
     if (/^SEM_CONEXAO/.test(m)) return 'Sem conexão com o serviço: o telão relê o estado quando a rede voltar.';
     if (/^Votação aberta/.test(m)) return 'Votação aberta: quem fecha é o apresentador (Enter).';
     if (/^Nada para encerrar/.test(m)) return 'Não há votação aberta neste passo.';
@@ -221,6 +223,12 @@
     if (/^Fim do roteiro/.test(m)) return 'Este é o último passo do roteiro.';
     if (/^Não há votação aberta/.test(m)) return 'Não há votação aberta.';
     if (/^Encerre a votação/.test(m)) return 'Encerre a votação (Enter) antes de pular.';
+    // C4: na queda de rede, o projetor mostrava "CONFLITO: o estado da sala
+    // mudou em outra janela" (sem outra janela) e "PERMISSION_DENIED:
+    // Permission denied". O núcleo continua mandando o prefixo CONFLITO (o teste
+    // do anfitrião confere); só a frase da tela muda.
+    if (/^CONFLITO/.test(m)) return 'O estado da sala mudou enquanto o comando ia: a tela foi atualizada. Confira e repita, se ainda quiser.';
+    if (/PERMISSION_DENIED/.test(m)) return 'O servidor recusou o comando: o estado da sala mudou. Confira a tela e repita, se ainda quiser.';
     return m;
   }
 
@@ -759,7 +767,8 @@
   // que solta a trava e a pega de novo), em vez de recusar na hora.
   function travarAba(sala, { esperarMs = 0 } = {}) {
     if (!raiz.navigator.locks?.request) return Promise.resolve(() => {});
-    const recusa = () => new Error(`A sala ${sala} já está aberta em outra aba deste navegador: use aquela aba.`);
+    // C4: a trava da aba fechada leva até 25 s para sair, e aí não há "aquela aba".
+    const recusa = () => new Error(`A sala ${sala} já está aberta em outra aba deste navegador: use aquela aba. Se você acabou de fechar a aba do telão, espere 30 s e clique de novo em Retomar sala.`);
     const opcoes = esperarMs > 0 && raiz.AbortSignal?.timeout ? { signal: raiz.AbortSignal.timeout(esperarMs) } : { ifAvailable: true };
     return new Promise((resolver, rejeitar) => {
       raiz.navigator.locks.request(`viracao:telao:${sala}`, opcoes, (trava) => {
@@ -1000,7 +1009,7 @@
     if (!x) return;
     const problema = ['regras', 'indisponivel', 'semConexao', 'encerrado'].includes(online.fase);
     x.status.textContent = online.mensagem + (online.lento && online.fase !== 'semConexao'
-      ? ' A primeira conexão passou de 8 s: se os celulares não entrarem, ligue "Rede restrita" na barra.' : '');
+      ? ' A primeira conexão passou de 8 s: depois de criar a sala, se os celulares não entrarem, ligue "Rede restrita" na barra.' : '');
     x.status.classList.toggle('abertura-erro', problema);
     x.status.classList.toggle('abertura-ok', online.fase === 'pronto');
     x.status.setAttribute('role', online.fase === 'regras' ? 'alert' : 'status');
@@ -4650,7 +4659,8 @@
       const falta = app.config.tempos.decisaoMinSeg - (agora() - e.abertoEm) / 1000;
       // O tempo mínimo protege a conversa da equipe (red team, falha 11), mas
       // quem decide é o apresentador: ele pode encerrar antes, confirmando.
-      if (falta > 0 && !(await confirmar(`Ainda no tempo mínimo de conversa (faltam ${F().relogio(falta * 1000)}). Encerrar a decisão agora?`, 'Encerrar agora', { focarCancelar: true }))) return;
+      // C4: no jogo individual não há conversa; o modal fala só do tempo mínimo.
+      if (falta > 0 && !(await confirmar(`Faltam ${F().relogio(falta * 1000)} para o tempo mínimo. Encerrar a decisão agora?`, 'Encerrar agora', { focarCancelar: true }))) return;
     }
     // O desfazer da abertura parou no meio: diante da tela parada, o Enter é o
     // gesto natural, e apuraria a votação aberta por engano (a rodada inteira no
