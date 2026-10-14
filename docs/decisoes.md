@@ -1148,3 +1148,5 @@ no config (o hash continua `69daf389`):
   site da versão 14, sem testes nem docs) abriu por arquivo no Edge, carregou
   o config pela barra (hash `69daf389`) e jogou o primeiro bimestre sem
   celulares.
+
+**Nota de 14/10, 14h30: a conta em detalhe aberta (versão 15).** Pedido do Kleber (print do celular): "a aba de detalhe das contas deve ficar aberta sempre para o jogador, não ter a necessidade de clicar para abrir". No formato simples, a conta do resultado ("A conta do bimestre em detalhe") e a da situação nos blocos ("Nov–dez: a conta em detalhe") deixam de ser recolhidas: o mesmo título, como subtítulo pequeno, e o mesmo conteúdo, sempre abertos, sem toque; e, como as duas telas ficaram mais altas, o resultado e a situação de um passo novo começam do topo (sem isso, a rolagem da decisão passava para o resultado, que chegava 231 px abaixo do título em set–out). Fora do formato simples e na história do placar final (D-065), tudo fica recolhido como antes. Config e regras iguais (hash `69daf389`, regras v5).
