@@ -795,8 +795,16 @@ function criarAtacante({ amb, sala, metricas, pedirDistribuicao, opcoes }) {
         await faseFormar(e);
       }
       if (e.equipesTravadas && !at.fases.has('trava')) {
-        at.fases.add('trava');
-        await faseTrava();
+        // Modo individual: a trava vem desde o lobby, e a vaga do atacante
+        // chega um instante depois (quem dá é o telão). Sem esperar por ela,
+        // os ataques de vaga (decidir por outra vaga, em nome de outro uid,
+        // trocar de vaga) ficavam todos "n/a". Quem nunca ganha vaga (o 21º)
+        // cai na fase no passo seguinte, com o "n/a" de sempre.
+        const esperaAVaga = e.tipo === 'lobby' && !(await at.canal.ler(s('membros', at.uid, 'equipe')));
+        if (!esperaAVaga) {
+          at.fases.add('trava');
+          await faseTrava();
+        }
       }
       if (e.tipo === 'rodada' && e.subfase === 'decidindo' && at.fases.has('trava') && !at.fases.has('rodada')) {
         at.fases.add('rodada');
