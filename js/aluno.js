@@ -1519,7 +1519,10 @@
       if (c.textContent !== t) c.textContent = t;
     }
     const ft = app.el.faixaTelao;
-    const velho = pulsoVelho();
+    // Revisão final de 14/10 (C5): um celular mais de 30 s sem rede mostrava o
+    // selo "Reconectando…" e, junto, esta faixa dizendo que ele estava
+    // conectado (culpando o telão). Sem rede, quem fala é só o selo.
+    const velho = app.conectado === true && pulsoVelho();
     if (ft.hidden === velho) {
       ft.textContent = velho ? 'Aguardando o telão… (o seu celular está conectado)' : '';
       ft.hidden = !velho;
