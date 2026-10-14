@@ -13,9 +13,12 @@ módulos:
   apresentação (D-060). No seminário de 07/10, o formato simples (D-078): as 6
   equipes jogam o mesmo personagem, o Jonas, com 5 opções por bimestre, o
   dinheiro na opção e o evento do mês igual para todos, sem sorteio
-  ([docs/jogo-simples.md](docs/jogo-simples.md)). O motor continua sabendo jogar
-  o formato com um personagem por equipe e cartas sorteadas (D-061): é o config
-  sem `regras.formatoSimples`.
+  ([docs/jogo-simples.md](docs/jogo-simples.md)). No de 14/10, o mesmo jogo no
+  modo individual (D-081, `regras.individual`): cada aluno joga no próprio
+  celular, com uma vaga dada pelo telão (até 20) e o nome só no aparelho, e o
+  telão mostra só a turma. O motor continua sabendo jogar o formato com um
+  personagem por equipe e cartas sorteadas (D-061): é o config sem
+  `regras.formatoSimples`.
 
 É um projeto pessoal do Kleber, **sem vínculo com nenhum empregador**.
 
@@ -89,9 +92,9 @@ npm install            # uma vez por clone
 npm run check          # validador do config + ESLint + testes sem rede: antes de cada commit
 npm test               # só os testes sem rede
 npm run emulador       # regras reais + canal-firebase + simulador contra o emulador (JDK 21)
-npm run e2e            # telão offline por file:// no Playwright (Chrome/Edge instalados)
-npm run e2e:online     # telão e 3 celulares contra o emulador: o jogo de sorteio (config de 05/10) e o config.json do dia
-npm run e2e:votos      # a matriz de votos pela tela: o config.json do dia (5 opções, sem sorteio) e as fixtures com sorteio
+npm run e2e            # telão offline por file:// no Playwright (Chrome/Edge instalados), e o celular do modo individual
+npm run e2e:online     # telão e celulares contra o emulador: o jogo de sorteio, as equipes (fixture) e o modo individual do config.json
+npm run e2e:votos      # as matrizes de votos pela tela: as equipes (config da versão 11 e fixtures) e o modo individual (celulares de verdade)
 npm run e2e:online:fixture   # o mesmo com a fixture: passa sempre pela frase da proteção (D-059)
 npm run simular -- --memoria      # 20 alunos simulados, sem rede
 ```

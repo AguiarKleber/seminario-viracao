@@ -1,5 +1,12 @@
 # O jogo simples: só o Jonas, 5 opções às cegas, sem sorteio
 
+> **Para o seminário de 14/10, o jogo é individual** (D-081, decisão do Kleber
+> de 13/10 à noite): cada aluno joga o próprio Jonas no celular, com o nome só
+> no aparelho, e o telão mostra só o resumo da turma. O conteúdo (o Jonas, os
+> 6 bimestres, as 30 opções, as consequências, os blocos de dados e os números
+> das combinações) é o mesmo descrito abaixo. O que muda nas telas está na
+> seção [O jogo individual](#o-jogo-individual-1410-d-081).
+
 O conteúdo do Jogo da Viração para o seminário de 07/10/2026. O formato é o que
 o Kleber decidiu em 05/10 à noite (D-078): **um personagem só**, o Jonas, para
 as 6 equipes; **6 bimestres com 5 opções** cada; **sem sorteio**. Com os
@@ -21,6 +28,52 @@ personagens, com cartas sorteadas, ficou no git e congelado em
 > **Princípio do Kleber:** "quanto menos explicação do que colocamos, mais
 > entendível é o game; é pra ser prático." Cada opção se entende sozinha, pelo
 > rótulo e pela mini-história.
+
+## O jogo individual (14/10, D-081)
+
+Config `2026-10-14-v5-individual` (hash `39fd446e`), versão 12 do site. A
+chave `regras.individual: true` liga o modo; sem ela, o jogo é por equipes,
+como abaixo.
+
+**Como cada aluno entra:**
+1. Lê o QR do telão (ou digita o endereço e o código da sala).
+2. Digita o **nome** (obrigatório, até 20 letras) e toca em "Entrar". O nome
+   fica só no celular dele: não vai para o servidor, e o telão nunca mostra
+   nomes. O topo do celular mostra o nome.
+3. O telão dá a ele uma **vaga própria** (o celular diz "Entrando na sala…" por
+   um instante). A vaga nunca aparece em tela nenhuma.
+4. Se recarregar a página, volta para a mesma vaga, com o mesmo nome. Quem
+   chega depois do 20º vê "A sala está cheia (20 pessoas)".
+
+**O que cada tela mostra:**
+
+| Momento | Telão (sem nomes) | Celular do aluno |
+| --- | --- | --- |
+| Lobby | "N pessoas na sala" | "Você está na sala", com o nome no topo |
+| Conheça o Jonas | O Jonas e a casa, "Todos jogam com o mesmo personagem" e, com o "Li", "N de M leram" | O mesmo texto, "a escolha é sua" e o botão "Li, pode seguir" |
+| Decisão | As 5 opções com a mini-história e "14 de 20 já escolheram" | As 5 opções, a mini-história ao tocar e "Votar nesta", na 2ª pessoa ("você") |
+| Resultado | O evento do mês, quantas pessoas ficaram com cada opção (A: 8 · B: 5 …), quantas não votaram e ficaram na opção de sempre, e quantas tiveram cada consequência ("As costas travaram …: 3 pessoas") | "A sua escolha", o seu saldo do bimestre, o dinheiro da família e a consequência, se houver |
+| Blocos de dados e Fim | O título, o contexto, os itens e a fonte e, com o "Li", "N de M leram" | O mesmo título, contexto, itens e fonte (com rolagem em 360×740), o botão "Li, pode seguir" e, embaixo, "O seu ano até aqui" |
+| Placar, página 1 | "Quanto sobrou, ou ficou devendo": "De 18 alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo.", com uma coluna por aluno, sem nome, do maior para o menor, e a média da turma | As suas escolhas, o seu ano e "Das 18 pessoas da turma, 3 fecharam o ano com dinheiro sobrando e 15 terminaram devendo." |
+| Placar, página 2 | "As escolhas da turma": bimestre × opção, com quantas pessoas escolheram cada uma | (o mesmo da página 1) |
+| Placar, página 3 | As 15.625 combinações, a melhor e a pior sequência | (o mesmo da página 1) |
+
+- **"Sobrou" e "devendo"** usam o número do placar, o dinheiro da família no fim
+  do ano: sobrou é R$ 0 ou mais; devendo é abaixo de R$ 0. Quem entrou no meio
+  do ano fica fora dessa conta, e a tela diz ("1 aluno entrou no meio do ano e
+  não está nessa conta.").
+- **Não existe** a tabela "O caminho de cada equipe" nem nada por vaga no placar
+  (pedido do Kleber de 13/10, às 21h).
+- **Sem voto**, fica a opção de sempre (C, D, D, C, A, D), como no jogo por
+  equipes. Quem chega no meio de uma decisão fica com a opção de sempre nela e
+  vota a partir da seguinte.
+- **Sem prorrogação:** uma vaga tem um voto só, e nunca empata.
+- **Sem celulares** (a internet caiu), o telão joga um caminho só, "a turma": o
+  apresentador escolhe a letra que a turma combinar ("Escolha da turma") e o
+  placar mostra o caminho da turma.
+- **O "Li, pode seguir"** só informa: o apresentador avança quando quiser. Ele
+  depende das regras v5 do Firebase (D-081); sem elas, os commits "[Li]" são
+  revertidos e as telas ficam sem o botão e sem o "N de M leram".
 
 ## Como se lê o jogo
 
@@ -477,3 +530,8 @@ R$ 7.000, para você confirmar:
   acima), `npm test` (o `test/jogo-simples.test.mjs` confere o config do dia com
   o motor, inclusive o pior caso abaixo de R$ 7.000) e `npm run e2e` (o telão,
   inclusive com o config do dia).
+- **O modo individual:** `npm run e2e` (o telão offline com "a turma" e com 20
+  vagas, e o celular em 360×740), `npm run e2e:online:dia` (o telão com 21
+  celulares simulados contra as regras reais) e `npm run e2e:votos:individual`
+  (celulares de verdade votando pela tela; `-- --celulares 20` para a sala
+  cheia).

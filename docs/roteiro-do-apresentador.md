@@ -8,6 +8,10 @@ Como publicar o site está no [README](../README.md). Como mudar o conteúdo est
 seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 06/10.
 
+**Para 14/10, vale primeiro a [seção 00](#00-o-jogo-individual-de-1410-d-081): o
+jogo individual (D-081), em que cada aluno joga no próprio celular.** O conteúdo
+e o que dizer em cada bimestre continuam os da seção 0.
+
 **Para 07/10, vale a [seção 0](#0-o-jogo-simples-de-0710-d-078-e-d-079): o jogo
 simples (D-078) com os ajustes de 06/10 de manhã (D-079) e de 06/10 à tarde
 (D-080).** Os blocos logo
@@ -180,6 +184,85 @@ rascunho, seção 8, item 15.
 13. [Teste no eduroam (30/09)](#13-teste-no-eduroam-3009)
 
 ---
+
+## 00. O jogo individual de 14/10 (D-081)
+
+Decisão do Kleber de 13/10 à noite (D-081). O conteúdo do jogo (o Jonas, os 6
+bimestres, as opções e os dados) é o da seção 0; aqui está só o que muda para
+quem conduz. Como cada tela fica: [jogo-simples.md](jogo-simples.md), seção "O
+jogo individual".
+
+**Em uma frase, para a turma:** "Cada um de vocês é o Jonas, motoboy do iFood,
+no próprio celular. Vocês decidem sozinhos o que ele faz em cada bimestre, e no
+fim a gente vê quantos fecharam o ano com dinheiro sobrando."
+
+**Antes de a turma chegar:**
+1. Abra o telão e confira o bloco 3: `regras v5 conferidas` (ou `regras v4
+   conferidas`, se o "Li" ficou de fora). O bloco 1 mostra a versão
+   `2026-10-14-v5-individual`.
+2. Digite o PIN e clique em **Criar sala com celulares**.
+
+**Na aula, passo a passo:**
+1. **O QR.** No lobby, o telão mostra o QR, o endereço e o código da sala. Diga:
+   "Leiam o QR com a câmera do celular, digitem o seu nome e toquem em Entrar."
+2. **Os nomes.** Cada aluno digita o nome (até 20 letras). O nome fica só no
+   celular dele: não vai para o servidor, e o telão nunca mostra nomes. Diga:
+   "Ninguém vê o seu voto, nem eu."
+3. **O contador.** O telão mostra "N pessoas na sala". Quando o número parar de
+   subir, aperte o Espaço. Quem chegar depois entra assim mesmo, no meio do jogo.
+   - Peça que cada um entre **uma vez só, pelo navegador do próprio celular**.
+     Abrir o link em outro navegador ou em aba anônima ocupa outra vaga, e a
+     vaga antiga não se libera. São 20 vagas.
+   - Se um celular disser "A sala está cheia (20 pessoas)", já há 20 aparelhos
+     na sala: essa pessoa acompanha pelo telão ou com um colega.
+4. **A enquete de entrada**, como sempre.
+5. **Conheça o Jonas.** Aparece no telão e no celular, com o botão "Li, pode
+   seguir". Ao lado do título, o telão mostra "12 de 20 leram": é só para você
+   saber, e você avança quando quiser.
+6. **Cada bimestre** (os três tempos da seção 0):
+   - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
+     escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
+     prorrogação: o Enter vai direto ao resultado.
+   - **Resultado.** O telão mostra quantas pessoas ficaram com cada opção,
+     quantas não votaram (e ficaram na opção de sempre) e quantas tiveram cada
+     consequência ("As costas travaram …: 3 pessoas"). No celular, cada um vê o
+     próprio saldo. Diga a frase do bimestre (tabela da seção 0), com "quem
+     escolheu…" no lugar de "a equipe que…".
+   - **Dados.** O bloco aparece no telão e no celular, com o "Li". Leia o
+     contexto e um número.
+7. **O placar**, em 3 páginas (o Espaço passa):
+   1. **"Quanto sobrou, ou ficou devendo":** "De 18 alunos, 3 terminaram com
+      dinheiro sobrando e 15 terminaram devendo.", com uma coluna por aluno, sem
+      nome, e a média da turma. Diga: "Mesma casa, mesmo Jonas: a diferença é só
+      o caminho de cada um."
+   2. **"As escolhas da turma":** quantas pessoas escolheram cada opção em cada
+      bimestre.
+   3. **As combinações:** a melhor e a pior sequência (a fala da seção 0).
+
+   No celular, cada um vê as próprias escolhas, o próprio ano e quantos da
+   turma fecharam o ano com dinheiro sobrando.
+8. **O termômetro, a enquete do "depois", o comparativo, "Dados: e nos outros
+   aplicativos?" e o Fim**, como na seção 0. Os dois blocos finais aparecem
+   também no celular.
+
+**O que não existe no jogo individual:** a formação das equipes (as teclas 1 a
+6), a prorrogação, a tabela "O caminho de cada equipe" e o **Mover aluno**
+(fica apagado na barra). **Decidir pela turma** só funciona sem celulares.
+**Remover inativos** não tira ninguém que já tem vaga.
+
+**Quem chega no meio:** digita o nome e ganha uma vaga. Com a decisão aberta, o
+celular avisa que nesta fica a opção de sempre, e a pessoa vota a partir da
+seguinte. No placar, ela fica fora da conta, e a tela diz.
+
+**Se a internet cair:** segure **Continuar sem celulares** (seção 8). O telão
+passa a jogar um caminho só, "a turma": em cada decisão, a turma combina por mão
+levantada, e você clica na letra em "Escolha da turma". O placar mostra o
+caminho da turma. Sem internet desde o começo: pendrive → **Começar sem
+celulares**, e a turma joga junto desde o início.
+
+**O seu celular** (modo espectador, D-064): com o PIN, mostra o mesmo resumo da
+turma que o telão ("N pessoas na sala", "N de M já escolheram", quantas pessoas
+ficaram com cada opção e o placar da turma), e nunca a tela de um aluno.
 
 ## 0. O jogo simples de 07/10 (D-078 e D-079)
 
