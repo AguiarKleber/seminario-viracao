@@ -1118,3 +1118,33 @@ O que a revisão final mudou:
   a frase no tamanho do corpo. No celular, em 360×740, o fundo do "Li, pode
   seguir" fica a 730 px do topo (e2e). A bateria: `npm run check` (675
   testes), `npm run e2e` e `npm run e2e:online`, verdes.
+
+O fechamento (das 13h22 às 14h): a leitura final das telas da versão 14 achou
+11 textos a corrigir. Nove foram corrigidos só no código das telas, sem mexer
+no config (o hash continua `69daf389`):
+- **telão:** "Em casa:" antes da família no "Conheça o Jonas", como no
+  celular; na sessão sem celulares, a enquete encerrada sem nenhuma contagem
+  diz "contagem por mão levantada" (e não "votos pelo celular"), o aviso diz
+  "As afirmações 1, 2 e 3", e o "Retomar a sessão" diz "Roteiro de 60 min";
+- **celular:** nas enquetes do modo individual, "O seu voto não fica ligado
+  ao seu nome: o telão mostra só os totais da turma." (a frase "nem o
+  apresentador" já tinha saído da entrada; no jogo por equipes, ela fica);
+  no formato simples, "O que isso custou:"; "(você não votou: ficou a opção
+  de sempre)"; nas fontes do "Conheça o Jonas", a do trabalho com o nome da
+  linha da conta, "o trabalho rende por mês"; e a entrada do espectador com
+  uma frase que vale para os dois modos e o botão **Entrar como espectador**.
+- **Ficam para depois do seminário** os dois que mexem no config: "= R$ 482
+  (R$ 480 no jogo)" na fonte da parcela da moto e "R$ 95,40 (R$ 95 na
+  conta)" na do ônibus. Mudariam o hash, citado no README, nos docs, no
+  roteiro, no plano de contingência e nos estados salvos das capturas do e2e,
+  no dia da aula. Ficam também as notas internas das fontes das rodadas, dos
+  efeitos e de `regras.atrasoFonte` e `regras.limiteFonte` ("D-024", "config
+  de 05/10", "6 casas"…), que nenhuma tela mostra.
+- **Docs:** o roteiro (o botão do espectador, a nota do espectador no jogo
+  individual, a seção 6 e a seção 11, "o voto não fica ligado ao nome"), a
+  arquitetura (a frase da privacidade) e o `contratos.md`
+  (`alunoLogica.contaDoMesComum`, `curto` e `fontesCurtas`).
+- **A cópia local de emergência** (`site-local-emergencia.zip`, os arquivos do
+  site da versão 14, sem testes nem docs) abriu por arquivo no Edge, carregou
+  o config pela barra (hash `69daf389`) e jogou o primeiro bimestre sem
+  celulares.

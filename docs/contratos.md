@@ -36,8 +36,8 @@ exibição fica num array de strings.
   escala:  { curtos: [5 strings], longos: [5 strings] },
   indicadores: { [id]: { id, nome, formato: "moeda"|"inteiro", inicial, min, max } },
   personas:    { [id]: { id, nome, descricao, familia: { descricao, pessoas },
-                         basico: { itens: [{ rotulo, valor, fonte, comida?: true }] }, outraRenda?: { rotulo, valor, fonte },
-                         inicial: { [ind]: n }, todoMes: [Efeito], fonte? } },
+                         basico: { itens: [{ rotulo, valor, fonte, comida?: true, curto? }] }, outraRenda?: { rotulo, valor, fonte },
+                         inicial: { [ind]: n }, todoMes: [Efeito], fonte?, fontesCurtas? } },
   equipes:     { [id]: { id, nome, cor, forma, persona, obrigatoria: boolean, lugar? } },
   rodadas:     { [id]: { id, titulo, texto, padrao, contexto?: { [persona]: texto }, efeitosGerais: [Efeito],
                          opcoes: { [id]: { id, rotulo, narrativa?, tendencia?, efeitos: [Efeito],
@@ -174,6 +174,10 @@ normalizado, e o `mes` não ganha campos).
   ao mês) e `regras.atrasoFonte` (texto, a fonte da multa e da mora). `regras.cortarPrimeiro` ∈ `"contas" | "comida"`,
   opcional; ausente, a normalização escreve **`"contas"`** (o padrão, **a validar** com o Kleber, abaixo). Qualquer uma
   dessas chaves sem o limite é erro (não teria efeito);
+- `basico.itens[].curto` e `persona.fontesCurtas` (revisão final de 14/10; opcionais, texto): o nome curto do item na
+  linha do básico do "Conheça o Jonas" e os nomes curtos das fontes, em uma linha, no pé dessa tela no telão e no "ver"
+  das fontes do celular. Ausentes, o hash não muda; sem o `curto`, a tela usa o rótulo sem o parêntese
+  ([como-editar-config.md](como-editar-config.md));
 - `basico.itens[].comida = true` marca o item da comida (o único que a casa pode deixar de comprar). `false` é aceito e
   some (o hash não muda); outro valor é erro. Com o limite, toda persona precisa de pelo menos um item com `comida: true`;
 - `basico.itens[].semAtraso = true` (revisão da F6c) marca o item que não atrasa: gás, ônibus, remédio ("quem não paga
@@ -750,6 +754,7 @@ não fecha nada nem recusa voto: quem fecha é o `encerrar()` do apresentador.
 | `fimDoCronometro(estado) → ms|null` | `estado.prazo − FOLGA_DA_REGRA_MS`: o fim do cronômetro que o telão e o celular desenham; `null` sem prazo (pausado) |
 | `FOLGA_DA_REGRA_MS` | 12 h (o tempo de vida da sala): a folga entre o fim do cronômetro e o prazo que o anfitrião grava para a regra (seção 7). Fica aqui porque o celular não carrega o anfitrião |
 | `cracha(uid, equipe|nome|null) → "Laranja · K7Q"` | derivado do uid, não pessoal; sem equipe, só o código |
+| `contaDoMesComum(conteudo, equipeId) → { trabalho, fixos: [{ rotulo, valor }], outraRenda, basico, saldo, fontes: [{ rotulo, fonte }] }|null` | a conta de um mês comum da persona da equipe, para o "Conheça o Jonas" do celular, que não carrega o motor (revisão final de 14/10). Só com o `todoMes` simples: cada efeito soma só na renda, sem `se`, `multiplica` nem `emprestimo`; renda ≥ 0 sem `fixo` é trabalho, renda < 0 com `fixo: true` é custo fixo. Qualquer outra coisa devolve `null`, e a tela fica sem a conta (nunca com um número diferente do telão); o teste confere com o `motor.mesComum`. A persona da tela leva o resultado em `contaDoMes`, só no formato simples |
 | `codigoCracha(uid) → "K7Q"` | 3 caracteres do alfabeto da sala (FNV-1a do uid); o telão usa para achar o aparelho no "Mover aluno" |
 
 Entradas de `telaDoAluno`:

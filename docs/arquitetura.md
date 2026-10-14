@@ -1140,7 +1140,7 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 - **Métodos nunca se misturam.** Se o "depois" for por mão levantada (modo offline), o comparativo não desenha antes × depois, só as duas distribuições lado a lado, com um aviso.
 - **O que se pode dizer com n ≤ 20:** retrato desta turma neste dia e a direção do movimento, contada em pessoas. O rodapé fixo "retrato desta turma, não pesquisa" lembra o que não se pode dizer: causalidade, representatividade, diferenças de 1 ou 2 votos e valor-p.
 - **Privacidade:**
-  - a tela de voto diz "ninguém, nem o apresentador, vê o seu voto; só os totais";
+  - a tela de voto diz "ninguém, nem o apresentador, vê o seu voto: só os totais" no jogo por equipes e, no modo individual, "o seu voto não fica ligado ao seu nome: o telão mostra só os totais da turma" (D-081, revisão de 14/10, item 5; a enquete desde a leitura final de 14/10);
   - a exportação leva **só agregados**: histogramas, matriz de transição e placar;
   - apagar a sala remove os votos individuais;
   - nunca há quebra da enquete por equipe.

@@ -545,7 +545,7 @@ Chegue 30 minutos antes.
    botão aparece marcado na barra). Veja a seção 13.
 8. Opcional: no seu celular, abra o endereço do aluno, toque em **Sou
    apresentador** (no fim da tela, antes de tocar em "Entrar"), digite o código
-   da sala e o PIN e toque em **Ver as equipes** (seção 4). Faça isso antes de a
+   da sala e o PIN e toque em **Entrar como espectador** (seção 4). Faça isso antes de a
    turma ver a tela: o PIN é digitado no celular, e nunca no projetor.
 9. Deixe o telão no lobby, com o QR grande, enquanto a turma chega.
 
@@ -664,13 +664,17 @@ aluno daquela equipe vê**: a situação, o contexto da família, as opções co
 contagem ao vivo da equipe, o resultado e a história. Serve para acompanhar uma
 equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 
+**No jogo individual (o de 14/10)**, ele mostra o resumo da turma, como o
+telão, e nunca a tela de uma pessoa: não há a fileira de botões das equipes
+(D-081).
+
 **Como entrar**
 1. No celular, abra o endereço do aluno (o do QR, ou
    `https://aguiarkleber.github.io/seminario-viracao/aluno/`). **Não toque em
    "Entrar"**: isso registraria o celular como aluno.
 2. No fim da tela, toque em **Sou apresentador**.
 3. Digite o código da sala (o do telão) e o PIN, o mesmo do telão, e toque em
-   **Ver as equipes**. Nesta tela, o "Ir" do teclado no campo do código só
+   **Entrar como espectador**. Nesta tela, o "Ir" do teclado no campo do código só
    passa ao campo do PIN: não entra como aluno. O PIN fica só na memória da
    página: nunca é guardado no aparelho.
 4. PIN errado: "O PIN não confere com o cadastrado no console. Confira e tente
@@ -1514,7 +1518,7 @@ os tempos e o atraso ao vivo.
 **O roteiro gira em torno do jogo** (D-060, D-078, D-079). As seis rodadas somam
 28 min; com "Conheça o Jonas" e o placar final, o jogo ocupa 37 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
-(versão `2026-10-06-v4.4-simples`). Na D-080, o bloco das outras plataformas
+(a tabela vem do `2026-10-14-v5.3-individual`, como diz o começo da seção). Na D-080, o bloco das outras plataformas
 (1:30) entrou antes do Fim, e o tempo saiu do placar final (6:00 → 5:30), do
 termômetro (3:00 → 2:30) e do comparativo (2:00 → 1:30).
 
@@ -1680,7 +1684,7 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | Não acho **Exportar totais** nem **Apagar a sala** | Estão na barra (H), e não na tela do Fim. **Apagar a sala** só funciona no passo Fim |
 | O placar final "não avança" | Ele tem várias páginas (3 no jogo individual): cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
 | O seu celular, no modo espectador, diz "O PIN não confere" | Confira o PIN (é o do console, o mesmo do telão). Com o PIN certo, as regras publicadas não são as v5 (README, passo 6). O jogo segue sem o espectador |
-| O seu celular voltou ao campo do PIN | A página recarregou: o PIN só fica na memória. Digite de novo e toque em **Ver as equipes** |
+| O seu celular voltou ao campo do PIN | A página recarregou: o PIN só fica na memória. Digite de novo e toque em **Entrar como espectador** |
 | Ao encerrar um bimestre do fim do ano (sobretudo Nov–dez) com 6 equipes, o telão congela alguns segundos, ou aparece `O serviço não respondeu em 10 s` (só no jogo por equipes) | O placar estimado (seção 5.7) é calculado no próprio notebook, e o telão para enquanto isso; em uma máquina lenta, passa dos 10 s em que o telão espera a confirmação, e o aviso sai mesmo com o comando já gravado. **Não aperte Enter de novo.** Espere a tela do sorteio; se ela não vier em meio minuto, siga a seção 9, item 4. A correção está para decisão |
 | O seu celular aparece no "N conectados" ou tem crachá | Ele entrou como aluno, e não como espectador. Veja a seção 4, "Cuidados" |
 | O selo do telão está em **Reconectando…**, e os celulares já em **Conectado** | Troque para os slides e volte (Alt+Tab), ou minimize e restaure o navegador: ele reconecta na hora. Se não resolver, F5 e **Retomar sala**, com a internet funcionando |
@@ -1713,16 +1717,18 @@ trabalhando, em plataformas.
   competição, lembre isso.
 - **As personas não são pessoas reais.** Foram montadas a partir de pesquisas (a
   base é o artigo de Ludmila Abílio) e de dados públicos, com a fonte de cada
-  valor ao lado (D-005). Diga que as rendas da Rose, da Daiane, do Kauã e da
-  Bruna são estimativas; a do Kauã vem de um dado de São Paulo de 2019, corrigido
+  valor ao lado (D-005). No jogo individual de 14/10, só o Jonas aparece. No
+  jogo por equipes, diga que as rendas da Rose, da Daiane, do Kauã e da Bruna
+  são estimativas; a do Kauã vem de um dado de São Paulo de 2019, corrigido
   pela inflação, e a ressalva está no slide (D-028). A da Bruna é derivada de
   censos de criadores de conteúdo, que o IBGE não mede.
 - **"Faltou na mesa" é fome** (D-066). Alguém da turma pode conhecer isso de
   perto. Diga o número como fato ("R$ 900 de comida que não foi comprada"),
   sem piada nem "imaginem passar fome", e sem perguntar quem já passou.
 - **Raça e gênero** ficam fora das personas; o dado vai para o slide (D-033).
-- **O voto é secreto.** Ninguém, nem o apresentador, vê o voto de ninguém; a
-  enquete nunca é mostrada por equipe; o celular só mostra ao próprio aluno o que
+- **O voto é secreto.** O voto não fica ligado ao nome: o nome fica só no
+  celular do aluno, e o telão mostra só os totais da turma (D-081, revisão de
+  14/10, item 5); a enquete nunca é mostrada por equipe; o celular só mostra ao próprio aluno o que
   ele respondeu antes e depois.
 - **O comparativo é um retrato desta turma.** Nada de "a aula mudou a opinião de
   vocês": sem causalidade, sem conclusão de diferença de um ou dois votos.
