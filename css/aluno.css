@@ -85,6 +85,20 @@ body.espectador .opcao-aluno { scroll-margin-top: 124px; }
 }
 .campo-pin:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
 
+/* ---------- Modo individual (decisão do Kleber de 13/10 à noite) ----------
+   O nome do aluno: o campo da entrada (grande, como o do código) e, depois,
+   no topo, no lugar do crachá. Um nome de 20 letras cabe em 360 px ao lado do
+   selo de conexão; mais largo que isso, ele termina em reticências. */
+.campo-nome {
+  width: 100%; min-height: 56px;
+  padding: 8px 12px;
+  font: inherit; font-size: 22px; font-weight: 650;
+  background: var(--fundo); color: var(--texto);
+  border: 2px solid var(--linha-forte); border-radius: var(--raio);
+}
+.campo-nome:focus-visible { outline: 3px solid var(--foco); outline-offset: 2px; }
+.cracha-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 750; }
+
 /* ---------- Faixas (versão nova, telão calado) ---------- */
 
 .faixa {

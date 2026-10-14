@@ -67,6 +67,10 @@
   const LETRAS = 'ABCDEFGHIJ';
   // Etapas em que a tela precisa ficar acesa (arquitetura, seção A, item 6).
   const TELAS_ACESAS = new Set(['enquete', 'decisao', 'prorrogacao']);
+  // O nome do aluno no modo individual (decisão do Kleber de 13/10 à noite):
+  // obrigatório, até 20 caracteres, guardado só no localStorage deste aparelho
+  // e nunca enviado ao banco.
+  const NOME_MAX = 20;
 
   const app = {
     el: {},
@@ -76,7 +80,11 @@
     emulador: false, lp: false, embutido: false,
     servico: null, canal: null, uid: null,
     dados: { meta: null, conteudo: null, estado: null, membros: null, resultados: null, placar: null, pulso: null, decisoes: null },
-    recebido: { meta: false, membros: false },
+    // conteudo: o modo (individual ou equipes) só se sabe com ele.
+    recebido: { meta: false, membros: false, conteudo: false },
+    // Modo individual: o nome do aluno nesta sala (só do aparelho), ou null
+    // enquanto ele não o digitou.
+    nome: null,
     votosServidor: {}, // { [enquete]: { [momento]: { [afirmacao]: v } } }, só os do próprio aparelho
     desligar: [], desligarEquipe: null, chaveEquipe: null, desligarVotos: [], chaveVotos: null,
     membroConfirmado: false, registrando: false, ultimoRegistro: 0, trocandoEquipe: false,
@@ -87,7 +95,9 @@
     // recolhidos: os detalhes recolhidos que o aluno abriu nesta tela (D-065),
     // para um redesenho (a contagem das equipes, um voto) não fechá-los na mão dele.
     // retornoVisto: as frases da opção aberta no último desenho (retornoAVista).
-    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set() },
+    // nomeRascunho: o que está no campo do nome (modo individual), para a tela
+    // remontada no meio da digitação não perder o texto.
+    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set(), nomeRascunho: '' },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
     // D-064: o modo espectador, o celular do apresentador. null fora dele;
     // dentro, { equipe, pin }: a equipe cuja tela ele vê e o PIN, só em memória
@@ -153,6 +163,42 @@
   // da família, sem energia, proteção e o detalhe da dívida). Sem a chave,
   // todas as telas ficam como antes.
   const simples = () => N().historia?.formatoSimples?.(app.dados.conteudo) === true;
+  // O modo individual (regras.individual; decisão do Kleber de 13/10 à
+  // noite): cada aluno joga sozinho, numa vaga própria que o telão dá, e o
+  // nome dele fica só neste aparelho. Lido direto do conteúdo da sala, como o
+  // alunoLogica faz: sem a chave, todas as telas ficam como antes (equipes).
+  const individual = () => app.dados.conteudo?.regras?.individual === true;
+
+  // O nome digitado, limpo: sem caractere de controle, sem espaço nas pontas
+  // nem repetido, e no máximo NOME_MAX letras (contadas por caractere, para um
+  // acento ou um emoji não ficar cortado ao meio). Vazio vira null: o nome é
+  // obrigatório.
+  function limparNome(texto) {
+    const t = String(texto ?? '').replace(/\p{C}/gu, '').replace(/\s+/g, ' ').trim();
+    const cortado = Array.from(t).slice(0, NOME_MAX).join('').trim();
+    return cortado === '' ? null : cortado;
+  }
+
+  // O nome guardado no aparelho é { sala, nome }. Da mesma sala, ele vale
+  // (recarregar não pede o nome de novo); de outra, só preenche o campo, e o
+  // aluno confirma com um toque. Assim um celular emprestado numa aula nova
+  // não entra com o nome de outra pessoa sem ninguém ver.
+  function nomeGuardado(sala) {
+    const g = lerLocal('nome');
+    const nome = limparNome(g?.nome);
+    return { nome: g?.sala === sala ? nome : null, sugestao: nome };
+  }
+
+  // "Entrar" na tela do nome: o nome vai para o aparelho (e só para ele), e a
+  // entrada na sala segue (garantirMembro grava o registro sem o nome).
+  function confirmarNome(texto) {
+    const nome = limparNome(texto);
+    if (!nome || app.fase !== 'sala') return;
+    app.nome = nome;
+    app.ui.nomeRascunho = nome;
+    gravarLocal('nome', { sala: app.sala, nome });
+    aoMudarDados();
+  }
 
   // No formato simples, a equipe pela cor, "Equipe Laranja", como no telão:
   // todas jogam com o mesmo personagem.
@@ -395,6 +441,11 @@
     gravarSessao('espectador', '');
     clearTimeout(app.repetirTimer);
     app.sala = sala;
+    // Modo individual: o nome desta sala, se o aparelho já o tem (recarregar
+    // volta com o mesmo nome), e o último nome usado, para preencher o campo.
+    const { nome, sugestao } = nomeGuardado(sala);
+    app.nome = nome;
+    app.ui.nomeRascunho = sugestao || '';
     app.fase = 'conectando';
     app.aviso = null;
     desenhar();
@@ -640,6 +691,11 @@
       return;
     }
     app.membroConfirmado = false;
+    // Modo individual: o aparelho entra na sala (e o telão lhe dá uma das 20
+    // vagas) só depois de o aluno dizer o nome; sem isto, quem abriu o link e
+    // não digitou nada já ocuparia uma vaga. Sem o conteúdo ainda, não se sabe
+    // o modo: espera um instante, ele chega junto com os outros nós.
+    if (!app.recebido.conteudo || (individual() && !app.nome)) return;
     if (d.meta.entradaAberta !== true || app.registrando || Date.now() - app.ultimoRegistro < REGISTRO_INTERVALO_MS) return;
     app.registrando = true;
     app.ultimoRegistro = Date.now();
@@ -691,6 +747,7 @@
         app.dados[no] = v;
         if (no === 'meta') app.recebido.meta = true;
         if (no === 'membros') app.recebido.membros = true;
+        if (no === 'conteudo') app.recebido.conteudo = true;
         aoMudarDados();
       }));
     }
@@ -1095,6 +1152,12 @@
     if (app.recebido.meta && d.meta === null) return { tipo: 'salaEncerrada', dados: {} };
     if (!app.recebido.membros || !app.recebido.meta) return { tipo: 'aguardando', dados: { motivo: 'entrando' } };
     const membro = membroDaTela();
+    // Modo individual: antes de tudo, o nome (que fica só no aparelho). Com a
+    // entrada fechada e sem registro, a tela da entrada fechada, e não o campo
+    // do nome de quem não vai conseguir entrar.
+    if (individual() && !app.espectador && !app.nome) {
+      return !membro && d.meta?.entradaAberta === false ? { tipo: 'entradaFechada', dados: {} } : { tipo: 'nome', dados: {} };
+    }
     return L().telaDoAluno({
       conteudo: d.conteudo, estado: d.estado, membro, membros: d.membros, espectador: Boolean(app.espectador),
       meusVotos: votosParaTela(), decisoesDaEquipe: decisoesParaTela(),
@@ -1122,7 +1185,10 @@
       app.fase, app.aviso, app.erro?.titulo, app.erro?.texto, app.embutido, tela, app.ui.foco, app.ui.nota, app.ui.aberta, app.ui.movido,
       // A recusa já vista some da tela (marcarRecusasVistas) sem mudar o estágio.
       [...app.envios.values()].filter((x) => x.vista).length,
-      resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' ? contagemEquipes() : null,
+      // A contagem das equipes só existe para a tela de escolher equipe. No
+      // modo individual, ela mudaria a cada vaga dada pelo telão e remontaria
+      // a tela de todos à toa (inclusive o campo do nome no meio da digitação).
+      resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' && !individual() ? contagemEquipes() : null,
       // Os votos ainda em leitura entram na chave: o "carregando…" do
       // comparativo só vira "sem resposta" com um redesenho, e a chegada de um
       // voto vazio não muda nenhum outro dado da tela (a tela ficava presa).
@@ -1135,12 +1201,22 @@
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
       const { limpar } = D();
+      // O campo do nome (modo individual) não perde o foco se a tela for
+      // remontada no meio da digitação: o texto já fica em app.ui.nomeRascunho.
+      const focoNoNome = document.activeElement?.id === 'nome-aluno';
       const alvo = limpar(app.el.tela);
       let tipo;
       if (app.fase === 'entrada') tipo = telaEntrada(alvo);
       else if (app.fase === 'conectando') tipo = telaSimples(alvo, 'conectando', `Sala ${app.sala}`, 'Entrando na sala…', 'Conectando ao servidor. Na primeira vez pode levar alguns segundos.');
       else if (app.fase === 'erro') tipo = telaErro(alvo);
       else tipo = desenharTela(alvo, tela);
+      if (focoNoNome) {
+        const campo = document.getElementById('nome-aluno');
+        if (campo) {
+          campo.focus();
+          campo.setSelectionRange?.(campo.value.length, campo.value.length);
+        }
+      }
       // O espectador sai por aqui, no fim de toda tela: o seletor de equipe,
       // no topo, fica só com as equipes (cabe em 360 px sem apertar o toque).
       if (app.fase === 'sala' && app.espectador) {
@@ -1173,16 +1249,27 @@
     const alvo = app.el.cracha;
     const membro = app.uid ? app.dados.membros?.[app.uid] : null;
     const equipe = membro && tem(app.dados.conteudo?.equipes, membro.equipe) ? app.dados.conteudo.equipes[membro.equipe] : null;
-    const chave = app.fase === 'sala' && app.uid ? `${app.uid}|${equipe?.id || ''}|${app.espectador ? 'espectador' : ''}` : '';
+    const sozinho = individual() && !app.espectador;
+    const chave = app.fase === 'sala' && app.uid
+      ? `${app.uid}|${equipe?.id || ''}|${app.espectador ? 'espectador' : ''}|${sozinho ? `nome:${app.nome || ''}` : ''}`
+      : '';
     if (alvo.dataset.chave === chave) return;
     alvo.dataset.chave = chave;
     const { limpar, acrescentar, el } = D();
     limpar(alvo);
+    alvo.setAttribute('aria-label', sozinho ? 'Seu nome' : 'Seu crachá');
     if (!chave) return;
     // D-064: no lugar do crachá, o selo do modo espectador (o espectador não é
     // aluno: não tem crachá, e o apresentador não o acha no "Mover aluno").
     if (app.espectador) {
       acrescentar(alvo, el('b', { classe: 'selo-espectador', dados: { espectador: '1' }, texto: 'modo espectador' }));
+      return;
+    }
+    // Modo individual: o nome do aluno, que só este celular conhece, e nada da
+    // vaga ("Vaga 7" parecia uma posição, e o número não diz nada a ninguém).
+    // Sem o nome ainda (a tela do nome está aberta), o topo fica vazio.
+    if (sozinho) {
+      if (app.nome) acrescentar(alvo, el('b', { classe: 'cracha-nome', dados: { nome: '1' }, texto: app.nome }));
       return;
     }
     const codigo = L().codigoCracha(app.uid);
@@ -1327,8 +1414,12 @@
       ]));
       return 'entrada';
     }
+    // Antes de entrar não se sabe o modo da sala: no individual (decisão do
+    // Kleber de 13/10 à noite), o celular pede o nome logo depois. Até a versão
+    // 11, a frase dizia "Sem nome e sem cadastro", o que lá seria falso; esta
+    // vale para os dois modos.
     filhos.push(nota(app.aviso, 'erro'), entrar,
-      el('p', { classe: 'privacidade', texto: 'Sem nome e sem cadastro: o celular recebe só um crachá curto, como "Equipe Laranja · K7Q".' }));
+      el('p', { classe: 'privacidade', texto: 'Sem cadastro: ninguém, nem o apresentador, vê o seu voto. O telão mostra só os totais da turma.' }));
     // D-064: discreto, depois de tudo: o aluno não tem o que fazer aqui.
     if (!app.embutido) {
       filhos.push(botao('Sou apresentador', () => {
@@ -1460,7 +1551,9 @@
       fase: 'entrada', erro: null, aviso: null, sala: null, desligarEquipe: null, chaveEquipe: null, chaveVotos: null,
       membroConfirmado: false, intervaloPresenca: 0, votosServidor: {},
       dados: { meta: null, conteudo: null, estado: null, membros: null, resultados: null, placar: null, pulso: null, decisoes: null },
-      recebido: { meta: false, membros: false },
+      recebido: { meta: false, membros: false, conteudo: false },
+      // O nome continua no aparelho (preenche o campo na próxima sala).
+      nome: null,
     });
     apagarLocal('sala');
     desenhar();
@@ -1492,6 +1585,7 @@
         return telaSimples(alvo, 'entradaFechada', `Sala ${app.sala}`, 'Entrada fechada',
           'O apresentador fechou a entrada nesta sala. Se você acabou de chegar, avise: quando ele abrir de novo, você entra sozinho.');
       case 'aguardando': return telaAguardando(alvo, d);
+      case 'nome': return telaNome(alvo);
       case 'enquete': return telaEnquete(alvo, focoOuPadrao(d));
       case 'enqueteRegistrada': {
         const foco = app.ui.foco && !d.encerrada ? d.afirmacoes.find((a) => a.id === app.ui.foco) : null;
@@ -1510,14 +1604,64 @@
     }
   }
 
+  // O título e o texto de uma espera. Modo individual (decisão do Kleber de
+  // 13/10 à noite): a sala cheia (o 21º aparelho; a capacidade vem da conta
+  // do telão, alunoLogica.vagasParaAtribuir), a vaga que o telão ainda vai
+  // dar e o lobby, que diz que cada um joga no próprio celular.
+  function textosDaEspera(d) {
+    if (d.motivo === 'salaCheia') {
+      const capacidade = Number.isInteger(d.capacidade) && d.capacidade > 0 ? d.capacidade : 20;
+      return [`A sala está cheia (${F().pessoas(capacidade)})`, 'Todas as vagas do jogo já são de outras pessoas. Acompanhe pelo telão.'];
+    }
+    if (individual() && d.motivo === 'entrando') {
+      return ['Entrando na sala…', 'O telão está guardando o seu lugar. Se demorar mais de um minuto, avise o apresentador.'];
+    }
+    if (individual() && d.motivo === 'lobby') {
+      return ['Você está na sala', 'Aguarde o apresentador começar e deixe esta página aberta. Neste jogo, cada pessoa faz as próprias escolhas, no próprio celular.'];
+    }
+    return MOTIVOS[d.motivo] || MOTIVOS.telao;
+  }
+
   function telaAguardando(alvo, d) {
-    const [titulo, texto] = MOTIVOS[d.motivo] || MOTIVOS.telao;
+    const [titulo, texto] = textosDaEspera(d);
     const { el, acrescentar } = D();
     const kicker = d.titulo || app.dados.conteudo?.titulo || 'Seminário da Viração';
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { motivo: d.motivo } }, [
       cabecalho(kicker, titulo), el('p', { classe: 'texto', texto }), notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'aguardando';
+  }
+
+  // Modo individual (decisão do Kleber de 13/10 à noite): o nome do aluno, que
+  // aparece só no topo deste celular. Ele nunca vai para o servidor: o voto é
+  // secreto e o tema é sensível, e o telão mostra só o resumo da turma. Só
+  // depois do "Entrar" o aparelho entra na sala (garantirMembro).
+  function telaNome(alvo) {
+    const { el, botao, acrescentar } = D();
+    const campo = el('input', {
+      id: 'nome-aluno', classe: 'campo-nome', type: 'text', autocomplete: 'given-name', autocapitalize: 'words',
+      spellcheck: 'false', maxlength: String(NOME_MAX), enterkeyhint: 'go', 'aria-describedby': 'dica-nome',
+      value: app.ui.nomeRascunho || null,
+    });
+    const entrar = botao('Entrar', () => confirmarNome(campo.value), {
+      classe: 'botao-primario botao-largo', desabilitado: !limparNome(app.ui.nomeRascunho), dados: { acao: 'confirmar-nome' },
+    });
+    campo.addEventListener('input', () => {
+      app.ui.nomeRascunho = campo.value;
+      entrar.disabled = !limparNome(campo.value);
+    });
+    campo.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' && !entrar.disabled) confirmarNome(campo.value);
+    });
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { etapa: 'nome' } }, [
+      cabecalho(`Sala ${app.sala}`, 'Qual é o seu nome?'),
+      el('label', { for: 'nome-aluno', classe: 'rotulo', texto: 'Seu nome' }),
+      campo,
+      el('p', { id: 'dica-nome', classe: 'texto-2', texto: `Até ${NOME_MAX} letras. Ele aparece só no topo deste celular.` }),
+      entrar,
+      el('p', { classe: 'privacidade', texto: 'O seu nome fica só neste celular: não vai para o servidor, e o telão nunca mostra nomes. Ninguém, nem o apresentador, vê o seu voto.' }),
+    ]));
+    return 'nome';
   }
 
   function telaSalaEncerrada(alvo) {
