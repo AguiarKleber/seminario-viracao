@@ -29,6 +29,9 @@
 // 7. o 21º aparelho: "A sala está cheia (20 pessoas)";
 // 8. o celular do apresentador (espectador): o resumo da turma, nunca uma vaga;
 // 9. sem a chave (a fixture das equipes), nada de nome: tudo como antes.
+// [Li] E o "Li, pode seguir": o botão no Jonas e nos blocos, o "Você já leu
+// ✓" depois do toque, o lidos/{uid} = o índice do passo, e o "N de M leram"
+// no celular do apresentador.
 // Em toda tela: nada passa da largura de 360 px. As capturas vão para
 // e2e/capturas/celular-individual-*.png.
 /* global document, innerWidth, requestAnimationFrame */
@@ -139,6 +142,13 @@ function palco(textoConfig) {
     // O PIN do apresentador fica em privado/ (só o console grava): aqui, por
     // fora das travas, como o console.
     semearPin(pin) { mundo.importar({ ...mundo.exportar(), privado: { pinApresentador: pin } }); },
+    // [Li] Os n primeiros outros tocam em "Li, pode seguir" no passo atual.
+    async lerOutros(prefixo, n) {
+      for (let i = 0; i < n; i += 1) {
+        const u = prefixo + String(i).padStart(2, '0');
+        await mundo.comoUsuario(u).gravar({ [cam('lidos', u)]: anf.estado().indice });
+      }
+    },
   };
 })(globalThis);
 `;
@@ -218,6 +228,24 @@ async function semVaga(p, nome) {
   assert.doesNotMatch(t, /\bVaga\b|\bequipe\b/i, `${nome}: a vaga ou "equipe" apareceu na tela: ${t.slice(0, 200)}`);
 }
 
+// [Li] O botão embaixo do texto; o toque grava lidos/{uid} = o índice do
+// passo atual (as regras v5 só aceitam esse), e a tela diz "Você já leu ✓".
+async function conferirLi(p, nome, uid) {
+  await p.waitForSelector('[data-acao="li"]', { timeout: 8000 });
+  assert.equal(lido(await p.textContent('[data-acao="li"]')), 'Li, pode seguir', `${nome}: o botão`);
+  await p.click('[data-acao="li"]');
+  await p.waitForFunction(() => document.querySelector('.lido-feito')?.textContent === 'Você já leu ✓', null, { timeout: 8000 });
+  assert.equal(await p.locator('[data-acao="li"]').count(), 0, `${nome}: depois do toque, sem o botão`);
+  const indice = (await estado(p)).indice;
+  assert.equal(await p.evaluate((c) => globalThis.__palco.ler(c), `salas/${SALA}/lidos/${uid}`), indice, `${nome}: lidos/{uid} = o índice do passo`);
+  await conferirLargura(p, `li-${nome}`);
+}
+
+// [Li] O "N de M leram" no celular do apresentador.
+async function esperarLeram(p, leram, total) {
+  await p.waitForFunction(([n, m]) => document.querySelector('.lidos-contagem')?.textContent === `${n} de ${m} leram`, [leram, total], { timeout: 8000 });
+}
+
 try {
   // ---------- 1 a 6: o aluno do começo ao fim ----------
   const cfg = JSON.parse(CONFIG_DIA);
@@ -259,6 +287,7 @@ try {
   assert.match(await textoDaTela(ana), /a escolha é sua/);
   await semVaga(ana, 'persona');
   await conferirLargura(ana, '03-persona');
+  await conferirLi(ana, 'persona', uidAna);
 
   // As 6 rodadas, com os blocos de dados depois de cada uma. Ana vota em
   // todas menos na 3ª (fica a opção de sempre).
@@ -305,6 +334,7 @@ try {
     assert.equal(await ana.locator('.tabela-meses tbody tr').count(), k + 1, 'o resumo do próprio ano, uma linha por bimestre');
     await semVaga(ana, `bloco-${k + 1}`);
     await conferirLargura(ana, `07-bloco-${k + 1}`);
+    await conferirLi(ana, `bloco-${k + 1}`, uidAna);
   }
 
   // 4. O placar final.
@@ -377,6 +407,10 @@ try {
   await ate(esp, (e) => e.tipo === 'personas', 'Conheça o Jonas (espectador)');
   await esperarTela(esp, 'persona');
   await semVaga(esp, 'espectador-persona');
+  await esperarLeram(esp, 0, 3);
+  assert.equal(await esp.locator('[data-acao="li"]').count(), 0, 'o espectador não tem o botão');
+  await esp.evaluate(() => globalThis.__palco.lerOutros('outro', 2));
+  await esperarLeram(esp, 2, 3);
   const r1 = passos.findIndex((x) => x.tipo === 'rodada');
   await ate(esp, (e) => e.indice === r1 && e.subfase === 'decidindo', 'decisão (espectador)');
   await esperarTela(esp, 'turmaDecisao');
@@ -402,6 +436,7 @@ try {
   assert.equal(lido(await esp.textContent('h1')), passos[r1 + 1].titulo);
   assert.equal(await esp.locator('.dados-item').count(), passos[r1 + 1].itens.length);
   assert.equal(await esp.locator('.tabela-meses').count(), 0, 'o espectador não vê o ano de ninguém');
+  await esperarLeram(esp, 0, 3);
   await conferirLargura(esp, '15-espectador-bloco');
   await ate(esp, (e) => e.tipo === 'placarFinal', 'placar (espectador)');
   await esperarTela(esp, 'turmaPlacar');

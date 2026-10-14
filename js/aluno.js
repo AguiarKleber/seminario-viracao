@@ -111,6 +111,10 @@
     // Modo individual, no espectador: as decisões de cada vaga aberta na
     // rodada (para o "N de M já escolheram"), um ouvinte por vaga.
     turma: { rodada: null, ouvintes: new Map(), decisoes: {}, reafirmadoEm: 0 },
+    // [Li] "Li, pode seguir" (modo individual, regras v5): o ouvinte de
+    // lidos/{uid} do aluno (lidos inteiro, no espectador), o caminho dele e o
+    // valor (undefined até a primeira leitura: sem ela, não há botão).
+    lido: { caminho: null, desligar: null, meu: undefined, todos: null, marcando: false },
   };
 
   // ---------- Utilidades ----------
@@ -783,9 +787,61 @@
     if (app.ui.movido && !(e?.tipo === 'rodada' && e.rodada === app.ui.movido.rodada)) app.ui.movido = null;
     religarEquipe();
     religarTurma();
+    religarLido();
     religarVotos();
     talvezReenviar();
     desenhar();
+  }
+
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10; regras v5), no modo
+  // individual. O aluno ouve a própria folha, lidos/{uid} (o índice do passo
+  // que ele leu), depois de o registro de membro ser confirmado: a regra só
+  // aceita o "li" de quem é membro. O celular do apresentador (com o PIN) ouve
+  // lidos inteiro, para o "N de M leram" do telão. Recusado (o pedido do PIN
+  // apagado numa queda), o pedido é gravado de novo, como na decisão.
+  function religarLido() {
+    const l = app.lido;
+    let caminho = null;
+    if (app.fase === 'sala' && individual()) {
+      if (app.espectador) caminho = cam('lidos');
+      else if (app.membroConfirmado) caminho = cam('lidos', app.uid);
+    }
+    if (caminho === l.caminho) return;
+    if (l.desligar) l.desligar();
+    Object.assign(l, { caminho, desligar: null, meu: undefined, todos: null });
+    if (!caminho) return;
+    const espectador = Boolean(app.espectador);
+    l.desligar = ouvinteResistente(caminho, (v) => {
+      if (espectador) l.todos = v;
+      else l.meu = v;
+      desenhar();
+    }, espectador ? reafirmarDaTurma : null);
+  }
+
+  function desligarLido() {
+    if (app.lido.desligar) app.lido.desligar();
+    app.lido = { caminho: null, desligar: null, meu: undefined, todos: null, marcando: false };
+  }
+
+  // [Li] O toque no "Li, pode seguir": grava lidos/{uid} = o índice do passo
+  // atual. A regra recusa o "li" de um passo que já passou (o apresentador
+  // avançou no meio), e a tela diz. Sem rede, o SDK guarda a escrita e o
+  // ouvinte já mostra "Você já leu ✓" (é só informação: o apresentador avança
+  // quando quiser).
+  function marcarLido() {
+    const indice = app.dados.estado?.indice;
+    if (app.espectador || !app.membroConfirmado || !Number.isFinite(indice) || app.lido.marcando) return;
+    app.lido.marcando = true;
+    desenhar();
+    app.canal.gravar({ [cam('lidos', app.uid)]: indice })
+      .catch((erro) => {
+        if (app.dados.estado?.indice !== indice) return;
+        app.ui.nota = recusado(erro) ? 'Não deu para marcar: o apresentador já passou para a próxima tela.' : 'Não deu para marcar agora: toque de novo.';
+      })
+      .finally(() => {
+        app.lido.marcando = false;
+        desenhar();
+      });
   }
 
   // Modo individual, no celular do apresentador (D-064): o "N de M já
@@ -1212,12 +1268,25 @@
     if (individual() && !app.espectador && !app.nome) {
       return !membro && d.meta?.entradaAberta === false ? { tipo: 'entradaFechada', dados: {} } : { tipo: 'nome', dados: {} };
     }
-    if (individual() && app.espectador) return telaDaTurma();
+    if (individual() && app.espectador) return comLeram(telaDaTurma());
     return L().telaDoAluno({
       conteudo: d.conteudo, estado: d.estado, membro, membros: d.membros, espectador: Boolean(app.espectador),
       meusVotos: votosParaTela(), decisoesDaEquipe: decisoesParaTela(),
       resultados: d.resultados, placar: d.placar, uid: app.uid, agora: agoraServidor(), meta: d.meta,
+      // [Li] Só no modo individual, e só depois da primeira leitura da folha:
+      // sem o meuLido, a tela fica como antes (sem o botão).
+      ...(individual() && !app.espectador && app.lido.meu !== undefined ? { meuLido: app.lido.meu } : {}),
     });
+  }
+
+  // [Li] No celular do apresentador, o "N de M leram" do telão no "Conheça o
+  // Jonas" e nos blocos (historia.contagemDeLidos, a mesma conta).
+  function comLeram(tela) {
+    const e = app.dados.estado;
+    const H = N().historia;
+    if (!H?.contagemDeLidos || !['personas', 'bloco'].includes(e?.tipo)) return tela;
+    const leram = H.contagemDeLidos(app.dados.conteudo, { estado: e, membros: app.dados.membros, lidos: app.lido.todos });
+    return { ...tela, dados: { ...tela.dados, leram } };
   }
 
   // Modo individual (decisão do Kleber de 13/10 à noite), no celular do
@@ -1322,6 +1391,8 @@
       // voto vazio não muda nenhum outro dado da tela (a tela ficava presa).
       [...(app.votosLendo || [])].sort(),
       app.espectador?.equipe ?? null, app.pedindoPin,
+      // [Li] O botão fica apagado enquanto o "li" é gravado.
+      app.lido.marcando,
     ]);
     desenharCracha();
     desenharBarraEspectador();
@@ -1667,6 +1738,7 @@
     for (const f of app.desligarVotos.splice(0)) f();
     if (app.desligarEquipe) app.desligarEquipe();
     desligarTurma();
+    desligarLido();
     clearInterval(app.intervaloPresenca);
     // O espectador sai (D-064): os ouvintes já foram desligados (sem o pedido,
     // o da decisão seria recusado e religaria), e o próprio pedido sai do banco.
@@ -1770,7 +1842,9 @@
     // apresentação" (o celular do apresentador, sem vaga, cai nesta tela).
     const bloco = individual() && d.motivo === 'apresentacao' ? partesDoBloco(d.bloco) : null;
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { motivo: d.motivo } }, [
-      bloco || [cabecalho(kicker, titulo), el('p', { classe: 'texto', texto })], notaDaRecusaDaEtapa() || nota(app.ui.nota),
+      bloco || [cabecalho(kicker, titulo), el('p', { classe: 'texto', texto })],
+      bloco ? blocoLido(d, { comNota: false }) : null,
+      notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'aguardando';
   }
@@ -2804,8 +2878,28 @@
       soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
       soUm ? null : listaIndicadores(d.indicadores),
       el('p', { classe: 'texto-2', texto: comoSeJoga }),
+      sozinho ? blocoLido(d) : null,
     ]));
     return 'persona';
+  }
+
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10), embaixo do "Conheça o
+  // Jonas" e dos blocos de dados, no modo individual. Depois do toque, "Você
+  // já leu ✓" (dados.lido, da telaDoAluno, pelo lidos/{uid} que o celular
+  // ouve). Sem a primeira leitura da folha (dados.lido ausente), nada: a tela
+  // fica como antes. No celular do apresentador, o "N de M leram" do telão.
+  // comNota: a tela que já mostra a nota de app.ui.nota passa false.
+  function blocoLido(d, { comNota = true } = {}) {
+    const { el, botao } = D();
+    if (app.espectador) {
+      if (!d.leram) return null;
+      return el('p', { classe: 'lidos-contagem', dados: { leram: d.leram.leram, total: d.leram.total } }, [el('b', { texto: `${d.leram.leram} de ${d.leram.total}` }), ' leram']);
+    }
+    if (d.lido === undefined) return null;
+    const marca = d.lido
+      ? el('p', { classe: 'lido-feito', role: 'status', dados: { lido: '1' }, texto: 'Você já leu ✓' })
+      : botao('Li, pode seguir', () => marcarLido(), { classe: 'botao-primario botao-largo botao-li', desabilitado: app.lido.marcando, dados: { acao: 'li' } });
+    return [marca, comNota ? nota(app.ui.nota) : null];
   }
 
   function descreverDecisao(rodadaId, decisao, origem) {
@@ -2861,6 +2955,7 @@
       sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
       bloco || cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', titulo),
     ];
+    if (bloco) filhos.push(blocoLido(d));
     if (bloco) {
       const todas = ordemDe(app.dados.conteudo, 'rodadas').length;
       filhos.push(el('h2', { classe: 'subtitulo subtitulo-seu-ano', texto: historia.length > 0 && historia.length >= todas ? 'O seu ano' : 'O seu ano até aqui' }));
