@@ -602,12 +602,12 @@
   }
 
   // D-084, nota de 14/10 (pedido do Kleber antes do seminário): "destaque":
-  // true num efeito de opção pede uma linha própria no resultado de quem a
+  // true em um efeito de opção pede uma linha própria no resultado de quem a
   // escolheu ("Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas
   // pessoas"). O bloqueio já estava somado no dinheiro da opção e não aparecia
   // escrito em lugar nenhum. A tela lê o efeito do config, sem o motor
   // (historia.destaquesDaOpcao), e por isso o destaque só vale onde o valor é
-  // fixo e vale para todos que escolheram a opção: num efeito de opção, com
+  // fixo e vale para todos que escolheram a opção: em um efeito de opção, com
   // "soma" na renda (o valor da linha), com rótulo (o texto da linha) e sem
   // condição além de persona, opção e rodada. false é aceito e some na
   // normalização, como o fixo: o hash de um config sem destaque não muda.

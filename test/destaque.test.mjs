@@ -1,5 +1,5 @@
 // O destaque da opção (D-084, nota de 14/10; pedido do Kleber antes do
-// seminário): "destaque": true num efeito de opção vira uma linha no
+// seminário): "destaque": true em um efeito de opção vira uma linha no
 // resultado de quem a escolheu ("Bloqueado 5 dias pelo app depois da greve
 // −R$ 450: 3 dessas pessoas"). Os 5 dias de bloqueio da greve, do protesto e
 // do breque já estavam somados no dinheiro da opção e não apareciam escritos.

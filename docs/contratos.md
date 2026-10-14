@@ -68,7 +68,7 @@ exibição fica num array de strings.
   `soma` **ou** `multiplica` **ou** `emprestimo`, só um deles (`fixo` e `categoria`: esquema v2.1; `emprestimo`: esquema v2.2, abaixo).
   `destaque` (D-084, nota de 14/10): booleano; `true` só em efeito de opção, com `soma.renda`, `rotulo` e sem
   condição além de `persona`, `opcao` e `rodada` (é **erro** fora disso, e junto de `emprestimo`): a tela escreve o
-  efeito numa linha embaixo da opção, no resultado (`historia.destaquesDaOpcao`). `false` some na normalização (o
+  efeito em uma linha embaixo da opção, no resultado (`historia.destaquesDaOpcao`). `false` some na normalização (o
   hash de um config sem destaque não muda). O motor o ignora: as contas são as mesmas.
 - `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada?, contexto?, itens?, fonte? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
