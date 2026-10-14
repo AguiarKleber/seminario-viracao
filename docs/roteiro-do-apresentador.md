@@ -197,9 +197,9 @@ no próprio celular. Vocês decidem sozinhos o que ele faz em cada bimestre, e n
 fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 
 **Antes de a turma chegar:**
-1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
-   (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
-   `2026-10-14-v5.2-individual` está na barra do pé da tela inicial: pare o
+1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`.
+   A versão `2026-10-14-v5.3-individual` (hash `69daf389`, versão 14 do site)
+   está na barra do pé da tela inicial: pare o
    mouse na borda de baixo (ou aperte H). Não há mais o painel do config
    (D-082): ele só aparece quando o config falta ou tem problema.
 2. Digite o PIN e clique em **Criar sala com celulares**.
@@ -249,9 +249,10 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
      Nenhum nome. No celular, cada um vê o próprio saldo e, logo abaixo, a
      mesma linha do bloqueio, se parou; o seu celular, no modo espectador,
      mostra o mesmo resumo do telão.
-     Se o projetor for 1024×768 e a tela ficar apertada demais, clique em
-     **Entrada aberta**, na barra, para fechar a entrada: a faixa do QR sai e
-     sobra espaço (quem chegar depois não entra até você abrir de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
+     Projetor 1024×768: **Ctrl+−** (90%) na montagem (seção 3). Se ainda
+     cortar, feche a entrada (H → **Entrada aberta**) assim que todos
+     entrarem: a faixa do QR sai (quem chegar depois não entra até você abrir
+     de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
      escolheu…" no lugar de "a equipe que…".
    - **Dados.** O bloco aparece no telão e no celular (com o "Li", também o
      botão "Li, pode seguir" e o "N de M leram"). Leia o contexto e um número.
@@ -421,14 +422,14 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 - [ ] O telão publicado abre sem aviso do config, e a barra do pé da tela
       (mouse parado na borda de baixo, ou H) diz "✓ config.json válido". Hash
       anotado: `________`.
-- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
+- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v5 conferidas.`, sem `REGRAS
       ABERTAS`. Se o `firebase/regras.json` mudou depois do teste, a versão
       subiu junto (v4, v5…), e as regras novas já foram publicadas (README,
       passo 6).
 - [ ] Uma sala de teste foi criada com o PIN e apagada (README, passo 8). Com
       ela aberta, o seu celular entrou pelo **Sou apresentador** e viu as
       equipes (seção 4). O PIN do celular é o mesmo do telão: se ele disse "O
-      PIN não confere" com o PIN certo, as regras publicadas não são as v4 (o
+      PIN não confere" com o PIN certo, as regras publicadas não são as v5 (o
       bloco **Com celulares** do telão também avisa); publique-as (README, passo 6).
 - [ ] A cota de contas anônimas está agendada para a aula, se o console oferecer
       (README, passo 9).
@@ -498,13 +499,19 @@ Chegue 30 minutos antes.
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
 4. Confira a barra do pé da tela inicial (mouse parado na borda de baixo, ou
    H: config válido e o mesmo hash da véspera) e o bloco **Com celulares**
-   (`regras v4 conferidas`). O roteiro é o de 60 min, o único do config
+   (`regras v5 conferidas`). O roteiro é o de 60 min, o único do config
    (D-083): o telão não pergunta.
 5. Digite o PIN e clique em **Criar sala com celulares**. **Anote o código da
    sala no papel.** Se o notebook travar, é com ele que a sala é retomada.
-6. Aperte **F11** para a janela do telão ficar em tela cheia (D-007). Abra os
-   slides em **outra janela**, também em tela cheia. Teste o Alt+Tab duas vezes e
-   termine no telão.
+6. Aperte **Ctrl+0** (zoom de 100%) e depois **F11** para a janela do telão
+   ficar em tela cheia (D-007). Abra os slides em **outra janela**, também em
+   tela cheia. Teste o Alt+Tab duas vezes e termine no telão.
+   - Confira a escala do Windows em 100% (Configurações → Sistema → Tela →
+     Escala): com 125%, o telão corta embaixo, e fechar a entrada não resolve.
+   - Se o projetor for 1024×768 (imagem quase quadrada), aperte **Ctrl+−** uma
+     vez depois do F11 (zoom de 90%): com 100% e a entrada aberta, a faixa do QR
+     pode cobrir a última linha do resultado de 20 pessoas. Confira no 1º
+     resultado.
 7. Se o teste no eduroam mostrou que só a "rede restrita" funciona, abra o telão
    com `/telao/?lp=1` no fim do endereço, já no passo 3. O próprio telão passa a
    usar a conexão compatível, e o QR já sai com a **Rede restrita** ligada (o
@@ -531,7 +538,7 @@ ativa, o Espaço e as setas vão para os slides.
 | 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes |
 | 1 a 5 | Soma 1 na coluna da escala; Shift + tecla desconta | Enquete sem celulares (mão levantada) |
 | ↑ e ↓ | Voltam ou avançam a afirmação que está sendo contada | Enquete sem celulares, com as afirmações juntas |
-| ← e PageUp | Nada, de propósito | — |
+| ← e PageUp | Mostram o passo anterior só no telão (modo revendo, com a faixa "Revendo: … · → volta"); os celulares não mudam. → volta ao passo atual; Espaço e Enter só saem do modo, sem rodar o comando. Serve para reprojetar o QR grande para quem chegou atrasado: ← até "Entrada na sala", depois → | Quando precisar |
 | F11 | Tela cheia da janela do navegador | Montagem |
 | Alt+Tab | Alterna entre o telão e os slides | Nos blocos |
 | Esc | Fecha a janela de confirmação ou de escolha | Com uma dessas janelas aberta |
@@ -545,7 +552,12 @@ encostado na borda de baixo da tela, e some 3 s depois do último movimento do
 mouse na borda ou sobre ela, mesmo com o mouse parado ali (mexer o mouse no meio
 da tela não a mostra). Aberta pelo H, ela também some em 3 s. Só a seguram uma
 janela de escolha aberta ou o foco do teclado dentro dela. As teclas funcionam
-com ela escondida. À esquerda, ela mostra:
+com ela escondida. **Tab só leva o foco:** Enter e Espaço continuam sendo
+Encerrar e Avançar mesmo com o foco em um botão (no teste, o Enter em **Salvar
+estado** abriu "Encerrar a enquete inteira"). Para usar um botão da barra,
+clique com o touchpad ou o mouse. Os botões "segure" (**Continuar sem
+celulares**, **Remover inativos** e **Encerrar jogo**) só respondem ao botão do
+mouse ou ao clique físico do touchpad, mantido por 2 s. À esquerda, ela mostra:
 - o passo e o atraso, por exemplo "passo 8 de 19 · +3 min de atraso";
 - o nome do passo;
 - "estado salvo às 14:05", depois do primeiro "Salvar estado" (desde a D-078,
@@ -686,7 +698,7 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
 - Digite o PIN longe do projetor. Se o celular cair ou a aba fechar, o servidor
   apaga o pedido com o PIN sozinho.
 - Nas regras v3, o PIN não dava leitura nenhuma, e o modo espectador não
-  funciona: precisa das regras **v4** publicadas (README, passo 6).
+  funciona: precisa das regras **v5** publicadas (README, passo 6).
 
 ## 5. Como conduzir cada passo
 
