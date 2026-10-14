@@ -887,8 +887,12 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .opcoes-simples .letra { margin-top: .05em; }
 
 /* "Conheça o Jonas": quem é, a casa, a conta de um mês comum em duas colunas
-   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho. */
-.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 1 auto; min-height: 0; justify-content: safe center; }
+   (o que entra e sai, e o valor) e, embaixo, a falta do mês em vermelho.
+   Sem encolher (flex-shrink 0): com a linha das fontes fora da .conheca, uma
+   .conheca que encolhia deixava a frase do mês por cima de "Fontes:" em
+   1024×768 com a faixa de entrada, sem a seção transbordar, e o aperto não
+   entrava (e2e individual-online, revisão final de 14/10). */
+.tela-personas .conheca { display: flex; flex-direction: column; gap: calc(var(--espaco) * .7); flex: 1 0 auto; justify-content: safe center; }
 .conheca-quem { font-size: calc(var(--corpo) * 1.1); line-height: 1.25; }
 /* Revisão final de 14/10 (pedido do Kleber): a conta do mês é o que se lê de
    longe, em letra maior; o básico item a item e as fontes vêm discretos, em
