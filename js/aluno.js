@@ -798,7 +798,7 @@
   // que ele leu), depois de o registro de membro ser confirmado: a regra só
   // aceita o "li" de quem é membro. O celular do apresentador (com o PIN) ouve
   // lidos inteiro, para o "N de M leram" do telão. Recusado (o pedido do PIN
-  // apagado numa queda), o pedido é gravado de novo, como na decisão.
+  // apagado em uma queda), o pedido é gravado de novo, como na decisão.
   function religarLido() {
     const l = app.lido;
     let caminho = null;
