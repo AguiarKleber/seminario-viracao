@@ -487,10 +487,13 @@
   function mostrarErroServico(erro, repetir, { espectador = false } = {}) {
     const texto = String(erro?.code || '') + ' ' + String(erro?.message || erro);
     let titulo = 'Sem acesso ao serviço';
-    let explicacao = `Não foi possível falar com o servidor (${String(erro?.message || erro)}). Tentando de novo a cada 10 s.`;
+    // Revisão final de 14/10 (C6): sem a mensagem crua do erro entre parênteses
+    // ("SEM_CONEXAO: …", "Failed to fetch dynamically imported module: …", os
+    // erros do Firebase em inglês) e com o que fazer: o 4G.
+    let explicacao = 'Não foi possível falar com o servidor. Tentando de novo a cada 10 s; se não entrar em 1 minuto, use os dados móveis (4G).';
     if (/too-many-requests/.test(texto)) {
       titulo = 'Muitas entradas nesta rede';
-      explicacao = 'O serviço limitou as contas novas desta rede por uma hora. Tente pelo 4G, ou espere alguns minutos.';
+      explicacao = 'Esta rede passou do limite de entradas novas do serviço. Desligue o Wi-Fi e entre pelos dados móveis (4G).';
     } else if (/conexao\.json|ligado ao serviço/.test(texto)) {
       titulo = 'Site ainda não configurado';
       explicacao = `${String(erro.message)}. Avise o apresentador: nesta aula as respostas serão por mão levantada.`;
@@ -504,7 +507,7 @@
       // O espectador volta ao campo do PIN desta sala, e não à entrada comum,
       // onde uma sala de aluno guardada no aparelho entraria direto como aluno.
       if (espectador) gravarSessao('espectador', sala);
-      explicacao = `Não foi possível baixar o app do servidor (${String(erro?.message || erro)}). A página recarrega sozinha em instantes para tentar de novo.`;
+      explicacao = 'Não foi possível baixar o app do servidor. A página recarrega sozinha em instantes para tentar de novo.';
       app.erro = { titulo, texto: explicacao, repetir: () => recarregarPara(sala, !espectador) };
       agendarRecarga(sala, !espectador);
     } else {
