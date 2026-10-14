@@ -427,6 +427,37 @@
   // cada um). Sem a chave, todas as telas ficam como as das equipes.
   const individual = () => Boolean(app.config) && N().historia.individual(app.config);
 
+  // "A turma" (modo individual sem celulares): o telão joga um caminho só, uma
+  // vaga, com a escolha da turma marcada pelo apresentador, para nunca travar
+  // se a internet cair antes de a aula começar. É assim enquanto não há membro
+  // nenhum e no máximo uma vaga em jogo. Depois de "Continuar sem celulares"
+  // (os membros ficam na árvore) ou de carregar um estado com várias vagas, as
+  // telas continuam com as contagens da turma, e a escolha marcada vale para
+  // todas as vagas (anfitriao.decidirPelaTurma).
+  function soATurma() {
+    if (!individual() || app.modo !== 'offline') return false;
+    if (Object.keys(app.dados.membros || {}).length > 0) return false;
+    return N().historia.vagasEmJogo(app.config, app.estado).length <= 1;
+  }
+
+  // "N pessoas na sala": quem tem vaga aberta (historia.pessoasNaSala).
+  const pessoasNaSala = () => N().historia.pessoasNaSala(app.config, { estado: app.estado, membros: app.dados.membros });
+
+  // "N de M já escolheram", com o mesmo filtro da apuração e os ativos do
+  // "n de m votaram" (historia.contagemDaDecisao).
+  const contagemDaTurma = (e) => N().historia.contagemDaDecisao(app.config, {
+    estado: e, membros: app.dados.membros, decisoes: app.dados.decisoes, ativos: ativosAgora(),
+  });
+
+  // A escolha que o apresentador marcou para a turma (offline): a mesma opção
+  // em todas as vagas em jogo, ou null.
+  function escolhaDaTurma(e) {
+    const vagas = N().historia.vagasEmJogo(app.config, e);
+    const marcadas = new Set(vagas.map((v) => e?.forcadas?.[v] ?? null));
+    const [unica] = marcadas;
+    return vagas.length > 0 && marcadas.size === 1 && typeof unica === 'string' ? unica : null;
+  }
+
   // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
   // regra da história e do resumo do celular (historia.rotuloDaRodada).
   function rotuloDaRodada(rodadaId) {
@@ -1529,7 +1560,10 @@
       case 'formarEquipes': return { id: 'formar-equipes', desenhar: telaFormarEquipes, chave: chaveMembrosPorEquipe };
       case 'personas': return { id: 'personas', desenhar: telaPersonas };
       case 'rodada':
-        if (e.subfase === 'decidindo') return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
+        // No modo individual não há prorrogação (o anfitrião vai direto à
+        // moeda: a vaga é de uma pessoa); uma que chegue assim mesmo (sala de
+        // antes) fica na tela da decisão, sem as células das vagas.
+        if (e.subfase === 'decidindo' || (e.subfase === 'prorrogacao' && individual())) return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
         if (e.subfase === 'prorrogacao') return { id: 'rodada-prorrogacao', desenhar: telaProrrogacao, chave: chaveDecisoes };
         if (e.subfase === 'fechando') return telaDoFechando(e);
         // Formato simples: não há sorteio. Um "sorteio" que chegue assim mesmo
@@ -1626,19 +1660,40 @@
   }
 
   function chaveLobby() {
-    return [ativosAgora().size, Object.keys(app.dados.membros || {}).length, app.dados.meta?.entradaAberta];
+    return [ativosAgora().size, Object.keys(app.dados.membros || {}).length, app.dados.meta?.entradaAberta, individual() ? pessoasNaSala() : null];
+  }
+
+  // O que a turma vê no lobby: no modo individual, "N pessoas na sala" (quem já
+  // tem a vaga; quem chega com as 20 ocupadas vê "A sala está cheia" no
+  // celular, e o telão diz que encheu). Nas equipes, os conectados.
+  function contagemDoLobby() {
+    const { el } = D();
+    if (!individual()) {
+      const conectados = ativosAgora().size;
+      return el('p', { classe: 'lobby-conectados' }, [el('b', { classe: 'numero-grande', texto: F().inteiro(conectados) }), conectados === 1 ? ' conectado' : ' conectados']);
+    }
+    const n = pessoasNaSala();
+    const cheia = n >= equipesOrdem().length;
+    return el('p', { classe: 'lobby-conectados', dados: { pessoas: String(n) } }, [
+      el('b', { classe: 'numero-grande', texto: F().inteiro(n) }), n === 1 ? ' pessoa na sala' : ' pessoas na sala',
+      cheia ? el('span', { classe: 'lobby-cheia', texto: ' · a sala está cheia' }) : null,
+    ]);
   }
 
   function telaLobby(s) {
     const { el } = D();
     if (app.modo === 'offline') {
+      // Modo individual sem celulares: a turma decide junto, de mão levantada,
+      // e o telão joga um caminho só (soATurma).
       D().acrescentar(s, [
         cabecalho('Sessão sem celulares', app.config.titulo),
         el('div', { classe: 'lobby-offline' }, [
           el('p', { classe: 'texto-grande', texto: 'Nesta sessão não há votação pelo celular.' }),
           el('ul', { classe: 'lista-simples' }, [
             el('li', { texto: 'Enquetes: mão levantada ou cartões, contados pelo apresentador.' }),
-            el('li', { texto: 'Decisões: cada equipe anuncia a sua, e o apresentador registra.' }),
+            el('li', { texto: individual()
+              ? 'Decisões: a turma escolhe junto, de mão levantada, e o apresentador registra a escolha.'
+              : 'Decisões: cada equipe anuncia a sua, e o apresentador registra.' }),
           ]),
         ]),
       ]);
@@ -1646,7 +1701,6 @@
     }
     const url = urlAluno();
     const lado = Math.floor(Math.min(raiz.innerHeight * 0.6, raiz.innerWidth * 0.45));
-    const conectados = ativosAgora().size;
     D().acrescentar(s, el('div', { classe: 'lobby' }, [
       el('div', { classe: 'lobby-qr' }, [G().qr(url, { lado, rotuloAria: `QR para entrar na sala ${app.sala}` })]),
       el('div', { classe: 'lobby-info' }, [
@@ -1657,7 +1711,7 @@
         el('p', { classe: 'codigo-sala', texto: app.sala }),
         // O "N ativos / M membros" é do apresentador e fica só na barra (D-047):
         // a turma precisa do número de conectados, e não do controle de inativos.
-        el('p', { classe: 'lobby-conectados' }, [el('b', { classe: 'numero-grande', texto: F().inteiro(conectados) }), conectados === 1 ? ' conectado' : ' conectados']),
+        contagemDoLobby(),
       ]),
     ]));
   }
@@ -2049,8 +2103,10 @@
     s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
     if (conteudo) D().acrescentar(s, conteudoDoBloco(passo));
     if (mapa || !conteudo) s.appendChild(linhaDoTempo(e, { mapa }));
-    // Revisto (modo revendo), o placar de quando o bloco estava na tela.
-    if (!mapa && !conteudo && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    // Revisto (modo revendo), o placar de quando o bloco estava na tela. No modo
+    // individual, nunca: seria uma linha por vaga, e o telão não mostra nada por
+    // pessoa (pedido do Kleber de 13/10, 21h, item 1).
+    if (!mapa && !conteudo && !individual() && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
     // Com a faixa de entrada embaixo (online), o bloco mais longo pode passar
     // de 1024×768: só quando a tela transborda (medida depois do desenho), as
     // entrelinhas e os vãos diminuem (data-aperto), com a letra nos 28 px.
@@ -2198,7 +2254,7 @@
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
     const p = personaDaEquipe(primeira);
     const mes = N().motor.mesComum(app.config, primeira);
-    s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
+    s.appendChild(cabecalho(individual() ? 'Todos jogam com o mesmo personagem' : 'Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
     const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
@@ -2283,6 +2339,7 @@
 
   function chaveDecisoes(e) {
     if (app.modo === 'offline') return null; // as decisões do apresentador estão no estado
+    if (individual()) return contagemDaTurma(e);
     return ativas(e).map((eq) => contagemDecisoes(e, eq));
   }
 
@@ -2298,6 +2355,13 @@
     const decorrido = (agora() - e.abertoEm) / 1000;
     const minimo = app.config.tempos.decisaoMinSeg;
     if (decorrido < minimo) return `Tempo mínimo de conversa: faltam ${F().relogio((minimo - decorrido) * 1000)}`;
+    if (individual()) {
+      if (app.modo === 'offline') {
+        return escolhaDaTurma(e) ? 'A escolha da turma está marcada. Enter encerra.' : 'Marque a escolha da turma (a letra na tela, ou "Decidir pela turma"); sem ela, fica a opção de sempre. Enter encerra.';
+      }
+      const { escolheram, total } = contagemDaTurma(e);
+      return total > 0 && escolheram >= total ? 'Todos já escolheram. Enter encerra.' : 'Enter encerra a decisão.';
+    }
     const equipes = ativas(e);
     if (equipes.length > 0 && equipes.every((eq) => equipeDecidiu(e, eq))) return 'Todas as equipes decidiram. Enter encerra.';
     return 'Enter encerra a decisão.';
@@ -2398,8 +2462,40 @@
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
       ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: true }),
     ]))));
-    s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
+    s.appendChild(individual()
+      ? andamentoDaTurma(e, rodada)
+      : el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
     app.depoisDeMedir.push(() => apertarDecisao(s));
+  }
+
+  // Modo individual, embaixo das opções, no lugar das células das equipes:
+  // - online, "14 de 20 já escolheram" (contagemDaTurma), sem nenhuma vaga nem
+  //   nome: o voto é secreto (decisão do Kleber de 13/10 à noite);
+  // - offline, as letras da escolha da turma (de mão levantada), que o
+  //   apresentador marca (anfitriao.decidirPelaTurma; clicar de novo desfaz).
+  //   Como as letras das equipes no offline, são controle e informação ao mesmo
+  //   tempo: a turma vê o que foi registrado.
+  function andamentoDaTurma(e, rodada) {
+    const { el, botao } = D();
+    if (app.modo === 'offline') {
+      const marcada = escolhaDaTurma(e);
+      return el('div', { classe: 'turma-decisao', role: 'group', 'aria-label': 'Escolha da turma' }, [
+        el('span', { classe: 'turma-decisao-rotulo', texto: 'Escolha da turma:' }),
+        el('div', { classe: 'botoes-opcao' }, ordemOpcoes(rodada).map((op) => botao(letraDe(rodada, op), () => decidirPelaTurmaOffline(op), {
+          classe: ['botao-letra', marcada === op ? 'botao-marcado' : null], pressionado: marcada === op,
+          titulo: rodada.opcoes[op].rotulo, dados: { turma: '1', opcao: op },
+        }))),
+      ]);
+    }
+    const { escolheram, total } = contagemDaTurma(e);
+    return el('p', { classe: 'turma-andamento', dados: { escolheram: String(escolheram), total: String(total) } }, [
+      el('b', { classe: 'turma-numero', texto: F().inteiro(escolheram) }), ` de ${F().inteiro(total)} já ${escolheram === 1 ? 'escolheu' : 'escolheram'}`,
+    ]);
+  }
+
+  function decidirPelaTurmaOffline(opcao) {
+    const atual = escolhaDaTurma(app.estado);
+    executar(() => app.anf.decidirPelaTurma(atual === opcao ? null : opcao), vista());
   }
 
   // Com a equipe pelo personagem (teste do Kleber de 05/10), o rótulo mais
@@ -2768,7 +2864,13 @@
   // O detalhamento das contas (entrou, gastos, multa, básico, juros,
   // empréstimo) fica no celular de cada equipe e na história do placar final.
   function telaResultado(s, e) {
-    if (simples()) return telaResultadoSimples(s, e);
+    if (simples()) {
+      if (!individual()) return telaResultadoSimples(s, e);
+      // "A turma" (sem celulares, um caminho só): a faixa do formato simples,
+      // com "A turma" no lugar da equipe.
+      if (soATurma()) return telaResultadoSimples(s, e, { quem: () => D().el('span', { classe: 'turma-quem', texto: 'A turma' }) });
+      return telaResultadoDaTurma(s, e);
+    }
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
@@ -2883,22 +2985,30 @@
   // dinheiro da família no fim dele ("tem R$ X" ou "devendo R$ X": o caixa
   // menos a dívida total, historia.dinheiroDaFamilia). Nada mais: as contas
   // atrasadas, o que faltou na mesa e a carta de cada equipe ficam fora.
-  function telaResultadoSimples(s, e) {
+  // O evento do mês (a carta, a mesma para todos no formato simples): o título
+  // e uma frase, uma vez, no alto do resultado.
+  function eventoDoMes(primeira) {
+    if (!primeira) return null;
+    const { el } = D();
+    const personaId = app.config.equipes[primeira.eq]?.persona;
+    const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
+    const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
+    return el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
+      el('p', { classe: 'evento-titulo', texto: titulo }),
+      frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
+    ]);
+  }
+
+  // quem: o que vai na primeira coluna da faixa (a equipe; "A turma", no modo
+  // individual sem celulares).
+  function telaResultadoSimples(s, e, { quem = (eq) => rotuloEquipe(eq) } = {}) {
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
     const { doPeriodo } = periodo();
     s.appendChild(cabecalho(null, rodada.titulo));
-    const primeira = itens[0];
-    if (primeira) {
-      const personaId = app.config.equipes[primeira.eq]?.persona;
-      const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
-      const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
-      s.appendChild(el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
-        el('p', { classe: 'evento-titulo', texto: titulo }),
-        frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
-      ]));
-    }
+    const evento = eventoDoMes(itens[0]);
+    if (evento) s.appendChild(evento);
     const grade = el('div', { classe: 'grade-simples', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
     for (const { eq, r } of itens) {
       const mes = mesDoResultado(e.rodada, eq, r);
@@ -2919,7 +3029,7 @@
         classe: 'resultado-simples', role: 'listitem',
         dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
       }, [
-        el('div', { classe: 'simples-quem' }, [rotuloEquipe(eq)]),
+        el('div', { classe: 'simples-quem' }, [quem(eq)]),
         el('p', { classe: 'simples-opcao' }, [el('b', { classe: 'letra', texto: letraDe(rodada, r.decisao) }), el('span', { texto: rotulo })]),
         el('div', { classe: 'simples-saldo' }, [
           el('p', { classe: 'resultado-saldo-rotulo', texto: `saldo ${doPeriodo}` }),
@@ -2958,6 +3068,67 @@
       if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
       if (s.dataset.aperto === '4' && transborda()) s.dataset.aperto = '5';
+    });
+  }
+
+  // Modo individual (decisão do Kleber de 13/10 à noite): o resultado da turma,
+  // sem nenhuma vaga nem nome (o voto é secreto e o tema é sensível). O evento
+  // do mês uma vez, no alto; quantas pessoas ficaram com cada opção (a letra, o
+  // rótulo, uma barra da parte da turma e o número; historia.contagemPorOpcao),
+  // com quem não votou contado na opção de sempre e dito numa linha embaixo; e,
+  // se houver, o que veio de uma escolha de antes, para quantas pessoas
+  // (historia.consequenciasDaTurma: "As costas travaram (…): 3 pessoas
+  // (−R$ 1.230 cada)"). O saldo e o dinheiro da família de cada um ficam no
+  // celular dele.
+  function telaResultadoDaTurma(s, e) {
+    const { el } = D();
+    const H = N().historia;
+    const rodada = app.config.rodadas[e.rodada];
+    const daRodada = app.dados.resultados?.[e.rodada] || {};
+    const c = H.contagemPorOpcao(app.config, e.rodada, app.dados.resultados);
+    s.appendChild(cabecalho(c.pessoas > 0 ? `O que a turma escolheu · ${F().pessoas(c.pessoas)}` : null, rodada.titulo));
+    const primeira = equipesOrdem().find((v) => daRodada[v]);
+    const evento = eventoDoMes(primeira ? { eq: primeira, r: daRodada[primeira] } : null);
+    if (evento) s.appendChild(evento);
+    if (c.pessoas === 0) return;
+    s.appendChild(el('ol', { classe: 'turma-opcoes', 'aria-label': 'Quantas pessoas escolheram cada opção' }, c.porOpcao.map((o) => el('li', {
+      classe: ['turma-opcao', o.n === 0 ? 'turma-opcao-zero' : null], dados: { opcao: o.id, n: String(o.n) },
+    }, [
+      el('b', { classe: 'letra', texto: o.letra }),
+      el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo }),
+      el('span', { classe: 'turma-barra', 'aria-hidden': 'true' }, [
+        el('span', { classe: 'turma-barra-cheia', estilo: { width: `${(o.n / c.pessoas) * 100}%` } }),
+      ]),
+      el('span', { classe: 'turma-n' }, [el('b', { texto: F().inteiro(o.n) }), o.n === 1 ? ' pessoa' : ' pessoas']),
+    ]))));
+    if (c.semVoto > 0) {
+      const letra = letraDe(rodada, rodada.padrao);
+      s.appendChild(el('p', { classe: 'turma-sem-voto', dados: { semVoto: String(c.semVoto) } }, c.semVoto === 1
+        ? `1 pessoa não escolheu e ficou na ${letra}, a opção de sempre.`
+        : `${F().inteiro(c.semVoto)} pessoas não escolheram e ficaram na ${letra}, a opção de sempre.`));
+    }
+    const grupos = H.consequenciasDaTurma(app.config, e.rodada, app.dados.resultados);
+    if (grupos.length > 0) {
+      s.appendChild(el('div', { classe: 'turma-antes' }, [
+        el('p', { classe: 'turma-antes-titulo', texto: 'Por causa de escolhas anteriores:' }),
+        el('ul', { classe: 'turma-antes-lista' }, grupos.map((g) => el('li', {
+          classe: 'turma-antes-item', dados: { motivo: g.motivo, pessoas: String(g.pessoas), valores: g.valores.join(' ') },
+        }, [
+          `${maiuscula(g.motivo)}: `, el('b', { texto: F().pessoas(g.pessoas) }),
+          ` (${g.valores.map((v) => F().moeda(v, { sinal: true })).join(' ou ')}${g.pessoas > 1 ? ' cada' : ''})`,
+        ]))),
+      ]));
+    }
+    // Com a faixa de entrada embaixo (online), em 1024×768 e 1280×720: só
+    // quando a tela transborda (medido depois do desenho), os vãos e as
+    // entrelinhas diminuem; depois, o título do mês encolhe; depois, sai a
+    // frase do evento (o título dele fica); por último, o evento inteiro (ele
+    // está no celular de cada um). A letra fica nos 28 px.
+    app.depoisDeMedir.push(() => {
+      for (const degrau of ['1', '2', '3', '4']) {
+        if (s.scrollHeight <= s.clientHeight + 1) return;
+        s.dataset.aperto = degrau;
+      }
     });
   }
 
@@ -3055,6 +3226,12 @@
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
+    // Modo individual (pedidos do Kleber de 13/10, 21h): nada por vaga. Sem "O
+    // caminho de cada equipe" (item 1); (1) "Quanto sobrou, ou ficou devendo":
+    // quantos terminaram com dinheiro sobrando e quantos devendo, e uma barra
+    // por pessoa, sem nome (item 2); (2) "As escolhas da turma", bimestre ×
+    // opção; (3) as combinações possíveis, como nas equipes.
+    if (simples() && individual()) return [{ tipo: 'fimDaTurma' }, { tipo: 'escolhasDaTurma' }, { tipo: 'combinacoes' }];
     if (simples()) return [{ tipo: 'caminho' }, { tipo: 'saldo' }, { tipo: 'combinacoes' }];
     const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
     const historias = equipes.flatMap((eq) => {
@@ -3092,6 +3269,8 @@
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
     else if (pagina.tipo === 'caminho') paginaCaminho(s, lado);
     else if (pagina.tipo === 'combinacoes') paginaCombinacoes(s, lado);
+    else if (pagina.tipo === 'fimDaTurma') paginaFimDaTurma(s, lado);
+    else if (pagina.tipo === 'escolhasDaTurma') paginaEscolhasDaTurma(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
     else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
     else if (pagina.tipo === 'historia') paginaHistoria(s, pagina, lado);
@@ -3298,6 +3477,181 @@
       extremo('Melhor sequência:', c.melhor, 'combinacao-melhor'),
       extremo('Pior sequência:', c.pior, 'combinacao-pior'),
     ]));
+  }
+
+  // ---------- Placar final do modo individual ----------
+
+  // "o ano" com as 6 rodadas de 2 meses; "os 6 meses", "o mês" num roteiro menor.
+  function periodoJogado(rodadas) {
+    const meses = rodadas * periodo().meses;
+    return meses === 12 ? 'o ano' : meses === 1 ? 'o mês' : `os ${meses} meses`;
+  }
+
+  // A vaga de "a turma" (soATurma): a que tem resultado.
+  const vagaDaTurma = () => equipesOrdem().find((v) => rodadasJogadas().some((r) => app.dados.resultados?.[r]?.[v])) ?? null;
+
+  // "tem R$ X" / "devendo R$ X" do fim, como palavra, e não só como cor.
+  function textoDaFamiliaFinal(valor) {
+    const d = N().historia.dinheiroDaFamilia({ renda: valor });
+    return { situacao: d.situacao, texto: `${d.situacao === 'devendo' ? 'devendo' : 'com'} ${F().moeda(d.valor)}` };
+  }
+
+  // A frase do destaque com os números em evidência. Tem de dizer, letra por
+  // letra, o mesmo que historia.fraseDoFimDaTurma (o celular do espectador usa
+  // aquela; o e2e confere as duas): "De 18 alunos, 3 terminaram com dinheiro
+  // sobrando e 15 terminaram devendo."
+  function fraseDoFimComNumeros(fim) {
+    const { el } = D();
+    const numero = (n, classe) => el('b', { classe: ['fim-turma-numero', classe], texto: F().inteiro(n) });
+    const parte = (n, resto, classe) => (n === 0 ? `nenhum terminou ${resto}` : [numero(n, classe), n === 1 ? ' terminou ' : ' terminaram ', resto]);
+    return [
+      'De ', numero(fim.pessoas, null), fim.pessoas === 1 ? ' aluno, ' : ' alunos, ',
+      parte(fim.positivos, 'com dinheiro sobrando', 'fim-turma-positivos'), ' e ', parte(fim.negativos, 'devendo', 'fim-turma-negativos'), '.',
+    ];
+  }
+
+  // Uma coluna por pessoa, sem nome, da que terminou com mais dinheiro para a
+  // que terminou com menos: acima da linha do zero, sobrou dinheiro (verde);
+  // abaixo, ficou devendo (vermelho). A posição diz o mesmo que a cor, que
+  // nunca é o único canal. A linha tracejada é a média da turma. Sem texto
+  // dentro do SVG: com 20 colunas, nenhum rótulo caberia nos 28 px.
+  function colunasDaTurma({ largura, altura, valores, media }) {
+    const { svg } = D();
+    const min = Math.min(0, ...valores, media ?? 0);
+    const max = Math.max(0, ...valores, media ?? 0);
+    const folga = (max - min || 1) * 0.06;
+    const y = (v) => ((max + folga - v) / (max - min + 2 * folga)) * altura;
+    const y0 = y(0);
+    // Com poucas pessoas, as colunas não viram paredes: no máximo 160 px por
+    // pessoa, e o grupo no meio.
+    const passo = Math.min(largura / Math.max(1, valores.length), 160);
+    const inicio = (largura - passo * valores.length) / 2;
+    const largo = Math.max(2, Math.min(passo * 0.72, passo - 4));
+    const filhos = valores.map((v, i) => {
+      const yv = y(v);
+      return svg('rect', {
+        x: inicio + i * passo + (passo - largo) / 2, y: Math.min(y0, yv), width: largo, height: Math.max(2, Math.abs(yv - y0)),
+        classe: v >= 0 ? 'coluna-sobrou' : 'coluna-devendo', dados: { valor: String(v) },
+      });
+    });
+    filhos.push(svg('line', { x1: 0, y1: y0, x2: largura, y2: y0, classe: 'eixo' }));
+    if (media !== null) filhos.push(svg('line', { x1: 0, y1: y(media), x2: largura, y2: y(media), classe: ['referencia', 'linha-media'], dados: { media: String(media) } }));
+    return svg('svg', {
+      viewBox: `0 0 ${largura} ${altura}`, width: largura, height: altura, role: 'img',
+      'aria-label': 'O dinheiro de cada aluno no fim, do maior para o menor, sem nomes',
+    }, filhos);
+  }
+
+  // Modo individual, página 1: "Quanto sobrou, ou ficou devendo" (pedido do
+  // Kleber de 13/10, 21h, item 2): do total de alunos, quantos terminaram com
+  // dinheiro sobrando (dinheiro da família ≥ R$ 0) e quantos devendo, em
+  // destaque e em linguagem simples (historia.fimDoAnoDaTurma; quem entrou no
+  // meio do ano fica de fora da conta, e uma linha diz isso), e, embaixo, uma
+  // coluna por aluno, sem nome, ordenada, com a média. "A turma" (sem
+  // celulares): como a família da turma terminou.
+  function paginaFimDaTurma(s, lado) {
+    const { el } = D();
+    const H = N().historia;
+    const fim = H.fimDoAnoDaTurma(app.config, app.dados.resultados);
+    const quando = periodoJogado(fim.rodadas);
+    if (soATurma()) {
+      // Uma frase e uma linha: maiores, no meio da tela.
+      s.classList.add('fim-turma-so');
+      const vaga = vagaDaTurma();
+      const familia = textoDaFamiliaFinal(fim.valores[0] ?? (vaga ? patrimonioNoPlacar(vaga) : 0));
+      s.appendChild(cabecalho(tituloDaPaginaSaldo(), [
+        `A turma terminou ${quando} `, el('span', { classe: 'fim-turma-valor', dados: { situacao: familia.situacao } }, familia.texto),
+      ], { extra: lado, classeTitulo: 'fim-turma-frase' }));
+      const jogadas = vaga ? rodadasJogadas().filter((r) => app.dados.resultados?.[r]?.[vaga]) : [];
+      if (jogadas.length > 0) {
+        const letras = jogadas.map((r) => letraDe(app.config.rodadas[r], app.dados.resultados[r][vaga].decisao));
+        s.appendChild(el('p', { classe: 'fim-turma-caminho', dados: { letras: letras.join('') } }, ['As escolhas da turma: ', el('b', { texto: letras.join(' ') })]));
+      }
+      return;
+    }
+    s.dataset.pessoas = String(fim.pessoas);
+    s.dataset.positivos = String(fim.positivos);
+    s.dataset.negativos = String(fim.negativos);
+    const titulo = fim.pessoas > 0 ? fraseDoFimComNumeros(fim) : 'Ninguém jogou todos os bimestres';
+    s.appendChild(cabecalho(tituloDaPaginaSaldo(), titulo, { extra: lado, classeTitulo: 'fim-turma-frase' }));
+    if (fim.valores.length > 0) {
+      s.appendChild(grafico('grafico-turma', (largura, altura) => colunasDaTurma({ largura, altura, valores: fim.valores, media: fim.media })));
+    }
+    const legenda = [];
+    if (fim.valores.length > 0) {
+      legenda.push(
+        el('span', { classe: 'fim-turma-chave' }, [el('span', { classe: ['amostra-coluna', 'amostra-sobrou'], 'aria-hidden': 'true' }), ' sobrou dinheiro']),
+        el('span', { classe: 'fim-turma-chave' }, [el('span', { classe: ['amostra-coluna', 'amostra-devendo'], 'aria-hidden': 'true' }), ' ficou devendo']),
+      );
+    }
+    if (fim.media !== null) {
+      // "devendo R$ 2.677" ou "R$ 300 sobrando": a palavra diz o sinal.
+      const media = fim.media < 0 ? `devendo ${F().moeda(-fim.media)}` : `${F().moeda(fim.media)} sobrando`;
+      legenda.push(el('span', { classe: 'fim-turma-media', dados: { media: String(fim.media) } }, [
+        el('span', { classe: 'amostra-media', 'aria-hidden': 'true' }), ' média da turma: ', el('b', { texto: media }),
+      ]));
+    }
+    const depois = H.fraseDosQueEntraramDepois(fim);
+    if (depois) legenda.push(el('span', { classe: 'fim-turma-depois', texto: depois }));
+    if (legenda.length > 0) s.appendChild(el('p', { classe: 'fim-turma-legenda' }, legenda));
+  }
+
+  // Modo individual, página 2: "As escolhas da turma" (historia.escolhasDaTurma),
+  // uma linha por bimestre e uma coluna por opção, com quantas pessoas ficaram
+  // com cada uma (a mais escolhida do bimestre em negrito). A letra é a mesma
+  // da decisão no telão e no celular; o rótulo vai na dica. Quem não votou
+  // ficou na opção de sempre, e a nota embaixo diz que ele está contado nela.
+  // "A turma" (sem celulares): o caminho que a turma escolheu.
+  function paginaEscolhasDaTurma(s, lado) {
+    const { el } = D();
+    if (soATurma()) return paginaCaminhoDaTurma(s, lado);
+    const linhas = N().historia.escolhasDaTurma(app.config, app.dados.resultados);
+    const colunas = Math.max(0, ...linhas.map((l) => l.porOpcao.length));
+    s.appendChild(cabecalho('Placar final · quantas pessoas escolheram cada opção', 'As escolhas da turma', { extra: lado }));
+    const cabeca = el('tr', {}, [
+      el('th', { scope: 'col', classe: 'turma-bimestre', texto: maiuscula(periodo().nome) }),
+      ...Array.from({ length: colunas }, (_, i) => el('th', { scope: 'col', texto: LETRAS[i] })),
+    ]);
+    const corpo = linhas.map((l) => {
+      const maior = Math.max(...l.porOpcao.map((o) => o.n));
+      return el('tr', { dados: { rodada: l.rodadaId, pessoas: String(l.pessoas) } }, [
+        el('th', { scope: 'row', classe: 'turma-bimestre', texto: l.rotulo }),
+        ...Array.from({ length: colunas }, (_, i) => {
+          const o = l.porOpcao[i];
+          if (!o) return el('td', { classe: 'turma-celula', texto: '—' });
+          return el('td', {
+            classe: ['turma-celula', o.n === 0 ? 'turma-celula-zero' : null, o.n > 0 && o.n === maior ? 'turma-celula-maior' : null],
+            title: o.rotulo, dados: { opcao: o.id, n: String(o.n) }, texto: F().inteiro(o.n),
+          });
+        }),
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-escolhas' }, [el('table', { classe: 'tabela-turma' }, [el('thead', {}, [cabeca]), el('tbody', {}, corpo)])]));
+    if (linhas.some((l) => l.semVoto > 0)) {
+      s.appendChild(el('p', { classe: 'turma-nota', texto: 'Quem não escolheu ficou na opção de sempre e está contado nela.' }));
+    }
+  }
+
+  // "A turma" (modo individual sem celulares), página 2: o caminho que a turma
+  // escolheu, um bimestre por linha: a letra, o rótulo e o saldo do bimestre.
+  function paginaCaminhoDaTurma(s, lado) {
+    const { el } = D();
+    const vaga = vagaDaTurma();
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(`Placar final · saldo ${doPeriodo}`, 'O caminho da turma', { extra: lado }));
+    const corpo = rodadasJogadas().map((r) => {
+      const res = vaga ? app.dados.resultados?.[r]?.[vaga] : null;
+      const rodada = app.config.rodadas[r];
+      if (!res) return el('tr', { dados: { rodada: r } }, [el('th', { scope: 'row', classe: 'turma-bimestre', texto: rotuloDaRodada(r) }), el('td', { texto: '—' }), el('td', { texto: '' })]);
+      const saldo = Math.round(mesDoResultado(r, vaga, res).saldoMes) + 0;
+      const rotulo = N().historia.textoDaOpcao(app.config, r, res.decisao, app.config.equipes[vaga]?.persona).rotulo || res.decisao;
+      return el('tr', { dados: { rodada: r, decisao: res.decisao, saldoMes: String(saldo) } }, [
+        el('th', { scope: 'row', classe: 'turma-bimestre', texto: rotuloDaRodada(r) }),
+        el('td', { classe: 'turma-escolha' }, [el('b', { classe: 'letra', texto: letraDe(rodada, res.decisao) }), ' ', rotulo]),
+        el('td', { classe: 'turma-saldo', dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }) }),
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-escolhas' }, [el('table', { classe: ['tabela-turma', 'tabela-caminho-turma'] }, [el('tbody', {}, corpo)])]));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
@@ -3664,7 +4018,28 @@
   // fim, eram os primeiros botões que a turma via depois do jogo.
   function telaFim(s) {
     s.appendChild(cabecalho(app.config.titulo, 'Fim'));
+    // Modo individual: a frase da turma, e não uma linha por vaga (pedido do
+    // Kleber de 13/10, 21h, item 1).
+    if (individual()) {
+      const frase = fraseDoFimNoFim();
+      if (frase) s.appendChild(D().el('p', { classe: ['texto-grande', 'fim-turma-resumo'], texto: frase }));
+      return;
+    }
     if (app.dados.placar && ativas(app.estado).length > 0) s.appendChild(placarResumido('placar-fim'));
+  }
+
+  // "De 18 alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo."
+  // ("A turma terminou o ano devendo R$ X.", sem celulares), ou null antes de
+  // qualquer rodada.
+  function fraseDoFimNoFim() {
+    const H = N().historia;
+    const fim = H.fimDoAnoDaTurma(app.config, app.dados.resultados);
+    if (fim.rodadas === 0) return null;
+    if (soATurma()) {
+      const vaga = vagaDaTurma();
+      return `A turma terminou ${periodoJogado(fim.rodadas)} ${textoDaFamiliaFinal(fim.valores[0] ?? (vaga ? patrimonioNoPlacar(vaga) : 0)).texto}.`;
+    }
+    return H.fraseDoFimDaTurma(fim);
   }
 
   // ---------- Revendo: voltar só para ver (pedido 6 do Kleber, 05/10) ----------
@@ -3904,8 +4279,12 @@
       pausar: aberta,
       // decidindo e votando: desfazer a abertura (D-037); a prorrogação não.
       desfazer: (e.tipo === 'rodada' && ['decidindo', 'sorteio', 'resultado', 'fechando'].includes(e.subfase)) || (e.tipo === 'enquete' && ['votando', 'apurada', 'fechando'].includes(e.subfase)),
-      decidir: e.tipo === 'rodada' && (e.subfase === 'decidindo' || e.subfase === 'prorrogacao'),
-      mover: online,
+      // Modo individual: online, a escolha é de cada um, no próprio celular, e
+      // "decidir" passaria por cima de todos os votos; offline, é a escolha da
+      // turma ("Decidir pela turma"). Mover não existe: a vaga é o ano de uma
+      // pessoa (o anfitrião recusa).
+      decidir: e.tipo === 'rodada' && (e.subfase === 'decidindo' || e.subfase === 'prorrogacao') && (!individual() || !online),
+      mover: online && !individual(),
       removerInativos: online,
       entrada: online,
       rede: online,
@@ -3919,6 +4298,8 @@
     for (const [id, ativo] of Object.entries(conf)) { const bt = b(id); if (bt) bt.disabled = !ativo; }
     const bp = b('pausar');
     if (bp) bp.querySelector('.botao-rotulo').textContent = pausado ? 'Retomar' : 'Pausar';
+    const bd = b('decidir');
+    if (bd) bd.querySelector('.botao-rotulo').textContent = individual() ? 'Decidir pela turma' : 'Decidir por esta equipe';
     const be = b('entrada');
     if (be) {
       be.querySelector('.botao-rotulo').textContent = app.dados.meta?.entradaAberta === true ? 'Entrada aberta' : 'Entrada fechada';
@@ -4141,6 +4522,17 @@
     const e = app.estado;
     if (!e || e.tipo !== 'rodada' || !['decidindo', 'prorrogacao'].includes(e.subfase)) return avisar('Só com uma decisão aberta.');
     const rodada = app.config.rodadas[e.rodada];
+    // Modo individual: só offline, e pela turma inteira (andamentoDaTurma).
+    if (individual()) {
+      if (app.modo !== 'offline') return avisar('No modo individual, cada pessoa escolhe no próprio celular.');
+      const marcada = escolhaDaTurma(e);
+      const opcoes = ordemOpcoes(rodada).map((op) => ({ rotulo: `${letraDe(rodada, op)} · ${rodada.opcoes[op].rotulo}`, valor: op, marcada: marcada === op }));
+      if (marcada) opcoes.push({ rotulo: 'Tirar a escolha da turma', valor: '__nenhuma__' });
+      const op = await escolher('Decidir pela turma: qual opção?', opcoes, { explicacao: 'A opção que a turma escolheu de mão levantada.' });
+      if (!op) return;
+      executar(() => app.anf.decidirPelaTurma(op === '__nenhuma__' ? null : op), vista(e));
+      return;
+    }
     const equipes = ativas(e).filter((eq) => e.subfase === 'decidindo' || e.empatadas?.[eq]);
     const eq = await escolher('Decidir por esta equipe', equipes.map((id) => ({
       rotulo: `${numeroEquipe(id)} ${app.config.equipes[id].nome}${e.forcadas?.[id] ? ` (agora: ${letraDe(rodada, e.forcadas[id])})` : ''}`,
@@ -4157,6 +4549,7 @@
 
   async function moverAluno() {
     if (app.modo !== 'online' || !app.anf) return;
+    if (individual()) return avisar('No modo individual, cada pessoa tem a própria vaga: não dá para mover.');
     const { el } = D();
     const campo = el('input', { type: 'text', maxlength: '3', autocomplete: 'off', autofocus: true, classe: 'campo-cracha', 'aria-label': 'Código do crachá' });
     const codigo = await abrirModal('Mover aluno: código do crachá (as 3 letras depois do ·)', el('div', {}, [campo]), [

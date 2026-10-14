@@ -952,6 +952,92 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 .combinacoes-subtitulo { font-size: .85em; font-weight: 650; color: var(--texto); text-wrap: balance; }
 .combinacao-familia { display: block; font-size: .8em; }
 
+/* ---------- O modo individual (decisão do Kleber de 13/10 à noite) ----------
+ * Cada aluno joga sozinho, numa vaga própria, e o telão mostra só o resumo da
+ * turma, em contagens e distribuições, sem nenhuma vaga nem nome (telao.js,
+ * individual()). Nada abaixo do corpo (28 px em 1024×768); os e2e
+ * (telao-individual e individual-online) provam 20 pessoas em 1024×768 e
+ * 1280×720, com a faixa de entrada, e em 1920×1080. */
+
+.lobby-cheia { color: var(--texto-2); font-weight: 600; }
+
+/* A decisão: no lugar das células das equipes, "14 de 20 já escolheram"
+   (online) ou as letras da escolha da turma (offline), no pé da tela. */
+.turma-andamento { margin-top: auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1em .3em; font-weight: 600; line-height: 1.15; }
+.turma-numero { font-size: calc(var(--corpo) * 1.6); font-weight: 800; line-height: 1; }
+.turma-decisao { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: .3em 1em; }
+.turma-decisao-rotulo { font-weight: 700; }
+.turma-decisao .botoes-opcao { gap: .5em; }
+.turma-decisao .botoes-opcao .botao-letra { min-width: 2.2em; padding: 0 .3em; }
+
+/* O resultado da turma: o evento do mês e, por opção, a letra, o rótulo, uma
+   barra da parte da turma e quantas pessoas (subgrid: as quatro colunas
+   alinhadas entre as opções); embaixo, quem não votou e o que veio de antes. */
+.turma-opcoes {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(3em, 24%) max-content;
+  column-gap: .6em; row-gap: calc(var(--espaco) * .6);
+}
+.turma-opcao { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; line-height: 1.15; }
+.turma-opcao-rotulo { font-weight: 600; min-width: 0; }
+.turma-barra { display: block; height: .7em; border: 1px solid var(--linha-forte); border-radius: 4px; background: var(--superficie-2); overflow: hidden; }
+.turma-barra-cheia { display: block; height: 100%; background: var(--neutro); }
+.turma-n { text-align: right; white-space: nowrap; color: var(--texto-2); }
+.turma-n b { color: var(--texto); font-weight: 800; }
+.turma-opcao-zero { color: var(--texto-2); }
+.turma-opcao-zero .letra { border-color: var(--texto-2); }
+.turma-sem-voto { color: var(--texto-2); line-height: 1.15; }
+.turma-antes { display: flex; flex-direction: column; gap: .1em; line-height: 1.15; }
+.turma-antes-titulo { color: var(--texto-2); font-weight: 600; }
+.turma-antes-item b { font-weight: 800; }
+/* O aperto (telao.js, telaResultadoDaTurma): os degraus 2 a 4 são os do
+   resultado simples (o título menor; sem a frase do evento; sem o evento). */
+.tela-rodada-resultado[data-aperto] .turma-opcoes { row-gap: 3px; }
+.tela-rodada-resultado[data-aperto] :is(.turma-opcao, .turma-antes, .turma-sem-voto) { line-height: 1.05; }
+
+/* "Quanto sobrou, ou ficou devendo" da turma: a frase com os números em
+   destaque (verde para quem terminou com dinheiro sobrando, vermelho para quem
+   terminou devendo; a palavra diz o mesmo que a cor), uma coluna por aluno,
+   sem nome, e a legenda. */
+h1.fim-turma-frase { font-size: calc(var(--titulo) * .82); line-height: 1.15; }
+.fim-turma-numero { font-size: 1.35em; font-weight: 850; }
+.fim-turma-positivos, .fim-turma-valor[data-situacao="tem"] { color: var(--positivo); }
+.fim-turma-negativos, .fim-turma-valor[data-situacao="devendo"] { color: var(--negativo); }
+.grafico-turma { min-height: 120px; }
+.coluna-sobrou { fill: var(--positivo); }
+.coluna-devendo { fill: var(--negativo); }
+.linha-media { stroke: var(--texto); }
+.fim-turma-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: .2em 1.4em; color: var(--texto-2); line-height: 1.2; }
+.fim-turma-legenda b { color: var(--texto); }
+.fim-turma-chave, .fim-turma-media { white-space: nowrap; }
+.amostra-coluna { display: inline-block; width: .8em; height: .8em; border-radius: 2px; vertical-align: -.05em; }
+.amostra-sobrou { background: var(--positivo); }
+.amostra-devendo { background: var(--negativo); }
+.amostra-media { display: inline-block; width: 1.6em; border-top: 3px dashed var(--texto); vertical-align: middle; }
+.fim-turma-caminho { font-size: calc(var(--corpo) * 1.3); color: var(--texto-2); }
+.fim-turma-caminho b { color: var(--texto); letter-spacing: .06em; }
+.fim-turma-resumo { margin-top: auto; }
+/* "A turma" (sem celulares): uma frase e uma linha, maiores, no meio da tela. */
+.tela.fim-turma-so { justify-content: center; gap: calc(var(--espaco) * 2); }
+.fim-turma-so h1.fim-turma-frase { font-size: calc(var(--titulo) * 1.05); }
+.fim-turma-so .fim-turma-caminho { font-size: calc(var(--corpo) * 1.6); }
+
+/* "As escolhas da turma": bimestre × opção, com quantas pessoas (a mais
+   escolhida em negrito); "O caminho da turma", sem celulares. */
+.turma-escolhas { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; }
+.tabela-turma { border-collapse: collapse; width: 100%; font-size: calc(var(--corpo) * 1.1); line-height: 1.15; }
+.tabela-turma th, .tabela-turma td { padding: .2em .4em; border-bottom: 1px solid var(--linha); text-align: center; vertical-align: middle; }
+.tabela-turma thead th { color: var(--texto-2); font-weight: 700; }
+.tabela-turma .turma-bimestre { text-align: left; white-space: nowrap; }
+.turma-celula-zero { color: var(--texto-2); }
+.turma-celula-maior { font-weight: 800; }
+.turma-nota { color: var(--texto-2); }
+.tabela-caminho-turma .turma-escolha { text-align: left; }
+.tabela-caminho-turma .turma-escolha .letra { margin-right: .2em; }
+.tabela-caminho-turma .turma-saldo { text-align: right; white-space: nowrap; font-weight: 700; }
+.turma-saldo[data-sinal="negativo"] { color: var(--negativo); }
+.turma-saldo[data-sinal="positivo"] { color: var(--positivo); }
+.turma-quem { font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }
   .revelar-apos { opacity: 1; }
