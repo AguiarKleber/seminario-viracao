@@ -34,7 +34,7 @@
 // no celular do apresentador.
 // Em toda tela: nada passa da largura de 360 px. As capturas vão para
 // e2e/capturas/celular-individual-*.png.
-/* global document, innerWidth, requestAnimationFrame */
+/* global document, innerWidth, requestAnimationFrame, Node */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -290,9 +290,20 @@ try {
   await conferirLi(ana, 'persona', uidAna);
 
   // As 6 rodadas, com os blocos de dados depois de cada uma. Ana vota em
-  // todas menos na 3ª (fica a opção de sempre).
+  // todas menos na 3ª (fica a opção de sempre). Ela atrasa a parcela da moto
+  // em jan–fev, para na greve em mar–abr (o destaque do bloqueio e a parcela
+  // atrasada juntos, a tela mais alta do resultado) e para no breque em
+  // set–out (D-084, nota de 14/10).
   const rodadas = passos.map((x, i) => [x, i]).filter(([x]) => x.tipo === 'rodada');
-  const votosAna = ['a', 'b', null, 'd', 'e', 'a'];
+  const votosAna = ['b', 'a', null, 'd', 'c', 'a'];
+  // O destaque que o resultado tem de mostrar: os efeitos marcados da opção
+  // ("Bloqueado 5 dias pelo app depois da greve −R$ 450"), lidos do config.
+  const destaqueEsperado = (rodadaId, opcaoId) => {
+    const r = cfg.rodadas.find((x) => x.id === rodadaId);
+    const efeitos = r.opcoes.find((o) => o.id === (opcaoId ?? r.padrao)).efeitos.filter((e) => e.destaque === true);
+    return efeitos.length === 0 ? null : efeitos.map((e) => `${e.rotulo.charAt(0).toUpperCase()}${e.rotulo.slice(1)} ${e.soma.renda < 0 ? '−' : '+'}R$ ${Math.abs(e.soma.renda).toLocaleString('pt-BR')}`).join(' · ');
+  };
+  let destaquesVistos = 0;
   for (const [k, [passo, indice]] of rodadas.entries()) {
     await ate(ana, (e) => e.indice === indice && e.subfase === 'decidindo', `decisão de ${passo.rodada}`);
     await esperarTela(ana, 'decisao', `decisão de ${passo.rodada}`);
@@ -320,7 +331,27 @@ try {
     assert.equal(lido(await ana.textContent('.saldo-rotulo')), 'O seu saldo do bimestre');
     assert.equal(await ana.locator('.equipe-linha').count(), 0);
     await semVaga(ana, `resultado-${passo.rodada}`);
-    if (k === 0 || k === 2) await conferirLargura(ana, `06-resultado-${passo.rodada}`);
+    // D-084, nota de 14/10: o destaque da opção, à vista logo abaixo do saldo
+    // (e acima da linha "Por causa das suas escolhas anteriores"), só nas
+    // opções marcadas no config.
+    const destaque = await ana.evaluate(() => {
+      const n = document.querySelector('.destaque-linha');
+      if (!n) return null;
+      const antes = document.querySelector('.consequencia-linha');
+      return {
+        texto: n.textContent, depoisDoSaldo: n.previousElementSibling?.classList.contains('saldo-destaque') ?? false,
+        antesDaConsequencia: antes ? Boolean(n.compareDocumentPosition(antes) & Node.DOCUMENT_POSITION_FOLLOWING) : true,
+        recolhido: Boolean(n.closest('details')), base: Math.round(n.getBoundingClientRect().bottom),
+      };
+    });
+    const esperadoDestaque = destaqueEsperado(passo.rodada, op);
+    assert.equal(destaque === null ? null : lido(destaque.texto), esperadoDestaque === null ? null : lido(esperadoDestaque), `resultado de ${passo.rodada}: o destaque da opção`);
+    if (destaque) {
+      assert.deepEqual([destaque.depoisDoSaldo, destaque.antesDaConsequencia, destaque.recolhido], [true, true, false], `resultado de ${passo.rodada}: o destaque logo abaixo do saldo, à vista`);
+      destaquesVistos += 1;
+      console.log(`  ${passo.rodada}: "${lido(destaque.texto)}" (o fim da linha a ${destaque.base} px do topo, em 740)`);
+    }
+    if (k === 0 || k === 1 || k === 2 || k === 4) await conferirLargura(ana, `06-resultado-${passo.rodada}`);
 
     // O bloco de dados seguinte, com o texto do telão.
     const bloco = passos[indice + 1];
@@ -336,6 +367,8 @@ try {
     await conferirLargura(ana, `07-bloco-${k + 1}`);
     await conferirLi(ana, `bloco-${k + 1}`, uidAna);
   }
+
+  assert.equal(destaquesVistos, 2, "o destaque na greve (mar–abr) e no breque (set–out)");
 
   // 4. O placar final.
   await ate(ana, (e) => e.tipo === 'placarFinal', 'placar final');
