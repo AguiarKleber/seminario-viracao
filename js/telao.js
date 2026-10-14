@@ -492,7 +492,7 @@
   const CONEXAO_LENTA_MS = 8000;
   // Tem de ser o mesmo valor que firebase/regras.json aceita em regrasVersao
   // (test/regras.test.mjs confere, e prende a versão ao conteúdo das regras).
-  const REGRAS_VERSAO = 'v4';
+  const REGRAS_VERSAO = 'v5';
   const CHAVE_ULTIMA_ONLINE = PREFIXO + 'ultimaOnline';
   const CAMPOS_CONEXAO = ['apiKey', 'authDomain', 'databaseURL', 'projectId', 'appId'];
   // O emulador (arquitetura, seção A, item 9) não precisa de chave de verdade:
