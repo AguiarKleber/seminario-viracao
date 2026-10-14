@@ -201,24 +201,36 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
    conferidas`, se o "Li" ficou de fora). O bloco 1 mostra a versão
    `2026-10-14-v5-individual`.
 2. Digite o PIN e clique em **Criar sala com celulares**.
+3. **Não entre como aluno com o seu celular nesta sala.** Para conferir o QR e
+   ver o que a turma vê, entre pelo **Sou apresentador** (seção 4). O aparelho
+   que entra como aluno ganha uma das 20 vagas, e ela só volta para a sala com
+   **Remover inativos**, quando alguém estiver esperando (veja "Sala cheia",
+   abaixo).
 
 **Na aula, passo a passo:**
 1. **O QR.** No lobby, o telão mostra o QR, o endereço e o código da sala. Diga:
    "Leiam o QR com a câmera do celular, digitem o seu nome e toquem em Entrar."
 2. **Os nomes.** Cada aluno digita o nome (até 20 letras). O nome fica só no
    celular dele: não vai para o servidor, e o telão nunca mostra nomes. Diga:
-   "Ninguém vê o seu voto, nem eu."
+   "O seu nome fica só no seu celular, e o seu voto não fica ligado ao seu
+   nome."
 3. **O contador.** O telão mostra "N pessoas na sala". Quando o número parar de
    subir, aperte o Espaço. Quem chegar depois entra assim mesmo, no meio do jogo.
    - Peça que cada um entre **uma vez só, pelo navegador do próprio celular**.
-     Abrir o link em outro navegador ou em aba anônima ocupa outra vaga, e a
-     vaga antiga não se libera. São 20 vagas.
-   - Se um celular disser "A sala está cheia (20 pessoas)", já há 20 aparelhos
-     na sala: essa pessoa acompanha pelo telão ou com um colega.
+     Abrir o link em outro navegador ou em aba anônima ocupa outra vaga. São 20
+     vagas.
+   - **Sala cheia.** Se um celular disser "A sala está cheia (20 pessoas)", já
+     há 20 aparelhos na sala. Se a turma tem menos de 20 pessoas, há uma vaga
+     presa: alguém entrou duas vezes, ou um celular entrou e saiu. Peça para
+     fecharem a aba repetida, espere 2 min e segure **Remover inativos**. A
+     vaga de quem está sem sinal há mais de 2 min e ainda não jogou nenhum
+     bimestre volta para quem está esperando (uma vaga por pessoa esperando).
+     Depois do 1º bimestre fechado, nenhuma vaga volta: quem sobrou acompanha
+     pelo telão ou com um colega.
 4. **A enquete de entrada**, como sempre.
-5. **Conheça o Jonas.** Aparece no telão e no celular, com o botão "Li, pode
-   seguir". Ao lado do título, o telão mostra "12 de 20 leram": é só para você
-   saber, e você avança quando quiser.
+5. **Conheça o Jonas.** Aparece no telão e no celular. Com o "Li" (regras v5),
+   o celular tem o botão "Li, pode seguir", e ao lado do título o telão mostra
+   "12 de 20 leram": é só para você saber, e você avança quando quiser.
 6. **Cada bimestre** (os três tempos da seção 0):
    - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
      escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
@@ -228,8 +240,8 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
      consequência ("As costas travaram …: 3 pessoas"). No celular, cada um vê o
      próprio saldo. Diga a frase do bimestre (tabela da seção 0), com "quem
      escolheu…" no lugar de "a equipe que…".
-   - **Dados.** O bloco aparece no telão e no celular, com o "Li". Leia o
-     contexto e um número.
+   - **Dados.** O bloco aparece no telão e no celular (com o "Li", também o
+     botão "Li, pode seguir" e o "N de M leram"). Leia o contexto e um número.
 7. **O placar**, em 3 páginas (o Espaço passa):
    1. **"Quanto sobrou, ou ficou devendo":** "De 18 alunos, 3 terminaram com
       dinheiro sobrando e 15 terminaram devendo.", com uma coluna por aluno, sem
@@ -248,17 +260,24 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 **O que não existe no jogo individual:** a formação das equipes (as teclas 1 a
 6), a prorrogação, a tabela "O caminho de cada equipe" e o **Mover aluno**
 (fica apagado na barra). **Decidir pela turma** só funciona sem celulares.
-**Remover inativos** não tira ninguém que já tem vaga.
+**Remover inativos** só tira quem tem vaga no caso da vaga presa (passo 3,
+"Sala cheia").
 
 **Quem chega no meio:** digita o nome e ganha uma vaga. Com a decisão aberta, o
 celular avisa que nesta fica a opção de sempre, e a pessoa vota a partir da
 seguinte. No placar, ela fica fora da conta, e a tela diz.
 
-**Se a internet cair:** segure **Continuar sem celulares** (seção 8). O telão
-passa a jogar um caminho só, "a turma": em cada decisão, a turma combina por mão
-levantada, e você clica na letra em "Escolha da turma". O placar mostra o
-caminho da turma. Sem internet desde o começo: pendrive → **Começar sem
-celulares**, e a turma joga junto desde o início.
+**Se a internet cair:** segure **Continuar sem celulares** (seção 8). Em cada
+decisão, a turma combina por mão levantada, e você clica na letra em "Escolha
+da turma".
+- **Antes de o 1º bimestre fechar** (no lobby, no Jonas ou na 1ª decisão), o
+  telão passa a jogar um caminho só, "a turma", como no pendrive, e o placar
+  mostra o caminho da turma.
+- **Depois de algum bimestre fechado**, cada pessoa segue o próprio ano com a
+  escolha da turma, e o placar continua por pessoas ("De 18 alunos…").
+
+Sem internet desde o começo: pendrive → **Começar sem celulares**, e a turma
+joga junto desde o início.
 
 **O seu celular** (modo espectador, D-064): com o PIN, mostra o mesmo resumo da
 turma que o telão ("N pessoas na sala", "N de M já escolheram", quantas pessoas
@@ -545,7 +564,7 @@ topo da tela.
 | Pular para… | Vai para um passo à frente. Só para a frente, e os passos do meio não acontecem |
 | Decidir por esta equipe | Registra a opção de uma equipe sem celular, ou que anunciou em voz alta |
 | Mover aluno | Troca um aluno de equipe pelas 3 letras do crachá (só com celulares) |
-| Remover inativos (segure) | Apaga o registro de quem está sem sinal há mais de 2 min. Segure 2 s. O aviso diz só quantos saíram. Não tem tecla de atalho (só com celulares; veja a seção 10) |
+| Remover inativos (segure) | Apaga o registro de quem está sem sinal há mais de 2 min. Segure 2 s. O aviso diz só quantos saíram. Não tem tecla de atalho (só com celulares; veja a seção 10). No jogo individual, quem tem vaga só sai no caso da vaga presa (seção 00, passo 3) |
 | Entrada aberta / fechada | Abre ou fecha a entrada de novos celulares (só com celulares) |
 | Rede restrita | Troca o QR por um que força a conexão mais lenta e mais compatível (`?lp=1`) (só com celulares) |
 | Salvar estado | Baixa o JSON com o estado da sala, sem nenhum voto individual |
@@ -638,7 +657,11 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   outro aparelho, ou abra o endereço do aluno numa **aba anônima** deste celular
   (o login anônimo é outro) e entre pelo **Sou apresentador**; feche a aba de
   aluno. O registro de aluno que ficou sai da contagem com **Remover inativos**,
-  depois de 2 min sem sinal (seção 10).
+  depois de 2 min sem sinal (seção 10). **No jogo individual, não:** o aparelho
+  que entrou como aluno ganhou uma vaga, e ela só sai no caso da vaga presa
+  (seção 00, passo 3: alguém esperando e nenhum bimestre fechado). Por isso,
+  nunca entre como aluno com o seu celular; use o **Sou apresentador** desde o
+  começo.
 - **Nunca no navegador do telão.** Não abra o modo espectador no notebook, no
   mesmo navegador (e no mesmo perfil) do telão, nem numa aba ao lado dele: as
   duas páginas têm o mesmo login anônimo e o mesmo pedido de PIN, e uma apaga o

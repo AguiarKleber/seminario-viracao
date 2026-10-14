@@ -891,8 +891,8 @@ sem a chave nova, tudo continua como na D-080).
     pessoas)".
   - Quem **recarrega** o celular volta para a mesma vaga, com o mesmo nome. Quem
     entra por **outro navegador** (ou aba anônima) é outro aparelho e ocupa
-    outra vaga, e a vaga antiga não se libera: "Remover inativos" não tira quem
-    tem vaga, e "Mover aluno" fica desligado.
+    outra vaga. "Mover aluno" fica desligado, e "Remover inativos" não tira quem
+    tem vaga, a não ser a **vaga presa** (revisão de 14/10, abaixo).
   - **Quem chega no meio de uma decisão** ganha a vaga e, nessa decisão, fica
     com a opção de sempre; vota a partir da seguinte. No placar, quem entrou no
     meio do ano fica fora da conta, e a tela diz ("1 aluno entrou no meio do ano
@@ -932,7 +932,9 @@ sem a chave nova, tudo continua como na D-080).
     como o telão, e nunca a tela de uma vaga (muda a D-064 no modo individual:
     sem o seletor de equipe).
 - **Sem celulares** (a internet caiu), o telão joga um caminho só, "a turma", e
-  o apresentador escolhe a opção que a turma combinar.
+  o apresentador escolhe a opção que a turma combinar. Depois de algum
+  bimestre fechado com celulares, a escolha da turma vale para todas as vagas,
+  e o placar continua por pessoas (revisão de 14/10, abaixo).
 - **[Li] "Li, pode seguir"** (pedido do Kleber de 07/10): no "Conheça o Jonas" e
   nos blocos, o celular mostra o botão "Li, pode seguir" e, depois do toque,
   "Você já leu ✓". O telão mostra "N de M leram" ao lado do título, só para
@@ -957,7 +959,26 @@ sem a chave nova, tudo continua como na D-080).
 - **Para o Kleber decidir** (nada disto trava a publicação):
   1. O bloco "Conversa em grupos: o mapa do patrão", do roteiro de 120 min,
      ainda fala em "equipe" (a atividade é em grupos na sala, e não no app).
-  2. Uma vaga ocupada por um aparelho que saiu (ou que entrou de novo por outro
-     navegador) não se libera. Com até 20 pessoas na turma, sobra pouca folga:
-     vale pedir que cada um entre uma vez só, pelo navegador do próprio
-     celular.
+  2. ~~Uma vaga ocupada por um aparelho que saiu (ou que entrou de novo por
+     outro navegador) não se libera.~~ Desde a revisão de 14/10, a vaga presa
+     volta com "Remover inativos" (abaixo). Continua valendo pedir que cada um
+     entre uma vez só, pelo navegador do próprio celular.
+- **Revisão de 14/10, de madrugada** (a revisão adversarial da versão 12;
+  nada muda o que o Kleber decidiu):
+  1. **A decisão fechada sem ninguém na sala** (a rede da turma demorou) abria
+     a 1ª vaga para sempre, sem dono: sobravam 19 vagas, e o placar contava só
+     esse fantasma. Agora só o telão sem celulares joga "a turma" assim;
+     online, a decisão fica sem resultado e fora da conta.
+  2. **A vaga presa** (o celular de teste do apresentador, uma aba repetida):
+     com alguém esperando, "Remover inativos" devolve a vaga de quem está sem
+     sinal há mais de 2 min e ainda não jogou nenhum bimestre, uma por pessoa
+     esperando. Depois do 1º bimestre fechado, nenhuma vaga volta. O roteiro
+     (seção 00) manda o apresentador nunca entrar como aluno.
+  3. **"Continuar sem celulares" antes do 1º bimestre fechado** agora vira "a
+     turma" (um caminho só), como diz o roteiro; antes, o telão seguia contando
+     as pessoas que já tinham entrado, todas com a mesma escolha.
+  4. Na enquete, o "N de M votaram" conta só quem tem vaga.
+  5. O celular diz "o seu voto não fica ligado ao seu nome", e não mais
+     "ninguém, nem o apresentador, vê o seu voto": o voto de cada vaga pode ser
+     lido, sem o nome, que nunca sai do celular.
+  6. O telão tenta dar as vagas até três vezes quando a gravação é recusada.

@@ -624,12 +624,15 @@ Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras 
 
 ## 7. `Viracao.anfitriao`
 
-`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp?, folgaDaRegraMs? })` devolve os métodos abaixo.
+`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp?, folgaDaRegraMs?, semCelulares? })` devolve os métodos abaixo.
 - `agora` padrão é `canal.agora`; sem `uid`, usa `canal.entrar()`;
 - `sala` segue `[A-HJ-NP-Z2-9]{4}`;
 - `aoMudar(estado)` é chamado a cada estado novo conhecido, inclusive o que chega por conflito;
 - `folgaDaRegraMs` (padrão `alunoLogica.FOLGA_DA_REGRA_MS`, 12 h): número ≥ 0, senão `TypeError`. Só o
   simulador e os testes passam outra, curta, para provar o corte da regra sem esperar 12 h.
+- `semCelulares` (padrão `false`): o telão passa `true` no modo offline. Só com ele, no modo individual, a
+  rodada que fecha sem vaga aberta e sem membro nenhum joga "a turma" (abre a primeira vaga). Online, ela fecha
+  sem resultado, e nenhuma vaga fica aberta sem dono (revisão de 14/10, achado 1).
 
 **O prazo gravado é o da regra (teste de 30/09).** Todo `prazo` que o anfitrião grava é
 `fim do cronômetro + folga`, e o fim do cronômetro é `prazo − folga` (`alunoLogica.fimDoCronometro`, que o
@@ -655,7 +658,7 @@ rede de segurança. Nos métodos abaixo, "prazo novo" é `agora + tempo da etapa
 | `definirEquipesAbertas(ids)` | antes da trava; grava `estado.equipesAbertas` como `{ e1: true, … }`, sempre com as obrigatórias; lista vazia lança erro. O "de 3 a 6" (arquitetura seção 8) fica na tela |
 | `moverMembro(uid, equipeId)` | grava `membros/{uid}/equipe`; recusa membro inexistente e equipe fechada |
 | `distribuirAtrasados() → Promise<n>` | depois da trava, põe numa equipe aberta quem não tem uma (ou está numa fechada), com `alunoLogica.sugerirEquipe`. Roda sozinho quando as equipes travam; o telão chama de novo quando entra alguém |
-| `removerInativos(limiteMs = 60000) → Promise<n>` | apaga `membros/{uid}` de quem não tem presença nos últimos `limiteMs`, **menos quem já votou na votação da etapa** (revisão da F6a: o voto confirmado nunca some). A etapa é lida do `estado` do banco: rodada em qualquer subfase (`decisoes/{r}`: o `sorteio` e o `resultado` também, porque o `desfazer()` reabre e apura de novo, e a apuração conta só quem ainda é membro) e enquete em `votando` ou `fechando` (`votosEnquete/{e}/{m}`). Fora disso, sai quem está sem sinal, como antes. Devolve quantos saíram |
+| `removerInativos(limiteMs = 60000) → Promise<n>` | apaga `membros/{uid}` de quem não tem presença nos últimos `limiteMs`, **menos quem já votou na votação da etapa** (revisão da F6a: o voto confirmado nunca some). A etapa é lida do `estado` do banco: rodada em qualquer subfase (`decisoes/{r}`: o `sorteio` e o `resultado` também, porque o `desfazer()` reabre e apura de novo, e a apuração conta só quem ainda é membro) e enquete em `votando` ou `fechando` (`votosEnquete/{e}/{m}`). Fora disso, sai quem está sem sinal, como antes. No modo individual, quem tem vaga não sai, com uma exceção, a **vaga presa** (revisão de 14/10, achado 2): se há quem espere uma vaga (a sala cheia), sai também, junto com a vaga (o membro apagado e a vaga tirada de `estado.equipesAbertas`, na mesma gravação, com `geracao + 1`), a vaga sem resultado em rodada nenhuma cujo dono está sem sinal e não votou na etapa; no máximo uma por pessoa esperando, primeiro a de quem está há mais tempo sem sinal; em seguida, `atribuirVagas()`. Devolve quantos saíram |
 | `abrirEntrada(bool)` | grava `meta/entradaAberta` |
 | `contagemManual(afirmacaoId, histograma)` | com a enquete em `votando`; guarda em `estado.manual`. Havendo contagem manual, a apuração é só ela, com `metodo: "manual"` e sem transição, e os votos de celular ficam de fora |
 | `exportarTotais() → Promise<objeto>` | só agregados, montados campo a campo: `{ titulo, versao, hashConfig, roteiro, exportadoEm, participantes, enquetes, resultados: { decisao, origem, contagem, carta, depois }, placar }`. **Nunca** uid |
@@ -1348,8 +1351,10 @@ celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `
   terminou o ano devendo R$ X" (`.fim-turma-valor`, com `data-situacao`) e "As escolhas da turma: E B C C D B"
   (`.fim-turma-caminho`, no meio da tela, `.fim-turma-so`), e a página 2 é "O caminho da turma"
   (`.tabela-caminho-turma`: o bimestre, a letra e o rótulo, e o saldo do bimestre); o Fim, "A turma terminou o ano
-  devendo R$ X.". Depois de "Continuar sem celulares" (os membros ficam na árvore) ou de carregar um estado com
-  várias vagas, as telas continuam com as contagens da turma, e a escolha marcada vale para todas as vagas.
+  devendo R$ X.". "Continuar sem celulares" antes de qualquer resultado tira da cópia local os membros e
+  `estado.equipesAbertas` e cai aqui (revisão de 14/10, achado 3). Depois de um resultado com celulares, ou ao
+  carregar um estado com várias vagas, as telas continuam com as contagens da turma, e a escolha marcada vale
+  para todas as vagas.
 
 **Histórico nas contas do telão:** o efeito da carta (a animação das cartas mais extremas) e o mês
 refeito passam ao motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do

@@ -44,16 +44,22 @@ como abaixo.
    um instante). A vaga nunca aparece em tela nenhuma.
 4. Se recarregar a página, volta para a mesma vaga, com o mesmo nome. Quem
    chega depois do 20º vê "A sala está cheia (20 pessoas)".
+5. Quem abre o link de novo em outro navegador ou em aba anônima ocupa outra
+   vaga. Essa **vaga presa** volta para quem está esperando quando o
+   apresentador segura "Remover inativos", se quem a ocupa está sem sinal há
+   mais de 2 min e ainda não jogou nenhum bimestre (revisão de 14/10). Depois
+   do 1º bimestre fechado, nenhuma vaga volta: o ano de uma pessoa nunca passa
+   para outra.
 
 **O que cada tela mostra:**
 
 | Momento | Telão (sem nomes) | Celular do aluno |
 | --- | --- | --- |
 | Lobby | "N pessoas na sala" | "Você está na sala", com o nome no topo |
-| Conheça o Jonas | O Jonas e a casa, "Todos jogam com o mesmo personagem" e, com o "Li", "N de M leram" | O mesmo texto, "a escolha é sua" e o botão "Li, pode seguir" |
+| Conheça o Jonas | O Jonas e a casa, "Todos jogam com o mesmo personagem" e, com o "Li", "N de M leram" | O mesmo texto, "a escolha é sua" e, com o "Li", o botão "Li, pode seguir" |
 | Decisão | As 5 opções com a mini-história e "14 de 20 já escolheram" | As 5 opções, a mini-história ao tocar e "Votar nesta", na 2ª pessoa ("você") |
 | Resultado | O evento do mês, quantas pessoas ficaram com cada opção (A: 8 · B: 5 …), quantas não votaram e ficaram na opção de sempre, e quantas tiveram cada consequência ("As costas travaram …: 3 pessoas") | "A sua escolha", o seu saldo do bimestre, o dinheiro da família e a consequência, se houver |
-| Blocos de dados e Fim | O título, o contexto, os itens e a fonte e, com o "Li", "N de M leram" | O mesmo título, contexto, itens e fonte (com rolagem em 360×740), o botão "Li, pode seguir" e, embaixo, "O seu ano até aqui" |
+| Blocos de dados e Fim | O título, o contexto, os itens e a fonte e, com o "Li", "N de M leram" | O mesmo título, contexto, itens e fonte (com rolagem em 360×740), com o "Li" o botão "Li, pode seguir" e, embaixo, "O seu ano até aqui" |
 | Placar, página 1 | "Quanto sobrou, ou ficou devendo": "De 18 alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo.", com uma coluna por aluno, sem nome, do maior para o menor, e a média da turma | As suas escolhas, o seu ano e "Das 18 pessoas da turma, 3 fecharam o ano com dinheiro sobrando e 15 terminaram devendo." |
 | Placar, página 2 | "As escolhas da turma": bimestre × opção, com quantas pessoas escolheram cada uma | (o mesmo da página 1) |
 | Placar, página 3 | As 15.625 combinações, a melhor e a pior sequência | (o mesmo da página 1) |
@@ -68,9 +74,17 @@ como abaixo.
   equipes. Quem chega no meio de uma decisão fica com a opção de sempre nela e
   vota a partir da seguinte.
 - **Sem prorrogação:** uma vaga tem um voto só, e nunca empata.
-- **Sem celulares** (a internet caiu), o telão joga um caminho só, "a turma": o
-  apresentador escolhe a letra que a turma combinar ("Escolha da turma") e o
-  placar mostra o caminho da turma.
+- **Sem celulares** (a internet caiu), o apresentador escolhe a letra que a
+  turma combinar ("Escolha da turma"):
+  - antes de o 1º bimestre fechar (e no pendrive, desde o início), o telão joga
+    um caminho só, "a turma", e o placar mostra o caminho da turma (revisão de
+    14/10: "Continuar sem celulares" tira da cópia local os alunos e as vagas);
+  - depois de algum bimestre fechado com celulares, a escolha da turma vale
+    para todas as vagas, cada pessoa segue o próprio ano, e o placar continua
+    por pessoas.
+- **Com celulares, a decisão que fecha sem ninguém na sala** (a rede da turma
+  demorou) fica sem resultado e fora da conta do placar: quem entra depois
+  ganha uma das 20 vagas e conta normalmente (revisão de 14/10).
 - **O "Li, pode seguir"** só informa: o apresentador avança quando quiser. Ele
   depende das regras v5 do Firebase (D-081); sem elas, os commits "[Li]" são
   revertidos e as telas ficam sem o botão e sem o "N de M leram".
