@@ -1035,7 +1035,7 @@ do resultado da D-081).
   como na tela de cada um; a média é arredondada. O mesmo motivo com dois
   valores (a moto que quebra custa menos a quem trocou o pneu) fica junto:
   "a moto quebrou (revisão adiada) −R$ 560: 1 dessas pessoas · −R$ 790: 2
-  dessas pessoas"; numa opção de uma pessoa só, "1 pessoa". **A opção que
+  dessas pessoas"; em uma opção de uma pessoa só, "1 pessoa". **A opção que
   ninguém escolheu fica, apagada, com "0 pessoas" e sem valores:** a turma
   reconhece as cinco letras da decisão, e a soma das pessoas fecha com o total.
   Quem não votou continua contado na opção de sempre, com a linha embaixo. O

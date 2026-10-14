@@ -1029,7 +1029,7 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
    direita, o que veio de antes, em letra secundária.
    O "em média" vai ao lado do valor quando cabe (1280×720 e 1920×1080) e
    embaixo dele quando não cabe (1024×768, onde o rótulo já quebra em duas
-   linhas): numa linha só para ele, cinco opções com consequência não cabiam
+   linhas): em uma linha só para ele, cinco opções com consequência não cabiam
    em 1280×720 com a faixa de entrada. */
 .turma-opcoes {
   display: grid; grid-template-columns: auto minmax(8em, 1fr) auto auto auto;
