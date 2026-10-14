@@ -961,7 +961,7 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
 .combinacao-familia { display: block; font-size: .8em; }
 
 /* ---------- O modo individual (decisão do Kleber de 13/10 à noite) ----------
- * Cada aluno joga sozinho, numa vaga própria, e o telão mostra só o resumo da
+ * Cada aluno joga sozinho, em uma vaga própria, e o telão mostra só o resumo da
  * turma, em contagens e distribuições, sem nenhuma vaga nem nome (telao.js,
  * individual()). Nada abaixo do corpo (28 px em 1024×768); os e2e
  * (telao-individual e individual-online) provam 20 pessoas em 1024×768 e

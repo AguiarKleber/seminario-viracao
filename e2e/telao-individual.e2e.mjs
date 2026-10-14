@@ -28,7 +28,7 @@
 // arquivo, e a sala segue com as 20 vagas, como depois de "Continuar sem
 // celulares"):
 // 6. o resultado da turma: quantas pessoas ficaram com cada opção (com quem
-//    não votou contado na opção de sempre e dito numa linha), e o que veio de
+//    não votou contado na opção de sempre e dito em uma linha), e o que veio de
 //    uma escolha de antes, para quantas pessoas;
 // 7. a escolha da turma marcada pelo apresentador vale para as 20 vagas;
 // 8. o placar: "Quanto sobrou, ou ficou devendo" com a frase de
@@ -558,7 +558,7 @@ async function parteDe20() {
   const noNode = Math.max(1, Math.min(3, RODADAS.length - 1));
   console.log(`Parte 2: 20 pessoas sem celulares (${noNode} rodadas jogadas no Node, o resto no telão pela turma)`);
   const { arquivo, plano } = await salaDe20(noNode);
-  // No telão: a escolha da turma (para as 20 vagas) numa rodada, nenhuma na
+  // No telão: a escolha da turma (para as 20 vagas) em uma rodada, nenhuma na
   // seguinte (cada uma na opção de sempre), e de novo a da turma (E, nada, B).
   const fimDaTurma = [4, null, 1];
   const daTurma = RODADAS.slice(noNode).map((r, k) => {

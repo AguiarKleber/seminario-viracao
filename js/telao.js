@@ -420,7 +420,7 @@
   const simples = () => N().historia.formatoSimples(app.config);
 
   // O modo individual (regras.individual, com o formato simples; decisão do
-  // Kleber de 13/10 à noite): cada aluno joga sozinho, numa vaga própria (uma
+  // Kleber de 13/10 à noite): cada aluno joga sozinho, em uma vaga própria (uma
   // "equipe de uma pessoa") que o telão dá quando ele entra. O voto é secreto e
   // o tema é sensível: o telão mostra só o resumo da turma, em contagens e
   // distribuições, e nunca uma vaga nem um nome (o nome fica só no celular de
@@ -3087,7 +3087,7 @@
   // sem nenhuma vaga nem nome (o voto é secreto e o tema é sensível). O evento
   // do mês uma vez, no alto; quantas pessoas ficaram com cada opção (a letra, o
   // rótulo, uma barra da parte da turma e o número; historia.contagemPorOpcao),
-  // com quem não votou contado na opção de sempre e dito numa linha embaixo; e,
+  // com quem não votou contado na opção de sempre e dito em uma linha embaixo; e,
   // se houver, o que veio de uma escolha de antes, para quantas pessoas
   // (historia.consequenciasDaTurma: "As costas travaram (…): 3 pessoas
   // (−R$ 1.230 cada)"). O saldo e o dinheiro da família de cada um ficam no
@@ -3493,7 +3493,7 @@
 
   // ---------- Placar final do modo individual ----------
 
-  // "o ano" com as 6 rodadas de 2 meses; "os 6 meses", "o mês" num roteiro menor.
+  // "o ano" com as 6 rodadas de 2 meses; "os 6 meses", "o mês" em um roteiro menor.
   function periodoJogado(rodadas) {
     const meses = rodadas * periodo().meses;
     return meses === 12 ? 'o ano' : meses === 1 ? 'o mês' : `os ${meses} meses`;
