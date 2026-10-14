@@ -982,7 +982,8 @@
     };
     atualizarBlocoOnline();
     return el('section', { classe: 'abertura-bloco', id: 'bloco-online', 'aria-labelledby': 'titulo-online' }, [
-      el('h2', { id: 'titulo-online', texto: '3. Com celulares' }),
+      // Sem o "3.": desde a D-082 a tela inicial não tem mais os passos 1 e 2.
+      el('h2', { id: 'titulo-online', texto: 'Com celulares' }),
       online.el.status,
       el('label', { for: 'pin-apresentador', texto: 'PIN do apresentador (digite antes de projetar)' }),
       pin,
