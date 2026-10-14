@@ -18,7 +18,9 @@
 //   dada pelo telão; o nome nunca vai para o banco, e o topo mostra o nome;
 // - o lobby ("N pessoas na sala") no telão e no celular do apresentador;
 // - a enquete de entrada e as do fim, respondidas pela tela;
-// - "Conheça o Jonas" e cada bloco de dados no celular, com o título do telão;
+// - "Conheça o Jonas" e cada bloco de dados no celular, com o título do telão
+//   e o [Li] "Li, pode seguir": o lidos/{uid} no banco, o "Você já leu ✓" e o
+//   "N de M leram" no telão e no celular do apresentador;
 // - os 6 bimestres: cada celular vota na própria vaga, e toda opção de todo
 //   bimestre é tocada em algum celular e contada no resultado; o "N de M já
 //   escolheram" no telão e no celular do apresentador; o resultado de cada
@@ -335,10 +337,33 @@ async function jogar({ site, navegador, vigiar }) {
     console.log(`Enquete ${passo.enquete}/${passo.momento}: ${quem.length} celulares responderam pela tela.`);
   }
 
-  // As telas de ler ("Conheça o Jonas" e os blocos de dados): a captura do
-  // primeiro celular.
+  // ---------- [Li] "Li, pode seguir" ----------
+  const leramNoTelao = () => telao.evaluate(() => ({ leram: document.querySelector('.tela')?.dataset.leram, total: document.querySelector('.tela')?.dataset.totalLidos }));
+  async function esperarLeram(leram, total, oque) {
+    await telao.waitForFunction(([a, b]) => document.querySelector('.tela')?.dataset.leram === a && document.querySelector('.tela')?.dataset.totalLidos === b, [String(leram), String(total)], { timeout: 20000 })
+      .catch(async () => { throw new Error(`${oque}: o telão mostra ${JSON.stringify(await leramNoTelao())}, esperado ${leram} de ${total}`); });
+    // A função roda no navegador: o lido() daqui não existe lá.
+    await esp.p.waitForFunction((t) => (document.querySelector('.lidos-contagem')?.textContent || '').replace(/\s+/g, ' ').trim() === t, `${leram} de ${total} ${leram === 1 ? 'leu' : 'leram'}`, { timeout: 20000 })
+      .catch(async () => { throw new Error(`${oque}: o celular do apresentador mostra "${await esp.p.textContent('.lidos-contagem').catch(() => null)}", esperado ${leram} de ${total}`); });
+  }
+  async function tocarLi(c, indice, oque) {
+    await c.p.locator('[data-acao="li"]').waitFor({ timeout: 15000 });
+    assert.equal(lido(await c.p.textContent('[data-acao="li"]')), 'Li, pode seguir', `${c.rotulo}, ${oque}: o botão`);
+    await c.p.locator('[data-acao="li"]').tap();
+    await c.p.waitForFunction(() => document.querySelector('.lido-feito')?.textContent === 'Você já leu ✓', null, { timeout: 15000 });
+    assert.equal(await esperarNoBanco(s('lidos', c.uid), indice), indice, `${c.rotulo}, ${oque}: lidos/{uid} = o índice do passo`);
+  }
+  // [Li] Metade toca, o telão e o apresentador contam; depois, o resto.
   async function lerTodos(quem, oque, { capturarComo = null } = {}) {
-    if (capturarComo) await capturar(quem[0], capturarComo);
+    const indice = (await estado()).indice;
+    await esperarLeram(0, quem.length, `${oque} (ninguém leu ainda)`);
+    const metade = quem.slice(0, Math.ceil(quem.length / 2));
+    if (capturarComo) await capturar(quem[0], `${capturarComo}-com-li`);
+    for (const c of metade) await tocarLi(c, indice, oque);
+    if (capturarComo) await capturar(quem[0], `${capturarComo}-ja-leu`);
+    await esperarLeram(metade.length, quem.length, oque);
+    for (const c of quem.slice(metade.length)) await tocarLi(c, indice, oque);
+    await esperarLeram(quem.length, quem.length, oque);
   }
 
   // ---------- Do lobby ao Jonas ----------
