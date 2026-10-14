@@ -217,7 +217,7 @@ async function conferirLargura(p, nome) {
     }
     return { rolagem: document.scrollingElement.scrollWidth, largura: innerWidth, largos };
   });
-  assert.ok(m.rolagem <= m.largura, `${nome}: rolagem lateral (${m.rolagem} px numa tela de ${m.largura})`);
+  assert.ok(m.rolagem <= m.largura, `${nome}: rolagem lateral (${m.rolagem} px em uma tela de ${m.largura})`);
   assert.deepEqual(m.largos, [], `${nome}: elementos passam da largura de 360 px`);
   await p.screenshot({ path: join(CAPTURAS, `celular-individual-${nome}.png`), fullPage: true });
 }

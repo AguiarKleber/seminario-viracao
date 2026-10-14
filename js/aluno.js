@@ -171,7 +171,7 @@
   // todas as telas ficam como antes.
   const simples = () => N().historia?.formatoSimples?.(app.dados.conteudo) === true;
   // O modo individual (regras.individual; decisão do Kleber de 13/10 à
-  // noite): cada aluno joga sozinho, numa vaga própria que o telão dá, e o
+  // noite): cada aluno joga sozinho, em uma vaga própria que o telão dá, e o
   // nome dele fica só neste aparelho. Lido direto do conteúdo da sala, como o
   // alunoLogica faz: sem a chave, todas as telas ficam como antes (equipes).
   const individual = () => app.dados.conteudo?.regras?.individual === true;
@@ -190,7 +190,7 @@
 
   // O nome guardado no aparelho é { sala, nome }. Da mesma sala, ele vale
   // (recarregar não pede o nome de novo); de outra, só preenche o campo, e o
-  // aluno confirma com um toque. Assim um celular emprestado numa aula nova
+  // aluno confirma com um toque. Assim um celular emprestado em uma aula nova
   // não entra com o nome de outra pessoa sem ninguém ver.
   function nomeGuardado(sala) {
     const g = lerLocal('nome');
