@@ -105,7 +105,13 @@ const ARG_CONFIG = process.argv.includes('--config') ? process.argv[process.argv
 // aparelhos. Depois dele, o conteúdo de 05/10 (sorteio e 6 personas, congelado
 // em test/fixtures/config-real-v31.json) e a fixture de 6 rodadas, que
 // continuam provando o caminho com sorteio.
-const CONFIG_DO_DIA = 'config.json';
+// Desde 13/10 (decisão do Kleber à noite), o config.json do dia é do modo
+// individual (regras.individual), e a matriz dele é o
+// e2e/votos-individual.e2e.mjs (cada celular vota na própria vaga). Aqui fica
+// o conteúdo das equipes da versão 11 (o jogo simples de 07/10, congelado em
+// test/fixtures/config-equipes-v11.json), porque as equipes continuam no
+// motor e no celular: é o config sem a chave individual.
+const CONFIG_DO_DIA = 'test/fixtures/config-equipes-v11.json';
 const CONFIG_REAL = 'test/fixtures/config-real-v31.json';
 const CONFIGS = ARG_CONFIG ? [ARG_CONFIG] : [CONFIG_DO_DIA, CONFIG_REAL, 'test/fixtures/config-teste-v3.json'];
 // O prefixo das capturas de cada config, para uma sessão não sobrescrever a outra.
@@ -183,7 +189,8 @@ async function conteudoDoTeste(arquivo) {
   // D-078: 5 opções em cada bimestre do dia. A matriz confere no fim que cada
   // uma delas foi tocada num celular e contada numa apuração conferida.
   if (arquivo === CONFIG_DO_DIA) {
-    assert.equal(simples, true, 'o config.json do dia é o formato simples (D-078)');
+    assert.equal(simples, true, 'o config das equipes da versão 11 é o formato simples (D-078)');
+    assert.notEqual(cfg.regras.individual, true, 'a matriz das equipes não joga o modo individual');
     for (const rId of rodadas) assert.equal(lista(cfg.rodadas[rId].ordemOpcoes).length, 5, `a rodada ${rId} do dia tem 5 opções (D-078)`);
   }
   console.log(`Conteúdo: ${arquivo} (versão ${cfg.versao}), roteiro ${ROTEIRO}, ${passos.length} passos, ${rodadas.length} rodadas de ${V.motor.mesesPorRodada(cfg)} mês(es)${simples ? ', formato simples (sem sorteio)' : ''}.`);

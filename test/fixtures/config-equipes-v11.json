@@ -1,0 +1,1521 @@
+{
+  "versao": "2026-10-06-v4.4-simples",
+  "titulo": "Viração: quem é o patrão?",
+  "tempos": {
+    "enqueteSeg": 60,
+    "decisaoSeg": 120,
+    "decisaoMinSeg": 45,
+    "prorrogacaoSeg": 20,
+    "gracaSeg": 5
+  },
+  "regras": {
+    "desempate": "prorrogacao-depois-moeda",
+    "cartaPor": "equipe",
+    "mostrarChances": "no_sorteio",
+    "placarPadrao": "efeitoDecisoes",
+    "alvoPorEquipe": 3,
+    "minPareados": 5,
+    "destacarCartas": 2,
+    "jurosDividaMes": 0.0743,
+    "jurosFonte": "Banco Central, SGS 25463: cheque especial, 7,43% ao mês em ago/2026 (136,41% ao ano; teto legal de 8% ao mês, Resolução CMN 4.765/2019). É a modalidade que rola a dívida de um mês para o outro sem pedir nada ao banco",
+    "pisoTrabalho": true,
+    "mesesPorRodada": 2,
+    "limiteChequeEspecial": 2000,
+    "limiteFonte": "Banco Central, Estudo Especial nº 84/2020 (microdados do SCR, dez/2019): limite médio de cheque especial de R$ 1.693 na faixa de renda abaixo de R$ 1,5 mil (R$ 21.422 acima de R$ 10 mil). Corrigido pelo IPCA de jan/2020 a ago/2026 (× 1,4347, BCB SGS 433): R$ 2.429. O próprio estudo avisa que o método superestima o limite (o do cheque especial é achado por resíduo) e que só entra quem teve carteira em 24 dos 36 meses; as personas não têm carteira (D-062). Usado R$ 2.000, o teto da faixa da D-066 (R$ 1.000 a R$ 2.000), abaixo dos R$ 2.429. Passado o limite, o banco não empresta mais",
+    "multaAtraso": 0.08,
+    "moraMes": 0.01,
+    "atrasoFonte": "Aluguel: a lei não fixa a multa, vale o contrato; o costume é 10% de multa e 1% de juros ao mês (Procon-SP, \"Multas por atraso\", jul/2019; Lei 8.245/1991). Luz: multa de até 2% e juros de 1% ao mês (ANEEL, REN 1.000/2021). Água: 2% e 1% ao mês (o teto do Código de Defesa do Consumidor para contas de consumo; DMAE). Celular e internet: 2% de multa (o teto do Código de Defesa do Consumidor, art. 52, § 1º) e 1% de juros ao mês (o que a operadora cobra pelo contrato: Vivo, via Selectra, 02/03/2023); a Resolução Anatel 765/2023 não fixa percentual, só manda informar a multa e os juros na fatura. Gás, ônibus e remédio não têm multa: quem não paga fica sem, e por isso no jogo eles não viram conta atrasada (a casa fica sem). Conta nossa: a média ponderada pelo peso de cada conta que pode atrasar no básico das 6 casas (aluguel, luz, água e celular; o aluguel é de 74% a 79% delas) dá multa de 8,1% e mora de 1% ao mês; usados 8% e 1%. A multa é cobrada uma vez, sobre o que atrasou no bimestre; a mora é simples, sobre o que já estava atrasado",
+    "cortarPrimeiro": "contas",
+    "formatoSimples": true
+  },
+  "escala": {
+    "curtos": [
+      "Discordo muito",
+      "Discordo",
+      "Neutro",
+      "Concordo",
+      "Concordo muito"
+    ],
+    "longos": [
+      "Discordo totalmente",
+      "Discordo",
+      "Nem concordo nem discordo",
+      "Concordo",
+      "Concordo totalmente"
+    ]
+  },
+  "indicadores": [
+    {
+      "id": "renda",
+      "nome": "Saldo acumulado",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": -100000,
+      "max": 100000
+    },
+    {
+      "id": "emprestimo",
+      "nome": "Empréstimo a pagar",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": 0,
+      "max": 100000
+    },
+    {
+      "id": "contas_atrasadas",
+      "nome": "Contas atrasadas",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": 0,
+      "max": 200000
+    },
+    {
+      "id": "faltou_na_mesa",
+      "nome": "Faltou na mesa",
+      "formato": "moeda",
+      "inicial": 0,
+      "min": 0,
+      "max": 200000
+    }
+  ],
+  "personas": [
+    {
+      "id": "motoboy",
+      "nome": "Jonas",
+      "descricao": "Motoboy, 34 anos, entrega pelo iFood com moto financiada. Mora no Sarandi, em Porto Alegre.",
+      "familia": {
+        "descricao": "Jonas, a companheira, que faz faxina duas vezes por semana e revende cosméticos, e a filha de 6 anos.",
+        "pessoas": 3
+      },
+      "basico": {
+        "itens": [
+          {
+            "rotulo": "comida (2,5 cestas básicas)",
+            "valor": 2098,
+            "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 2,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)",
+            "comida": true
+          },
+          {
+            "rotulo": "aluguel (2 quartos)",
+            "valor": 1200,
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Usado o piso da faixa do Sarandi (R$ 1.192, R$ 1.200 no jogo): a casa que já não fecha o mês aluga o mais barato do bairro (até 06/10 de manhã, R$ 1.300, dentro da mesma faixa; D-079). Mercado formal (exige fiador ou análise de crédito)"
+          },
+          {
+            "rotulo": "luz",
+            "valor": 162,
+            "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 150 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
+          },
+          {
+            "rotulo": "água e esgoto",
+            "valor": 119,
+            "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 12 m³/mês, 4 m³ por pessoa (estimativa)"
+          },
+          {
+            "rotulo": "gás de cozinha",
+            "valor": 89,
+            "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)",
+            "semAtraso": true
+          },
+          {
+            "rotulo": "ônibus da companheira",
+            "valor": 95,
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95 (até 06/10 de manhã, 30 passagens, estimativa sem conta; reconta da D-079). Estimativa sem fonte: ela não pega outro ônibus no mês (a revenda vai a pé ou na moto do Jonas)",
+            "semAtraso": true
+          },
+          {
+            "rotulo": "celular e internet",
+            "valor": 75,
+            "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
+          },
+          {
+            "rotulo": "remédios",
+            "valor": 90,
+            "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
+            "semAtraso": true
+          }
+        ]
+      },
+      "outraRenda": {
+        "rotulo": "faxinas e revenda da companheira",
+        "valor": 1600,
+        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300 (até 06/10 de manhã, 8 por mês, o mês arredondado para 4 semanas; reconta da D-079). DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Trabalhar três dias por semana na mesma casa já gera vínculo de emprego (Lei Complementar 150/2015); por isso, a diarista vai no máximo duas vezes por semana à mesma casa. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. Ninguém na casa tem carteira assinada"
+      },
+      "todoMes": [
+        {
+          "soma": {
+            "renda": 2680
+          },
+          "rotulo": "entregas do mês, já sem a gasolina",
+          "fonte": "IBGE, PNAD Contínua, Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 10: motociclistas de app, R$ 2.221/mês, 44,9 h/semana, valor \"retirado\", já sem o combustível. IBGE, Notas técnicas da PNAD Contínua v1.5, p. 35-36: a retirada do conta-própria já desconta \"equipamentos e outros investimentos\". Por isso a parcela da moto (R$ 480) aparece aqui somada e sai como custo fixo: o líquido fica nos R$ 2.200"
+        },
+        {
+          "soma": {
+            "renda": -480
+          },
+          "fixo": true,
+          "rotulo": "a parcela da moto",
+          "fonte": "Tabela Fipe set/2026 (CG 160 Start 2026, R$ 18.598), 80% financiado em 48x a 1,97% a.m. (BCB, SGS 25471, jun/2026) = R$ 482"
+        }
+      ],
+      "fonte": "Abílio (2021): trajetória dos motoboys; PNAD 2025"
+    }
+  ],
+  "equipes": [
+    {
+      "id": "e1",
+      "nome": "Laranja",
+      "cor": "#E69F00",
+      "forma": "circulo",
+      "persona": "motoboy",
+      "obrigatoria": true
+    },
+    {
+      "id": "e2",
+      "nome": "Celeste",
+      "cor": "#56B4E9",
+      "forma": "triangulo",
+      "persona": "motoboy",
+      "obrigatoria": true
+    },
+    {
+      "id": "e3",
+      "nome": "Verde",
+      "cor": "#009E73",
+      "forma": "quadrado",
+      "persona": "motoboy",
+      "obrigatoria": false
+    },
+    {
+      "id": "e4",
+      "nome": "Azul",
+      "cor": "#0072B2",
+      "forma": "losango",
+      "persona": "motoboy",
+      "obrigatoria": false
+    },
+    {
+      "id": "e5",
+      "nome": "Vermelho",
+      "cor": "#D55E00",
+      "forma": "estrela",
+      "persona": "motoboy",
+      "obrigatoria": false
+    },
+    {
+      "id": "e6",
+      "nome": "Rosa",
+      "cor": "#CC79A7",
+      "forma": "cruz",
+      "persona": "motoboy",
+      "obrigatoria": false
+    }
+  ],
+  "rodadas": [
+    {
+      "id": "r1",
+      "titulo": "Jan–fev: quanto trabalhar no calor?",
+      "texto": "39 °C às 14h, a filha de férias e o IPVA com desconto até 30/01.",
+      "padrao": "c",
+      "contexto": {
+        "motoboy": "A parcela da moto vence no dia 5, o IPVA tem desconto até 30/01, e às 14h faz 39 °C. A filha está de férias."
+      },
+      "efeitosGerais": [],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "12 horas por dia no sol",
+          "narrativa": "Rodar 12 horas por dia, todo dia, no calor de 39 °C: mais entregas, menos sono e quase sem tempo em casa.",
+          "impacto": "12 h por dia no sol: chega em casa e a filha de férias já dormiu",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 1040
+              },
+              "rotulo": "horas a mais (as piores do dia)",
+              "fonte": "Estimativa: +20 h por semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses: R$ 520 por mês × 2 = R$ 1.040"
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Atrasar a parcela da moto",
+          "narrativa": "Adiar a parcela de fevereiro para março: alivia agora, mas ela volta com multa e juros, e a moto corre risco.",
+          "impacto": "O banco liga todo dia, e em março a parcela volta com multa e juros",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 480
+              },
+              "rotulo": "a parcela de fevereiro ficou para depois",
+              "fonte": "Parcela da moto de R$ 480 (Tabela Fipe set/2026, CG 160 Start, R$ 18.598, 80% em 48× a 1,97% ao mês, BCB SGS 25471: R$ 482). Atrasar um mês é o crédito mais à mão de quem já está no cheque especial. Volta em mar–abr com multa e juros (efeito geral de mar–abr)"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Jornada de sempre",
+          "narrativa": "Manter cerca de 45 horas por semana, como sempre, no sol, sem esticar e sem parar nos dias mais quentes.",
+          "impacto": "Roda no sol como sempre: chega exausto, e a conta segue sem fechar",
+          "efeitos": []
+        },
+        {
+          "id": "d",
+          "rotulo": "Parar das 10h às 16h",
+          "narrativa": "A Defesa Civil recomenda evitar esforço das 10h às 16h no calor: parar poupa o corpo, mas custa o pico do almoço.",
+          "impacto": "Volta inteiro para a filha, e o pico do almoço fica para quem aguentou o sol",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -110
+              },
+              "rotulo": "parou das 10h às 16h nos dias de calor forte",
+              "fonte": "Defesa Civil de Porto Alegre (08/02/2025): evitar esforço das 10h às 16h; 39,5 °C em 11/02/2025 (Correio Braziliense). 6 dias de calor extremo no bimestre (estimativa: em fev/2025, três dias passaram de 37 °C em uma semana) × 40% do dia × 50%: a OIT (\"Trabalhar num planeta mais quente\") estima que, entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade, e a hora no sol rende menos; das 10h às 16h fica o pico do almoço (R$ 107). R$ 110 na tela e no jogo"
+            }
+          ]
+        },
+        {
+          "id": "e",
+          "rotulo": "Pagar o IPVA em janeiro",
+          "narrativa": "O IPVA da moto tem desconto se for pago até 30/01: pagar agora usa o cheque especial, que cobra juros todo mês.",
+          "impacto": "Paga o IPVA adiantado no cheque especial: o ano já começa no vermelho",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -330
+              },
+              "categoria": "gasto",
+              "rotulo": "IPVA pago em janeiro, com 3% de desconto",
+              "fonte": "Sefaz-RS, IPVA 2026: vencimento em 30/04/2026, 2% do valor venal da moto (~R$ 17 mil, estimativa sem fonte, a mesma do IPVA de mar–abr: a CG 160 de 2025; a parcela da moto usa o preço da 2026 na Fipe, R$ 18.598): R$ 340. Pagar até 30/01 dá 3% de desconto pela antecipação (2% em fevereiro, 1% em março); os 22,4% do anúncio somam o Bom Motorista (15%) e o Bom Cidadão (5%), que valem também no vencimento e o jogo não dá ao Jonas. R$ 340 × 0,97 = R$ 329,80, R$ 330 na tela. Em mar–abr, quem pagou não paga os R$ 340 (efeito geral de mar–abr)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "titulo": "Mar–abr: a lei que saiu de pauta",
+      "texto": "O 99Food chega, o IPVA vence e a lei dos apps sai de pauta.",
+      "padrao": "d",
+      "contexto": {
+        "motoboy": "O 99Food chegou pagando R$ 250 por 20 corridas, e o IPVA vence em 30/04. A lei que saiu de pauta prometia R$ 8,50 por entrega."
+      },
+      "efeitosGerais": [
+        {
+          "soma": {
+            "renda": 340
+          },
+          "se": {
+            "decidiu": {
+              "r1": "e"
+            }
+          },
+          "rotulo": "IPVA já pago em janeiro",
+          "fonte": "Sefaz-RS: o IPVA é um só por ano. Quem pagou em janeiro (jan–fev, opção E) não paga os R$ 340 de 30/04 da carta do bimestre"
+        },
+        {
+          "soma": {
+            "renda": -500
+          },
+          "se": {
+            "decidiu": {
+              "r1": "b"
+            }
+          },
+          "categoria": "gasto",
+          "rotulo": "parcela da moto atrasada, com multa e juros",
+          "fonte": "A parcela de fevereiro (R$ 480) paga em março, um mês atrasada: multa de 2% (Código de Defesa do Consumidor, art. 52, § 1º), juros de mora de 1% ao mês (o usual nos contratos; o mesmo 1% da mora do jogo, D-069) e os juros do próprio financiamento por um mês (1,97%, BCB SGS 25471): R$ 480 × 1,0497 = R$ 503,86, R$ 500 no jogo. Com parcela atrasada, o banco pode pedir a moto de volta (Decreto-Lei 911/1969, arts. 2º e 3º)"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r1": "a"
+            },
+            "opcao": "b"
+          },
+          "soma": {
+            "renda": -630
+          },
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
+          "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r1": "a"
+            },
+            "opcao": "b"
+          },
+          "soma": {
+            "renda": -600
+          },
+          "categoria": "gasto",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
+          "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Parar no dia da greve",
+          "narrativa": "14/04: greve nacional contra a lei dos apps, que fixaria R$ 8,50 por entrega e não R$ 10; quem para arrisca bloqueio.",
+          "impacto": "Cinco dias bloqueado depois da greve: em casa, olhando o celular que não toca",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -90
+              },
+              "rotulo": "um dia parado na greve",
+              "fonte": "Um dia sem ganho (1/60 do bimestre). PLP 152/2025: em 14/04/2026, dia da greve nacional de motoristas e entregadores de aplicativo, com \"protestos em Brasília e diferentes capitais\", o projeto saiu da pauta da Câmara; o governo federal também retirou o apoio (Diário do Transporte, 14/04/2026). A votação foi cancelada por \"um impasse entre o relator e o governo federal, que retirou o apoio à proposta\", e \"não tem nova data\" (Mobile Time, 14/04/2026). O projeto trazia R$ 8,50 por entrega e criava o trabalhador \"plataformizado\", que \"não se enquadra na Consolidação das Leis do Trabalho (CLT), mas também deixa de ser considerado totalmente autônomo\" (O Tempo, 08/04/2026). A greve foi convocada contra o texto: as lideranças queriam R$ 10 por entrega, e não R$ 8,50, e rejeitavam o \"autônomo plataformizado\", que afasta a CLT (Diário do Transporte, 14/04/2026). Um dia do bimestre: R$ 89,33, R$ 90 na tela e no jogo"
+            },
+            {
+              "soma": {
+                "renda": -450
+              },
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Rodar também no 99Food",
+          "narrativa": "O 99Food chegou com bônus de entrada: rodar nos dois apps rende mais e divide a atenção no trânsito.",
+          "impacto": "Dois apps apitando ao mesmo tempo: atenção dividida no trânsito o dia todo",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 900
+              },
+              "rotulo": "dois apps ao mesmo tempo",
+              "fonte": "Estimativa: +15% da renda do bimestre (R$ 5.360 × 15% = R$ 804) mais o bônus de entrada do 99Food em Porto Alegre (desde 17/03/2026: R$ 250 garantidos por 20 corridas de moto, R$ 12,50 cada, R$ 5 acima do mínimo de R$ 7,50 do iFood; Jornal do Brás, 23/03/2026: R$ 100) = R$ 904, R$ 900 na tela e no jogo. PNAD 2025: 37,5% dos plataformizados usam dois ou mais apps; Fairwork 2025: 62 de 88 dependem de mais de um app. 99 e iFood: o seguro de cada app só cobre a corrida ou a entrega dele"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Pegar um empréstimo",
+          "narrativa": "Crédito pessoal a 6,39% ao mês, em 12 parcelas: o dinheiro entra agora, e a dívida passa do fim do ano.",
+          "impacto": "12 parcelas: a mesma entrega agora paga a moto e o empréstimo",
+          "efeitos": [
+            {
+              "emprestimo": {
+                "valor": 1500,
+                "parcelas": 12,
+                "taxaMes": 0.0639,
+                "fonte": "Banco Central, SGS 25464: crédito pessoal não consignado, 6,39% ao mês em ago/2026. Tabela Price, 12 parcelas: R$ 1.500 = 12 × R$ 182,76 (conta nossa, sem IOF). No bimestre, duas parcelas por rodada, a partir de mai–jun: 8 dentro do jogo e 4 depois"
+              },
+              "rotulo": "crédito pessoal"
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Aceitar até entrega ruim",
+          "narrativa": "O app manda menos pedidos para quem recusa: aceitar até a entrega longa e barata para não sumir da fila.",
+          "impacto": "Aceita até a entrega ruim: mais horas longe da filha para ganhar quase o mesmo",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 160
+              },
+              "rotulo": "aceitou até as entregas ruins",
+              "fonte": "Estimativa: +3% da renda do bimestre (R$ 5.360 × 3% = R$ 161, R$ 160 na tela e no jogo): as entregas ruins rendem pouco. iFood (31/08/2026): o \"Mais Entregas\" exige 90% do tempo disponível e no máximo 2 recusas; e, no iFood, 7 recusas seguidas = 15 minutos fora (Metrópoles, 01/08/2025)"
+            }
+          ]
+        },
+        {
+          "id": "e",
+          "rotulo": "Trocar iFood pelo 99Food",
+          "narrativa": "Largar o iFood pelo bônus do 99Food, que paga mais por corrida, sem saber quantos pedidos virão.",
+          "impacto": "Troca de app pelo bônus: começa do zero, sem saber se o pedido vem",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 100
+              },
+              "rotulo": "bônus de entrada do 99Food",
+              "fonte": "99Food em Porto Alegre desde 17/03/2026: R$ 250 garantidos por 20 corridas de moto, R$ 12,50 cada, R$ 5 acima do mínimo de R$ 7,50 do iFood (Jornal do Brás, 23/03/2026): 20 × R$ 5 = R$ 100 a mais. Estimativa sem fonte: que o volume de pedidos no 99Food seja o mesmo do iFood (não achei dado de volume)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "titulo": "Mai–jun: chuva, frio e o Guaíba",
+      "texto": "Chove forte, o Guaíba sobe e o frio chega.",
+      "padrao": "d",
+      "contexto": {
+        "motoboy": "O pneu traseiro está quase no fim, com 13 mil km no ano. Com chuva, o app paga de R$ 3 a R$ 12 a mais por entrega."
+      },
+      "efeitosGerais": [
+        {
+          "se": {
+            "decidiu": {
+              "r2": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": -630
+          },
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
+          "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r2": "b"
+            },
+            "opcao": "c"
+          },
+          "soma": {
+            "renda": -600
+          },
+          "categoria": "gasto",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
+          "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Pneu novo antes da chuva",
+          "narrativa": "O pneu traseiro está quase no fim (13 mil km): careca, ele derrapa na chuva e dá multa grave; trocar custa agora.",
+          "impacto": "Pneu novo na chuva: freia sem medo, e o dinheiro sai do mercado",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -230
+              },
+              "categoria": "gasto",
+              "rotulo": "pneu traseiro novo",
+              "fonte": "Pneu traseiro da CG 160: R$ 228 (lojas, B; o mesmo da carta \"A moto quebrou\" do config de 05/10), R$ 230 na tela. O pneu traseiro dura de 15 a 20 mil km, e a moto roda 6.760 km por bimestre (130 km por dia × 26 dias, Sindimoto-SP via AutoPapo, 08/11/2025): 13.520 km no fim de abril. Pneu careca é infração grave, R$ 195,23 e 5 pontos (CTB, art. 230, XVIII). Se a moto quebrar em set–out (revisão adiada), o pneu já está pago. Simplificação a decidir (revisão de 06/10): a retirada da PNAD já desconta a manutenção média (fonte de jul–ago C), e o pneu é cobrado aqui à parte; quem não troca não paga o pneu no ano (estimativa sem fonte de quando ele entraria na manutenção média)"
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Parar nos dias de alerta",
+          "narrativa": "A meteorologia dá alerta laranja de temporal, com vento de 100 km/h: parar é seguro, mas não rende.",
+          "impacto": "Fica em casa no alerta laranja: a filha dorme sabendo que o pai está seco",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -180
+              },
+              "rotulo": "2 dias parado no alerta de temporal",
+              "fonte": "Só de maio a outubro, a estação dos temporais e das cheias (cheia de jun/2025 com o Guaíba a 3,01 m, Agência Brasil; alerta de 22 e 23/09/2026 na Ilha da Pintada). INMET, via O Tempo (27/09/2026): alerta laranja, vento de 100 km/h e granizo em Porto Alegre. Metrópoles (01/08/2025): promoção de chuva de R$ 3 a R$ 12 por entrega. Jonas: 2 dias de trabalho do bimestre, 2 × R$ 89,33 = R$ 178,67, R$ 180 na tela"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Rodar de madrugada",
+          "narrativa": "Com chuva, o app paga um extra por entrega: rodar até de madrugada rende mais, no frio e no escuro.",
+          "impacto": "Rodando de madrugada na chuva: a companheira acordada esperando a moto",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 800
+              },
+              "rotulo": "madrugadas na chuva",
+              "fonte": "Estimativa: +15% da renda do bimestre (R$ 804, R$ 800 na tela e no jogo; o rascunho v2 usava +20% de um mês, e no bimestre as madrugadas não rendem o mesmo nos dois meses). Promoção de chuva de R$ 3 a R$ 12 por entrega (Metrópoles, 01/08/2025)"
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Jornada de sempre",
+          "narrativa": "Rodar do almoço ao jantar como sempre, molhado e com frio, com a capa velha e sem parar no temporal.",
+          "impacto": "Roda molhado do almoço ao jantar e chega em casa gelado, como todo inverno",
+          "efeitos": []
+        },
+        {
+          "id": "e",
+          "rotulo": "Comprar capa, bota e luva",
+          "narrativa": "Kit de chuva (capa, bota, luva e balaclava): o Jonas fica seco e protegido, mas o dinheiro sai do mercado.",
+          "impacto": "O dinheiro da roupa sai do mercado, e o Jonas chega seco em casa pela primeira vez",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -280
+              },
+              "categoria": "gasto",
+              "rotulo": "capa, bota e luva de chuva",
+              "fonte": "Kit de chuva para motociclista (capa, bota, luva e balaclava): de R$ 262,99 a R$ 278,90 (Mercado Livre, set/2026, B), R$ 280 na tela"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "titulo": "Jul–ago: a regra nova do app",
+      "texto": "O iFood lança o +Entregas; em 27/07, protesto no Centro.",
+      "padrao": "c",
+      "contexto": {
+        "motoboy": "No +Entregas, o iFood diz que se ganha de 10% a 30% a mais; os entregadores dizem que é R$ 3 por entrega e 12 horas na rua."
+      },
+      "efeitosGerais": [
+        {
+          "se": {
+            "decidiu": {
+              "r3": "c"
+            },
+            "opcao": "a"
+          },
+          "soma": {
+            "renda": -630
+          },
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
+          "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r3": "c"
+            },
+            "opcao": "a"
+          },
+          "soma": {
+            "renda": -600
+          },
+          "categoria": "gasto",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
+          "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Entrar no +Entregas",
+          "narrativa": "O +Entregas promete mais ganho e quase não aceita recusa; os entregadores dizem que ele paga R$ 3 por entrega.",
+          "impacto": "+Entregas: 12 horas na rua, todos os dias, e a filha só o vê de capacete",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 540
+              },
+              "rotulo": "no +Entregas",
+              "fonte": "O iFood diz que se ganha de 10% a 30% a mais; os entregadores dizem que ganham menos (CUT-RS, 27/07/2026: \"12 horas na rua, sete dias na semana, para ganhar três pila por entrega\", Acergs). Usado +10% da renda do bimestre, a ponta de baixo do que o iFood diz: R$ 536, R$ 540 na tela e no jogo"
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Ir ao protesto de 27/07",
+          "narrativa": "27/07: entregadores marcham no Centro contra o +Entregas; quem vai perde meio dia e arrisca o bloqueio.",
+          "impacto": "Do protesto para cinco dias bloqueado: a filha estranha o pai em casa de dia",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -40
+              },
+              "rotulo": "meio dia no protesto",
+              "fonte": "Meio dia sem ganho. CUT-RS (27/07/2026): entregadores protestam da Esquina Democrática até o Praia de Belas contra o \"+Entregas\", que paga R$ 3 por entrega. Meio dia do bimestre: R$ 44,67, R$ 40 na tela"
+            },
+            {
+              "soma": {
+                "renda": -450
+              },
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Adiar a revisão da moto",
+          "narrativa": "A revisão da moto está vencida, com 20 mil km no ano: adiar alivia o mês e deixa a moto mais perto de quebrar.",
+          "impacto": "Adia a revisão e roda com a moto pedindo socorro, atento a cada barulho",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 100
+              },
+              "rotulo": "revisão da moto adiada",
+              "fonte": "A retirada da PNAD já desconta a manutenção média (Notas técnicas v1.5, p. 35-36): adiar a revisão devolve ao caixa metade de um mês dela (estimativa: o que dá para adiar, e não pneu e óleo). Moto: R$ 200 por mês (Sindimoto-SP, via AutoPapo, 08/11/2025): R$ 100. No jogo simples, a conta volta sempre: em set–out a moto quebra (efeito geral de set–out); na vida, é risco"
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Tirar uma semana de folga",
+          "narrativa": "A primeira semana de descanso do ano: no app não há férias pagas, e cada dia parado é um dia sem ganho.",
+          "impacto": "Uma semana inteira com a filha, paga com o dinheiro que não entra",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -630
+              },
+              "rotulo": "uma semana sem trabalhar",
+              "fonte": "Uma semana (7 dias) sem ganho: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela"
+            }
+          ]
+        },
+        {
+          "id": "e",
+          "rotulo": "Pegar promoções da noite",
+          "narrativa": "O iFood paga bônus a quem fica online das 18h às 22h: a jornada gira em torno do horário que o app quer.",
+          "impacto": "Noites de inverno na rua atrás do bônus, e o jantar em casa sem o pai",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 310
+              },
+              "rotulo": "promoções da noite",
+              "fonte": "iFood, \"Entenda as mecânicas… de cada tipo de promoção\" (2026): R$ 30 por ficar ativo das 18h às 21h59, +R$ 3 ou +30% por rota; 4 noites por mês × R$ 30 a R$ 48, nos 2 meses: ~R$ 310 (a conta da carta \"Promoções e desafios do bimestre\" do config de 05/10)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r5",
+      "titulo": "Set–out: breque geral",
+      "texto": "Greve dos entregadores em 01/09, e outro app paga bônus a quem furar.",
+      "padrao": "a",
+      "contexto": {
+        "motoboy": "Breque geral no dia 1º: quem fura fica marcado entre os colegas, e quem adere perde o dia. O Acampamento Farroupilha recebe 1,1 milhão de visitantes."
+      },
+      "efeitosGerais": [
+        {
+          "soma": {
+            "renda": -270
+          },
+          "se": {
+            "decidiu": {
+              "r4": "c"
+            }
+          },
+          "rotulo": "a moto quebrou (revisão adiada): 3 dias parado",
+          "fonte": "Revisão adiada em jul–ago (opção C): no jogo simples, a moto sempre quebra em set–out (na vida, é risco; simplificação). 3 dias sem a moto: 3 × R$ 89,33 = R$ 268, R$ 270 na tela. A moto roda 6.760 km por bimestre, revisão a cada 6.000 km, relação de 20 a 30 mil km e pneu traseiro de 15 a 20 mil km (Sindimoto-SP via AutoPapo, 08/11/2025): 33.800 km no fim de set–out"
+        },
+        {
+          "soma": {
+            "renda": -520
+          },
+          "se": {
+            "decidiu": {
+              "r4": "c",
+              "r3": [
+                "b",
+                "c",
+                "d",
+                "e"
+              ]
+            }
+          },
+          "categoria": "gasto",
+          "rotulo": "a moto quebrou (revisão adiada): kit da corrente e pneu",
+          "fonte": "Kit de relação Honda R$ 294 + pneu traseiro R$ 228 (lojas, B; a carta \"A moto quebrou\" do config de 05/10) = R$ 522, R$ 520 na tela"
+        },
+        {
+          "soma": {
+            "renda": -290
+          },
+          "se": {
+            "decidiu": {
+              "r4": "c",
+              "r3": "a"
+            }
+          },
+          "categoria": "gasto",
+          "rotulo": "a moto quebrou (revisão adiada): kit da corrente; o pneu era novo",
+          "fonte": "Kit de relação Honda R$ 294 (lojas, B), R$ 290 na tela. Quem trocou o pneu em mai–jun (opção A) não paga o pneu de novo: com 13.520 km de uso até aqui, ele ainda não chegou ao fim (15 a 20 mil km, Sindimoto-SP via AutoPapo)"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r4": "a"
+            },
+            "opcao": "d"
+          },
+          "soma": {
+            "renda": -630
+          },
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
+          "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r4": "a"
+            },
+            "opcao": "d"
+          },
+          "soma": {
+            "renda": -600
+          },
+          "categoria": "gasto",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
+          "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Jornada de sempre",
+          "narrativa": "Nem parar nem furar: seguir a rotina no mês do breque geral e do Acampamento Farroupilha.",
+          "impacto": "Nem para nem fura: segue cansado, longe da filha, como em todo bimestre",
+          "efeitos": []
+        },
+        {
+          "id": "b",
+          "rotulo": "Recusar o que não paga",
+          "narrativa": "Recusar o pedido que não cobre o custo da moto: o app passa a mandar menos chamadas para quem recusa.",
+          "impacto": "Recusa o que não paga, e o celular passa horas em silêncio na esquina",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -270
+              },
+              "rotulo": "recusou o que não pagava",
+              "fonte": "Estimativa: −5% da renda do bimestre (R$ 268, R$ 270 na tela e no jogo). iFood: 7 recusas seguidas = 15 minutos fora (Metrópoles, 01/08/2025)"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Parar no dia do breque",
+          "narrativa": "01/09: o breque pede R$ 10 por corrida curta e o fim do +Entregas; quem para perde o dia e arrisca bloqueio.",
+          "impacto": "Adere ao breque com o país, e o app responde com cinco dias de bloqueio",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -90
+              },
+              "rotulo": "um dia parado no breque",
+              "fonte": "Um dia sem ganho (1/60 do bimestre). Breque geral de 01/09/2026: R$ 10 por corrida de até 4 km, R$ 2,50 por km, fim do +Entregas e transparência nos bloqueios (Metrópoles, 01/09/2026). Até agora, sem reajuste Um dia do bimestre: R$ 89,33, R$ 90 na tela e no jogo"
+            },
+            {
+              "soma": {
+                "renda": -450
+              },
+              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Furar o breque pelo bônus",
+          "narrativa": "Outro app paga bônus a quem furar; rodar nas noites da Farroupilha rende, mas pega mal com os colegas.",
+          "impacto": "Fura o breque e roda toda noite da Farroupilha: vira o fura-greve da quadra",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 150
+              },
+              "rotulo": "bônus do concorrente no dia do breque",
+              "fonte": "Metrópoles (01/09/2026) e Correio Braziliense (31/08/2026): durante o breque, 99Food e Keeta ofereceram até R$ 9 a mais por entrega (visto em São Paulo). Estimativa: ~17 entregas no dia × R$ 9 = R$ 153, R$ 150 no jogo"
+            },
+            {
+              "soma": {
+                "renda": 670
+              },
+              "rotulo": "noites e fins de semana da Farroupilha",
+              "fonte": "Acampamento Farroupilha de 29/08 a 20/09/2026, mais de 1,1 milhão de visitantes no Parque Harmonia (Jornal do Comércio, 09/2026): sem número de ganho. Estimativa: +25% de um mês para quem roda (três semanas de acampamento, noites e fins de semana): 25% de R$ 2.680 = R$ 670"
+            }
+          ]
+        },
+        {
+          "id": "e",
+          "rotulo": "Folgar no 20 de Setembro",
+          "narrativa": "Feriado com o Acampamento Farroupilha cheio: um dia com a filha, e os pedidos vão para outro.",
+          "impacto": "Um dia no Acampamento com a filha, e o feriado cheio de pedidos fica para outro",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -90
+              },
+              "rotulo": "folga no 20 de Setembro",
+              "fonte": "20 de Setembro, feriado estadual no Rio Grande do Sul (Lei estadual 4.850/1964). Um dia de trabalho do bimestre: R$ 89,33, R$ 90 na tela"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r6",
+      "titulo": "Nov–dez: Natal e nenhum 13º",
+      "texto": "Dezembro começa com 16% mais pedidos; 13º, só com carteira.",
+      "padrao": "d",
+      "contexto": {
+        "motoboy": "Dezembro começa com 16% mais pedidos no iFood. Quem tem carteira assinada recebe o 13º até o dia 20; nesta casa, ninguém tem. A conta de luz pode subir 24%."
+      },
+      "efeitosGerais": [
+        {
+          "se": {
+            "decidiu": {
+              "r5": "d"
+            },
+            "opcao": "b"
+          },
+          "soma": {
+            "renda": -630
+          },
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): 7 dias parado",
+          "fonte": "Carta \"Dor\" do config de 05/10: Souza et al. (Physis, 2024), entregadores: \"minha coluna é arrebentada\"; Kinote et al. (RBPS, 2013): 76,7% com dor, 46,7% com dor crônica. 7 dias parado: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Regra do jogo simples (decisão do Kleber de 05/10, à noite): duas opções puxadas seguidas (mais horas ou noites na rua: 12 h no sol, dois apps, madrugada na chuva, +Entregas, furar o breque com a Farroupilha, todo dia até o Natal) e as costas travam no bimestre da segunda. Na vida é risco; no jogo, sempre acontece na segunda seguida: simplificação, estimativa sem fonte"
+        },
+        {
+          "se": {
+            "decidiu": {
+              "r5": "d"
+            },
+            "opcao": "b"
+          },
+          "soma": {
+            "renda": -600
+          },
+          "categoria": "gasto",
+          "rotulo": "as costas travaram (2 bimestres puxados seguidos): fisioterapia, 4 sessões",
+          "fonte": "Doctoralia, Porto Alegre: fisioterapia particular de R$ 120 a R$ 320 a sessão; 4 sessões × R$ 150 = R$ 600. Fila do SUS no RS sem tempo divulgado (Agora RS, 17/09/2026)"
+        }
+      ],
+      "opcoes": [
+        {
+          "id": "a",
+          "rotulo": "Pedir ajuda à família",
+          "narrativa": "Sem 13º no Natal, pedir à mãe aposentada uma ajuda para o mercado: sem INSS nem carteira, resta a família.",
+          "impacto": "A mãe aposentada ajuda no Natal: a conta respira, e o orgulho pesa",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 300
+              },
+              "rotulo": "ajuda da mãe no Natal",
+              "fonte": "Estimativa sem fonte do valor: a mãe do Jonas, aposentada pelo INSS com 1 salário mínimo (R$ 1.621 desde 01/01/2026, Decreto 12.797/2025; o benefício que substitui o salário não fica abaixo do mínimo, Constituição, art. 201, § 2º), dá R$ 300 para o mercado do Natal, menos de um quinto do que recebe. Quem não tem INSS nem 13º se apoia na família: dos entregadores que ficaram 15 dias ou mais parados depois de um acidente, só 20% receberam do INSS; entre todos os que se afastaram, a ajuda da família para as despesas foi o apoio mais citado (38,3%) (Siqueira et al., Cad. Saúde Pública 41(3), 2025, UFBA, 563 entregadores). Entrou no lugar de \"Cortar comida e remédio\" (pedido do Kleber de 06/10: o básico para sobreviver não é opção realista; D-079). Não é opção puxada (não põe horas na rua)"
+            }
+          ]
+        },
+        {
+          "id": "b",
+          "rotulo": "Sem folga até o Natal",
+          "narrativa": "Dezembro começa com 16% mais pedidos: rodar todo dia até a véspera do Natal rende mais e não deixa descanso.",
+          "impacto": "Trabalha até a véspera do Natal: a filha passa as férias sem o pai acordado",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": 1040
+              },
+              "rotulo": "horas a mais (as piores do dia)",
+              "fonte": "Estimativa: +20 h por semana a ~53% do ganho-hora (pacote B de calibragem, D-024), nos 2 meses: R$ 520 por mês × 2 = R$ 1.040"
+            }
+          ]
+        },
+        {
+          "id": "c",
+          "rotulo": "Folgar na semana do Natal",
+          "narrativa": "Uma semana com a família no Natal, sem férias pagas, justo em dezembro, quando os pedidos sobem.",
+          "impacto": "Uma semana de Natal com a filha, e os pedidos de dezembro vão para outro",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -630
+              },
+              "rotulo": "uma semana de folga no Natal",
+              "fonte": "Uma semana (7 dias) sem ganho: R$ 2.680 × 2 × 7 ÷ 60 = R$ 625,33, R$ 630 na tela. Simplificação (revisão de 06/10): é a semana média do ano, e o +R$ 430 de dezembro (evento do mês) fica inteiro; uma semana de dezembro valeria (R$ 2.680 + R$ 430) ÷ 30 × 7 = R$ 725,67"
+            }
+          ]
+        },
+        {
+          "id": "d",
+          "rotulo": "Jornada de sempre",
+          "narrativa": "Seguir a rotina até o fim do ano, sem 13º, sem férias e sem um dia a mais de folga.",
+          "impacto": "Rotina de sempre até o fim do ano, sem 13º e sem um dia a mais com a filha",
+          "efeitos": []
+        },
+        {
+          "id": "e",
+          "rotulo": "Presente para a filha",
+          "narrativa": "A filha de 6 anos pediu um brinquedo ao Papai Noel: o presente tira dinheiro das contas, mas alegra o Natal dela.",
+          "impacto": "A filha abre o presente no Natal, e o dinheiro sai das contas de dezembro",
+          "efeitos": [
+            {
+              "soma": {
+                "renda": -170
+              },
+              "categoria": "gasto",
+              "rotulo": "presente de Natal da filha",
+              "fonte": "Fecomércio-RS, Pesquisa de Final de Ano 2025 (385 consumidores de 8 cidades do RS, de 14 a 26/10/2025; via Sindilojas Gravataí, 10/12/2025): cada presente de Natal custa em média R$ 166,93 (R$ 742,43 por pessoa, 4,4 presentes), e o brinquedo é o 2º presente mais comprado (46,6%). Um presente, o da filha: R$ 170 no jogo. Entrou no lugar de \"Temporário com carteira\" (pedido do Kleber de 06/10 à tarde: a opção pedia explicação, porque pagava menos no caixa e os benefícios não apareciam; D-080). Não é opção puxada (não põe horas na rua)"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cartas": [
+    {
+      "id": "calor",
+      "titulo": "O calor de janeiro",
+      "curto": "Calor",
+      "narrativa": "Fez 39 °C às 14h, e a gasolina subiu.",
+      "peso": 1,
+      "rodadas": [
+        "r1"
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -30
+          },
+          "fixo": true,
+          "rotulo": "gasolina mais cara",
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,30 (jan) e 6,18 (fev) em jan–fev de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 28, R$ 30 no jogo"
+        }
+      ],
+      "fonte": "O evento de jan–fev, igual para todas as equipes (jogo simples, sem sorteio)"
+    },
+    {
+      "id": "pauta",
+      "titulo": "A lei saiu de pauta",
+      "curto": "Sem lei",
+      "narrativa": "A greve parou as capitais, e a lei dos apps saiu de pauta sem nova data. O IPVA venceu.",
+      "peso": 1,
+      "rodadas": [
+        "r2"
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -60
+          },
+          "fixo": true,
+          "rotulo": "gasolina mais cara",
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,38 (mar) e 6,52 (abr, o maior preço de 2024 a 2026) em mar–abr de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 63, R$ 60 no jogo"
+        },
+        {
+          "soma": {
+            "renda": -340
+          },
+          "fixo": true,
+          "rotulo": "IPVA da moto",
+          "fonte": "Sefaz-RS, calendário do IPVA 2026 (ipva.rs.gov.br/lista/649): \"o vencimento ocorrerá no dia 30 de abril de 2026\"; 2% para moto. Valor venal estimado (sem fonte): CG 160 de 2025 ~R$ 17 mil (a 2026 vale R$ 18.598 na Fipe de set/2026): R$ 340. No vencimento, o desconto chega a 20% (Bom Motorista e Bom Cidadão), mas depende de não ter multa e do cadastro na Nota Fiscal Gaúcha: não entrou (escolha nossa, a validar). Quem pagou em janeiro (jan–fev, opção E) recebe os R$ 340 de volta no efeito geral de mar–abr: o IPVA é um só por ano. Pode estar em parte dentro da retirada da PNAD (a validar)"
+        }
+      ],
+      "fonte": "O evento de mar–abr, igual para todas as equipes. PLP 152/2025 fora de pauta em 14/04/2026, dia da greve nacional (Diário do Transporte e Mobile Time, 14/04/2026)"
+    },
+    {
+      "id": "chuva",
+      "titulo": "A chuva de maio",
+      "curto": "Chuva",
+      "narrativa": "Choveu a semana inteira, o Guaíba subiu e o frio chegou.",
+      "peso": 1,
+      "rodadas": [
+        "r3"
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -30
+          },
+          "fixo": true,
+          "rotulo": "gasolina mais cara",
+          "fonte": "ANP, série mensal de preços por município, Porto Alegre: gasolina a R$ 6,25 (mai) e 6,21 (jun) em mai–jun de 2026, contra R$ 6,08 na média de 2025 (o ano da renda da PNAD, que já vem sem o combustível: só a diferença de preço entra). 130 km por dia ÷ 40 km/L × 26 dias = 84,5 L por mês (AutoPapo, 08/11/2025). Conta nossa, nos 2 meses: R$ 26, R$ 30 no jogo"
+        }
+      ],
+      "fonte": "O evento de mai–jun, igual para todas as equipes. Na enchente de 2024, só 66% dos entregadores trabalharam (config de 05/10)"
+    },
+    {
+      "id": "regra_nova",
+      "titulo": "A regra nova do app",
+      "curto": "Regra nova",
+      "narrativa": "O iFood lançou o +Entregas, e o licenciamento da moto venceu no fim de julho.",
+      "peso": 1,
+      "rodadas": [
+        "r4"
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": -110
+          },
+          "fixo": true,
+          "rotulo": "licenciamento da moto",
+          "fonte": "AutoPapo (Detran-RS, 2026): licenciamento de R$ 114,09 até 31/07, sem parcelar, e só com as multas quitadas. R$ 110 no jogo"
+        }
+      ],
+      "fonte": "O evento de jul–ago, igual para todas as equipes. CUT-RS (27/07/2026): o +Entregas paga R$ 3 por entrega"
+    },
+    {
+      "id": "breque",
+      "titulo": "O breque geral",
+      "curto": "Breque",
+      "narrativa": "No dia 1º, entregadores pararam o país, e o reajuste não veio.",
+      "peso": 1,
+      "rodadas": [
+        "r5"
+      ],
+      "efeitos": [],
+      "fonte": "O evento de set–out, igual para todas as equipes. Breque geral de 01/09/2026: R$ 10 por corrida de até 4 km e fim do +Entregas (Metrópoles, 01/09/2026); até agora, sem reajuste"
+    },
+    {
+      "id": "natal",
+      "titulo": "Natal sem 13º",
+      "curto": "Natal",
+      "narrativa": "Dezembro encheu de pedidos, e a conta de luz subiu. O 13º não veio, porque ninguém nesta casa tem carteira assinada.",
+      "peso": 1,
+      "rodadas": [
+        "r6"
+      ],
+      "efeitos": [
+        {
+          "soma": {
+            "renda": 430
+          },
+          "rotulo": "dezembro começa com 16% mais pedidos",
+          "fonte": "iFood, release de 30/10/2023: nos 12 primeiros dias de dezembro de 2022, pedidos 16% acima da média dos meses anteriores do ano (é a demanda; estender os 16% ao mês inteiro e à renda é estimativa sem fonte, confiança baixa): R$ 2.680 × 16% = R$ 428,80, R$ 430 no jogo. A data é certa: entra para todas as equipes"
+        },
+        {
+          "soma": {
+            "renda": -40
+          },
+          "categoria": "gasto",
+          "rotulo": "luz 24% mais cara em dezembro",
+          "fonte": "Sul21 (08/2026): a CEEE Equatorial propõe +24,24% na baixa tensão a partir de 22/11/2026, ainda em consulta pública (não é definitivo). Um mês, sobre a conta de luz do básico: R$ 162 × 24,24% = R$ 39,27, R$ 40 no jogo"
+        }
+      ],
+      "fonte": "O evento de nov–dez, igual para todas as equipes. Quem tem carteira recebe o 13º até 20/12 (Lei 4.749/1965); nesta casa, ninguém (D-062)"
+    }
+  ],
+  "enquetes": [
+    {
+      "id": "entrada",
+      "titulo": "Termômetro de entrada",
+      "pareada": true,
+      "revelar": "so_no_comparativo",
+      "modo": "todas",
+      "afirmacoes": [
+        {
+          "id": "a1",
+          "texto": "Se eu estivesse no lugar desses trabalhadores, faria escolhas que fechariam as contas."
+        },
+        {
+          "id": "a2",
+          "texto": "Quem trabalha por aplicativo e não fecha as contas está administrando mal o dinheiro."
+        },
+        {
+          "id": "a3",
+          "texto": "Trabalhar mais horas resolve o problema de quem ganha pouco por aplicativo."
+        }
+      ]
+    },
+    {
+      "id": "termometro",
+      "titulo": "Termômetro",
+      "pareada": false,
+      "revelar": "ao_vivo",
+      "modo": "uma_por_vez",
+      "afirmacoes": [
+        {
+          "id": "t1",
+          "texto": "O aplicativo é o patrão."
+        },
+        {
+          "id": "t2",
+          "texto": "Carteira assinada é coisa do passado."
+        },
+        {
+          "id": "t3",
+          "texto": "Quem não prospera por conta própria é porque não se esforçou o suficiente."
+        }
+      ]
+    },
+    {
+      "id": "termometro_curto",
+      "titulo": "Termômetro",
+      "pareada": false,
+      "revelar": "ao_vivo",
+      "modo": "uma_por_vez",
+      "afirmacoes": [
+        {
+          "id": "t1",
+          "texto": "O aplicativo é o patrão."
+        },
+        {
+          "id": "t3",
+          "texto": "Quem não prospera por conta própria é porque não se esforçou o suficiente."
+        }
+      ]
+    }
+  ],
+  "referencias": [],
+  "roteiros": {
+    "60min": [
+      {
+        "tipo": "lobby",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "antes",
+        "alvoSeg": 90,
+        "opcional": true
+      },
+      {
+        "tipo": "formarEquipes",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "personas",
+        "alvoSeg": 150
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r1",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: calor e jornada",
+        "alvoSeg": 90,
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e aproveitar o pico do almoço.",
+        "itens": [
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês, já sem a gasolina.",
+          "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade de trabalho; Porto Alegre chegou a 39,5 °C."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\" (2019); Correio Braziliense (02/2025)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r2",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: a greve de 14/04 e a lei",
+        "alvoSeg": 90,
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem carteira assinada, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
+        "itens": [
+          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
+          "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
+          "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
+        ],
+        "fonte": "O Tempo (08/04/2026); Diário do Transporte e Mobile Time (14/04/2026); Brasil de Fato (29/04/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4 e 8"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r3",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: chuva e acidentes",
+        "alvoSeg": 90,
+        "contexto": "Na chuva, a moto freia pior e o app paga mais por entrega: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende da família e do seguro do app, que paga de 7 a 30 dias parado.",
+        "itens": [
+          "22% dos entregadores de moto sofreram acidente em 3 meses, segundo uma pesquisa financiada pelas plataformas.",
+          "Dos acidentados parados por 15 dias ou mais, só 20% receberam do INSS; entre os que pararam, a família foi o apoio mais citado (38,3%).",
+          "Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores ficaram ativos na 1ª semana."
+        ],
+        "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024); iFood, seguro de acidentes (2026)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r4",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: gestão por algoritmo",
+        "alvoSeg": 90,
+        "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
+        "itens": [
+          "+Entregas: o iFood promete de 10% a 30% a mais de ganho, mas exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas deixam o entregador 15 minutos fora do app.",
+          "47,4% dos entregadores dizem que bônus e promoções que mudam o preço influenciam a jornada deles."
+        ],
+        "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles (01/08/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r5",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: o que é o breque",
+        "alvoSeg": 90,
+        "contexto": "Breque é a greve dos entregadores de app: todos desligam o aplicativo no mesmo dia para pressionar a plataforma. Sem salário garantido, quem para perde o dia e arrisca o bloqueio.",
+        "itens": [
+          "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
+          "31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
+          "01/09/2026: breque geral para pedir R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+        ],
+        "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025); Metrópoles (01/09/2026)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r6",
+        "alvoSeg": 280
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: fim de ano sem 13º",
+        "alvoSeg": 90,
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira assinada (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
+        "itens": [
+          "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
+          "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
+          "No começo de dezembro de 2022, o iFood teve 16% mais pedidos que a média dos meses anteriores."
+        ],
+        "fonte": "Lei 4.090/1962; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 5, 8 e 10; iFood, release de 30/10/2023"
+      },
+      {
+        "tipo": "placarFinal",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "termometro_curto",
+        "momento": "unico",
+        "alvoSeg": 150
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "depois",
+        "alvoSeg": 90
+      },
+      {
+        "tipo": "comparativo",
+        "enquete": "entrada",
+        "alvoSeg": 90
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: e nos outros aplicativos?",
+        "alvoSeg": 90,
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de transporte de passageiros, como a Uber e a 99. Outras 300 mil trabalham em apps de faxina, cuidado e reparos.",
+        "itens": [
+          "Motorista de app ganha R$ 2.873 por mês e trabalha 45,9 horas por semana.",
+          "Por hora, ganha menos que quem dirige sem app: R$ 14,40 contra R$ 16.",
+          "8 em cada 10 (80,2%) dizem que o app decide sozinho quanto recebem por corrida. 6 em cada 10 (60,8%) dizem que ele escolhe os passageiros.",
+          "Só 1 em cada 4 motoristas de app (25,5%) contribui para o INSS. Entre os motoristas sem app, são 6 em cada 10 (59,2%)."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Fim: quem é o patrão?",
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, as regras e quem trabalha; no app, quem decide é a plataforma.",
+        "itens": [
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8% dizem que ele define sozinho quem atendem.",
+          "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
+          "Cerca de 92% do delivery passou pelo iFood no 1º trimestre de 2025; o iFood cobra do restaurante 26,2% de cada pedido com entrega."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, amostra de Open Finance, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "alvoSeg": 150
+      },
+      {
+        "tipo": "fim"
+      }
+    ],
+    "120min": [
+      {
+        "tipo": "lobby",
+        "alvoSeg": 150
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "antes",
+        "alvoSeg": 90,
+        "opcional": true
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Mapa do seminário",
+        "alvoSeg": 270,
+        "contexto": "Doze meses do Jonas em seis bimestres; depois de cada um, dados reais do tema. No fim, a pergunta: quem é o patrão?"
+      },
+      {
+        "tipo": "formarEquipes",
+        "alvoSeg": 120
+      },
+      {
+        "tipo": "personas",
+        "alvoSeg": 180
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r1",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: calor e jornada",
+        "alvoSeg": 330,
+        "contexto": "No app não há jornada fixa nem pausa garantida: no calor, é o entregador quem decide sozinho entre poupar o corpo e aproveitar o pico do almoço.",
+        "itens": [
+          "44,9 horas por semana: a jornada média do motoboy de app, que tira R$ 2.221 por mês, já sem a gasolina.",
+          "Quem trabalha por app faz 5,4 horas a mais por semana que os demais e ganha 12% menos por hora.",
+          "Entre 33 e 34 °C, quem faz trabalho moderado perde metade da capacidade de trabalho; Porto Alegre chegou a 39,5 °C."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; OIT, \"Trabalhar num planeta mais quente\" (2019); Correio Braziliense (02/2025)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r2",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: a greve de 14/04 e a lei",
+        "alvoSeg": 330,
+        "contexto": "A lei dos apps (PLP 152/2025) criaria o \"plataformizado\" (nem carteira assinada, nem autônomo), com piso de R$ 8,50 por entrega; a categoria queria R$ 10. Com a greve de 14/04/2026 contra o texto, a lei saiu de pauta.",
+        "itens": [
+          "R$ 8,50 era o piso do projeto (a categoria pedia R$ 10); hoje, o mínimo do iFood é R$ 7,50, valor que o próprio iFood define.",
+          "1,8 milhão de pessoas trabalham por aplicativo no Brasil; 325 mil delas como entregadores.",
+          "72,1% de quem trabalha por app está na informalidade, contra 42,7% dos demais trabalhadores."
+        ],
+        "fonte": "O Tempo (08/04/2026); Diário do Transporte e Mobile Time (14/04/2026); Brasil de Fato (29/04/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4 e 8"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r3",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: chuva e acidentes",
+        "alvoSeg": 330,
+        "contexto": "Na chuva, a moto freia pior e o app paga mais por entrega: é quando o entregador mais se arrisca. Acidentado e sem INSS, ele depende da família e do seguro do app, que paga de 7 a 30 dias parado.",
+        "itens": [
+          "22% dos entregadores de moto sofreram acidente em 3 meses, segundo uma pesquisa financiada pelas plataformas.",
+          "Dos acidentados parados por 15 dias ou mais, só 20% receberam do INSS; entre os que pararam, a família foi o apoio mais citado (38,3%).",
+          "Na enchente de maio de 2024, nas cidades atingidas, só 66% dos entregadores ficaram ativos na 1ª semana."
+        ],
+        "fonte": "Cebrap/Amobitec (2025); Siqueira et al., Cad. Saúde Pública 41(3), 2025 (UFBA, 563 entregadores); 55content (04/07/2024); iFood, seguro de acidentes (2026)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r4",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: gestão por algoritmo",
+        "alvoSeg": 330,
+        "contexto": "Gestão por algoritmo: é o app, e não um chefe, que distribui os pedidos, define o preço e pune quem recusa, com regras que mudam sem aviso, como o +Entregas.",
+        "itens": [
+          "+Entregas: o iFood promete de 10% a 30% a mais de ganho, mas exige 90% do tempo online e no máximo 2 recusas.",
+          "A 2ª entrega agrupada paga R$ 3, e não os R$ 7,50 do mínimo; no iFood, 7 recusas seguidas deixam o entregador 15 minutos fora do app.",
+          "47,4% dos entregadores dizem que bônus e promoções que mudam o preço influenciam a jornada deles."
+        ],
+        "fonte": "iFood (31/08/2026 e jun/2025); CUT-RS (27/07/2026); Metrópoles (01/08/2025); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 14"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r5",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: o que é o breque",
+        "alvoSeg": 330,
+        "contexto": "Breque é a greve dos entregadores de app: todos desligam o aplicativo no mesmo dia para pressionar a plataforma. Sem salário garantido, quem para perde o dia e arrisca o bloqueio.",
+        "itens": [
+          "01/07/2020: o primeiro Breque dos Apps, na pandemia, pediu mais por entrega e o fim dos bloqueios sem explicação.",
+          "31/03/2025: breque em 60 cidades, segundo os entregadores; dois meses depois, o iFood subiu o mínimo de R$ 6,50 para R$ 7,50.",
+          "01/09/2026: breque geral para pedir R$ 10 por corrida de até 4 km e o fim do +Entregas; até agora, sem reajuste."
+        ],
+        "fonte": "Agência Brasil (25/07/2020); Brasil de Fato (31/03 e 29/04/2025); Metrópoles (01/09/2026)"
+      },
+      {
+        "tipo": "rodada",
+        "rodada": "r6",
+        "alvoSeg": 330
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: fim de ano sem 13º",
+        "alvoSeg": 330,
+        "contexto": "O 13º é um salário a mais no fim do ano, direito de quem tem carteira assinada (Lei 4.090/1962). Quem trabalha por app é \"conta própria\": sem 13º, sem férias pagas e, em 2 de cada 3 casos, sem INSS.",
+        "itens": [
+          "86,8% de quem trabalha por app é \"conta própria\"; só 4,5% têm carteira assinada.",
+          "Só 19,4% dos motoboys de app contribuem para o INSS; entre os outros motoboys, 37,1%.",
+          "No começo de dezembro de 2022, o iFood teve 16% mais pedidos que a média dos meses anteriores."
+        ],
+        "fonte": "Lei 4.090/1962; IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 5, 8 e 10; iFood, release de 30/10/2023"
+      },
+      {
+        "tipo": "placarFinal",
+        "alvoSeg": 360
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Conversa em grupos: o mapa do patrão",
+        "alvoSeg": 600,
+        "contexto": "Cada equipe volta ao ano do Jonas e responde: quem manda no trabalho dele?",
+        "itens": [
+          "Repassem os seis bimestres: o que a equipe escolheu e o que aconteceu com o Jonas.",
+          "Em cada bimestre, quem decidiu o preço, a regra e a punição: o Jonas, o app, o cliente ou o governo?",
+          "Marquem no mapa quem manda em quê, e uma pessoa por equipe conta a resposta à turma."
+        ]
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Caminhos: regulação, proteção, organização e educação",
+        "alvoSeg": 390,
+        "contexto": "Quatro caminhos em debate para quem trabalha por app. Qual deles teria mudado o ano do Jonas?",
+        "itens": [
+          "Regulação: a lei dos apps (PLP 152/2025) fixaria R$ 8,50 por entrega; saiu de pauta em 14/04/2026, sem nova data.",
+          "Proteção: só 19,4% dos motoboys de app contribuem para o INSS; o seguro do iFood só paga a partir de 7 dias parado.",
+          "Organização: em julho de 2026, com o apoio do sindicato do RS, a Justiça mandou a Uber desbloquear dois motoristas.",
+          "Educação: quem trabalha por app e tem diploma ganha 20,2% menos que os outros diplomados; muitos fazem trabalho abaixo da formação."
+        ],
+        "fonte": "O Tempo (08/04/2026); Mobile Time (14/04/2026); IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 7 e 10; iFood, seguro de acidentes (2026); CUT (23/07/2026)"
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "termometro",
+        "momento": "unico",
+        "alvoSeg": 360
+      },
+      {
+        "tipo": "enquete",
+        "enquete": "entrada",
+        "momento": "depois",
+        "alvoSeg": 90
+      },
+      {
+        "tipo": "comparativo",
+        "enquete": "entrada",
+        "alvoSeg": 150
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Dados: e nos outros aplicativos?",
+        "alvoSeg": 240,
+        "contexto": "Não é só no delivery: 941 mil pessoas trabalham em apps de transporte de passageiros, como a Uber e a 99. Outras 300 mil trabalham em apps de faxina, cuidado e reparos.",
+        "itens": [
+          "Motorista de app ganha R$ 2.873 por mês e trabalha 45,9 horas por semana.",
+          "Por hora, ganha menos que quem dirige sem app: R$ 14,40 contra R$ 16.",
+          "8 em cada 10 (80,2%) dizem que o app decide sozinho quanto recebem por corrida. 6 em cada 10 (60,8%) dizem que ele escolhe os passageiros.",
+          "Só 1 em cada 4 motoristas de app (25,5%) contribui para o INSS. Entre os motoristas sem app, são 6 em cada 10 (59,2%)."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 3, 4, 9 e 13"
+      },
+      {
+        "tipo": "bloco",
+        "titulo": "Fim: quem é o patrão?",
+        "contexto": "No papel, o entregador é autônomo. Patrão é quem decide o preço, as regras e quem trabalha; no app, quem decide é a plataforma.",
+        "itens": [
+          "78,3% dos entregadores dizem que o app define sozinho quanto recebem por entrega; 70,8% dizem que ele define sozinho quem atendem.",
+          "23,1% dos entregadores dizem que a jornada é moldada por ameaça de punição ou bloqueio do app.",
+          "Cerca de 92% do delivery passou pelo iFood no 1º trimestre de 2025; o iFood cobra do restaurante 26,2% de cada pedido com entrega."
+        ],
+        "fonte": "IBGE, PNAD Contínua: Trabalho por meio de plataformas digitais 2025 (publ. set/2026), p. 13-14; Klavi, amostra de Open Finance, via Giro News (07/10/2025); iFood, Portal do Parceiro (2026)",
+        "alvoSeg": 240
+      },
+      {
+        "tipo": "fim"
+      }
+    ]
+  }
+}
