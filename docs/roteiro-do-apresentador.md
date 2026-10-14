@@ -211,7 +211,13 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 
 **Na aula, passo a passo:**
 1. **O QR.** No lobby, o telão mostra o QR, o endereço e o código da sala. Diga:
-   "Leiam o QR com a câmera do celular, digitem o seu nome e toquem em Entrar."
+   "Leiam o QR com a câmera do celular e toquem em Entrar; depois digitem o seu
+   nome e toquem em Entrar de novo, ou em Ir, no teclado. Cada um entra uma vez
+   só, pelo navegador do próprio celular. Se aparecer Sem acesso ao serviço,
+   esperem uns 15 segundos sem fechar a página; se não entrar em 1 minuto, usem
+   o 4G. Se o celular ficar parado mais de meio minuto, joguem com o colega do
+   lado." Quem digitar o código à mão usa as letras maiúsculas. Não tente
+   consertar um aparelho diante da turma.
 2. **Os nomes.** Cada aluno digita o nome (até 20 letras). O nome fica só no
    celular dele: não vai para o servidor, e o telão nunca mostra nomes. Diga:
    "O seu nome fica só no seu celular, e o seu voto não fica ligado ao seu
@@ -224,19 +230,38 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
    - **Sala cheia.** Se um celular disser "A sala está cheia (20 pessoas)", já
      há 20 aparelhos na sala. Se a turma tem menos de 20 pessoas, há uma vaga
      presa: alguém entrou duas vezes, ou um celular entrou e saiu. Peça para
-     fecharem a aba repetida, espere 2 min e segure **Remover inativos**. A
-     vaga de quem está sem sinal há mais de 2 min e ainda não jogou nenhum
-     bimestre volta para quem está esperando (uma vaga por pessoa esperando).
+     fecharem a aba repetida e espere 2 min. Antes de segurar **Remover
+     inativos**, diga: "Todo mundo, desbloqueie o celular e deixe a tela do
+     jogo aberta por meio minuto" (sem isso, pode sair a vaga de um aluno com
+     o celular bloqueado, e não a da aba repetida). A vaga de quem está sem
+     sinal há mais de 2 min e ainda não jogou nenhum bimestre volta para quem
+     está esperando (uma vaga por pessoa esperando). Depois, pergunte se
+     alguém ainda vê "A sala está cheia"; se sim, segure de novo.
      Depois do 1º bimestre fechado, nenhuma vaga volta: quem sobrou acompanha
      pelo telão ou com um colega.
 4. **A enquete de entrada**, como sempre.
 5. **Conheça o Jonas.** Aparece no telão e no celular. Com o "Li" (regras v5),
    o celular tem o botão "Li, pode seguir", e ao lado do título o telão mostra
-   "12 de 20 leram": é só para você saber, e você avança quando quiser.
+   "12 de 20 leram": é só para você saber, e você avança quando quiser. No
+   celular (versão 14), a conta do mês vem aberta, e o básico item a item e as
+   fontes abrem ao tocar em "ver".
 6. **Cada bimestre** (os três tempos da seção 0):
    - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
      escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
      prorrogação: o Enter vai direto ao resultado.
+     **Antes do Enter, confira o M.** O M do "N de M já escolheram" conta só
+     quem deu sinal no último minuto: com o Wi-Fi oscilando, ele encolhe, e a
+     barra pode dizer "Todos já escolheram" com votos ainda presos nos
+     celulares. Compare o M com o "N pessoas na sala" do lobby (ou com o
+     "ativos / membros" da barra). Se ele caiu de repente, pergunte "alguém
+     está sem rede?" e espere de 15 a 20 s: o voto guardado chega sozinho.
+     Nunca encerre com "0 de 0 já escolheram" (se encerrou, Ctrl+Z, Tab e
+     Enter reabrem a decisão sem perder nada). Para decidir o Enter, vale o
+     telão, e não o seu celular.
+     **Em mar–abr e jul–ago, diga a letra de quem não votar**, porque ali a
+     opção de sempre não é a "Jornada de sempre": em mar–abr, "quem não votar
+     fica com a D, aceitar até entrega ruim"; em jul–ago, "quem não votar fica
+     com a C, adiar a revisão da moto".
    - **Resultado.** O telão mostra uma linha por opção (D-084): quantas
      pessoas, o saldo do bimestre e a família de quem a escolheu ("em média",
      quando os valores variam) e, embaixo, as consequências de escolhas
@@ -295,7 +320,9 @@ joga junto desde o início.
 
 **O seu celular** (modo espectador, D-064): com o PIN, mostra o mesmo resumo da
 turma que o telão ("N pessoas na sala", "N de M já escolheram", quantas pessoas
-ficaram com cada opção e o placar da turma), e nunca a tela de um aluno.
+ficaram com cada opção e o placar da turma), e nunca a tela de um aluno. O M
+do "N de M" do seu celular pode ser maior que o do telão, porque conta também
+quem está com o celular bloqueado: para decidir o Enter, vale o telão.
 
 ## 0. O jogo simples de 07/10 (D-078 e D-079)
 
@@ -716,8 +743,8 @@ slides.
   Espaço abre a enquete de entrada.
 - **Diga:** "Apontem a câmera do celular para o QR. Se não abrir, digitem o
   endereço que está ao lado dele; se pedir, o código é este aqui, em letras
-  grandes. Não tem nome nem cadastro: o celular
-  recebe só um crachá. Abram no navegador do celular; se abriu dentro do
+  grandes. Não tem cadastro: o celular pede só o seu nome, que fica no
+  aparelho. Abram no navegador do celular; se abriu dentro do
   Instagram, toquem em ⋯ e em 'Abrir no navegador'. Se o Wi-Fi não pegar, usem o
   4G. Deixem a página aberta."
 
@@ -1479,9 +1506,13 @@ básico")
 
 ## 6. Minuto a minuto: 60 min
 
+**Para 14/10 (config `2026-10-14-v5.3-individual`):** não há formação das
+equipes (o jogo é individual), o lobby tem 3:00 e o "Conheça o Jonas", 3:30. A
+tabela abaixo foi recalculada do `roteiros.60min` do config, e a barra mostra
+os tempos e o atraso ao vivo.
+
 **O roteiro gira em torno do jogo** (D-060, D-078, D-079). As seis rodadas somam
-28 min; com a formação das equipes, "Conheça o Jonas" e o placar final, o jogo
-ocupa 38 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
+28 min; com "Conheça o Jonas" e o placar final, o jogo ocupa 37 dos 60 min. Depois de cada rodada vem um bloco de dados do tema
 dela, de 1:30, sem entrevistas. Os tempos são os tempos-alvo do `config.json`
 (versão `2026-10-06-v4.4-simples`). Na D-080, o bloco das outras plataformas
 (1:30) entrou antes do Fim, e o tempo saiu do placar final (6:00 → 5:30), do
@@ -1495,29 +1526,28 @@ rodadas.
 
 | # | Início | Passo (alvo) | Faça e diga |
 | --- | --- | --- | --- |
-| 1 | 0:00 | Lobby (2:00) | QR na tela. "Apontem a câmera… sem nome, sem cadastro." (5.1) |
-| 2 | 2:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
-| 3 | 3:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava. "Me coloque em uma equipe; sentem juntos." (5.4) |
-| 4 | 5:30 | Conheça o Jonas (2:30) | "Todo mundo é o Jonas." A casa e o mês comum que já não fecha (a tela não diz o valor: falta R$ 128). As duas frases da seção 0 |
-| 5 | 8:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:40) | Leia as 5 opções (título e mini-história, sem valores); 120 s; Enter depois do tempo mínimo; o resultado e a frase da seção 0 |
-| 6 | 12:40 | Bloco: Dados: calor e jornada (1:30) | Leia o contexto e um número da tela |
-| 7 | 14:10 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:40) | Como a rodada 1. O empréstimo (C) é dívida |
-| 8 | 18:50 | Bloco: Dados: a greve de 14/04 e a lei (1:30) | Como o bloco 6 |
-| 9 | 20:20 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (4:40) | Como a rodada 1 |
-| 10 | 25:00 | Bloco: Dados: chuva e acidentes (1:30) | Como o bloco 6 |
-| 11 | 26:30 | Rodada 4 · Jul–ago: a regra nova do app (4:40) | Como a rodada 1 |
-| 12 | 31:10 | Bloco: Dados: gestão por algoritmo (1:30) | Como o bloco 6 |
-| 13 | 32:40 | Rodada 5 · Set–out: breque geral (4:40) | Como a rodada 1 |
-| 14 | 37:20 | Bloco: Dados: o que é o breque (1:30) | Como o bloco 6 |
-| 15 | 38:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:40) | Como a rodada 1. É o fim do ano |
-| 16 | 43:30 | Bloco: Dados: fim de ano sem 13º (1:30) | Como o bloco 6 |
-| 17 | 45:00 | Placar final (5:30) | 3 páginas: o caminho, quanto sobrou e as 15.625 combinações (seção 0) |
-| 18 | 50:30 | Termômetro (2:30), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
-| 19 | 53:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
-| 20 | 54:30 | Comparativo (1:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
-| 21 | 56:00 | Bloco: Dados: e nos outros aplicativos? (1:30) | O contexto e um número: os motoristas da Uber e da 99 (5.11) |
-| 22 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
-| 23 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+| 1 | 0:00 | Lobby (3:00) | QR na tela. "Leiam o QR… toquem em Entrar; depois digitem o seu nome." (seção 00, passo 1) |
+| 2 | 3:00 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra. "Respondam o que pensam hoje; ninguém vê o voto." (5.2) |
+| 3 | 4:30 | Conheça o Jonas (3:30) | "Todo mundo é o Jonas." A casa e o mês comum que já não fecha (a tela não diz o valor: falta R$ 128). As duas frases da seção 0 |
+| 4 | 8:00 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (4:40) | Leia as 5 opções (título e mini-história, sem valores); 120 s; Enter depois do tempo mínimo; o resultado e a frase da seção 0 |
+| 5 | 12:40 | Bloco: Dados: calor e jornada (1:30) | Leia o contexto e um número da tela |
+| 6 | 14:10 | Rodada 2 · Mar–abr: a lei que saiu de pauta (4:40) | Como a rodada 1. O empréstimo (C) é dívida |
+| 7 | 18:50 | Bloco: Dados: a greve de 14/04 e a lei (1:30) | Como o bloco 5 |
+| 8 | 20:20 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (4:40) | Como a rodada 1 |
+| 9 | 25:00 | Bloco: Dados: chuva e acidentes (1:30) | Como o bloco 5 |
+| 10 | 26:30 | Rodada 4 · Jul–ago: a regra nova do app (4:40) | Como a rodada 1 |
+| 11 | 31:10 | Bloco: Dados: gestão por algoritmo (1:30) | Como o bloco 5 |
+| 12 | 32:40 | Rodada 5 · Set–out: breque geral (4:40) | Como a rodada 1 |
+| 13 | 37:20 | Bloco: Dados: o que é o breque (1:30) | Como o bloco 5 |
+| 14 | 38:50 | Rodada 6 · Nov–dez: Natal e nenhum 13º (4:40) | Como a rodada 1. É o fim do ano |
+| 15 | 43:30 | Bloco: Dados: fim de ano sem 13º (1:30) | Como o bloco 5 |
+| 16 | 45:00 | Placar final (5:30) | 3 páginas: quanto sobrou ("De N alunos…"), as escolhas da turma e as 15.625 combinações (seção 00) |
+| 17 | 50:30 | Termômetro (2:30), 2 afirmações: t1 e t3 | Espaço passa a afirmação; na última, Enter. "Ao vivo, uma frase por vez." (5.8) |
+| 18 | 53:00 | Enquete de entrada · depois (1:30) | Enter encerra. "As mesmas frases do começo." (5.9) |
+| 19 | 54:30 | Comparativo (1:30) | Espaço pagina. "Retrato desta turma, não pesquisa." (5.10) |
+| 20 | 56:00 | Bloco: Dados: e nos outros aplicativos? (1:30) | O contexto e um número: os motoristas da Uber e da 99 (5.11) |
+| 21 | 57:30 | Bloco: Fim: quem é o patrão? (2:30) | Leia o contexto e os três números de quem manda; abra a conversa (5.11) |
+| 22 | 60:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
 
 ## 7. Minuto a minuto: 120 min
 
