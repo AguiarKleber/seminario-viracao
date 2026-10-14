@@ -21,6 +21,11 @@
   // Também com uma letra, _ ou - (vira chave de conteudo/roteiros, como os ids).
   const RE_ROTEIRO = /^(?=[A-Za-z0-9_-]*[A-Za-z_-])[A-Za-z0-9_-]{1,24}$/;
   const MAX_EQUIPES = 6;
+  // O modo individual (decisão do Kleber de 13/10 à noite, regras.individual):
+  // cada aluno joga sozinho, numa vaga que é uma "equipe de uma pessoa", e a
+  // turma tem no máximo 20 pessoas conectadas (o plano grátis do Firebase
+  // aguenta 100 conexões). Uma vaga a mais seria uma pessoa a mais na sala.
+  const MAX_VAGAS_INDIVIDUAL = 20;
   const MAX_AFIRMACAO = 110;
   // D-040: o rótulo curto vai escrito dentro da fatia do sorteio. Com mais de 10
   // letras ele quase nunca cabe na fatia (o telão o omite, e a fatia fica só com a
@@ -149,7 +154,8 @@
     tempos: ['enqueteSeg', 'decisaoSeg', 'decisaoMinSeg', 'prorrogacaoSeg', 'gracaSeg', 'pulsoSeg'],
     regras: ['desempate', 'cartaPor', 'mostrarChances', 'placarPadrao', 'alvoPorEquipe', 'minPareados', 'destacarCartas',
       'jurosDividaMes', 'jurosFonte', 'pisoTrabalho', 'mesesPorRodada',
-      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro', 'formatoSimples'],
+      'limiteChequeEspecial', 'limiteFonte', 'multaAtraso', 'moraMes', 'atrasoFonte', 'cortarPrimeiro', 'formatoSimples',
+      'individual'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
     persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
@@ -664,6 +670,11 @@
     // um config sem a chave não mudam. As conferências dele estão em
     // conferirFormatoSimples.
     if (tem(g, 'formatoSimples') && booleano(r, g, 'formatoSimples', 'regras', false) === true) n.formatoSimples = true;
+    // O modo individual (decisão do Kleber de 13/10 à noite): cada aluno joga
+    // sozinho, numa vaga própria. Como o formatoSimples, só true entra no
+    // normalizado: sem a chave, o hash, o anfitrião e as telas ficam como
+    // antes (equipes). As conferências dele estão em conferirIndividual.
+    if (tem(g, 'individual') && booleano(r, g, 'individual', 'regras', false) === true) n.individual = true;
     // D-046: fração ao mês, e não porcentagem. "8" em vez de 0,08 multiplicaria a
     // dívida por 9 a cada mês; 0 ou 1 não são juros que alguém cobre de verdade.
     if (n.jurosDividaMes !== undefined && !(n.jurosDividaMes > 0 && n.jurosDividaMes < 1)) {
@@ -1379,13 +1390,20 @@
   }
 
   function conferirEquipes(r, cfg) {
-    const { equipes, personas, ordem } = cfg;
-    if (ordem.equipes.length > MAX_EQUIPES) {
-      r.erro('equipes', `${ordem.equipes.length} equipes: o máximo é ${MAX_EQUIPES}`);
+    const { equipes, ordem } = cfg;
+    const individual = cfg.regras.individual === true;
+    const maximo = individual ? MAX_VAGAS_INDIVIDUAL : MAX_EQUIPES;
+    if (ordem.equipes.length > maximo) {
+      r.erro('equipes', individual
+        ? `${ordem.equipes.length} vagas: no modo individual, o máximo é ${maximo} (uma por pessoa)`
+        : `${ordem.equipes.length} equipes: o máximo é ${maximo}`);
     }
     // Cor e forma distintas: a paleta Okabe-Ito vem com forma porque parte da
     // turma pode ser daltônica, e duas equipes iguais seriam indistinguíveis no
-    // projetor (D-016, risco R21).
+    // projetor (D-016, risco R21). No modo individual, a vaga nunca aparece na
+    // tela (o telão mostra só o resumo da turma), e 20 vagas não caberiam em
+    // seis cores: cor e forma podem repetir.
+    if (individual) return conferirPersonasSemEquipe(r, cfg);
     const porCor = new Map();
     const porForma = new Map();
     for (const id of ordem.equipes) {
@@ -1401,11 +1419,46 @@
         else porForma.set(forma, id);
       }
     }
-    // Persona compartilhada por duas equipes é de propósito (D-004): mostra ao
-    // vivo que a diferença entre elas é sorte. Persona sem equipe só não joga.
+    conferirPersonasSemEquipe(r, cfg);
+  }
+
+  // Persona compartilhada por duas equipes é de propósito (D-004): mostra ao
+  // vivo que a diferença entre elas é sorte. Persona sem equipe só não joga.
+  function conferirPersonasSemEquipe(r, cfg) {
+    const { equipes, personas, ordem } = cfg;
     const usadas = new Set(ordem.equipes.map((id) => equipes[id].persona));
     for (const id of ordem.personas) {
       if (!usadas.has(id)) r.aviso(`personas.${id}`, `a persona "${personas[id].nome || id}" não tem equipe`);
+    }
+  }
+
+  // O modo individual (regras.individual; decisão do Kleber de 13/10 à noite).
+  // Cada aluno entra com o nome (que fica só no celular dele) e ganha do telão
+  // uma vaga própria: uma "equipe de uma pessoa". Assim a decisão, a apuração,
+  // o resultado e o placar continuam os de sempre. Por isso:
+  // - exige o formato simples: o resumo da turma compara caminhos do mesmo
+  //   personagem, sem sorteio (com cartas, duas pessoas com as mesmas escolhas
+  //   teriam resultados diferentes, e a contagem por opção não diria nada);
+  // - sem "formarEquipes": a vaga é dada pelo telão quando a pessoa entra, e o
+  //   passo deixaria todo celular escolhendo uma "equipe" que ninguém vê;
+  // - nenhuma vaga obrigatória: a obrigatória fica aberta sem ninguém e joga no
+  //   piloto, e seria contada como uma pessoa a mais no resumo da turma.
+  function conferirIndividual(r, cfg) {
+    if (cfg.regras.individual !== true) return;
+    if (cfg.regras.formatoSimples !== true) {
+      r.erro('regras.individual', 'o modo individual exige "formatoSimples": true (um personagem só, sem sorteio)');
+    }
+    for (const [nome, passos] of Object.entries(cfg.roteiros || {})) {
+      (Array.isArray(passos) ? passos : []).forEach((p, i) => {
+        if (p?.tipo === 'formarEquipes') {
+          r.erro(`roteiros.${nome}[${i}]`, 'no modo individual não há "formarEquipes": cada pessoa ganha a própria vaga ao entrar na sala');
+        }
+      });
+    }
+    for (const id of cfg.ordem.equipes) {
+      if (cfg.equipes[id].obrigatoria === true) {
+        r.erro(`equipes.${id}.obrigatoria`, 'no modo individual nenhuma vaga é obrigatória: sem ninguém nela, ela jogaria sozinha e contaria como uma pessoa a mais');
+      }
     }
   }
 
@@ -1670,6 +1723,7 @@
     conferirEquipes(r, cfg);
     conferirPlacar(r, cfg);
     conferirFormatoSimples(r, cfg);
+    conferirIndividual(r, cfg);
     // Só com o config sem erro: o motor confia no formato normalizado.
     if (r.erros.length === 0) conferirCartasPossiveis(r, cfg, idx);
     const ok = r.erros.length === 0;
