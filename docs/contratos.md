@@ -1279,6 +1279,68 @@ as equipes colado, com a letra do corpo nos 28 px e a linha da nota mantida. No 
 largura do passo mais largo dela (e não mais); o teto antigo de 8 letras de vão falhava com a sorte ao acaso e valores
 de cinco dígitos, sem a coluna esticar. O `regras.placarPadrao` não é mais lido pelo telão.
 
+**Modo individual (`regras.individual`, com `regras.formatoSimples`; decisão do Kleber de 13/10 à noite):** cada aluno
+joga sozinho, em uma vaga própria (uma "equipe de uma pessoa", `e1` a `e20`) que o telão dá quando ele entra
+(`anfitriao.atribuirVagas`, chamado pelo `distribuirAtrasados`; seção 10). O voto é secreto e o tema é sensível: **o
+telão nunca mostra uma vaga nem um nome** (o nome fica só no celular), só o resumo da turma, em contagens e
+distribuições (as funções de `historia`, seção 8). Sem a chave, todas as telas ficam como as das equipes
+(`individual()` no `telao.js`). Os e2e `telao-individual.e2e.mjs` (offline) e `individual-online.e2e.mjs` (21
+celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `.equipe-nome`, "Vaga N" ou a palavra
+"equipe" fora do texto dos blocos.
+- **Lobby** online: `.lobby-conectados` com `data-pessoas` = `historia.pessoasNaSala` ("15 pessoas na sala": quem já
+  tem a vaga aberta), e `.lobby-cheia` (" · a sala está cheia") com as 20 ocupadas. Offline, a lista diz "Decisões: a
+  turma escolhe junto, de mão levantada, e o apresentador registra a escolha."
+- **Conheça o Jonas:** o kicker é "Todos jogam com o mesmo personagem". **Aperto** (equipes e individual): medido
+  depois do desenho, só se a tela transborda (a faixa de entrada em 1280×720 empurrava a frase do mês comum para baixo
+  dela), `data-aperto` 1 (entrelinhas e vãos menores), 2 (a descrição e a frase do mês no tamanho do corpo) e 3 (sai o
+  básico item a item; o total fica na conta).
+- **Decisão:** as opções com a mini-história, como no formato simples; no lugar das células das equipes, online,
+  `p.turma-andamento` "14 de 20 já escolheram" (`data-escolheram`, `data-total`, de `historia.contagemDaDecisao` com
+  os ativos: o mesmo filtro da apuração, e quem sumiu sem votar sai do M); offline, `.turma-decisao` "Escolha da
+  turma:" com uma `.botao-letra` por opção (`data-turma="1"`, `data-opcao`), que chama `anfitriao.decidirPelaTurma`
+  (vale para todas as vagas em jogo; clicar de novo desfaz). A dica da barra diz "Todos já escolheram. Enter encerra."
+  ou, offline, se a escolha da turma está marcada. Não há prorrogação (o anfitrião vai direto à moeda); uma que chegue
+  assim mesmo fica na tela da decisão. Na barra, "Decidir pela turma" (só offline; online, a escolha é de cada um) e
+  "Mover aluno" desligado (o anfitrião recusa).
+- **Resultado** (`telaResultadoDaTurma`): o kicker "O que a turma escolheu · 20 pessoas", o título do bimestre, o
+  evento do mês (`.evento-do-mes`), e `ol.turma-opcoes` com uma `li.turma-opcao` por opção (`data-opcao`, `data-n`;
+  `.turma-opcao-zero` com 0): a letra, o rótulo, `.turma-barra` (a parte da turma) e `.turma-n` ("8 pessoas"), de
+  `historia.contagemPorOpcao`, em subgrid (as colunas alinhadas). Quem não votou está na contagem da opção de sempre,
+  e `p.turma-sem-voto` (`data-sem-voto`) diz "2 pessoas não escolheram e ficaram na C, a opção de sempre.". Se houver,
+  `.turma-antes`: "Por causa de escolhas anteriores:" e um `li.turma-antes-item` por motivo (`data-motivo`,
+  `data-pessoas`, `data-valores`) de `historia.consequenciasDaTurma`: "As costas travaram (2 bimestres puxados
+  seguidos): **3 pessoas** (−R$ 1.230 cada)" (dois valores: "−R$ 790 ou −R$ 560 cada"). O saldo de cada um fica no
+  celular dele. **Aperto**, só se transborda: 1 (vãos e entrelinhas menores), 2 (o título menor), 3 (sem a frase do
+  evento), 4 (sem o evento), os mesmos degraus 2 a 4 do resultado simples.
+- **Placar final** (pedidos de 13/10, 21h): três páginas, `fimDaTurma`, `escolhasDaTurma` e `combinacoes`; sem "O
+  caminho de cada equipe" e sem nada por vaga.
+  1. `fimDaTurma`, kicker "Quanto sobrou, ou ficou devendo": o título (`h1.fim-turma-frase`) é a frase de
+     `historia.fraseDoFimDaTurma(historia.fimDoAnoDaTurma(…))`, letra por letra, com os números em destaque
+     (`.fim-turma-numero`; `.fim-turma-positivos` em `--positivo`, `.fim-turma-negativos` em `--negativo`): "De 18
+     alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo." (dinheiro da família ≥ R$ 0 é "sobrando").
+     A seção leva `data-pessoas`, `data-positivos` e `data-negativos`. Embaixo, `.grafico-turma`: uma coluna por
+     aluno, sem nome, do maior para o menor (`rect.coluna-sobrou` acima da linha do zero, `rect.coluna-devendo`
+     abaixo, `data-valor`; a posição diz o mesmo que a cor), a linha tracejada da média (`line.linha-media`,
+     `data-media`) e nenhum texto dentro do SVG; até 160 px por pessoa, o grupo no meio. A legenda
+     (`.fim-turma-legenda`): "sobrou dinheiro", "ficou devendo", "média da turma: devendo R$ X" (ou "R$ X sobrando") e,
+     se alguém entrou no meio do ano (fora da conta), a frase de `historia.fraseDosQueEntraramDepois`;
+  2. `escolhasDaTurma`, "As escolhas da turma" (kicker "Placar final · quantas pessoas escolheram cada opção"):
+     `table.tabela-turma` com uma linha por bimestre (`data-rodada`, o nome curto) e uma coluna por letra, cada
+     célula com quantas pessoas ficaram com a opção (`data-opcao`, `data-n`, o rótulo na dica; `.turma-celula-maior`
+     em negrito na mais escolhida, `.turma-celula-zero` em cinza), de `historia.escolhasDaTurma`; com alguém sem voto,
+     `p.turma-nota` "Quem não escolheu ficou na opção de sempre e está contado nela.";
+  3. `combinacoes`, a mesma do formato simples.
+- **Fim:** no lugar do placar resumido, `p.fim-turma-resumo` com a frase da turma. Nos blocos sem conteúdo, o placar
+  resumido não aparece (seria uma linha por vaga).
+- **"A turma"** (offline, sem membro nenhum e no máximo uma vaga em jogo: `soATurma()`): o telão joga um caminho só.
+  Antes da primeira apuração não há vaga aberta; o `decidirPelaTurma` (ou o fechamento, sem escolha) abre a `e1`. O
+  resultado é a faixa do formato simples com `.turma-quem` "A turma" no lugar da equipe; o placar diz "A turma
+  terminou o ano devendo R$ X" (`.fim-turma-valor`, com `data-situacao`) e "As escolhas da turma: E B C C D B"
+  (`.fim-turma-caminho`, no meio da tela, `.fim-turma-so`), e a página 2 é "O caminho da turma"
+  (`.tabela-caminho-turma`: o bimestre, a letra e o rótulo, e o saldo do bimestre); o Fim, "A turma terminou o ano
+  devendo R$ X.". Depois de "Continuar sem celulares" (os membros ficam na árvore) ou de carregar um estado com
+  várias vagas, as telas continuam com as contagens da turma, e a escolha marcada vale para todas as vagas.
+
 **Histórico nas contas do telão:** o efeito da carta (a animação das cartas mais extremas) e o mês
 refeito passam ao motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do
 roteiro), a mesma conta do anfitrião.
@@ -1320,7 +1382,13 @@ alheio).
 - os comandos que dependem do passo (avançar, encerrar, pausar/retomar, +30 s, desfazer,
   pular, encerrar o jogo, decidir por equipe, abrir e fechar equipes) levam a `geracao` que
   o apresentador via ao apertar a tecla; se o estado mudou até o comando rodar, ele é
-  descartado ("o estado mudou; confira e repita"). O mesmo se a sessão trocou;
+  descartado ("o estado mudou; confira e repita"). O mesmo se a sessão trocou. No modo
+  individual, o comando leva também o estado da hora da tecla (`vista(e)` = `{ geracao, estado }`)
+  e vale se, de lá para cá, só mudaram a `geracao` e as vagas abertas
+  (`anfitriao.soMudaramAsVagas`): cada vaga dada a quem entra sobe a `geracao`, e com 20
+  celulares entrando juntos no lobby o Espaço caía nessa janela e era jogado fora;
+- `{ silencioso: true }`: o comando que o próprio telão dispara (a vaga de quem entra, no modo
+  individual). A recusa sem conexão e o erro não abrem a barra; o erro vira um aviso discreto;
 - "Continuar sem celulares" e "Salvar estado" não passam pela fila (socorro).
 
 **Confirmações:** as que encurtam a conversa das equipes (encerrar no tempo mínimo),
@@ -1378,7 +1446,13 @@ a "4. Sem celulares"), que prepara o serviço uma vez por página:
     recarregar e retomar com o PIN);
   - selo pelo `aoMudarConexao`;
   - `distribuirAtrasados()` quando o espelho mostra, depois da trava, membro sem
-    equipe aberta (uma vez por conjunto de uids).
+    equipe aberta (uma vez por conjunto de uids; os soltos e o estado saem da mesma leitura do
+    espelho). No modo individual, é ele que dá a vaga de quem entra (`atribuirVagas`, desde o
+    lobby, porque sem "formar equipes" as vagas travam desde o início), e roda silencioso. Se a
+    gravação falha, ou é recusada sem conexão, a assinatura é zerada, e a próxima mudança da sala
+    (o pulso do próprio telão, a cada `pulsoSeg`) tenta de novo: antes, o aluno ficava em
+    "Entrando na sala…" até outra pessoa entrar. Quem fica sem vaga (a sala cheia) continua solto,
+    e a assinatura segura a repetição.
 - **Ativos e inativos** (arquitetura, seção 10): ativo = membro com `presenca` nos
   últimos 60 s. "N ativos / M membros" (`[data-contagem-ativos]`) fica só na barra (D-047;
   o lobby projeta os conectados; só números: nem uid nem crachá); o denominador do "n de m
