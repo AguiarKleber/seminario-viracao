@@ -2900,8 +2900,7 @@
     const { el, botao } = D();
     if (app.espectador) {
       if (!d.leram) return null;
-      // "1 de 7 leu", como no telão.
-      return el('p', { classe: 'lidos-contagem', dados: { leram: d.leram.leram, total: d.leram.total } }, [el('b', { texto: `${d.leram.leram} de ${d.leram.total}` }), d.leram.leram === 1 ? ' leu' : ' leram']);
+      return el('p', { classe: 'lidos-contagem', dados: { leram: d.leram.leram, total: d.leram.total } }, [el('b', { texto: `${d.leram.leram} de ${d.leram.total}` }), ' leram']);
     }
     if (d.lido === undefined) return null;
     const marca = d.lido
