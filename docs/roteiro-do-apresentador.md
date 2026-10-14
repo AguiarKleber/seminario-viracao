@@ -1517,6 +1517,10 @@ antiga está no histórico do git deste arquivo.
 
 ## 8. Se a rede cair
 
+**Sem internet, nunca aperte F5 nem Tentar de novo:** a página não volta, e o
+projetor mostra a página de erro do navegador. Segure **Continuar sem
+celulares** (com o mouse ou o clique do touchpad).
+
 **Queda curta.** O selo da barra passa a **Reconectando…**, e os celulares também
 avisam. Espere: a conexão volta sozinha, e o voto feito durante a queda fica
 guardado no celular e é reenviado. Não feche o telão.
@@ -1526,9 +1530,12 @@ guardado no celular e é reenviado. Não feche o telão.
   sozinha (D-047): a turma não vê o aviso solto no meio da tela. Nada fica numa
   fila para sair depois: quando o selo voltar a **Conectado**, confira a tela e
   aperte de novo.
-- Se aparecer `O serviço não respondeu em 10 s`, o comando saiu, mas a
-  confirmação não chegou: ele pode ser aplicado quando a rede voltar. Confira a
-  tela antes de repetir.
+- Se aparecer `O serviço não respondeu em 10 s`, **não aperte a tecla de
+  novo**: a rede pode estar fora mesmo com o selo em **Conectado**. Espere a
+  rede voltar (os celulares e o seu espectador voltam a responder). Se a tela
+  não mudou, aperte de novo, uma vez; se ficou em "Apurando…", siga a seção 9,
+  item 4. Na versão 14, o próprio aviso diz isso (`… a rede pode estar fora.
+  Não repita agora…`).
 - **Continuar sem celulares** e **Salvar estado** funcionam mesmo sem rede: saem
   da cópia local da sala.
 
@@ -1553,9 +1560,8 @@ guardado no celular e é reenviado. Não feche o telão.
      votado pelo celular. O Enter apura esses votos. A contagem à mão os
      substitui: a primeira tecla de contagem pede confirmação. A dica da barra
      repete isso e as teclas da contagem.
-3. Decisões: cada equipe anuncia a sua, e você clica na letra de cada equipe (A a
-   D). Sem celular, o contexto da família não chega às equipes: leia em voz alta
-   o de cada persona, se der tempo, ou siga só com a situação do mês.
+3. Decisões: a turma combina de mão levantada, e você clica na letra (A a E)
+   em **Escolha da turma**. Se der tempo, leia a situação do mês em voz alta.
 4. Clique em **Salvar estado** de vez em quando: desde a D-078, ele não é mais
    salvo sozinho no fim da rodada.
 5. Se o "depois" for por mão levantada e o "antes" foi pelo celular, o
@@ -1576,16 +1582,29 @@ do pé da tela) → **Começar sem celulares**.
 
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
-1. **Recarregue a página** (F5). No bloco **Com celulares**, o código da última sala já vem
+1. Se o selo diz **Reconectando…** ou os celulares estão sem rede, **não
+   recarregue**: siga a seção 8. Com a internet funcionando, **recarregue a
+   página** (F5). No bloco **Com celulares**, o código da última sala já vem
    preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
-   placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
-   até a página onde estava.
+   placar final, o telão volta à página 1 ("Quanto sobrou, ou ficou devendo"):
+   dê Espaço até a página onde estava. Se o F5 mostrar a página de erro do
+   navegador, a internet do notebook caiu: quando ela voltar, aperte F5 de novo
+   e clique em **Retomar sala**. Se não voltar, abra a cópia local (área de
+   trabalho ou pendrive), clique em **Carregar config.json** e depois em
+   **Carregar estado** (o JSON mais recente de Downloads).
 2. **O navegador ou o notebook morreu:** em outro navegador ou outro notebook,
    abra o telão, digite o PIN, digite o código da sala (o do papel) e clique em
    **Retomar sala**.
 3. Se aparecer `A sala … já está aberta em outra aba deste navegador`, feche a aba
-   repetida e use a outra.
-4. Se o telão ficou parado em "Apurando…", aperte **Enter** para concluir. Se não
+   repetida e use a outra. Se não há outra aba (você fechou a do telão sem
+   querer), a trava da aba fechada leva até 25 s para sair: espere 30 s e
+   clique de novo em **Retomar sala**. Se insistir, feche o navegador inteiro e
+   abra de novo (na janela normal, não pede PIN), ou use o outro navegador com
+   o PIN e o código anotado no papel.
+4. Se o telão ficou parado em "Apurando…", aperte **Enter**. Se ele voltar à
+   decisão com um aviso de recusa (`PERMISSION_DENIED` na versão 13; `O
+   servidor recusou o comando` na 14), aperte **Enter** de novo: os votos não se
+   perdem. Com a rede ainda fora, espere ela voltar antes. Só se nada disso
    concluir, **Ctrl+Z** volta à votação sem apagar nada.
 5. Se o telão antigo voltar a funcionar, ele fica **passivo**: o selo diz
    **Outra máquina assumiu**, aparece o aviso `Outra máquina assumiu esta sala
@@ -1603,25 +1622,29 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | O celular diz "Muitas entradas nesta rede" | Cota de contas anônimas daquele IP. O aluno usa o 4G (README, passo 9) |
 | O celular diz "Não foi possível baixar o app do servidor" | A rede bloqueou a CDN do Firebase. O celular recarrega a página sozinho, no máximo a cada 15 s, e volta à sala sem o aluno tocar em nada. Se não voltar, o aluno usa o 4G |
 | O bloco **Com celulares** do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
-| "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. Quem voltar depois entra de novo sozinho (com a entrada aberta), como quem chegou atrasado: não vota na decisão já aberta e pode cair noutra equipe (**Mover aluno** corrige) |
+| "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. No jogo individual, **Remover inativos** só devolve vaga com alguém esperando e antes do 1º bimestre fechado. Se o M do "N de M" cair de repente na decisão, alguém perdeu a rede: espere 15 a 20 s antes do Enter |
 | `Sem conexão com o serviço: o comando não foi enviado` | Espere o selo voltar a **Conectado** e aperte de novo (seção 8) |
 | O celular diz "Há uma versão nova do app: atualize a página" | O aluno recarrega a página. O voto guardado não se perde |
-| O celular mostra "Aguardando o telão…" | O telão está escondido ou sem rede. Volte ao telão (Alt+Tab); a faixa some sozinha |
+| O celular mostra "Aguardando o telão…" | O telão está escondido ou sem rede. Volte ao telão (Alt+Tab); a faixa some sozinha. Se o selo do próprio celular diz **Reconectando…**, o problema é a rede do aparelho: o voto fica guardado e sai sozinho (na versão 14, a faixa não aparece nesse caso) |
 | O celular diz "Você entrou depois de esta decisão abrir" | É a regra: ele vota na próxima decisão |
-| Aluno na equipe errada | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
-| Equipe sem celular, ou que anunciou em voz alta | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
-| O tempo acabou e a equipe ainda conversa | Espere: o voto vale até você apertar Enter, mesmo com "tempo esgotado". **+30 s** só mostra à turma mais 30 s no cronômetro |
+| Aluno na equipe errada (só no jogo por equipes) | **Mover aluno** → as 3 letras depois do "·" no crachá do celular → a equipe |
+| Equipe sem celular, ou que anunciou em voz alta (só no jogo por equipes) | **Decidir por esta equipe**. "Tirar a decisão do apresentador" desfaz |
+| O tempo acabou e a equipe ainda conversa (só no jogo por equipes) | Espere: o voto vale até você apertar Enter, mesmo com "tempo esgotado". **+30 s** só mostra à turma mais 30 s no cronômetro |
 | Um aluno diz que tocou em "Votar nesta" e não contou | Peça para ele ler a frase logo abaixo do botão: ela diz por quê e o que fazer. "toque em “Votar nesta” de novo" quer dizer que basta tocar outra vez, com a votação aberta. Com a votação aberta, o voto só não conta por pausa (P), por ele ter saído da sala (**Remover inativos**), por ter entrado na sala depois de a decisão abrir ou por estar em outra equipe. "✓ seu voto" só aparece depois que o servidor confirmou |
-| O celular diz "Você foi movido para a equipe N…: o voto na equipe anterior não vale aqui. Vote de novo." | O aluno foi movido (**Mover aluno**) depois de votar: ele vota de novo, pela equipe nova. Com a decisão aberta, o telão pede confirmação antes de mover ("Mover e descartar o voto") |
+| O celular diz "Você foi movido para a equipe N…: o voto na equipe anterior não vale aqui. Vote de novo." (só no jogo por equipes) | O aluno foi movido (**Mover aluno**) depois de votar: ele vota de novo, pela equipe nova. Com a decisão aberta, o telão pede confirmação antes de mover ("Mover e descartar o voto") |
 | Espaço não avança, e aparece `Votação aberta: quem fecha é o apresentador (Enter)` | Enter primeiro, depois Espaço. O aviso aparece junto da barra, que se abre sozinha |
 | `Encerre a votação (Enter) antes de pular.` | Enter, depois **Pular para…** |
 | Um aviso sumiu antes de você ler, ou apertou uma tecla e nada parece ter acontecido | Aperte H: o aviso fica 15 s junto da barra (seção 4) |
 | Não acho **Exportar totais** nem **Apagar a sala** | Estão na barra (H), e não na tela do Fim. **Apagar a sala** só funciona no passo Fim |
-| O placar final "não avança" | Ele tem várias páginas (15 com seis equipes): cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
-| O seu celular, no modo espectador, diz "O PIN não confere" | Confira o PIN (é o do console, o mesmo do telão). Com o PIN certo, as regras publicadas não são as v4 (README, passo 6). O jogo segue sem o espectador |
+| O placar final "não avança" | Ele tem várias páginas (3 no jogo individual): cada Espaço passa uma, e só a última segue o roteiro. A dica da barra diz em que página você está |
+| O seu celular, no modo espectador, diz "O PIN não confere" | Confira o PIN (é o do console, o mesmo do telão). Com o PIN certo, as regras publicadas não são as v5 (README, passo 6). O jogo segue sem o espectador |
 | O seu celular voltou ao campo do PIN | A página recarregou: o PIN só fica na memória. Digite de novo e toque em **Ver as equipes** |
-| Ao encerrar um bimestre do fim do ano (sobretudo Nov–dez) com 6 equipes, o telão congela alguns segundos, ou aparece `O serviço não respondeu em 10 s` | O placar estimado (seção 5.7) é calculado no próprio notebook, e o telão para enquanto isso; numa máquina lenta, passa dos 10 s em que o telão espera a confirmação, e o aviso sai mesmo com o comando já gravado. **Não aperte Enter de novo.** Espere a tela do sorteio; se ela não vier em meio minuto, siga a seção 9, item 4. A correção está para decisão |
+| Ao encerrar um bimestre do fim do ano (sobretudo Nov–dez) com 6 equipes, o telão congela alguns segundos, ou aparece `O serviço não respondeu em 10 s` (só no jogo por equipes) | O placar estimado (seção 5.7) é calculado no próprio notebook, e o telão para enquanto isso; em uma máquina lenta, passa dos 10 s em que o telão espera a confirmação, e o aviso sai mesmo com o comando já gravado. **Não aperte Enter de novo.** Espere a tela do sorteio; se ela não vier em meio minuto, siga a seção 9, item 4. A correção está para decisão |
 | O seu celular aparece no "N conectados" ou tem crachá | Ele entrou como aluno, e não como espectador. Veja a seção 4, "Cuidados" |
+| O selo do telão está em **Reconectando…**, e os celulares já em **Conectado** | Troque para os slides e volte (Alt+Tab), ou minimize e restaure o navegador: ele reconecta na hora. Se não resolver, F5 e **Retomar sala**, com a internet funcionando |
+| A tela do telão está cortada embaixo ou à direita | Ctrl+0 (seção 3); em projetor 1024×768, Ctrl+− de novo |
+| Um celular diz "Sem acesso ao serviço" ou fica parado em "Entrando na sala…" | Esperar 15 s sem fechar a página; se não entrar em 1 minuto, usar o 4G. Parado em "Carregando…" (celular muito antigo): jogar com o colega do lado |
+| Aparece "Revendo: …" no alto do telão | Aperte →: volta ao passo atual (seção 4, a tecla ←) |
 
 ## 11. Cuidados com o tema
 
