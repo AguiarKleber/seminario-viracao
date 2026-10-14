@@ -541,6 +541,29 @@
     return { valor: valor + 0, emprestimo };
   }
 
+  // D-084, nota de 14/10 (pedido do Kleber antes do seminário): o efeito da
+  // opção marcado com "destaque": true no config vira uma linha no resultado
+  // de quem a escolheu ("Bloqueado 5 dias pelo app depois da greve −R$ 450").
+  // Os 5 dias de bloqueio já estavam somados no dinheiro da opção (−R$ 540 = 1
+  // dia parado e o bloqueio), e não apareciam escritos em lugar nenhum: o
+  // saldo de quem parou caía R$ 450 a mais, e a turma não via por quê. Só os
+  // efeitos diretos da opção (efeitoDireto): o validador recusa o destaque com
+  // condição de estado ou de histórico, com multiplica ou sem rótulo, porque a
+  // conta é feita sem o motor (o celular não o carrega). O motivo é o rótulo
+  // até os dois-pontos, como em consequenciasDaRodada; o valor, a soma na
+  // renda em reais inteiros. [{ motivo, valor }], na ordem dos efeitos; config
+  // sem destaque dá [].
+  function destaquesDaOpcao(conteudo, rodadaId, opcaoId, personaId) {
+    const itens = [];
+    for (const efeito of lista(em(conteudo, 'rodadas', rodadaId, 'opcoes', opcaoId, 'efeitos'))) {
+      if (!efeito || efeito.destaque !== true || typeof efeito.rotulo !== 'string') continue;
+      if (!efeitoDireto(efeito.se, { rodadaId, opcaoId, personaId })) continue;
+      const valor = Math.round(Number(em(efeito, 'soma', 'renda'))) + 0;
+      if (Number.isFinite(valor) && valor !== 0) itens.push({ motivo: efeito.rotulo.split(':')[0].trim(), valor });
+    }
+    return itens;
+  }
+
   // A linha do dinheiro da opção, a mesma no telão e no celular: "+R$ 900 no
   // bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre"; com empréstimo,
   // "+R$ 1.500 emprestado" e, se a opção também mexe na renda, o valor depois
@@ -708,8 +731,13 @@
   // consequenciasDaRodada (o rótulo até os dois-pontos), uma linha por valor:
   // a moto que quebra custa menos a quem trocou o pneu. A opção que ninguém
   // escolheu vem com n 0, sem saldo, sem família e sem consequência.
+  // Nota de 14/10: antes das consequências, o destaque da opção
+  // (destaquesDaOpcao: "bloqueado 5 dias pelo app depois da greve −R$ 450"),
+  // com quantas dessas pessoas; a persona de cada vaga decide se ele vale (no
+  // formato simples, é a mesma para todos, e ele vale para todos da opção).
   // { pessoas, semVoto, porOpcao: [{ id, letra, rotulo, n, saldo: { valor, media }
   // | null, familia: { situacao: 'tem' | 'devendo', valor (≥ 0), media } | null,
+  // destaques: [{ motivo, valor, pessoas }] ([] sem destaque no config),
   // consequencias: [{ motivo, valor, pessoas }], o mesmo motivo junto }] }.
   function resultadoPorOpcao(conteudo, rodadaId, resultados) {
     const c = contagemPorOpcao(conteudo, rodadaId, resultados);
@@ -733,7 +761,15 @@
           .map((g, i) => ({ g, i }))
           .sort((x, y) => ordemMotivo.indexOf(x.g.motivo) - ordemMotivo.indexOf(y.g.motivo) || x.i - y.i)
           .map(({ g }) => ({ motivo: g.motivo, valor: g.valor, pessoas: g.equipes.length }));
-        return { ...o, saldo, familia, consequencias };
+        const destaques = [];
+        for (const v of deles) {
+          for (const d of destaquesDaOpcao(conteudo, rodadaId, o.id, em(conteudo, 'equipes', v, 'persona'))) {
+            const linha = destaques.find((x) => x.motivo === d.motivo && x.valor === d.valor);
+            if (linha) linha.pessoas += 1;
+            else destaques.push({ ...d, pessoas: 1 });
+          }
+        }
+        return { ...o, saldo, familia, destaques, consequencias };
       }),
     };
   }
@@ -848,7 +884,7 @@
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
     nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
-    formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
+    formatoSimples, dinheiroDaOpcao, destaquesDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
     consequenciasDaRodada,
     individual, vagasEmJogo, pessoasNaSala, contagemDaDecisao, contagemPorOpcao, consequenciasDaTurma, escolhasDaTurma,
     resultadoPorOpcao, quantasDessas, valorDoGrupo,

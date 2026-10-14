@@ -109,6 +109,12 @@
   // histórico (a opção decidida), sem o estado daquele mês: uma condição de
   // indicador valeria no mês do empréstimo e poderia não valer na parcela.
   const CONDICAO_EMPRESTIMO = new Set(['opcao', 'persona', 'equipe', 'rodada']);
+  // D-084 (nota de 14/10): a condição que um efeito com "destaque" pode ter, a
+  // mesma do efeito direto da opção (historia.efeitoDireto). A tela conta quem
+  // escolheu a opção sem o motor (o celular não o carrega): uma condição de
+  // estado ou de histórico valeria para uns e não para outros, e a linha
+  // contaria errado.
+  const CONDICAO_DESTAQUE = new Set(['opcao', 'persona', 'rodada']);
   // Esquema v3.1 (D-066: o cheque especial tem limite). Os dois indicadores
   // que o motor calcula quando a conta passaria do limite (motor,
   // INDICADOR_ATRASADAS e INDICADOR_MESA): as contas atrasadas (dívida, entram
@@ -172,7 +178,7 @@
     afirmacao: ['id', 'texto'],
     referencia: ['id', 'nome', 'renda', 'persona', 'fonte'],
     passo: ['tipo', 'alvoSeg', 'opcional', 'titulo', 'enquete', 'momento', 'rodada', 'contexto', 'itens', 'fonte'],
-    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria', 'emprestimo'],
+    efeito: ['se', 'soma', 'multiplica', 'rotulo', 'fonte', 'fixo', 'categoria', 'emprestimo', 'destaque'],
     emprestimo: ['valor', 'parcelas', 'taxaMes', 'fonte'],
     condicao: ['opcao', 'persona', 'equipe', 'rodada', 'indicador', 'decidiu', 'sorteou'],
     limite: ['abaixoDe', 'acimaDe'],
@@ -499,6 +505,7 @@
     const fonte = texto(r, bruto, 'fonte', caminho, true);
     if (fonte !== undefined) n.fonte = fonte;
     tipoDoEfeito(r, bruto, n, caminho, temFator);
+    destaqueDoEfeito(r, bruto, n, caminho, naOpcao);
     // Com empréstimo no config, o saldo devedor só anda pelo motor (entra o
     // empréstimo, a parcela abate). Uma soma de fora desencontraria o saldo da
     // tabela Price; a conferência é feita depois, quando se sabe se há
@@ -527,6 +534,9 @@
     for (const chave of ['soma', 'multiplica', 'fixo', 'categoria']) {
       if (tem(bruto, chave)) r.erro(junta(caminho, chave), `"${chave}" junto de "emprestimo": o empréstimo não soma na renda; a entrada e as parcelas são calculadas pelo motor`);
     }
+    // D-084 (nota de 14/10): o empréstimo já tem a linha dele embaixo da
+    // opção ("+R$ 1.500 emprestado"); o destaque é de uma soma na renda.
+    if (tem(bruto, 'destaque')) r.erro(junta(caminho, 'destaque'), '"destaque" junto de "emprestimo": o destaque é de uma soma na renda, e o empréstimo já aparece na linha do dinheiro da opção');
     const n = {};
     if (tem(bruto, 'se')) {
       for (const chave of Object.keys(ehObjeto(bruto.se) ? bruto.se : {})) {
@@ -589,6 +599,29 @@
     }
     if (fixo) n.fixo = true;
     else n.categoria = categoria;
+  }
+
+  // D-084, nota de 14/10 (pedido do Kleber antes do seminário): "destaque":
+  // true num efeito de opção pede uma linha própria no resultado de quem a
+  // escolheu ("Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas
+  // pessoas"). O bloqueio já estava somado no dinheiro da opção e não aparecia
+  // escrito em lugar nenhum. A tela lê o efeito do config, sem o motor
+  // (historia.destaquesDaOpcao), e por isso o destaque só vale onde o valor é
+  // fixo e vale para todos que escolheram a opção: num efeito de opção, com
+  // "soma" na renda (o valor da linha), com rótulo (o texto da linha) e sem
+  // condição além de persona, opção e rodada. false é aceito e some na
+  // normalização, como o fixo: o hash de um config sem destaque não muda.
+  function destaqueDoEfeito(r, bruto, n, caminho, naOpcao) {
+    if (!tem(bruto, 'destaque') || booleano(r, bruto, 'destaque', caminho, false) !== true) return;
+    const c = junta(caminho, 'destaque');
+    const problemas = [];
+    if (!naOpcao) problemas.push('destaque só vale nos efeitos de uma opção: a linha sai embaixo da opção, no resultado de quem a escolheu');
+    if (!Number.isFinite(n.soma?.renda)) problemas.push('destaque sem "soma" na renda: o valor da linha é essa soma (com "multiplica" o valor muda de uma pessoa para outra)');
+    if (n.rotulo === undefined) problemas.push('destaque sem "rotulo": o rótulo é o texto da linha');
+    const fora = Object.keys(ehObjeto(bruto.se) ? bruto.se : {}).filter((chave) => !CONDICAO_DESTAQUE.has(chave));
+    if (fora.length > 0) problemas.push(`destaque com condição de ${fora.join(', ')}: só vale sem condição ou com ${[...CONDICAO_DESTAQUE].join(', ')}, porque a tela conta quem escolheu a opção sem o motor`);
+    for (const mensagem of problemas) r.erro(c, mensagem);
+    if (problemas.length === 0) n.destaque = true;
   }
 
   function efeitos(r, obj, chave, caminho, idx, obrigatorio, onde = null, naOpcao = false) {

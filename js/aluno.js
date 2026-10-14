@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '12';
+  const VERSAO_APP = '13';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -3341,6 +3341,7 @@
           valorSaldo(mes.saldoMes),
         ])
         : null,
+      linhaDestaque(d.rodada?.id, d.decisao?.id, d.equipe?.id),
       linhaConsequencia(d.deAntes),
       linhaDaFamilia(valoresDe(d.indicadores)),
       recolhido(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
@@ -3349,6 +3350,22 @@
       ]),
     ]));
     return 'resultado';
+  }
+
+  // D-084, nota de 14/10 (pedido do Kleber antes do seminário): o destaque da
+  // opção escolhida, à vista logo abaixo do saldo, a mesma linha do telão
+  // ("Bloqueado 5 dias pelo app depois da greve −R$ 450"). Os 5 dias de
+  // bloqueio já estavam no dinheiro da opção e no saldo, e não apareciam
+  // escritos em lugar nenhum (historia.destaquesDaOpcao). Sem destaque, null.
+  function linhaDestaque(rodadaId, opcaoId, equipeId) {
+    const itens = N().historia?.destaquesDaOpcao?.(app.dados.conteudo, rodadaId, opcaoId, personaIdDaEquipe(equipeId)) || [];
+    if (itens.length === 0) return null;
+    const { el } = D();
+    return el('p', { classe: 'destaque-linha', dados: { destaques: String(itens.length) } }, itens.map((g, i) => [
+      i > 0 ? ' · ' : null,
+      `${maiuscula(g.motivo)} `,
+      el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+    ]));
   }
 
   // D-078: a consequência de uma escolha de antes, à vista e não só no detalhe
@@ -3536,13 +3553,18 @@
     // Embaixo de cada opção (D-084): o saldo do bimestre e a família de quem a
     // escolheu e, uma por linha, as consequências, "a moto quebrou (revisão
     // adiada) −R$ 790: 3 dessas pessoas". A opção que ninguém escolheu fica só
-    // com o 0.
+    // com o 0. Antes das consequências, o destaque da opção, como no telão
+    // (D-084, nota de 14/10: "Bloqueado 5 dias pelo app depois da greve −R$
+    // 450: 3 dessas pessoas").
     const detalhes = (o) => [
       o.saldo || o.familia ? el('p', { classe: 'turma-opcao-valores' }, [
         o.saldo ? [`saldo ${doPeriodo} `, el('b', { texto: moeda(o.saldo.valor) }), emMedia(o.saldo.media)] : null,
         o.saldo && o.familia ? ' · ' : null,
         o.familia ? [`a família ${o.familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(o.familia.valor) }), emMedia(o.familia.media)] : null,
       ]) : null,
+      ...lista(o.destaques).map((g) => el('p', { classe: 'turma-opcao-destaque', dados: { motivo: g.motivo, pessoas: g.pessoas, valor: g.valor } }, [
+        `${maiuscula(g.motivo)} `, el('b', { texto: moeda(g.valor) }), `: ${H.quantasDessas(g.pessoas, o.n)}`,
+      ])),
       ...lista(o.consequencias).map((g) => el('p', { classe: 'turma-opcao-antes', dados: { motivo: g.motivo, pessoas: g.pessoas, valor: g.valor } }, [
         `${maiuscula(g.motivo)} `, el('b', { texto: moeda(g.valor) }), `: ${H.quantasDessas(g.pessoas, o.n)}`,
       ])),

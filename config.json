@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-14-v5.1-individual",
+  "versao": "2026-10-14-v5.2-individual",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -464,7 +464,8 @@
               "soma": {
                 "renda": -450
               },
-              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "rotulo": "bloqueado 5 dias pelo app depois da greve",
+              "destaque": true,
               "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
@@ -712,7 +713,8 @@
               "soma": {
                 "renda": -450
               },
-              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "rotulo": "bloqueado 5 dias pelo app depois do protesto",
+              "destaque": true,
               "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
@@ -886,7 +888,8 @@
               "soma": {
                 "renda": -450
               },
-              "rotulo": "bloqueio branco: 5 dias sem pedidos",
+              "rotulo": "bloqueado 5 dias pelo app depois do breque",
+              "destaque": true,
               "fonte": "Abílio (2021), p. 941: entregadores que recusam corridas \"são penalizados pela empresa, em uma espécie de bloqueio informal. Ficam sem receber novas corridas por um período que também não está claro\" (o \"bloqueio branco\"); p. 950: a suspensão sumária, sem meios de se defender. No jogo (D-072; a duração, D-079): quem adere fica 5 dias sem chamada depois, o menor afastamento da regra dos MOTORISTAS da 99 (aceitar e cancelar até finalizar menos de 70% das corridas = 5, 10 e 15 dias fora, página oficial; a regra é de motoristas, e não de entregadores); que o bloqueio branco dure isso é estimativa sem fonte (até 06/10 de manhã, 7 dias). 5 dias da renda do trabalho do bimestre: R$ 2.680 × 2 × 5 ÷ 60 = R$ 446,67, R$ 450 na tela. A certeza é simplificação do jogo: nem todo grevista é bloqueado"
             }
           ]
