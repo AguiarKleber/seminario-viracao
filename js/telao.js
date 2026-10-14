@@ -55,6 +55,8 @@
     el: {},
     config: null, validacao: null, hash: null, textoConfig: null, origemConfig: null,
     roteiroEscolhido: null, erroLeitura: null, lendo: true,
+    // A reserva do config aberta pela tecla H, na abertura (D-082).
+    reservaAberta: false,
     modo: null, canal: null, anf: null, sala: null, nomeRoteiro: null, passos: null,
     estado: null,
     dados: { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null, lidos: null },
@@ -1350,6 +1352,8 @@
       app.hash = N().validarConfig.hash(v.config);
       const nomes = Object.keys(v.config.roteiros);
       if (!nomes.includes(app.roteiroEscolhido)) app.roteiroEscolhido = nomes[0];
+      // Config válido: a reserva aberta pelo H fecha (D-082).
+      app.reservaAberta = false;
     } else {
       app.config = null;
       app.hash = null;
@@ -1369,42 +1373,37 @@
     const v = app.validacao;
     const titulo = app.config ? app.config.titulo : 'Telão do seminário';
 
-    // Config: estado da leitura, erros (a lista inteira), avisos e o hash.
-    const blocoConfig = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-config' }, [
-      el('h2', { id: 'titulo-config', texto: '1. config.json' }),
-    ]);
-    if (app.lendo) blocoConfig.appendChild(el('p', { classe: 'abertura-status', texto: 'Lendo config.json…' }));
-    else if (!v) {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status', texto: app.erroLeitura
-        ? `Não foi possível ler o config.json do site (${app.erroLeitura}). Carregue o arquivo.`
-        : 'Aberto pelo arquivo (pendrive): carregue o config.json.' }));
-    } else if (v.ok) {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status abertura-ok' }, [
-        el('span', { classe: 'marca-ok', 'aria-hidden': 'true', texto: '✓' }),
-        ` Válido · versão ${app.config.versao} · hash `, el('code', { id: 'hash-config', texto: app.hash }),
-      ]));
-    } else {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status abertura-erro', role: 'alert', texto: `O config.json tem ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}. A sala não pode ser criada até corrigir todos:` }));
-      blocoConfig.appendChild(el('ol', { classe: 'lista-erros', id: 'erros-config' }, v.erros.map((e) => el('li', {}, [el('code', { texto: e.caminho }), ` ${e.mensagem}`]))));
+    // Pedido do Kleber de 13/10 à noite (D-082): a abertura sem o painel
+    // "1. config.json". O config do site é lido sozinho, e carregar o arquivo à
+    // mão virou reserva de emergência (o pendrive, sem internet), na barra
+    // oculta do pé da tela (montarReservaConfig). Só quando falta o config, ou
+    // ele tem problema, um aviso aparece no meio da tela, com a lista inteira
+    // dos erros, e a barra fica aberta: sem config, nenhuma sala é criada, e
+    // o apresentador precisa achar o botão sem saber que ele existe.
+    const problemaConfig = !app.lendo && (!v || !v.ok);
+    let blocoConfig = null;
+    if (problemaConfig && !v) {
+      blocoConfig = el('section', { classe: 'abertura-bloco abertura-alerta', id: 'aviso-config', role: 'alert', 'aria-labelledby': 'titulo-config' }, [
+        el('h2', { id: 'titulo-config', texto: 'Falta o config.json' }),
+        el('p', { classe: 'abertura-status', texto: app.erroLeitura
+          ? `Não foi possível ler o config.json do site (${app.erroLeitura}). Carregue o arquivo pela barra de baixo, ou arraste-o para esta janela.`
+          : 'Aberto pelo arquivo (pendrive): carregue o config.json pela barra de baixo, ou arraste-o para esta janela.' }),
+      ]);
+    } else if (problemaConfig) {
+      blocoConfig = el('section', { classe: 'abertura-bloco abertura-alerta', id: 'aviso-config', 'aria-labelledby': 'titulo-config' }, [
+        el('h2', { id: 'titulo-config', texto: `O config.json tem ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}` }),
+        el('p', { classe: 'abertura-status abertura-erro', role: 'alert', texto: 'A sala não pode ser criada até corrigir todos. Depois, carregue o arquivo de novo pela barra de baixo.' }),
+        el('ol', { classe: 'lista-erros', id: 'erros-config' }, v.erros.map((e) => el('li', {}, [el('code', { texto: e.caminho }), ` ${e.mensagem}`]))),
+      ]);
     }
-    if (v && v.avisos.length > 0) {
-      blocoConfig.appendChild(el('details', { classe: 'lista-avisos' }, [
-        el('summary', { texto: `${v.avisos.length} ${v.avisos.length === 1 ? 'aviso' : 'avisos'} (não impedem a sala)` }),
-        el('ul', {}, v.avisos.map((a) => el('li', {}, [el('code', { texto: a.caminho }), ` ${a.mensagem}`]))),
-      ]));
-    }
-    const entradaConfig = el('input', { type: 'file', id: 'arquivo-config', accept: '.json,application/json', classe: 'invisivel',
-      ao: { change: (ev) => lerConfigDeArquivo(ev.target.files[0]).catch(mostrarErro) } });
-    blocoConfig.appendChild(el('div', { classe: 'zona-arquivo', id: 'zona-config' }, [
-      entradaConfig,
-      el('label', { for: 'arquivo-config', classe: 'botao', texto: 'Carregar config.json' }),
-      el('span', { classe: 'zona-dica', texto: 'ou arraste o arquivo para esta janela' }),
-    ]));
 
-    // Roteiro: 60 ou 120 min (D-019).
-    const blocoRoteiro = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-roteiro' }, [el('h2', { id: 'titulo-roteiro', texto: '2. Roteiro' })]);
-    if (app.config) {
-      const opcoes = Object.keys(app.config.roteiros).map((nome) => {
+    // Roteiro (D-019): desde a D-083, o config do dia tem um roteiro só (o de
+    // 60 min), e o telão usa esse, sem perguntar. O bloco só aparece com mais
+    // de um, como nos configs de teste.
+    const nomesRoteiros = app.config ? Object.keys(app.config.roteiros) : [];
+    let blocoRoteiro = null;
+    if (nomesRoteiros.length > 1) {
+      const opcoes = nomesRoteiros.map((nome) => {
         const passos = N().roteiro.passos(app.config, nome);
         const min = Math.round(N().roteiro.somaAlvos(passos) / 60);
         return el('label', { classe: 'opcao-roteiro' }, [
@@ -1413,9 +1412,10 @@
           el('span', {}, [el('b', { texto: nome }), ` · ${passos.length} passos, ${min} min planejados`]),
         ]);
       });
-      blocoRoteiro.appendChild(el('div', { classe: 'opcoes-roteiro', role: 'radiogroup' }, opcoes));
-    } else {
-      blocoRoteiro.appendChild(el('p', { classe: 'abertura-status', texto: 'Aparece depois do config.json.' }));
+      blocoRoteiro = el('section', { classe: 'abertura-bloco abertura-roteiro', 'aria-labelledby': 'titulo-roteiro' }, [
+        el('h2', { id: 'titulo-roteiro', texto: 'Roteiro' }),
+        el('div', { classe: 'opcoes-roteiro', role: 'radiogroup' }, opcoes),
+      ]);
     }
 
     // Retomar a sessão offline guardada neste navegador.
@@ -1457,17 +1457,72 @@
     const blocoComecar = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-comecar' }, [
       // Com o bloco "Com celulares" (site publicado), ele vem antes: é o modo
       // normal da aula, e o sem celulares vira a alternativa.
-      el('h2', { id: 'titulo-comecar', texto: blocoOnline ? '4. Sem celulares' : '3. Começar' }),
+      el('h2', { id: 'titulo-comecar', texto: blocoOnline ? 'Sem celulares' : 'Começar' }),
       el('div', { classe: 'abertura-acoes' }, acoes),
-      el('p', { classe: 'abertura-nota', texto: 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5) e cada equipe anuncia a sua decisão.' }),
+      // No modo individual, sem celulares, a turma escolhe junto (D-081).
+      el('p', { classe: 'abertura-nota', texto: individual()
+        ? 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5), e a turma escolhe junto cada decisão.'
+        : 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5) e cada equipe anuncia a sua decisão.' }),
     ]);
 
     D().acrescentar(palco, el('section', { classe: 'tela tela-abertura' }, [
       el('header', { classe: 'tela-cabecalho' }, [
-        el('div', {}, [el('p', { classe: 'kicker', texto: 'Telão do apresentador' }), el('h1', { texto: titulo })]),
+        el('div', { classe: 'cabecalho-textos' }, [
+          el('p', { classe: 'kicker', texto: 'Telão do apresentador' }),
+          el('h1', { texto: titulo }),
+          app.lendo ? el('p', { classe: 'abertura-status', id: 'status-config', role: 'status', texto: 'Lendo config.json…' }) : null,
+        ]),
       ]),
-      el('div', { classe: 'abertura-grade' }, [blocoConfig, blocoRoteiro, blocoRetomar, blocoOnline, blocoComecar]),
+      el('div', { classe: 'abertura-grade' }, [blocoConfig, blocoRetomar, blocoRoteiro, blocoOnline, blocoComecar]),
+      montarReservaConfig({ aberta: problemaConfig }),
     ]));
+  }
+
+  // A reserva de emergência do config (D-082): uma barra no pé da tela, como a
+  // barra do apresentador da sessão (D-038), escondida até o mouse parar na
+  // faixa fina de baixo (ou até a tecla H, ou o Tab chegar ao botão); aberta
+  // de vez quando falta o config ou ele tem problema. Mostra o estado da
+  // leitura (o "✓ válido", a versão e o hash) e carrega o arquivo pelo seletor
+  // ou arrastado para a janela (ligarArrastar). Esconder e mostrar é só CSS
+  // (telao.css, .reserva-config): na abertura não há estado nem fila, e a
+  // barra some junto com a abertura quando a sessão começa.
+  function montarReservaConfig({ aberta }) {
+    const { el } = D();
+    const v = app.validacao;
+    let estado;
+    if (app.lendo) estado = el('span', { classe: 'reserva-estado', texto: 'Lendo config.json…' });
+    else if (v?.ok) {
+      estado = el('span', { classe: 'reserva-estado abertura-ok' }, [
+        el('span', { classe: 'marca-ok', 'aria-hidden': 'true', texto: '✓' }),
+        ` config.json válido · versão ${app.config.versao} · hash `, el('code', { id: 'hash-config', texto: app.hash }),
+      ]);
+    } else if (v) estado = el('span', { classe: 'reserva-estado abertura-erro', texto: `config.json com ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}` });
+    else estado = el('span', { classe: 'reserva-estado abertura-erro', texto: 'Sem config.json' });
+    const entradaConfig = el('input', { type: 'file', id: 'arquivo-config', accept: '.json,application/json', classe: 'invisivel',
+      ao: { change: (ev) => lerConfigDeArquivo(ev.target.files[0]).catch(mostrarErro) } });
+    return el('aside', {
+      classe: 'reserva-config', id: 'reserva-config', 'aria-label': 'Reserva: carregar o config.json',
+      dados: { fixa: aberta ? 'true' : 'false', aberta: app.reservaAberta ? 'true' : 'false' },
+    }, [
+      estado,
+      el('div', { classe: 'zona-arquivo', id: 'zona-config' }, [
+        entradaConfig,
+        el('label', { for: 'arquivo-config', classe: 'botao botao-barra', texto: 'Carregar config.json' }),
+        el('span', { classe: 'zona-dica', texto: 'ou arraste o arquivo para esta janela' }),
+      ]),
+      v && v.avisos.length > 0 ? el('details', { classe: 'lista-avisos' }, [
+        el('summary', { texto: `${v.avisos.length} ${v.avisos.length === 1 ? 'aviso' : 'avisos'} (não impedem a sala)` }),
+        el('ul', {}, v.avisos.map((a) => el('li', {}, [el('code', { texto: a.caminho }), ` ${a.mensagem}`]))),
+      ]) : null,
+    ]);
+  }
+
+  // A tecla H na abertura abre e fecha a reserva do config (a mesma tecla da
+  // barra da sessão).
+  function alternarReservaConfig() {
+    app.reservaAberta = !app.reservaAberta;
+    const r = document.getElementById('reserva-config');
+    if (r) r.dataset.aberta = app.reservaAberta ? 'true' : 'false';
   }
 
   // Retomar a sessão offline guardada neste navegador. O canal nasce com o
@@ -4730,7 +4785,15 @@
     if (app.el.modal.open) return; // o <dialog> cuida de Enter e Esc
     const alvo = ev.target;
     if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.isContentEditable)) return;
-    if (!app.anf) return; // na abertura, o teclado é o do formulário
+    // Na abertura, o teclado é o do formulário; só o H abre e fecha a reserva
+    // do config (D-082), como abre a barra na sessão.
+    if (!app.anf) {
+      if ((ev.key === 'h' || ev.key === 'H') && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+        alternarReservaConfig();
+        ev.preventDefault();
+      }
+      return;
+    }
     const tecla = ev.key;
     const numero = numeroDaTecla(ev);
     // Pedido 6 do Kleber (05/10), modo revendo: ← e PageUp voltam mais um

@@ -148,13 +148,24 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 
 /* ---------- Abertura ---------- */
 
-.tela-abertura { font-size: clamp(18px, 1.55vw, 30px); gap: 1.2em; }
+/* D-082 (pedido do Kleber de 13/10 à noite): sem o painel do config, o que
+   sobra fica no meio da tela, na vertical e na horizontal. Os blocos ("Com
+   celulares" e "Sem celulares") lado a lado, cada um com até 28em; o aviso do
+   config (só quando falta ou tem problema), o "Retomar" e o roteiro (só com
+   mais de um) ocupam a largura inteira. Por file://, um bloco só, no meio. */
+.tela-abertura { font-size: clamp(18px, 1.55vw, 30px); gap: 1.2em; justify-content: safe center; align-items: center; }
+.tela-abertura .tela-cabecalho { justify-content: center; text-align: center; }
+.tela-abertura .cabecalho-textos { align-items: center; }
 .tela-abertura h1 { font-size: 2.2em; }
 .tela-abertura h2 { font-size: 1.1em; margin-bottom: .5em; }
-.abertura-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2em 2em; align-items: start; }
-/* O config ocupa a coluna da esquerda inteira: uma lista longa de erros não
-   empurra o "Começar" para fora da tela. */
-.abertura-grade > :first-child { grid-row: span 3; }
+.abertura-grade {
+  width: min(100%, 57.6em);
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 1.2em 1.6em;
+}
+.abertura-grade > * { flex: 1 1 24em; max-width: 28em; }
+.abertura-grade > :is(.abertura-alerta, .abertura-retomar, .abertura-roteiro) { flex-basis: 100%; max-width: none; }
+.abertura-alerta { border-color: var(--foco); }
+.abertura-roteiro .opcoes-roteiro { flex-direction: row; flex-wrap: wrap; gap: .3em 2em; }
 .abertura-bloco {
   display: flex; flex-direction: column; gap: .6em;
   padding: 1em 1.2em;
@@ -182,6 +193,36 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 }
 body.arrastando .zona-arquivo { border-color: var(--foco); }
 .zona-dica { color: var(--texto-2); }
+
+/* A reserva do config (D-082), no pé da tela, no tamanho da barra do
+ * apresentador. Escondida, só a faixa de cima dela (10 px, o BORDA_BARRA_PX do
+ * telao.js) fica dentro da tela, invisível; com o mouse PARADO nela por 0,4 s
+ * (o PARAR_NA_BORDA_MS: passar não abre), a barra sobe, e some 0,7 s depois
+ * de o mouse sair dela (o SAIR_DA_BARRA_MS). Abre na hora com o H
+ * (data-aberta), com o Tab chegando ao botão (:focus-within), arrastando um
+ * arquivo e, de vez, quando falta o config ou ele tem problema (data-fixa). */
+.reserva-config {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px;
+  padding: 6px 10px 8px;
+  background: rgba(17, 17, 17, .97);
+  border-top: 1px solid var(--linha-forte);
+  font-size: 15px; line-height: 1.25;
+  transform: translateY(calc(100% - 10px)); opacity: 0;
+  transition: transform .15s ease .7s, opacity .15s ease .7s;
+}
+/* Como todo :hover do projeto, só com mouse de verdade (test/estilo.test.mjs). */
+@media (hover: hover) {
+  .reserva-config:hover { transform: none; opacity: 1; transition-delay: .4s; }
+}
+.reserva-config:focus-within, .reserva-config[data-aberta="true"], .reserva-config[data-fixa="true"], body.arrastando .reserva-config {
+  transform: none; opacity: 1; transition-delay: 0s;
+}
+.reserva-config .zona-arquivo { padding: 4px 8px; gap: 4px 12px; border-width: 1px; }
+.reserva-config .lista-avisos ul { max-height: 30vh; }
+/* Com a reserva aberta de vez (sem config), a tela inicial deixa o espaço
+   dela livre embaixo. */
+.tela-abertura:has(.reserva-config[data-fixa="true"]) { padding-bottom: 64px; }
 .opcoes-roteiro { display: flex; flex-direction: column; gap: .5em; }
 .opcao-roteiro { display: flex; align-items: center; gap: .6em; min-height: 48px; cursor: pointer; }
 .opcao-roteiro input { width: 1.2em; height: 1.2em; accent-color: var(--texto); }

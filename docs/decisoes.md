@@ -982,3 +982,27 @@ sem a chave nova, tudo continua como na D-080).
      "ninguém, nem o apresentador, vê o seu voto": o voto de cada vaga pode ser
      lido, sem o nome, que nunca sai do celular.
   6. O telão tenta dar as vagas até três vezes quando a gravação é recusada.
+
+## 14/10/2026 (de manhã): os três ajustes antes do seminário
+
+Pedidos do Kleber de 13/10 à noite, que chegaram com a revisão da versão 12 já
+rodando. Ainda a versão 12 do site (não publicada) e as regras v5 (ou v4, sem o
+"Li"): nada aqui toca o banco.
+
+**D-082. A tela inicial do telão sem o painel "1. config.json"** (muda a
+abertura da seção 11 da arquitetura).
+- **O que o Kleber pediu:** tirar o painel "1. config.json" (o "Carregar
+  config.json") da tela inicial, deixar o carregar à mão escondido na barra de
+  baixo, como reserva de emergência para abrir sem internet, e centralizar o
+  que sobrar.
+- **Como ficou:** o telão continua lendo o `config.json` do site sozinho. A
+  tela inicial mostra só o título e os blocos **Com celulares** e **Sem
+  celulares** (sem os números "3." e "4."), no meio da tela, em 1024×768,
+  1280×720 e 1920×1080. O "Carregar config.json" (e o "✓ config.json válido",
+  a versão e o hash) foi para uma **barra no pé da tela**, que abre como a
+  barra do apresentador: com o mouse parado na borda de baixo (passar não
+  abre) ou com a tecla H. Arrastar o arquivo para a janela continua valendo.
+- **Quando falta o config ou ele tem problema** (o pendrive, por duplo clique;
+  o site fora do ar; um erro no arquivo), um aviso aparece no meio da tela,
+  com a lista inteira dos erros, e a barra fica aberta de vez: sem config,
+  nenhuma sala é criada, e o botão não pode ficar escondido justamente aí.

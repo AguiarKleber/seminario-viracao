@@ -45,8 +45,9 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
 3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
-   repita o passo 8: o bloco 3 tem de dizer `regras v5 conferidas`; o bloco 1,
-   a versão `2026-10-14-v5-individual` e o hash `39fd446e`. Os celulares com a
+   repita o passo 8: o bloco **Com celulares** tem de dizer `regras v5
+   conferidas`; a barra do pé da tela inicial (o mouse parado na borda de
+   baixo, ou a tecla H), a versão `2026-10-14-v5-individual` e o hash `39fd446e`. Os celulares com a
    versão 11 em cache veem a faixa "Há uma versão nova do app: atualize a
    página".
 4. Ensaie com 3 ou 4 celulares ([roteiro](docs/roteiro-do-apresentador.md),
@@ -61,7 +62,8 @@ depois do merge.
 **Sem o "Li"** (se não der para colar as regras a tempo): os commits [Li] são
 revertidos na branch (`git revert` de cada um, do mais novo para o mais
 antigo), as regras continuam v4 e não há nenhum passo no console. Os passos 2 a
-5 são os mesmos, com `regras v4 conferidas` no bloco 3 e o ensaio sem o "Li".
+5 são os mesmos, com `regras v4 conferidas` no bloco **Com celulares** e o
+ensaio sem o "Li".
 
 **Plano B:** até o merge, a versão 11 (por equipes) continua no ar. Depois do
 merge, reverter o merge na `main` volta à versão 11, que funciona tanto com as
@@ -140,7 +142,7 @@ terminais abaixo ficam na pasta do projeto.
    node -e "import('./bin/emulador.mjs').then(m => m.administrador('PUT', 'privado/pinApresentador', m.PIN_EMULADOR)).then(() => console.log('PIN do emulador semeado'))"
    ```
    Tem de aparecer `PIN do emulador semeado`.
-3. Abra `http://127.0.0.1:8080/telao/?emulador=1`. O bloco **3. Com celulares**
+3. Abra `http://127.0.0.1:8080/telao/?emulador=1`. O bloco **Com celulares**
    tem de dizer `Emulador local · regras v4 conferidas.`
 4. No campo do PIN, digite o valor de `PIN_EMULADOR`, que está em
    `bin/emulador.mjs` e só vale no emulador. Clique em **Criar sala com
@@ -328,8 +330,11 @@ Actions mostra "pages build and deployment" em verde.
 
 1. Abra `https://aguiarkleber.github.io/seminario-viracao/telao/` no Chrome ou no
    Edge.
-2. O bloco **1. config.json** mostra "✓ Válido", a versão e o hash. Anote o hash.
-3. No bloco **3. Com celulares**, espere `Serviço conectado · regras v4
+2. Pare o mouse na borda de baixo da tela (ou aperte H): a barra que sobe
+   mostra "✓ config.json válido", a versão e o hash. Anote o hash. Desde a
+   D-082, a tela inicial não tem mais o painel do config: ele só aparece, no
+   meio da tela, quando o config falta ou tem problema.
+3. No bloco **Com celulares**, espere `Serviço conectado · regras v4
    conferidas.`
 4. Digite o PIN no campo **PIN do apresentador** e clique em **Criar sala com
    celulares**.

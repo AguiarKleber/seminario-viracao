@@ -1422,8 +1422,9 @@ votos; a contagem à mão os substitui (métodos nunca se misturam, seção 7).
 
 ### Telão online (`js/telao.js`, seção "Modo online")
 
-Só fora de `file://`. A abertura ganha o bloco "3. Com celulares" (o offline passa
-a "4. Sem celulares"), que prepara o serviço uma vez por página:
+Só fora de `file://`. A abertura ganha o bloco "Com celulares" (o offline passa
+a "Sem celulares"; D-082: sem números, desde que o painel do config saiu), que
+prepara o serviço uma vez por página:
 1. `?emulador=1`, só em `localhost`/`127.0.0.1`: a conexão do emulador (projeto
    `demo-seminario`, sem `conexao.json`). Fora disso, `../conexao.json` com
    `no-store`; falta, erro ou `COLE_AQUI` em `apiKey`, `authDomain`, `databaseURL`,

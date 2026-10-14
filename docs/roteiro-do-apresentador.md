@@ -197,9 +197,11 @@ no próprio celular. Vocês decidem sozinhos o que ele faz em cada bimestre, e n
 fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 
 **Antes de a turma chegar:**
-1. Abra o telão e confira o bloco 3: `regras v5 conferidas` (ou `regras v4
-   conferidas`, se o "Li" ficou de fora). O bloco 1 mostra a versão
-   `2026-10-14-v5-individual`.
+1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
+   (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
+   `2026-10-14-v5-individual` está na barra do pé da tela inicial: pare o
+   mouse na borda de baixo (ou aperte H). Não há mais o painel do config
+   (D-082): ele só aparece quando o config falta ou tem problema.
 2. Digite o PIN e clique em **Criar sala com celulares**.
 3. **Não entre como aluno com o seu celular nesta sala.** Para conferir o QR e
    ver o que a turma vê, entre pelo **Sou apresentador** (seção 4). O aparelho
@@ -407,8 +409,10 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 ### Site e serviço
 
 - [ ] Nenhuma mudança no site depois do congelamento (06/10).
-- [ ] O telão publicado abre com "✓ Válido". Hash anotado: `________`.
-- [ ] O bloco 3 diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
+- [ ] O telão publicado abre sem aviso do config, e a barra do pé da tela
+      (mouse parado na borda de baixo, ou H) diz "✓ config.json válido". Hash
+      anotado: `________`.
+- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
       ABERTAS`. Se o `firebase/regras.json` mudou depois do teste, a versão
       subiu junto (v4, v5…), e as regras novas já foram publicadas (README,
       passo 6).
@@ -416,7 +420,7 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
       ela aberta, o seu celular entrou pelo **Sou apresentador** e viu as
       equipes (seção 4). O PIN do celular é o mesmo do telão: se ele disse "O
       PIN não confere" com o PIN certo, as regras publicadas não são as v4 (o
-      bloco 3 do telão também avisa); publique-as (README, passo 6).
+      bloco **Com celulares** do telão também avisa); publique-as (README, passo 6).
 - [ ] A cota de contas anônimas está agendada para a aula, se o console oferecer
       (README, passo 9).
 - [ ] No pendrive, `telao/index.html` abre por duplo clique e mostra o mesmo hash.
@@ -483,9 +487,10 @@ Chegue 30 minutos antes.
    do Chrome ou do Edge, o mesmo navegador configurado na véspera: economia de
    memória desligada para o site e downloads automáticos permitidos (seção 2).
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
-4. Confira o bloco 1 (config válido e o mesmo hash da véspera) e o bloco 3
-   (`regras v4 conferidas`). No bloco 2, escolha o roteiro: **60min** ou
-   **120min** (D-019).
+4. Confira a barra do pé da tela inicial (mouse parado na borda de baixo, ou
+   H: config válido e o mesmo hash da véspera) e o bloco **Com celulares**
+   (`regras v4 conferidas`). No bloco **Roteiro**, escolha o roteiro: **60min**
+   ou **120min** (D-019).
 5. Digite o PIN e clique em **Criar sala com celulares**. **Anote o código da
    sala no papel.** Se o notebook travar, é com ele que a sala é retomada.
 6. Aperte **F11** para a janela do telão ficar em tela cheia (D-007). Abra os
@@ -1579,19 +1584,20 @@ guardado no celular e é reenviado. Não feche o telão.
 
 **O notebook reiniciou, e sem internet:**
 1. No pendrive, dê duplo clique em `telao/index.html` e clique em **Carregar
-   config.json**.
+   config.json**, na barra do pé da tela (por duplo clique, sem o config, ela
+   já abre aberta), ou arraste o `config.json` para a janela.
 2. Clique em **Carregar estado (JSON)** e escolha o `viracao-estado-….json` mais
    recente da pasta Downloads.
 3. O telão segue sem celulares, do ponto salvo.
 
-**Sem internet desde o começo:** pendrive → **Carregar config.json** →
-**Começar sem celulares**.
+**Sem internet desde o começo:** pendrive → **Carregar config.json** (na barra
+do pé da tela) → **Começar sem celulares**.
 
 ## 9. Se o telão travar
 
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
-1. **Recarregue a página** (F5). No bloco 3, o código da última sala já vem
+1. **Recarregue a página** (F5). No bloco **Com celulares**, o código da última sala já vem
    preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
    placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
    até a página onde estava.
@@ -1617,7 +1623,7 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | O celular diz "Entrada fechada" | Clique em **Entrada fechada** na barra para reabrir. O aluno entra sozinho |
 | O celular diz "Muitas entradas nesta rede" | Cota de contas anônimas daquele IP. O aluno usa o 4G (README, passo 9) |
 | O celular diz "Não foi possível baixar o app do servidor" | A rede bloqueou a CDN do Firebase. O celular recarrega a página sozinho, no máximo a cada 15 s, e volta à sala sem o aluno tocar em nada. Se não voltar, o aluno usa o 4G |
-| O bloco 3 do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
+| O bloco **Com celulares** do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
 | "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. Quem voltar depois entra de novo sozinho (com a entrada aberta), como quem chegou atrasado: não vota na decisão já aberta e pode cair noutra equipe (**Mover aluno** corrige) |
 | `Sem conexão com o serviço: o comando não foi enviado` | Espere o selo voltar a **Conectado** e aperte de novo (seção 8) |
 | O celular diz "Há uma versão nova do app: atualize a página" | O aluno recarrega a página. O voto guardado não se perde |
@@ -1809,7 +1815,7 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
   fratura, e só se a carta quiser.
 - **Depois de cada correção (01 a 05/10):** se o `firebase/regras.json` mudou,
   publique as regras de novo (README, passo 6). A versão sobe junto (v4, v5…), e
-  é ela que o bloco 3 passa a mostrar em `regras vN conferidas`. Em toda máquina
+  é ela que o bloco **Com celulares** passa a mostrar em `regras vN conferidas`. Em toda máquina
   com o telão aberto, recarregue a página: o telão aberto continua com o código
   antigo.
   Veja "Depois de publicado: mudar alguma coisa", no README.
