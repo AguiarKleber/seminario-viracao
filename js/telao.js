@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '12';
+  const VERSAO_APP = '13';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -3150,6 +3150,13 @@
       // secundária. O motivo é o rótulo até os dois-pontos
       // (historia.consequenciasDaRodada).
       const consequencias = N().historia.consequenciasDaRodada([{ equipeId: eq, deAntes: deAntesDoResultado(e.rodada, eq, r) }]);
+      // D-084, nota de 14/10: o destaque da opção (os 5 dias de bloqueio de
+      // quem parou na greve, já somados no dinheiro dela) vem antes, na mesma
+      // observação (historia.destaquesDaOpcao). Config sem destaque: nada muda.
+      const destaques = N().historia.destaquesDaOpcao(app.config, e.rodada, r.decisao, app.config.equipes[eq]?.persona);
+      const observacoes = [...destaques, ...consequencias];
+      const dadosObs = { motivos: consequencias.map((g) => g.motivo).join(' | '), valores: consequencias.map((g) => g.valor).join(' ') };
+      if (destaques.length > 0) dadosObs.destaques = destaques.map((g) => g.motivo).join(' | ');
       grade.appendChild(el('article', {
         classe: 'resultado-simples', role: 'listitem',
         dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
@@ -3164,10 +3171,7 @@
           el('p', { classe: 'resultado-saldo-rotulo', texto: 'a família' }),
           el('p', { classe: 'simples-familia-valor', dados: { situacao: familia.situacao } }, [`${familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(familia.valor) })]),
         ]),
-        consequencias.length > 0 ? el('p', {
-          classe: 'simples-obs',
-          dados: { motivos: consequencias.map((g) => g.motivo).join(' | '), valores: consequencias.map((g) => g.valor).join(' ') },
-        }, consequencias.map((g, i) => [
+        observacoes.length > 0 ? el('p', { classe: 'simples-obs', dados: dadosObs }, observacoes.map((g, i) => [
           i > 0 ? ' · ' : null,
           `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} `,
           el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
@@ -3231,6 +3235,28 @@
       const m = /^(.+?)((?: \(|, ).*)$/.exec(motivo);
       return m ? [m[1], el('span', { classe: 'turma-motivo-resto', texto: m[2] })] : [motivo];
     };
+    // Embaixo da opção, na mesma linha secundária: primeiro o destaque dela
+    // (D-084, nota de 14/10: "Bloqueado 5 dias pelo app depois da greve −R$
+    // 450: 3 dessas pessoas", o bloqueio que já estava no dinheiro da opção e
+    // não aparecia escrito), depois o que veio de uma escolha de antes. Cada
+    // item com o valor e quantas dessas pessoas; o mesmo motivo de novo (outro
+    // valor) não se repete.
+    const itensDaOpcao = (o) => {
+      const itens = [
+        ...o.destaques.map((g) => ({ g, classe: 'turma-destaque-item' })),
+        ...o.consequencias.map((g) => ({ g, classe: 'turma-antes-item' })),
+      ];
+      if (itens.length === 0) return null;
+      return el('p', { classe: 'turma-consequencias' }, itens.map(({ g, classe }, i) => {
+        const repetido = i > 0 && itens[i - 1].classe === classe && itens[i - 1].g.motivo === g.motivo;
+        return el('span', { classe, dados: { motivo: g.motivo, pessoas: String(g.pessoas), valor: String(g.valor) } }, [
+          i > 0 ? ' · ' : null,
+          ...(repetido ? [] : [...motivoEmDuasPartes(i === 0 ? maiuscula(g.motivo) : g.motivo), ' ']),
+          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+          `: ${H.quantasDessas(g.pessoas, o.n)}`,
+        ]);
+      }));
+    };
     const linhas = c.porOpcao.map((o) => {
       const dados = { opcao: o.id, n: String(o.n) };
       if (o.saldo) Object.assign(dados, { saldo: String(o.saldo.valor), saldoMedia: String(o.saldo.media) });
@@ -3247,15 +3273,7 @@
           el('span', { classe: 'turma-familia-valor', dados: { situacao: o.familia.situacao } }, [`${o.familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(o.familia.valor) })]),
           emMedia(o.familia.media),
         ]) : null,
-        o.consequencias.length > 0 ? el('p', { classe: 'turma-consequencias' }, o.consequencias.map((g, i) => el('span', {
-          classe: 'turma-antes-item', dados: { motivo: g.motivo, pessoas: String(g.pessoas), valor: String(g.valor) },
-        }, [
-          i > 0 ? ' · ' : null,
-          // O mesmo motivo de novo (outro valor) não se repete.
-          ...(i > 0 && o.consequencias[i - 1].motivo === g.motivo ? [] : [...motivoEmDuasPartes(i === 0 ? maiuscula(g.motivo) : g.motivo), ' ']),
-          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
-          `: ${H.quantasDessas(g.pessoas, o.n)}`,
-        ]))) : null,
+        itensDaOpcao(o),
       ]);
     });
     s.appendChild(el('div', { classe: 'turma-opcoes', role: 'list', 'aria-label': `O que cada opção deu ${doPeriodo}` }, [

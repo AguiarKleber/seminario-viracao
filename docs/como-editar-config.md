@@ -940,6 +940,17 @@ fim, por exemplo, seria ignorado em silêncio, e a carta não faria nada na aula
     nenhum. Para mexer na energia, use outro efeito;
   - nunca os dois no mesmo efeito;
   - `"fixo": false` é aceito e vale o mesmo que não ter a chave.
+- `destaque` (opcional, nota de 14/10 na D-084): com `true`, o efeito ganha uma
+  linha própria no resultado de quem escolheu a opção, com o rótulo e o valor:
+  "Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas pessoas" no telão,
+  e a mesma linha, sem as pessoas, no celular. Serve para o que já está no
+  dinheiro da opção e a turma precisa ver escrito (no config do dia, os 5 dias
+  de bloqueio da greve, do protesto e do breque). O validador recusa (é
+  **erro**) o destaque que não for `true` ou `false`, fora dos efeitos de uma
+  opção, sem `soma` na `renda`, sem `rotulo`, junto de `emprestimo` ou com
+  condição além de `persona`, `opcao` e `rodada`: a tela conta quem escolheu a
+  opção sem o motor. `"destaque": false` vale o mesmo que não ter a chave, e o
+  jogo (as contas) não muda com ela.
 
 - `emprestimo` (opcional, esquema v2.2, D-065): a equipe pega um empréstimo.
 

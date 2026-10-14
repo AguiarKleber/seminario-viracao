@@ -24,53 +24,32 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo de 6 personagens (até 05/10), cada um com a fonte; as fontes do Jonas vêm dele |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (13/10)
+## Onde estamos (14/10)
 
 | Já feito | Situação |
 | --- | --- |
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
-| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a **versão 11** do site (o jogo por equipes de 07/10), no ar e funcionando. Até o merge, é o plano B |
-| O jogo individual (D-081) | Branch `claude/individual`, **ainda não fundida nem publicada**, na **versão 12** do site: cada aluno entra com o nome (que fica só no celular dele), ganha uma vaga dada pelo telão (até 20) e joga o próprio Jonas; o telão mostra só o resumo da turma, sem nomes; o placar tem "Quanto sobrou, ou ficou devendo" (quantos terminaram com dinheiro sobrando e quantos devendo), "As escolhas da turma" e as combinações, sem "O caminho de cada equipe"; os blocos de dados e o Fim aparecem também no celular |
-| O "Li, pode seguir" (D-081) | Na mesma branch, em commits cuja mensagem começa por "[Li]". Exige as **regras v5** coladas no console. Sem elas, os commits [Li] são revertidos, e o resto funciona com as regras v4 |
-| Conteúdo | `config.json` versão `2026-10-14-v5.1-individual` (hash `b91b7dc3`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes e só com o roteiro de 60 min (D-083). O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v5** e a `main` com a **versão 12** do site (o jogo individual, D-081, com o "Li, pode seguir"), no ar e funcionando |
+| A linha do bloqueio (nota de 14/10 na D-084) | Branch `claude/linha-bloqueio`, **ainda não fundida nem publicada**, na **versão 13** do site: na greve, no protesto e no breque, o resultado escreve embaixo da opção "Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas pessoas", e o celular de quem parou mostra a mesma linha logo abaixo do saldo. As regras continuam v5 |
+| Conteúdo | `config.json` versão `2026-10-14-v5.2-individual` (hash `2b4b2233`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes, só com o roteiro de 60 min (D-083) e com `"destaque": true` nos 5 dias de bloqueio. O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
 
-**Para publicar (14/10 de manhã), com o "Li":** o site passa à versão 12, o
-`config.json` muda e as regras passam a v5.
-1. **Cole as regras v5 no console** (passo 6), com o `firebase/regras.json` da
-   branch `claude/individual` (no PR, aba **Files changed**, no arquivo, **⋯** →
-   **View file** → **Copy raw file**). Pode ser antes do merge: as regras v5
-   aceitam também o telão da versão 11, que continua funcionando com elas.
-   **Confira:** perto do topo, a linha do `regrasVersao` tem `'v5'` e `'v4'`.
-2. Sem nenhuma sala aberta, funda o PR da `claude/individual` na `main` (o
+**Para publicar a versão 13:** nenhum passo no console (as regras continuam v5).
+1. **Antes de criar a sala da aula.** Uma sala criada com o config de antes
+   (`v5.1-individual`, o da versão 12) não se retoma com o novo (o hash muda):
+   publique antes e crie a sala depois. Se a sala da aula já estiver criada,
+   não funda: a versão 12 continua valendo.
+2. Sem nenhuma sala aberta, funda o PR da `claude/linha-bloqueio` na `main` (o
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
-3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
-   repita o passo 8: o bloco **Com celulares** tem de dizer `regras v5
-   conferidas`; a barra do pé da tela inicial (o mouse parado na borda de
-   baixo, ou a tecla H), a versão `2026-10-14-v5.1-individual` e o hash `b91b7dc3`. Os celulares com a
-   versão 11 em cache veem a faixa "Há uma versão nova do app: atualize a
-   página".
-4. Ensaie com 3 ou 4 celulares ([roteiro](docs/roteiro-do-apresentador.md),
-   seção 00): cada um entra com o nome, toca em "Li, pode seguir" no "Conheça o
-   Jonas" e vota em Jan–fev até o resultado. Apague a sala no fim.
-5. Baixe o ZIP de novo para o pendrive (passo 11).
+3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto. O
+   bloco **Com celulares** diz `regras v5 conferidas`; a barra do pé da tela
+   inicial (o mouse parado na borda de baixo, ou a tecla H) mostra a versão
+   `2026-10-14-v5.2-individual` e o hash `2b4b2233`. Os celulares com a versão
+   12 em cache veem a faixa "Há uma versão nova do app: atualize a página".
+4. Baixe o ZIP de novo para o pendrive (passo 11).
 
-Se o merge vier antes das regras, o telão novo mostra `REGRAS ABERTAS ou
-DESATUALIZADAS` e não cria a sala até as regras v5 serem coladas: cole logo
-depois do merge.
-
-**Sem o "Li"** (se não der para colar as regras a tempo): os commits [Li] são
-revertidos na branch (`git revert` de cada um, do mais novo para o mais
-antigo), as regras continuam v4 e não há nenhum passo no console. Os passos 2 a
-5 são os mesmos, com `regras v4 conferidas` no bloco **Com celulares** e o
-ensaio sem o "Li".
-
-**Plano B:** até o merge, a versão 11 (por equipes) continua no ar. Depois do
-merge, reverter o merge na `main` volta à versão 11, que funciona tanto com as
-regras v4 quanto com as v5.
-
-Uma sala criada com o config de antes (`v4.4-simples`, o da versão 11) não se
-retoma com o novo (o hash muda): crie a sala da aula só depois da publicação.
+**Plano B:** reverter o merge na `main` volta à versão 12, com as mesmas regras
+v5.
 
 ## Como funciona
 

@@ -39,7 +39,7 @@
 /* global document, innerWidth, innerHeight, NodeFilter, getComputedStyle, SVGElement, requestAnimationFrame, MutationObserver */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
-import { copyFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { carregarNucleo, RAIZ } from '../test/carregar-nucleo.mjs';
@@ -98,6 +98,22 @@ function caminhoNoMotor(escolhas) {
     return { rodada: r, opcao: opcaoId, carta: baralho[0].carta, saldo: Math.round(a.mes.saldoMes) + 0, saldoMes: a.mes.saldoMes, depois: a.depois, familia: H.dinheiroDaFamilia(a.depois), deAntes: a.deAntes };
   });
   return { linhas, final: Math.round(M.patrimonio(estado)) + 0 };
+}
+
+// A linha embaixo da opção no resultado da turma, como o telão a escreve
+// (telao.js, itensDaOpcao): primeiro o destaque da opção (D-084, nota de
+// 14/10: "Bloqueado 5 dias pelo app depois da greve −R$ 450: 3 dessas
+// pessoas"), depois o que veio de antes; cada item com quantas dessas pessoas,
+// e o mesmo motivo de novo (outro valor) sem repetir. Recebe uma opção de
+// historia.resultadoPorOpcao; null quando não há nada embaixo dela.
+function linhaEsperada(o) {
+  const itens = [...o.destaques.map((g) => ({ g, tipo: 'destaque' })), ...o.consequencias.map((g) => ({ g, tipo: 'antes' }))];
+  if (itens.length === 0) return null;
+  return itens.map(({ g, tipo }, j) => {
+    const repetido = j > 0 && itens[j - 1].tipo === tipo && itens[j - 1].g.motivo === g.motivo;
+    const motivo = j === 0 ? `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)}` : g.motivo;
+    return `${j > 0 ? ' · ' : ''}${repetido ? '' : `${motivo} `}${F.moeda(g.valor, { sinal: true })}: ${o.n === 1 ? '1 pessoa' : `${g.pessoas} dessas pessoas`}`;
+  }).join('');
 }
 
 // ---------- Navegador ----------
@@ -450,9 +466,11 @@ async function parteTurma() {
       assert.equal(f.opcaoTexto, H.textoDaOpcao(cfg, r, x.opcao, PERSONA).rotulo);
       assert.equal(Number(f.saldoMes), x.saldo, `${onde}: o saldo do bimestre do motor`);
       assert.equal(lido(f.familia), lido(`${x.familia.situacao} ${F.moeda(x.familia.valor)}`), `${onde}: o dinheiro da família`);
-      const grupos = H.consequenciasDaRodada([{ equipeId: VAGAS[0], deAntes: x.deAntes }]);
+      // D-084, nota de 14/10: o destaque da opção (o bloqueio de quem parou)
+      // vem antes da consequência de antes, na mesma observação.
+      const grupos = [...H.destaquesDaOpcao(cfg, r, x.opcao, PERSONA), ...H.consequenciasDaRodada([{ equipeId: VAGAS[0], deAntes: x.deAntes }])];
       const obs = grupos.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${F.moeda(g.valor, { sinal: true })}`).join(' · ');
-      assert.equal(f.obs === null ? null : lido(f.obs), grupos.length > 0 ? lido(obs) : null, `${onde}: a consequência de antes`);
+      assert.equal(f.obs === null ? null : lido(f.obs), grupos.length > 0 ? lido(obs) : null, `${onde}: o destaque e a consequência de antes`);
       if (grupos.length > 0 && onde.endsWith('1024×768')) consequencias += 1;
     });
   }
@@ -516,8 +534,9 @@ async function parteTurma() {
 // das regras), 20 alunos que entram juntos e ganham as vagas e1 a e20 (o uid
 // desempata: u00 → e1), e as primeiras rodadas votadas no celular simulado.
 // Devolve o arquivo do "Salvar estado" (sem membros, votos nem presença) e o
-// plano de cada pessoa.
-async function salaDe20(rodadasNoNode) {
+// plano de cada pessoa. planoDado: as escolhas de cada pessoa em cada rodada
+// (o pior caso do destaque, na parte 3); sem ele, o plano de sempre.
+async function salaDe20(rodadasNoNode, planoDado = null) {
   const sessao = montarSessao(V, { config: cfg, roteiro: ROTEIRO });
   const { anf, relogio } = sessao;
   await anf.criarSala();
@@ -534,7 +553,7 @@ async function salaDe20(rodadasNoNode) {
   // (A, D, C): com o fim que a turma marca no telão, 5 terminam com dinheiro
   // sobrando e 15 devendo, e a página do fim tem colunas dos dois lados.
   const inicio = [0, 3, 2];
-  const plano = alunos.map((_, i) => RODADAS.slice(0, rodadasNoNode).map((r, k) => {
+  const plano = planoDado ?? alunos.map((_, i) => RODADAS.slice(0, rodadasNoNode).map((r, k) => {
     if (i < 5) return opcoesDe(r)[inicio[k % inicio.length] % opcoesDe(r).length];
     return i % 6 === 5 ? null : opcoesDe(r)[(i + k) % opcoesDe(r).length];
   }));
@@ -612,6 +631,7 @@ async function parteDe20() {
       colunas: document.querySelector('.turma-colunas')?.textContent ?? null,
       semVoto: document.querySelector('.turma-sem-voto')?.textContent ?? null,
       antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => ({ opcao: li.closest('.turma-opcao').dataset.opcao, motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), valor: Number(li.dataset.valor) })),
+      destaques: Array.from(document.querySelectorAll('.turma-destaque-item'), (li) => ({ opcao: li.closest('.turma-opcao').dataset.opcao, motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), valor: Number(li.dataset.valor) })),
       faixas: document.querySelectorAll('.resultado-simples').length,
     }));
     const c = contagem(k);
@@ -643,13 +663,13 @@ async function parteDe20() {
         [String(e.saldo.valor), String(e.saldo.media), e.familia.situacao, String(e.familia.valor), String(e.familia.media)], `${onde}: os números da ${LETRAS[i]}`);
       assert.equal(lido(o.saldo), lido(`${F.moeda(e.saldo.valor, { sinal: true })}${e.saldo.media ? ' em média' : ''}`), `${onde}: o saldo da ${LETRAS[i]}`);
       assert.equal(lido(o.familia), lido(`${e.familia.situacao === 'devendo' ? 'devendo' : 'tem'} ${F.moeda(e.familia.valor)}${e.familia.media ? ' em média' : ''}`), `${onde}: a família da ${LETRAS[i]}`);
-      const frase = e.consequencias.map((g, j) => {
-        const repetido = j > 0 && e.consequencias[j - 1].motivo === g.motivo;
-        const motivo = j === 0 ? `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)}` : g.motivo;
-        return `${j > 0 ? ' · ' : ''}${repetido ? '' : `${motivo} `}${F.moeda(g.valor, { sinal: true })}: ${o.n === 1 ? '1 pessoa' : `${g.pessoas} dessas pessoas`}`;
-      }).join('');
-      assert.equal(o.consequencias === null ? null : lido(o.consequencias), e.consequencias.length === 0 ? null : lido(frase), `${onde}: as consequências da ${LETRAS[i]}`);
+      const frase = linhaEsperada(e);
+      assert.equal(o.consequencias === null ? null : lido(o.consequencias), frase === null ? null : lido(frase), `${onde}: o destaque e as consequências da ${LETRAS[i]}`);
     }
+    // D-084, nota de 14/10: o destaque de cada opção vale para todos que a
+    // escolheram (é efeito direto dela): "N dessas pessoas", com N = a opção.
+    assert.deepEqual(t.destaques, esperado.porOpcao.flatMap((o) => o.destaques.map((g) => ({ opcao: o.id, motivo: g.motivo, pessoas: g.pessoas, valor: g.valor }))), `${onde}: o destaque, por opção`);
+    for (const d of t.destaques) assert.equal(d.pessoas, c.n[d.opcao], `${onde}: o destaque da ${d.opcao} para todos que a escolheram`);
     const padrao = letraDe(r, cfg.rodadas[r].padrao);
     assert.equal(t.semVoto === null ? null : lido(t.semVoto), c.semVoto === 0 ? null
       : lido(c.semVoto === 1 ? `1 pessoa não escolheu e ficou na ${padrao}, a opção de sempre.` : `${c.semVoto} pessoas não escolheram e ficaram na ${padrao}, a opção de sempre.`), `${onde}: quem não votou`);
@@ -748,9 +768,109 @@ async function parteDe20() {
   console.log(`  ${H.fraseDoFimDaTurma(fim)} Resultados com quem não votou: ${vistos.semVoto}; com consequência de antes: ${vistos.antes}`);
 }
 
+// ---------- Parte 3: o pior caso do destaque, 20 pessoas ----------
+
+// D-084, nota de 14/10 (pedido do Kleber antes do seminário): nas rodadas com
+// destaque (o bloqueio da greve, do protesto e do breque), o resultado da
+// turma no pior caso de altura: as 20 pessoas repartidas pelas 5 opções (4 em
+// cada) e, em cada opção, os caminhos que juntam todas as consequências de
+// antes que o jogo permite ali (contadas pelo motor, caminho por caminho),
+// com valores diferentes entre si (o "em média" do saldo e da família, que
+// pode quebrar a linha). O destaque entra na linha de baixo da opção dele.
+function piorCasoDaRodada(k) {
+  const r = RODADAS[k];
+  const porOpcao = Math.floor(VAGAS.length / opcoesDe(r).length);
+  const candidatos = new Map(opcoesDe(r).map((op) => [op, []]));
+  const andar = (prefixo) => {
+    if (prefixo.length < k) {
+      for (const op of opcoesDe(RODADAS[prefixo.length])) andar([...prefixo, op]);
+      return;
+    }
+    for (const op of opcoesDe(r)) {
+      const l = caminhoNoMotor([...prefixo, op]).linhas[k];
+      const grupos = new Set(H.consequenciasDaRodada([{ equipeId: VAGAS[0], deAntes: l.deAntes }]).map((g) => `${g.motivo}=${g.valor}`));
+      candidatos.get(op).push({ escolhas: [...prefixo, op], grupos, saldo: l.saldo });
+    }
+  };
+  andar([]);
+  const plano = [];
+  for (const op of opcoesDe(r)) {
+    const todos = new Set(candidatos.get(op).flatMap((c) => [...c.grupos]));
+    const cobertos = new Set();
+    const escolhidos = [];
+    while (escolhidos.length < porOpcao) {
+      // O que mais junta consequências novas; no empate, um saldo ainda não visto.
+      let melhor = null;
+      let ganho = -1;
+      for (const c of candidatos.get(op)) {
+        if (escolhidos.includes(c)) continue;
+        const g = [...c.grupos].filter((x) => !cobertos.has(x)).length + (escolhidos.every((x) => x.saldo !== c.saldo) ? 0.5 : 0);
+        if (g > ganho) [melhor, ganho] = [c, g];
+      }
+      if (!melhor) break;
+      escolhidos.push(melhor);
+      for (const x of melhor.grupos) cobertos.add(x);
+    }
+    assert.equal(cobertos.size, todos.size, `${r}/${op}: o pior caso junta todas as ${todos.size} consequências possíveis (${[...todos].join('; ')})`);
+    plano.push(...escolhidos.map((c) => c.escolhas));
+  }
+  while (plano.length < VAGAS.length) plano.push(plano[plano.length % porOpcao]);
+  return plano;
+}
+
+async function parteDoDestaque() {
+  prefixo = 'destaque';
+  const alvos = RODADAS.map((r, k) => [r, k]).filter(([r]) => opcoesDe(r).some((op) => H.destaquesDaOpcao(cfg, r, op, PERSONA).length > 0));
+  console.log(`Parte 3: o pior caso do destaque, 20 pessoas (${alvos.map(([r]) => r).join(', ') || 'nenhuma rodada com destaque'})`);
+  const medidas = [];
+  for (const [r, k] of alvos) {
+    const plano = piorCasoDaRodada(k);
+    const linhas = plano.map((escolhas) => caminhoNoMotor(escolhas).linhas[k]);
+    const esperado = H.resultadoPorOpcao(cfg, r, {
+      [r]: Object.fromEntries(VAGAS.map((v, i) => [v, { decisao: linhas[i].opcao, mes: { saldoMes: linhas[i].saldoMes }, depois: linhas[i].depois, deAntes: linhas[i].deAntes }])),
+    });
+    const { arquivo } = await salaDe20(k + 1, plano);
+    // O arquivo do "Salvar estado" fica junto das capturas: carregado no telão
+    // ("Carregar estado"), mostra o pior caso para conferir à mão.
+    writeFileSync(join(CAPTURAS, `estado-pior-caso-${r}.json`), JSON.stringify(arquivo));
+    await abrirConfig();
+    await page.setInputFiles('#arquivo-estado', { name: 'estado.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(arquivo)) });
+    await esperarEstado((e) => e.tipo === 'rodada' && e.rodada === r && e.subfase === 'resultado', `o estado do pior caso de ${r}`);
+    await esperarTela('rodada-resultado');
+    await conferirTela(`resultado-${r}`, async (onde) => {
+      const t = await page.evaluate(() => {
+        const s = document.querySelector('.tela');
+        const palco = document.getElementById('palco').getBoundingClientRect();
+        const fundo = Math.max(...[...s.querySelectorAll('*')].map((n) => n.getBoundingClientRect().bottom));
+        return {
+          aperto: s.dataset.aperto ?? '0', sobra: Math.round(Math.min(innerHeight, palco.bottom) - fundo),
+          opcoes: Array.from(document.querySelectorAll('.turma-opcao'), (li) => ({ opcao: li.dataset.opcao, n: Number(li.dataset.n), linha: li.querySelector('.turma-consequencias')?.textContent ?? null })),
+          destaques: Array.from(document.querySelectorAll('.turma-destaque-item'), (li) => ({ opcao: li.closest('.turma-opcao').dataset.opcao, motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), valor: Number(li.dataset.valor) })),
+          antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => ({ opcao: li.closest('.turma-opcao').dataset.opcao, motivo: li.dataset.motivo, pessoas: Number(li.dataset.pessoas), valor: Number(li.dataset.valor) })),
+        };
+      });
+      assert.deepEqual(t.opcoes.map((o) => [o.opcao, o.n]), esperado.porOpcao.map((o) => [o.id, o.n]), `${onde}: quantas pessoas em cada opção`);
+      assert.deepEqual(t.destaques, esperado.porOpcao.flatMap((o) => o.destaques.map((g) => ({ opcao: o.id, motivo: g.motivo, pessoas: g.pessoas, valor: g.valor }))), `${onde}: o destaque, por opção`);
+      assert.ok(t.destaques.length > 0, `${onde}: alguma opção com destaque`);
+      for (const d of t.destaques) assert.equal(d.pessoas, esperado.porOpcao.find((o) => o.id === d.opcao).n, `${onde}: o destaque da ${d.opcao} para todos que a escolheram`);
+      assert.deepEqual(t.antes, esperado.porOpcao.flatMap((o) => o.consequencias.map((g) => ({ opcao: o.id, motivo: g.motivo, pessoas: g.pessoas, valor: g.valor }))), `${onde}: o que veio de antes, por opção`);
+      // O texto inteiro de cada linha; no aperto 6, o motivo perde o resto
+      // (" (revisão adiada)"), que fica no DOM, escondido.
+      for (const [i, o] of t.opcoes.entries()) {
+        const frase = linhaEsperada(esperado.porOpcao[i]);
+        assert.equal(o.linha === null ? null : lido(o.linha), frase === null ? null : lido(frase), `${onde}: a linha embaixo da ${LETRAS[i]}`);
+      }
+      medidas.push(`${r} ${onde.split(' em ')[1]}: aperto ${t.aperto}, sobram ${t.sobra} px`);
+    });
+  }
+  for (const m of medidas) console.log(`  ${m}`);
+}
+
 await parteTurma();
 await page.goto('about:blank');
 await parteDe20();
+await page.goto('about:blank');
+await parteDoDestaque();
 assert.deepEqual(errosDaPagina, [], 'nenhum erro na página');
 console.log(`OK: o modo individual no telão offline (1024×768, 1280×720 e 1920×1080; ${capturadas.length} capturas).`);
 await navegador.close();

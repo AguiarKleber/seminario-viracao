@@ -64,8 +64,12 @@ exibição fica num array de strings.
     em efeitos, `ajustesDePeso` e `somenteSe`;
   - todas as chaves presentes precisam valer ao mesmo tempo;
   - qualquer chave fora dessas é erro.
-- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto"|"protecao", emprestimo?: { valor, parcelas, taxaMes, fonte } }`, com
+- `Efeito = { se?: Condicao, soma?: { [ind]: n }, multiplica?: { [ind]: n }, rotulo?, fonte?, fixo?: true, categoria?: "gasto"|"protecao", emprestimo?: { valor, parcelas, taxaMes, fonte }, destaque?: true }`, com
   `soma` **ou** `multiplica` **ou** `emprestimo`, só um deles (`fixo` e `categoria`: esquema v2.1; `emprestimo`: esquema v2.2, abaixo).
+  `destaque` (D-084, nota de 14/10): booleano; `true` só em efeito de opção, com `soma.renda`, `rotulo` e sem
+  condição além de `persona`, `opcao` e `rodada` (é **erro** fora disso, e junto de `emprestimo`): a tela escreve o
+  efeito em uma linha embaixo da opção, no resultado (`historia.destaquesDaOpcao`). `false` some na normalização (o
+  hash de um config sem destaque não muda). O motor o ignora: as contas são as mesmas.
 - `Passo = { tipo, alvoSeg?, opcional?, titulo?, enquete?, momento?, rodada?, contexto?, itens?, fonte? }`
   - `tipo` ∈ `lobby | enquete | bloco | formarEquipes | personas | rodada | placarFinal | comparativo | fim`;
   - `momento` ∈ `antes | depois | unico`;
@@ -824,6 +828,7 @@ celular e no `test/carregar-nucleo.mjs`.
 | `faltouNaMesaDe(valores) → n \| null` | D-066: o acumulado de `faltou_na_mesa`, ou `null` sem o indicador. Não é dívida |
 | `formatoSimples(conteudo) → boolean` | `regras.formatoSimples === true` (decisão do Kleber de 05/10 à noite) |
 | `dinheiroDaOpcao(conteudo, rodadaId, opcaoId, personaId) → { valor, emprestimo }` | formato simples: a soma dos `soma.renda` dos efeitos diretos da opção (sem condição, ou só com `persona`, `opcao`, `rodada` valendo); o empréstimo à parte; condição de equipe, indicador ou histórico fica de fora (é a consequência, a surpresa do resultado) |
+| `destaquesDaOpcao(conteudo, rodadaId, opcaoId, personaId) → [{ motivo, valor }]` | D-084, nota de 14/10: os efeitos diretos da opção com `"destaque": true` (o bloqueio da greve, do protesto e do breque), para a linha embaixo dela no resultado; o motivo é o `rotulo` até os dois-pontos, o valor é o `soma.renda` em reais inteiros; `[]` sem destaque. O telão escreve "Bloqueado 5 dias pelo app depois da greve −R$ 450" na faixa (e, no resultado da turma, com "N dessas pessoas"); o celular, à vista logo abaixo do saldo (`p.destaque-linha`) |
 | `textoDoDinheiro(dinheiro, moeda, periodo) → string` | "+R$ 900 no bimestre", "−R$ 172 no bimestre", "R$ 0 no bimestre", "+R$ 1.500 emprestado" (e " · −R$ X no bimestre" se a opção também mexe na renda) |
 | `dinheiroDaFamilia(valores) → { situacao: 'tem' \| 'devendo', valor } \| null` / `textoDaFamilia(valores, moeda)` | o patrimônio (`patrimonioDe`) em reais inteiros: "tem R$ X" ou "devendo R$ X" |
 | `primeiraFrase(texto) → string \| null` | a primeira frase (o evento do mês no resultado do formato simples) |
@@ -1315,7 +1320,9 @@ celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `
   valores): a letra, o rótulo (`.turma-opcao-rotulo`), `.turma-n` ("8 pessoas"), `.turma-saldo-opcao` e
   `.turma-familia-opcao` (o valor, quando todos da opção têm o mesmo em reais inteiros; a média arredondada, com
   `.turma-media` "em média", quando variam; ao lado do valor quando cabe, embaixo em telas até 1100 px) e, embaixo,
-  `p.turma-consequencias` com um `span.turma-antes-item` por motivo e valor (`data-motivo`, `data-pessoas`,
+  `p.turma-consequencias` com, primeiro, um `span.turma-destaque-item` por destaque da opção (nota de 14/10:
+  "Bloqueado 5 dias pelo app depois da greve **−R$ 450**: 3 dessas pessoas", de `resultadoPorOpcao`, `destaques`) e
+  depois um `span.turma-antes-item` por motivo e valor (os dois com `data-motivo`, `data-pessoas`,
   `data-valor`): "A moto quebrou (revisão adiada) **−R$ 790**: 3 dessas pessoas" ("1 pessoa" quando a opção tem
   uma só; o mesmo motivo com outro valor vem junto e não se repete: "· **−R$ 560**: 1 dessas pessoas"). Quem não
   votou está na opção de sempre, e `p.turma-sem-voto` (`data-sem-voto`) diz "2 pessoas não escolheram e ficaram na
@@ -1323,10 +1330,10 @@ celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `
   título menor), 3 (sem a frase do evento), 4 (sem o evento), 5 (entrelinha 1 e a borda fina), 6 (o motivo só com a
   parte principal, sem o parêntese nem o que vem depois da vírgula: `.turma-motivo-resto` some) e 7 (sem o kicker,
   o título no corpo e os nomes das colunas na linha dele). Medido (pior caso: as cinco opções com todas as
-  consequências possíveis, 11 linhas em mar–abr e em set–out, 20 pessoas): cabe em 1024×768 sem a faixa de entrada,
+  consequências possíveis, 11 linhas em mar–abr e em set–out, mais o destaque desde 14/10, 20 pessoas): cabe em 1024×768 sem a faixa de entrada,
   em 1280×720 e 1920×1080 com ela; em 1024×768 com a faixa, só o pior caso passa da altura, e a saída é fechar a
   entrada. O celular do apresentador (modo espectador) mostra o mesmo resumo (`telaTurmaResultado`:
-  `.turma-opcao-valores` e `.turma-opcao-antes` embaixo de cada opção).
+  `.turma-opcao-valores`, `.turma-opcao-destaque` e `.turma-opcao-antes` embaixo de cada opção).
 - **Placar final** (pedidos de 13/10, 21h): três páginas, `fimDaTurma`, `escolhasDaTurma` e `combinacoes`; sem "O
   caminho de cada equipe" e sem nada por vaga.
   1. `fimDaTurma`, kicker "Quanto sobrou, ou ficou devendo": o título (`h1.fim-turma-frase`) é a frase de

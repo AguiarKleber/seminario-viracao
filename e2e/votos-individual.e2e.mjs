@@ -406,6 +406,7 @@ async function jogar({ site, navegador, vigiar }) {
     return opcoesDe(RODADAS[k])[(i + k) % 5];
   };
   const cobertas = Object.fromEntries(RODADAS.map((rId) => [rId, new Set()]));
+  let destaquesVistos = 0;
   const opcaoNoCelular = (op) => `.botao-opcao-aluno[data-opcao="${op}"]`;
   async function tocarVotar(c, op) {
     const b = c.p.locator(opcaoNoCelular(op));
@@ -579,11 +580,23 @@ async function jogar({ site, navegador, vigiar }) {
       if (op) assert.ok(linha.startsWith(`A sua escolha: ${letraDe(rId, op)} · ${H.textoDaOpcao(cfg, rId, op, PERSONA).rotulo}`), `${c.rotulo}, ${rId}: "${linha}"`);
       else assert.match(linha, /\(você não votou: ficou o de sempre\)$/, `${c.rotulo}, ${rId}: sem voto`);
       assert.equal(lido(await c.p.textContent('.saldo-rotulo')), 'O seu saldo do bimestre', `${c.rotulo}, ${rId}: o saldo`);
+      // D-084, nota de 14/10: quem parou (na greve, no protesto, no breque) vê
+      // a linha do bloqueio logo abaixo do saldo; os outros, nada.
+      const destaques = H.destaquesDaOpcao(cfg, rId, op ?? cfg.rodadas[rId].padrao, PERSONA);
+      const destaque = await c.p.$eval('.destaque-linha', (x) => x.textContent).catch(() => null);
+      assert.equal(destaque === null ? null : lido(destaque), destaques.length === 0 ? null
+        : lido(destaques.map((g) => `${g.motivo.charAt(0).toUpperCase()}${g.motivo.slice(1)} ${g.valor < 0 ? '−' : '+'}R$ ${Math.abs(g.valor).toLocaleString('pt-BR')}`).join(' · ')), `${c.rotulo}, ${rId}: o destaque da opção`);
       await semVaga(c, `resultado de ${rId}`);
     }
     await esperarTela(esp, 'turmaResultado');
     const noEspectador = Object.fromEntries(await esp.p.$$eval('.turma-opcao', (ls) => ls.map((l) => [l.dataset.opcao, Number(l.dataset.n)])));
     assert.deepEqual(noEspectador, contagem, `${rId}: o celular do apresentador conta as pessoas de cada opção`);
+    // O destaque no celular do apresentador: embaixo de cada opção marcada que
+    // alguém escolheu, para todos da opção.
+    const destaquesNoEspectador = await esp.p.$$eval('.turma-opcao-destaque', (ls) => ls.map((l) => [l.closest('.turma-opcao').dataset.opcao, Number(l.dataset.pessoas)]));
+    const comDestaque = opcoesDe(rId).filter((op) => contagem[op] > 0 && H.destaquesDaOpcao(cfg, rId, op, PERSONA).length > 0);
+    assert.deepEqual(destaquesNoEspectador, comDestaque.map((op) => [op, contagem[op]]), `${rId}: o destaque no celular do apresentador`);
+    if (comDestaque.length > 0) destaquesVistos += 1;
     if (k === 0) {
       await capturar(cel[0], 'resultado');
       await capturar(esp, 'espectador-resultado');
@@ -606,6 +619,8 @@ async function jogar({ site, navegador, vigiar }) {
   }
   // Com 7 celulares ou mais, toda opção de todo bimestre passa por um toque.
   if (N_CELULARES >= 7) for (const rId of RODADAS) assert.deepEqual([...cobertas[rId]].sort(), [...opcoesDe(rId)].sort(), `${rId}: toda opção foi tocada em um celular e contada`);
+  // Com toda opção tocada, as rodadas com destaque (a greve, o protesto, o breque) o mostraram.
+  if (N_CELULARES >= 7) assert.equal(destaquesVistos, RODADAS.filter((rId) => opcoesDe(rId).some((op) => H.destaquesDaOpcao(cfg, rId, op, PERSONA).length > 0)).length, "o destaque em toda rodada que tem um");
 
   // ---------- O placar ----------
   await avancar('placar final', (e) => e.tipo === 'placarFinal');

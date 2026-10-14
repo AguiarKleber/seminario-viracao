@@ -420,6 +420,7 @@ async function jogar({ site, navegador, vigiar, celulares }) {
     await conferirLidos('conheca');
 
     let comAntes = 0;
+    let comDestaques = 0;
     for (const [k, r] of RODADAS.entries()) {
       await avancarAte((e) => e.tipo === 'rodada' && e.rodada === r, `${r}`);
       await esperarEstado((e) => e.subfase === 'decidindo', `${r} aberta`);
@@ -468,6 +469,7 @@ async function jogar({ site, navegador, vigiar, celulares }) {
           numeros: Array.from(document.querySelectorAll('.turma-opcao'), (li) => [li.dataset.saldo ?? null, li.dataset.saldoMedia ?? null, li.dataset.familia ?? null, li.dataset.valorFamilia ?? null, li.dataset.familiaMedia ?? null]),
           semVoto: document.querySelector('.turma-sem-voto')?.textContent ?? null,
           antes: Array.from(document.querySelectorAll('.turma-antes-item'), (li) => [li.closest('.turma-opcao').dataset.opcao, li.dataset.motivo, Number(li.dataset.pessoas), Number(li.dataset.valor)]),
+          destaques: Array.from(document.querySelectorAll('.turma-destaque-item'), (li) => [li.closest('.turma-opcao').dataset.opcao, li.dataset.motivo, Number(li.dataset.pessoas), Number(li.dataset.valor), li.textContent]),
         }));
         assert.equal(t.kicker, `O que a turma escolheu · ${F.pessoas(alunos.length)}`, `${onde}: quantas pessoas`);
         assert.deepEqual(t.opcoes, opcoesDe(r).map((op) => [op, n[op], H.textoDaOpcao(cfg, r, op, PERSONA).rotulo]), `${onde}: quantas pessoas em cada opção`);
@@ -478,10 +480,25 @@ async function jogar({ site, navegador, vigiar, celulares }) {
           : [null, null, null, null, null])), `${onde}: o saldo e a família de cada opção`);
         assert.deepEqual(t.antes, esperado.porOpcao.flatMap((o) => o.consequencias.map((g) => [o.id, g.motivo, g.pessoas, g.valor])), `${onde}: o que veio de antes, por opção`);
         for (const g of grupos) assert.equal(t.antes.filter((a) => a[1] === g.motivo).reduce((s, a) => s + a[2], 0), g.pessoas, `${onde}: "${g.motivo}", para ${g.pessoas} pessoas`);
+        // D-084, nota de 14/10: o destaque (o bloqueio de quem parou na greve,
+        // foi ao protesto ou parou no breque) embaixo de cada opção marcada no
+        // config que alguém escolheu, para todos que a escolheram, antes das
+        // consequências: "Bloqueado 5 dias pelo app depois da greve −R$ 450: 3
+        // dessas pessoas".
+        assert.deepEqual(t.destaques.map((d) => d.slice(0, 4)), esperado.porOpcao.flatMap((o) => o.destaques.map((g) => [o.id, g.motivo, g.pessoas, g.valor])), `${onde}: o destaque, por opção`);
+        assert.deepEqual(t.destaques.map((d) => [d[0], d[2]]), comDestaque.map((op) => [op, n[op]]), `${onde}: o destaque nas opções marcadas, para todos da opção`);
+        t.destaques.forEach(([op, motivo, pessoas, valor, texto], i) => {
+          const primeiro = i === 0 || t.destaques[i - 1][0] !== op;
+          const esperadoTexto = `${primeiro ? '' : ' · '}${primeiro ? motivo.charAt(0).toUpperCase() + motivo.slice(1) : motivo} ${F.moeda(valor, { sinal: true })}: ${n[op] === 1 ? '1 pessoa' : `${pessoas} dessas pessoas`}`;
+          assert.equal(lido(texto), lido(esperadoTexto), `${onde}: o texto do destaque da ${op}`);
+        });
       };
+      // As opções que alguém escolheu e que têm um efeito com "destaque" no config.
+      const comDestaque = opcoesDe(r).filter((op) => n[op] > 0 && cfg.rodadas[r].opcoes[op].efeitos.some((e) => e.destaque === true));
       if (grupos.length > 0) comAntes += 1;
-      // As telas mais altas: o primeiro resultado e os que têm consequência.
-      if (k === 0 || grupos.length > 0) await conferirTelao(`resultado-${r}`, conferir);
+      if (comDestaque.length > 0) comDestaques += 1;
+      // As telas mais altas: o primeiro resultado e os que têm consequência ou destaque.
+      if (k === 0 || grupos.length > 0 || comDestaque.length > 0) await conferirTelao(`resultado-${r}`, conferir);
       else await conferir(r);
       // O resultado gravado, lido como o celular lê (resultados é livre para ler).
       const gravados = await todos[0].canal.ler(s('resultados', r));
@@ -529,7 +546,8 @@ async function jogar({ site, navegador, vigiar, celulares }) {
     });
     // O 21º continuou de fora o jogo inteiro.
     assert.equal(await vigesimoPrimeiro.vaga(), null, 'o 21º nunca ganhou vaga');
-    console.log(`  ${H.fraseDoFimDaTurma(fim)} Resultados com consequência de antes: ${comAntes}; capturas: ${capturas.length}`);
+    assert.ok(comDestaques > 0, "algum resultado com destaque");
+    console.log(`  ${H.fraseDoFimDaTurma(fim)} Resultados com consequência de antes: ${comAntes}; com destaque: ${comDestaques}; capturas: ${capturas.length}`);
     console.log('OK: o modo individual com 21 celulares simulados (telão em 1024×768 e 1280×720 com a faixa de entrada, e em 1920×1080).');
   } finally {
     clearInterval(presencas);

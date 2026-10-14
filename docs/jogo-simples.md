@@ -31,7 +31,7 @@ personagens, com cartas sorteadas, ficou no git e congelado em
 
 ## O jogo individual (14/10, D-081)
 
-Config `2026-10-14-v5.1-individual` (hash `b91b7dc3`; só o roteiro de 60 min desde a D-083), versão 12 do site. A
+Config `2026-10-14-v5.2-individual` (hash `2b4b2233`; só o roteiro de 60 min desde a D-083; a linha do bloqueio desde a nota de 14/10 na D-084), versão 13 do site. A
 chave `regras.individual: true` liga o modo; sem ela, o jogo é por equipes,
 como abaixo.
 
@@ -250,7 +250,7 @@ na vida, são risco.
 
 | | Gatilho | Quando | Efeito | Fonte |
 | --- | --- | --- | --- | --- |
-| K1 | Parar na greve, ir ao protesto ou parar no breque | No mesmo bimestre | **5 dias sem pedidos: −R$ 450** (já está no valor da opção; era 1 semana, −R$ 630) | D-072; Abílio (2021), p. 941 e 950. A fonte diz que o prazo "não está claro": 5 dias é o menor afastamento da regra da 99 (5, 10 e 15 dias), estimativa sem fonte para o bloqueio branco (D-079) |
+| K1 | Parar na greve, ir ao protesto ou parar no breque | No mesmo bimestre | **5 dias sem pedidos: −R$ 450** (já está no valor da opção; era 1 semana, −R$ 630). Desde 14/10, o efeito tem `"destaque": true` e o resultado o escreve embaixo da opção: "Bloqueado 5 dias pelo app depois da greve −R$ 450" (do protesto, do breque) | D-072; Abílio (2021), p. 941 e 950. A fonte diz que o prazo "não está claro": 5 dias é o menor afastamento da regra da 99 (5, 10 e 15 dias), estimativa sem fonte para o bloqueio branco (D-079) |
 | K2 | **Duas opções puxadas seguidas** (⚑ num bimestre e ⚑ no seguinte) | No bimestre da segunda | **As costas travam:** 7 dias parado (−R$ 630) e 4 sessões de fisioterapia (−R$ 600) = **−R$ 1.230** | Carta "Dor" do config de 05/10: Souza et al. (Physis, 2024); Doctoralia POA (4 × R$ 150). O "sempre, na segunda seguida" é estimativa sem fonte (regra decidida pelo Kleber) |
 | K3 | Pagar o IPVA em janeiro (jan–fev E) | Mar–abr | O IPVA não vence de novo: +R$ 340 | Sefaz-RS (um IPVA por ano) |
 | K4 | Atrasar a parcela da moto (jan–fev B) | Mar–abr | A parcela volta com multa de 2%, mora de 1% e um mês dos juros do contrato: −R$ 500 | CDC, art. 52, § 1º; BCB SGS 25471; Decreto-Lei 911/1969 |

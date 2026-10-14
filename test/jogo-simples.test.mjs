@@ -114,7 +114,7 @@ test('config.json do dia: modo individual, com 20 vagas neutras, nenhuma obrigat
     assert.equal(cfg.equipes[eq].persona, 'motoboy');
     assert.notEqual(cfg.equipes[eq].obrigatoria, true, `${eq}: no modo individual nenhuma vaga é obrigatória`);
   }
-  assert.equal(cfg.versao, '2026-10-14-v5.1-individual');
+  assert.equal(cfg.versao, '2026-10-14-v5.2-individual');
 });
 
 // Sem a etapa de formar equipes (a vaga é dada pelo telão quando o aluno entra), e
