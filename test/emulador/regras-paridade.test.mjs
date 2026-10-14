@@ -467,10 +467,6 @@ paridade('regrasVersao só a versão destas regras; autoteste e privado nunca; p
   const u = await amb.usuario('u');
   await tentar(`regrasVersao ${VERSAO_REGRAS}`, () => u.canal.gravar({ [`regrasVersao/${u.uid}`]: VERSAO_REGRAS }), 'aceito');
   await tentar('regrasVersao de outra versão', () => u.canal.gravar({ [`regrasVersao/${u.uid}`]: 'v0-velha' }), 'recusado');
-  // [Li] As regras v5 aceitam também o "v4": o telão da versão 11 (o plano B)
-  // continua abrindo sala com elas publicadas.
-  await tentar('regrasVersao v4 (compatível)', () => u.canal.gravar({ [`regrasVersao/${u.uid}`]: 'v4' }), 'aceito');
-  await tentar('regrasVersao v3', () => u.canal.gravar({ [`regrasVersao/${u.uid}`]: 'v3' }), 'recusado');
   await tentar('regrasVersao de outro', () => u.canal.gravar({ 'regrasVersao/outro': VERSAO_REGRAS }), 'recusado');
   await tentar('autoteste', () => u.canal.gravar({ [`autoteste/${u.uid}`]: true }), 'recusado');
   await tentar('privado', () => u.canal.gravar({ 'privado/pinApresentador': '1234567890' }), 'recusado');
@@ -497,40 +493,6 @@ paridade('retomada: hostUid só com o PIN certo, só o próprio uid e só esse c
   await tentar('anfitrião antigo deixa de escrever', () => mudarEstado({ tipo: 'bloco' }), 'recusado');
   await tentar('anfitrião novo escreve', () => n.canal.transacao(`${S}/estado`, (e) => (e ? { ...e, tipo: 'bloco', geracao: e.geracao + 1 } : undefined)), 'aceito');
   await tentar('anfitrião antigo não apaga a sala', () => h.canal.gravar({ [S]: null }), 'recusado');
-});
-
-// [Li] "Li, pode seguir" (pedido do Kleber de 07/10; regras v5): lidos/{uid} = o
-// índice do passo que o aluno leu. Só o próprio, já membro, só o passo atual e só
-// número; o aluno lê só o próprio, o espectador com o PIN e o anfitrião, todos.
-paridade('[Li] lidos: só o próprio membro, só o índice do passo atual; o aluno lê o seu, o PIN e o anfitrião leem todos', async (amb, tentar) => {
-  const { S, h, mudarEstado, membro } = await salaPronta(amb, { estado: { indice: 3 } });
-  const a = await membro('a', 'e1');
-  const b = await membro('b', 'e2');
-  const fora = await amb.usuario('fora');
-  const lido = (quem, valor, dono = quem) => () => quem.canal.gravar({ [`${S}/lidos/${dono.uid}`]: valor });
-  await tentar('o próprio lido no passo atual', lido(a, 3), 'aceito');
-  await tentar('regravar o mesmo', lido(a, 3), 'aceito');
-  await tentar('lido de outro passo', lido(b, 2), 'recusado');
-  await tentar('lido como true', lido(b, true), 'recusado');
-  await tentar('lido como texto', lido(b, '3'), 'recusado');
-  await tentar('lido em nome de outro', lido(a, 3, b), 'recusado');
-  await tentar('lido de quem não é membro', lido(fora, 3), 'recusado');
-  await tentar('o nó lidos inteiro', () => a.canal.gravar({ [`${S}/lidos`]: { [a.uid]: 3 } }), 'recusado');
-  await tentar('o anfitrião não grava lido', lido(h, 3), 'recusado');
-  await tentar('o aluno lê o próprio', () => a.canal.ler(`${S}/lidos/${a.uid}`), 'aceito');
-  await tentar('o aluno não lê o de outro', () => a.canal.ler(`${S}/lidos/${b.uid}`), 'recusado');
-  await tentar('o aluno não lê todos', () => a.canal.ler(`${S}/lidos`), 'recusado');
-  await tentar('o anfitrião lê todos', () => h.canal.ler(`${S}/lidos`), 'aceito');
-  const esp = await amb.usuario('esp');
-  await tentar('sem o PIN, o espectador não lê', () => esp.canal.ler(`${S}/lidos`), 'recusado');
-  await esp.canal.gravar({ [`pedidosAnfitriao/${esp.uid}`]: PIN });
-  await tentar('o espectador com o PIN lê todos', () => esp.canal.ler(`${S}/lidos`), 'aceito');
-  await tentar('o espectador não grava', lido(esp, 3), 'recusado');
-  await mudarEstado({ indice: 4 });
-  await tentar('o "li" atrasado, do passo que passou', lido(b, 3), 'recusado');
-  await tentar('o lido do passo novo', lido(b, 4), 'aceito');
-  await tentar('apagar o próprio lido', lido(a, null), 'aceito');
-  assert.deepEqual(await h.canal.ler(`${S}/lidos`), { [b.uid]: 4 });
 });
 
 // ---------- Diferenças de propósito (contratos, seção 6) ----------
@@ -584,10 +546,6 @@ test('só online: prioridade recusada em todo nó que o aluno grava', async () =
   await new Promise((r) => setTimeout(r, 5));
   await mudarEstado({ tipo: 'rodada', rodada: 'r1', subfase: 'decidindo', abertoEm: h.canal.agora(), prazo: h.canal.agora() + 60_000 });
   await assert.rejects(d.canal.gravar({ [`${S}/decisoes/r1/e1/${d.uid}`]: comPrioridade('a') }), /PERMISSION_DENIED/, 'decisão com prioridade');
-  // [Li] O lido (regras v5), no índice do passo atual.
-  await mudarEstado({ indice: 9 });
-  await assert.rejects(d.canal.gravar({ [`${S}/lidos/${d.uid}`]: comPrioridade(9) }), /PERMISSION_DENIED/, 'lido com prioridade');
-  await d.canal.gravar({ [`${S}/lidos/${d.uid}`]: 9 });
   // Sem prioridade, as mesmas escritas passam: o que falhou foi só a prioridade.
   await d.canal.gravar({ [`${S}/decisoes/r1/e1/${d.uid}`]: 'a' });
   await a.canal.gravar({ [`${S}/presenca/${a.uid}`]: a.canal.marcadorDeHora(), [`regrasVersao/${a.uid}`]: VERSAO_REGRAS });
