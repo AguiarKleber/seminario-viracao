@@ -551,10 +551,12 @@
   //   Duas pessoas na mesma vaga nunca deveriam acontecer (a gravação é
   //   atômica e confere a geracao); se acontecer, fica quem entrou primeiro, e
   //   a outra ganha vaga nova.
-  // - Uma vaga livre é a que ninguém ocupa E que nunca foi aberta: a vaga
+  // - Uma vaga livre é a que ninguém ocupa E que não está aberta: a vaga
   //   aberta tem o caminho de alguém (resultados, votos), e dá-la a outra
-  //   pessoa misturaria dois anos do Jonas num só. Por isso a vaga não volta
-  //   para a fila nem quando o dono some.
+  //   pessoa misturaria dois anos do Jonas em um só. Por isso a vaga não volta
+  //   para a fila quando o dono some. A única que volta é a vaga presa, sem
+  //   bimestre jogado, que o "Remover inativos" fecha junto com o dono
+  //   (anfitriao.removerInativos; revisão de 14/10, achado 2).
   // - Ordem determinística: quem entrou primeiro (entrouEm, a hora do
   //   servidor), e o uid no empate; a menor vaga livre, na ordem do config.
   //   Vários entrando no mesmo instante ganham vagas diferentes, e a mesma

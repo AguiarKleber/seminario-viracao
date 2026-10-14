@@ -256,6 +256,113 @@ test('modo individual: "Remover inativos" nunca tira quem tem vaga, e "Mover alu
   await assert.rejects(anf.moverMembro('u00', 'e5'), /não dá para mover/);
 });
 
+// Revisão de 14/10 (achado 2): a vaga presa. O apresentador lê o QR com o
+// próprio celular no lobby, para conferir, e fica com a e1; com 20 alunos, o
+// 20º via "A sala está cheia".
+async function salaComVagaPresa() {
+  const sessao = sessaoIndividual();
+  const { anf, relogio } = sessao;
+  await anf.criarSala();
+  const doApresentador = sessao.novoAluno('celular-do-apresentador');
+  await doApresentador.entrar();
+  await doApresentador.presenca();
+  await anf.atribuirVagas();
+  relogio.passar(30_000);
+  const alunos = [];
+  for (let i = 0; i < 20; i += 1) {
+    const a = sessao.novoAluno(`u${String(i).padStart(2, '0')}`);
+    await a.entrar();
+    alunos.push(a);
+  }
+  await anf.atribuirVagas();
+  return { ...sessao, doApresentador, alunos };
+}
+
+const presencaDeTodos = (alunos) => Promise.all(alunos.map((a) => a.presenca()));
+
+test('vaga presa: "Remover inativos" devolve a quem espera a vaga sem bimestre de quem está sem sinal', async () => {
+  const sessao = await salaComVagaPresa();
+  const { anf, relogio, alunos, doApresentador, config } = sessao;
+  assert.equal(await vagaDe(sessao, doApresentador.uid), 'e1');
+  assert.deepEqual(await telaDe(alunos[19]), { tipo: 'aguardando', dados: { motivo: 'salaCheia', capacidade: 20 } });
+  relogio.passar(3 * 60_000); // o celular do apresentador voltou ao bolso
+  await presencaDeTodos(alunos);
+  const geracao = anf.estado().geracao;
+
+  const removidos = await anf.removerInativos(120_000);
+
+  assert.equal(removidos, 1);
+  assert.equal(await doApresentador.membro(), null, 'o registro do celular do apresentador saiu');
+  assert.equal(await vagaDe(sessao, alunos[19].uid), 'e1', 'quem esperava ganhou a vaga');
+  const membros = await sessao.host.ler(s('membros'));
+  assert.equal(Object.keys(membros).length, 20);
+  assert.equal(new Set(Object.values(membros).map((m) => m.equipe)).size, 20, 'nenhuma vaga repetida');
+  assert.equal(H.pessoasNaSala(config, { estado: anf.estado(), membros }), 20);
+  assert.ok(anf.estado().geracao > geracao, 'a vaga sai e volta pelo estado, com a geracao');
+  assert.deepEqual(await telaDe(alunos[19]), { tipo: 'aguardando', dados: { motivo: 'lobby' } });
+});
+
+test('vaga presa: sem ninguém esperando, ninguém com vaga sai', async () => {
+  const sessao = await salaComVagaPresa();
+  const { anf, relogio, alunos } = sessao;
+  relogio.passar(3 * 60_000);
+  await presencaDeTodos(alunos);
+  await alunos[19].canal.gravar({ [s('membros', alunos[19].uid)]: null }); // o 21º desistiu e saiu
+
+  assert.equal(await anf.removerInativos(120_000), 0);
+  assert.equal(await vagaDe(sessao, 'celular-do-apresentador'), 'e1');
+});
+
+test('vaga presa: a vaga com bimestre jogado e a de quem já votou nunca são devolvidas', async () => {
+  const sessao = sessaoIndividual();
+  const { anf, relogio } = sessao;
+  await anf.criarSala();
+  const antigos = [];
+  for (let i = 0; i < 20; i += 1) {
+    const a = sessao.novoAluno(`u${String(i).padStart(2, '0')}`);
+    await a.entrar();
+    await a.presenca();
+    antigos.push(a);
+  }
+  await anf.atribuirVagas();
+  await anf.avancar(); // personas
+  relogio.passar(1000);
+  await anf.avancar(); // r1
+  await anf.encerrar(); // as 20 vagas jogaram r1
+  relogio.passar(1000);
+  await anf.avancar(); // bloco
+  await anf.avancar(); // r2, decidindo
+  const r2 = anf.estado().rodada;
+  await antigos[0].decidir(r2, 'e1', 'a');
+  const novo = sessao.novoAluno('chegou-tarde');
+  await novo.entrar();
+  await novo.presenca();
+  await anf.atribuirVagas();
+  relogio.passar(3 * 60_000); // ninguém mais mandou sinal, só quem chegou
+
+  await novo.presenca();
+  assert.equal(await anf.removerInativos(120_000), 0);
+  assert.equal(Object.keys(await sessao.host.ler(s('membros'))).length, 21);
+  assert.equal(await vagaDe(sessao, 'chegou-tarde'), null, 'continua esperando: todas as vagas já jogaram');
+});
+
+test('vaga presa: entre várias, sai primeiro a de quem está há mais tempo sem sinal, e só uma por pessoa esperando', async () => {
+  const sessao = await salaComVagaPresa();
+  const { anf, relogio, alunos } = sessao;
+  // u00 (e2) e u01 (e3) somem também, mas depois do celular do apresentador.
+  relogio.passar(60_000);
+  await alunos[0].presenca();
+  await alunos[1].presenca();
+  relogio.passar(3 * 60_000);
+  await presencaDeTodos(alunos.slice(2));
+
+  assert.equal(await anf.removerInativos(120_000), 1, 'só um esperando: só uma vaga');
+  assert.equal(await vagaDe(sessao, 'celular-do-apresentador'), null);
+  assert.equal(await vagaDe(sessao, alunos[0].uid), 'e2');
+  assert.equal(await vagaDe(sessao, alunos[1].uid), 'e3');
+  assert.equal(await vagaDe(sessao, alunos[19].uid), 'e1');
+});
+
 // Revisão de 14/10 (achado 7, a sonda S3 do revisor): um aluno sem vaga, por
 // script, apaga o próprio registro entre a leitura e a gravação do telão, e
 // entra de novo logo depois. A vaga dele criaria um membro sem entrouEm, e a

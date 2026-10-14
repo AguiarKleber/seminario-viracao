@@ -925,24 +925,84 @@
     async function removerInativos(limiteMs = ATIVO_MS) {
       const e = await canal.ler(cam('estado'));
       const noDosVotos = votosDaEtapa(e);
-      const [membros, presenca, votos] = await Promise.all([
+      const [membros, presenca, votos, resultados] = await Promise.all([
         canal.ler(cam('membros')), canal.ler(cam('presenca')), noDosVotos ? canal.ler(noDosVotos) : null,
+        individual ? canal.ler(cam('resultados')) : null,
       ]);
       const votaram = quemVotou(votos);
       const t = agora();
+      const inativo = (u) => typeof presenca?.[u] !== 'number' || t - presenca[u] > limiteMs;
       const escritas = {};
       for (const u of Object.keys(membros || {})) {
         if (votaram.has(u)) continue;
-        // Modo individual: quem tem vaga nunca sai. A vaga não volta para a
-        // fila (vagasParaAtribuir), e o aparelho que voltasse ganharia outra:
-        // a mesma pessoa em dois anos do Jonas, e uma vaga jogando sozinha.
-        // O celular no bolso, com a tela apagada, perde a presença em 1 min.
+        // Modo individual: quem tem vaga não sai por aqui. A vaga não volta
+        // para a fila (vagasParaAtribuir), e o aparelho que voltasse ganharia
+        // outra: a mesma pessoa em dois anos do Jonas, e uma vaga jogando
+        // sozinha. O celular no bolso, com a tela apagada, perde a presença em
+        // 1 min. A exceção é a vaga presa (vagasPresas, logo abaixo).
         if (individual && tem(config.equipes, membros[u]?.equipe)) continue;
-        const p = presenca?.[u];
-        if (typeof p !== 'number' || t - p > limiteMs) escritas[cam('membros', u)] = null;
+        if (inativo(u)) escritas[cam('membros', u)] = null;
+      }
+      const removidos = Object.keys(escritas).length;
+      const presas = individual && e ? vagasPresas(e, membros, escritas, { presenca, inativo, votaram, resultados }) : [];
+      let novo = null;
+      if (presas.length > 0) {
+        // A vaga e o dono saem juntos, na mesma gravação do estado (com a
+        // geracao + 1 que a regra exige): nunca fica uma vaga aberta sem dono,
+        // nem um dono com a vaga fechada.
+        const equipesAbertas = { ...e.equipesAbertas };
+        for (const { vaga, donos } of presas) {
+          delete equipesAbertas[vaga];
+          for (const u of donos) escritas[cam('membros', u)] = null;
+        }
+        novo = { ...e, equipesAbertas: Object.keys(equipesAbertas).length > 0 ? equipesAbertas : null, geracao: e.geracao + 1 };
+        escritas[cam('estado')] = novo;
       }
       if (Object.keys(escritas).length > 0) await canal.gravar(escritas);
-      return Object.keys(escritas).length;
+      if (novo) {
+        atual = novo;
+        avisar();
+      }
+      // Quem esperava ganha a vaga agora: o telão (vigiarAtrasados) só
+      // distribui quando a lista de quem espera muda, e ela não mudou.
+      if (individual && atual) await atribuirVagas();
+      return removidos + presas.reduce((n, p) => n + p.donos.length, 0);
+    }
+
+    // Modo individual, revisão de 14/10 (achado 2): a vaga presa. Quem entrou
+    // por outro navegador ou por uma aba anônima, ou o apresentador que leu o
+    // QR com o próprio celular para conferir, ocupa uma vaga para sempre. Com
+    // 20 pessoas, o 20º aluno de verdade via "A sala está cheia". O "Remover
+    // inativos" devolve essas vagas a quem está esperando, com quatro
+    // condições:
+    // - só quando alguém espera uma vaga (a sala cheia), e no máximo uma vaga
+    //   por pessoa esperando;
+    // - só a vaga sem nenhum bimestre jogado (sem resultado): o ano de uma
+    //   pessoa nunca passa para outra;
+    // - só se quem a ocupa está sem sinal há mais de limiteMs e não votou na
+    //   etapa aberta (o mesmo critério de quem sai);
+    // - primeiro a vaga aberta sem ninguém, depois a de quem está há mais
+    //   tempo sem sinal.
+    // O celular que voltar entra de novo sozinho, como quem chegou agora.
+    // Devolve [{ vaga, donos }], na ordem de liberar.
+    function vagasPresas(e, membros, escritas, { presenca, inativo, votaram, resultados }) {
+      const ficam = {};
+      for (const [u, m] of Object.entries(membros || {})) if (!tem(escritas, cam('membros', u))) ficam[u] = m;
+      const esperando = N().alunoLogica.vagasParaAtribuir(config, { membros: ficam, equipesAbertas: e.equipesAbertas }).semVaga.length;
+      if (esperando === 0) return [];
+      const jogou = (vaga) => Object.values(resultados || {}).some((r) => tem(r, vaga));
+      // O último sinal de quem ocupa a vaga; sem sinal nenhum, o mais antigo.
+      const sinal = (u) => (typeof presenca?.[u] === 'number' ? presenca[u] : -Infinity);
+      const candidatas = [];
+      for (const vaga of equipesAtivas(e)) {
+        if (jogou(vaga)) continue;
+        const donos = Object.keys(ficam).filter((u) => ficam[u]?.equipe === vaga);
+        if (donos.some((u) => votaram.has(u) || !inativo(u))) continue;
+        candidatas.push({ vaga, donos, desde: donos.length === 0 ? -Infinity : Math.max(...donos.map(sinal)) });
+      }
+      // -Infinity menos -Infinity é NaN: o empate é comparado à parte.
+      candidatas.sort((a, b) => (a.desde === b.desde ? 0 : a.desde - b.desde) || ordemEquipes.indexOf(a.vaga) - ordemEquipes.indexOf(b.vaga));
+      return candidatas.slice(0, esperando).map(({ vaga, donos }) => ({ vaga, donos }));
     }
 
     async function abrirEntrada(aberta) {

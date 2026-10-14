@@ -126,3 +126,35 @@ test('a rodada individual contra as regras reais: um voto por vaga, só na próp
   alunos.forEach((a, i) => assert.deepEqual([r1[vagaDe(a)].decisao, r1[vagaDe(a)].origem], [escolhas[i], 'maioria']));
   assert.equal(await telao.ler(s('prorrogacoes', 'r1')), null);
 });
+
+// Revisão de 14/10 (achado 2): a vaga presa (o celular de teste do
+// apresentador, uma segunda aba) volta para quem espera, com o membro e o
+// estado na mesma gravação. As regras reais aceitam: o anfitrião apaga o
+// membro e grava o estado com a geracao + 1.
+test('vaga presa contra as regras reais: "Remover inativos" devolve a vaga de quem nunca deu sinal a quem espera', async () => {
+  const { s, telao, anf, alunos } = await salaIndividual(1); // o celular de teste, sem presença
+  await anf.atribuirVagas();
+  const presa = alunos[0];
+  assert.equal((await telao.ler(s('membros', presa.uid))).equipe, 'e1');
+  const novos = await Promise.all(Array.from({ length: 20 }, async (_, i) => {
+    const canal = await abrir(`ind-presa${i}`);
+    return { canal, uid: await canal.entrar() };
+  }));
+  for (const a of novos) await a.canal.gravar({ [s('membros', a.uid)]: { entrouEm: a.canal.marcadorDeHora() } });
+  await anf.atribuirVagas();
+  await Promise.all(novos.map((a) => a.canal.gravar({ [s('presenca', a.uid)]: a.canal.marcadorDeHora() })));
+  const semVaga = [];
+  for (const a of novos) if (!(await telao.ler(s('membros', a.uid))).equipe) semVaga.push(a);
+  assert.equal(semVaga.length, 1, 'um aluno de verdade ficou de fora');
+
+  assert.equal(await anf.removerInativos(60_000), 1);
+
+  assert.equal(await telao.ler(s('membros', presa.uid)), null);
+  assert.equal((await telao.ler(s('membros', semVaga[0].uid))).equipe, 'e1', 'quem esperava ganhou a vaga');
+  const membros = await telao.ler(s('membros'));
+  const vagas = Object.values(membros).map((m) => m.equipe);
+  assert.equal(vagas.length, 20);
+  assert.equal(new Set(vagas).size, 20, 'nenhuma vaga repetida');
+  const estado = await telao.ler(s('estado'));
+  assert.deepEqual(new Set(Object.keys(estado.equipesAbertas)), new Set(vagas), 'abertas = ocupadas');
+});
