@@ -155,32 +155,47 @@
   // - o comando vale para o anfitrião da hora da tecla: se a sessão trocou
   //   (seguiu sem celulares, voltou à abertura), ele é descartado;
   // - "Continuar sem celulares" e "Salvar estado" nem passam por aqui (socorro).
+  // - modo individual (decisão do Kleber de 13/10 à noite): a vaga que o telão
+  //   dá a quem entra (anfitriao.atribuirVagas) grava o estado com geracao + 1,
+  //   e com 20 celulares entrando juntos no lobby o Espaço do apresentador caía
+  //   nessa janela e era jogado fora ("o estado mudou"). Por isso o comando leva
+  //   também o estado da hora da tecla (opcoes.estado), e vale se, de lá para
+  //   cá, só mudaram a geracao e as vagas abertas (anfitriao.soMudaramAsVagas):
+  //   o passo é o mesmo, e o comando ainda faz sentido.
+  // - silencioso: o comando que o próprio telão dispara, sem tecla (a vaga de
+  //   quem entra). A recusa e o erro não abrem a barra na frente da turma: quem
+  //   chama tenta de novo.
   let fila = Promise.resolve();
-  function executar(fn, { geracao } = {}) {
+  function executar(fn, { geracao, estado, silencioso = false } = {}) {
     if (app.passivo) {
-      avisar(AVISO_PASSIVO, 'erro');
+      if (!silencioso) avisar(AVISO_PASSIVO, 'erro');
       return Promise.resolve();
     }
     if (semConexao()) {
-      avisar(AVISO_SEM_CONEXAO, 'erro');
+      if (!silencioso) avisar(AVISO_SEM_CONEXAO, 'erro');
       return Promise.resolve();
     }
     const anf = app.anf;
     const online = app.modo === 'online';
     const p = fila.then(() => {
       if (app.anf !== anf) throw new Error('ESTADO_MUDOU: a sessão mudou antes de o comando rodar.');
-      if (geracao !== undefined && app.estado?.geracao !== geracao) throw new Error('ESTADO_MUDOU: o estado mudou antes de o comando rodar.');
+      if (geracao !== undefined && app.estado?.geracao !== geracao && !soMudaramAsVagas(estado, app.estado)) {
+        throw new Error('ESTADO_MUDOU: o estado mudou antes de o comando rodar.');
+      }
       const r = fn();
       return online ? comLimite(Promise.resolve(r), ESPERA_SERVICO_MS, 'SEM_RESPOSTA: o serviço não respondeu.') : r;
     });
     fila = p.catch(() => {});
-    p.catch(mostrarErro);
+    p.catch(silencioso ? avisarDiscreto : mostrarErro);
     return p;
   }
 
-  // A geracao que o apresentador vê agora: é o que os comandos que dependem do
-  // passo atual levam para a fila.
-  const vista = () => ({ geracao: app.estado?.geracao });
+  // Só no modo individual: nas equipes, a vaga nunca muda sozinha o estado.
+  const soMudaramAsVagas = (antes, depois) => individual() && N().anfitriao.soMudaramAsVagas(antes, depois);
+
+  // A geracao (e o estado) que o apresentador vê agora: é o que os comandos que
+  // dependem do passo atual levam para a fila.
+  const vista = (e = app.estado) => ({ geracao: e?.geracao, estado: e });
 
   const AVISO_SEM_CONEXAO = 'Sem conexão com o serviço: o comando não foi enviado. Espere o selo voltar a "conectado", ou siga sem celulares.';
   const AVISO_PASSIVO = 'Outra máquina assumiu esta sala com o PIN: este telão só acompanha. Para voltar a comandar daqui, recarregue e retome com o PIN.';
@@ -209,6 +224,11 @@
 
   function mostrarErro(erro) {
     avisar(traduzirErro(erro && erro.message ? erro.message : erro), 'erro');
+  }
+
+  // O erro do comando silencioso: só na barra, quando o apresentador a abrir.
+  function avisarDiscreto(erro) {
+    avisar(`Um comando automático do telão não foi gravado (${traduzirErro(erro && erro.message ? erro.message : erro)}); ele é tentado de novo.`);
   }
 
   let avisoTimer = 0;
@@ -398,6 +418,14 @@
   // opção, o evento do mês igual para todas as equipes (sem sorteio) e o placar
   // pelo caminho de cada equipe. Sem a chave, todas as telas ficam como antes.
   const simples = () => N().historia.formatoSimples(app.config);
+
+  // O modo individual (regras.individual, com o formato simples; decisão do
+  // Kleber de 13/10 à noite): cada aluno joga sozinho, numa vaga própria (uma
+  // "equipe de uma pessoa") que o telão dá quando ele entra. O voto é secreto e
+  // o tema é sensível: o telão mostra só o resumo da turma, em contagens e
+  // distribuições, e nunca uma vaga nem um nome (o nome fica só no celular de
+  // cada um). Sem a chave, todas as telas ficam como as das equipes.
+  const individual = () => Boolean(app.config) && N().historia.individual(app.config);
 
   // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
   // regra da história e do resumo do celular (historia.rotuloDaRodada).
@@ -858,15 +886,28 @@
     // Quem entra depois da trava (ou tem equipe fechada) vai para uma equipe pelo
     // telão (contratos, seção 7). A assinatura evita repetir a mesma distribuição
     // a cada presença que chega.
+    // Modo individual: é aqui que cada aluno que entra ganha a vaga dele (o
+    // distribuirAtrasados do anfitrião chama o atribuirVagas). Os soltos saem do
+    // próprio espelho (os membros e o estado da mesma leitura): com o estado da
+    // tela, um instante mais velho, quem acabou de ganhar a vaga ainda parecia
+    // solto. Quem fica sem vaga (a sala cheia) continua solto, e a assinatura
+    // segura a repetição.
+    // Revisão do núcleo (13/10, item 3): se a gravação falhava (a rede, ou outra
+    // gravação passando na frente duas vezes), a assinatura ficava, e o aluno
+    // ficava preso em "Entrando na sala…" até alguém mais entrar. Agora a falha
+    // (e a recusa sem conexão, que nem chega à fila) zera a assinatura, e a
+    // próxima mudança da sala (o pulso do próprio telão, a cada 10 s) tenta de novo.
     let assinatura = '';
     function vigiarAtrasados(arvore) {
-      const e = app.estado;
+      const e = arvore.estado || app.estado;
       if (!app.anf || !e || e.equipesTravadas !== true) return;
       const soltos = Object.keys(arvore.membros || {}).filter((u) => !tem(e.equipesAbertas, arvore.membros[u]?.equipe)).sort();
       const nova = soltos.join(',');
       if (nova === assinatura) return;
       assinatura = nova;
-      if (soltos.length > 0) executar(() => app.anf.distribuirAtrasados());
+      if (soltos.length === 0) return;
+      const rearmar = () => { if (assinatura === nova) assinatura = ''; };
+      executar(() => app.anf.distribuirAtrasados(), { silencioso: individual() }).then((n) => { if (n === undefined) rearmar(); }, rearmar);
     }
   }
 
@@ -2067,7 +2108,7 @@
       if (abertas.size >= max) return avisar(`O máximo é de ${max} equipes.`);
       abertas.add(id);
     }
-    executar(() => app.anf.definirEquipesAbertas([...abertas]), { geracao: e.geracao });
+    executar(() => app.anf.definirEquipesAbertas([...abertas]), vista(e));
   }
 
   function telaFormarEquipes(s, e) {
@@ -4004,7 +4045,7 @@
       else avisar('Esta é a última afirmação: Enter encerra a enquete inteira.');
       return;
     }
-    executar(() => app.anf.avancar(), { geracao: e.geracao });
+    executar(() => app.anf.avancar(), vista(e));
   }
 
   // Offline, a enquete aberta pode ter votos de celular que chegaram antes da
@@ -4049,13 +4090,13 @@
     if (app.anf.desfazendoAbertura(e) && !(await confirmar('Esta votação foi aberta por engano, e o desfazer não terminou. Encerrar vai apurá-la assim mesmo. Para voltar ao passo anterior, cancele e use Ctrl+Z. Apurar mesmo assim?',
       'Apurar mesmo assim', { focarCancelar: true }))) return;
     if (!(await confirmarEncerrarEnquete(e))) return;
-    executar(() => app.anf.encerrar(), { geracao: e.geracao });
+    executar(() => app.anf.encerrar(), vista(e));
   }
 
   function pausarOuRetomar() {
     const e = app.estado;
     if (!e || !['votando', 'decidindo', 'prorrogacao'].includes(e.subfase)) return;
-    executar(() => (typeof e.restanteMs === 'number' ? app.anf.retomar() : app.anf.pausar()), { geracao: e.geracao });
+    executar(() => (typeof e.restanteMs === 'number' ? app.anf.retomar() : app.anf.pausar()), vista(e));
   }
 
   async function desfazer() {
@@ -4076,7 +4117,7 @@
     else if (e.tipo === 'rodada') texto = 'Desfazer a apuração desta rodada? As decisões e a semente continuam: encerrar de novo tira as mesmas cartas.';
     else if (e.tipo === 'enquete') texto = 'Reabrir a votação desta enquete? A apuração é apagada e refeita no próximo encerrar.';
     else return avisar('Nada para desfazer neste passo.');
-    if (await confirmar(texto, 'Desfazer', { focarCancelar: true })) executar(() => app.anf.desfazer(), { geracao: e.geracao });
+    if (await confirmar(texto, 'Desfazer', { focarCancelar: true })) executar(() => app.anf.desfazer(), vista(e));
   }
 
   async function pularPara() {
@@ -4085,7 +4126,7 @@
     const opcoes = app.passos.filter((p) => p.indice > e.indice).map((p) => ({ rotulo: `${p.indice + 1}. ${descreverPasso(p)}${p.opcional ? ' (opcional)' : ''}`, valor: p.indice }));
     if (opcoes.length === 0) return avisar('Não há passo depois deste.');
     const escolhido = await escolher('Pular para…', opcoes, { explicacao: 'Só para a frente. Os passos no meio ficam sem acontecer.' });
-    if (escolhido !== null && escolhido !== undefined) executar(() => app.anf.pularPara(escolhido), { geracao: e.geracao });
+    if (escolhido !== null && escolhido !== undefined) executar(() => app.anf.pularPara(escolhido), vista(e));
   }
 
   async function encerrarJogo() {
@@ -4093,7 +4134,7 @@
     if (!app.anf || !e) return;
     const fim = app.passos.findIndex((p) => p.tipo === 'fim');
     if (fim < 0 || fim <= e.indice) return avisar('Não há passo "fim" à frente no roteiro.');
-    executar(() => app.anf.pularPara(fim), { geracao: e.geracao });
+    executar(() => app.anf.pularPara(fim), vista(e));
   }
 
   async function decidirPorEquipe() {
@@ -4111,7 +4152,7 @@
     if (e.forcadas?.[eq]) opcoes.push({ rotulo: 'Tirar a decisão do apresentador', valor: '__nenhuma__' });
     const op = await escolher(`${app.config.equipes[eq].nome}: qual opção?`, opcoes);
     if (!op) return;
-    executar(() => app.anf.decidirPorEquipe(eq, op === '__nenhuma__' ? null : op), { geracao: e.geracao });
+    executar(() => app.anf.decidirPorEquipe(eq, op === '__nenhuma__' ? null : op), vista(e));
   }
 
   async function moverAluno() {
