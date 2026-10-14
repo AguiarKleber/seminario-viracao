@@ -29,7 +29,7 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | Já feito | Situação |
 | --- | --- |
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
-| 6 a 8. Regras, GitHub Pages e telão | **Regras v5** e a `main` com a **versão 13** do site (`d0e7d05`: o jogo individual, D-081, com o "Li, pode seguir" e a linha do bloqueio da nota de 14/10 na D-084), no ar desde as 10h05 de 14/10. **O ZIP do pendrive ainda não foi refeito** depois da versão 11 (passo 11) |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v5** e a `main` com a **versão 13** do site (`d0e7d05`: o jogo individual, D-081, com o "Li, pode seguir" e a linha do bloqueio da nota de 14/10 na D-084), no ar desde as 10h05 de 14/10. **Não há sinal de que o ZIP do pendrive foi refeito** depois da versão 11 (passo 11) |
 | A revisão final de 14/10 (nota depois da D-084) | Branch `claude/revisao-final`, **ainda não fundida nem publicada**, na **versão 14** do site: o "Conheça o Jonas" mais limpo (pedido do Kleber), os avisos de queda de rede do telão e dois textos do celular. As regras continuam v5 |
 | Conteúdo | `config.json` versão `2026-10-14-v5.3-individual` (hash `69daf389`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes, só com o roteiro de 60 min (D-083), com `"destaque": true` nos 5 dias de bloqueio e, desde a revisão final, o nome curto de cada item do básico e as fontes em uma linha no "Conheça o Jonas", sem as notas internas das recontas. O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
 
@@ -47,8 +47,8 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
    inicial (o mouse parado na borda de baixo, ou a tecla H) mostra a versão
    `2026-10-14-v5.3-individual` e o hash `69daf389`. Os celulares com a versão
    13 em cache veem a faixa "Há uma versão nova do app: atualize a página".
-4. Baixe o ZIP de novo para o pendrive (passo 11): ele ainda é o da versão 11,
-   que recusa o estado salvo hoje.
+4. Baixe o ZIP de novo para o pendrive (passo 11): um ZIP da versão 11 recusa
+   o estado salvo hoje.
 
 **Plano B:** reverter o merge na `main` volta à versão 13 (`d0e7d05`, hash
 `2b4b2233`), com as mesmas regras v5.
