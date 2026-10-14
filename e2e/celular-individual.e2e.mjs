@@ -359,7 +359,7 @@ try {
     const decisao = lido(await ana.textContent('.decisao-linha'));
     assert.match(decisao, /^A sua escolha: /);
     if (op) assert.match(decisao, new RegExp(`^A sua escolha: ${op.toUpperCase()} · `));
-    else assert.match(decisao, /\(você não votou: ficou o de sempre\)$/);
+    else assert.match(decisao, /\(você não votou: ficou a opção de sempre\)$/);
     assert.equal(lido(await ana.textContent('.saldo-rotulo')), 'O seu saldo do bimestre');
     assert.equal(await ana.locator('.equipe-linha').count(), 0);
     await semVaga(ana, `resultado-${passo.rodada}`);

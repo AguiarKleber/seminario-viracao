@@ -1434,11 +1434,13 @@
     let blocoRetomar = null;
     if (temUltima) {
       const outroConfig = app.hash && ultima.hashConfig !== app.hash;
+      // A chave interna do roteiro ("60min") vazava para a tela (leitura final de 14/10).
+      const rotuloRoteiro = /^[0-9]+min$/.test(String(ultima.roteiro)) ? `Roteiro de ${parseInt(ultima.roteiro, 10)} min` : `Roteiro ${ultima.roteiro}`;
       blocoRetomar = el('section', { classe: 'abertura-bloco abertura-retomar', id: 'bloco-retomar' }, [
         el('p', { classe: 'abertura-pergunta', texto: `Retomar a sessão de ${F().dataHora(ultima.criadaEm)}?` }),
         el('p', { classe: 'abertura-status', texto: outroConfig
           ? `Ela foi criada com outro config.json (${ultima.hashConfig}). Carregue o mesmo arquivo para retomar.`
-          : `Roteiro ${ultima.roteiro} · sem celulares.` }),
+          : `${rotuloRoteiro} · sem celulares.` }),
         el('div', { classe: 'abertura-acoes' }, [
           botao('Retomar', () => executar(retomarOffline),
             { classe: 'botao-primario', desabilitado: !app.config || outroConfig, dados: { acao: 'retomar' } }),
@@ -1958,7 +1960,11 @@
     const enq = app.config.enquetes[e.enquete];
     const ap = app.dados.enquetes?.[e.enquete]?.[e.momento];
     const ordem = ordemAfirmacoes(enq);
-    const metodo = ap?.metodo === 'manual' ? 'contagem por mão levantada' : 'votos pelo celular';
+    // Sem celulares e sem nenhuma contagem (o Enter confirmado no aviso), a
+    // apuração sai como "celular", mas nenhum voto chegou por ele: o rótulo é
+    // o da mão levantada, como o lobby dessa sessão diz (leitura final de 14/10).
+    const ninguem = !ordem.some((a) => Number(ap?.n?.[a]) > 0);
+    const metodo = ap?.metodo === 'manual' || (app.modo === 'offline' && ninguem) ? 'contagem por mão levantada' : 'votos pelo celular';
     if (!ap) {
       D().acrescentar(s, [cabecalho(kickerEnquete(e), 'Apurando…')]);
       return;
@@ -2393,7 +2399,10 @@
     const fecha = mes.saldoMes >= 0;
     s.appendChild(el('div', { classe: 'conheca' }, [
       el('p', { classe: 'conheca-quem', texto: p.descricao || '' }),
-      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'], texto: p.familia.descricao }) : null,
+      // "Em casa:" em negrito, como no celular: sem o rótulo, "Jonas, a
+      // companheira, …" ficava uma lista solta, que se lia como aposto (leitura
+      // final de 14/10). A descrição do config foi escrita para vir depois dele.
+      p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'] }, [el('b', { texto: 'Em casa:' }), ` ${p.familia.descricao}`]) : null,
       el('ul', { classe: 'conheca-conta' }, [
         pedaco('o trabalho rende por mês', F().moeda(mes.trabalho), 'conheca-trabalho'),
         mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? fixos.join(' e ') : 'os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
@@ -4647,7 +4656,8 @@
     const ordem = ordemAfirmacoes(app.config.enquetes[e.enquete]);
     const zeradas = ordem.map((a, i) => (histManual(e, a).every((x) => x === 0) ? i + 1 : null)).filter(Boolean);
     if (zeradas.length === 0) return true;
-    const quais = zeradas.length === 1 ? `A afirmação ${zeradas[0]} está` : `As afirmações ${zeradas.join(', ')} estão`;
+    // "1, 2 e 3", com o "e" antes do último (leitura final de 14/10).
+    const quais = zeradas.length === 1 ? `A afirmação ${zeradas[0]} está` : `As afirmações ${zeradas.slice(0, -1).join(', ')} e ${zeradas.at(-1)} estão`;
     return confirmar(`${quais} sem contagem e ${zeradas.length === 1 ? 'vai' : 'vão'} para o resultado como "sem votos". Encerrar a enquete inteira assim mesmo?`,
       'Encerrar a enquete', { focarCancelar: true });
   }

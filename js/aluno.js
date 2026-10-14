@@ -1570,7 +1570,13 @@
     return texto ? D().el('p', { classe: 'nota', dados: { tipo }, role: tipo === 'erro' ? 'alert' : 'status', texto }) : null;
   }
 
-  const privacidade = () => D().el('p', { classe: 'privacidade', texto: 'Ninguém, nem o apresentador, vê o seu voto: só os totais.' });
+  // No modo individual, a mesma garantia da entrada (revisão de 14/10, D-081,
+  // item 5): o voto de cada vaga pode ser lido, sem o nome; o que se garante é
+  // que ele não fica ligado à pessoa. Por equipes, a frase de sempre (o
+  // e2e/sessao-online confere).
+  const privacidade = () => D().el('p', { classe: 'privacidade', texto: individual()
+    ? 'O seu voto não fica ligado ao seu nome: o telão mostra só os totais da turma.'
+    : 'Ninguém, nem o apresentador, vê o seu voto: só os totais.' });
 
   function telaSimples(alvo, tipo, kicker, titulo, texto) {
     const { el, acrescentar } = D();
@@ -1617,7 +1623,9 @@
     if (app.pedindoPin && !app.embutido) {
       acrescentar(alvo, el('section', { classe: 'bloco', dados: { espectador: '1' } }, [
         cabecalho('Seminário da Viração', 'Modo espectador'),
-        el('p', { classe: 'texto-2', texto: 'Para o apresentador: com o PIN, este celular mostra a tela de qualquer equipe, como o aluno vê. Ele não vota e não entra na contagem.' }),
+        // Aqui o celular ainda não sabe o modo da sala: a frase vale para os
+        // dois (no individual, o espectador vê só o resumo da turma, D-081).
+        el('p', { classe: 'texto-2', texto: 'Para o apresentador: com o PIN, este celular acompanha a sala sem votar e sem entrar na contagem.' }),
         ...filhos.slice(1),
         ...camposDoEspectador(campo),
       ]));
@@ -1663,7 +1671,7 @@
       pin,
       el('p', { id: 'dica-pin', classe: 'texto-2', texto: 'O mesmo PIN do telão.' }),
       nota(app.aviso, 'erro'),
-      botao('Ver as equipes', ver, { classe: 'botao-primario botao-largo', dados: { acao: 'entrar-espectador' } }),
+      botao('Entrar como espectador', ver, { classe: 'botao-primario botao-largo', dados: { acao: 'entrar-espectador' } }),
       botao('Voltar', () => {
         // A marca da aba sai junto: deixada aqui, ela fazia a próxima recarga
         // voltar ao campo do PIN mesmo depois de o aparelho entrar como aluno.
@@ -2409,7 +2417,8 @@
   // R$ Y", com o cartaCusto que o telão gravou (o tempo parado custa quanto?).
   // Carta que não custou nada, e sala de antes do v2.1 (sem cartaCusto), ficam
   // sem a linha. A mesma forma para toda carta: a grave não ganha destaque
-  // (arquitetura, seção 8).
+  // (arquitetura, seção 8). No formato simples, "O que isso custou:", logo
+  // abaixo de "O que aconteceu:": lá a turma nunca vê a palavra "carta".
   function linhaCustoCarta(custo) {
     if (!custo) return null;
     const dias = Number(custo.diasParado) || 0;
@@ -2422,7 +2431,7 @@
     if (perdida > 0) partes.push(['renda perdida ', el('b', { texto: F().moeda(perdida) })]);
     if (gastos > 0) partes.push(['gastos ', el('b', { texto: F().moeda(gastos) })]);
     return el('p', { classe: 'carta-custo', dados: { diasParado: dias, rendaPerdida: perdida, gastos } },
-      ['O que a carta custou: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+      [simples() ? 'O que isso custou: ' : 'O que a carta custou: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   // ----- A dívida da família (D-046; esquema v2.2, D-065)
@@ -2645,8 +2654,9 @@
   // voto simples da equipe (D-041: "ninguém votou: ficou o de sempre", e nunca
   // "piloto automático"). O mesmo texto do descreverDecisao.
   const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
-  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa.
-  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou o de sempre' };
+  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa, e com
+  // "a opção de sempre", como a decisão e o telão dizem (leitura final de 14/10).
+  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou a opção de sempre' };
   const origensDaDecisao = () => (individual() ? ORIGENS_INDIVIDUAL : ORIGENS_DA_DECISAO);
   // "Decisão:" nas telas da equipe; "A sua escolha:" no modo individual.
   const rotuloDecisao = () => (individual() ? 'A sua escolha: ' : 'Decisão: ');
@@ -2938,8 +2948,13 @@
     // As fontes inteiras, na ordem da conta: o trabalho e a parcela, a outra
     // renda e cada item do básico.
     const fonte = (rotulo, texto) => (texto ? el('p', { classe: 'fonte' }, [el('b', { texto: `${rotulo}: ` }), texto]) : null);
+    // A fonte do trabalho leva o nome da linha que ela explica, "o trabalho
+    // rende por mês" (leitura final de 14/10): o rótulo do config ("entregas
+    // do mês…") não está mais em nenhuma linha da conta. A dos custos fixos
+    // fica com o rótulo deles ("a parcela da moto").
+    const rotulosFixos = new Set(lista(c.fixos).map((f) => f.rotulo).filter(Boolean));
     const fontes = recolhido('conheca-fontes', persona.fontesCurtas ? `Fontes: ${persona.fontesCurtas}` : 'As fontes de cada valor', [
-      ...lista(c.fontes).map((f) => fonte(f.rotulo || 'trabalho', f.fonte)),
+      ...lista(c.fontes).map((f) => fonte(rotulosFixos.has(f.rotulo) ? f.rotulo : 'o trabalho rende por mês', f.fonte)),
       outra ? fonte(outra.rotulo, outra.fonte) : null,
       ...itens.map((i) => fonte(i.rotulo, i.fonte)),
     ]);

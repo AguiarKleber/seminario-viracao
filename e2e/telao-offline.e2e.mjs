@@ -1492,7 +1492,7 @@ for (const [k, a] of AFIRM_ANTES.entries()) {
     // Revisão da F2, achado 11: Enter com afirmações sem contagem pede
     // confirmação, com o foco no "Cancelar"; um segundo Enter cancela.
     const zeradas = AFIRM_ANTES.slice(1).map((_, i) => i + 2);
-    const re = zeradas.length === 1 ? `afirmação ${zeradas[0]} está sem contagem` : `afirmações ${zeradas.join(', ')} estão sem contagem`;
+    const re = zeradas.length === 1 ? `afirmação ${zeradas[0]} está sem contagem` : `afirmações ${zeradas.slice(0, -1).join(', ')} e ${zeradas.at(-1)} estão sem contagem`;
     await page.keyboard.press('Enter');
     await page.waitForFunction((fonte) => document.getElementById('modal').open && new RegExp(fonte).test(document.getElementById('modal').textContent), re);
     await page.keyboard.press('Enter');

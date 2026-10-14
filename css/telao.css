@@ -901,7 +901,7 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .conheca-linha { display: contents; }
 .conheca-linha > b { text-align: right; }
 .conheca-itens { font-size: max(28px, .8em); line-height: 1.25; }
-.conheca-itens b { color: var(--texto); font-weight: 600; }
+.conheca-itens b, .conheca-familia b { color: var(--texto); font-weight: 600; }
 .conheca-mes { font-size: calc(var(--corpo) * 1.1); }
 .tela-personas .conheca-fontes { margin-top: 0; font-size: max(28px, .72em); }
 /* O aperto (telao.js, telaConheca): só quando a tela transborda (a faixa de
