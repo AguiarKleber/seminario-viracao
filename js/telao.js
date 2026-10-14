@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '13';
+  const VERSAO_APP = '14';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -2360,8 +2360,14 @@
 
   // Formato simples: com um personagem só, a etapa das personas vira "Conheça
   // o Jonas": quem é, a casa, a renda, o básico e se a conta de um mês comum
-  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda. O
-  // básico item a item vai numa linha corrida (o celular tem as fontes).
+  // fecha (motor.mesComum, a mesma conta da tela de personas), na largura toda.
+  // Revisão final de 14/10 (pedido do Kleber, 11h: "poluída na parte dos
+  // custos"): a conta do mês em quatro linhas grandes e alinhadas, sem o
+  // "menos" na frente da parcela (o sinal já diz); o básico item a item em
+  // uma linha curta e discreta, com o nome curto de cada item (o "curto" do
+  // config: "água", e não "água e esgoto (…)"); e as fontes em uma linha só,
+  // no pé, com os nomes curtos (persona.fontesCurtas). As fontes inteiras de
+  // cada valor ficam no celular, no "ver" das fontes.
   function telaConheca(s, e) {
     const { el } = D();
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
@@ -2372,17 +2378,20 @@
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
     const itens = lista(p.basico?.itens).filter((i) => i && i.valor > 0);
+    // O nome curto do item; sem ele, o rótulo sem o parêntese ("comida (2,5
+    // cestas básicas)" vira "comida").
+    const curto = (i) => i.curto || String(i.rotulo || '').replace(/\s*\(.*\)\s*$/, '');
     const fecha = mes.saldoMes >= 0;
     s.appendChild(el('div', { classe: 'conheca' }, [
       el('p', { classe: 'conheca-quem', texto: p.descricao || '' }),
       p.familia?.descricao ? el('p', { classe: ['conheca-familia', 'texto-secundario'], texto: p.familia.descricao }) : null,
       el('ul', { classe: 'conheca-conta' }, [
         pedaco('o trabalho rende por mês', F().moeda(mes.trabalho), 'conheca-trabalho'),
-        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? `menos ${fixos.join(' e ')}` : 'menos os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
+        mes.custosFixos > 0 ? pedaco(fixos.length > 0 ? fixos.join(' e ') : 'os custos fixos', F().moeda(-mes.custosFixos), 'conheca-fixos') : null,
         outra ? pedaco(outra.rotulo, F().moeda(outra.valor, { sinal: true }), 'conheca-outra') : null,
         pedaco('o básico da casa', F().moeda(-mes.basico), 'conheca-basico'),
       ]),
-      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(i.rotulo, i.valor)))) : null,
+      itens.length > 0 ? el('p', { classe: ['conheca-itens', 'texto-secundario'] }, juntarPedacos(itens.map((i) => pedacoConta(curto(i), i.valor)))) : null,
       // Sem o valor (pedido do Kleber de 06/10 à tarde, com o print da versão
       // 9): era "Num mês comum, a conta não fecha: faltam R$ 128 (R$ 256 no
       // bimestre)". A frase diz só que a conta não fecha; os números ficam nas
@@ -2393,6 +2402,8 @@
         ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
         : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
+    // Fora da .conheca (que cresce e centraliza a conta): a linha fica no pé.
+    if (p.fontesCurtas) s.appendChild(el('p', { classe: ['bloco-fonte', 'conheca-fontes'] }, [el('b', { texto: 'Fontes: ' }), p.fontesCurtas]));
     // Com a faixa de entrada embaixo, em 1280×720, a frase do mês comum passava
     // da faixa (e2e individual-online, 13/10; nas equipes, o e2e online não
     // media esta tela). Só quando a tela transborda (medido depois do desenho):

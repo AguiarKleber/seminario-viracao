@@ -297,6 +297,29 @@ h1.afirmacao { font-size: 23px; font-weight: 650; line-height: 1.3; text-wrap: p
 .basico-item .fonte { grid-column: 1 / -1; }
 .basico-valor { text-align: right; }
 
+/* "Conheça o Jonas" (revisão final de 14/10, pedido do Kleber): a conta do mês
+   em linhas grandes, com os valores alinhados à direita, e a frase do mês em
+   vermelho, como no telão. O básico item a item e as fontes ficam recolhidos
+   (o "ver" abre ao tocar), sem caixa dentro da caixa. */
+.conheca { display: flex; flex-direction: column; gap: 8px; }
+.conheca-conta {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 10px;
+  margin: 0; padding: 8px 12px; list-style: none; font-size: 16px; line-height: 1.25;
+  background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
+}
+.conheca-linha { display: contents; }
+.conheca-linha > b { text-align: right; white-space: nowrap; }
+.conheca-mes { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.3; }
+.conheca-mes[data-sinal="negativo"] { color: var(--negativo); }
+.conheca-mes[data-sinal="positivo"] { color: var(--positivo); }
+.recolhido .basico-itens { padding: 0; border: 0; background: none; }
+/* Mais específico que o .recolhido (que vem depois no arquivo): a linha das
+   fontes é discreta, sem a caixa. */
+.recolhido.recolhido-fontes { background: none; border-color: transparent; }
+.recolhido.recolhido-fontes summary { min-height: 44px; padding: 8px 0; font-size: 14px; font-weight: 400; color: var(--texto-2); }
+.recolhido.recolhido-fontes .recolhido-corpo { padding: 0 0 12px; gap: 8px; }
+.recolhido-fontes .fonte b { color: var(--texto); font-weight: 600; }
+
 /* A conta do mês: a linha "entrou · o básico custa" e, embaixo, o que faltou
    em destaque. Destaque por tamanho, peso e borda, nunca só por cor (D-016). */
 .conta-mes {

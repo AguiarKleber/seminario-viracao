@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '13';
+  const VERSAO_APP = '14';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -2876,18 +2876,69 @@
         ? 'Cada pessoa escolhe sozinha, no próprio celular. O telão mostra só os totais da turma.'
         : `Em cada ${periodo().nome}, a escolha é sua: o seu voto não fica ligado ao seu nome, e o telão mostra só os totais da turma.`;
     }
+    // Revisão final de 14/10: no "Conheça o Jonas", a conta do mês aberta e o
+    // resto recolhido (contaConheca); sem a conta (um todoMes que o celular
+    // não sabe somar), o básico item a item, como antes.
+    const conta = soUm && persona.contaDoMes ? contaConheca(persona) : null;
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
       sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(kicker, soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
       el('p', { classe: 'texto', texto: persona.descricao || '' }),
       linhaFamilia(persona),
-      detalheBasico(persona),
+      conta ? conta.conta : detalheBasico(persona),
       soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
       soUm ? null : listaIndicadores(d.indicadores),
       el('p', { classe: 'texto-2', texto: comoSeJoga }),
       sozinho ? blocoLido(d) : null,
+      conta ? conta.fontes : null,
     ]));
     return 'persona';
+  }
+
+  // Revisão final de 14/10 (pedido do Kleber, 11h): o "Conheça o Jonas" no
+  // celular estava poluído na parte dos custos (os 8 itens do básico, cada um
+  // com a fonte inteira, e a outra renda com um parágrafo de fonte): o "Li,
+  // pode seguir" ficava a ~2.000 px do topo, em 360×740. Agora, como no
+  // telão: a conta do mês em quatro linhas alinhadas e a frase do mês comum;
+  // o básico item a item em um "ver" que abre ao tocar; e, no pé, as fontes
+  // em uma linha curta, que abre as fontes inteiras de cada valor. Nenhum
+  // número nem fonte sai da tela: só muda o que vem aberto.
+  function contaConheca(persona) {
+    const { el } = D();
+    const c = persona.contaDoMes;
+    const itens = lista(persona.basico?.itens);
+    const outra = persona.outraRenda && persona.outraRenda.valor > 0 ? persona.outraRenda : null;
+    const linha = (rotulo, valor) => el('li', { classe: 'conheca-linha' }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
+    const fecha = c.saldo >= 0;
+    const conta = [
+      el('ul', { classe: 'conheca-conta', dados: { saldoMesComum: String(c.saldo) } }, [
+        linha('o trabalho rende por mês', F().moeda(c.trabalho)),
+        ...lista(c.fixos).map((f) => linha(f.rotulo || 'custo fixo', F().moeda(-f.valor))),
+        outra ? linha(outra.rotulo, F().moeda(outra.valor, { sinal: true })) : null,
+        linha('o básico da casa', F().moeda(-c.basico)),
+      ]),
+      // O mesmo texto do telão (telaConheca), sem o valor (pedido de 06/10).
+      el('p', { classe: 'conheca-mes', dados: { sinal: fecha ? 'positivo' : 'negativo' } }, fecha
+        ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
+        : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
+      recolhido('conheca-basico', 'O básico da casa, item a item', [
+        el('ul', { classe: 'basico-itens' }, itens.map((i) => el('li', { classe: 'basico-item' }, [
+          el('span', { classe: 'basico-rotulo', texto: i.rotulo }),
+          el('b', { classe: 'basico-valor', texto: F().moeda(i.valor) }),
+        ]))),
+        linhaBasico(persona),
+      ]),
+    ];
+    // As fontes inteiras, na ordem da conta: o trabalho e a parcela, a outra
+    // renda e cada item do básico.
+    const fonte = (rotulo, texto) => (texto ? el('p', { classe: 'fonte' }, [el('b', { texto: `${rotulo}: ` }), texto]) : null);
+    const fontes = recolhido('conheca-fontes', persona.fontesCurtas ? `Fontes: ${persona.fontesCurtas}` : 'As fontes de cada valor', [
+      ...lista(c.fontes).map((f) => fonte(f.rotulo || 'trabalho', f.fonte)),
+      outra ? fonte(outra.rotulo, outra.fonte) : null,
+      ...itens.map((i) => fonte(i.rotulo, i.fonte)),
+    ]);
+    if (fontes) fontes.classList.add('recolhido-fontes');
+    return { conta: el('div', { classe: 'conheca' }, conta), fontes };
   }
 
   // [Li] "Li, pode seguir" (pedido do Kleber de 07/10), embaixo do "Conheça o

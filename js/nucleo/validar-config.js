@@ -164,10 +164,10 @@
       'individual'],
     escala: ['curtos', 'longos'],
     indicador: ['id', 'nome', 'formato', 'inicial', 'min', 'max', 'fonte'],
-    persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte'],
+    persona: ['id', 'nome', 'descricao', 'familia', 'basico', 'outraRenda', 'inicial', 'todoMes', 'fonte', 'fontesCurtas'],
     familia: ['descricao', 'pessoas'],
     basico: ['itens'],
-    itemBasico: ['rotulo', 'valor', 'fonte', 'comida', 'semAtraso'],
+    itemBasico: ['rotulo', 'valor', 'fonte', 'comida', 'semAtraso', 'curto'],
     outraRenda: ['rotulo', 'valor', 'fonte'],
     equipe: ['id', 'nome', 'cor', 'forma', 'persona', 'obrigatoria', 'lugar'],
     rodada: ['id', 'titulo', 'texto', 'padrao', 'contexto', 'efeitosGerais', 'opcoes', 'fonte'],
@@ -794,7 +794,10 @@
   function persona(r, b, c, id, idx) {
     conferirChaves(r, b, CHAVES.persona, c, false);
     const n = { id, nome: texto(r, b, 'nome', c), descricao: texto(r, b, 'descricao', c), inicial: {}, todoMes: [] };
-    copiarTextos(r, b, n, c, ['fonte']);
+    // fontesCurtas (revisão final de 14/10, pedido do Kleber): os nomes curtos
+    // das fontes, na linha do pé do "Conheça o Jonas". Opcional: sem ela, o
+    // hash de um config de antes não muda.
+    copiarTextos(r, b, n, c, ['fonte', 'fontesCurtas']);
     if (tem(b, 'inicial')) {
       const ci = junta(c, 'inicial');
       if (!ehObjeto(b.inicial)) r.erro(ci, 'precisa ser um objeto { indicador: número }');
@@ -858,6 +861,10 @@
       if (!ehObjeto(item)) r.erro(cit, 'precisa ser um objeto { rotulo, valor, fonte }');
       else {
         const n = valorComFonte(r, item, cit, CHAVES.itemBasico);
+        // curto (revisão final de 14/10): o nome do item na linha curta do
+        // básico do "Conheça o Jonas" ("água", e não "água e esgoto"). Opcional,
+        // como as marcas abaixo: sem ele, o hash não muda.
+        copiarTextos(r, item, n, cit, ['curto']);
         // D-066: o item da comida, o único que a casa pode deixar de comprar
         // quando o dinheiro e o limite acabam ("o que faltou na mesa"). false
         // é aceito e some, para o hash de um config sem a marca não mudar.

@@ -1,5 +1,5 @@
 {
-  "versao": "2026-10-14-v5.2-individual",
+  "versao": "2026-10-14-v5.3-individual",
   "titulo": "Viração: quem é o patrão?",
   "tempos": {
     "enqueteSeg": 60,
@@ -92,44 +92,52 @@
         "itens": [
           {
             "rotulo": "comida (2,5 cestas básicas)",
+            "curto": "comida",
             "valor": 2098,
             "fonte": "DIEESE/Conab, cesta básica de Porto Alegre, ago/2026 (publ. 10/09/2026): R$ 839,34 por adulto x 2,5 (criança até 11 anos conta meia, regra do DIEESE; 12 anos ou mais conta inteira, escolha nossa)",
             "comida": true
           },
           {
             "rotulo": "aluguel (2 quartos)",
+            "curto": "aluguel",
             "valor": 1200,
-            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Usado o piso da faixa do Sarandi (R$ 1.192, R$ 1.200 no jogo): a casa que já não fecha o mês aluga o mais barato do bairro (até 06/10 de manhã, R$ 1.300, dentro da mesma faixa; D-079). Mercado formal (exige fiador ou análise de crédito)"
+            "fonte": "QuintoAndar, lido em 29/09/2026: 2 dormitórios com condomínio e taxas, Rubem Berta R$ 1.123-1.411 e Sarandi R$ 1.192-1.525. Usado o piso da faixa do Sarandi (R$ 1.192, R$ 1.200 no jogo): a casa que já não fecha o mês aluga o mais barato do bairro. Mercado formal (exige fiador ou análise de crédito)"
           },
           {
             "rotulo": "luz",
+            "curto": "luz",
             "valor": 162,
             "fonte": "CEEE Equatorial, tarifa B1 R$ 0,822/kWh sem tributos (ANEEL 3.547/2025); com ICMS e PIS/Cofins ~R$ 1,08/kWh; 150 kWh/mês (estimativa; a média do Sul é 208 kWh, EPE 2025)"
           },
           {
             "rotulo": "água e esgoto",
+            "curto": "água",
             "valor": 119,
             "fonte": "DMAE: R$ 5,50/m³ (Decreto 23.639/2026) + esgoto de ~80% da água; 12 m³/mês, 4 m³ por pessoa (estimativa)"
           },
           {
             "rotulo": "gás de cozinha",
+            "curto": "gás",
             "valor": 89,
             "fonte": "ANP, levantamento de 20 a 26/09/2026: botijão de 13 kg em Porto Alegre R$ 119,00; 0,75 botijão por mês (estimativa)",
             "semAtraso": true
           },
           {
             "rotulo": "ônibus da companheira",
+            "curto": "ônibus",
             "valor": 95,
-            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95 (até 06/10 de manhã, 30 passagens, estimativa sem conta; reconta da D-079). Estimativa sem fonte: ela não pega outro ônibus no mês (a revenda vai a pé ou na moto do Jonas)",
+            "fonte": "Prefeitura de Porto Alegre: passagem de ônibus R$ 5,30 desde 19/02/2026. A ida e a volta das faxinas: 8,67 faxinas por mês × 2 = 17,3 passagens, 18 no jogo, R$ 95,40, R$ 95. Estimativa sem fonte: ela não pega outro ônibus no mês (a revenda vai a pé ou na moto do Jonas)",
             "semAtraso": true
           },
           {
             "rotulo": "celular e internet",
+            "curto": "celular",
             "valor": 75,
             "fonte": "Estimativa: pré-pago R$ 20-30 por 30 dias (Claro, Vivo, TIM); internet fixa média ~R$ 92 (Anatel, 1º tri/2026)"
           },
           {
             "rotulo": "remédios",
+            "curto": "remédios",
             "valor": 90,
             "fonte": "Estimativa: famílias com até 2 salários mínimos gastam 4,2% com remédio (IBGE, POF 2017-2018). A Farmácia Popular dá 41 itens de graça, mas não analgésico nem antibiótico",
             "semAtraso": true
@@ -139,7 +147,7 @@
       "outraRenda": {
         "rotulo": "faxinas e revenda da companheira",
         "valor": 1600,
-        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250: B). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300 (até 06/10 de manhã, 8 por mês, o mês arredondado para 4 semanas; reconta da D-079). DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Trabalhar três dias por semana na mesma casa já gera vínculo de emprego (Lei Complementar 150/2015); por isso, a diarista vai no máximo duas vezes por semana à mesma casa. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. Ninguém na casa tem carteira assinada"
+        "fonte": "Diária de faxina em Porto Alegre R$ 130 a 150 (GetNinjas; Famyle, R$ 150 a 250). Duas faxinas por semana × R$ 150, sem carteira e sem INSS: 2 × 52 semanas ÷ 12 = 8,67 faxinas por mês, R$ 1.300. DIEESE (2026, PNAD 4º tri/2025): 76% das trabalhadoras domésticas sem carteira, renda média de R$ 1.335; diaristas trabalham ~24 h por semana (DIEESE, boletim de abr/2025). Trabalhar três dias por semana na mesma casa já gera vínculo de emprego (Lei Complementar 150/2015); por isso, a diarista vai no máximo duas vezes por semana à mesma casa. Revenda de cosméticos: R$ 300 por mês, abaixo da média de ~R$ 417 brutos (ABEVD, jan/2026: R$ 50 bi ÷ 3 milhões de revendedoras ÷ 12, margem de 30%; conta nossa). R$ 1.300 + 300 = R$ 1.600. Ninguém na casa tem carteira assinada"
       },
       "todoMes": [
         {
@@ -158,7 +166,8 @@
           "fonte": "Tabela Fipe set/2026 (CG 160 Start 2026, R$ 18.598), 80% financiado em 48x a 1,97% a.m. (BCB, SGS 25471, jun/2026) = R$ 482"
         }
       ],
-      "fonte": "Abílio (2021): trajetória dos motoboys; PNAD 2025"
+      "fonte": "Abílio (2021): trajetória dos motoboys; PNAD 2025",
+      "fontesCurtas": "IBGE (PNAD 2025), DIEESE/Conab, QuintoAndar, CEEE, DMAE, Tabela Fipe"
     }
   ],
   "equipes": [
