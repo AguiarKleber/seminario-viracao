@@ -562,7 +562,7 @@ ativa, o Espaço e as setas vão para os slides.
 | Ctrl+Z | Desfaz, com confirmação. Com a votação recém-aberta por um Espaço a mais, desfaz a abertura e volta à tela de antes, **se nenhum voto chegou** e, na rodada, se você não decidiu por nenhuma equipe (senão avisa "Já chegaram N votos" e a votação segue aberta). Uma rodada que já foi apurada e reaberta pelo Ctrl+Z não volta mais para trás. Se a rede falhar no meio, a tela mostra "Desfazendo a abertura…": dê Ctrl+Z de novo (o Enter pergunta antes de apurar) | Depois de encerrar uma rodada ou uma enquete; com enquete ou decisão aberta (não na prorrogação) |
 | F | Tela cheia da página (alternativa ao F11) | Qualquer hora |
 | H | Mostra ou esconde a barra. Mostrada pela tecla, ela também some sozinha em 3 s (fica enquanto você navega nela com Tab) | Qualquer hora |
-| 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes |
+| 1 a 6 | Abre ou fecha a equipe daquele número | Formação das equipes (só no jogo por equipes) |
 | 1 a 5 | Soma 1 na coluna da escala; Shift + tecla desconta | Enquete sem celulares (mão levantada) |
 | ↑ e ↓ | Voltam ou avançam a afirmação que está sendo contada | Enquete sem celulares, com as afirmações juntas |
 | ← e PageUp | Mostram o passo anterior só no telão (modo revendo, com a faixa "Revendo: … · → volta"); os celulares não mudam. → volta ao passo atual; Espaço e Enter só saem do modo, sem rodar o comando. Serve para reprojetar o QR grande para quem chegou atrasado: ← até "Entrada na sala", depois → | Quando precisar |
@@ -827,7 +827,7 @@ slides.
   inteiro destas famílias, bimestre a bimestre. Entre um bimestre e outro, os
   dados que explicam o que aconteceu."
 
-### 5.4 Formação das equipes
+### 5.4 Formação das equipes (só no jogo por equipes)
 
 - **Telão:** os cartões das equipes (forma, número, nome e persona), quantos há
   em cada uma e "N pessoas sem equipe".

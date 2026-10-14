@@ -81,6 +81,8 @@ ser obrigatórias:
 | `cortarPrimeiro` | regras, opcional | `"contas"` (o padrão, **a validar**) ou `"comida"`: o que a casa deixa de pagar primeiro quando o limite acaba |
 | `comida: true` | item do `basico` | Marca o item da comida, o único que a casa pode deixar de comprar. Com o limite, toda persona precisa de um |
 | `semAtraso: true` | item do `basico`, opcional | Marca o item que não atrasa (gás, ônibus, remédio: quem não paga fica sem). O config atual marca o gás, o ônibus e o remédio das 6 casas |
+| `curto` | item do `basico`, opcional | O nome curto do item ("água", e não "água e esgoto") na linha do básico do "Conheça o Jonas" (revisão final de 14/10). Sem ele, a tela usa o rótulo sem o parêntese; ausente, o hash não muda |
+| `fontesCurtas` | persona, opcional | Os nomes curtos das fontes, em uma linha ("IBGE (PNAD 2025), DIEESE/Conab, …"), no pé do "Conheça o Jonas" no telão e no "ver" das fontes do celular, que abre as fontes inteiras de cada valor (revisão final de 14/10) |
 | indicadores `contas_atrasadas` e `faltou_na_mesa` | `indicadores`, obrigatórios com o limite | O que a casa deve de contas, com multa e mora, e a comida que não deu para comprar. Só o motor mexe nos dois. Veja `indicadores` |
 
 E a D-067: quando o dinheiro de uma proteção passa do que o trabalho daria num
@@ -465,7 +467,7 @@ celular; os `longos`, nas legendas do telão.
     obrigatória em cada item (D-005).
   - O total é a soma dos itens, calculada pelo código. **Nunca escreva o total no
     config**: não há campo para ele.
-  - Uma chave fora de `rotulo`, `valor`, `fonte`, `comida` e `semAtraso` é
+  - Uma chave fora de `rotulo`, `valor`, `fonte`, `comida`, `semAtraso` e `curto` é
     **erro**, e não aviso: o básico entra na conta, e um `"valor "` com espaço
     deixaria o item sem valor.
   - `comida: true` (esquema v3.1, D-066) marca o item da comida: é o único que
