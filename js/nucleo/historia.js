@@ -571,11 +571,205 @@
     return d ? `${d.situacao === 'devendo' ? 'devendo' : 'tem'} ${moeda(d.valor)}` : null;
   }
 
+  // ---------- O modo individual (decisão do Kleber de 13/10 à noite) ----------
+  //
+  // Cada aluno joga sozinho, numa vaga própria (uma "equipe de uma pessoa";
+  // alunoLogica.vagasParaAtribuir). O voto é secreto e o tema é sensível: o
+  // telão (e o espectador) mostram só o resumo da turma, em contagens e
+  // distribuições, e nunca uma vaga nem um nome (o nome fica só no celular de
+  // cada um). As contas abaixo são esse resumo, as mesmas no telão, no celular
+  // e na exportação.
+
+  function individual(conteudo) {
+    return em(conteudo, 'regras', 'individual') === true;
+  }
+
+  function ordemDe(conteudo, colecao) {
+    const ordem = lista(em(conteudo, 'ordem', colecao));
+    return ordem.length > 0 ? ordem : Object.keys(em(conteudo, colecao) || {});
+  }
+
+  // A letra que a tela mostra ao lado de cada opção: a posição na rodada.
+  const LETRAS = 'ABCDEFGHIJ';
+
+  // As vagas que jogam: as abertas no estado, na ordem do config.
+  function vagasEmJogo(conteudo, estado) {
+    return ordemDe(conteudo, 'equipes').filter((id) => em(estado, 'equipesAbertas', id) === true);
+  }
+
+  // "N pessoas na sala" (o lobby e o canto do telão): quem tem uma vaga aberta.
+  // Quem acabou de entrar e ainda espera a vaga (um instante) e quem chegou com
+  // a sala cheia não contam: a conta é a de quem joga, no máximo uma pessoa
+  // por vaga (duas no mesmo registro de vaga contam uma vez, como na apuração).
+  function pessoasNaSala(conteudo, { estado, membros } = {}) {
+    const abertas = new Set(vagasEmJogo(conteudo, estado));
+    const ocupadas = new Set();
+    for (const m of Object.values(membros || {})) {
+      if (m && typeof m === 'object' && abertas.has(m.equipe)) ocupadas.add(m.equipe);
+    }
+    return ocupadas.size;
+  }
+
+  // "N de M já escolheram", na decisão. O mesmo filtro da apuração
+  // (anfitrião, votosDaEquipe): conta o voto de quem está na vaga e entrou
+  // antes de a decisão abrir. M é quem pode votar agora; com `ativos` (os uids
+  // com presença recente), quem sumiu sai do M, como no "2 de 3 decidiram" das
+  // equipes, e M nunca fica menor que N. A vaga que o apresentador decidiu
+  // (estado.forcadas) conta como escolhida. { escolheram, total }.
+  function contagemDaDecisao(conteudo, { estado, membros, decisoes, ativos } = {}) {
+    const abertoEm = em(estado, 'abertoEm');
+    const ativo = (u) => ativos == null || (ativos instanceof Set ? ativos.has(u) : lista(ativos).includes(u));
+    let escolheram = 0;
+    let total = 0;
+    for (const vaga of vagasEmJogo(conteudo, estado)) {
+      if (typeof em(estado, 'forcadas', vaga) === 'string') {
+        escolheram += 1;
+        total += 1;
+        continue;
+      }
+      const donos = Object.keys(membros || {}).filter((u) => {
+        const m = membros[u];
+        return m && m.equipe === vaga && typeof m.entrouEm === 'number' && typeof abertoEm === 'number' && m.entrouEm <= abertoEm;
+      });
+      if (donos.length === 0) continue;
+      const votou = donos.some((u) => typeof em(decisoes, vaga, u) === 'string');
+      if (votou) escolheram += 1;
+      if (votou || donos.some(ativo)) total += 1;
+    }
+    return { escolheram, total: Math.max(total, escolheram) };
+  }
+
+  // Quantas pessoas ficaram com cada opção numa rodada apurada ("A: 8 · B: 5
+  // …"), na ordem das opções, com as de 0 também. semVoto: quantas não votaram
+  // e ficaram no padrão (origem "piloto": "ninguém votou: ficou o de sempre").
+  // { pessoas, porOpcao: [{ id, letra, rotulo, n }], semVoto }.
+  function contagemPorOpcao(conteudo, rodadaId, resultados) {
+    const daRodada = em(resultados, rodadaId) || {};
+    const todas = ordemDe(conteudo, 'equipes');
+    const vagas = todas.filter((v) => em(daRodada, v) !== null);
+    const personaId = em(conteudo, 'equipes', vagas[0] ?? todas[0], 'persona');
+    const opcoes = lista(em(conteudo, 'rodadas', rodadaId, 'ordemOpcoes'));
+    const n = {};
+    let semVoto = 0;
+    for (const v of vagas) {
+      const r = daRodada[v];
+      if (typeof r.decisao === 'string') n[r.decisao] = (n[r.decisao] || 0) + 1;
+      if (r.origem === 'piloto') semVoto += 1;
+    }
+    return {
+      pessoas: vagas.length,
+      porOpcao: opcoes.map((id, i) => ({ id, letra: LETRAS[i] ?? String(i + 1), rotulo: textoDaOpcao(conteudo, rodadaId, id, personaId).rotulo, n: n[id] || 0 })),
+      semVoto,
+    };
+  }
+
+  // O que veio de uma escolha de antes, para quantas pessoas ("as costas
+  // travaram para 3 pessoas"). O motivo é o de consequenciasDaRodada (o rótulo
+  // até os dois-pontos), agrupado só pelo motivo: o valor muda de uma pessoa
+  // para outra (a moto que quebra custa menos a quem trocou o pneu), e vai em
+  // `valores`, sem repetir, na ordem em que aparece. Na ordem dos motivos.
+  // [{ motivo, pessoas, valores: [n] }].
+  function consequenciasDaTurma(conteudo, rodadaId, resultados) {
+    const daRodada = em(resultados, rodadaId) || {};
+    const itens = ordemDe(conteudo, 'equipes')
+      .filter((v) => em(daRodada, v) !== null)
+      .map((v) => ({ equipeId: v, deAntes: daRodada[v].deAntes }));
+    const porMotivo = [];
+    for (const g of consequenciasDaRodada(itens)) {
+      let linha = porMotivo.find((x) => x.motivo === g.motivo);
+      if (!linha) {
+        linha = { motivo: g.motivo, pessoas: 0, valores: [] };
+        porMotivo.push(linha);
+      }
+      linha.pessoas += g.equipes.length;
+      if (!linha.valores.includes(g.valor)) linha.valores.push(g.valor);
+    }
+    return porMotivo;
+  }
+
+  // A tabela bimestre × opção do placar final ("As escolhas da turma"): uma
+  // linha por rodada apurada, na ordem do config, com o nome curto ("Jan–fev")
+  // e a contagem de contagemPorOpcao. [{ rodadaId, rotulo, titulo, pessoas,
+  // porOpcao, semVoto }].
+  function escolhasDaTurma(conteudo, resultados) {
+    const linhas = [];
+    ordemDe(conteudo, 'rodadas').forEach((rodadaId, i) => {
+      const c = contagemPorOpcao(conteudo, rodadaId, resultados);
+      if (c.pessoas === 0) return;
+      const titulo = em(conteudo, 'rodadas', rodadaId, 'titulo');
+      linhas.push({ rodadaId, rotulo: rotuloDaRodada(titulo, i), titulo: titulo ?? null, ...c });
+    });
+    return linhas;
+  }
+
+  // "Quanto sobrou, ou ficou devendo" do modo individual (pedido do Kleber de
+  // 13/10, 21h, print 2): do total de alunos, quantos terminaram o ano com
+  // dinheiro sobrando e quantos terminaram devendo. O número de cada pessoa é
+  // o dinheiro da família no fim (o patrimônio da última rodada, em reais
+  // inteiros, a mesma conta de dinheiroDaFamilia, que o celular mostra).
+  // - Positivo: terminou com R$ 0 ou mais ("tem R$ 0" é a régua das 15.625
+  //   combinações para "fechou o ano", patrimônio ≥ 0); negativo: devendo.
+  //   positivos + negativos = pessoas, sempre.
+  // - Só entra quem jogou todas as rodadas que a turma jogou: quem entrou no
+  //   meio do ano tem menos bimestres de conta que não fecha, e ficaria melhor
+  //   do que quem jogou o ano inteiro só por ter chegado tarde. Esses são
+  //   contados à parte (entraramDepois; fraseDosQueEntraramDepois).
+  // { pessoas, positivos, negativos, media (null sem ninguém), valores (do
+  // maior para o menor, sem vaga e sem nome: uma barra por pessoa),
+  // entraramDepois, rodadas (quantas a turma jogou) }.
+  function fimDoAnoDaTurma(conteudo, resultados) {
+    const jogadas = ordemDe(conteudo, 'rodadas').filter((r) => Object.keys(em(resultados, r) || {}).length > 0);
+    const valores = [];
+    let entraramDepois = 0;
+    for (const vaga of ordemDe(conteudo, 'equipes')) {
+      const comResultado = jogadas.filter((r) => em(resultados, r, vaga) !== null);
+      if (comResultado.length === 0) continue;
+      const fim = comResultado.length === jogadas.length ? patrimonioDe(em(resultados, comResultado.at(-1), vaga, 'depois')) : null;
+      if (fim === null) {
+        entraramDepois += 1;
+        continue;
+      }
+      valores.push(Math.round(fim) + 0);
+    }
+    valores.sort((a, b) => b - a);
+    const positivos = valores.filter((v) => v >= 0).length;
+    const media = valores.length > 0 ? Math.round(valores.reduce((s, v) => s + v, 0) / valores.length) + 0 : null;
+    return { pessoas: valores.length, positivos, negativos: valores.length - positivos, media, valores, entraramDepois, rodadas: jogadas.length };
+  }
+
+  // "1 terminou", "3 terminaram", "nenhum terminou".
+  function quantosTerminaram(n) {
+    if (n === 0) return 'nenhum terminou';
+    return n === 1 ? '1 terminou' : `${n} terminaram`;
+  }
+
+  // A frase do destaque, a mesma no telão e no celular do espectador (pedido
+  // do Kleber de 13/10, 21h: "De 18 alunos, 3 terminaram com dinheiro
+  // sobrando e 15 terminaram devendo"). Recebe o fimDoAnoDaTurma; null sem
+  // ninguém que tenha jogado o ano inteiro.
+  function fraseDoFimDaTurma(fim) {
+    const pessoas = fim?.pessoas;
+    if (!Number.isInteger(pessoas) || pessoas <= 0) return null;
+    const total = pessoas === 1 ? 'De 1 aluno' : `De ${pessoas} alunos`;
+    return `${total}, ${quantosTerminaram(fim.positivos)} com dinheiro sobrando e ${quantosTerminaram(fim.negativos)} devendo.`;
+  }
+
+  // Quem entrou no meio do ano fica fora da conta de fraseDoFimDaTurma; a
+  // tela diz isso, para a soma bater com a sala ("1 aluno entrou no meio do
+  // ano e não está nessa conta."). null quando ninguém entrou depois.
+  function fraseDosQueEntraramDepois(fim) {
+    const n = fim?.entraramDepois;
+    if (!Number.isInteger(n) || n <= 0) return null;
+    return n === 1 ? '1 aluno entrou no meio do ano e não está nessa conta.' : `${n} alunos entraram no meio do ano e não estão nessa conta.`;
+  }
+
   V.historia = {
     historiaDaEquipe, escolhaOuSorte, linhaDoMes, textoDaOpcao, protecaoDoResultado, fraseDaProtecao, piorCasoDoPlacar,
     temProtecao, escolheuProtecao, dividaTotal, patrimonioDe, periodo, rotuloDaRodada, mesesJogados, resumoPorRodada,
     nomesDosGastos, faltouNaMesaDe, fraseAcimaDoTrabalho, fraseDoLimite, textoDaCarta, curtosDasCartas,
     formatoSimples, dinheiroDaOpcao, textoDoDinheiro, dinheiroDaFamilia, textoDaFamilia, primeiraFrase,
     consequenciasDaRodada,
+    individual, vagasEmJogo, pessoasNaSala, contagemDaDecisao, contagemPorOpcao, consequenciasDaTurma, escolhasDaTurma,
+    fimDoAnoDaTurma, fraseDoFimDaTurma, fraseDosQueEntraramDepois,
   };
 })(globalThis);

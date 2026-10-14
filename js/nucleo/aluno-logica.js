@@ -111,6 +111,11 @@
   // resultado não podem depender da ordem de carga.
   const simples = (conteudo) => em(conteudo, 'regras', 'formatoSimples') === true;
 
+  // O modo individual (regras.individual; decisão do Kleber de 13/10 à noite):
+  // cada aluno joga sozinho, numa vaga própria. Lido aqui, pelo mesmo motivo
+  // do formato simples.
+  const individual = (conteudo) => em(conteudo, 'regras', 'individual') === true;
+
   // A família e o básico da casa vão junto com a persona (D-044): a tela mostra
   // "o básico custa R$ Y" desde antes do primeiro mês. O total é a soma dos
   // itens, a mesma conta do motor (que o celular não carrega).
@@ -337,6 +342,41 @@
     return em(conteudo, 'roteiros', meta?.roteiro, String(estado.indice), 'titulo');
   }
 
+  // Pedido do Kleber de 13/10, 21h (prints 3 e 4): as telas de dados (o bloco
+  // com contexto, itens e fonte, inclusive "Dados: e nos outros aplicativos?"
+  // e o "Fim: quem é o patrão?") aparecem também no celular, ao mesmo tempo
+  // que no telão. Até a versão 11, o celular mostrava só o título e a situação
+  // do Jonas, e quem estava longe do telão não lia os números. O texto vem do
+  // passo do roteiro congelado na sala (conteudo.roteiros), o mesmo que o
+  // telão projeta. { titulo, contexto, itens: [texto], fonte }, ou null num
+  // bloco sem nenhum dos três (só o título, como a "Abertura").
+  function blocoDoPasso(conteudo, estado, meta) {
+    const passo = em(conteudo, 'roteiros', meta?.roteiro, String(estado.indice));
+    if (!passo || passo.tipo !== 'bloco') return null;
+    const texto = (x) => (typeof x === 'string' && x.trim() !== '' ? x : null);
+    const contexto = texto(passo.contexto);
+    const itens = lista(passo.itens).map(texto).filter((x) => x !== null);
+    const fonte = texto(passo.fonte);
+    if (contexto === null && itens.length === 0 && fonte === null) return null;
+    return { titulo: texto(passo.titulo), contexto, itens, fonte };
+  }
+
+  // O bloco vai na tela só quando tem conteúdo: a tela de um bloco só com
+  // título fica igual à de antes, campo a campo.
+  const comBloco = (conteudo, estado, meta) => {
+    const bloco = blocoDoPasso(conteudo, estado, meta);
+    return bloco ? { bloco } : {};
+  };
+
+  // Modo individual: o fim do ano da turma (historia.fimDoAnoDaTurma), para o
+  // celular dizer "das 18 pessoas da turma, 3 terminaram com dinheiro
+  // sobrando" sem ranking nem nome. Só no modo individual: a tela das equipes
+  // fica igual à de antes. Sem o historia.js carregado, nada.
+  function turmaDe(conteudo, resultados) {
+    const H = raiz.Viracao.historia;
+    return individual(conteudo) && H ? { turma: H.fimDoAnoDaTurma(conteudo, resultados) } : {};
+  }
+
   function telaDoAluno(entrada) {
     const { conteudo, estado, membro, meusVotos, resultados, placar, meta } = entrada;
     // Sem registro de membro: ou a entrada fechou, ou o registro ainda não foi
@@ -348,6 +388,16 @@
     const abertas = em(estado, 'equipesAbertas');
     const equipeValida = equipeId !== null && (!abertas || em(abertas, equipeId) === true) ? equipeId : null;
     const formadas = equipeValida !== null && estado.equipesTravadas === true;
+    // Modo individual: sem vaga, o aluno não joga nada, nem a enquete. Ou o
+    // telão ainda vai dar a vaga (um instante: "Entrando na sala…"), ou as 20
+    // vagas já são de outras pessoas. A conta é a mesma do telão
+    // (vagasParaAtribuir), com os membros que o celular lê: quem ficou de fora
+    // lá é quem fica de fora aqui. O espectador (D-064) não é aluno e não
+    // passa por aqui.
+    if (individual(conteudo) && equipeValida === null && entrada.espectador !== true) {
+      const { semVaga, capacidade } = vagasParaAtribuir(conteudo, { membros: entrada.membros, equipesAbertas: abertas });
+      return semVaga.includes(entrada.uid) ? aguardando('salaCheia', { capacidade }) : aguardando('entrando');
+    }
     switch (estado.tipo) {
       case 'lobby':
         return aguardando('lobby');
@@ -357,8 +407,11 @@
         // Antes das equipes: "acompanhe a apresentação". Depois: a situação da
         // persona (D-006), sem Wake Lock e sem "aguardando o telão".
         return formadas
-          ? tela('situacao', { ...dadosSituacao(conteudo, equipeValida, resultados), titulo: tituloDoBloco(conteudo, estado, meta), final: false })
-          : aguardando('apresentacao', { titulo: tituloDoBloco(conteudo, estado, meta) });
+          ? tela('situacao', {
+            ...dadosSituacao(conteudo, equipeValida, resultados), titulo: tituloDoBloco(conteudo, estado, meta), final: false,
+            ...comBloco(conteudo, estado, meta),
+          })
+          : aguardando('apresentacao', { titulo: tituloDoBloco(conteudo, estado, meta), ...comBloco(conteudo, estado, meta) });
       case 'formarEquipes':
         if (estado.equipesTravadas === true) return formadas ? tela('persona', dadosPersona(conteudo, equipeValida)) : aguardando('semEquipe');
         return tela('escolherEquipe', {
@@ -375,6 +428,7 @@
             ...dadosSituacao(conteudo, equipeValida, resultados), placar: em(placar, equipeValida), final: true,
             historia: historia(conteudo, equipeValida, resultados),
             piorCaso: piorCasoDaEquipe(conteudo, placar, resultados, equipeValida),
+            ...turmaDe(conteudo, resultados),
           })
           : aguardando('apresentacao');
       case 'comparativo':
@@ -386,6 +440,7 @@
           resumo: equipeValida ? resumoDe(conteudo, equipeValida, resultados) : [],
           periodo: periodoDe(conteudo),
           piorCaso: equipeValida ? piorCasoDaEquipe(conteudo, placar, resultados, equipeValida) : null,
+          ...turmaDe(conteudo, resultados),
         });
       default:
         return aguardando('telao');
@@ -476,6 +531,58 @@
     const incompleta = abertas.find((id) => conta[id] < alvo);
     if (incompleta) return incompleta;
     return abertas.reduce((melhor, id) => (conta[id] < conta[melhor] ? id : melhor));
+  }
+
+  // O modo individual (decisão do Kleber de 13/10 à noite): cada aluno ganha
+  // uma vaga própria, uma "equipe de uma pessoa", e quem grava é o telão (o
+  // único escritor do estado; o celular grava só o próprio registro, sem
+  // equipe). Esta é a conta, pura, que o anfitrião grava (atribuirVagas) e o
+  // celular repete para saber se a sala está cheia.
+  // - A vaga de um membro é a equipe gravada nele, se ela existe no conteúdo.
+  //   Duas pessoas na mesma vaga nunca deveriam acontecer (a gravação é
+  //   atômica e confere a geracao); se acontecer, fica quem entrou primeiro, e
+  //   a outra ganha vaga nova.
+  // - Uma vaga livre é a que ninguém ocupa E que nunca foi aberta: a vaga
+  //   aberta tem o caminho de alguém (resultados, votos), e dá-la a outra
+  //   pessoa misturaria dois anos do Jonas num só. Por isso a vaga não volta
+  //   para a fila nem quando o dono some.
+  // - Ordem determinística: quem entrou primeiro (entrouEm, a hora do
+  //   servidor), e o uid no empate; a menor vaga livre, na ordem do config.
+  //   Vários entrando no mesmo instante ganham vagas diferentes, e a mesma
+  //   entrada dá sempre a mesma conta, no telão e no celular.
+  // - Recarregar o celular não muda nada: o uid é o mesmo, e a vaga está no
+  //   registro dele.
+  // Devolve { atribuicoes: { uid: vaga }, abrir: [vagas a abrir, na ordem do
+  // config], semVaga: [uids sem vaga: a sala está cheia], capacidade, ocupadas }.
+  // "abrir" traz também a vaga de quem já a tem e não está aberta (uma
+  // gravação antiga pela metade): sem abrir, ela não jogaria.
+  function vagasParaAtribuir(conteudo, { membros, equipesAbertas } = {}) {
+    const vagas = ids(conteudo, 'equipes').filter((id) => em(conteudo, 'equipes', id) !== null);
+    const aberta = (id) => equipesAbertas != null && estaNoConjunto(equipesAbertas, id);
+    const entrou = (u) => (Number.isFinite(membros[u]?.entrouEm) ? membros[u].entrouEm : Infinity);
+    const ordem = Object.keys(membros || {})
+      .filter((u) => membros[u] && typeof membros[u] === 'object')
+      .sort((a, b) => entrou(a) - entrou(b) || (a < b ? -1 : a > b ? 1 : 0));
+    const dono = new Map();
+    const esperando = [];
+    for (const u of ordem) {
+      const vaga = membros[u].equipe;
+      if (typeof vaga === 'string' && vagas.includes(vaga) && !dono.has(vaga)) dono.set(vaga, u);
+      else esperando.push(u);
+    }
+    const livres = vagas.filter((v) => !dono.has(v) && !aberta(v));
+    const atribuicoes = {};
+    const semVaga = [];
+    for (const u of esperando) {
+      const vaga = livres.shift();
+      if (vaga === undefined) semVaga.push(u);
+      else {
+        atribuicoes[u] = vaga;
+        dono.set(vaga, u);
+      }
+    }
+    const abrir = vagas.filter((v) => dono.has(v) && !aberta(v));
+    return { atribuicoes, abrir, semVaga, capacidade: vagas.length, ocupadas: dono.size };
   }
 
   // O voto guardado no aparelho ainda pode ser reenviado? Só se a mesma etapa
@@ -577,6 +684,6 @@
   }
 
   V.alunoLogica = {
-    telaDoAluno, sugerirEquipe, pendenteAindaVale, motivoDaRecusa, cracha, codigoCracha, fimDoCronometro, FOLGA_DA_REGRA_MS,
+    telaDoAluno, sugerirEquipe, vagasParaAtribuir, pendenteAindaVale, motivoDaRecusa, cracha, codigoCracha, fimDoCronometro, FOLGA_DA_REGRA_MS,
   };
 })(globalThis);
