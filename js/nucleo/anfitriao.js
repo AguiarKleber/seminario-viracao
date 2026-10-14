@@ -60,6 +60,14 @@
     // que este anfitrião grava quando ele entra (atribuirVagas). A decisão, a
     // apuração, o resultado e o placar por equipe continuam os mesmos.
     const individual = config.regras?.individual === true;
+    // A sessão sem celulares (o telão offline: o pendrive, "Começar sem
+    // celulares", "Continuar sem celulares" e "Carregar estado"). Só ela joga
+    // "a turma" quando a rodada fecha sem ninguém na sala (fecharRodada). O
+    // telão diz qual é; o padrão é com celulares. Revisão de 14/10 (achado 1):
+    // online, o desvio também rodava, e a rodada fechada antes de os celulares
+    // entrarem abria a primeira vaga para sempre, sem dono. Ela tirava um lugar
+    // dos 20 e era a única pessoa contada no placar.
+    const semCelulares = opcoes.semCelulares === true;
     const base = 'salas/' + sala;
     let uid = opcoes.uid || null;
     let atual = null;
@@ -413,8 +421,11 @@
       // vaga aberta e ninguém na sala. A rodada joga a primeira vaga, com a
       // escolha do apresentador ou o padrão: sem isto, ela fecharia sem
       // resultado nenhum, e o telão não teria o que mostrar. Com alguém na sala,
-      // a vaga é dele, e quem a dá é o atribuirVagas.
-      if (individual && equipesAtivas(e).length === 0 && Object.keys(membros || {}).length === 0 && ordemEquipes.length > 0) {
+      // a vaga é dele, e quem a dá é o atribuirVagas. Com celulares (online), a
+      // rodada fechada sem ninguém fica sem resultado (semCelulares), e o
+      // placar a deixa fora da conta (historia.fimDoAnoDaTurma): quem entrar
+      // depois ganha uma vaga e conta como quem jogou o ano inteiro.
+      if (individual && semCelulares && equipesAtivas(e).length === 0 && Object.keys(membros || {}).length === 0 && ordemEquipes.length > 0) {
         e = { ...e, equipesAbertas: { [ordemEquipes[0]]: true } };
       }
       const ativas = equipesAtivas(e);
@@ -849,8 +860,11 @@
     // velha faz a regra recusar esta (e a nova tentativa lê tudo de novo). Na
     // ordem contrária, o estado novo com os membros velhos daria uma vaga nova
     // a quem já tinha uma, e deixaria a primeira aberta, sem ninguém.
-    // Uma recusa (outro escritor passou na frente) é tentada de novo uma vez,
-    // com tudo relido: o telão só repete a chamada quando alguém entra.
+    // Uma recusa é tentada de novo até duas vezes, com tudo relido. Ela vem de
+    // outro escritor que passou na frente, ou de um aluno sem vaga que apagou
+    // o próprio registro entre a leitura e a gravação: a vaga dele criaria um
+    // membro sem entrouEm, e a regra recusa a gravação inteira, com a vaga dos
+    // outros (revisão de 14/10, achado 7; o celular honesto nunca faz isso).
     // Devolve { atribuidas, semVaga: [uids] } (semVaga: a sala está cheia).
     async function atribuirVagas() {
       exigirEstado();
@@ -870,7 +884,7 @@
         try {
           await canal.gravar(escritas);
         } catch (erro) {
-          if (tentativa >= 2 || !/PERMISSION_DENIED/.test(String(erro?.message))) throw erro;
+          if (tentativa >= 3 || !/PERMISSION_DENIED/.test(String(erro?.message))) throw erro;
           continue;
         }
         atual = novo;

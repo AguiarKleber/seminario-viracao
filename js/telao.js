@@ -430,10 +430,11 @@
   // "A turma" (modo individual sem celulares): o telão joga um caminho só, uma
   // vaga, com a escolha da turma marcada pelo apresentador, para nunca travar
   // se a internet cair antes de a aula começar. É assim enquanto não há membro
-  // nenhum e no máximo uma vaga em jogo. Depois de "Continuar sem celulares"
-  // (os membros ficam na árvore) ou de carregar um estado com várias vagas, as
-  // telas continuam com as contagens da turma, e a escolha marcada vale para
-  // todas as vagas (anfitriao.decidirPelaTurma).
+  // nenhum e no máximo uma vaga em jogo. "Continuar sem celulares" antes de
+  // qualquer bimestre fechar também cai aqui (ele tira os alunos e as vagas da
+  // cópia local). Depois de um bimestre fechado com celulares, ou ao carregar
+  // um estado com várias vagas, as telas continuam com as contagens da turma,
+  // e a escolha marcada vale para todas as vagas (anfitriao.decidirPelaTurma).
   function soATurma() {
     if (!individual() || app.modo !== 'offline') return false;
     if (Object.keys(app.dados.membros || {}).length > 0) return false;
@@ -1021,8 +1022,10 @@
     app.revendo = null;
     // Só o anfitrião desta sessão desenha: o de uma sessão anterior (um comando
     // online que ainda termina depois de seguir sem celulares) não mexe na tela.
+    // semCelulares: só o offline joga "a turma" quando a rodada fecha sem
+    // ninguém na sala (revisão de 14/10, achado 1).
     const anf = N().anfitriao.criar({
-      canal: c, config: app.config, sala, nomeRoteiro, versaoApp: VERSAO_APP,
+      canal: c, config: app.config, sala, nomeRoteiro, versaoApp: VERSAO_APP, semCelulares: modo === 'offline',
       gerarSemente: aleatorioUint32, aoMudar: (e) => { if (app.anf === anf) aoMudarEstado(e); },
     });
     app.anf = anf;
@@ -1296,6 +1299,22 @@
     apagarLocal(CHAVE_ULTIMA_ONLINE);
     online.salaRetomar = '';
     podarVotos(arvore, arvore.estado);
+    // Modo individual, antes de qualquer bimestre fechar: a sala passa a ser
+    // "a turma" (soATurma), um caminho só, como no pendrive. Os alunos e as
+    // vagas saem da cópia local. Revisão de 14/10 (achado 3): os membros
+    // ficavam, e o telão seguia contando "5 pessoas" que jogavam todas a mesma
+    // escolha de mão levantada, com 5 colunas iguais no placar. Com bimestre
+    // já fechado (a queda no meio do jogo), cada pessoa segue o ano dela com a
+    // escolha da turma (anfitriao.decidirPelaTurma), e o placar continua por
+    // pessoas.
+    if (individual() && Object.keys(arvore.resultados || {}).length === 0) {
+      delete arvore.membros;
+      if (arvore.estado) {
+        arvore.estado = { ...arvore.estado };
+        delete arvore.estado.equipesAbertas;
+        delete arvore.estado.forcadas;
+      }
+    }
     // A trava da aba passa do online para o offline: o desligarOuvintes acabou
     // de soltá-la, e o navegador pode levar um instante para liberar.
     await ligarOffline({ sala, uid: arvore.meta.hostUid, nomeRoteiro, criar: false, arvore, esperarMs: 3000 });
@@ -1769,8 +1788,16 @@
     }
     let votaram = 0;
     for (const n of porUid.values()) if (n === abertas.length) votaram += 1;
-    const ativos = ativosAgora().size;
-    return { votaram, total: Math.max(ativos, votaram) };
+    // Modo individual: só quem tem vaga vê a enquete. O aparelho na "sala
+    // cheia" (ou ainda "Entrando na sala…") manda presença e não vota, e a
+    // conta ficava em "20 de 21 votaram" para sempre (revisão de 14/10, achado
+    // 4). É o mesmo filtro da decisão (historia.contagemDaDecisao).
+    let ativos = ativosAgora();
+    if (individual()) {
+      const comVaga = (u) => tem(e.equipesAbertas, app.dados.membros?.[u]?.equipe) && e.equipesAbertas[app.dados.membros[u].equipe] === true;
+      ativos = new Set([...ativos].filter(comVaga));
+    }
+    return { votaram, total: Math.max(ativos.size, votaram) };
   }
 
   function chaveEnqueteVotando(e) {

@@ -29,6 +29,8 @@
 // 8. toda tela conferida cabe em 1024×768 e 1280×720 com a faixa de entrada
 //    embaixo e em 1920×1080: sem rolagem, nada abaixo de 28 px, nada fora do
 //    palco, nada sobreposto, e nada por vaga.
+// 9. a internet cai no lobby, com alunos já na sala: "Continuar sem celulares"
+//    passa a jogar "a turma", um caminho só (revisão de 14/10, achado 3).
 /* global document, getComputedStyle, innerHeight, innerWidth, NodeFilter, requestAnimationFrame, SVGElement */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
@@ -100,6 +102,7 @@ async function sessao() {
   const celulares = [];
   try {
     await jogar({ site, navegador, vigiar, celulares });
+    await semCelularesNoLobby({ site, navegador, vigiar, celulares });
   } finally {
     await Promise.allSettled(celulares.map((c) => c.fechar()));
     await navegador.close();
@@ -356,6 +359,13 @@ async function jogar({ site, navegador, vigiar, celulares }) {
       await assert.rejects(c.canal.gravar({ [s('membros', c.uid, 'equipe')]: outra }), NEGADO, 'quem tem vaga não troca');
       await assert.rejects(c.canal.gravar({ [s('membros', c.uid)]: null }), NEGADO, 'quem tem vaga não larga a vaga');
     }
+    // Revisão de 14/10 (achado 4): na enquete, o "N de M votaram" conta só
+    // quem tem vaga. O 21º manda presença e nunca vê a enquete; com ele no M,
+    // a conta ficava em "20 de 21" e nunca chegava a "todos votaram".
+    if ((await estado()).tipo === 'enquete') {
+      await esperar(async () => lido(await telao.textContent('.enquete-status').catch(() => '')) === `0 de ${VAGAS.length} votaram`, `"0 de ${VAGAS.length} votaram" na enquete, sem o 21º`, 10000);
+      console.log(`  na enquete, "0 de ${VAGAS.length} votaram", sem o 21º (que manda presença e não tem vaga)`);
+    }
 
     // O plano de cada aluno: os cinco primeiros na melhor combinação do config
     // do dia (A D C E D A); os outros mudam de opção a cada bimestre; os de
@@ -514,4 +524,98 @@ async function jogar({ site, navegador, vigiar, celulares }) {
   } finally {
     clearInterval(presencas);
   }
+}
+
+// 9. Revisão de 14/10 (achado 3): a internet cai no lobby, com 4 alunos já na
+// sala, e o apresentador segura "Continuar sem celulares". O telão passa a
+// jogar "a turma", um caminho só, como no pendrive: no resultado, "A turma", e
+// não "O que a turma escolheu · 4 pessoas" com a mesma escolha em todas. Antes
+// da correção, os membros e as vagas iam junto para a cópia local.
+async function semCelularesNoLobby({ site, navegador, vigiar, celulares }) {
+  const V = await carregarNucleo();
+  const cfg = V.validarConfig.validarTexto(TEXTO_CONFIG).config;
+  const ctx = await navegador.newContext({ viewport: { width: 1024, height: 768 } });
+  await servirSdk(ctx);
+  await ctx.route(`${site.url}config.json`, (rota) => rota.fulfill({ status: 200, contentType: 'application/json; charset=utf-8', body: TEXTO_CONFIG }));
+  const telao = await ctx.newPage();
+  vigiar(telao, 'telão (sem celulares)');
+  await telao.goto(`${site.url}telao/?emulador=1`);
+  await telao.waitForFunction(() => /regras v[0-9]+ conferidas/.test(document.getElementById('status-online')?.textContent || ''), null, { timeout: 30000 });
+  await telao.waitForFunction(() => document.getElementById('hash-config'));
+  await telao.fill('#pin-apresentador', PIN_EMULADOR);
+  await telao.click('[data-acao="criar-online"]');
+  await telao.waitForFunction(() => document.body.dataset.tela === 'lobby', null, { timeout: 20000 });
+  const sala = await telao.evaluate(() => globalThis.Viracao.telao.sala());
+  const s = (...partes) => ['salas', sala, ...partes].join('/');
+  for (let i = 0; i < 4; i += 1) {
+    const canal = await novoCanalNoEmulador(`turma${i}`);
+    celulares.push(canal);
+    const uid = await canal.entrar();
+    await canal.gravar({ [s('membros', uid)]: { entrouEm: canal.marcadorDeHora() } });
+    await canal.gravar({ [s('presenca', uid)]: canal.marcadorDeHora() });
+  }
+  await telao.waitForFunction(() => document.querySelector('.lobby-conectados')?.dataset.pessoas === '4', null, { timeout: 20000 });
+
+  // Segurar o botão da barra (2 s), como o apresentador.
+  await telao.mouse.move(310, 768 - 10);
+  await telao.waitForFunction(() => !document.getElementById('barra').hidden);
+  await telao.locator('#barra [data-acao="semCelulares"]').hover();
+  await telao.mouse.down();
+  await telao.waitForTimeout(2400);
+  await telao.mouse.up();
+  await telao.waitForFunction(() => globalThis.Viracao.telao.modo() === 'offline', null, { timeout: 10000 });
+  const estado = () => telao.evaluate(() => globalThis.Viracao.telao.estado());
+  assert.equal((await estado()).equipesAbertas ?? null, null, 'sem as vagas da sala online');
+
+  // Até a primeira decisão; a turma escolhe D, de mão levantada.
+  const esperarEstado = async (teste, descricao) => {
+    for (let i = 0; i < 200; i += 1) {
+      const e = await estado();
+      if (e && teste(e)) return e;
+      await telao.waitForTimeout(80);
+    }
+    throw new Error(`Tempo esgotado esperando: ${descricao}`);
+  };
+  const confirmarSeAbrir = async () => {
+    await telao.waitForTimeout(400);
+    if (await telao.evaluate(() => document.getElementById('modal').open)) {
+      await telao.keyboard.press('Tab');
+      await telao.keyboard.press('Enter');
+    }
+  };
+  for (let i = 0; i < 10; i += 1) {
+    const e = await estado();
+    if (e.tipo === 'rodada') break;
+    if (e.tipo === 'enquete' && e.subfase === 'votando') {
+      await telao.keyboard.press('Enter');
+      await confirmarSeAbrir();
+      await esperarEstado((x) => x.subfase === 'apurada', 'a enquete apurada');
+      continue;
+    }
+    await telao.waitForTimeout(1700);
+    await telao.keyboard.press('Space');
+    await esperarEstado((x) => x.indice !== e.indice || x.subfase !== e.subfase, `sair do passo ${e.indice}`);
+  }
+  const r1 = await esperarEstado((e) => e.tipo === 'rodada' && e.subfase === 'decidindo', 'a primeira decisão');
+  const op = cfg.rodadas[r1.rodada].ordemOpcoes[3];
+  await telao.click(`.turma-decisao .botao-letra[data-opcao="${op}"]`);
+  await esperarEstado((x) => Object.values(x.forcadas || {}).length > 0, 'a escolha da turma marcada');
+  assert.deepEqual((await estado()).forcadas, { [cfg.ordem.equipes[0]]: op }, 'a escolha da turma é um caminho só');
+  await telao.keyboard.press('Enter');
+  await confirmarSeAbrir();
+  await esperarEstado((x) => x.subfase === 'resultado', 'o resultado da primeira decisão');
+  await telao.waitForFunction(() => document.body.dataset.tela === 'rodada-resultado');
+  const t = await telao.evaluate(() => ({
+    quem: Array.from(document.querySelectorAll('.turma-quem'), (x) => x.textContent),
+    opcoes: document.querySelectorAll('.turma-opcao').length,
+    kicker: document.querySelector('#palco .kicker')?.textContent ?? '',
+  }));
+  assert.deepEqual(t.quem, ['A turma'], 'o resultado é o da turma, um caminho só');
+  assert.equal(t.opcoes, 0, 'sem a contagem por pessoas');
+  assert.ok(!/pessoas/.test(t.kicker), `sem "N pessoas" no alto ("${t.kicker}")`);
+  assert.deepEqual((await estado()).equipesAbertas, { [cfg.ordem.equipes[0]]: true }, 'uma vaga só, a da turma');
+  await telao.screenshot({ path: join(CAPTURAS, 'individual-sem-celulares-no-lobby.png') });
+  if (COPIA) copyFileSync(join(CAPTURAS, 'individual-sem-celulares-no-lobby.png'), join(COPIA, 'individual-sem-celulares-no-lobby.png'));
+  await ctx.close();
+  console.log('OK: "Continuar sem celulares" no lobby, com 4 alunos na sala, joga "a turma" (um caminho só).');
 }

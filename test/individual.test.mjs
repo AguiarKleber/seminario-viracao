@@ -256,6 +256,43 @@ test('modo individual: "Remover inativos" nunca tira quem tem vaga, e "Mover alu
   await assert.rejects(anf.moverMembro('u00', 'e5'), /não dá para mover/);
 });
 
+// Revisão de 14/10 (achado 7, a sonda S3 do revisor): um aluno sem vaga, por
+// script, apaga o próprio registro entre a leitura e a gravação do telão, e
+// entra de novo logo depois. A vaga dele criaria um membro sem entrouEm, e a
+// regra recusava a gravação inteira, com a vaga do aluno honesto, nas duas
+// tentativas que havia.
+test('atribuirVagas: o aluno sem vaga que sai entre a leitura e a gravação, duas vezes, não deixa os outros sem vaga', async () => {
+  const sessao = sessaoIndividual();
+  await sessao.anf.criarSala();
+  const honesto = sessao.novoAluno('honesto');
+  await honesto.entrar();
+  const atacante = sessao.novoAluno('atacante');
+  await atacante.entrar();
+  const host = sessao.canal.comoUsuario(HOST);
+  let recusas = 0;
+  const canal = {
+    ...host,
+    async gravar(escritas) {
+      if (recusas >= 2 || !Object.keys(escritas).some((k) => k.endsWith('/equipe'))) return host.gravar(escritas);
+      await atacante.canal.gravar({ [s('membros', 'atacante')]: null });
+      try {
+        return await host.gravar(escritas);
+      } finally {
+        recusas += 1;
+        await atacante.entrar();
+      }
+    },
+  };
+  const anf = V.anfitriao.criar({ canal, config: sessao.config, sala: SALA, nomeRoteiro: '60min', agora: sessao.relogio.agora, uid: HOST, gerarSemente: () => 7 });
+  await anf.carregarSala();
+
+  const r = await anf.atribuirVagas();
+
+  assert.equal(recusas, 2, 'as duas primeiras gravações foram recusadas');
+  assert.equal(r.atribuidas, 2);
+  assert.ok(await vagaDe(sessao, 'honesto'), 'o aluno honesto ganhou a vaga');
+});
+
 test('distribuirAtrasados no modo individual dá as vagas (é o que o telão e o simulador chamam quando alguém entra)', async () => {
   const { anf, alunos, ...sessao } = await salaComAlunos(4);
   assert.equal(await anf.distribuirAtrasados(), 4);
@@ -403,7 +440,7 @@ test('quem entra com a decisão aberta ganha vaga, acompanha sem votar, joga no 
 // ---------- Sem celulares: "a turma" ----------
 
 test('sem celulares (offline): o telão joga um caminho só, "a turma", com a escolha do apresentador', async () => {
-  const sessao = sessaoIndividual();
+  const sessao = sessaoIndividual({ semCelulares: true });
   const { anf, host, relogio, config } = sessao;
   await anf.criarSala();
   await anf.avancar(); // personas
@@ -432,7 +469,7 @@ test('sem celulares (offline): o telão joga um caminho só, "a turma", com a es
 });
 
 test('sem celulares, sem decisão nenhuma: a primeira rodada também joga "a turma" no padrão', async () => {
-  const sessao = sessaoIndividual();
+  const sessao = sessaoIndividual({ semCelulares: true });
   const { anf, host, relogio } = sessao;
   await anf.criarSala();
   await anf.avancar();
@@ -443,6 +480,45 @@ test('sem celulares, sem decisão nenhuma: a primeira rodada também joga "a tur
   assert.deepEqual(Object.keys(r1), ['e1']);
   assert.equal(r1.e1.origem, 'piloto');
   assert.deepEqual(anf.estado().equipesAbertas, { e1: true });
+});
+
+// Revisão de 14/10 (achado 1): online, a rodada fechada antes de qualquer
+// celular entrar (a rede da turma demorou) abria a e1 para sempre, sem dono. A
+// e1 tirava um lugar dos 20 e era a única pessoa contada no placar.
+test('com celulares, a rodada que fecha sem ninguém na sala fica sem resultado, e as 20 vagas continuam livres', async () => {
+  const sessao = sessaoIndividual();
+  const { anf, host, relogio, config } = sessao;
+  await anf.criarSala();
+  await anf.avancar(); // personas
+  relogio.passar(1000);
+  await anf.avancar(); // r1
+  await anf.encerrar();
+  assert.equal(anf.estado().subfase, 'resultado');
+  assert.equal(anf.estado().equipesAbertas ?? null, null, 'nenhuma vaga aberta sem dono');
+  assert.equal(await host.ler(s('resultados', 'r1')), null);
+
+  const alunos = [];
+  for (let i = 0; i < 20; i += 1) {
+    const a = sessao.novoAluno(`u${String(i).padStart(2, '0')}`);
+    await a.entrar();
+    alunos.push(a);
+  }
+  const r = await anf.atribuirVagas();
+  assert.deepEqual(r, { atribuidas: 20, semVaga: [] });
+  assert.notEqual((await telaDe(alunos[19])).dados?.motivo, 'salaCheia');
+  assert.equal(H.pessoasNaSala(config, { estado: anf.estado(), membros: await host.ler(s('membros')) }), 20);
+
+  while (anf.estado().tipo !== 'placarFinal') {
+    const e = anf.estado();
+    if ((e.tipo === 'rodada' && e.subfase === 'decidindo') || (e.tipo === 'enquete' && e.subfase === 'votando')) await anf.encerrar();
+    else {
+      relogio.passar(1000);
+      await anf.avancar();
+    }
+  }
+  const fim = H.fimDoAnoDaTurma(config, await host.ler(s('resultados')));
+  assert.equal(fim.pessoas, 20, 'as 20 contam: r1, sem resultado, fica fora da conta');
+  assert.equal(fim.entraramDepois, 0);
 });
 
 test('"Continuar sem celulares" no meio do jogo: a escolha da turma vale para todas as vagas abertas', async () => {
