@@ -67,6 +67,10 @@
   const LETRAS = 'ABCDEFGHIJ';
   // Etapas em que a tela precisa ficar acesa (arquitetura, seção A, item 6).
   const TELAS_ACESAS = new Set(['enquete', 'decisao', 'prorrogacao']);
+  // O nome do aluno no modo individual (decisão do Kleber de 13/10 à noite):
+  // obrigatório, até 20 caracteres, guardado só no localStorage deste aparelho
+  // e nunca enviado ao banco.
+  const NOME_MAX = 20;
 
   const app = {
     el: {},
@@ -76,7 +80,11 @@
     emulador: false, lp: false, embutido: false,
     servico: null, canal: null, uid: null,
     dados: { meta: null, conteudo: null, estado: null, membros: null, resultados: null, placar: null, pulso: null, decisoes: null },
-    recebido: { meta: false, membros: false },
+    // conteudo: o modo (individual ou equipes) só se sabe com ele.
+    recebido: { meta: false, membros: false, conteudo: false },
+    // Modo individual: o nome do aluno nesta sala (só do aparelho), ou null
+    // enquanto ele não o digitou.
+    nome: null,
     votosServidor: {}, // { [enquete]: { [momento]: { [afirmacao]: v } } }, só os do próprio aparelho
     desligar: [], desligarEquipe: null, chaveEquipe: null, desligarVotos: [], chaveVotos: null,
     membroConfirmado: false, registrando: false, ultimoRegistro: 0, trocandoEquipe: false,
@@ -87,7 +95,9 @@
     // recolhidos: os detalhes recolhidos que o aluno abriu nesta tela (D-065),
     // para um redesenho (a contagem das equipes, um voto) não fechá-los na mão dele.
     // retornoVisto: as frases da opção aberta no último desenho (retornoAVista).
-    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set() },
+    // nomeRascunho: o que está no campo do nome (modo individual), para a tela
+    // remontada no meio da digitação não perder o texto.
+    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set(), nomeRascunho: '' },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
     // D-064: o modo espectador, o celular do apresentador. null fora dele;
     // dentro, { equipe, pin }: a equipe cuja tela ele vê e o PIN, só em memória
@@ -98,6 +108,13 @@
     // da gravação, e não depois da prova): é ele, e não o app.espectador, que
     // diz se há o que apagar ao sair, ao fechar a aba e quando a prova falha.
     espectador: null, pedindoPin: false, pedidoGravado: false,
+    // Modo individual, no espectador: as decisões de cada vaga aberta na
+    // rodada (para o "N de M já escolheram"), um ouvinte por vaga.
+    turma: { rodada: null, ouvintes: new Map(), decisoes: {}, reafirmadoEm: 0 },
+    // [Li] "Li, pode seguir" (modo individual, regras v5): o ouvinte de
+    // lidos/{uid} do aluno (lidos inteiro, no espectador), o caminho dele e o
+    // valor (undefined até a primeira leitura: sem ela, não há botão).
+    lido: { caminho: null, desligar: null, meu: undefined, todos: null, marcando: false },
   };
 
   // ---------- Utilidades ----------
@@ -153,6 +170,44 @@
   // da família, sem energia, proteção e o detalhe da dívida). Sem a chave,
   // todas as telas ficam como antes.
   const simples = () => N().historia?.formatoSimples?.(app.dados.conteudo) === true;
+  // O modo individual (regras.individual; decisão do Kleber de 13/10 à
+  // noite): cada aluno joga sozinho, em uma vaga própria que o telão dá, e o
+  // nome dele fica só neste aparelho. Lido direto do conteúdo da sala, como o
+  // alunoLogica faz: sem a chave, todas as telas ficam como antes (equipes).
+  const individual = () => app.dados.conteudo?.regras?.individual === true;
+
+  // O nome digitado, limpo: sem caractere de controle, sem espaço nas pontas
+  // nem repetido, e no máximo NOME_MAX letras (contadas por caractere, para um
+  // acento ou um emoji não ficar cortado ao meio). Vazio vira null: o nome é
+  // obrigatório.
+  function limparNome(texto) {
+    // Primeiro o espaço (a quebra de linha colada vira espaço), depois o resto
+    // dos caracteres de controle.
+    const t = String(texto ?? '').replace(/\s+/g, ' ').replace(/\p{C}/gu, '').trim();
+    const cortado = Array.from(t).slice(0, NOME_MAX).join('').trim();
+    return cortado === '' ? null : cortado;
+  }
+
+  // O nome guardado no aparelho é { sala, nome }. Da mesma sala, ele vale
+  // (recarregar não pede o nome de novo); de outra, só preenche o campo, e o
+  // aluno confirma com um toque. Assim um celular emprestado em uma aula nova
+  // não entra com o nome de outra pessoa sem ninguém ver.
+  function nomeGuardado(sala) {
+    const g = lerLocal('nome');
+    const nome = limparNome(g?.nome);
+    return { nome: g?.sala === sala ? nome : null, sugestao: nome };
+  }
+
+  // "Entrar" na tela do nome: o nome vai para o aparelho (e só para ele), e a
+  // entrada na sala segue (garantirMembro grava o registro sem o nome).
+  function confirmarNome(texto) {
+    const nome = limparNome(texto);
+    if (!nome || app.fase !== 'sala') return;
+    app.nome = nome;
+    app.ui.nomeRascunho = nome;
+    gravarLocal('nome', { sala: app.sala, nome });
+    aoMudarDados();
+  }
 
   // No formato simples, a equipe pela cor, "Equipe Laranja", como no telão:
   // todas jogam com o mesmo personagem.
@@ -395,6 +450,11 @@
     gravarSessao('espectador', '');
     clearTimeout(app.repetirTimer);
     app.sala = sala;
+    // Modo individual: o nome desta sala, se o aparelho já o tem (recarregar
+    // volta com o mesmo nome), e o último nome usado, para preencher o campo.
+    const { nome, sugestao } = nomeGuardado(sala);
+    app.nome = nome;
+    app.ui.nomeRascunho = sugestao || '';
     app.fase = 'conectando';
     app.aviso = null;
     desenhar();
@@ -619,6 +679,9 @@
   // um membro virtual da equipe escolhida, que nunca vai para o banco. O
   // entrouEm não conta: a telaDoAluno dá o motivo "espectador" antes de olhar.
   function membroDaTela() {
+    // Modo individual: o espectador não vê a tela de uma vaga (seria a de uma
+    // pessoa), e o membro virtual não tem equipe (telaDaTurma).
+    if (app.espectador && individual()) return { entrouEm: 0 };
     if (app.espectador) return app.espectador.equipe ? { equipe: app.espectador.equipe, entrouEm: 0 } : null;
     return tem(app.dados.membros, app.uid) ? app.dados.membros[app.uid] : null;
   }
@@ -640,6 +703,11 @@
       return;
     }
     app.membroConfirmado = false;
+    // Modo individual: o aparelho entra na sala (e o telão lhe dá uma das 20
+    // vagas) só depois de o aluno dizer o nome; sem isto, quem abriu o link e
+    // não digitou nada já ocuparia uma vaga. Sem o conteúdo ainda, não se sabe
+    // o modo: espera um instante, ele chega junto com os outros nós.
+    if (!app.recebido.conteudo || (individual() && !app.nome)) return;
     if (d.meta.entradaAberta !== true || app.registrando || Date.now() - app.ultimoRegistro < REGISTRO_INTERVALO_MS) return;
     app.registrando = true;
     app.ultimoRegistro = Date.now();
@@ -691,6 +759,7 @@
         app.dados[no] = v;
         if (no === 'meta') app.recebido.meta = true;
         if (no === 'membros') app.recebido.membros = true;
+        if (no === 'conteudo') app.recebido.conteudo = true;
         aoMudarDados();
       }));
     }
@@ -717,9 +786,107 @@
     // mesma rodada).
     if (app.ui.movido && !(e?.tipo === 'rodada' && e.rodada === app.ui.movido.rodada)) app.ui.movido = null;
     religarEquipe();
+    religarTurma();
+    religarLido();
     religarVotos();
     talvezReenviar();
     desenhar();
+  }
+
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10; regras v5), no modo
+  // individual. O aluno ouve a própria folha, lidos/{uid} (o índice do passo
+  // que ele leu), depois de o registro de membro ser confirmado: a regra só
+  // aceita o "li" de quem é membro. O celular do apresentador (com o PIN) ouve
+  // lidos inteiro, para o "N de M leram" do telão. Recusado (o pedido do PIN
+  // apagado em uma queda), o pedido é gravado de novo, como na decisão.
+  function religarLido() {
+    const l = app.lido;
+    let caminho = null;
+    if (app.fase === 'sala' && individual()) {
+      if (app.espectador) caminho = cam('lidos');
+      else if (app.membroConfirmado) caminho = cam('lidos', app.uid);
+    }
+    if (caminho === l.caminho) return;
+    if (l.desligar) l.desligar();
+    Object.assign(l, { caminho, desligar: null, meu: undefined, todos: null });
+    if (!caminho) return;
+    const espectador = Boolean(app.espectador);
+    l.desligar = ouvinteResistente(caminho, (v) => {
+      if (espectador) l.todos = v;
+      else l.meu = v;
+      desenhar();
+    }, espectador ? reafirmarDaTurma : null);
+  }
+
+  function desligarLido() {
+    if (app.lido.desligar) app.lido.desligar();
+    app.lido = { caminho: null, desligar: null, meu: undefined, todos: null, marcando: false };
+  }
+
+  // [Li] O toque no "Li, pode seguir": grava lidos/{uid} = o índice do passo
+  // atual. A regra recusa o "li" de um passo que já passou (o apresentador
+  // avançou no meio), e a tela diz. Sem rede, o SDK guarda a escrita e o
+  // ouvinte já mostra "Você já leu ✓" (é só informação: o apresentador avança
+  // quando quiser).
+  function marcarLido() {
+    const indice = app.dados.estado?.indice;
+    if (app.espectador || !app.membroConfirmado || !Number.isFinite(indice) || app.lido.marcando) return;
+    app.lido.marcando = true;
+    desenhar();
+    app.canal.gravar({ [cam('lidos', app.uid)]: indice })
+      .catch((erro) => {
+        if (app.dados.estado?.indice !== indice) return;
+        app.ui.nota = recusado(erro) ? 'Não deu para marcar: o apresentador já passou para a próxima tela.' : 'Não deu para marcar agora: toque de novo.';
+      })
+      .finally(() => {
+        app.lido.marcando = false;
+        desenhar();
+      });
+  }
+
+  // Modo individual, no celular do apresentador (D-064): o "N de M já
+  // escolheram" da rodada, como no telão, precisa das decisões de cada vaga
+  // aberta. A regra deixa quem tem o PIN ler decisoes/{r}/{vaga}, uma vaga por
+  // vez (e não a rodada inteira): um ouvinte por vaga, ligados e desligados
+  // conforme as vagas abrem (quem chega no meio). Os votos ficam só em memória
+  // e a tela mostra só a contagem, nunca quem escolheu o quê.
+  function religarTurma() {
+    const t = app.turma;
+    const e = app.dados.estado;
+    const aberta = Boolean(app.espectador) && individual() && e?.tipo === 'rodada' && ['decidindo', 'prorrogacao', 'fechando'].includes(e.subfase);
+    const rodada = aberta ? e.rodada : null;
+    const vagas = aberta ? N().historia?.vagasEmJogo?.(app.dados.conteudo, e) || [] : [];
+    if (rodada !== t.rodada) {
+      for (const desligar of t.ouvintes.values()) desligar();
+      t.ouvintes.clear();
+      t.decisoes = {};
+      t.rodada = rodada;
+    }
+    for (const [vaga, desligar] of t.ouvintes) {
+      if (vagas.includes(vaga)) continue;
+      desligar();
+      t.ouvintes.delete(vaga);
+    }
+    for (const vaga of vagas) {
+      if (t.ouvintes.has(vaga)) continue;
+      t.ouvintes.set(vaga, ouvinteResistente(cam('decisoes', rodada, vaga), (v) => {
+        t.decisoes = { ...t.decisoes, [vaga]: v };
+        desenhar();
+      }, reafirmarDaTurma));
+    }
+  }
+
+  // Com 20 ouvintes, uma queda faz os 20 serem recusados juntos: o pedido do
+  // PIN é gravado de novo uma vez, e não 20.
+  function reafirmarDaTurma() {
+    if (Date.now() - app.turma.reafirmadoEm < 2000) return;
+    app.turma.reafirmadoEm = Date.now();
+    reafirmarPedido();
+  }
+
+  function desligarTurma() {
+    for (const desligar of app.turma.ouvintes.values()) desligar();
+    app.turma = { rodada: null, ouvintes: new Map(), decisoes: {}, reafirmadoEm: 0 };
   }
 
   // As decisões da própria equipe (a regra só deixa ler essas), ligadas só
@@ -1095,11 +1262,104 @@
     if (app.recebido.meta && d.meta === null) return { tipo: 'salaEncerrada', dados: {} };
     if (!app.recebido.membros || !app.recebido.meta) return { tipo: 'aguardando', dados: { motivo: 'entrando' } };
     const membro = membroDaTela();
+    // Modo individual: antes de tudo, o nome (que fica só no aparelho). Com a
+    // entrada fechada e sem registro, a tela da entrada fechada, e não o campo
+    // do nome de quem não vai conseguir entrar.
+    if (individual() && !app.espectador && !app.nome) {
+      return !membro && d.meta?.entradaAberta === false ? { tipo: 'entradaFechada', dados: {} } : { tipo: 'nome', dados: {} };
+    }
+    if (individual() && app.espectador) return comLeram(telaDaTurma());
     return L().telaDoAluno({
       conteudo: d.conteudo, estado: d.estado, membro, membros: d.membros, espectador: Boolean(app.espectador),
       meusVotos: votosParaTela(), decisoesDaEquipe: decisoesParaTela(),
       resultados: d.resultados, placar: d.placar, uid: app.uid, agora: agoraServidor(), meta: d.meta,
+      // [Li] Só no modo individual, e só depois da primeira leitura da folha:
+      // sem o meuLido, a tela fica como antes (sem o botão).
+      ...(individual() && !app.espectador && app.lido.meu !== undefined ? { meuLido: app.lido.meu } : {}),
     });
+  }
+
+  // [Li] No celular do apresentador, o "N de M leram" do telão no "Conheça o
+  // Jonas" e nos blocos (historia.contagemDeLidos, a mesma conta).
+  function comLeram(tela) {
+    const e = app.dados.estado;
+    const H = N().historia;
+    if (!H?.contagemDeLidos || !['personas', 'bloco'].includes(e?.tipo)) return tela;
+    const leram = H.contagemDeLidos(app.dados.conteudo, { estado: e, membros: app.dados.membros, lidos: app.lido.todos });
+    return { ...tela, dados: { ...tela.dados, leram } };
+  }
+
+  // Modo individual (decisão do Kleber de 13/10 à noite), no celular do
+  // apresentador (D-064): o resumo da turma, como o telão, e nunca a tela de
+  // uma vaga. Com uma pessoa por vaga, a contagem ao vivo de uma vaga seria o
+  // voto de alguém, e o caminho dela, o ano de alguém. As contas são as do
+  // historia.js, as mesmas do telão. O que não é de ninguém (a enquete, o
+  // Jonas, os dados do bloco, o comparativo e o fim) sai da telaDoAluno de
+  // sempre, com um membro virtual sem vaga.
+  function telaDaTurma() {
+    const d = app.dados;
+    const c = d.conteudo;
+    const e = d.estado;
+    const H = N().historia;
+    if (!c || !e || !H?.vagasEmJogo) return { tipo: 'aguardando', dados: { motivo: 'telao' } };
+    const entrada = {
+      conteudo: c, estado: e, membro: { entrouEm: 0 }, membros: d.membros, espectador: true, meusVotos: {}, decisoesDaEquipe: null,
+      resultados: d.resultados, placar: d.placar, uid: app.uid, agora: agoraServidor(), meta: d.meta,
+    };
+    const vagas = ordemDe(c, 'equipes');
+    switch (e.tipo) {
+      case 'lobby':
+        return { tipo: 'turmaLobby', dados: { pessoas: H.pessoasNaSala(c, { estado: e, membros: d.membros }), capacidade: vagas.length } };
+      case 'personas': {
+        // O Jonas é o mesmo em toda vaga: a tela do personagem pela primeira
+        // vaga, aberta só nesta conta (ela não leva nada de ninguém).
+        const vaga = vagas[0];
+        return L().telaDoAluno({ ...entrada, membro: { equipe: vaga, entrouEm: 0 }, estado: { ...e, equipesAbertas: { ...(e.equipesAbertas || {}), [vaga]: true } } });
+      }
+      case 'rodada':
+        return telaDaRodadaDaTurma(c, e, vagas[0]);
+      case 'placarFinal':
+        return { tipo: 'turmaPlacar', dados: { fim: H.fimDoAnoDaTurma(c, d.resultados), escolhas: H.escolhasDaTurma(c, d.resultados) } };
+      default:
+        return L().telaDoAluno(entrada);
+    }
+  }
+
+  // A rodada no espectador do modo individual: na decisão, as opções (a
+  // mini-história ao tocar, sem voto) e "N de M já escolheram"; no resultado,
+  // o evento do bimestre, quantas pessoas ficaram com cada opção e as
+  // consequências de escolhas anteriores, por quantas pessoas. vaga: a de
+  // referência para o texto do personagem (o mesmo em todas).
+  function telaDaRodadaDaTurma(c, e, vaga) {
+    const H = N().historia;
+    const rodada = c.rodadas?.[e.rodada];
+    if (!rodada) return { tipo: 'aguardando', dados: { motivo: 'telao' } };
+    const personaId = c.equipes?.[vaga]?.persona ?? null;
+    const info = { id: e.rodada, titulo: rodada.titulo };
+    if (e.subfase === 'decidindo' || e.subfase === 'prorrogacao') {
+      const opcoes = ordemOpcoes(e.rodada).map((id) => {
+        const t = H.textoDaOpcao(c, e.rodada, id, personaId);
+        return { id, rotulo: t.rotulo ?? id, impacto: t.impacto ?? null, narrativa: t.narrativa ?? null };
+      });
+      return {
+        tipo: 'turmaDecisao',
+        dados: {
+          rodada: info, contexto: rodada.contexto?.[personaId] ?? null, opcoes,
+          contagem: H.contagemDaDecisao(c, { estado: e, membros: app.dados.membros, decisoes: app.turma.decisoes }),
+          prazo: L().fimDoCronometro(e), pausado: typeof e.restanteMs === 'number',
+        },
+      };
+    }
+    const porOpcao = H.contagemPorOpcao(c, e.rodada, app.dados.resultados);
+    if (e.subfase === 'fechando' || porOpcao.pessoas === 0) return { tipo: 'aguardando', dados: { motivo: 'votacaoEncerrada' } };
+    // O evento do bimestre é o mesmo para todos no formato simples: o da
+    // primeira vaga com resultado.
+    const algum = Object.values(app.dados.resultados?.[e.rodada] || {}).find((r) => r && typeof r.carta === 'string');
+    const carta = algum ? { titulo: H.textoDaCarta(c, algum.carta, personaId).titulo, narrativa: c.cartas?.[algum.carta]?.narrativa ?? null } : null;
+    return {
+      tipo: 'turmaResultado',
+      dados: { rodada: info, carta, porOpcao, consequencias: H.consequenciasDaTurma(c, e.rodada, app.dados.resultados) },
+    };
   }
 
   let desenhoAgendado = false;
@@ -1122,12 +1382,17 @@
       app.fase, app.aviso, app.erro?.titulo, app.erro?.texto, app.embutido, tela, app.ui.foco, app.ui.nota, app.ui.aberta, app.ui.movido,
       // A recusa já vista some da tela (marcarRecusasVistas) sem mudar o estágio.
       [...app.envios.values()].filter((x) => x.vista).length,
-      resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' ? contagemEquipes() : null,
+      // A contagem das equipes só existe para a tela de escolher equipe. No
+      // modo individual, ela mudaria a cada vaga dada pelo telão e remontaria
+      // a tela de todos à toa (inclusive o campo do nome no meio da digitação).
+      resumoEnvios(), app.trocandoEquipe, app.fase === 'sala' && !individual() ? contagemEquipes() : null,
       // Os votos ainda em leitura entram na chave: o "carregando…" do
       // comparativo só vira "sem resposta" com um redesenho, e a chegada de um
       // voto vazio não muda nenhum outro dado da tela (a tela ficava presa).
       [...(app.votosLendo || [])].sort(),
       app.espectador?.equipe ?? null, app.pedindoPin,
+      // [Li] O botão fica apagado enquanto o "li" é gravado.
+      app.lido.marcando,
     ]);
     desenharCracha();
     desenharBarraEspectador();
@@ -1135,12 +1400,22 @@
     if (chave !== app.chaveDesenho) {
       app.chaveDesenho = chave;
       const { limpar } = D();
+      // O campo do nome (modo individual) não perde o foco se a tela for
+      // remontada no meio da digitação: o texto já fica em app.ui.nomeRascunho.
+      const focoNoNome = document.activeElement?.id === 'nome-aluno';
       const alvo = limpar(app.el.tela);
       let tipo;
       if (app.fase === 'entrada') tipo = telaEntrada(alvo);
       else if (app.fase === 'conectando') tipo = telaSimples(alvo, 'conectando', `Sala ${app.sala}`, 'Entrando na sala…', 'Conectando ao servidor. Na primeira vez pode levar alguns segundos.');
       else if (app.fase === 'erro') tipo = telaErro(alvo);
       else tipo = desenharTela(alvo, tela);
+      if (focoNoNome) {
+        const campo = document.getElementById('nome-aluno');
+        if (campo) {
+          campo.focus();
+          campo.setSelectionRange?.(campo.value.length, campo.value.length);
+        }
+      }
       // O espectador sai por aqui, no fim de toda tela: o seletor de equipe,
       // no topo, fica só com as equipes (cabe em 360 px sem apertar o toque).
       if (app.fase === 'sala' && app.espectador) {
@@ -1173,16 +1448,27 @@
     const alvo = app.el.cracha;
     const membro = app.uid ? app.dados.membros?.[app.uid] : null;
     const equipe = membro && tem(app.dados.conteudo?.equipes, membro.equipe) ? app.dados.conteudo.equipes[membro.equipe] : null;
-    const chave = app.fase === 'sala' && app.uid ? `${app.uid}|${equipe?.id || ''}|${app.espectador ? 'espectador' : ''}` : '';
+    const sozinho = individual() && !app.espectador;
+    const chave = app.fase === 'sala' && app.uid
+      ? `${app.uid}|${equipe?.id || ''}|${app.espectador ? 'espectador' : ''}|${sozinho ? `nome:${app.nome || ''}` : ''}`
+      : '';
     if (alvo.dataset.chave === chave) return;
     alvo.dataset.chave = chave;
     const { limpar, acrescentar, el } = D();
     limpar(alvo);
+    alvo.setAttribute('aria-label', sozinho ? 'Seu nome' : 'Seu crachá');
     if (!chave) return;
     // D-064: no lugar do crachá, o selo do modo espectador (o espectador não é
     // aluno: não tem crachá, e o apresentador não o acha no "Mover aluno").
     if (app.espectador) {
       acrescentar(alvo, el('b', { classe: 'selo-espectador', dados: { espectador: '1' }, texto: 'modo espectador' }));
+      return;
+    }
+    // Modo individual: o nome do aluno, que só este celular conhece, e nada da
+    // vaga ("Vaga 7" parecia uma posição, e o número não diz nada a ninguém).
+    // Sem o nome ainda (a tela do nome está aberta), o topo fica vazio.
+    if (sozinho) {
+      if (app.nome) acrescentar(alvo, el('b', { classe: 'cracha-nome', dados: { nome: '1' }, texto: app.nome }));
       return;
     }
     const codigo = L().codigoCracha(app.uid);
@@ -1327,8 +1613,12 @@
       ]));
       return 'entrada';
     }
+    // Antes de entrar não se sabe o modo da sala: no individual (decisão do
+    // Kleber de 13/10 à noite), o celular pede o nome logo depois. Até a versão
+    // 11, a frase dizia "Sem nome e sem cadastro", o que lá seria falso; esta
+    // vale para os dois modos.
     filhos.push(nota(app.aviso, 'erro'), entrar,
-      el('p', { classe: 'privacidade', texto: 'Sem nome e sem cadastro: o celular recebe só um crachá curto, como "Equipe Laranja · K7Q".' }));
+      el('p', { classe: 'privacidade', texto: 'Sem cadastro: ninguém, nem o apresentador, vê o seu voto. O telão mostra só os totais da turma.' }));
     // D-064: discreto, depois de tudo: o aluno não tem o que fazer aqui.
     if (!app.embutido) {
       filhos.push(botao('Sou apresentador', () => {
@@ -1376,9 +1666,11 @@
   // por equipe, com a forma e o número (o nome inteiro não cabe seis vezes em
   // 360 px; está no aria-label e na linha da equipe, na tela). Equipe fechada
   // pelo apresentador fica apagada: não tem tela de aluno.
+  // Modo individual: sem o seletor. As 20 vagas não caberiam, e a tela de uma
+  // vaga é a de uma pessoa; o espectador vê o resumo da turma (telaDaTurma).
   function desenharBarraEspectador() {
     const barra = app.el.barraEspectador;
-    const ligado = app.fase === 'sala' && Boolean(app.espectador);
+    const ligado = app.fase === 'sala' && Boolean(app.espectador) && !individual();
     document.body.classList.toggle('espectador', ligado);
     const c = app.dados.conteudo;
     const abertas = app.dados.estado?.equipesAbertas;
@@ -1445,6 +1737,8 @@
     for (const f of app.desligar.splice(0)) f();
     for (const f of app.desligarVotos.splice(0)) f();
     if (app.desligarEquipe) app.desligarEquipe();
+    desligarTurma();
+    desligarLido();
     clearInterval(app.intervaloPresenca);
     // O espectador sai (D-064): os ouvintes já foram desligados (sem o pedido,
     // o da decisão seria recusado e religaria), e o próprio pedido sai do banco.
@@ -1460,7 +1754,9 @@
       fase: 'entrada', erro: null, aviso: null, sala: null, desligarEquipe: null, chaveEquipe: null, chaveVotos: null,
       membroConfirmado: false, intervaloPresenca: 0, votosServidor: {},
       dados: { meta: null, conteudo: null, estado: null, membros: null, resultados: null, placar: null, pulso: null, decisoes: null },
-      recebido: { meta: false, membros: false },
+      recebido: { meta: false, membros: false, conteudo: false },
+      // O nome continua no aparelho (preenche o campo na próxima sala).
+      nome: null,
     });
     apagarLocal('sala');
     desenhar();
@@ -1483,6 +1779,11 @@
     pausado: 'Pausado pelo apresentador: o voto volta a valer quando ele retomar.',
     espectador: 'Modo espectador: não vota.',
   };
+  // Modo individual: não há conversa da equipe para acompanhar, e quem não vota
+  // fica com a opção de sempre (a apuração da vaga sem voto).
+  const motivoSemVoto = (motivo) => (individual() && motivo === 'entrouDepois'
+    ? 'Você entrou depois de esta decisão abrir: nesta, fica a opção de sempre. O seu voto vale na próxima.'
+    : MOTIVOS_SEM_VOTO[motivo]);
 
   function desenharTela(alvo, tela) {
     const d = tela.dados;
@@ -1492,6 +1793,7 @@
         return telaSimples(alvo, 'entradaFechada', `Sala ${app.sala}`, 'Entrada fechada',
           'O apresentador fechou a entrada nesta sala. Se você acabou de chegar, avise: quando ele abrir de novo, você entra sozinho.');
       case 'aguardando': return telaAguardando(alvo, d);
+      case 'nome': return telaNome(alvo);
       case 'enquete': return telaEnquete(alvo, focoOuPadrao(d));
       case 'enqueteRegistrada': {
         const foco = app.ui.foco && !d.encerrada ? d.afirmacoes.find((a) => a.id === app.ui.foco) : null;
@@ -1506,18 +1808,77 @@
       case 'resultado': return telaResultado(alvo, d);
       case 'comparativo': return telaComparativo(alvo, d);
       case 'fim': return telaFim(alvo, d);
+      case 'turmaLobby': return telaTurmaLobby(alvo, d);
+      case 'turmaDecisao': return telaTurmaDecisao(alvo, d);
+      case 'turmaResultado': return telaTurmaResultado(alvo, d);
+      case 'turmaPlacar': return telaTurmaPlacar(alvo, d);
       default: return telaAguardando(alvo, { motivo: 'telao' });
     }
   }
 
+  // O título e o texto de uma espera. Modo individual (decisão do Kleber de
+  // 13/10 à noite): a sala cheia (o 21º aparelho; a capacidade vem da conta
+  // do telão, alunoLogica.vagasParaAtribuir), a vaga que o telão ainda vai
+  // dar e o lobby, que diz que cada um joga no próprio celular.
+  function textosDaEspera(d) {
+    if (d.motivo === 'salaCheia') {
+      const capacidade = Number.isInteger(d.capacidade) && d.capacidade > 0 ? d.capacidade : 20;
+      return [`A sala está cheia (${F().pessoas(capacidade)})`, 'Todas as vagas do jogo já são de outras pessoas. Acompanhe pelo telão.'];
+    }
+    if (individual() && d.motivo === 'entrando') {
+      return ['Entrando na sala…', 'O telão está guardando o seu lugar. Se demorar mais de um minuto, avise o apresentador.'];
+    }
+    if (individual() && d.motivo === 'lobby') {
+      return ['Você está na sala', 'Aguarde o apresentador começar e deixe esta página aberta. Neste jogo, cada pessoa faz as próprias escolhas, no próprio celular.'];
+    }
+    return MOTIVOS[d.motivo] || MOTIVOS.telao;
+  }
+
   function telaAguardando(alvo, d) {
-    const [titulo, texto] = MOTIVOS[d.motivo] || MOTIVOS.telao;
+    const [titulo, texto] = textosDaEspera(d);
     const { el, acrescentar } = D();
     const kicker = d.titulo || app.dados.conteudo?.titulo || 'Seminário da Viração';
+    // Modo individual: o bloco de dados também aqui, no lugar do "acompanhe a
+    // apresentação" (o celular do apresentador, sem vaga, cai nesta tela).
+    const bloco = individual() && d.motivo === 'apresentacao' ? partesDoBloco(d.bloco) : null;
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { motivo: d.motivo } }, [
-      cabecalho(kicker, titulo), el('p', { classe: 'texto', texto }), notaDaRecusaDaEtapa() || nota(app.ui.nota),
+      bloco || [cabecalho(kicker, titulo), el('p', { classe: 'texto', texto })],
+      bloco ? blocoLido(d, { comNota: false }) : null,
+      notaDaRecusaDaEtapa() || nota(app.ui.nota),
     ]));
     return 'aguardando';
+  }
+
+  // Modo individual (decisão do Kleber de 13/10 à noite): o nome do aluno, que
+  // aparece só no topo deste celular. Ele nunca vai para o servidor: o voto é
+  // secreto e o tema é sensível, e o telão mostra só o resumo da turma. Só
+  // depois do "Entrar" o aparelho entra na sala (garantirMembro).
+  function telaNome(alvo) {
+    const { el, botao, acrescentar } = D();
+    const campo = el('input', {
+      id: 'nome-aluno', classe: 'campo-nome', type: 'text', autocomplete: 'given-name', autocapitalize: 'words',
+      spellcheck: 'false', maxlength: String(NOME_MAX), enterkeyhint: 'go', 'aria-describedby': 'dica-nome',
+      value: app.ui.nomeRascunho || null,
+    });
+    const entrar = botao('Entrar', () => confirmarNome(campo.value), {
+      classe: 'botao-primario botao-largo', desabilitado: !limparNome(app.ui.nomeRascunho), dados: { acao: 'confirmar-nome' },
+    });
+    campo.addEventListener('input', () => {
+      app.ui.nomeRascunho = campo.value;
+      entrar.disabled = !limparNome(campo.value);
+    });
+    campo.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' && !entrar.disabled) confirmarNome(campo.value);
+    });
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { etapa: 'nome' } }, [
+      cabecalho(`Sala ${app.sala}`, 'Qual é o seu nome?'),
+      el('label', { for: 'nome-aluno', classe: 'rotulo', texto: 'Seu nome' }),
+      campo,
+      el('p', { id: 'dica-nome', classe: 'texto-2', texto: `Até ${NOME_MAX} letras. Ele aparece só no topo deste celular.` }),
+      entrar,
+      el('p', { classe: 'privacidade', texto: 'O seu nome fica só neste celular: não vai para o servidor, e o telão nunca mostra nomes. Ninguém, nem o apresentador, vê o seu voto.' }),
+    ]));
+    return 'nome';
   }
 
   function telaSalaEncerrada(alvo) {
@@ -2271,6 +2632,11 @@
   // voto simples da equipe (D-041: "ninguém votou: ficou o de sempre", e nunca
   // "piloto automático"). O mesmo texto do descreverDecisao.
   const ORIGENS_DA_DECISAO = { piloto: 'ninguém votou: ficou o de sempre', moeda: 'empate decidido na moeda', prorrogacao: 'decidida na prorrogação', apresentador: 'registrada pelo apresentador' };
+  // Modo individual: quem "não votou" é o próprio aluno, na 2ª pessoa.
+  const ORIGENS_INDIVIDUAL = { ...ORIGENS_DA_DECISAO, piloto: 'você não votou: ficou o de sempre' };
+  const origensDaDecisao = () => (individual() ? ORIGENS_INDIVIDUAL : ORIGENS_DA_DECISAO);
+  // "Decisão:" nas telas da equipe; "A sua escolha:" no modo individual.
+  const rotuloDecisao = () => (individual() ? 'A sua escolha: ' : 'Decisão: ');
 
   // A frase do topo, em partes e sem DOM (o test/aluno-textos.test.mjs confere
   // cada caso): { antes, reais, depois } (o valor em negrito no meio) e os
@@ -2284,30 +2650,68 @@
   // opcoes.simples: no formato simples o telão diz "devendo R$ X", e o próprio
   // celular, "A família está devendo R$ X." (leitura final de 06/10); por isso,
   // "e a família ainda ficou devendo R$ X", e não "e ainda faltou R$ X".
+  // opcoes.individual (modo individual, decisão do Kleber de 13/10 à noite):
+  // na 2ª pessoa do singular ("Você escolheu em todos os 6 bimestres, e a
+  // família ainda ficou devendo R$ X."), e quem fecha as contas é a família,
+  // com voto ou sem ele.
   function partesDaFrase(origens, patrimonio, nome, opcoes = {}) {
     const total = lista(origens).length;
     if (!Number.isFinite(patrimonio) || total === 0) return null;
     const escolheram = lista(origens).filter((o) => o !== 'piloto').length;
+    const sujeito = opcoes.individual ? 'Você escolheu' : 'Vocês escolheram';
     let quem;
-    if (escolheram === total) quem = total === 1 ? `Vocês escolheram no ${nome} jogado` : `Vocês escolheram em todos os ${total} ${pluralDoPeriodo(nome)}`;
-    else if (escolheram > 0) quem = `Vocês escolheram em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
-    else quem = `A equipe não votou em nenhum ${nome}`;
+    if (escolheram === total) quem = total === 1 ? `${sujeito} no ${nome} jogado` : `${sujeito} em todos os ${total} ${pluralDoPeriodo(nome)}`;
+    else if (escolheram > 0) quem = `${sujeito} em ${escolheram} dos ${total} ${pluralDoPeriodo(nome)}`;
+    else quem = opcoes.individual ? `Você não votou em nenhum ${nome}` : `A equipe não votou em nenhum ${nome}`;
     const valor = Math.round(patrimonio) + 0;
     const atributos = { resultado: valor < 0 ? 'faltou' : 'fechou', valor, escolheram, total };
     if (valor < 0) {
-      const falta = opcoes.simples
+      const falta = opcoes.simples || opcoes.individual
         ? (escolheram > 0 ? ', e a família ainda ficou devendo ' : ', e a família ficou devendo ')
         : (escolheram > 0 ? ', e ainda faltou ' : ', e faltou ');
       return { antes: `${quem}${falta}`, reais: -valor, depois: '.', ...atributos };
     }
+    if (opcoes.individual) return { antes: `${quem}, e a família fechou as contas: sobrou `, reais: valor, depois: '.', ...atributos };
     // Sem nenhum voto, o sujeito é "a equipe": "fechou", e não "fecharam"
     // (a versão de 05/10 à tarde dizia "A equipe não votou… e fecharam").
     return { antes: `${quem} e ${escolheram > 0 ? 'fecharam' : 'fechou'} as contas: sobrou `, reais: valor, depois: '.', ...atributos };
   }
 
+  // Modo individual (pedido do Kleber de 13/10, 21h): no placar final, o
+  // celular diz quantas pessoas da turma fecharam o ano com dinheiro sobrando e
+  // quantas terminaram devendo, sem ranking e sem nome. turma é o
+  // historia.fimDoAnoDaTurma (a régua do telão: R$ 0 ou mais é "sobrando");
+  // null sem ninguém que tenha jogado o ano inteiro. Sem DOM: o
+  // test/aluno-individual.test.mjs confere cada caso.
+  function fraseDaTurma(turma) {
+    const pessoas = turma?.pessoas;
+    if (!Number.isInteger(pessoas) || pessoas <= 0) return null;
+    const positivos = Number(turma.positivos) || 0;
+    const negativos = Number(turma.negativos) || 0;
+    if (pessoas === 1) {
+      return `Na turma, 1 pessoa jogou o ano inteiro e terminou ${positivos === 1 ? 'com dinheiro sobrando' : 'devendo'}.`;
+    }
+    // "nenhuma fechou", "1 fechou", "3 fecharam": "pessoa" é feminino.
+    const quantas = (n, um, varios) => (n === 0 ? `nenhuma ${um}` : n === 1 ? `1 ${um}` : `${n} ${varios}`);
+    return `Das ${pessoas} pessoas da turma, ${quantas(positivos, 'fechou', 'fecharam')} o ano com dinheiro sobrando e ${quantas(negativos, 'terminou', 'terminaram')} devendo.`;
+  }
+
+  function linhaDaTurma(turma) {
+    const texto = fraseDaTurma(turma);
+    if (!texto) return null;
+    const { el } = D();
+    // Quem entrou no meio do ano fica fora da conta, e a tela diz (a mesma
+    // frase do telão), para a soma bater com a sala.
+    const depois = N().historia?.fraseDosQueEntraramDepois?.(turma) ?? null;
+    return el('div', { classe: 'turma-fim', dados: { pessoas: turma.pessoas, positivos: turma.positivos, negativos: turma.negativos } }, [
+      el('p', { classe: 'turma-frase', texto }),
+      depois ? el('p', { classe: 'texto-2', texto: depois }) : null,
+    ]);
+  }
+
   // A frase na tela; sem placar, o "ficou com" do último bimestre.
   function fraseDasEscolhas(meses, patrimonio) {
-    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples() });
+    const f = partesDaFrase(meses.map((m) => m.origem), patrimonio, periodo().nome, { simples: simples(), individual: individual() });
     if (!f) return null;
     const { el } = D();
     return el('p', { classe: 'escolhas-frase', dados: { resultado: f.resultado, valor: f.valor, escolheram: f.escolheram, total: f.total } },
@@ -2350,7 +2754,7 @@
     const p = periodo();
     const linhas = meses.map(({ h, decisao, origem, carta }, i) => {
       const letra = decisao ? letraDe(h.rodadaId, decisao) : '?';
-      const sufixo = ORIGENS_DA_DECISAO[origem];
+      const sufixo = origensDaDecisao()[origem];
       return el('li', { classe: 'escolha', dados: { rodada: h.rodadaId, saldoMes: h.mes.saldoMes, opcao: decisao || '', letra, origem: origem || '', carta: carta || '' } }, [
         el('span', { classe: 'escolha-mes', texto: h.rotulo || rotuloDoMes(h.titulo, i) }),
         valorSaldo(h.mes.saldoMes, 'saldo-mes'),
@@ -2364,7 +2768,7 @@
     const patrimonio = Number.isFinite(doPlacar) ? doPlacar : ultimo.saldoAcumulado;
     return [
       fraseDasEscolhas(meses, patrimonio),
-      el('section', { classe: 'escolhas-ano', 'aria-label': `As escolhas de vocês, ${p.nome} a ${p.nome}`, dados: { linhas: String(linhas.length) } }, [
+      el('section', { classe: 'escolhas-ano', 'aria-label': `As ${individual() ? 'suas escolhas' : 'escolhas de vocês'}, ${p.nome} a ${p.nome}`, dados: { linhas: String(linhas.length) } }, [
         // O cabeçalho das duas colunas, como o da tabela do resumo: o número
         // colorido de cada linha é o saldo do bimestre (pedido de 05/10, item 3:
         // tem de ficar claro que o valor colorido é o saldo do bimestre).
@@ -2434,7 +2838,7 @@
       // (historia.historiaDaEquipe, D-054).
       return el('li', { classe: 'historia-mes', dados: { rodada: h.rodadaId } }, [
         el('p', { classe: 'kicker', texto: h.titulo || '' }),
-        el('p', {}, ['Decisão: ', el('b', { texto: h.opcao?.rotulo || '' })]),
+        el('p', {}, [rotuloDecisao(), el('b', { texto: h.opcao?.rotulo || '' })]),
         h.opcao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.opcao.narrativa }) : null,
         el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: h.carta?.titulo || '' })]),
         h.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: h.carta.narrativa }) : null,
@@ -2455,17 +2859,47 @@
     // Formato simples: "Conheça o Jonas", como o telão (todas as equipes jogam
     // com ele), sem o ponto de partida dos indicadores (energia, proteção).
     const soUm = simples();
+    // Modo individual: sem a linha da vaga, e o texto de quem decide sozinho.
+    const sozinho = individual();
+    let kicker = soUm ? 'Todas as equipes jogam com o mesmo personagem' : 'A persona da sua equipe';
+    let comoSeJoga = 'Nas rodadas, a equipe decide junto. Vale a opção mais votada.';
+    if (sozinho) {
+      kicker = 'O personagem do jogo';
+      comoSeJoga = app.espectador
+        ? 'Cada pessoa escolhe sozinha, no próprio celular. O telão mostra só os totais da turma.'
+        : `Em cada ${periodo().nome}, a escolha é sua: ninguém vê o seu voto, e o telão mostra só os totais da turma.`;
+    }
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
-      cabecalho(soUm ? 'Todas as equipes jogam com o mesmo personagem' : 'A persona da sua equipe', soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
+      cabecalho(kicker, soUm ? `Conheça o ${persona.nome || 'personagem'}` : persona.nome || ''),
       el('p', { classe: 'texto', texto: persona.descricao || '' }),
       linhaFamilia(persona),
       detalheBasico(persona),
       soUm ? null : el('h2', { classe: 'subtitulo', texto: 'Ponto de partida' }),
       soUm ? null : listaIndicadores(d.indicadores),
-      el('p', { classe: 'texto-2', texto: 'Nas rodadas, a equipe decide junto. Vale a opção mais votada.' }),
+      el('p', { classe: 'texto-2', texto: comoSeJoga }),
+      sozinho ? blocoLido(d) : null,
     ]));
     return 'persona';
+  }
+
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10), embaixo do "Conheça o
+  // Jonas" e dos blocos de dados, no modo individual. Depois do toque, "Você
+  // já leu ✓" (dados.lido, da telaDoAluno, pelo lidos/{uid} que o celular
+  // ouve). Sem a primeira leitura da folha (dados.lido ausente), nada: a tela
+  // fica como antes. No celular do apresentador, o "N de M leram" do telão.
+  // comNota: a tela que já mostra a nota de app.ui.nota passa false.
+  function blocoLido(d, { comNota = true } = {}) {
+    const { el, botao } = D();
+    if (app.espectador) {
+      if (!d.leram) return null;
+      return el('p', { classe: 'lidos-contagem', dados: { leram: d.leram.leram, total: d.leram.total } }, [el('b', { texto: `${d.leram.leram} de ${d.leram.total}` }), ' leram']);
+    }
+    if (d.lido === undefined) return null;
+    const marca = d.lido
+      ? el('p', { classe: 'lido-feito', role: 'status', dados: { lido: '1' }, texto: 'Você já leu ✓' })
+      : botao('Li, pode seguir', () => marcarLido(), { classe: 'botao-primario botao-largo botao-li', desabilitado: app.lido.marcando, dados: { acao: 'li' } });
+    return [marca, comNota ? nota(app.ui.nota) : null];
   }
 
   function descreverDecisao(rodadaId, decisao, origem) {
@@ -2473,7 +2907,27 @@
     const base = `${letraDe(rodadaId, decisao.id)} · ${decisao.rotulo || decisao.id}`;
     // "piloto automático" saiu das telas (D-041; rascunho, seção 7, item 14):
     // no ensaio, soava como a opção boa de quem não votou.
-    return ORIGENS_DA_DECISAO[origem] ? `${base} (${ORIGENS_DA_DECISAO[origem]})` : base;
+    const origens = origensDaDecisao();
+    return origens[origem] ? `${base} (${origens[origem]})` : base;
+  }
+
+  // Modo individual (pedido do Kleber de 13/10, 21h, prints 3 e 4): o bloco de
+  // dados também no celular, ao mesmo tempo que no telão, com o título, o
+  // contexto, os itens e a fonte do passo do roteiro congelado na sala
+  // (alunoLogica, dados.bloco). Até a versão 11, o celular mostrava só o
+  // título, e quem estava longe do telão não lia os números. Cabe em 360×740
+  // com rolagem: o texto é o do telão, inteiro, na letra do celular.
+  function partesDoBloco(bloco) {
+    if (!bloco) return null;
+    const { el } = D();
+    return [
+      cabecalho('O mesmo do telão', bloco.titulo || ''),
+      bloco.contexto ? el('p', { classe: 'dados-contexto', texto: bloco.contexto }) : null,
+      lista(bloco.itens).length > 0
+        ? el('ul', { classe: 'dados-itens', dados: { itens: String(lista(bloco.itens).length) } }, lista(bloco.itens).map((t) => el('li', { classe: 'dados-item', texto: t })))
+        : null,
+      bloco.fonte ? el('p', { classe: 'dados-fonte', texto: `Fonte: ${bloco.fonte}` }) : null,
+    ];
   }
 
   // A situação da persona nos blocos e no placar final (D-065). De cima para
@@ -2490,10 +2944,22 @@
     // No placar final a história vem pronta; nos blocos, a telaDoAluno manda só
     // o último mês, e o resumo sai dos resultados do banco (a mesma função).
     const historia = d.final ? lista(d.historia) : historiaDaSala(d.equipe?.id);
+    // Modo individual: sem a linha da vaga (o número dela não diz nada a
+    // ninguém) e, nos blocos de dados, o texto do telão no topo; o ano do
+    // próprio aluno vem logo depois, com um título que separa um do outro.
+    const sozinho = individual();
+    const bloco = sozinho && !d.final ? partesDoBloco(d.bloco) : null;
+    let titulo = d.final ? 'As escolhas de vocês' : (d.titulo || `A situação de ${nome}`);
+    if (sozinho && d.final) titulo = 'As suas escolhas';
     const filhos = [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
-      cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', d.final ? 'As escolhas de vocês' : (d.titulo || `A situação de ${nome}`)),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe), el('span', { classe: 'texto-2', texto: `· ${d.persona?.nome || ''}` })]),
+      bloco || cabecalho(d.final ? 'Placar final' : 'Acompanhe a apresentação', titulo),
     ];
+    if (bloco) filhos.push(blocoLido(d));
+    if (bloco) {
+      const todas = ordemDe(app.dados.conteudo, 'rodadas').length;
+      filhos.push(el('h2', { classe: 'subtitulo subtitulo-seu-ano', texto: historia.length > 0 && historia.length >= todas ? 'O seu ano' : 'O seu ano até aqui' }));
+    }
     if (d.final) {
       // As escolhas e a dívida de hoje no topo; "Escolha ou sorte?" e o pior
       // caso logo depois: são o fecho da aula. A história inteira fica
@@ -2503,8 +2969,13 @@
       // Formato simples: as escolhas do ano (a frase de cima já diz quanto
       // sobrou ou faltou) e a história recolhida. Sem "Escolha ou sorte?" (não
       // há sorte), sem o pior caso e sem o detalhe da dívida.
-      if (simples()) filhos.push(blocoEscolhas(historia, d), blocoHistoria(historia, d.persona?.nome));
-      else {
+      // Modo individual: logo abaixo da frase do próprio ano, quantas pessoas
+      // da turma fecharam o ano e quantas terminaram devendo, sem ranking e
+      // sem nome (o voto é secreto).
+      if (simples()) {
+        const [frase, escolhas] = blocoEscolhas(historia, d) || [];
+        filhos.push(frase, sozinho ? linhaDaTurma(d.turma) : null, escolhas, blocoHistoria(historia, d.persona?.nome));
+      } else {
         filhos.push(blocoEscolhas(historia, d), ultimo ? blocoDivida(dividaDoUltimo(ultimo), ultimo.mes) : null,
           blocoEscolhaOuSorte(d.placar), blocoPiorCaso(d.piorCaso, { comNota: !jaEstimado }), blocoHistoria(historia, d.persona?.nome));
       }
@@ -2524,7 +2995,7 @@
       filhos.push(recolhido(`mes:${d.mes.rodada}`, `${rotulo}: a conta em detalhe`, [
         contaDoMes(d.mes, d.persona),
         el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
-          el('p', {}, ['Decisão: ', el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
+          el('p', {}, [rotuloDecisao(), el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
           el('p', {}, [simples() ? 'O que aconteceu: ' : 'Carta: ', el('b', { texto: d.mes.carta?.titulo || '' })]),
           linhaCustoCarta(d.mes.cartaCusto),
           ...lista(d.narrativa).map((t) => el('blockquote', { classe: 'narrativa', texto: t })),
@@ -2574,6 +3045,7 @@
     const enviando = emVoo(envio);
     const escolhido = enviando || guardadoNoAparelho(envio) ? envio.pendente.opcao : d.meuVoto;
     const personaId = personaIdDaEquipe(membro.equipe);
+    const sozinho = individual();
     const aberta = d.opcoes.some((op) => op.id === app.ui.aberta) ? app.ui.aberta : null;
     const eqNova = app.ui.movido?.rodada === d.rodada.id && !escolhido ? app.dados.conteudo?.equipes?.[app.ui.movido.para] : null;
     const eqNovaTexto = eqNova
@@ -2613,13 +3085,24 @@
           op.impacto ? el('span', { classe: 'opcao-impacto', texto: op.impacto }) : null,
           minha ? el('span', { classe: 'opcao-seu-voto', texto: marca }) : null,
         ]),
-        el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
+        // Modo individual: sem a contagem. Numa vaga de uma pessoa, ela só
+        // diria "1 voto" na própria escolha, que já leva o "✓ seu voto".
+        sozinho ? null : el('span', { classe: 'opcao-votos', texto: op.votos === 1 ? '1 voto' : `${op.votos} votos` }),
       ]);
       return el('div', { classe: ['opcao-aluno', estaAberta ? 'aberta' : null], dados: { opcaoBloco: op.id } }, [
         b, estaAberta ? detalheDaOpcao(d, op, { idDetalhe, personaId, minha, envio, enviando, pendenteBase, movido: eqNovaTexto }) : null,
       ]);
     });
-    const forcada = d.forcada ? `O apresentador registrou a decisão da equipe: ${letraDe(d.rodada.id, d.forcada)}.` : null;
+    // Modo individual: o apresentador só registra uma escolha sem celulares
+    // (anfitriao.decidirPelaTurma), e ela é a da turma, de mão levantada.
+    const forcada = d.forcada
+      ? `O apresentador registrou a ${sozinho ? 'escolha da turma' : 'decisão da equipe'}: ${letraDe(d.rodada.id, d.forcada)}.`
+      : null;
+    // A dica do toque que não vota (D-055), depois das opções. No modo
+    // individual, sem os votos da equipe: a escolha é só de quem vota.
+    const dica = sozinho
+      ? 'Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. A escolha é só sua, ninguém vê o seu voto, e dá para mudar até o apresentador encerrar. Sem voto, fica a opção de sempre.'
+      : `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${d.situacao?.equipe?.nome ? `Equipe ${d.situacao.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.`;
     const s = d.situacao;
     const persona = s?.persona?.nome;
     // A ordem é o que se lê antes de votar: o aperto da casa no topo (D-043) e
@@ -2657,12 +3140,12 @@
       pressao.length > 0 ? el('div', { classe: 'pressao' }, pressao) : null,
       movido,
       el('div', { classe: 'opcoes-aluno', role: 'group', 'aria-label': `Opções da rodada (${opcoes.length})` }, opcoes),
-      nota(d.motivo ? MOTIVOS_SEM_VOTO[d.motivo] : null),
+      nota(d.motivo ? motivoSemVoto(d.motivo) : null),
       nota(forcada),
       notaDoEnvio(envio, escolhido ? `Seu voto: ${letraDe(d.rodada.id, escolhido)} · registrado.` : null) || nota(app.ui.nota),
       // A dica do toque que não vota (D-055) fica aqui, depois das opções: acima
       // delas, a linha a mais empurrava a letra D para baixo da dobra em 360×740.
-      el('p', { classe: 'texto-2', texto: `Toque em uma opção para ler a explicação; o voto só vale no “Votar nesta”. Os números são os votos da ${s?.equipe?.nome ? `Equipe ${s.equipe.nome}` : 'sua equipe'}. Vale a mais votada; dá para mudar até o apresentador encerrar.` }),
+      el('p', { classe: 'texto-2', texto: dica }),
       s ? el('details', { classe: 'situacao-resumo' }, [
         el('summary', { texto: `Situação de ${persona || 'sua persona'}` }),
         // A dívida por partes (pedido de 05/10): a linha curta de cima diz só o
@@ -2694,7 +3177,7 @@
       // só aparecia numa nota embaixo da lista (fora da tela em 360×740), o
       // botão ficava igual, e o "Votar nesta" parecia quebrado. O mesmo para o
       // botão apagado (entrou depois, pausado): sem o motivo à vista, parecia defeito.
-      if (!d.podeVotar) aviso = avisoDaOpcao(MOTIVOS_SEM_VOTO[d.motivo], 'info');
+      if (!d.podeVotar) aviso = avisoDaOpcao(motivoSemVoto(d.motivo), 'info');
       else if (envio?.estagio === 'recusado' && envio.pendente.opcao === op.id) {
         const r = recusaParaTela(envio);
         aviso = avisoDaOpcao(r.texto, r.tipo);
@@ -2835,15 +3318,18 @@
     const { el, acrescentar } = D();
     const mes = d.mes;
     const persona = personaDaEquipe(d.equipe?.id);
+    // Modo individual: na 2ª pessoa ("O seu saldo do bimestre", "A sua
+    // escolha"), e sem a linha da vaga.
+    const sozinho = individual();
     acrescentar(alvo, el('section', { classe: 'bloco', dados: { tom: 'normal', carta: d.carta?.id || '' } }, [
-      el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
+      sozinho ? null : el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]),
       cabecalho(`${d.rodada?.titulo || 'Rodada'} · o que aconteceu`, d.carta?.titulo || ''),
       notaDaRecusaDaEtapa(),
       d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
-      el('p', { classe: 'decisao-linha' }, ['Decisão: ', el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
+      el('p', { classe: 'decisao-linha' }, [rotuloDecisao(), el('b', { texto: descreverDecisao(d.rodada?.id, d.decisao, d.origem) })]),
       Number.isFinite(mes?.saldoMes)
         ? el('p', { classe: 'saldo-destaque', dados: { saldoMes: mes.saldoMes, sinal: sinalDe(mes.saldoMes) } }, [
-          el('span', { classe: 'saldo-rotulo', texto: `Saldo ${periodo().doPeriodo}` }),
+          el('span', { classe: 'saldo-rotulo', texto: `${sozinho ? 'O seu saldo' : 'Saldo'} ${periodo().doPeriodo}` }),
           valorSaldo(mes.saldoMes),
         ])
         : null,
@@ -2868,7 +3354,9 @@
     if (grupos.length === 0) return null;
     const { el } = D();
     const partes = grupos.map((g) => [`${g.motivo} `, el('b', { texto: F().moeda(g.valor, { sinal: true }) })]);
-    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, ['Por causa de escolhas anteriores: ', partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
+    // Modo individual: as escolhas anteriores são as do próprio aluno.
+    const rotulo = individual() ? 'Por causa das suas escolhas anteriores: ' : 'Por causa de escolhas anteriores: ';
+    return el('p', { classe: 'consequencia-linha', dados: { motivos: String(grupos.length) } }, [rotulo, partes.map((p, i) => (i > 0 ? [' · ', p] : p))]);
   }
 
   function telaResultado(alvo, d) {
@@ -2963,18 +3451,128 @@
   // história recolhida. Antes, a primeira linha era "Saldo acumulado da sua
   // equipe", o caixa gravado no placar: com o empréstimo, ele dizia R$ 1.500 a
   // mais do que a família tinha. O "ficou com" da última linha é o patrimônio.
+  // Modo individual: sem a linha da vaga, e com a frase da turma (quantas
+  // pessoas fecharam o ano), a mesma do placar final.
   function telaFim(alvo, d) {
     const { el, acrescentar } = D();
+    const sozinho = individual();
     acrescentar(alvo, el('section', { classe: 'bloco' }, [
-      d.equipe ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
+      d.equipe && !sozinho ? el('p', { classe: 'equipe-linha' }, [rotuloEquipe(d.equipe)]) : null,
       cabecalho(app.dados.conteudo?.titulo || 'Seminário da Viração', 'Obrigado pela participação'),
       resumoMesAMes(d.historia),
+      sozinho ? linhaDaTurma(d.turma) : null,
       // Formato simples: sem sorte, o pior caso é o próprio caminho jogado.
       simples() ? null : blocoPiorCaso(d.piorCaso),
       blocoHistoria(d.historia, personaDaEquipe(d.equipe?.id)?.nome),
       el('p', { classe: 'texto-2', texto: 'Pode fechar esta página. Os votos individuais são apagados com a sala.' }),
     ]));
     return 'fim';
+  }
+
+  // ----- O resumo da turma no celular do apresentador (modo individual)
+  //
+  // As mesmas contas do telão (historia.js), nunca uma vaga nem um nome. O
+  // espectador não vota e não vê o voto de ninguém: na decisão, só quantos já
+  // escolheram; depois do resultado, quantos ficaram com cada opção.
+
+  function telaTurmaLobby(alvo, d) {
+    const { el, acrescentar } = D();
+    const titulo = d.pessoas > 0 ? `${F().pessoas(d.pessoas)} na sala` : 'Ninguém na sala ainda';
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'lobby', pessoas: d.pessoas } }, [
+      cabecalho('Modo espectador · a turma', titulo),
+      el('p', { classe: 'texto', texto: `Cabem ${F().pessoas(d.capacidade)}. Cada uma joga no próprio celular; o telão e este celular mostram só os totais da turma.` }),
+    ]));
+    return 'turmaLobby';
+  }
+
+  function telaTurmaDecisao(alvo, d) {
+    const { el, botao, acrescentar } = D();
+    const aberta = d.opcoes.some((op) => op.id === app.ui.aberta) ? app.ui.aberta : null;
+    const opcoes = d.opcoes.map((op, i) => {
+      const estaAberta = aberta === op.id;
+      const idDetalhe = `opcao-detalhe-${i}`;
+      const b = botao('', () => alternarOpcao(op.id), { classe: 'botao-opcao-aluno', dados: { opcao: op.id } });
+      b.setAttribute('aria-expanded', String(estaAberta));
+      if (estaAberta) b.setAttribute('aria-controls', idDetalhe);
+      D().limpar(b);
+      acrescentar(b, [
+        el('b', { classe: 'opcao-letra', texto: letraDe(d.rodada.id, op.id) }),
+        el('span', { classe: 'opcao-textos' }, [
+          el('span', { classe: 'opcao-rotulo', texto: op.rotulo }),
+          op.impacto ? el('span', { classe: 'opcao-impacto', texto: op.impacto }) : null,
+        ]),
+      ]);
+      return el('div', { classe: ['opcao-aluno', estaAberta ? 'aberta' : null], dados: { opcaoBloco: op.id } }, [
+        b,
+        estaAberta && op.narrativa ? el('div', { classe: 'opcao-detalhe', id: idDetalhe }, [el('p', { classe: 'opcao-narrativa', texto: op.narrativa })]) : null,
+      ]);
+    });
+    const { escolheram, total } = d.contagem;
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'decisao', rodada: d.rodada.id } }, [
+      cabecalho('Modo espectador · a decisão da turma', d.rodada.titulo, { lado: cronometro(d) }),
+      d.contexto ? el('div', { classe: 'contexto-familia', role: 'note' }, [el('p', { classe: 'contexto-texto', texto: d.contexto })]) : null,
+      el('p', { classe: 'turma-contagem', dados: { escolheram, total } }, [el('b', { texto: `${escolheram} de ${total}` }), ' já escolheram']),
+      el('div', { classe: 'opcoes-aluno', role: 'group', 'aria-label': `Opções da rodada (${opcoes.length})` }, opcoes),
+      nota('Modo espectador: não vota e não vê o voto de ninguém, só quantas pessoas já escolheram.'),
+    ]));
+    return 'turmaDecisao';
+  }
+
+  function telaTurmaResultado(alvo, d) {
+    const { el, acrescentar } = D();
+    const moeda = (v) => F().moeda(v, { sinal: true });
+    const consequencias = lista(d.consequencias).map((g) => {
+      const valor = g.valores.length === 1 ? ` (${moeda(g.valores[0])})` : '';
+      return el('p', { classe: 'consequencia-linha', dados: { pessoas: g.pessoas } }, [
+        'Por causa de escolhas anteriores: ', `${g.motivo}${valor}, para `, el('b', { texto: F().pessoas(g.pessoas) }), '.',
+      ]);
+    });
+    const { pessoas, semVoto } = d.porOpcao;
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'resultado', rodada: d.rodada.id } }, [
+      cabecalho(`${d.rodada.titulo || 'Rodada'} · o que aconteceu`, d.carta?.titulo || ''),
+      d.carta?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.carta.narrativa }) : null,
+      el('h2', { classe: 'subtitulo', texto: `O que as ${F().pessoas(pessoas)} escolheram` }),
+      el('ul', { classe: 'turma-opcoes' }, d.porOpcao.porOpcao.map((o) => el('li', { classe: 'turma-opcao', dados: { opcao: o.id, n: o.n } }, [
+        el('b', { classe: 'opcao-letra', texto: o.letra }),
+        el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo || o.id }),
+        el('b', { classe: 'turma-opcao-n', texto: String(o.n) }),
+      ]))),
+      semVoto > 0
+        ? el('p', { classe: 'texto-2', texto: `${F().pessoas(semVoto)} não ${semVoto === 1 ? 'votou e ficou' : 'votaram e ficaram'} com a opção de sempre (já na conta acima).` })
+        : null,
+      consequencias,
+    ]));
+    return 'turmaResultado';
+  }
+
+  function telaTurmaPlacar(alvo, d) {
+    const { el, acrescentar } = D();
+    const H = N().historia;
+    const fim = d.fim;
+    const frase = H.fraseDoFimDaTurma(fim);
+    const depois = H.fraseDosQueEntraramDepois(fim);
+    const letras = lista(d.escolhas[0]?.porOpcao).map((o) => o.letra);
+    const tabela = d.escolhas.length > 0
+      ? el('table', { classe: 'tabela-turma' }, [
+        el('thead', {}, [el('tr', {}, [el('th', { scope: 'col', texto: maiuscula(periodo().nome) }), ...letras.map((l) => el('th', { scope: 'col', texto: l }))])]),
+        el('tbody', {}, d.escolhas.map((linha) => el('tr', { dados: { rodada: linha.rodadaId } }, [
+          el('th', { scope: 'row', texto: linha.rotulo }),
+          ...linha.porOpcao.map((o) => el('td', { dados: { opcao: o.id }, texto: String(o.n) })),
+        ]))),
+      ])
+      : null;
+    acrescentar(alvo, el('section', { classe: 'bloco', dados: { turma: 'placar' } }, [
+      cabecalho('Modo espectador · placar final', 'Quanto sobrou, ou ficou devendo'),
+      frase ? el('p', { classe: 'turma-destaque', dados: { positivos: fim.positivos, negativos: fim.negativos } }, frase) : el('p', { classe: 'texto', texto: 'Ninguém jogou o ano inteiro.' }),
+      fim.pessoas > 0 ? el('dl', { classe: 'indicadores' }, [
+        el('dt', { texto: 'Com dinheiro sobrando' }), el('dd', { texto: F().pessoas(fim.positivos) }),
+        el('dt', { texto: 'Devendo' }), el('dd', { texto: F().pessoas(fim.negativos) }),
+        el('dt', { texto: 'Média da turma' }), el('dd', { texto: F().moeda(fim.media, { sinal: true }) }),
+      ]) : null,
+      depois ? el('p', { classe: 'texto-2', texto: depois }) : null,
+      tabela ? [el('h2', { classe: 'subtitulo', texto: 'As escolhas da turma' }), tabela] : null,
+    ]));
+    return 'turmaPlacar';
   }
 
   // ---------- Início ----------
@@ -3059,9 +3657,10 @@
     // D-064: a equipe que o espectador vê, ou null fora do modo espectador.
     espectador: () => (app.espectador ? { equipe: app.espectador.equipe } : null),
     // As contas puras das telas de 05/10 (a dívida total, a frase das escolhas
-    // e o "no ano"), para o teste unitário, que roda no Node sem DOM: não leem
-    // nem mudam o estado.
-    textos: { totalDaDivida, partesDaFrase, quandoDosMeses },
+    // e o "no ano") e as do modo individual (o nome limpo e a frase da turma),
+    // para o teste unitário, que roda no Node sem DOM: não leem nem mudam o
+    // estado.
+    textos: { totalDaDivida, partesDaFrase, quandoDosMeses, limparNome, fraseDaTurma },
   };
 
   if (typeof document !== 'undefined') {
