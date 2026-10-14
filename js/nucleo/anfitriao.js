@@ -55,6 +55,19 @@
     const indiceFormar = passos.findIndex((p) => p.tipo === 'formarEquipes');
     const passosRodada = passos.filter((p) => p.tipo === 'rodada');
     const ordemEquipes = lista(config.ordem.equipes);
+    // O modo individual (regras.individual; decisão do Kleber de 13/10 à
+    // noite): cada aluno joga numa vaga própria, uma "equipe de uma pessoa",
+    // que este anfitrião grava quando ele entra (atribuirVagas). A decisão, a
+    // apuração, o resultado e o placar por equipe continuam os mesmos.
+    const individual = config.regras?.individual === true;
+    // A sessão sem celulares (o telão offline: o pendrive, "Começar sem
+    // celulares", "Continuar sem celulares" e "Carregar estado"). Só ela joga
+    // "a turma" quando a rodada fecha sem ninguém na sala (fecharRodada). O
+    // telão diz qual é; o padrão é com celulares. Revisão de 14/10 (achado 1):
+    // online, o desvio também rodava, e a rodada fechada antes de os celulares
+    // entrarem abria a primeira vaga para sempre, sem dono. Ela tirava um lugar
+    // dos 20 e era a única pessoa contada no placar.
+    const semCelulares = opcoes.semCelulares === true;
     const base = 'salas/' + sala;
     let uid = opcoes.uid || null;
     let atual = null;
@@ -133,7 +146,10 @@
       if (indice > indiceFormar) e.equipesTravadas = true;
       // Nenhuma equipe escolhida ainda: abrem todas, e o apresentador fecha as que
       // sobrarem. Uma rodada sem equipes abertas não teria quem jogar.
-      if ((passo.tipo === 'formarEquipes' || e.equipesTravadas) && !e.equipesAbertas) e.equipesAbertas = todasAsEquipes();
+      // No modo individual, não: a vaga abre quando alguém a ganha
+      // (atribuirVagas). Aberta sem ninguém, ela jogaria no piloto e contaria
+      // como uma pessoa a mais no resumo da turma.
+      if (!individual && (passo.tipo === 'formarEquipes' || e.equipesTravadas) && !e.equipesAbertas) e.equipesAbertas = todasAsEquipes();
       if (passo.tipo === 'enquete') {
         const enq = config.enquetes[passo.enquete];
         e.enquete = passo.enquete;
@@ -391,7 +407,7 @@
     }
 
     async function fecharRodada() {
-      const e = await fase1();
+      let e = await fase1();
       const M = N().motor;
       const r = e.rodada;
       const s = await semente(r);
@@ -401,11 +417,26 @@
         canal.ler(cam('decisoes', r)), canal.ler(cam('membros')), canal.ler(cam('resultados')),
         canal.ler(cam('prorrogacoes', r)),
       ]);
+      // Modo individual sem celulares (o telão offline, "a turma"): nenhuma
+      // vaga aberta e ninguém na sala. A rodada joga a primeira vaga, com a
+      // escolha do apresentador ou o padrão: sem isto, ela fecharia sem
+      // resultado nenhum, e o telão não teria o que mostrar. Com alguém na sala,
+      // a vaga é dele, e quem a dá é o atribuirVagas. Com celulares (online), a
+      // rodada fechada sem ninguém fica sem resultado (semCelulares), e o
+      // placar a deixa fora da conta (historia.fimDoAnoDaTurma): quem entrar
+      // depois ganha uma vaga e conta como quem jogou o ano inteiro.
+      if (individual && semCelulares && equipesAtivas(e).length === 0 && Object.keys(membros || {}).length === 0 && ordemEquipes.length > 0) {
+        e = { ...e, equipesAbertas: { [ordemEquipes[0]]: true } };
+      }
       const ativas = equipesAtivas(e);
       // Uma prorrogação só por rodada, mesmo depois do desfazer (D-035). O
       // desfazer apaga as empatadas do estado; a marca prorrogacoes/{r}, gravada
       // junto com a prorrogação e nunca apagada, é o que ainda lembra dela.
-      const jaProrrogou = Boolean(e.empatadas) || marca === true;
+      // No modo individual, nunca: a vaga é de uma pessoa, e um voto não empata.
+      // Se um dia duas pessoas caírem na mesma vaga (não deveria: a vaga é
+      // dada pelo telão, numa gravação só), o empate vai direto para a moeda,
+      // e a turma nunca vê uma prorrogação que ninguém entenderia.
+      const jaProrrogou = individual || Boolean(e.empatadas) || marca === true;
       const consolidacoes = {};
       const empatadas = {};
       for (const eq of ativas) {
@@ -733,6 +764,28 @@
       });
     }
 
+    // Modo individual sem celulares (o telão offline): a turma decide junto,
+    // de mão levantada, e o apresentador marca uma opção só. Ela vale para
+    // todas as vagas abertas (depois de "Continuar sem celulares", cada pessoa
+    // segue o ano dela com a escolha da turma); sem vaga aberta (o pendrive,
+    // desde o início), abre a primeira, "a turma". null desfaz. Uma transição
+    // só: a escolha nunca fica pela metade entre as vagas. Online, com os
+    // celulares, a escolha é de cada um, e o telão não chama isto.
+    async function decidirPelaTurma(opcaoId) {
+      const e = exigirEstado();
+      if (!individual) throw new Error('decidirPelaTurma é do modo individual (regras.individual); use decidirPorEquipe.');
+      if (e.tipo !== 'rodada' || !(e.subfase === 'decidindo' || e.subfase === 'prorrogacao')) {
+        throw new Error('Só dá para decidir pela turma com a decisão aberta.');
+      }
+      if (opcaoId !== null && !tem(config.rodadas[e.rodada].opcoes, opcaoId)) throw new Error(`Opção inexistente: "${opcaoId}".`);
+      return transicionar((srv) => {
+        const abertas = equipesAtivas(srv).length > 0 ? srv.equipesAbertas : { [ordemEquipes[0]]: true };
+        const forcadas = {};
+        if (opcaoId !== null) for (const id of ordemEquipes) if (tem(abertas, id) && abertas[id] === true) forcadas[id] = opcaoId;
+        return { ...srv, equipesAbertas: abertas, forcadas };
+      });
+    }
+
     async function definirEquipesAbertas(ids) {
       const e = exigirEstado();
       if (e.equipesTravadas) throw new Error('As equipes já estão travadas.');
@@ -749,6 +802,10 @@
 
     async function moverMembro(uidMembro, equipeId) {
       const e = exigirEstado();
+      // Modo individual: a vaga é o ano de uma pessoa. Mover alguém para a vaga
+      // de outro poria duas pessoas no mesmo caminho (e um voto empatando o
+      // outro); para a vaga vazia, ele perderia os bimestres que já jogou.
+      if (individual) throw new Error('No modo individual, cada pessoa tem a própria vaga: não dá para mover.');
       if (!tem(config.equipes, equipeId)) throw new Error(`Equipe inexistente: "${equipeId}".`);
       if (e.equipesAbertas && !tem(e.equipesAbertas, equipeId)) throw new Error(`A equipe "${equipeId}" não está aberta.`);
       // Gravar só a equipe de um uid que não existe criaria um membro sem entrouEm.
@@ -768,6 +825,10 @@
     // pelo telão, com a mesma regra do "me coloque numa equipe".
     async function distribuirAtrasados() {
       const e = exigirEstado();
+      // Modo individual: quem chega ganha a vaga dele. O telão (vigiarAtrasados)
+      // e o simulador já chamam isto quando alguém entra sem equipe; desviar
+      // aqui faz os dois darem a vaga sem saber do modo.
+      if (individual) return (await atribuirVagas()).atribuidas;
       if (!e.equipesTravadas) return 0;
       const { membros, ativos } = await lerAtivos();
       const copia = structuredClone(membros);
@@ -785,6 +846,51 @@
       }
       if (Object.keys(escritas).length > 0) await canal.gravar(escritas);
       return Object.keys(escritas).length;
+    }
+
+    // Modo individual (decisão do Kleber de 13/10 à noite): o celular entra sem
+    // equipe (grava só a entrouEm, como sempre), e o telão, o único escritor do
+    // estado, dá a cada um a menor vaga livre (alunoLogica.vagasParaAtribuir) e
+    // a abre em estado.equipesAbertas. Tudo numa gravação só, com a geracao + 1
+    // que a regra exige: ou a vaga fica gravada no membro E aberta no estado,
+    // ou nada muda. É isso que impede duas pessoas na mesma vaga: duas contas
+    // feitas com o mesmo estado gravam a mesma geracao, e a segunda é recusada.
+    // O estado é lido ANTES dos membros: a gravação anterior, se chegou entre
+    // as duas leituras, aparece nos membros com o estado velho, e a geracao
+    // velha faz a regra recusar esta (e a nova tentativa lê tudo de novo). Na
+    // ordem contrária, o estado novo com os membros velhos daria uma vaga nova
+    // a quem já tinha uma, e deixaria a primeira aberta, sem ninguém.
+    // Uma recusa é tentada de novo até duas vezes, com tudo relido. Ela vem de
+    // outro escritor que passou na frente, ou de um aluno sem vaga que apagou
+    // o próprio registro entre a leitura e a gravação: a vaga dele criaria um
+    // membro sem entrouEm, e a regra recusa a gravação inteira, com a vaga dos
+    // outros (revisão de 14/10, achado 7; o celular honesto nunca faz isso).
+    // Devolve { atribuidas, semVaga: [uids] } (semVaga: a sala está cheia).
+    async function atribuirVagas() {
+      exigirEstado();
+      if (!individual) throw new Error('atribuirVagas é do modo individual (regras.individual); use distribuirAtrasados.');
+      for (let tentativa = 1; ; tentativa += 1) {
+        const srv = await canal.ler(cam('estado'));
+        const membros = await canal.ler(cam('membros'));
+        if (!srv) throw new Error(`A sala ${sala} não tem estado.`);
+        const plano = N().alunoLogica.vagasParaAtribuir(config, { membros, equipesAbertas: srv.equipesAbertas });
+        const atribuidas = Object.keys(plano.atribuicoes).length;
+        if (atribuidas === 0 && plano.abrir.length === 0) return { atribuidas: 0, semVaga: plano.semVaga };
+        const equipesAbertas = { ...(srv.equipesAbertas || {}) };
+        for (const vaga of plano.abrir) equipesAbertas[vaga] = true;
+        const novo = { ...srv, equipesAbertas, geracao: srv.geracao + 1 };
+        const escritas = { [cam('estado')]: novo };
+        for (const [u, vaga] of Object.entries(plano.atribuicoes)) escritas[cam('membros', u, 'equipe')] = vaga;
+        try {
+          await canal.gravar(escritas);
+        } catch (erro) {
+          if (tentativa >= 3 || !/PERMISSION_DENIED/.test(String(erro?.message))) throw erro;
+          continue;
+        }
+        atual = novo;
+        avisar();
+        return { atribuidas, semVaga: plano.semVaga };
+      }
     }
 
     // Onde estão os votos da etapa em andamento, que o "Remover inativos" não
@@ -819,19 +925,84 @@
     async function removerInativos(limiteMs = ATIVO_MS) {
       const e = await canal.ler(cam('estado'));
       const noDosVotos = votosDaEtapa(e);
-      const [membros, presenca, votos] = await Promise.all([
+      const [membros, presenca, votos, resultados] = await Promise.all([
         canal.ler(cam('membros')), canal.ler(cam('presenca')), noDosVotos ? canal.ler(noDosVotos) : null,
+        individual ? canal.ler(cam('resultados')) : null,
       ]);
       const votaram = quemVotou(votos);
       const t = agora();
+      const inativo = (u) => typeof presenca?.[u] !== 'number' || t - presenca[u] > limiteMs;
       const escritas = {};
       for (const u of Object.keys(membros || {})) {
         if (votaram.has(u)) continue;
-        const p = presenca?.[u];
-        if (typeof p !== 'number' || t - p > limiteMs) escritas[cam('membros', u)] = null;
+        // Modo individual: quem tem vaga não sai por aqui. A vaga não volta
+        // para a fila (vagasParaAtribuir), e o aparelho que voltasse ganharia
+        // outra: a mesma pessoa em dois anos do Jonas, e uma vaga jogando
+        // sozinha. O celular no bolso, com a tela apagada, perde a presença em
+        // 1 min. A exceção é a vaga presa (vagasPresas, logo abaixo).
+        if (individual && tem(config.equipes, membros[u]?.equipe)) continue;
+        if (inativo(u)) escritas[cam('membros', u)] = null;
+      }
+      const removidos = Object.keys(escritas).length;
+      const presas = individual && e ? vagasPresas(e, membros, escritas, { presenca, inativo, votaram, resultados }) : [];
+      let novo = null;
+      if (presas.length > 0) {
+        // A vaga e o dono saem juntos, na mesma gravação do estado (com a
+        // geracao + 1 que a regra exige): nunca fica uma vaga aberta sem dono,
+        // nem um dono com a vaga fechada.
+        const equipesAbertas = { ...e.equipesAbertas };
+        for (const { vaga, donos } of presas) {
+          delete equipesAbertas[vaga];
+          for (const u of donos) escritas[cam('membros', u)] = null;
+        }
+        novo = { ...e, equipesAbertas: Object.keys(equipesAbertas).length > 0 ? equipesAbertas : null, geracao: e.geracao + 1 };
+        escritas[cam('estado')] = novo;
       }
       if (Object.keys(escritas).length > 0) await canal.gravar(escritas);
-      return Object.keys(escritas).length;
+      if (novo) {
+        atual = novo;
+        avisar();
+      }
+      // Quem esperava ganha a vaga agora: o telão (vigiarAtrasados) só
+      // distribui quando a lista de quem espera muda, e ela não mudou.
+      if (individual && atual) await atribuirVagas();
+      return removidos + presas.reduce((n, p) => n + p.donos.length, 0);
+    }
+
+    // Modo individual, revisão de 14/10 (achado 2): a vaga presa. Quem entrou
+    // por outro navegador ou por uma aba anônima, ou o apresentador que leu o
+    // QR com o próprio celular para conferir, ocupa uma vaga para sempre. Com
+    // 20 pessoas, o 20º aluno de verdade via "A sala está cheia". O "Remover
+    // inativos" devolve essas vagas a quem está esperando, com quatro
+    // condições:
+    // - só quando alguém espera uma vaga (a sala cheia), e no máximo uma vaga
+    //   por pessoa esperando;
+    // - só a vaga sem nenhum bimestre jogado (sem resultado): o ano de uma
+    //   pessoa nunca passa para outra;
+    // - só se quem a ocupa está sem sinal há mais de limiteMs e não votou na
+    //   etapa aberta (o mesmo critério de quem sai);
+    // - primeiro a vaga aberta sem ninguém, depois a de quem está há mais
+    //   tempo sem sinal.
+    // O celular que voltar entra de novo sozinho, como quem chegou agora.
+    // Devolve [{ vaga, donos }], na ordem de liberar.
+    function vagasPresas(e, membros, escritas, { presenca, inativo, votaram, resultados }) {
+      const ficam = {};
+      for (const [u, m] of Object.entries(membros || {})) if (!tem(escritas, cam('membros', u))) ficam[u] = m;
+      const esperando = N().alunoLogica.vagasParaAtribuir(config, { membros: ficam, equipesAbertas: e.equipesAbertas }).semVaga.length;
+      if (esperando === 0) return [];
+      const jogou = (vaga) => Object.values(resultados || {}).some((r) => tem(r, vaga));
+      // O último sinal de quem ocupa a vaga; sem sinal nenhum, o mais antigo.
+      const sinal = (u) => (typeof presenca?.[u] === 'number' ? presenca[u] : -Infinity);
+      const candidatas = [];
+      for (const vaga of equipesAtivas(e)) {
+        if (jogou(vaga)) continue;
+        const donos = Object.keys(ficam).filter((u) => ficam[u]?.equipe === vaga);
+        if (donos.some((u) => votaram.has(u) || !inativo(u))) continue;
+        candidatas.push({ vaga, donos, desde: donos.length === 0 ? -Infinity : Math.max(...donos.map(sinal)) });
+      }
+      // -Infinity menos -Infinity é NaN: o empate é comparado à parte.
+      candidatas.sort((a, b) => (a.desde === b.desde ? 0 : a.desde - b.desde) || ordemEquipes.indexOf(a.vaga) - ordemEquipes.indexOf(b.vaga));
+      return candidatas.slice(0, esperando).map(({ vaga, donos }) => ({ vaga, donos }));
     }
 
     async function abrirEntrada(aberta) {
@@ -878,6 +1049,24 @@
           saida.enquetes[e][m] = item;
         }
       }
+      // Modo individual: a vaga é uma pessoa, e o resultado dela é o voto dela.
+      // A exportação leva só totais (AGENTS.md, regra 8): por bimestre, quantas
+      // pessoas escolheram cada opção; no fim, quantas terminaram com dinheiro
+      // sobrando e quantas devendo, a média, a melhor e a pior. Nada por vaga.
+      if (individual) {
+        const H = N().historia;
+        for (const linha of H.escolhasDaTurma(config, resultados)) {
+          const porOpcao = {};
+          for (const o of linha.porOpcao) porOpcao[o.id] = o.n;
+          saida.resultados[linha.rodadaId] = { pessoas: linha.pessoas, porOpcao, semVoto: linha.semVoto };
+        }
+        const fim = H.fimDoAnoDaTurma(config, resultados);
+        saida.placar = {
+          pessoas: fim.pessoas, positivos: fim.positivos, negativos: fim.negativos, media: fim.media, entraramDepois: fim.entraramDepois,
+          melhor: fim.valores.length > 0 ? fim.valores[0] : null, pior: fim.valores.length > 0 ? fim.valores.at(-1) : null,
+        };
+        return saida;
+      }
       for (const [r, equipes] of Object.entries(resultados || {})) {
         saida.resultados[r] = {};
         for (const [eq, res] of Object.entries(equipes)) {
@@ -893,10 +1082,36 @@
       avancar, encerrar, desfazer, pularPara,
       maisTempo, pausar, retomar,
       decidirPorEquipe, moverMembro, removerInativos, abrirEntrada, definirEquipesAbertas, distribuirAtrasados,
+      atribuirVagas, decidirPelaTurma,
       contagemManual, exportarTotais, desfazendoAbertura,
       estado: () => atual,
     };
   }
 
-  V.anfitriao = { criar };
+  // Igualdade de dois valores do banco: a ordem das chaves não conta, e a chave
+  // com null (ou ausente) é a mesma coisa, porque o RTDB apaga o null. O estado
+  // que o anfitrião guarda (atual) leva "restanteMs: null"; o lido do banco, não.
+  function mesmoValor(a, b) {
+    const vazio = (x) => x === null || x === undefined;
+    if (vazio(a) || vazio(b)) return vazio(a) && vazio(b);
+    if (typeof a !== 'object' || typeof b !== 'object') return a === b;
+    const chaves = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const k of chaves) if (!mesmoValor(a[k], b[k])) return false;
+    return true;
+  }
+
+  // Modo individual: cada vaga que o telão dá (atribuirVagas) grava o estado
+  // com geracao + 1 e uma vaga a mais em equipesAbertas, e nada além disso. O
+  // telão descarta o comando cuja geracao mudou enquanto ele esperava na fila
+  // ("ESTADO_MUDOU", em executar): com 20 celulares entrando juntos no lobby,
+  // o Espaço do apresentador cairia nessa janela e seria jogado fora. Esta
+  // conferência diz se, de um estado para o outro, só mudaram a geracao e as
+  // vagas abertas, o passo é o mesmo e o comando ainda vale. Pura, sem canal.
+  function soMudaramAsVagas(antes, depois) {
+    if (!antes || !depois || typeof antes !== 'object' || typeof depois !== 'object') return false;
+    const semVagas = (e) => ({ ...e, geracao: null, equipesAbertas: null });
+    return mesmoValor(semVagas(antes), semVagas(depois));
+  }
+
+  V.anfitriao = { criar, soMudaramAsVagas };
 })(globalThis);

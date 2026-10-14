@@ -36,6 +36,7 @@
 /* global document, innerWidth, innerHeight, NodeFilter, getComputedStyle, SVGElement, requestAnimationFrame, MutationObserver */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -58,6 +59,20 @@ function caminhoDoConfig() {
   const i = process.argv.indexOf('--config');
   const arg = i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
   return resolve(RAIZ, arg || join('test', 'fixtures', 'config-simples.json'));
+}
+
+// Desde 13/10 (decisão do Kleber à noite), o config.json do dia é do modo
+// individual (regras.individual): as telas são as da turma, sem equipe, e
+// quem as confere é o e2e/telao-individual.e2e.mjs. O `npm run e2e` passa o
+// config.json para cá; com um config individual, este e2e (o das equipes)
+// passa a vez àquele, e a fixture continua conferindo as equipes.
+{
+  const caminho = caminhoDoConfig();
+  if (JSON.parse(readFileSync(caminho, 'utf8'))?.regras?.individual === true) {
+    console.log(`${caminho} é do modo individual: quem confere é o e2e/telao-individual.e2e.mjs.`);
+    const r = spawnSync(process.execPath, [join(RAIZ, 'e2e', 'telao-individual.e2e.mjs'), '--config', caminho], { stdio: 'inherit' });
+    process.exit(r.status ?? 1);
+  }
 }
 
 const H = V.historia;
@@ -362,7 +377,11 @@ async function jogar(nome) {
   await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(TEXTO_CONFIG) });
   await page.waitForSelector('#hash-config');
   assert.equal(await page.textContent('#hash-config'), V.validarConfig.hash(cfg));
-  await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
+  // D-083: com um roteiro só no config (o do dia), a abertura não tem o bloco
+  // "Roteiro", e o telão usa esse; com mais de um (as fixtures), escolhe.
+  const radios = await page.locator('input[name="roteiro"]').count();
+  assert.equal(radios, Object.keys(cfg.roteiros).length > 1 ? Object.keys(cfg.roteiros).length : 0, 'o bloco "Roteiro" só com mais de um roteiro');
+  if (radios > 0) await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
   await page.click('[data-acao="comecar-offline"]');
   await esperarTela('lobby');
   // Toda tela que o telão desenhar, para provar que o sorteio nunca aparece.

@@ -118,13 +118,15 @@ rótulo e o núcleo não escreve conteúdo.
    nenhuma tela do telão rola e que nenhum texto fica abaixo de 28 px.
 4. Rode `npm run check`.
 5. Abra o PR e faça o merge. Espere até 10 minutos, abra o telão publicado e
-   confira no bloco 1 a versão e o hash novos. O telão lê o config só ao abrir:
+   confira na barra do pé da tela inicial (mouse parado na borda de baixo, ou
+   a tecla H) a versão e o hash novos. O telão lê o config só ao abrir:
    se ele já estava aberto, recarregue a página.
 6. Baixe o ZIP de novo para o pendrive (README, passo 11).
 
 **Sem Node na máquina?** O telão também valida. Baixe o `config.json` editado,
-abra `telao/index.html` por duplo clique e clique em **Carregar config.json**. O
-telão lista **todos** os erros e se recusa a criar a sala até que sejam
+abra `telao/index.html` por duplo clique e clique em **Carregar config.json**, na
+barra do pé da tela (sem o config, ela já abre aberta). O telão lista **todos**
+os erros, no meio da tela, e se recusa a criar a sala até que sejam
 corrigidos. As conferências de equilíbrio, porém, só saem no `npm run validar`.
 
 ---
@@ -168,7 +170,8 @@ aparecem na tela.
 "titulo": "Viração: quem é o patrão?"
 ```
 
-- `versao`: texto livre. O telão mostra na abertura ("Válido · versão …"). Mude a
+- `versao`: texto livre. O telão mostra na barra do pé da tela inicial
+  ("config.json válido · versão …"). Mude a
   cada edição, para saber qual está carregada.
 - `titulo`: aparece no telão (abertura, lobby, Fim) e no celular.
 
@@ -763,11 +766,10 @@ seu `id`, como no `config.json` atual.)
   No celular, é sempre uma afirmação por vez.
 - `afirmacoes[].texto`: até 110 caracteres. Acima disso, o validador avisa que
   pode não caber no celular sem rolagem.
-- No conteúdo validado em 28/09 há três enquetes: `entrada` (a do antes e
-  depois, com 3 afirmações, `todas`), `termometro` (t1, t2 e t3, no roteiro de
-  120 min) e `termometro_curto` (só t1 e t3, no roteiro de 60 min, D-032). Os
-  ids das afirmações valem dentro de cada enquete: o t1 das duas é o mesmo
-  texto, repetido de propósito.
+- No config do dia há duas enquetes: `entrada` (a do antes e depois, com 3
+  afirmações, `todas`) e `termometro_curto` (só t1 e t3, D-032). O `termometro`
+  de 3 frases (t1, t2 e t3) era do roteiro de 120 min e saiu com ele em 14/10
+  (D-083). Os ids das afirmações valem dentro de cada enquete.
 
 ### `referencias`
 
@@ -816,7 +818,9 @@ vale para quem quiser pôr uma linha de volta.
 }
 ```
 
-O apresentador escolhe o roteiro na abertura do telão (D-019). O nome usa
+Com mais de um roteiro, o apresentador escolhe na abertura do telão (D-019);
+com um só (o config do dia, desde a D-083: só o `60min`), o telão usa esse sem
+perguntar. O nome usa
 letras, algarismos, `_` ou `-`. Num nome como `60min`, o número vira teto: o
 validador avisa se a soma dos tempos-alvo passar de 60 minutos.
 

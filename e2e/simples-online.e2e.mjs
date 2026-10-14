@@ -26,6 +26,7 @@
 /* global document, getComputedStyle, innerHeight, innerWidth, MutationObserver, requestAnimationFrame */
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { administrador, PIN_EMULADOR, RAIZ, rodarNoEmulador } from '../bin/emulador.mjs';
@@ -43,6 +44,17 @@ const ARG_CONFIG = (() => {
   return i >= 0 ? process.argv[i + 1] : process.argv.find((a) => a.startsWith('--config='))?.slice('--config='.length);
 })();
 const TEXTO_CONFIG = readFileSync(ARG_CONFIG ? resolve(RAIZ, ARG_CONFIG) : join(RAIZ, 'test', 'fixtures', 'config-simples.json'), 'utf8');
+
+// Desde 13/10 (decisão do Kleber à noite), o config.json do dia é do modo
+// individual (regras.individual): quem joga com ele contra o emulador é o
+// e2e/individual-online.e2e.mjs. Com um config individual, este e2e (o das
+// equipes) passa a vez àquele, como o telao-simples faz com o
+// telao-individual.
+if (JSON.parse(TEXTO_CONFIG)?.regras?.individual === true) {
+  console.log(`${ARG_CONFIG} é do modo individual: quem confere é o e2e/individual-online.e2e.mjs.`);
+  const r = spawnSync(process.execPath, [join(RAIZ, 'e2e', 'individual-online.e2e.mjs'), '--config', ARG_CONFIG], { stdio: 'inherit' });
+  process.exit(r.status ?? 1);
+}
 
 if (!process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
   process.exitCode = await rodarNoEmulador(`node e2e/simples-online.e2e.mjs${ARG_CONFIG ? ` --config ${ARG_CONFIG}` : ''}`);

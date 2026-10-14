@@ -5,11 +5,13 @@ trabalho em plataformas. Até 20 alunos usam o próprio celular, e um telão
 acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 
 - **Enquetes de 1 a 5**, com comparação antes e depois.
-- **Jogo da Viração**: 6 equipes jogam o mesmo personagem, o Jonas, motoboy do
-  iFood, durante 12 meses em 6 rodadas bimestrais intercaladas com a
-  apresentação. Cada bimestre tem 5 opções, com o dinheiro na própria opção, e
-  o evento do mês é igual para todos, sem sorteio: no fim, compara-se o que cada
-  combinação de escolhas fez com o dinheiro da família (D-078).
+- **Jogo da Viração**: o personagem é o Jonas, motoboy do iFood, durante 12
+  meses em 6 rodadas bimestrais intercaladas com a apresentação. Cada bimestre
+  tem 5 opções, e o evento do mês é igual para todos, sem sorteio: no fim,
+  compara-se o que cada combinação de escolhas fez com o dinheiro da família
+  (D-078). Para 14/10, o jogo é **individual** (D-081): cada aluno entra com o
+  nome, que fica só no celular dele, e joga o próprio Jonas; o telão mostra só o
+  resumo da turma. Em 07/10, 6 equipes jogaram o mesmo Jonas (a versão 11).
 
 | Documento | Para quê |
 | --- | --- |
@@ -22,37 +24,53 @@ acompanha. Quem opera o telão é o apresentador, pelo teclado do notebook.
 | [docs/rascunho-conteudo.md](docs/rascunho-conteudo.md) | Os valores do jogo de 6 personagens (até 05/10), cada um com a fonte; as fontes do Jonas vêm dele |
 | [AGENTS.md](AGENTS.md) | Regras para quem mexe no código |
 
-## Onde estamos (06/10)
+## Onde estamos (13/10)
 
 | Já feito | Situação |
 | --- | --- |
 | 1 a 5. Firebase, banco, login anônimo, `conexao.json`, PIN | Prontos (projeto `seminario-viracao`, plano Spark; o PIN fica só no console, em `privado/pinApresentador`) |
-| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a versão 10 do site (PR #10), publicada em 06/10 às 20h19 |
-| Ajustes de 06/10 | Na versão 9 do site (D-079: a decisão às cegas, com a mini-história ao lado do rótulo; um bloco de dados com contexto, números e fonte depois de cada bimestre, sem a trilha; o Fim com os dados do setor; sem entrevistas; o placar sem a lista de posições; a enquete sem "mediana · média · n"; o conteúdo conferido com as fontes; o telão medido também em 1280×720). **As regras não mudam** (continuam v4) |
-| Pedidos de 06/10 à tarde (D-080) | Na versão 10 do site (PR #10, publicada em 06/10 às 20h19): o nome de cada equipe em uma palavra (Laranja, Celeste, Verde, Azul, Vermelho e Rosa); "Conheça o Jonas" sem o valor do mês comum; a revisão textual de todo texto de tela; nov–dez E vira "Presente para a filha"; o placar sem a linha "Jonas com carteira assinada"; a consequência como observação na faixa da equipe; "Caminhos" e a conversa em grupos com itens; e o bloco "Dados: e nos outros aplicativos?" antes do Fim. As regras continuam v4 |
-| Pedidos de 06/10 à noite (D-080, última nota) | Branch `claude/ajustes-noite-0610`, **ainda não fundida nem publicada**: os motoristas de app em linguagem simples (4 itens, uma ideia por item, com "8 em cada 10 (80,2%)" e os mesmos números); a página 3 do placar com o subtítulo "A melhor e a pior sequência de alternativas para conseguir renda" e, embaixo das letras, como a família termina o ano; e mais espaço entre os dados dos blocos. **Versão 11 do site**; as regras continuam v4 |
-| Conteúdo | `config.json` versão `2026-10-06-v4.4-simples` (D-079: opções às cegas com mini-história, um bloco de dados depois de cada bimestre, sem entrevistas, o pior caso abaixo de R$ 7.000; D-080: os pedidos de 06/10 à tarde, com 281 combinações que fecham o ano e a pior devendo R$ 6.135; o hash é o que `npm run validar` imprimir, `57a8d00b` em 06/10 à noite, depois dos pedidos da noite). Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), com o que falta o Kleber confirmar no fim. O de 6 personagens ficou no git e em `test/fixtures/config-real-v31.json` |
+| 6 a 8. Regras, GitHub Pages e telão | **Regras v4** e a `main` com a **versão 11** do site (o jogo por equipes de 07/10), no ar e funcionando. Até o merge, é o plano B |
+| O jogo individual (D-081) | Branch `claude/individual`, **ainda não fundida nem publicada**, na **versão 12** do site: cada aluno entra com o nome (que fica só no celular dele), ganha uma vaga dada pelo telão (até 20) e joga o próprio Jonas; o telão mostra só o resumo da turma, sem nomes; o placar tem "Quanto sobrou, ou ficou devendo" (quantos terminaram com dinheiro sobrando e quantos devendo), "As escolhas da turma" e as combinações, sem "O caminho de cada equipe"; os blocos de dados e o Fim aparecem também no celular |
+| O "Li, pode seguir" (D-081) | Na mesma branch, em commits cuja mensagem começa por "[Li]". Exige as **regras v5** coladas no console. Sem elas, os commits [Li] são revertidos, e o resto funciona com as regras v4 |
+| Conteúdo | `config.json` versão `2026-10-14-v5.1-individual` (hash `b91b7dc3`): o mesmo jogo da versão 11 (281 das 15.625 combinações fecham o ano), com 20 vagas, sem a formação de equipes e só com o roteiro de 60 min (D-083). O config das equipes da versão 11 ficou em `test/fixtures/config-equipes-v11.json`. Tudo em [docs/jogo-simples.md](docs/jogo-simples.md), seção "O jogo individual" |
 
-**Para publicar (antes do seminário de 07/10):** o site passa à versão 11 e o
-`config.json` muda; as regras ficam como estão (v4), sem nenhum passo no console do
-Firebase.
-1. Sem nenhuma sala aberta, funda o PR da `claude/ajustes-noite-0610` na `main` (o
+**Para publicar (14/10 de manhã), com o "Li":** o site passa à versão 12, o
+`config.json` muda e as regras passam a v5.
+1. **Cole as regras v5 no console** (passo 6), com o `firebase/regras.json` da
+   branch `claude/individual` (no PR, aba **Files changed**, no arquivo, **⋯** →
+   **View file** → **Copy raw file**). Pode ser antes do merge: as regras v5
+   aceitam também o telão da versão 11, que continua funcionando com elas.
+   **Confira:** perto do topo, a linha do `regrasVersao` tem `'v5'` e `'v4'`.
+2. Sem nenhuma sala aberta, funda o PR da `claude/individual` na `main` (o
    GitHub Pages leva de 1 a 3 minutos; espere a aba Actions mostrar "pages build
    and deployment" em verde).
-2. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
-   repita o passo 8: o bloco 3 tem de dizer `regras v4 conferidas`, o bloco 1, a
-   versão `2026-10-06-v4.4-simples` e o mesmo hash que `npm run validar` imprime
-   na `main` publicada. Os celulares com a versão 10 em cache veem a faixa "Há
-   uma versão nova do app: atualize a página".
-3. Ensaie uma sala de teste até o resultado de Jan–fev (roteiro, seção 0) e
-   apague a sala no fim.
-4. Baixe o ZIP de novo para o pendrive (passo 11).
+3. Recarregue o telão com Ctrl+F5 em toda máquina onde ele estiver aberto e
+   repita o passo 8: o bloco **Com celulares** tem de dizer `regras v5
+   conferidas`; a barra do pé da tela inicial (o mouse parado na borda de
+   baixo, ou a tecla H), a versão `2026-10-14-v5.1-individual` e o hash `b91b7dc3`. Os celulares com a
+   versão 11 em cache veem a faixa "Há uma versão nova do app: atualize a
+   página".
+4. Ensaie com 3 ou 4 celulares ([roteiro](docs/roteiro-do-apresentador.md),
+   seção 00): cada um entra com o nome, toca em "Li, pode seguir" no "Conheça o
+   Jonas" e vota em Jan–fev até o resultado. Apague a sala no fim.
+5. Baixe o ZIP de novo para o pendrive (passo 11).
 
-Uma sala criada com o config de antes (`v4.1-simples`, com os nomes compostos,
-ou `v4.2-simples`, com o temporário com carteira, ou `v4.3-simples`, o da
-versão 10) não se retoma com o novo (o
-hash muda): crie a sala da aula só depois da
-publicação.
+Se o merge vier antes das regras, o telão novo mostra `REGRAS ABERTAS ou
+DESATUALIZADAS` e não cria a sala até as regras v5 serem coladas: cole logo
+depois do merge.
+
+**Sem o "Li"** (se não der para colar as regras a tempo): os commits [Li] são
+revertidos na branch (`git revert` de cada um, do mais novo para o mais
+antigo), as regras continuam v4 e não há nenhum passo no console. Os passos 2 a
+5 são os mesmos, com `regras v4 conferidas` no bloco **Com celulares** e o
+ensaio sem o "Li".
+
+**Plano B:** até o merge, a versão 11 (por equipes) continua no ar. Depois do
+merge, reverter o merge na `main` volta à versão 11, que funciona tanto com as
+regras v4 quanto com as v5.
+
+Uma sala criada com o config de antes (`v4.4-simples`, o da versão 11) não se
+retoma com o novo (o hash muda): crie a sala da aula só depois da publicação.
 
 ## Como funciona
 
@@ -124,7 +142,7 @@ terminais abaixo ficam na pasta do projeto.
    node -e "import('./bin/emulador.mjs').then(m => m.administrador('PUT', 'privado/pinApresentador', m.PIN_EMULADOR)).then(() => console.log('PIN do emulador semeado'))"
    ```
    Tem de aparecer `PIN do emulador semeado`.
-3. Abra `http://127.0.0.1:8080/telao/?emulador=1`. O bloco **3. Com celulares**
+3. Abra `http://127.0.0.1:8080/telao/?emulador=1`. O bloco **Com celulares**
    tem de dizer `Emulador local · regras v4 conferidas.`
 4. No campo do PIN, digite o valor de `PIN_EMULADOR`, que está em
    `bin/emulador.mjs` e só vale no emulador. Clique em **Criar sala com
@@ -150,7 +168,7 @@ Este passo a passo é para quem não é desenvolvedor. Cada passo termina com um
 **Confira**. Se o que está escrito ali não aparecer, pare e resolva antes de
 seguir.
 
-**Os passos 1 a 5 já foram feitos** (veja [Onde estamos](#onde-estamos-0510)).
+**Os passos 1 a 5 já foram feitos** (veja [Onde estamos](#onde-estamos-1310)).
 Eles ficam aqui como referência, para conferir ou refazer um dia. O que falta
 começa no passo 6.
 
@@ -291,7 +309,9 @@ perto do topo há uma linha com `'v4'` (é o `regrasVersao`). Toda vez que o
 `regras.json` mudar, repita este passo: a versão sobe junto (v5, v6…). Se as
 regras publicadas forem de outra versão, o telão avisa e não cria a sala. Na
 passagem do site v6 para o v7, este passo vai junto com o merge (veja "Publicar
-o site v7 e as regras v4 juntos", em [Onde estamos](#onde-estamos-0510)).
+o site v7 e as regras v4 juntos", no histórico do git deste README). Na
+passagem da versão 11 para a 12, com o "Li", as regras v5 vão junto com o merge
+(veja [Onde estamos](#onde-estamos-1310)).
 
 ### 7. Ligar o GitHub Pages
 
@@ -310,8 +330,11 @@ Actions mostra "pages build and deployment" em verde.
 
 1. Abra `https://aguiarkleber.github.io/seminario-viracao/telao/` no Chrome ou no
    Edge.
-2. O bloco **1. config.json** mostra "✓ Válido", a versão e o hash. Anote o hash.
-3. No bloco **3. Com celulares**, espere `Serviço conectado · regras v4
+2. Pare o mouse na borda de baixo da tela (ou aperte H): a barra que sobe
+   mostra "✓ config.json válido", a versão e o hash. Anote o hash. Desde a
+   D-082, a tela inicial não tem mais o painel do config: ele só aparece, no
+   meio da tela, quando o config falta ou tem problema.
+3. No bloco **Com celulares**, espere `Serviço conectado · regras v4
    conferidas.`
 4. Digite o PIN no campo **PIN do apresentador** e clique em **Criar sala com
    celulares**.
@@ -451,11 +474,11 @@ deixa o pendrive carregar o estado salvo pelo telão online.
 | `npm run servir` | Site em `http://127.0.0.1:8080/` (outra porta: `npm run servir -- 8181`) |
 | `node bin/emulador.mjs "node bin/servir.mjs"` | Emulador + site, para ensaiar à mão (JDK 21) |
 | `npm run emulador` | Testes contra o emulador: regras reais, `canal-firebase` e simulador (JDK 21) |
-| `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados: o jogo com sorteio (o config de 05/10, congelado), o formato simples com a fixture e com o `config.json` do dia |
-| `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador, com o jogo de sorteio (o config de 05/10, congelado), e depois o jogo simples do `config.json` do dia (o mesmo que o `e2e:online:dia`); nunca fala com o projeto real |
-| `npm run e2e:online:dia` | O jogo simples do `config.json` do dia com o telão (com a faixa de entrada) e 3 celulares, contra o emulador (`npm run e2e:online:simples`: o mesmo com a fixture) |
+| `npm run e2e` | Telão por `file://` no Playwright, com o Chrome ou o Edge instalados: o jogo com sorteio (o config de 05/10, congelado), o formato simples com a fixture, o `config.json` do dia (o modo individual: "a turma" e uma sala de 20 vagas) e o celular do modo individual em 360×740 (`npm run e2e:celular`) |
+| `npm run e2e:online` | Telão e 3 celulares (mais um que entra e some, para os inativos) contra o emulador, com o jogo de sorteio (o config de 05/10, congelado), depois o jogo simples por equipes (a fixture) e o modo individual do `config.json` do dia (o mesmo que o `e2e:online:dia`); nunca fala com o projeto real |
+| `npm run e2e:online:dia` | O modo individual do `config.json` do dia: o telão (com a faixa de entrada, nos 3 tamanhos) e 21 celulares simulados contra as regras reais, inclusive 20 entrando juntos e o 21º com a sala cheia (`npm run e2e:online:simples`: o jogo por equipes com a fixture) |
 | `npm run e2e:online:fixture` | O mesmo, com a fixture de teste no lugar do `config.json`: é o que passa sempre por "a proteção pagou" no celular (D-059). Rode junto com o anterior |
-| `npm run e2e:votos` | A matriz de votos: a sessão inteira, primeiro com o `config.json` do dia (o jogo simples: 5 opções por bimestre, todas votadas pela tela e contadas, e nenhum celular no "Sorteando…"), depois com as 6 rodadas do config de 05/10 (sorteio; congelado em `test/fixtures/config-real-v31.json`) e com a fixture de 6 bimestres, com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, e um celular no modo espectador, contra o emulador. Demora bastante (espera o relógio real). Veio do voto que não contou no teste de 30/09 |
+| `npm run e2e:votos` | As duas matrizes de votos. A das equipes: a sessão inteira, primeiro com o conteúdo das equipes da versão 11 (`test/fixtures/config-equipes-v11.json`, o jogo simples: 5 opções por bimestre, todas votadas pela tela e contadas, e nenhum celular no "Sorteando…"), depois com as 6 rodadas do config de 05/10 (sorteio; congelado em `test/fixtures/config-real-v31.json`) e com a fixture de 6 bimestres, com um celular em cada equipe, votando pela tela, inclusive depois do fim do cronômetro, e um celular no modo espectador, contra o emulador. Demora bastante (espera o relógio real). Veio do voto que não contou no teste de 30/09. Depois, a do modo individual (`npm run e2e:votos:individual`): 8 celulares de verdade (`-- --celulares 20` para 20) digitam o nome, ganham a vaga, votam pela tela na própria vaga e, com os commits [Li], tocam em "Li, pode seguir" |
 | `npm run simular -- --memoria` | 20 alunos simulados, sem rede |
 | `npm run simular -- --emulador --com-anfitriao --rapido --atacar` | Sessão inteira com 20 robôs e ataques, no emulador (acrescente `--rajada --quedas --recargas` para as perturbações) |
 | `npm run versao` | Sobe o `?v=` e a versão do app juntos |

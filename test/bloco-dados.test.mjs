@@ -159,14 +159,19 @@ test('bloco: 4 itens é o teto, sem aviso (D-080)', () => {
   assert.deepEqual(r.avisos, [], listar(r.avisos));
 });
 
-test('config.json do dia: "Caminhos" com um item por caminho e a fonte, e a "Conversa em grupos" com os passos (120 min)', () => {
-  const passos = dia.config.roteiros['120min'];
-  const caminhos = passos.find((p) => /^Caminhos:/.test(p.titulo || ''));
-  assert.deepEqual(caminhos.itens.map((i) => i.split(':')[0]), ['Regulação', 'Proteção', 'Organização', 'Educação']);
-  assert.ok(caminhos.contexto && caminhos.fonte, 'Caminhos: o contexto e a fonte');
-  const conversa = passos.find((p) => /^Conversa em grupos/.test(p.titulo || ''));
-  assert.equal(conversa.itens.length, 3, 'a conversa: três passos');
-  assert.ok(conversa.contexto, 'a conversa: o contexto');
+// D-083 (pedido do Kleber de 13/10 à noite): só o roteiro de 60 min. Com o de
+// 120, saíram os blocos que só ele tinha ("Mapa do seminário", "Conversa em
+// grupos" e "Caminhos") e a enquete "termometro" de 3 frases; fica o
+// "termometro_curto". O teto de 4 itens da D-080 continua provado acima, com um
+// bloco montado no teste.
+test('config.json do dia: um roteiro só, o de 60 min, sem "Mapa do seminário", "Conversa em grupos" e "Caminhos" (D-083)', () => {
+  assert.deepEqual(Object.keys(dia.config.roteiros), ['60min']);
+  const titulos = dia.config.roteiros['60min'].map((p) => p.titulo).filter(Boolean);
+  for (const t of ['Mapa do seminário', 'Conversa em grupos', 'Caminhos']) {
+    assert.equal(titulos.some((x) => x.startsWith(t)), false, `sem o bloco "${t}"`);
+  }
+  assert.deepEqual(Object.keys(dia.config.enquetes).sort(), ['entrada', 'termometro_curto']);
+  assert.ok(dia.config.roteiros['60min'].some((p) => p.enquete === 'termometro_curto'), 'o termômetro curto continua no roteiro');
 });
 
 // D-080 (print 1 do Kleber, 06/10 à tarde): o Fim enriquecido com outras

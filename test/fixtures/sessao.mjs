@@ -18,7 +18,8 @@ export function configDaSessao(V) {
   return normalizar(V, bruto);
 }
 
-export function montarSessao(V, { travas = true, roteiro = '60min', config = configDaSessao(V), sementes = [123456789] } = {}) {
+// semCelulares: o anfitrião do telão offline ("a turma"; anfitriao.criar).
+export function montarSessao(V, { travas = true, roteiro = '60min', config = configDaSessao(V), sementes = [123456789], semCelulares = false } = {}) {
   let t = T0;
   const relogio = { agora: () => t, passar: (ms) => { t += ms; } };
   const canal = V.canalLocal.criar({ travas, relogio: relogio.agora });
@@ -26,7 +27,7 @@ export function montarSessao(V, { travas = true, roteiro = '60min', config = con
   const fila = [...sementes];
   const geradas = [];
   const anf = V.anfitriao.criar({
-    canal: host, config, sala: SALA, nomeRoteiro: roteiro, agora: relogio.agora, uid: HOST,
+    canal: host, config, sala: SALA, nomeRoteiro: roteiro, agora: relogio.agora, uid: HOST, semCelulares,
     gerarSemente: () => {
       const s = fila.length > 0 ? fila.shift() : 42;
       geradas.push(s);

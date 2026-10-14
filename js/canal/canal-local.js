@@ -34,7 +34,13 @@
   // O valor que firebase/regras.json aceita em regrasVersao (test/regras.test.mjs
   // confere que é o mesmo do regras.json e do telão, e que a versão está presa
   // ao conteúdo das regras).
-  const REGRAS_VERSAO = 'v4';
+  const REGRAS_VERSAO = 'v5';
+  // [Li] As regras v5 são as v4 mais o nó lidos, nada a menos, e aceitam
+  // também o "v4": o telão da versão 11 (o plano B) e o da 12 sem o "Li", que
+  // gravam "v4", continuam abrindo sala com as regras v5 publicadas. O telão
+  // com o "Li" grava "v5", e as regras v4 o recusam: é o que avisa que as
+  // regras novas ainda não foram coladas no console.
+  const REGRAS_ACEITAS = new Set([REGRAS_VERSAO, 'v4']);
   const LIVRES_PARA_LER = new Set(['meta', 'conteudo', 'estado', 'pulso', 'resultados', 'placar', 'enquetes', 'membros']);
 
   function negar(motivo) {
@@ -213,6 +219,19 @@
     }
   }
 
+  // [Li] "Li, pode seguir" (pedido do Kleber de 07/10; regras v5): o celular
+  // grava lidos/{uid} = o índice do passo que ele leu. Só o próprio aluno, já
+  // membro da sala, e só o passo atual (estado.indice, um número): um "li"
+  // atrasado, de um passo que já passou, é recusado e não vira um "leu" no
+  // passo seguinte. Apagar o próprio pode. O anfitrião não grava aqui (só lê).
+  function conferirLido(ctx, [dono, ...resto]) {
+    const { uid, sala, estado, valor } = ctx;
+    if (dono === undefined || resto.length > 0) throw negar('lido fora do formato');
+    if (dono !== uid) throw negar('lido em nome de outro uid');
+    if (!em(sala, ['membros', uid])) throw negar('lido de quem não é membro');
+    if (valor !== null && !(typeof valor === 'number' && valor === estado.indice)) throw negar('lido só do passo atual (o índice do passo)');
+  }
+
   function conferirFolhaDaSala(ctx, no, resto) {
     const { uid, sala, host, novaSala, valor, agora, escrito, pinOk } = ctx;
     switch (no) {
@@ -250,6 +269,8 @@
         return conferirVotoEnquete(ctx, resto);
       case 'decisoes':
         return conferirDecisao(ctx, resto);
+      case 'lidos':
+        return conferirLido(ctx, resto);
       default:
         throw negar(`nó desconhecido na sala: "${no}"`);
     }
@@ -267,7 +288,7 @@
     const [topo, a, b, ...resto] = segs;
     const valor = em(novo, segs);
     if (topo === 'regrasVersao') {
-      if (segs.length !== 2 || a !== uid || (valor !== null && valor !== REGRAS_VERSAO)) throw negar(`regrasVersao só aceita "${REGRAS_VERSAO}" no próprio uid`);
+      if (segs.length !== 2 || a !== uid || (valor !== null && !REGRAS_ACEITAS.has(valor))) throw negar(`regrasVersao só aceita "${REGRAS_VERSAO}" (ou "v4") no próprio uid`);
       return;
     }
     if (topo === 'pedidosAnfitriao') {
@@ -347,7 +368,7 @@
   // mesmo que resultados/{r} aceite. Este é o nível mais raso de cada nó.
   const NIVEL_MINIMO = {
     meta: 3, conteudo: 3, estado: 3, pulso: 3, placar: 3,
-    membros: 4, presenca: 4, sementes: 4, prorrogacoes: 4, resultados: 4, enquetes: 5, decisoes: 6, votosEnquete: 7,
+    membros: 4, presenca: 4, sementes: 4, prorrogacoes: 4, resultados: 4, enquetes: 5, decisoes: 6, votosEnquete: 7, lidos: 4,
   };
 
   function exigirNivel(segs) {
@@ -400,6 +421,9 @@
     // qualquer equipe (o modo espectador), e continua sem ler a rodada inteira.
     if (no === 'decisoes') return segs.length >= 5 && (em(sala, ['membros', uid, 'equipe']) === segs[4] || pinConfere(arvore, uid));
     if (no === 'votosEnquete') return segs.length >= 7 && segs[6] === uid;
+    // [Li] Regras v5: o aluno lê só o próprio lido; o celular do apresentador,
+    // com o PIN (o espectador), lê todos, para o "N de M leram".
+    if (no === 'lidos') return pinConfere(arvore, uid) || (segs.length >= 4 && segs[3] === uid);
     return false;
   }
 

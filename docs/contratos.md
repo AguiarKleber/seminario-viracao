@@ -581,7 +581,8 @@ Só no Firebase:
   depois de 2 min 5 s foi recusado;
 - leitura: o aluno lê `meta`, `conteudo`, `estado`, `pulso`, `resultados`, `placar`, `enquetes` e `membros`; em `decisoes/{r}/{equipe}`, só a da própria equipe; em `votosEnquete`, só a própria folha; nunca `sementes`, `prorrogacoes`, `presenca` nem a sala inteira;
 - **regras v4 (D-064, o modo espectador):** quem tem PIN_OK (o mesmo da retomada: `privado/pinApresentador` existe e `pedidosAnfitriao/{uid}` é igual a ele, no dado atual) lê `decisoes/{r}/{equipe}` de **qualquer** equipe, uma por vez; nunca `decisoes/{r}` inteiro, a sala inteira, `sementes` nem o voto de enquete de outro. É só leitura: votar continua exigindo ser membro da equipe. Nas regras v3, o PIN não dava leitura nenhuma, e o celular do apresentador não via a contagem da equipe nem tinha como conferir o PIN (`pedidosAnfitriao` aceita qualquer texto de 8 a 32 caracteres);
-- `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v4"`); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
+- **[Li] regras v5 (o "Li, pode seguir", D-081):** `salas/{s}/lidos/{uid}` guarda o número do passo que o aluno leu (`estado/indice`); só o próprio aluno, membro da sala, grava, e só o passo atual; o aluno lê só a própria folha, e quem tem PIN_OK lê `lidos` inteiro (o celular do apresentador conta "N de M leram"); o telão já lê a sala inteira;
+- `regrasVersao/{uid}` só aceita a versão das regras (`REGRAS_VERSAO`, hoje `"v5"`; as regras v5 aceitam também o `"v4"` do telão da versão 11, o plano B); `pedidosAnfitriao/{uid}`, só texto de 8 a 32 caracteres; `autoteste` e `privado`, nunca.
   A versão fica em três lugares (`firebase/regras.json`, `REGRAS_VERSAO` em `js/telao.js` e em
   `js/canal/canal-local.js`) e presa ao conteúdo das regras: `test/regras.test.mjs` guarda o hash
   (sha256, 12 caracteres, do regras.json com a versão trocada por um marcador) de cada versão, e
@@ -623,12 +624,15 @@ Diferenças **de propósito**, todas no lado do anfitrião ou do PIN (as regras 
 
 ## 7. `Viracao.anfitriao`
 
-`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp?, folgaDaRegraMs? })` devolve os métodos abaixo.
+`Viracao.anfitriao.criar({ canal, config, sala, nomeRoteiro, agora?, gerarSemente, uid?, aoMudar?, versaoApp?, folgaDaRegraMs?, semCelulares? })` devolve os métodos abaixo.
 - `agora` padrão é `canal.agora`; sem `uid`, usa `canal.entrar()`;
 - `sala` segue `[A-HJ-NP-Z2-9]{4}`;
 - `aoMudar(estado)` é chamado a cada estado novo conhecido, inclusive o que chega por conflito;
 - `folgaDaRegraMs` (padrão `alunoLogica.FOLGA_DA_REGRA_MS`, 12 h): número ≥ 0, senão `TypeError`. Só o
   simulador e os testes passam outra, curta, para provar o corte da regra sem esperar 12 h.
+- `semCelulares` (padrão `false`): o telão passa `true` no modo offline. Só com ele, no modo individual, a
+  rodada que fecha sem vaga aberta e sem membro nenhum joga "a turma" (abre a primeira vaga). Online, ela fecha
+  sem resultado, e nenhuma vaga fica aberta sem dono (revisão de 14/10, achado 1).
 
 **O prazo gravado é o da regra (teste de 30/09).** Todo `prazo` que o anfitrião grava é
 `fim do cronômetro + folga`, e o fim do cronômetro é `prazo − folga` (`alunoLogica.fimDoCronometro`, que o
@@ -654,7 +658,7 @@ rede de segurança. Nos métodos abaixo, "prazo novo" é `agora + tempo da etapa
 | `definirEquipesAbertas(ids)` | antes da trava; grava `estado.equipesAbertas` como `{ e1: true, … }`, sempre com as obrigatórias; lista vazia lança erro. O "de 3 a 6" (arquitetura seção 8) fica na tela |
 | `moverMembro(uid, equipeId)` | grava `membros/{uid}/equipe`; recusa membro inexistente e equipe fechada |
 | `distribuirAtrasados() → Promise<n>` | depois da trava, põe numa equipe aberta quem não tem uma (ou está numa fechada), com `alunoLogica.sugerirEquipe`. Roda sozinho quando as equipes travam; o telão chama de novo quando entra alguém |
-| `removerInativos(limiteMs = 60000) → Promise<n>` | apaga `membros/{uid}` de quem não tem presença nos últimos `limiteMs`, **menos quem já votou na votação da etapa** (revisão da F6a: o voto confirmado nunca some). A etapa é lida do `estado` do banco: rodada em qualquer subfase (`decisoes/{r}`: o `sorteio` e o `resultado` também, porque o `desfazer()` reabre e apura de novo, e a apuração conta só quem ainda é membro) e enquete em `votando` ou `fechando` (`votosEnquete/{e}/{m}`). Fora disso, sai quem está sem sinal, como antes. Devolve quantos saíram |
+| `removerInativos(limiteMs = 60000) → Promise<n>` | apaga `membros/{uid}` de quem não tem presença nos últimos `limiteMs`, **menos quem já votou na votação da etapa** (revisão da F6a: o voto confirmado nunca some). A etapa é lida do `estado` do banco: rodada em qualquer subfase (`decisoes/{r}`: o `sorteio` e o `resultado` também, porque o `desfazer()` reabre e apura de novo, e a apuração conta só quem ainda é membro) e enquete em `votando` ou `fechando` (`votosEnquete/{e}/{m}`). Fora disso, sai quem está sem sinal, como antes. No modo individual, quem tem vaga não sai, com uma exceção, a **vaga presa** (revisão de 14/10, achado 2): se há quem espere uma vaga (a sala cheia), sai também, junto com a vaga (o membro apagado e a vaga tirada de `estado.equipesAbertas`, na mesma gravação, com `geracao + 1`), a vaga sem resultado em rodada nenhuma cujo dono está sem sinal e não votou na etapa; no máximo uma por pessoa esperando, primeiro a de quem está há mais tempo sem sinal; em seguida, `atribuirVagas()`. Devolve quantos saíram |
 | `abrirEntrada(bool)` | grava `meta/entradaAberta` |
 | `contagemManual(afirmacaoId, histograma)` | com a enquete em `votando`; guarda em `estado.manual`. Havendo contagem manual, a apuração é só ela, com `metodo: "manual"` e sem transição, e os votos de celular ficam de fora |
 | `exportarTotais() → Promise<objeto>` | só agregados, montados campo a campo: `{ titulo, versao, hashConfig, roteiro, exportadoEm, participantes, enquetes, resultados: { decisao, origem, contagem, carta, depois }, placar }`. **Nunca** uid |
@@ -1279,6 +1283,90 @@ as equipes colado, com a letra do corpo nos 28 px e a linha da nota mantida. No 
 largura do passo mais largo dela (e não mais); o teto antigo de 8 letras de vão falhava com a sorte ao acaso e valores
 de cinco dígitos, sem a coluna esticar. O `regras.placarPadrao` não é mais lido pelo telão.
 
+**Modo individual (`regras.individual`, com `regras.formatoSimples`; decisão do Kleber de 13/10 à noite):** cada aluno
+joga sozinho, em uma vaga própria (uma "equipe de uma pessoa", `e1` a `e20`) que o telão dá quando ele entra
+(`anfitriao.atribuirVagas`, chamado pelo `distribuirAtrasados`; seção 10). O voto é secreto e o tema é sensível: **o
+telão nunca mostra uma vaga nem um nome** (o nome fica só no celular), só o resumo da turma, em contagens e
+distribuições (as funções de `historia`, seção 8). Sem a chave, todas as telas ficam como as das equipes
+(`individual()` no `telao.js`). Os e2e `telao-individual.e2e.mjs` (offline) e `individual-online.e2e.mjs` (21
+celulares simulados contra o emulador) conferem que nenhuma tela projetada tem `.equipe-nome`, "Vaga N" ou a palavra
+"equipe" fora do texto dos blocos.
+- **Lobby** online: `.lobby-conectados` com `data-pessoas` = `historia.pessoasNaSala` ("15 pessoas na sala": quem já
+  tem a vaga aberta), e `.lobby-cheia` (" · a sala está cheia") com as 20 ocupadas. Offline, a lista diz "Decisões: a
+  turma escolhe junto, de mão levantada, e o apresentador registra a escolha."
+- **Conheça o Jonas:** o kicker é "Todos jogam com o mesmo personagem". **Aperto** (equipes e individual): medido
+  depois do desenho, só se a tela transborda (a faixa de entrada em 1280×720 empurrava a frase do mês comum para baixo
+  dela), `data-aperto` 1 (entrelinhas e vãos menores), 2 (a descrição e a frase do mês no tamanho do corpo) e 3 (sai o
+  básico item a item; o total fica na conta).
+- **Decisão:** as opções com a mini-história, como no formato simples; no lugar das células das equipes, online,
+  `p.turma-andamento` "14 de 20 já escolheram" (`data-escolheram`, `data-total`, de `historia.contagemDaDecisao` com
+  os ativos: o mesmo filtro da apuração, e quem sumiu sem votar sai do M); offline, `.turma-decisao` "Escolha da
+  turma:" com uma `.botao-letra` por opção (`data-turma="1"`, `data-opcao`), que chama `anfitriao.decidirPelaTurma`
+  (vale para todas as vagas em jogo; clicar de novo desfaz). A dica da barra diz "Todos já escolheram. Enter encerra."
+  ou, offline, se a escolha da turma está marcada. Não há prorrogação (o anfitrião vai direto à moeda); uma que chegue
+  assim mesmo fica na tela da decisão. Na barra, "Decidir pela turma" (só offline; online, a escolha é de cada um) e
+  "Mover aluno" desligado (o anfitrião recusa).
+- **Resultado** (`telaResultadoDaTurma`; D-084, pedido do Kleber de 13/10 à noite): o kicker "O que a turma
+  escolheu · 20 pessoas", o título do bimestre, o evento do mês (`.evento-do-mes`) e `div.turma-opcoes` (role list,
+  subgrid: as colunas alinhadas entre as opções): `.turma-colunas` com os nomes das duas colunas de dinheiro ("saldo
+  do bimestre" e "a família"), uma vez só, e um cartão `div.turma-opcao` por opção, de
+  `historia.resultadoPorOpcao` (`data-opcao`, `data-n`; com alguém, `data-saldo`, `data-saldo-media`,
+  `data-familia` "tem"/"devendo", `data-valor-familia`, `data-familia-media`; `.turma-opcao-zero` com 0, sem
+  valores): a letra, o rótulo (`.turma-opcao-rotulo`), `.turma-n` ("8 pessoas"), `.turma-saldo-opcao` e
+  `.turma-familia-opcao` (o valor, quando todos da opção têm o mesmo em reais inteiros; a média arredondada, com
+  `.turma-media` "em média", quando variam; ao lado do valor quando cabe, embaixo em telas até 1100 px) e, embaixo,
+  `p.turma-consequencias` com um `span.turma-antes-item` por motivo e valor (`data-motivo`, `data-pessoas`,
+  `data-valor`): "A moto quebrou (revisão adiada) **−R$ 790**: 3 dessas pessoas" ("1 pessoa" quando a opção tem
+  uma só; o mesmo motivo com outro valor vem junto e não se repete: "· **−R$ 560**: 1 dessas pessoas"). Quem não
+  votou está na opção de sempre, e `p.turma-sem-voto` (`data-sem-voto`) diz "2 pessoas não escolheram e ficaram na
+  C, a opção de sempre.". Nada por vaga nem nome. **Aperto**, só se transborda: 1 (vãos e entrelinhas menores), 2 (o
+  título menor), 3 (sem a frase do evento), 4 (sem o evento), 5 (entrelinha 1 e a borda fina), 6 (o motivo só com a
+  parte principal, sem o parêntese nem o que vem depois da vírgula: `.turma-motivo-resto` some) e 7 (sem o kicker,
+  o título no corpo e os nomes das colunas na linha dele). Medido (pior caso: as cinco opções com todas as
+  consequências possíveis, 11 linhas em mar–abr e em set–out, 20 pessoas): cabe em 1024×768 sem a faixa de entrada,
+  em 1280×720 e 1920×1080 com ela; em 1024×768 com a faixa, só o pior caso passa da altura, e a saída é fechar a
+  entrada. O celular do apresentador (modo espectador) mostra o mesmo resumo (`telaTurmaResultado`:
+  `.turma-opcao-valores` e `.turma-opcao-antes` embaixo de cada opção).
+- **Placar final** (pedidos de 13/10, 21h): três páginas, `fimDaTurma`, `escolhasDaTurma` e `combinacoes`; sem "O
+  caminho de cada equipe" e sem nada por vaga.
+  1. `fimDaTurma`, kicker "Quanto sobrou, ou ficou devendo": o título (`h1.fim-turma-frase`) é a frase de
+     `historia.fraseDoFimDaTurma(historia.fimDoAnoDaTurma(…))`, letra por letra, com os números em destaque
+     (`.fim-turma-numero`; `.fim-turma-positivos` em `--positivo`, `.fim-turma-negativos` em `--negativo`): "De 18
+     alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo." (dinheiro da família ≥ R$ 0 é "sobrando").
+     A seção leva `data-pessoas`, `data-positivos` e `data-negativos`. Embaixo, `.grafico-turma`: uma coluna por
+     aluno, sem nome, do maior para o menor (`rect.coluna-sobrou` acima da linha do zero, `rect.coluna-devendo`
+     abaixo, `data-valor`; a posição diz o mesmo que a cor), a linha tracejada da média (`line.linha-media`,
+     `data-media`) e nenhum texto dentro do SVG; até 160 px por pessoa, o grupo no meio. A legenda
+     (`.fim-turma-legenda`): "sobrou dinheiro", "ficou devendo", "média da turma: devendo R$ X" (ou "R$ X sobrando") e,
+     se alguém entrou no meio do ano (fora da conta), a frase de `historia.fraseDosQueEntraramDepois`;
+  2. `escolhasDaTurma`, "As escolhas da turma" (kicker "Placar final · quantas pessoas escolheram cada opção"):
+     `table.tabela-turma` com uma linha por bimestre (`data-rodada`, o nome curto) e uma coluna por letra, cada
+     célula com quantas pessoas ficaram com a opção (`data-opcao`, `data-n`, o rótulo na dica; `.turma-celula-maior`
+     em negrito na mais escolhida, `.turma-celula-zero` em cinza), de `historia.escolhasDaTurma`; com alguém sem voto,
+     `p.turma-nota` "Quem não escolheu ficou na opção de sempre e está contado nela.";
+  3. `combinacoes`, a mesma do formato simples.
+- **Fim:** no lugar do placar resumido, `p.fim-turma-resumo` com a frase da turma. Nos blocos sem conteúdo, o placar
+  resumido não aparece (seria uma linha por vaga).
+- **[Li] "N de M leram"** (pedido do Kleber de 07/10; regras v5): no "Conheça o Jonas" e nos blocos com contexto,
+  itens ou fonte (os que têm o botão "Li, pode seguir" no celular), o kicker ganha " · 17 de 20 leram" (`comLidos`),
+  e a seção leva `data-leram` e `data-total-lidos`. A conta é `historia.contagemDeLidos` com o nó `salas/{S}/lidos`
+  (ouvido só no modo individual; o telão é o anfitrião e lê a sala inteira) e os ativos: conta quem tem o índice do
+  passo atual (o "li" de um passo que já passou não vale), M é quem tem vaga aberta, e quem sumiu sem ler sai do M.
+  Só informa: quem avança é o apresentador. Só online, no passo atual (no modo revendo, nada) e com alguém na conta.
+  No kicker, e não ao lado do título, para não tirar altura nem largura dos blocos, que já apertam com a faixa de
+  entrada. Tudo do "Li" está nos commits que começam por "[Li]": revertidos, o telão volta a gravar `"v4"` e a tela,
+  ao kicker de antes.
+- **"A turma"** (offline, sem membro nenhum e no máximo uma vaga em jogo: `soATurma()`): o telão joga um caminho só.
+  Antes da primeira apuração não há vaga aberta; o `decidirPelaTurma` (ou o fechamento, sem escolha) abre a `e1`. O
+  resultado é a faixa do formato simples com `.turma-quem` "A turma" no lugar da equipe; o placar diz "A turma
+  terminou o ano devendo R$ X" (`.fim-turma-valor`, com `data-situacao`) e "As escolhas da turma: E B C C D B"
+  (`.fim-turma-caminho`, no meio da tela, `.fim-turma-so`), e a página 2 é "O caminho da turma"
+  (`.tabela-caminho-turma`: o bimestre, a letra e o rótulo, e o saldo do bimestre); o Fim, "A turma terminou o ano
+  devendo R$ X.". "Continuar sem celulares" antes de qualquer resultado tira da cópia local os membros e
+  `estado.equipesAbertas` e cai aqui (revisão de 14/10, achado 3). Depois de um resultado com celulares, ou ao
+  carregar um estado com várias vagas, as telas continuam com as contagens da turma, e a escolha marcada vale
+  para todas as vagas.
+
 **Histórico nas contas do telão:** o efeito da carta (a animação das cartas mais extremas) e o mês
 refeito passam ao motor o histórico da equipe (`motor.historicoDe` com as rodadas anteriores do
 roteiro), a mesma conta do anfitrião.
@@ -1320,7 +1408,13 @@ alheio).
 - os comandos que dependem do passo (avançar, encerrar, pausar/retomar, +30 s, desfazer,
   pular, encerrar o jogo, decidir por equipe, abrir e fechar equipes) levam a `geracao` que
   o apresentador via ao apertar a tecla; se o estado mudou até o comando rodar, ele é
-  descartado ("o estado mudou; confira e repita"). O mesmo se a sessão trocou;
+  descartado ("o estado mudou; confira e repita"). O mesmo se a sessão trocou. No modo
+  individual, o comando leva também o estado da hora da tecla (`vista(e)` = `{ geracao, estado }`)
+  e vale se, de lá para cá, só mudaram a `geracao` e as vagas abertas
+  (`anfitriao.soMudaramAsVagas`): cada vaga dada a quem entra sobe a `geracao`, e com 20
+  celulares entrando juntos no lobby o Espaço caía nessa janela e era jogado fora;
+- `{ silencioso: true }`: o comando que o próprio telão dispara (a vaga de quem entra, no modo
+  individual). A recusa sem conexão e o erro não abrem a barra; o erro vira um aviso discreto;
 - "Continuar sem celulares" e "Salvar estado" não passam pela fila (socorro).
 
 **Confirmações:** as que encurtam a conversa das equipes (encerrar no tempo mínimo),
@@ -1339,8 +1433,9 @@ votos; a contagem à mão os substitui (métodos nunca se misturam, seção 7).
 
 ### Telão online (`js/telao.js`, seção "Modo online")
 
-Só fora de `file://`. A abertura ganha o bloco "3. Com celulares" (o offline passa
-a "4. Sem celulares"), que prepara o serviço uma vez por página:
+Só fora de `file://`. A abertura ganha o bloco "Com celulares" (o offline passa
+a "Sem celulares"; D-082: sem números, desde que o painel do config saiu), que
+prepara o serviço uma vez por página:
 1. `?emulador=1`, só em `localhost`/`127.0.0.1`: a conexão do emulador (projeto
    `demo-seminario`, sem `conexao.json`). Fora disso, `../conexao.json` com
    `no-store`; falta, erro ou `COLE_AQUI` em `apiKey`, `authDomain`, `databaseURL`,
@@ -1350,7 +1445,9 @@ a "4. Sem celulares"), que prepara o serviço uma vez por página:
    navegador guarda a falha do `import()` de um endereço para o documento inteiro), e o
    offline continua ali.
 3. `canalFirebase.criar({ sdk, conexao, longPolling: ?lp=1, emulador, ambienteLocal })` e `entrar()`.
-4. Autoteste: `autoteste/{uid}` tem de ser recusado e `regrasVersao/{uid} = REGRAS_VERSAO` (hoje `"v4"`)
+4. Autoteste: `autoteste/{uid}` tem de ser recusado e `regrasVersao/{uid} = REGRAS_VERSAO` (hoje `"v5"`,
+   com o "Li, pode seguir"; as regras v5 aceitam também o `"v4"` do telão da versão 11, o plano B; com as regras v4
+   ainda no console, este telão é recusado aqui, e é isso que avisa que as regras novas não foram coladas)
    tem de passar. Senão, "REGRAS ABERTAS ou DESATUALIZADAS: não use", e criar e
    retomar ficam desabilitados.
 5. Primeira conexão acima de 8 s: sugere a "Rede restrita".
@@ -1378,7 +1475,13 @@ a "4. Sem celulares"), que prepara o serviço uma vez por página:
     recarregar e retomar com o PIN);
   - selo pelo `aoMudarConexao`;
   - `distribuirAtrasados()` quando o espelho mostra, depois da trava, membro sem
-    equipe aberta (uma vez por conjunto de uids).
+    equipe aberta (uma vez por conjunto de uids; os soltos e o estado saem da mesma leitura do
+    espelho). No modo individual, é ele que dá a vaga de quem entra (`atribuirVagas`, desde o
+    lobby, porque sem "formar equipes" as vagas travam desde o início), e roda silencioso. Se a
+    gravação falha, ou é recusada sem conexão, a assinatura é zerada, e a próxima mudança da sala
+    (o pulso do próprio telão, a cada `pulsoSeg`) tenta de novo: antes, o aluno ficava em
+    "Entrando na sala…" até outra pessoa entrar. Quem fica sem vaga (a sala cheia) continua solto,
+    e a assinatura segura a repetição.
 - **Ativos e inativos** (arquitetura, seção 10): ativo = membro com `presenca` nos
   últimos 60 s. "N ativos / M membros" (`[data-contagem-ativos]`) fica só na barra (D-047;
   o lobby projeta os conectados; só números: nem uid nem crachá); o denominador do "n de m
@@ -1420,7 +1523,7 @@ anfitrião: quem decide é o telão.
     achado 14).
   - `entrar()`, lê `meta` (sem meta: "não há sala") e `membros/{uid}`. **Aparelho que já é membro da sala**
     (entrou como aluno e voltou à entrada) não vira espectador: fica na tela do PIN com "Este aparelho já entrou
-    como aluno nesta sala e conta na equipe dele. Use outro aparelho para espiar as equipes.", sem gravar o
+    como aluno nesta sala. Use outro aparelho para o modo espectador." (sem falar em equipe desde a D-081), sem gravar o
     pedido e sem apagar o próprio membro (depois da trava a regra nem deixaria; quem tira o aluno é o
     apresentador, pelo telão). Antes, ele virava um membro fantasma no "N de M" (F6b, achado 16).
   - Depois, nesta ordem: `apagarAoDesconectar(pedidosAnfitriao/{uid})`, **esperando a confirmação**; grava

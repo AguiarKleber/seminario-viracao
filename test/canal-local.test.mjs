@@ -380,6 +380,53 @@ test('regras v4 (D-064): com o PIN, o espectador lê a decisão de qualquer equi
   await assert.rejects(esp.ler(`${S}/decisoes/r1/e1`), negado(), 'pedido apagado');
 });
 
+// [Li] "Li, pode seguir" (pedido do Kleber de 07/10; regras v5): lidos/{uid} =
+// o índice do passo que o aluno leu.
+test('[Li] trava: lidos só do próprio membro, só o índice do passo atual, só número; o anfitrião não grava', async () => {
+  // Arrange
+  const { canal, h } = await salaPronta({ estado: { indice: 3 } });
+  const a = await membro(canal, 'a', 'e1');
+  const b = await membro(canal, 'b', 'e2');
+  const fora = canal.comoUsuario('fora');
+  // Act + Assert
+  await a.gravar({ [`${S}/lidos/a`]: 3 });
+  await a.gravar({ [`${S}/lidos/a`]: 3 }); // regravar o mesmo
+  await assert.rejects(b.gravar({ [`${S}/lidos/b`]: 2 }), negado(/passo atual/), 'outro passo');
+  await assert.rejects(b.gravar({ [`${S}/lidos/b`]: true }), negado(/passo atual/), 'true, e não o índice');
+  await assert.rejects(b.gravar({ [`${S}/lidos/b`]: '3' }), negado(/passo atual/), 'texto');
+  await assert.rejects(a.gravar({ [`${S}/lidos/b`]: 3 }), negado(/outro uid/));
+  await assert.rejects(fora.gravar({ [`${S}/lidos/fora`]: 3 }), negado(/não é membro/));
+  await assert.rejects(a.gravar({ [`${S}/lidos`]: { a: 3 } }), negado(/nível/), 'o nó inteiro');
+  await assert.rejects(a.gravar({ [`${S}/lidos/a/x`]: 3 }), negado(/formato/));
+  await assert.rejects(h.gravar({ [`${S}/lidos/h`]: 3 }), negado(), 'o anfitrião só lê');
+  // O passo muda: o "li" atrasado do passo que passou é recusado.
+  await mudarEstado(h, { indice: 4 });
+  await assert.rejects(b.gravar({ [`${S}/lidos/b`]: 3 }), negado(/passo atual/));
+  await b.gravar({ [`${S}/lidos/b`]: 4 });
+  await a.gravar({ [`${S}/lidos/a`]: null }); // apagar o próprio pode
+  assert.deepEqual(await h.ler(`${S}/lidos`), { b: 4 });
+});
+
+test('[Li] leitura de lidos: o aluno, só o próprio; o espectador com o PIN e o anfitrião, todos', async () => {
+  // Arrange
+  const { canal, h } = await salaPronta({ estado: { indice: 2 } });
+  const arvore = canal.exportar();
+  arvore.privado = { pinApresentador: 'pin-certo-0001' };
+  canal.importar(arvore);
+  const a = await membro(canal, 'a', 'e1');
+  const b = await membro(canal, 'b', 'e1');
+  await a.gravar({ [`${S}/lidos/a`]: 2 });
+  const esp = canal.comoUsuario('esp');
+  // Act + Assert
+  assert.equal(await a.ler(`${S}/lidos/a`), 2);
+  await assert.rejects(a.ler(`${S}/lidos/b`), negado());
+  await assert.rejects(b.ler(`${S}/lidos`), negado());
+  await assert.rejects(esp.ler(`${S}/lidos`), negado(), 'sem o PIN');
+  await esp.gravar({ 'pedidosAnfitriao/esp': 'pin-certo-0001' });
+  assert.deepEqual(await esp.ler(`${S}/lidos`), { a: 2 });
+  assert.deepEqual(await h.ler(`${S}/lidos`), { a: 2 });
+});
+
 test('ouvinte que perde a permissão (aluno movido de equipe) é cancelado com erro', async () => {
   // Arrange
   const { canal, h } = await salaPronta();
@@ -423,7 +470,10 @@ test('regrasVersao só aceita a versão destas regras; autoteste e privado nunca
   // Arrange
   const canal = V.canalLocal.criar().comoUsuario('u');
   // Act + Assert
+  await canal.gravar({ 'regrasVersao/u': 'v5' });
+  // [Li] As regras v5 aceitam também o "v4" (o telão da versão 11, o plano B).
   await canal.gravar({ 'regrasVersao/u': 'v4' });
+  await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v6' }), negado());
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v3' }), negado());
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v2' }), negado());
   await assert.rejects(canal.gravar({ 'regrasVersao/u': 'v1' }), negado());

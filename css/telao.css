@@ -148,13 +148,24 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 
 /* ---------- Abertura ---------- */
 
-.tela-abertura { font-size: clamp(18px, 1.55vw, 30px); gap: 1.2em; }
+/* D-082 (pedido do Kleber de 13/10 à noite): sem o painel do config, o que
+   sobra fica no meio da tela, na vertical e na horizontal. Os blocos ("Com
+   celulares" e "Sem celulares") lado a lado, cada um com até 28em; o aviso do
+   config (só quando falta ou tem problema), o "Retomar" e o roteiro (só com
+   mais de um) ocupam a largura inteira. Por file://, um bloco só, no meio. */
+.tela-abertura { font-size: clamp(18px, 1.55vw, 30px); gap: 1.2em; justify-content: safe center; align-items: center; }
+.tela-abertura .tela-cabecalho { justify-content: center; text-align: center; }
+.tela-abertura .cabecalho-textos { align-items: center; }
 .tela-abertura h1 { font-size: 2.2em; }
 .tela-abertura h2 { font-size: 1.1em; margin-bottom: .5em; }
-.abertura-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2em 2em; align-items: start; }
-/* O config ocupa a coluna da esquerda inteira: uma lista longa de erros não
-   empurra o "Começar" para fora da tela. */
-.abertura-grade > :first-child { grid-row: span 3; }
+.abertura-grade {
+  width: min(100%, 57.6em);
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 1.2em 1.6em;
+}
+.abertura-grade > * { flex: 1 1 24em; max-width: 28em; }
+.abertura-grade > :is(.abertura-alerta, .abertura-retomar, .abertura-roteiro) { flex-basis: 100%; max-width: none; }
+.abertura-alerta { border-color: var(--foco); }
+.abertura-roteiro .opcoes-roteiro { flex-direction: row; flex-wrap: wrap; gap: .3em 2em; }
 .abertura-bloco {
   display: flex; flex-direction: column; gap: .6em;
   padding: 1em 1.2em;
@@ -182,6 +193,36 @@ h1.titulo-bloco { font-size: calc(var(--titulo) * 1.05); }
 }
 body.arrastando .zona-arquivo { border-color: var(--foco); }
 .zona-dica { color: var(--texto-2); }
+
+/* A reserva do config (D-082), no pé da tela, no tamanho da barra do
+ * apresentador. Escondida, só a faixa de cima dela (10 px, o BORDA_BARRA_PX do
+ * telao.js) fica dentro da tela, invisível; com o mouse PARADO nela por 0,4 s
+ * (o PARAR_NA_BORDA_MS: passar não abre), a barra sobe, e some 0,7 s depois
+ * de o mouse sair dela (o SAIR_DA_BARRA_MS). Abre na hora com o H
+ * (data-aberta), com o Tab chegando ao botão (:focus-within), arrastando um
+ * arquivo e, de vez, quando falta o config ou ele tem problema (data-fixa). */
+.reserva-config {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px;
+  padding: 6px 10px 8px;
+  background: rgba(17, 17, 17, .97);
+  border-top: 1px solid var(--linha-forte);
+  font-size: 15px; line-height: 1.25;
+  transform: translateY(calc(100% - 10px)); opacity: 0;
+  transition: transform .15s ease .7s, opacity .15s ease .7s;
+}
+/* Como todo :hover do projeto, só com mouse de verdade (test/estilo.test.mjs). */
+@media (hover: hover) {
+  .reserva-config:hover { transform: none; opacity: 1; transition-delay: .4s; }
+}
+.reserva-config:focus-within, .reserva-config[data-aberta="true"], .reserva-config[data-fixa="true"], body.arrastando .reserva-config {
+  transform: none; opacity: 1; transition-delay: 0s;
+}
+.reserva-config .zona-arquivo { padding: 4px 8px; gap: 4px 12px; border-width: 1px; }
+.reserva-config .lista-avisos ul { max-height: 30vh; }
+/* Com a reserva aberta de vez (sem config), a tela inicial deixa o espaço
+   dela livre embaixo. */
+.tela-abertura:has(.reserva-config[data-fixa="true"]) { padding-bottom: 64px; }
 .opcoes-roteiro { display: flex; flex-direction: column; gap: .5em; }
 .opcao-roteiro { display: flex; align-items: center; gap: .6em; min-height: 48px; cursor: pointer; }
 .opcao-roteiro input { width: 1.2em; height: 1.2em; accent-color: var(--texto); }
@@ -855,6 +896,14 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .conheca-itens { line-height: 1.25; }
 .conheca-itens b { color: var(--texto); }
 .conheca-mes { font-size: calc(var(--corpo) * 1.1); }
+/* O aperto (telao.js, telaConheca): só quando a tela transborda (a faixa de
+   entrada em 1280×720). */
+.tela-personas[data-aperto] { gap: calc(var(--espaco) * .5); }
+.tela-personas[data-aperto] .conheca { gap: calc(var(--espaco) * .35); }
+.tela-personas[data-aperto] :is(.conheca-quem, .conheca-familia, .conheca-itens, .conheca-mes) { line-height: 1.12; }
+.tela-personas[data-aperto] .conheca-conta { gap: 0 1.4em; line-height: 1.12; }
+.tela-personas:is([data-aperto="2"], [data-aperto="3"]) :is(.conheca-quem, .conheca-mes) { font-size: var(--corpo); }
+.tela-personas[data-aperto="3"] .conheca-itens { display: none; }
 
 /* O resultado: o evento do mês uma vez, no topo, e uma faixa por equipe em
    três colunas alinhadas entre as faixas (subgrid): a equipe e, embaixo, a
@@ -893,8 +942,8 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .tela-rodada-resultado[data-aperto] .grade-simples { row-gap: calc(var(--espaco) * .4); }
 .tela-rodada-resultado[data-aperto] .resultado-simples { line-height: 1; padding-top: 0; padding-bottom: 0; }
 .tela-rodada-resultado[data-aperto] .evento-do-mes { line-height: 1.05; }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) { gap: calc(var(--espaco) * .5); }
-.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) h1 { font-size: calc(var(--corpo) * 1.1); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) { gap: calc(var(--espaco) * .5); }
+.tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) h1 { font-size: calc(var(--corpo) * 1.1); }
 .tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .grade-simples { row-gap: 4px; }
 .tela-rodada-resultado:is([data-aperto="2"], [data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .resultado-simples .resultado-saldo { font-size: 1.1em; }
 /* D-078 e D-080: a consequência de uma escolha de antes, como observação na
@@ -907,8 +956,8 @@ body.em-sessao:not(.barra-visivel) .aviso { display: none; }
 .simples-obs { grid-column: 1 / -1; grid-row: 3; font-size: max(28px, .85em); color: var(--texto-2); line-height: 1.12; }
 .simples-obs b { display: inline-block; font-weight: 800; }
 .tela-rodada-resultado[data-aperto] .simples-obs { line-height: 1; }
-.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"], [data-aperto="5"]) .evento-linha { display: none; }
-.tela-rodada-resultado:is([data-aperto="4"], [data-aperto="5"]) .evento-do-mes { display: none; }
+.tela-rodada-resultado:is([data-aperto="3"], [data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .evento-linha { display: none; }
+.tela-rodada-resultado:is([data-aperto="4"], [data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .evento-do-mes { display: none; }
 /* O quinto aperto (D-080), só se seis faixas com a observação ainda não couberem
    sem o evento: o pior caso medido é mar–abr com as seis equipes atingidas e a
    faixa de entrada em 1280×720 (cada faixa com três linhas passava 74 px). Cada
@@ -951,6 +1000,142 @@ td.caminho-total { font-weight: 800; white-space: nowrap; text-align: right; }
    frase em .8em de 1,3 × corpo dá 29 px no menor tamanho, acima dos 28 px. */
 .combinacoes-subtitulo { font-size: .85em; font-weight: 650; color: var(--texto); text-wrap: balance; }
 .combinacao-familia { display: block; font-size: .8em; }
+
+/* ---------- O modo individual (decisão do Kleber de 13/10 à noite) ----------
+ * Cada aluno joga sozinho, em uma vaga própria, e o telão mostra só o resumo da
+ * turma, em contagens e distribuições, sem nenhuma vaga nem nome (telao.js,
+ * individual()). Nada abaixo do corpo (28 px em 1024×768); os e2e
+ * (telao-individual e individual-online) provam 20 pessoas em 1024×768 e
+ * 1280×720, com a faixa de entrada, e em 1920×1080. */
+
+.lobby-cheia { color: var(--texto-2); font-weight: 600; }
+
+/* A decisão: no lugar das células das equipes, "14 de 20 já escolheram"
+   (online) ou as letras da escolha da turma (offline), no pé da tela. */
+.turma-andamento { margin-top: auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: .1em .3em; font-weight: 600; line-height: 1.15; }
+.turma-numero { font-size: calc(var(--corpo) * 1.6); font-weight: 800; line-height: 1; }
+.turma-decisao { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: .3em 1em; }
+.turma-decisao-rotulo { font-weight: 700; }
+.turma-decisao .botoes-opcao { gap: .5em; }
+.turma-decisao .botoes-opcao .botao-letra { min-width: 2.2em; padding: 0 .3em; }
+
+/* O resultado da turma (D-084): o evento do mês e uma linha por opção, em
+   cartões como as faixas das equipes do resultado simples, com as colunas
+   alinhadas entre as opções (subgrid): a letra, o rótulo, quantas pessoas, o
+   saldo do bimestre e a família de quem a escolheu (com "em média" embaixo,
+   quando os valores variam). Os nomes das duas colunas de dinheiro vão uma vez
+   só, em cima; repetidos em cada cartão, cinco opções não cabiam em 1024×768
+   com a faixa de entrada. Embaixo da opção, na largura do rótulo para a
+   direita, o que veio de antes, em letra secundária.
+   O "em média" vai ao lado do valor quando cabe (1280×720 e 1920×1080) e
+   embaixo dele quando não cabe (1024×768, onde o rótulo já quebra em duas
+   linhas): em uma linha só para ele, cinco opções com consequência não cabiam
+   em 1280×720 com a faixa de entrada. */
+.turma-opcoes {
+  display: grid; grid-template-columns: auto minmax(8em, 1fr) auto auto auto;
+  column-gap: .5em; row-gap: calc(var(--espaco) * .45);
+}
+.turma-colunas, .turma-opcao { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; }
+.turma-colunas { padding: 0 .35em; border: 2px solid transparent; border-block: 0; color: var(--texto-2); line-height: 1.1; }
+.turma-coluna-saldo, .turma-coluna-familia { grid-row: 1; text-align: right; white-space: nowrap; }
+.turma-coluna-saldo { grid-column: 4; }
+.turma-coluna-familia { grid-column: 5; }
+.turma-opcao {
+  align-items: center; row-gap: 0;
+  /* A folga de cima e de baixo nunca some: com a entrelinha 1 (os últimos
+     apertos), o texto passa uns 0,17em da linha, e sem a folga ele encostava
+     na borda do cartão. */
+  padding: .15em .35em;
+  border: 2px solid var(--linha); border-radius: var(--raio);
+  background: var(--superficie);
+  line-height: 1.12;
+}
+.turma-opcao > .letra { grid-column: 1; grid-row: 1; height: 1.2em; min-width: 1.2em; }
+.turma-opcao-rotulo { grid-column: 2; grid-row: 1; font-weight: 600; min-width: 0; }
+.turma-n { grid-column: 3; grid-row: 1; text-align: right; white-space: nowrap; color: var(--texto-2); }
+.turma-n b { color: var(--texto); font-weight: 800; }
+.turma-valor { grid-row: 1; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: baseline; column-gap: .3em; text-align: right; }
+.turma-valor > * { white-space: nowrap; }
+/* Em 1024×768 o rótulo já quebra em duas linhas: o "em média" vai sempre
+   embaixo do valor, nas duas colunas (com a quebra decidida pela largura de
+   cada coluna, uma ficava ao lado e a outra embaixo). */
+@media (max-width: 1100px) {
+  .turma-valor { flex-direction: column; align-items: flex-end; }
+}
+.turma-saldo-opcao { grid-column: 4; }
+.turma-familia-opcao { grid-column: 5; }
+.turma-saldo-valor { font-weight: 800; }
+.turma-saldo-valor[data-sinal="negativo"] { color: var(--negativo); }
+.turma-saldo-valor[data-sinal="positivo"] { color: var(--positivo); }
+.turma-familia-valor b { font-weight: 800; }
+.turma-familia-valor[data-situacao="devendo"] b { color: var(--negativo); }
+.turma-media { color: var(--texto-2); font-size: max(28px, .8em); }
+.turma-consequencias { grid-column: 2 / -1; grid-row: 2; font-size: max(28px, .85em); color: var(--texto-2); line-height: 1.12; }
+.turma-consequencias b { display: inline-block; font-weight: 800; color: var(--texto); }
+.turma-opcao-zero { color: var(--texto-2); background: transparent; border-style: dashed; }
+.turma-opcao-zero .letra { border-color: var(--texto-2); }
+.turma-opcao-zero .turma-n b { color: var(--texto-2); }
+.turma-sem-voto { color: var(--texto-2); line-height: 1.15; }
+/* O aperto (telao.js, telaResultadoDaTurma): os degraus 2 a 4 são os do
+   resultado simples (o título menor; sem a frase do evento; sem o evento); o
+   quinto deixa a entrelinha mínima e os cartões sem folga. */
+.tela-rodada-resultado[data-aperto] .turma-opcoes { row-gap: 3px; }
+.tela-rodada-resultado[data-aperto] :is(.turma-opcao, .turma-colunas, .turma-sem-voto, .turma-consequencias) { line-height: 1.05; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) :is(.turma-opcao, .turma-consequencias, .turma-colunas) { line-height: 1; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcao > .letra { height: 1em; min-width: 1em; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcoes { row-gap: 2px; }
+.tela-rodada-resultado:is([data-aperto="6"], [data-aperto="7"]) .turma-motivo-resto { display: none; }
+.tela-rodada-resultado:is([data-aperto="5"], [data-aperto="6"], [data-aperto="7"]) .turma-opcao { border-width: 1px; }
+/* O sétimo: sem o kicker, o título no tamanho do corpo e os nomes das colunas
+   ("saldo do bimestre", "a família") na linha do título, à direita (os
+   títulos dos bimestres terminam antes das colunas, medido em 1024×768). */
+.tela-rodada-resultado[data-aperto="7"] .kicker { display: none; }
+.tela-rodada-resultado[data-aperto="7"] h1 { font-size: var(--corpo); }
+.tela-rodada-resultado[data-aperto="7"] .turma-colunas { margin-top: calc(var(--corpo) * -1.08 - var(--espaco) * .5); }
+
+/* "Quanto sobrou, ou ficou devendo" da turma: a frase com os números em
+   destaque (verde para quem terminou com dinheiro sobrando, vermelho para quem
+   terminou devendo; a palavra diz o mesmo que a cor), uma coluna por aluno,
+   sem nome, e a legenda. */
+h1.fim-turma-frase { font-size: calc(var(--titulo) * .82); line-height: 1.15; }
+.fim-turma-numero { font-size: 1.35em; font-weight: 850; }
+.fim-turma-positivos, .fim-turma-valor[data-situacao="tem"] { color: var(--positivo); }
+.fim-turma-negativos, .fim-turma-valor[data-situacao="devendo"] { color: var(--negativo); }
+.grafico-turma { min-height: 120px; }
+.coluna-sobrou { fill: var(--positivo); }
+.coluna-devendo { fill: var(--negativo); }
+.linha-media { stroke: var(--texto); }
+.fim-turma-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: .2em 1.4em; color: var(--texto-2); line-height: 1.2; }
+.fim-turma-legenda b { color: var(--texto); }
+.fim-turma-chave, .fim-turma-media { white-space: nowrap; }
+.amostra-coluna { display: inline-block; width: .8em; height: .8em; border-radius: 2px; vertical-align: -.05em; }
+.amostra-sobrou { background: var(--positivo); }
+.amostra-devendo { background: var(--negativo); }
+.amostra-media { display: inline-block; width: 1.6em; border-top: 3px dashed var(--texto); vertical-align: middle; }
+.fim-turma-caminho { font-size: calc(var(--corpo) * 1.3); color: var(--texto-2); }
+.fim-turma-caminho b { color: var(--texto); letter-spacing: .06em; }
+.fim-turma-resumo { margin-top: auto; }
+/* "A turma" (sem celulares): uma frase e uma linha, maiores, no meio da tela. */
+.tela.fim-turma-so { justify-content: center; gap: calc(var(--espaco) * 2); }
+.fim-turma-so h1.fim-turma-frase { font-size: calc(var(--titulo) * 1.05); }
+.fim-turma-so .fim-turma-caminho { font-size: calc(var(--corpo) * 1.6); }
+
+/* "As escolhas da turma": bimestre × opção, com quantas pessoas (a mais
+   escolhida em negrito); "O caminho da turma", sem celulares. */
+.turma-escolhas { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: safe center; }
+.tabela-turma { border-collapse: collapse; width: 100%; font-size: calc(var(--corpo) * 1.1); line-height: 1.15; }
+.tabela-turma th, .tabela-turma td { padding: .2em .4em; border-bottom: 1px solid var(--linha); text-align: center; vertical-align: middle; }
+.tabela-turma thead th { color: var(--texto-2); font-weight: 700; }
+.tabela-turma .turma-bimestre { text-align: left; white-space: nowrap; }
+.turma-celula-zero { color: var(--texto-2); }
+.turma-celula-maior { font-weight: 800; }
+.turma-nota { color: var(--texto-2); }
+.tabela-caminho-turma .turma-escolha { text-align: left; }
+.tabela-caminho-turma .turma-escolha .letra { margin-right: .2em; }
+.tabela-caminho-turma .turma-saldo { text-align: right; white-space: nowrap; font-weight: 700; }
+.turma-saldo[data-sinal="negativo"] { color: var(--negativo); }
+.turma-saldo[data-sinal="positivo"] { color: var(--positivo); }
+.turma-quem { font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
   .ponteiro-animado { transform: translateX(var(--alvo)); }

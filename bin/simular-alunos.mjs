@@ -12,7 +12,7 @@
 //   node bin/simular-alunos.mjs --sala K7Q2 --emulador     só alunos, numa sala aberta por um telão de verdade
 //   node bin/simular-alunos.mjs --sala K7Q2 --sim-tenho-certeza   contra o projeto REAL (conexao.json)
 //
-// Opções: --alunos N (20) · --rapido · --roteiro 60min|120min · --semente N · --config caminho (config.json)
+// Opções: --alunos N (20) · --rapido · --roteiro 60min (um roteiro do config) · --semente N · --config caminho (config.json)
 // Perturbações: --rajada · --quedas · --recargas · --derrubar-telao · --atacar
 //
 // O relatório confere, passo a passo, que os votos confirmados pelo servidor são
@@ -248,6 +248,8 @@ function criarMetricas() {
     legitimasRecusadas: [],
     tardias: [],
     legitimasEnviadas: 0,
+    // [Li] "Li, pode seguir" (regras v5): os toques dos robôs, enviados e confirmados.
+    lidos: { enviados: 0, confirmados: 0 },
     ataques: [],
     violacoes: [],
     passo(chave) {
@@ -443,6 +445,27 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
     }
   }
 
+  // [Li] O toque no "Li, pode seguir": grava lidos/{uid} = o índice do passo.
+  // Como o voto, segura o telão simulado até a confirmação; a recusa depois de
+  // o apresentador avançar é tardia (o celular diz "o apresentador já passou").
+  async function marcarLi(estado) {
+    metricas.legitimasEnviadas += 1;
+    metricas.lidos.enviados += 1;
+    robo.pendentes += 1;
+    try {
+      await robo.rede.gravar({ [s('lidos', robo.uid)]: estado.indice });
+      metricas.lidos.confirmados += 1;
+      robo.meuLido = estado.indice;
+    } catch (erro) {
+      const registroRecusa = { quem: robo.nome, oque: `lidos/{uid} = ${estado.indice}`, motivo: String(erro.message) };
+      if (NEGADO.test(registroRecusa.motivo) && robo.estado?.geracao !== estado.geracao) metricas.tardias.push(registroRecusa);
+      else metricas.legitimasRecusadas.push(registroRecusa);
+    } finally {
+      robo.pendentes -= 1;
+      agendar();
+    }
+  }
+
   async function perturbar(momento) {
     if (robo.papel.recargaEm === momento) {
       robo.papel.recargaEm = null;
@@ -479,6 +502,8 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
       const tela = V.alunoLogica.telaDoAluno({
         conteudo: robo.conteudo, estado, membro, membros, meusVotos: robo.meusVotos, decisoesDaEquipe,
         resultados: null, placar: null, uid: robo.uid, agora: agoraServidor(),
+        // [Li] Como o celular: só no modo individual, com o "li" que o robô já gravou.
+        ...(robo.conteudo?.regras?.individual === true ? { meuLido: robo.meuLido ?? null } : {}),
       });
       await agir(tela, estado, membros, membro);
       robo.geracaoTratada = Math.max(robo.geracaoTratada, estado.geracao);
@@ -494,6 +519,14 @@ function criarRobo({ indice, amb, sala, conteudoPrevisto, opcoes, metricas, rng,
 
   async function agir(tela, estado, membros) {
     const d = tela.dados;
+    // [Li] "Conheça o Jonas" e os blocos de dados com o botão (d.lido === false).
+    if (d?.lido === false && !robo.papel.nuncaVota) {
+      const chave = `li|${estado.indice}`;
+      if (robo.feitos.has(chave)) return;
+      robo.feitos.add(chave);
+      await marcarLi(estado);
+      return;
+    }
     if (tela.tipo === 'escolherEquipe' && !d.minha && !robo.papel.nuncaVota) {
       const chave = `equipe|${estado.geracao}`;
       if (robo.feitos.has(chave)) return;
@@ -678,6 +711,20 @@ function criarAtacante({ amb, sala, metricas, pedirDistribuicao, opcoes }) {
     at.ultimaEnquete = { enquete: e.enquete, momento: e.momento, afirm };
   }
 
+  // [Li] O "Li, pode seguir" (regras v5): só o próprio aluno, membro da sala, e
+  // só o passo atual; o aluno lê só a própria folha.
+  async function faseLi(e) {
+    const c = at.canal;
+    const lido = (dono) => s('lidos', dono);
+    if (at.vitima) await tentar('Li', 'li em nome de outro uid', () => c.gravar({ [lido(at.vitima)]: e.indice }));
+    await tentar('Li', 'li de outro passo', () => c.gravar({ [lido(at.uid)]: e.indice + 1 }));
+    await tentar('Li', 'li com texto no lugar do número', () => c.gravar({ [lido(at.uid)]: String(e.indice) }));
+    await tentar('Li', 'li de quem não é membro', () => at.intruso.canal.gravar({ [lido(at.intruso.uid)]: e.indice }));
+    await tentar('Li', 'li com prioridade de 100 KB', () => c.gravar({ [lido(at.uid)]: { '.value': e.indice, '.priority': blob } }), { soOnline: true, porque: SEM_PRIORIDADE });
+    if (at.vitima) await tentar('leitura', 'ler o li de outro aluno', () => c.ler(lido(at.vitima)));
+    await tentar('leitura', 'ler os lidos da sala', () => c.ler(s('lidos')));
+  }
+
   async function faseEnqueteFechada() {
     const u = at.ultimaEnquete;
     await tentar('fora da janela', 'votar com a enquete já fechada', () => at.canal.gravar({ [s('votosEnquete', u.enquete, u.momento, u.afirm, at.uid)]: 3 }));
@@ -790,13 +837,25 @@ function criarAtacante({ amb, sala, metricas, pedirDistribuicao, opcoes }) {
         at.fases.add('enqueteFechada');
         await faseEnqueteFechada();
       }
+      if (e.tipo === 'personas' && !at.fases.has('li')) {
+        at.fases.add('li');
+        await faseLi(e);
+      }
       if (e.tipo === 'formarEquipes' && !e.equipesTravadas && !at.fases.has('formar')) {
         at.fases.add('formar');
         await faseFormar(e);
       }
       if (e.equipesTravadas && !at.fases.has('trava')) {
-        at.fases.add('trava');
-        await faseTrava();
+        // Modo individual: a trava vem desde o lobby, e a vaga do atacante
+        // chega um instante depois (quem dá é o telão). Sem esperar por ela,
+        // os ataques de vaga (decidir por outra vaga, em nome de outro uid,
+        // trocar de vaga) ficavam todos "n/a". Quem nunca ganha vaga (o 21º)
+        // cai na fase no passo seguinte, com o "n/a" de sempre.
+        const esperaAVaga = e.tipo === 'lobby' && !(await at.canal.ler(s('membros', at.uid, 'equipe')));
+        if (!esperaAVaga) {
+          at.fases.add('trava');
+          await faseTrava();
+        }
       }
       if (e.tipo === 'rodada' && e.subfase === 'decidindo' && at.fases.has('trava') && !at.fases.has('rodada')) {
         at.fases.add('rodada');
@@ -1082,6 +1141,7 @@ function imprimirRelatorio({ metricas, opcoes, amb, duracaoMs, conferencia, regi
   L('');
   L(' Escritas recusadas');
   L(`  legítimas: ${metricas.legitimasRecusadas.length} de ${metricas.legitimasEnviadas} (${metricas.legitimasEnviadas ? ((100 * metricas.legitimasRecusadas.length) / metricas.legitimasEnviadas).toFixed(1) : '0.0'}%; tem de ser 0%)`);
+  if (metricas.lidos.enviados > 0) L(`  [Li] "Li, pode seguir": ${metricas.lidos.confirmados} de ${metricas.lidos.enviados} toques confirmados`);
   if (metricas.tardias.length > 0) {
     L(`  tardias: ${metricas.tardias.length} (a etapa fechou antes de o voto chegar; o celular mostra "a votação fechou")`);
     // Com o simulador no papel do telão, ele espera todos os celulares antes de

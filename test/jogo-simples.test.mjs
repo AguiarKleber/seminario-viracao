@@ -1,6 +1,6 @@
 // O jogo simples de 06/10 (D-078): a consequência de antes na tela
 // (historia.consequenciasDaRodada) e o config.json do dia, conferido com o
-// motor: o Jonas para as 6 equipes, 5 opções por bimestre, o valor da opção
+// motor: o Jonas para todas as vagas, 5 opções por bimestre, o valor da opção
 // igual ao que o jogo cobra no 1º bimestre, a regra das costas e as outras consequências
 // encadeadas, e as 15.625 combinações (281 fecham o ano, todas com ao menos uma opção puxada; D-079 e D-080).
 import { test } from 'node:test';
@@ -70,7 +70,7 @@ function jogar(cfg, letras) {
   return { resultados, final: Math.round(M.patrimonio(estado)) };
 }
 
-test('config.json do dia: formato simples, o Jonas nas 6 equipes, 6 bimestres × 5 opções, uma carta por bimestre e os padrões C, D, D, C, A, D', () => {
+test('config.json do dia: formato simples, o Jonas em todas as vagas, 6 bimestres × 5 opções, uma carta por bimestre e os padrões C, D, D, C, A, D', () => {
   const r = configDoDia();
   assert.deepEqual(r.erros, []);
   const cfg = r.config;
@@ -98,20 +98,40 @@ test('config.json do dia: o placar sem referência (sem a linha "Jonas com carte
   assert.deepEqual(cfg.referencias, {});
 });
 
-// Pedido do Kleber de 06/10 à tarde (nota depois da D-079): o nome de cada equipe
-// em uma palavra. Azul-céu, Verde-azulado, Vermelhão e Roxo-rosado viraram
-// Celeste, Verde, Vermelho e Rosa; a cor, a forma e a ordem ficaram como estavam.
-test('config.json do dia: cada equipe com o nome da cor em uma palavra, e a cor e a forma de antes', () => {
+// Decisão do Kleber de 13/10 à noite: o jogo passa a ser individual. Cada aluno
+// ocupa uma vaga própria (uma "equipe de uma pessoa"), no máximo 20 conectados.
+// As vagas não aparecem na tela (o telão mostra só o resumo da turma): o nome é
+// neutro ("Vaga 1"), e a cor e a forma podem repetir. Até a versão 11, eram 6
+// equipes com o nome da cor em uma palavra (Laranja, Celeste, Verde, Azul,
+// Vermelho e Rosa; pedido de 06/10 à tarde, nota depois da D-079).
+test('config.json do dia: modo individual, com 20 vagas neutras, nenhuma obrigatória, e o Jonas em todas', () => {
   const cfg = configDoDia().config;
-  const equipes = cfg.ordem.equipes.map((eq) => [eq, cfg.equipes[eq].nome, cfg.equipes[eq].cor, cfg.equipes[eq].forma]);
-  assert.deepEqual(equipes, [
-    ['e1', 'Laranja', '#E69F00', 'circulo'],
-    ['e2', 'Celeste', '#56B4E9', 'triangulo'],
-    ['e3', 'Verde', '#009E73', 'quadrado'],
-    ['e4', 'Azul', '#0072B2', 'losango'],
-    ['e5', 'Vermelho', '#D55E00', 'estrela'],
-    ['e6', 'Rosa', '#CC79A7', 'cruz'],
-  ]);
+  assert.equal(cfg.regras.individual, true);
+  assert.equal(cfg.regras.formatoSimples, true, 'o modo individual exige o formato simples');
+  assert.deepEqual(cfg.ordem.equipes, Array.from({ length: 20 }, (_, i) => `e${i + 1}`));
+  for (const [i, eq] of cfg.ordem.equipes.entries()) {
+    assert.equal(cfg.equipes[eq].nome, `Vaga ${i + 1}`);
+    assert.equal(cfg.equipes[eq].persona, 'motoboy');
+    assert.notEqual(cfg.equipes[eq].obrigatoria, true, `${eq}: no modo individual nenhuma vaga é obrigatória`);
+  }
+  assert.equal(cfg.versao, '2026-10-14-v5.1-individual');
+});
+
+// Sem a etapa de formar equipes (a vaga é dada pelo telão quando o aluno entra), e
+// os tempos refeitos para o roteiro continuar fechando 60 minutos, com a decisão
+// de 120 s. Desde a D-083 (pedido do Kleber de 13/10 à noite), o roteiro de 60
+// min é o único: o de 120 saiu do config.
+test('config.json do dia: só o roteiro de 60 min, sem "formarEquipes", com 60 minutos certos e a decisão de 120 s', () => {
+  const cfg = configDoDia().config;
+  assert.equal(cfg.tempos.decisaoSeg, 120);
+  assert.deepEqual(Object.keys(cfg.roteiros), ['60min'], 'um roteiro só (D-083)');
+  for (const [nome, minutos] of [['60min', 60]]) {
+    const passos = V.roteiro.passos(cfg, nome);
+    assert.equal(passos.some((p) => p.tipo === 'formarEquipes'), false, `${nome}: sem formar equipes`);
+    assert.equal(passos.reduce((s, p) => s + (p.alvoSeg || 0), 0), minutos * 60, `${nome}: soma dos tempos-alvo`);
+    for (const tipo of ['lobby', 'personas', 'placarFinal', 'fim']) assert.ok(passos.some((p) => p.tipo === tipo), `${nome}: ${tipo}`);
+    assert.equal(passos.filter((p) => p.tipo === 'rodada').length, 6, `${nome}: os 6 bimestres`);
+  }
 });
 
 // Só no 1º bimestre o saldo muda exatamente o valor da tela: dali em diante, com a

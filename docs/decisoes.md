@@ -861,3 +861,191 @@ D-079, da D-070 e da D-056).
   menor que o de antes, nem em "Caminhos" com a faixa de entrada). Config
   `2026-10-06-v4.4-simples` (hash `57a8d00b`), versão 11 do site, regras v4;
   os números das combinações não mudam (281 fecham, +R$ 1.714 e −R$ 6.135).
+
+## 13/10/2026 (à noite): o jogo individual, para o seminário de 14/10
+
+Decisão do Kleber de 13/10 à noite, com os pedidos dele das 21h sobre os prints
+da primeira versão. O seminário é em 14/10, às 17h. Como cada tela fica, em
+[jogo-simples.md](jogo-simples.md) (seção "O jogo individual"); como conduzir,
+no [roteiro do apresentador](roteiro-do-apresentador.md) (seção 00).
+
+**D-081. O jogo individual: cada aluno joga o próprio Jonas, com o nome só no
+celular, o telão mostra só a turma, e o "Li, pode seguir"** (muda partes da
+D-004, da D-018, da D-035, da D-064, da D-078 e da D-080 no modo individual;
+sem a chave nova, tudo continua como na D-080).
+- **O que o Kleber decidiu:** o jogo passa a ser individual. Cada aluno entra
+  com o **nome** e faz as próprias escolhas, com no máximo **20 pessoas** ao
+  mesmo tempo. O nome aparece **só no celular do próprio aluno** (a opção "a"):
+  o telão mostra só o resumo da turma (contagens e distribuições) e nunca um
+  nome, porque o voto é secreto e o tema é sensível.
+- **Como o app faz isso:** a chave `regras.individual: true` no config, que
+  exige o formato simples. Cada aluno ocupa uma **vaga própria**, que é uma
+  "equipe de uma pessoa" (as vagas `e1` a `e20`, que nunca aparecem na tela).
+  Assim, a decisão, a apuração (um voto; sem voto, a opção de sempre), o
+  resultado e o placar continuam os mesmos do jogo por equipes.
+  - **Quem dá a vaga é o telão** (o único que escreve o estado): o celular entra
+    sem vaga, e o telão grava a menor vaga livre, na ordem de chegada. Nunca há
+    duas pessoas na mesma vaga, nem com 20 entrando juntas (testado com 20
+    celulares de verdade contra as regras reais).
+  - O **21º** não ganha vaga, e o celular dele diz "A sala está cheia (20
+    pessoas)".
+  - Quem **recarrega** o celular volta para a mesma vaga, com o mesmo nome. Quem
+    entra por **outro navegador** (ou aba anônima) é outro aparelho e ocupa
+    outra vaga. "Mover aluno" fica desligado, e "Remover inativos" não tira quem
+    tem vaga, a não ser a **vaga presa** (revisão de 14/10, abaixo).
+  - **Quem chega no meio de uma decisão** ganha a vaga e, nessa decisão, fica
+    com a opção de sempre; vota a partir da seguinte. No placar, quem entrou no
+    meio do ano fica fora da conta, e a tela diz ("1 aluno entrou no meio do ano
+    e não está nessa conta.").
+  - **O nome fica só no aparelho** (no armazenamento do navegador do celular) e
+    nunca vai para o Firebase. O nome é obrigatório, com até 20 letras, e o topo
+    do celular o mostra.
+  - **Sem a etapa de formar equipes** nos dois roteiros, e **sem prorrogação**:
+    uma vaga com um voto nunca empata (muda a D-035 no modo individual).
+- **O telão, sem nenhum nome nem vaga:** "N pessoas na sala" no lobby; "14 de
+  20 já escolheram" na decisão; no resultado, quantas pessoas ficaram com cada
+  opção, quantas não votaram e quantas tiveram cada consequência (muda a
+  observação na faixa da equipe da D-080). O placar tem 3 páginas:
+  1. **"Quanto sobrou, ou ficou devendo"** (pedido 2 das 21h): do total de
+     alunos, quantos terminaram com dinheiro sobrando (o dinheiro da família no
+     fim do ano ≥ R$ 0) e quantos terminaram devendo, em destaque ("De 18
+     alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo."); e
+     embaixo, uma coluna por aluno, sem nome, do maior para o menor, com a
+     média da turma;
+  2. **"As escolhas da turma"**: bimestre × opção, com quantas pessoas
+     escolheram cada uma;
+  3. **as 15.625 combinações**, com a melhor e a pior sequência (a página da
+     D-080, sem mudança).
+  - **Sai a tabela "O caminho de cada equipe"** (pedido 1 das 21h: não faz
+    sentido no jogo individual), e nada no placar é por vaga.
+- **O celular de cada aluno:** a decisão como antes (5 opções, a mini-história
+  ao tocar, "Votar nesta"), na 2ª pessoa ("você"); o resultado com o seu saldo
+  do bimestre, o dinheiro da família e a consequência; no placar, as suas
+  escolhas, o seu ano e "Das N pessoas da turma, K fecharam o ano com dinheiro
+  sobrando e J terminaram devendo." (sem ranking e sem nome).
+  - **Os dados também no celular** (pedido 3 das 21h, prints 3 e 4): os blocos
+    de dados, inclusive "Dados: e nos outros aplicativos?", e o "Fim: quem é o
+    patrão?" aparecem no celular ao mesmo tempo que no telão, com o título, o
+    contexto, os itens e a fonte, legíveis em 360×740 (com rolagem). "Conheça o
+    Jonas" também.
+  - **O celular do apresentador** (D-064, com o PIN) mostra o resumo da turma,
+    como o telão, e nunca a tela de uma vaga (muda a D-064 no modo individual:
+    sem o seletor de equipe).
+- **Sem celulares** (a internet caiu), o telão joga um caminho só, "a turma", e
+  o apresentador escolhe a opção que a turma combinar. Depois de algum
+  bimestre fechado com celulares, a escolha da turma vale para todas as vagas,
+  e o placar continua por pessoas (revisão de 14/10, abaixo).
+- **[Li] "Li, pode seguir"** (pedido do Kleber de 07/10): no "Conheça o Jonas" e
+  nos blocos, o celular mostra o botão "Li, pode seguir" e, depois do toque,
+  "Você já leu ✓". O telão mostra "N de M leram" ao lado do título, só para
+  informar: o apresentador avança quando quiser.
+  - Para isso, as **regras do Firebase passam à v5**: um caminho novo,
+    `salas/{sala}/lidos/{uid}`, com o número do passo lido, gravado só pelo
+    próprio aluno que é membro da sala e só para o passo atual. As regras v5
+    aceitam também o telão da versão 11 (`'v4'`), então a versão 11 continua
+    funcionando depois de colar as regras novas.
+  - Tudo o que é do "Li" está em **commits separados, com a mensagem começando
+    por "[Li]"**. Se as regras v5 não puderem ser coladas no console a tempo,
+    esses commits são revertidos, as regras continuam v4 e o resto do jogo
+    individual funciona igual (testado: `git revert` dos commits [Li] e a
+    bateria verde).
+- **Números e versões:** o config `2026-10-14-v5-individual` (hash
+  `39fd446e`), com o mesmo conteúdo do jogo (281 das 15.625 combinações fecham o
+  ano; a melhor, A-D-C-E-D-A, termina com +R$ 1.714; a pior, D-A-E-C-C-C,
+  devendo R$ 6.135); a **versão 12** do site; as regras **v5** (ou v4, sem o
+  "Li"). O conteúdo das equipes da versão 11 ficou congelado em
+  `test/fixtures/config-equipes-v11.json`, e o motor continua sabendo jogar
+  por equipes (é o config sem a chave `individual`).
+- **Para o Kleber decidir** (nada disto trava a publicação):
+  1. ~~O bloco "Conversa em grupos: o mapa do patrão", do roteiro de 120 min,
+     ainda fala em "equipe" (a atividade é em grupos na sala, e não no app).~~
+     Saiu com o roteiro de 120 min (D-083, abaixo).
+  2. ~~Uma vaga ocupada por um aparelho que saiu (ou que entrou de novo por
+     outro navegador) não se libera.~~ Desde a revisão de 14/10, a vaga presa
+     volta com "Remover inativos" (abaixo). Continua valendo pedir que cada um
+     entre uma vez só, pelo navegador do próprio celular.
+- **Revisão de 14/10, de madrugada** (a revisão adversarial da versão 12;
+  nada muda o que o Kleber decidiu):
+  1. **A decisão fechada sem ninguém na sala** (a rede da turma demorou) abria
+     a 1ª vaga para sempre, sem dono: sobravam 19 vagas, e o placar contava só
+     esse fantasma. Agora só o telão sem celulares joga "a turma" assim;
+     online, a decisão fica sem resultado e fora da conta.
+  2. **A vaga presa** (o celular de teste do apresentador, uma aba repetida):
+     com alguém esperando, "Remover inativos" devolve a vaga de quem está sem
+     sinal há mais de 2 min e ainda não jogou nenhum bimestre, uma por pessoa
+     esperando. Depois do 1º bimestre fechado, nenhuma vaga volta. O roteiro
+     (seção 00) manda o apresentador nunca entrar como aluno.
+  3. **"Continuar sem celulares" antes do 1º bimestre fechado** agora vira "a
+     turma" (um caminho só), como diz o roteiro; antes, o telão seguia contando
+     as pessoas que já tinham entrado, todas com a mesma escolha.
+  4. Na enquete, o "N de M votaram" conta só quem tem vaga.
+  5. O celular diz "o seu voto não fica ligado ao seu nome", e não mais
+     "ninguém, nem o apresentador, vê o seu voto": o voto de cada vaga pode ser
+     lido, sem o nome, que nunca sai do celular.
+  6. O telão tenta dar as vagas até três vezes quando a gravação é recusada.
+
+## 14/10/2026 (de manhã): os três ajustes antes do seminário
+
+Pedidos do Kleber de 13/10 à noite, que chegaram com a revisão da versão 12 já
+rodando. Ainda a versão 12 do site (não publicada) e as regras v5 (ou v4, sem o
+"Li"): nada aqui toca o banco.
+
+**D-082. A tela inicial do telão sem o painel "1. config.json"** (muda a
+abertura da seção 11 da arquitetura).
+- **O que o Kleber pediu:** tirar o painel "1. config.json" (o "Carregar
+  config.json") da tela inicial, deixar o carregar à mão escondido na barra de
+  baixo, como reserva de emergência para abrir sem internet, e centralizar o
+  que sobrar.
+- **Como ficou:** o telão continua lendo o `config.json` do site sozinho. A
+  tela inicial mostra só o título e os blocos **Com celulares** e **Sem
+  celulares** (sem os números "3." e "4."), no meio da tela, em 1024×768,
+  1280×720 e 1920×1080. O "Carregar config.json" (e o "✓ config.json válido",
+  a versão e o hash) foi para uma **barra no pé da tela**, que abre como a
+  barra do apresentador: com o mouse parado na borda de baixo (passar não
+  abre) ou com a tecla H. Arrastar o arquivo para a janela continua valendo.
+- **Quando falta o config ou ele tem problema** (o pendrive, por duplo clique;
+  o site fora do ar; um erro no arquivo), um aviso aparece no meio da tela,
+  com a lista inteira dos erros, e a barra fica aberta de vez: sem config,
+  nenhuma sala é criada, e o botão não pode ficar escondido justamente aí.
+
+**D-083. Só o roteiro de 60 min** (muda a D-019 e a D-032).
+- **O que o Kleber pediu:** tirar o roteiro de 120 min do config. Com ele
+  saem os blocos que só ele tinha, o "Mapa do seminário", a "Conversa em
+  grupos: o mapa do patrão" e "Caminhos: regulação, proteção, organização e
+  educação", e a enquete "termometro" de 3 frases; fica o "termometro_curto"
+  (t1 e t3). Com um roteiro só, o bloco "Roteiro" sai da tela inicial.
+- **Como ficou:** o config passa a `2026-10-14-v5.1-individual` (hash
+  `b91b7dc3`), com o mesmo jogo (281 das 15.625 combinações fecham o ano; a
+  melhor, A-D-C-E-D-A, termina com +R$ 1.714; a pior, D-A-E-C-C-C, devendo
+  R$ 6.135). O telão usa o único roteiro sem perguntar; com mais de um (os
+  configs de teste), o bloco "Roteiro" volta. O motor e o validador continuam
+  aceitando vários roteiros.
+
+**D-084. O resultado do bimestre, no modo individual, por opção** (muda a parte
+do resultado da D-081).
+- **O que o Kleber pediu:** uma linha por OPÇÃO, sem nome nem equipe: a letra,
+  o rótulo, "N pessoas", o saldo do bimestre e a família de quem escolheu
+  aquela opção (o valor, quando todos têm o mesmo; "em média", quando variam)
+  e, embaixo da opção, as consequências com quantas pessoas foram atingidas:
+  "a moto quebrou (revisão adiada) −R$ 790: 3 dessas pessoas". Opção sem
+  ninguém: "0 pessoas" ou omitir, o que coubesse e ficasse mais claro.
+- **Como ficou:** um cartão por opção, como as faixas das equipes (print do
+  resultado por equipe), com as colunas "saldo do bimestre" e "a família"
+  alinhadas e nomeadas uma vez, em cima. Os valores saem em reais inteiros,
+  como na tela de cada um; a média é arredondada. O mesmo motivo com dois
+  valores (a moto que quebra custa menos a quem trocou o pneu) fica junto:
+  "a moto quebrou (revisão adiada) −R$ 560: 1 dessas pessoas · −R$ 790: 2
+  dessas pessoas"; em uma opção de uma pessoa só, "1 pessoa". **A opção que
+  ninguém escolheu fica, apagada, com "0 pessoas" e sem valores:** a turma
+  reconhece as cinco letras da decisão, e a soma das pessoas fecha com o total.
+  Quem não votou continua contado na opção de sempre, com a linha embaixo. O
+  celular do apresentador (modo espectador) mostra o mesmo resumo.
+- **Cabe com 20 pessoas** em 1024×768, 1280×720 com a faixa de entrada e
+  1920×1080, com os apertos de sempre (só quando transborda) e dois novos para
+  o pior caso: o motivo só com a parte principal ("a moto quebrou −R$ 790: 3
+  dessas pessoas") e, por último, sem a linha "O que a turma escolheu · 20
+  pessoas". Medido no pior caso possível do config (as cinco opções com todas
+  as consequências que o jogo permite, em mar–abr e em set–out): só em
+  1024×768 **com** a faixa de entrada ele passa da altura; aí, fechar a
+  entrada (a faixa sai) resolve.
+

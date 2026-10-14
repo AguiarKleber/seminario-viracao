@@ -22,7 +22,7 @@
 
   // Tem de ser igual ao ?v= das tags <script> do telao/index.html: é por ele que
   // se vê, na meta da sala, qual versão do telão criou a sala.
-  const VERSAO_APP = '11';
+  const VERSAO_APP = '12';
   // Chaves do localStorage com a versão: um formato novo nunca lê o estado de um
   // telão velho como se fosse seu.
   const PREFIXO = `viracao:telao:v${VERSAO_APP}:`;
@@ -55,9 +55,11 @@
     el: {},
     config: null, validacao: null, hash: null, textoConfig: null, origemConfig: null,
     roteiroEscolhido: null, erroLeitura: null, lendo: true,
+    // A reserva do config aberta pela tecla H, na abertura (D-082).
+    reservaAberta: false,
     modo: null, canal: null, anf: null, sala: null, nomeRoteiro: null, passos: null,
     estado: null,
-    dados: { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null },
+    dados: { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null, lidos: null },
     // Estado de interface (entra na chave do desenho): nada disto vai ao banco.
     // pagina: a página do comparativo e a do placar final (D-041).
     ui: { pagina: 0, afirmacaoManual: 0, lp: false },
@@ -155,32 +157,47 @@
   // - o comando vale para o anfitrião da hora da tecla: se a sessão trocou
   //   (seguiu sem celulares, voltou à abertura), ele é descartado;
   // - "Continuar sem celulares" e "Salvar estado" nem passam por aqui (socorro).
+  // - modo individual (decisão do Kleber de 13/10 à noite): a vaga que o telão
+  //   dá a quem entra (anfitriao.atribuirVagas) grava o estado com geracao + 1,
+  //   e com 20 celulares entrando juntos no lobby o Espaço do apresentador caía
+  //   nessa janela e era jogado fora ("o estado mudou"). Por isso o comando leva
+  //   também o estado da hora da tecla (opcoes.estado), e vale se, de lá para
+  //   cá, só mudaram a geracao e as vagas abertas (anfitriao.soMudaramAsVagas):
+  //   o passo é o mesmo, e o comando ainda faz sentido.
+  // - silencioso: o comando que o próprio telão dispara, sem tecla (a vaga de
+  //   quem entra). A recusa e o erro não abrem a barra na frente da turma: quem
+  //   chama tenta de novo.
   let fila = Promise.resolve();
-  function executar(fn, { geracao } = {}) {
+  function executar(fn, { geracao, estado, silencioso = false } = {}) {
     if (app.passivo) {
-      avisar(AVISO_PASSIVO, 'erro');
+      if (!silencioso) avisar(AVISO_PASSIVO, 'erro');
       return Promise.resolve();
     }
     if (semConexao()) {
-      avisar(AVISO_SEM_CONEXAO, 'erro');
+      if (!silencioso) avisar(AVISO_SEM_CONEXAO, 'erro');
       return Promise.resolve();
     }
     const anf = app.anf;
     const online = app.modo === 'online';
     const p = fila.then(() => {
       if (app.anf !== anf) throw new Error('ESTADO_MUDOU: a sessão mudou antes de o comando rodar.');
-      if (geracao !== undefined && app.estado?.geracao !== geracao) throw new Error('ESTADO_MUDOU: o estado mudou antes de o comando rodar.');
+      if (geracao !== undefined && app.estado?.geracao !== geracao && !soMudaramAsVagas(estado, app.estado)) {
+        throw new Error('ESTADO_MUDOU: o estado mudou antes de o comando rodar.');
+      }
       const r = fn();
       return online ? comLimite(Promise.resolve(r), ESPERA_SERVICO_MS, 'SEM_RESPOSTA: o serviço não respondeu.') : r;
     });
     fila = p.catch(() => {});
-    p.catch(mostrarErro);
+    p.catch(silencioso ? avisarDiscreto : mostrarErro);
     return p;
   }
 
-  // A geracao que o apresentador vê agora: é o que os comandos que dependem do
-  // passo atual levam para a fila.
-  const vista = () => ({ geracao: app.estado?.geracao });
+  // Só no modo individual: nas equipes, a vaga nunca muda sozinha o estado.
+  const soMudaramAsVagas = (antes, depois) => individual() && N().anfitriao.soMudaramAsVagas(antes, depois);
+
+  // A geracao (e o estado) que o apresentador vê agora: é o que os comandos que
+  // dependem do passo atual levam para a fila.
+  const vista = (e = app.estado) => ({ geracao: e?.geracao, estado: e });
 
   const AVISO_SEM_CONEXAO = 'Sem conexão com o serviço: o comando não foi enviado. Espere o selo voltar a "conectado", ou siga sem celulares.';
   const AVISO_PASSIVO = 'Outra máquina assumiu esta sala com o PIN: este telão só acompanha. Para voltar a comandar daqui, recarregue e retome com o PIN.';
@@ -209,6 +226,11 @@
 
   function mostrarErro(erro) {
     avisar(traduzirErro(erro && erro.message ? erro.message : erro), 'erro');
+  }
+
+  // O erro do comando silencioso: só na barra, quando o apresentador a abrir.
+  function avisarDiscreto(erro) {
+    avisar(`Um comando automático do telão não foi gravado (${traduzirErro(erro && erro.message ? erro.message : erro)}); ele é tentado de novo.`);
   }
 
   let avisoTimer = 0;
@@ -399,6 +421,46 @@
   // pelo caminho de cada equipe. Sem a chave, todas as telas ficam como antes.
   const simples = () => N().historia.formatoSimples(app.config);
 
+  // O modo individual (regras.individual, com o formato simples; decisão do
+  // Kleber de 13/10 à noite): cada aluno joga sozinho, em uma vaga própria (uma
+  // "equipe de uma pessoa") que o telão dá quando ele entra. O voto é secreto e
+  // o tema é sensível: o telão mostra só o resumo da turma, em contagens e
+  // distribuições, e nunca uma vaga nem um nome (o nome fica só no celular de
+  // cada um). Sem a chave, todas as telas ficam como as das equipes.
+  const individual = () => Boolean(app.config) && N().historia.individual(app.config);
+
+  // "A turma" (modo individual sem celulares): o telão joga um caminho só, uma
+  // vaga, com a escolha da turma marcada pelo apresentador, para nunca travar
+  // se a internet cair antes de a aula começar. É assim enquanto não há membro
+  // nenhum e no máximo uma vaga em jogo. "Continuar sem celulares" antes de
+  // qualquer bimestre fechar também cai aqui (ele tira os alunos e as vagas da
+  // cópia local). Depois de um bimestre fechado com celulares, ou ao carregar
+  // um estado com várias vagas, as telas continuam com as contagens da turma,
+  // e a escolha marcada vale para todas as vagas (anfitriao.decidirPelaTurma).
+  function soATurma() {
+    if (!individual() || app.modo !== 'offline') return false;
+    if (Object.keys(app.dados.membros || {}).length > 0) return false;
+    return N().historia.vagasEmJogo(app.config, app.estado).length <= 1;
+  }
+
+  // "N pessoas na sala": quem tem vaga aberta (historia.pessoasNaSala).
+  const pessoasNaSala = () => N().historia.pessoasNaSala(app.config, { estado: app.estado, membros: app.dados.membros });
+
+  // "N de M já escolheram", com o mesmo filtro da apuração e os ativos do
+  // "n de m votaram" (historia.contagemDaDecisao).
+  const contagemDaTurma = (e) => N().historia.contagemDaDecisao(app.config, {
+    estado: e, membros: app.dados.membros, decisoes: app.dados.decisoes, ativos: ativosAgora(),
+  });
+
+  // A escolha que o apresentador marcou para a turma (offline): a mesma opção
+  // em todas as vagas em jogo, ou null.
+  function escolhaDaTurma(e) {
+    const vagas = N().historia.vagasEmJogo(app.config, e);
+    const marcadas = new Set(vagas.map((v) => e?.forcadas?.[v] ?? null));
+    const [unica] = marcadas;
+    return vagas.length > 0 && marcadas.size === 1 && typeof unica === 'string' ? unica : null;
+  }
+
   // O nome curto da rodada ("Jan–fev"), pela posição dela no config: a mesma
   // regra da história e do resumo do celular (historia.rotuloDaRodada).
   function rotuloDaRodada(rodadaId) {
@@ -492,7 +554,7 @@
   const CONEXAO_LENTA_MS = 8000;
   // Tem de ser o mesmo valor que firebase/regras.json aceita em regrasVersao
   // (test/regras.test.mjs confere, e prende a versão ao conteúdo das regras).
-  const REGRAS_VERSAO = 'v4';
+  const REGRAS_VERSAO = 'v5';
   const CHAVE_ULTIMA_ONLINE = PREFIXO + 'ultimaOnline';
   const CAMPOS_CONEXAO = ['apiKey', 'authDomain', 'databaseURL', 'projectId', 'appId'];
   // O emulador (arquitetura, seção A, item 9) não precisa de chave de verdade:
@@ -858,15 +920,28 @@
     // Quem entra depois da trava (ou tem equipe fechada) vai para uma equipe pelo
     // telão (contratos, seção 7). A assinatura evita repetir a mesma distribuição
     // a cada presença que chega.
+    // Modo individual: é aqui que cada aluno que entra ganha a vaga dele (o
+    // distribuirAtrasados do anfitrião chama o atribuirVagas). Os soltos saem do
+    // próprio espelho (os membros e o estado da mesma leitura): com o estado da
+    // tela, um instante mais velho, quem acabou de ganhar a vaga ainda parecia
+    // solto. Quem fica sem vaga (a sala cheia) continua solto, e a assinatura
+    // segura a repetição.
+    // Revisão do núcleo (13/10, item 3): se a gravação falhava (a rede, ou outra
+    // gravação passando na frente duas vezes), a assinatura ficava, e o aluno
+    // ficava preso em "Entrando na sala…" até alguém mais entrar. Agora a falha
+    // (e a recusa sem conexão, que nem chega à fila) zera a assinatura, e a
+    // próxima mudança da sala (o pulso do próprio telão, a cada 10 s) tenta de novo.
     let assinatura = '';
     function vigiarAtrasados(arvore) {
-      const e = app.estado;
+      const e = arvore.estado || app.estado;
       if (!app.anf || !e || e.equipesTravadas !== true) return;
       const soltos = Object.keys(arvore.membros || {}).filter((u) => !tem(e.equipesAbertas, arvore.membros[u]?.equipe)).sort();
       const nova = soltos.join(',');
       if (nova === assinatura) return;
       assinatura = nova;
-      if (soltos.length > 0) executar(() => app.anf.distribuirAtrasados());
+      if (soltos.length === 0) return;
+      const rearmar = () => { if (assinatura === nova) assinatura = ''; };
+      executar(() => app.anf.distribuirAtrasados(), { silencioso: individual() }).then((n) => { if (n === undefined) rearmar(); }, rearmar);
     }
   }
 
@@ -907,7 +982,8 @@
     };
     atualizarBlocoOnline();
     return el('section', { classe: 'abertura-bloco', id: 'bloco-online', 'aria-labelledby': 'titulo-online' }, [
-      el('h2', { id: 'titulo-online', texto: '3. Com celulares' }),
+      // Sem o "3.": desde a D-082 a tela inicial não tem mais os passos 1 e 2.
+      el('h2', { id: 'titulo-online', texto: 'Com celulares' }),
       online.el.status,
       el('label', { for: 'pin-apresentador', texto: 'PIN do apresentador (digite antes de projetar)' }),
       pin,
@@ -942,15 +1018,17 @@
     const c = canal || await abrirCanal(modo, { sala });
     const passos = N().roteiro.passos(app.config, nomeRoteiro);
     Object.assign(app, { modo, canal: c, sala, nomeRoteiro, passos, estado: null, chaveDesenho: null, chavePasso: null });
-    app.dados = { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null };
+    app.dados = { meta: null, membros: null, presenca: null, resultados: null, placar: null, enquetes: null, votos: null, decisoes: null, lidos: null };
     app.ui = { pagina: 0, afirmacaoManual: 0, lp: false };
     app.inicioPasso = lerLocal(chavePassoLocal(sala));
     app.passivo = false;
     app.revendo = null;
     // Só o anfitrião desta sessão desenha: o de uma sessão anterior (um comando
     // online que ainda termina depois de seguir sem celulares) não mexe na tela.
+    // semCelulares: só o offline joga "a turma" quando a rodada fecha sem
+    // ninguém na sala (revisão de 14/10, achado 1).
     const anf = N().anfitriao.criar({
-      canal: c, config: app.config, sala, nomeRoteiro, versaoApp: VERSAO_APP,
+      canal: c, config: app.config, sala, nomeRoteiro, versaoApp: VERSAO_APP, semCelulares: modo === 'offline',
       gerarSemente: aleatorioUint32, aoMudar: (e) => { if (app.anf === anf) aoMudarEstado(e); },
     });
     app.anf = anf;
@@ -1024,6 +1102,9 @@
   function ligarOuvintes() {
     desligarOuvintes();
     for (const no of ['meta', 'membros', 'presenca', 'resultados', 'placar', 'enquetes']) ouvir(no, no);
+    // [Li] O "Li, pode seguir" de cada aluno (regras v5): o telão é o anfitrião
+    // e lê a sala inteira. Só no modo individual: nas equipes, nada muda.
+    if (individual()) ouvir('lidos', 'lidos');
     // O estado também é ouvido, e não só recebido do anfitrião: outra janela (ou
     // outra máquina, online) pode tê-lo mudado. O anfitrião descobre no próximo
     // comando (CONFLITO); a tela, já.
@@ -1221,6 +1302,22 @@
     apagarLocal(CHAVE_ULTIMA_ONLINE);
     online.salaRetomar = '';
     podarVotos(arvore, arvore.estado);
+    // Modo individual, antes de qualquer bimestre fechar: a sala passa a ser
+    // "a turma" (soATurma), um caminho só, como no pendrive. Os alunos e as
+    // vagas saem da cópia local. Revisão de 14/10 (achado 3): os membros
+    // ficavam, e o telão seguia contando "5 pessoas" que jogavam todas a mesma
+    // escolha de mão levantada, com 5 colunas iguais no placar. Com bimestre
+    // já fechado (a queda no meio do jogo), cada pessoa segue o ano dela com a
+    // escolha da turma (anfitriao.decidirPelaTurma), e o placar continua por
+    // pessoas.
+    if (individual() && Object.keys(arvore.resultados || {}).length === 0) {
+      delete arvore.membros;
+      if (arvore.estado) {
+        arvore.estado = { ...arvore.estado };
+        delete arvore.estado.equipesAbertas;
+        delete arvore.estado.forcadas;
+      }
+    }
     // A trava da aba passa do online para o offline: o desligarOuvintes acabou
     // de soltá-la, e o navegador pode levar um instante para liberar.
     await ligarOffline({ sala, uid: arvore.meta.hostUid, nomeRoteiro, criar: false, arvore, esperarMs: 3000 });
@@ -1256,6 +1353,8 @@
       app.hash = N().validarConfig.hash(v.config);
       const nomes = Object.keys(v.config.roteiros);
       if (!nomes.includes(app.roteiroEscolhido)) app.roteiroEscolhido = nomes[0];
+      // Config válido: a reserva aberta pelo H fecha (D-082).
+      app.reservaAberta = false;
     } else {
       app.config = null;
       app.hash = null;
@@ -1275,42 +1374,37 @@
     const v = app.validacao;
     const titulo = app.config ? app.config.titulo : 'Telão do seminário';
 
-    // Config: estado da leitura, erros (a lista inteira), avisos e o hash.
-    const blocoConfig = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-config' }, [
-      el('h2', { id: 'titulo-config', texto: '1. config.json' }),
-    ]);
-    if (app.lendo) blocoConfig.appendChild(el('p', { classe: 'abertura-status', texto: 'Lendo config.json…' }));
-    else if (!v) {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status', texto: app.erroLeitura
-        ? `Não foi possível ler o config.json do site (${app.erroLeitura}). Carregue o arquivo.`
-        : 'Aberto pelo arquivo (pendrive): carregue o config.json.' }));
-    } else if (v.ok) {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status abertura-ok' }, [
-        el('span', { classe: 'marca-ok', 'aria-hidden': 'true', texto: '✓' }),
-        ` Válido · versão ${app.config.versao} · hash `, el('code', { id: 'hash-config', texto: app.hash }),
-      ]));
-    } else {
-      blocoConfig.appendChild(el('p', { classe: 'abertura-status abertura-erro', role: 'alert', texto: `O config.json tem ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}. A sala não pode ser criada até corrigir todos:` }));
-      blocoConfig.appendChild(el('ol', { classe: 'lista-erros', id: 'erros-config' }, v.erros.map((e) => el('li', {}, [el('code', { texto: e.caminho }), ` ${e.mensagem}`]))));
+    // Pedido do Kleber de 13/10 à noite (D-082): a abertura sem o painel
+    // "1. config.json". O config do site é lido sozinho, e carregar o arquivo à
+    // mão virou reserva de emergência (o pendrive, sem internet), na barra
+    // oculta do pé da tela (montarReservaConfig). Só quando falta o config, ou
+    // ele tem problema, um aviso aparece no meio da tela, com a lista inteira
+    // dos erros, e a barra fica aberta: sem config, nenhuma sala é criada, e
+    // o apresentador precisa achar o botão sem saber que ele existe.
+    const problemaConfig = !app.lendo && (!v || !v.ok);
+    let blocoConfig = null;
+    if (problemaConfig && !v) {
+      blocoConfig = el('section', { classe: 'abertura-bloco abertura-alerta', id: 'aviso-config', role: 'alert', 'aria-labelledby': 'titulo-config' }, [
+        el('h2', { id: 'titulo-config', texto: 'Falta o config.json' }),
+        el('p', { classe: 'abertura-status', texto: app.erroLeitura
+          ? `Não foi possível ler o config.json do site (${app.erroLeitura}). Carregue o arquivo pela barra de baixo, ou arraste-o para esta janela.`
+          : 'Aberto pelo arquivo (pendrive): carregue o config.json pela barra de baixo, ou arraste-o para esta janela.' }),
+      ]);
+    } else if (problemaConfig) {
+      blocoConfig = el('section', { classe: 'abertura-bloco abertura-alerta', id: 'aviso-config', 'aria-labelledby': 'titulo-config' }, [
+        el('h2', { id: 'titulo-config', texto: `O config.json tem ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}` }),
+        el('p', { classe: 'abertura-status abertura-erro', role: 'alert', texto: 'A sala não pode ser criada até corrigir todos. Depois, carregue o arquivo de novo pela barra de baixo.' }),
+        el('ol', { classe: 'lista-erros', id: 'erros-config' }, v.erros.map((e) => el('li', {}, [el('code', { texto: e.caminho }), ` ${e.mensagem}`]))),
+      ]);
     }
-    if (v && v.avisos.length > 0) {
-      blocoConfig.appendChild(el('details', { classe: 'lista-avisos' }, [
-        el('summary', { texto: `${v.avisos.length} ${v.avisos.length === 1 ? 'aviso' : 'avisos'} (não impedem a sala)` }),
-        el('ul', {}, v.avisos.map((a) => el('li', {}, [el('code', { texto: a.caminho }), ` ${a.mensagem}`]))),
-      ]));
-    }
-    const entradaConfig = el('input', { type: 'file', id: 'arquivo-config', accept: '.json,application/json', classe: 'invisivel',
-      ao: { change: (ev) => lerConfigDeArquivo(ev.target.files[0]).catch(mostrarErro) } });
-    blocoConfig.appendChild(el('div', { classe: 'zona-arquivo', id: 'zona-config' }, [
-      entradaConfig,
-      el('label', { for: 'arquivo-config', classe: 'botao', texto: 'Carregar config.json' }),
-      el('span', { classe: 'zona-dica', texto: 'ou arraste o arquivo para esta janela' }),
-    ]));
 
-    // Roteiro: 60 ou 120 min (D-019).
-    const blocoRoteiro = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-roteiro' }, [el('h2', { id: 'titulo-roteiro', texto: '2. Roteiro' })]);
-    if (app.config) {
-      const opcoes = Object.keys(app.config.roteiros).map((nome) => {
+    // Roteiro (D-019): desde a D-083, o config do dia tem um roteiro só (o de
+    // 60 min), e o telão usa esse, sem perguntar. O bloco só aparece com mais
+    // de um, como nos configs de teste.
+    const nomesRoteiros = app.config ? Object.keys(app.config.roteiros) : [];
+    let blocoRoteiro = null;
+    if (nomesRoteiros.length > 1) {
+      const opcoes = nomesRoteiros.map((nome) => {
         const passos = N().roteiro.passos(app.config, nome);
         const min = Math.round(N().roteiro.somaAlvos(passos) / 60);
         return el('label', { classe: 'opcao-roteiro' }, [
@@ -1319,9 +1413,10 @@
           el('span', {}, [el('b', { texto: nome }), ` · ${passos.length} passos, ${min} min planejados`]),
         ]);
       });
-      blocoRoteiro.appendChild(el('div', { classe: 'opcoes-roteiro', role: 'radiogroup' }, opcoes));
-    } else {
-      blocoRoteiro.appendChild(el('p', { classe: 'abertura-status', texto: 'Aparece depois do config.json.' }));
+      blocoRoteiro = el('section', { classe: 'abertura-bloco abertura-roteiro', 'aria-labelledby': 'titulo-roteiro' }, [
+        el('h2', { id: 'titulo-roteiro', texto: 'Roteiro' }),
+        el('div', { classe: 'opcoes-roteiro', role: 'radiogroup' }, opcoes),
+      ]);
     }
 
     // Retomar a sessão offline guardada neste navegador.
@@ -1363,17 +1458,72 @@
     const blocoComecar = el('section', { classe: 'abertura-bloco', 'aria-labelledby': 'titulo-comecar' }, [
       // Com o bloco "Com celulares" (site publicado), ele vem antes: é o modo
       // normal da aula, e o sem celulares vira a alternativa.
-      el('h2', { id: 'titulo-comecar', texto: blocoOnline ? '4. Sem celulares' : '3. Começar' }),
+      el('h2', { id: 'titulo-comecar', texto: blocoOnline ? 'Sem celulares' : 'Começar' }),
       el('div', { classe: 'abertura-acoes' }, acoes),
-      el('p', { classe: 'abertura-nota', texto: 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5) e cada equipe anuncia a sua decisão.' }),
+      // No modo individual, sem celulares, a turma escolhe junto (D-081).
+      el('p', { classe: 'abertura-nota', texto: individual()
+        ? 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5), e a turma escolhe junto cada decisão.'
+        : 'Sem celulares: as enquetes são contadas por mão levantada (teclas 1 a 5) e cada equipe anuncia a sua decisão.' }),
     ]);
 
     D().acrescentar(palco, el('section', { classe: 'tela tela-abertura' }, [
       el('header', { classe: 'tela-cabecalho' }, [
-        el('div', {}, [el('p', { classe: 'kicker', texto: 'Telão do apresentador' }), el('h1', { texto: titulo })]),
+        el('div', { classe: 'cabecalho-textos' }, [
+          el('p', { classe: 'kicker', texto: 'Telão do apresentador' }),
+          el('h1', { texto: titulo }),
+          app.lendo ? el('p', { classe: 'abertura-status', id: 'status-config', role: 'status', texto: 'Lendo config.json…' }) : null,
+        ]),
       ]),
-      el('div', { classe: 'abertura-grade' }, [blocoConfig, blocoRoteiro, blocoRetomar, blocoOnline, blocoComecar]),
+      el('div', { classe: 'abertura-grade' }, [blocoConfig, blocoRetomar, blocoRoteiro, blocoOnline, blocoComecar]),
+      montarReservaConfig({ aberta: problemaConfig }),
     ]));
+  }
+
+  // A reserva de emergência do config (D-082): uma barra no pé da tela, como a
+  // barra do apresentador da sessão (D-038), escondida até o mouse parar na
+  // faixa fina de baixo (ou até a tecla H, ou o Tab chegar ao botão); aberta
+  // de vez quando falta o config ou ele tem problema. Mostra o estado da
+  // leitura (o "✓ válido", a versão e o hash) e carrega o arquivo pelo seletor
+  // ou arrastado para a janela (ligarArrastar). Esconder e mostrar é só CSS
+  // (telao.css, .reserva-config): na abertura não há estado nem fila, e a
+  // barra some junto com a abertura quando a sessão começa.
+  function montarReservaConfig({ aberta }) {
+    const { el } = D();
+    const v = app.validacao;
+    let estado;
+    if (app.lendo) estado = el('span', { classe: 'reserva-estado', texto: 'Lendo config.json…' });
+    else if (v?.ok) {
+      estado = el('span', { classe: 'reserva-estado abertura-ok' }, [
+        el('span', { classe: 'marca-ok', 'aria-hidden': 'true', texto: '✓' }),
+        ` config.json válido · versão ${app.config.versao} · hash `, el('code', { id: 'hash-config', texto: app.hash }),
+      ]);
+    } else if (v) estado = el('span', { classe: 'reserva-estado abertura-erro', texto: `config.json com ${v.erros.length} ${v.erros.length === 1 ? 'problema' : 'problemas'}` });
+    else estado = el('span', { classe: 'reserva-estado abertura-erro', texto: 'Sem config.json' });
+    const entradaConfig = el('input', { type: 'file', id: 'arquivo-config', accept: '.json,application/json', classe: 'invisivel',
+      ao: { change: (ev) => lerConfigDeArquivo(ev.target.files[0]).catch(mostrarErro) } });
+    return el('aside', {
+      classe: 'reserva-config', id: 'reserva-config', 'aria-label': 'Reserva: carregar o config.json',
+      dados: { fixa: aberta ? 'true' : 'false', aberta: app.reservaAberta ? 'true' : 'false' },
+    }, [
+      estado,
+      el('div', { classe: 'zona-arquivo', id: 'zona-config' }, [
+        entradaConfig,
+        el('label', { for: 'arquivo-config', classe: 'botao botao-barra', texto: 'Carregar config.json' }),
+        el('span', { classe: 'zona-dica', texto: 'ou arraste o arquivo para esta janela' }),
+      ]),
+      v && v.avisos.length > 0 ? el('details', { classe: 'lista-avisos' }, [
+        el('summary', { texto: `${v.avisos.length} ${v.avisos.length === 1 ? 'aviso' : 'avisos'} (não impedem a sala)` }),
+        el('ul', {}, v.avisos.map((a) => el('li', {}, [el('code', { texto: a.caminho }), ` ${a.mensagem}`]))),
+      ]) : null,
+    ]);
+  }
+
+  // A tecla H na abertura abre e fecha a reserva do config (a mesma tecla da
+  // barra da sessão).
+  function alternarReservaConfig() {
+    app.reservaAberta = !app.reservaAberta;
+    const r = document.getElementById('reserva-config');
+    if (r) r.dataset.aberta = app.reservaAberta ? 'true' : 'false';
   }
 
   // Retomar a sessão offline guardada neste navegador. O canal nasce com o
@@ -1484,11 +1634,14 @@
         if (e.subfase === 'votando') return { id: 'enquete-votando', desenhar: telaEnqueteVotando, chave: chaveEnqueteVotando };
         if (e.subfase === 'fechando') return telaDoFechando(e);
         return { id: 'enquete-apurada', desenhar: telaEnqueteApurada, chave: () => app.dados.enquetes?.[e.enquete]?.[e.momento] ?? null };
-      case 'bloco': return { id: 'bloco', desenhar: telaBloco, chave: () => app.dados.placar };
+      case 'bloco': return { id: 'bloco', desenhar: telaBloco, chave: () => [app.dados.placar, contagemDosLidos(e)] };
       case 'formarEquipes': return { id: 'formar-equipes', desenhar: telaFormarEquipes, chave: chaveMembrosPorEquipe };
-      case 'personas': return { id: 'personas', desenhar: telaPersonas };
+      case 'personas': return { id: 'personas', desenhar: telaPersonas, chave: () => contagemDosLidos(e) };
       case 'rodada':
-        if (e.subfase === 'decidindo') return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
+        // No modo individual não há prorrogação (o anfitrião vai direto à
+        // moeda: a vaga é de uma pessoa); uma que chegue assim mesmo (sala de
+        // antes) fica na tela da decisão, sem as células das vagas.
+        if (e.subfase === 'decidindo' || (e.subfase === 'prorrogacao' && individual())) return { id: 'rodada-decidindo', desenhar: telaRodadaDecidindo, chave: chaveDecisoes };
         if (e.subfase === 'prorrogacao') return { id: 'rodada-prorrogacao', desenhar: telaProrrogacao, chave: chaveDecisoes };
         if (e.subfase === 'fechando') return telaDoFechando(e);
         // Formato simples: não há sorteio. Um "sorteio" que chegue assim mesmo
@@ -1585,19 +1738,40 @@
   }
 
   function chaveLobby() {
-    return [ativosAgora().size, Object.keys(app.dados.membros || {}).length, app.dados.meta?.entradaAberta];
+    return [ativosAgora().size, Object.keys(app.dados.membros || {}).length, app.dados.meta?.entradaAberta, individual() ? pessoasNaSala() : null];
+  }
+
+  // O que a turma vê no lobby: no modo individual, "N pessoas na sala" (quem já
+  // tem a vaga; quem chega com as 20 ocupadas vê "A sala está cheia" no
+  // celular, e o telão diz que encheu). Nas equipes, os conectados.
+  function contagemDoLobby() {
+    const { el } = D();
+    if (!individual()) {
+      const conectados = ativosAgora().size;
+      return el('p', { classe: 'lobby-conectados' }, [el('b', { classe: 'numero-grande', texto: F().inteiro(conectados) }), conectados === 1 ? ' conectado' : ' conectados']);
+    }
+    const n = pessoasNaSala();
+    const cheia = n >= equipesOrdem().length;
+    return el('p', { classe: 'lobby-conectados', dados: { pessoas: String(n) } }, [
+      el('b', { classe: 'numero-grande', texto: F().inteiro(n) }), n === 1 ? ' pessoa na sala' : ' pessoas na sala',
+      cheia ? el('span', { classe: 'lobby-cheia', texto: ' · a sala está cheia' }) : null,
+    ]);
   }
 
   function telaLobby(s) {
     const { el } = D();
     if (app.modo === 'offline') {
+      // Modo individual sem celulares: a turma decide junto, de mão levantada,
+      // e o telão joga um caminho só (soATurma).
       D().acrescentar(s, [
         cabecalho('Sessão sem celulares', app.config.titulo),
         el('div', { classe: 'lobby-offline' }, [
           el('p', { classe: 'texto-grande', texto: 'Nesta sessão não há votação pelo celular.' }),
           el('ul', { classe: 'lista-simples' }, [
             el('li', { texto: 'Enquetes: mão levantada ou cartões, contados pelo apresentador.' }),
-            el('li', { texto: 'Decisões: cada equipe anuncia a sua, e o apresentador registra.' }),
+            el('li', { texto: individual()
+              ? 'Decisões: a turma escolhe junto, de mão levantada, e o apresentador registra a escolha.'
+              : 'Decisões: cada equipe anuncia a sua, e o apresentador registra.' }),
           ]),
         ]),
       ]);
@@ -1605,7 +1779,6 @@
     }
     const url = urlAluno();
     const lado = Math.floor(Math.min(raiz.innerHeight * 0.6, raiz.innerWidth * 0.45));
-    const conectados = ativosAgora().size;
     D().acrescentar(s, el('div', { classe: 'lobby' }, [
       el('div', { classe: 'lobby-qr' }, [G().qr(url, { lado, rotuloAria: `QR para entrar na sala ${app.sala}` })]),
       el('div', { classe: 'lobby-info' }, [
@@ -1616,7 +1789,7 @@
         el('p', { classe: 'codigo-sala', texto: app.sala }),
         // O "N ativos / M membros" é do apresentador e fica só na barra (D-047):
         // a turma precisa do número de conectados, e não do controle de inativos.
-        el('p', { classe: 'lobby-conectados' }, [el('b', { classe: 'numero-grande', texto: F().inteiro(conectados) }), conectados === 1 ? ' conectado' : ' conectados']),
+        contagemDoLobby(),
       ]),
     ]));
   }
@@ -1671,8 +1844,16 @@
     }
     let votaram = 0;
     for (const n of porUid.values()) if (n === abertas.length) votaram += 1;
-    const ativos = ativosAgora().size;
-    return { votaram, total: Math.max(ativos, votaram) };
+    // Modo individual: só quem tem vaga vê a enquete. O aparelho na "sala
+    // cheia" (ou ainda "Entrando na sala…") manda presença e não vota, e a
+    // conta ficava em "20 de 21 votaram" para sempre (revisão de 14/10, achado
+    // 4). É o mesmo filtro da decisão (historia.contagemDaDecisao).
+    let ativos = ativosAgora();
+    if (individual()) {
+      const comVaga = (u) => tem(e.equipesAbertas, app.dados.membros?.[u]?.equipe) && e.equipesAbertas[app.dados.membros[u].equipe] === true;
+      ativos = new Set([...ativos].filter(comVaga));
+    }
+    return { votaram, total: Math.max(ativos.size, votaram) };
   }
 
   function chaveEnqueteVotando(e) {
@@ -1990,6 +2171,33 @@
   // era, com a trilha e o placar resumido.
   const temConteudo = (passo) => Boolean(passo?.contexto || passo?.itens?.length);
 
+  // [Li] "N de M leram" (pedido do Kleber de 07/10; regras v5): no "Conheça o
+  // Jonas" e nos blocos com conteúdo, o celular de cada aluno tem o botão "Li,
+  // pode seguir", que grava lidos/{uid} = o índice do passo. O telão só
+  // informa, discreto, no kicker ("Apresentação · 17 de 20 leram"): quem avança
+  // é o apresentador, quando quiser. Na linha do kicker, e não ao lado do
+  // título, para não tirar altura nem largura da tela (os blocos de dados já
+  // apertam com a faixa de entrada). Só online, no modo individual, no passo
+  // atual (revisto, o passo já passou) e com alguém na conta: M é quem joga,
+  // e quem sumiu sem ler sai dele (historia.contagemDeLidos, com os ativos).
+  function contagemDosLidos(e) {
+    if (!individual() || app.modo !== 'online' || !e || e.revisto) return null;
+    const passo = passoDe(e);
+    const comBotao = passo?.tipo === 'personas' || (passo?.tipo === 'bloco' && (temConteudo(passo) || Boolean(passo.fonte)));
+    if (!comBotao) return null;
+    const c = N().historia.contagemDeLidos(app.config, { estado: e, membros: app.dados.membros, lidos: app.dados.lidos, ativos: ativosAgora() });
+    return c.total > 0 ? c : null;
+  }
+
+  // O kicker com o "N de M leram", e os números na seção (o e2e lê).
+  function comLidos(s, e, kicker) {
+    const c = contagemDosLidos(e);
+    if (!c) return kicker;
+    s.dataset.leram = String(c.leram);
+    s.dataset.totalLidos = String(c.total);
+    return `${kicker} · ${F().inteiro(c.leram)} de ${F().inteiro(c.total)} ${c.leram === 1 ? 'leu' : 'leram'}`;
+  }
+
   function conteudoDoBloco(passo) {
     const { el } = D();
     return [
@@ -2005,11 +2213,13 @@
     const conteudo = temConteudo(passo);
     if (mapa) s.classList.add('bloco-mapa');
     if (conteudo) s.classList.add('bloco-com-conteudo');
-    s.appendChild(cabecalho('Apresentação', passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
+    s.appendChild(cabecalho(comLidos(s, e, 'Apresentação'), passo.titulo || 'Apresentação', { classeTitulo: 'titulo-bloco' }));
     if (conteudo) D().acrescentar(s, conteudoDoBloco(passo));
     if (mapa || !conteudo) s.appendChild(linhaDoTempo(e, { mapa }));
-    // Revisto (modo revendo), o placar de quando o bloco estava na tela.
-    if (!mapa && !conteudo && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
+    // Revisto (modo revendo), o placar de quando o bloco estava na tela. No modo
+    // individual, nunca: seria uma linha por vaga, e o telão não mostra nada por
+    // pessoa (pedido do Kleber de 13/10, 21h, item 1).
+    if (!mapa && !conteudo && !individual() && e.equipesTravadas && ativas(e).length > 0) s.appendChild(placarResumido('placar-discreto', e.revisto ? e.indice : null));
     // Com a faixa de entrada embaixo (online), o bloco mais longo pode passar
     // de 1024×768: só quando a tela transborda (medida depois do desenho), as
     // entrelinhas e os vãos diminuem (data-aperto), com a letra nos 28 px.
@@ -2067,7 +2277,7 @@
       if (abertas.size >= max) return avisar(`O máximo é de ${max} equipes.`);
       abertas.add(id);
     }
-    executar(() => app.anf.definirEquipesAbertas([...abertas]), { geracao: e.geracao });
+    executar(() => app.anf.definirEquipesAbertas([...abertas]), vista(e));
   }
 
   function telaFormarEquipes(s, e) {
@@ -2157,7 +2367,7 @@
     const primeira = ativas(e)[0] ?? equipesOrdem()[0];
     const p = personaDaEquipe(primeira);
     const mes = N().motor.mesComum(app.config, primeira);
-    s.appendChild(cabecalho('Todas as equipes jogam com o mesmo personagem', `Conheça o ${p.nome || 'personagem'}`));
+    s.appendChild(cabecalho(comLidos(s, e, individual() ? 'Todos jogam com o mesmo personagem' : 'Todas as equipes jogam com o mesmo personagem'), `Conheça o ${p.nome || 'personagem'}`));
     const pedaco = (rotulo, valor, classe) => el('li', { classe: ['conheca-linha', classe] }, [el('span', { texto: rotulo }), el('b', { texto: valor })]);
     const fixos = lista(p.todoMes).filter((t) => t && t.fixo === true && Number(t.soma?.renda) < 0).map((t) => t.rotulo).filter(Boolean);
     const outra = p.outraRenda && p.outraRenda.valor > 0 ? p.outraRenda : null;
@@ -2183,6 +2393,18 @@
         ? 'Em um mês comum, a conta fecha: sobra dinheiro depois de pagar as contas e sustentar a casa.'
         : 'Em um mês comum, a conta não fecha: falta dinheiro para pagar as contas e sustentar a casa.'),
     ]));
+    // Com a faixa de entrada embaixo, em 1280×720, a frase do mês comum passava
+    // da faixa (e2e individual-online, 13/10; nas equipes, o e2e online não
+    // media esta tela). Só quando a tela transborda (medido depois do desenho):
+    // primeiro, entrelinhas e vãos menores; depois, quem é e a frase do mês no
+    // tamanho do corpo; por último, sai o básico item a item (o total fica na
+    // conta, e os itens estão no celular). A letra fica nos 28 px.
+    app.depoisDeMedir.push(() => {
+      for (const degrau of ['1', '2', '3']) {
+        if (s.scrollHeight <= s.clientHeight + 1) return;
+        s.dataset.aperto = degrau;
+      }
+    });
   }
 
   function telaPersonas(s, e) {
@@ -2242,6 +2464,7 @@
 
   function chaveDecisoes(e) {
     if (app.modo === 'offline') return null; // as decisões do apresentador estão no estado
+    if (individual()) return contagemDaTurma(e);
     return ativas(e).map((eq) => contagemDecisoes(e, eq));
   }
 
@@ -2257,6 +2480,13 @@
     const decorrido = (agora() - e.abertoEm) / 1000;
     const minimo = app.config.tempos.decisaoMinSeg;
     if (decorrido < minimo) return `Tempo mínimo de conversa: faltam ${F().relogio((minimo - decorrido) * 1000)}`;
+    if (individual()) {
+      if (app.modo === 'offline') {
+        return escolhaDaTurma(e) ? 'A escolha da turma está marcada. Enter encerra.' : 'Marque a escolha da turma (a letra na tela, ou "Decidir pela turma"); sem ela, fica a opção de sempre. Enter encerra.';
+      }
+      const { escolheram, total } = contagemDaTurma(e);
+      return total > 0 && escolheram >= total ? 'Todos já escolheram. Enter encerra.' : 'Enter encerra a decisão.';
+    }
     const equipes = ativas(e);
     if (equipes.length > 0 && equipes.every((eq) => equipeDecidiu(e, eq))) return 'Todas as equipes decidiram. Enter encerra.';
     return 'Enter encerra a decisão.';
@@ -2357,8 +2587,40 @@
       el('b', { classe: 'letra', texto: letraDe(rodada, op) }),
       ...textosDaOpcao(e.rodada, op, personaId, { comNarrativa: true }),
     ]))));
-    s.appendChild(el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
+    s.appendChild(individual()
+      ? andamentoDaTurma(e, rodada)
+      : el('div', { classe: 'equipes-status' }, ativas(e).map((eq) => celulaEquipe(e, eq, rodada, ordemOpcoes(rodada)))));
     app.depoisDeMedir.push(() => apertarDecisao(s));
+  }
+
+  // Modo individual, embaixo das opções, no lugar das células das equipes:
+  // - online, "14 de 20 já escolheram" (contagemDaTurma), sem nenhuma vaga nem
+  //   nome: o voto é secreto (decisão do Kleber de 13/10 à noite);
+  // - offline, as letras da escolha da turma (de mão levantada), que o
+  //   apresentador marca (anfitriao.decidirPelaTurma; clicar de novo desfaz).
+  //   Como as letras das equipes no offline, são controle e informação ao mesmo
+  //   tempo: a turma vê o que foi registrado.
+  function andamentoDaTurma(e, rodada) {
+    const { el, botao } = D();
+    if (app.modo === 'offline') {
+      const marcada = escolhaDaTurma(e);
+      return el('div', { classe: 'turma-decisao', role: 'group', 'aria-label': 'Escolha da turma' }, [
+        el('span', { classe: 'turma-decisao-rotulo', texto: 'Escolha da turma:' }),
+        el('div', { classe: 'botoes-opcao' }, ordemOpcoes(rodada).map((op) => botao(letraDe(rodada, op), () => decidirPelaTurmaOffline(op), {
+          classe: ['botao-letra', marcada === op ? 'botao-marcado' : null], pressionado: marcada === op,
+          titulo: rodada.opcoes[op].rotulo, dados: { turma: '1', opcao: op },
+        }))),
+      ]);
+    }
+    const { escolheram, total } = contagemDaTurma(e);
+    return el('p', { classe: 'turma-andamento', dados: { escolheram: String(escolheram), total: String(total) } }, [
+      el('b', { classe: 'turma-numero', texto: F().inteiro(escolheram) }), ` de ${F().inteiro(total)} já ${escolheram === 1 ? 'escolheu' : 'escolheram'}`,
+    ]);
+  }
+
+  function decidirPelaTurmaOffline(opcao) {
+    const atual = escolhaDaTurma(app.estado);
+    executar(() => app.anf.decidirPelaTurma(atual === opcao ? null : opcao), vista());
   }
 
   // Com a equipe pelo personagem (teste do Kleber de 05/10), o rótulo mais
@@ -2727,7 +2989,13 @@
   // O detalhamento das contas (entrou, gastos, multa, básico, juros,
   // empréstimo) fica no celular de cada equipe e na história do placar final.
   function telaResultado(s, e) {
-    if (simples()) return telaResultadoSimples(s, e);
+    if (simples()) {
+      if (!individual()) return telaResultadoSimples(s, e);
+      // "A turma" (sem celulares, um caminho só): a faixa do formato simples,
+      // com "A turma" no lugar da equipe.
+      if (soATurma()) return telaResultadoSimples(s, e, { quem: () => D().el('span', { classe: 'turma-quem', texto: 'A turma' }) });
+      return telaResultadoDaTurma(s, e);
+    }
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
@@ -2842,22 +3110,30 @@
   // dinheiro da família no fim dele ("tem R$ X" ou "devendo R$ X": o caixa
   // menos a dívida total, historia.dinheiroDaFamilia). Nada mais: as contas
   // atrasadas, o que faltou na mesa e a carta de cada equipe ficam fora.
-  function telaResultadoSimples(s, e) {
+  // O evento do mês (a carta, a mesma para todos no formato simples): o título
+  // e uma frase, uma vez, no alto do resultado.
+  function eventoDoMes(primeira) {
+    if (!primeira) return null;
+    const { el } = D();
+    const personaId = app.config.equipes[primeira.eq]?.persona;
+    const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
+    const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
+    return el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
+      el('p', { classe: 'evento-titulo', texto: titulo }),
+      frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
+    ]);
+  }
+
+  // quem: o que vai na primeira coluna da faixa (a equipe; "A turma", no modo
+  // individual sem celulares).
+  function telaResultadoSimples(s, e, { quem = (eq) => rotuloEquipe(eq) } = {}) {
     const { el } = D();
     const rodada = app.config.rodadas[e.rodada];
     const itens = resultadosDaRodada(e);
     const { doPeriodo } = periodo();
     s.appendChild(cabecalho(null, rodada.titulo));
-    const primeira = itens[0];
-    if (primeira) {
-      const personaId = app.config.equipes[primeira.eq]?.persona;
-      const titulo = N().historia.textoDaCarta(app.config, primeira.r.carta, personaId).titulo || primeira.r.carta;
-      const frase = N().historia.primeiraFrase(app.config.cartas[primeira.r.carta]?.narrativa);
-      s.appendChild(el('div', { classe: 'evento-do-mes', dados: { carta: primeira.r.carta } }, [
-        el('p', { classe: 'evento-titulo', texto: titulo }),
-        frase ? el('p', { classe: 'evento-linha', texto: frase }) : null,
-      ]));
-    }
+    const evento = eventoDoMes(itens[0]);
+    if (evento) s.appendChild(evento);
     const grade = el('div', { classe: 'grade-simples', role: 'list', 'aria-label': `Resultado ${doPeriodo} por equipe` });
     for (const { eq, r } of itens) {
       const mes = mesDoResultado(e.rodada, eq, r);
@@ -2878,7 +3154,7 @@
         classe: 'resultado-simples', role: 'listitem',
         dados: { equipe: eq, decisao: r.decisao, carta: r.carta, saldoMes: String(saldo), familia: familia.situacao, valorFamilia: String(familia.valor) },
       }, [
-        el('div', { classe: 'simples-quem' }, [rotuloEquipe(eq)]),
+        el('div', { classe: 'simples-quem' }, [quem(eq)]),
         el('p', { classe: 'simples-opcao' }, [el('b', { classe: 'letra', texto: letraDe(rodada, r.decisao) }), el('span', { texto: rotulo })]),
         el('div', { classe: 'simples-saldo' }, [
           el('p', { classe: 'resultado-saldo-rotulo', texto: `saldo ${doPeriodo}` }),
@@ -2917,6 +3193,100 @@
       if (s.dataset.aperto === '2' && transborda()) s.dataset.aperto = '3';
       if (s.dataset.aperto === '3' && transborda()) s.dataset.aperto = '4';
       if (s.dataset.aperto === '4' && transborda()) s.dataset.aperto = '5';
+    });
+  }
+
+  // Modo individual (decisão do Kleber de 13/10 à noite): o resultado da turma,
+  // sem nenhuma vaga nem nome (o voto é secreto e o tema é sensível). O evento
+  // do mês uma vez, no alto, e, desde a D-084 (pedido do Kleber de 13/10 à
+  // noite, para 14/10), uma linha por OPÇÃO (historia.resultadoPorOpcao): a
+  // letra, o rótulo e quantas pessoas ficaram com ela; o saldo do bimestre e o
+  // dinheiro da família de quem a escolheu, nas colunas "saldo do bimestre" e
+  // "a família" (o valor, quando todos têm o mesmo; com "em média", ao lado ou
+  // embaixo, quando variam); e, embaixo da opção, o que veio de uma escolha de antes,
+  // com quantas dessas pessoas ("a moto quebrou (revisão adiada) −R$ 790: 3
+  // dessas pessoas"). Antes, o telão dava só a contagem e uma lista das
+  // consequências da turma inteira, e ninguém via o que cada escolha tinha
+  // dado. A opção que ninguém escolheu fica na lista, apagada, com "0 pessoas"
+  // e sem valores: a turma reconhece as cinco letras da decisão. Quem não votou
+  // está na opção de sempre, dito em uma linha embaixo.
+  function telaResultadoDaTurma(s, e) {
+    const { el } = D();
+    const H = N().historia;
+    const rodada = app.config.rodadas[e.rodada];
+    const daRodada = app.dados.resultados?.[e.rodada] || {};
+    const c = H.resultadoPorOpcao(app.config, e.rodada, app.dados.resultados);
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(c.pessoas > 0 ? `O que a turma escolheu · ${F().pessoas(c.pessoas)}` : null, rodada.titulo));
+    const primeira = equipesOrdem().find((v) => daRodada[v]);
+    const evento = eventoDoMes(primeira ? { eq: primeira, r: daRodada[primeira] } : null);
+    if (evento) s.appendChild(evento);
+    if (c.pessoas === 0) return;
+    // O espaço antes do "em média" não ocupa lugar no flex (texto só de espaço
+    // não vira item), mas faz o texto ler "−R$ 936 em média", e não "−R$ 936em média".
+    const emMedia = (media) => (media ? [' ', el('span', { classe: 'turma-media', texto: 'em média' })] : null);
+    // O motivo em duas partes: o principal ("a moto quebrou") e o resto (" (revisão
+    // adiada)", ", com multa e juros"), que o último aperto esconde.
+    const motivoEmDuasPartes = (motivo) => {
+      const m = /^(.+?)((?: \(|, ).*)$/.exec(motivo);
+      return m ? [m[1], el('span', { classe: 'turma-motivo-resto', texto: m[2] })] : [motivo];
+    };
+    const linhas = c.porOpcao.map((o) => {
+      const dados = { opcao: o.id, n: String(o.n) };
+      if (o.saldo) Object.assign(dados, { saldo: String(o.saldo.valor), saldoMedia: String(o.saldo.media) });
+      if (o.familia) Object.assign(dados, { familia: o.familia.situacao, valorFamilia: String(o.familia.valor), familiaMedia: String(o.familia.media) });
+      return el('div', { classe: ['turma-opcao', o.n === 0 ? 'turma-opcao-zero' : null], role: 'listitem', dados }, [
+        el('b', { classe: 'letra', texto: o.letra }),
+        el('span', { classe: 'turma-opcao-rotulo', texto: o.rotulo }),
+        el('span', { classe: 'turma-n' }, [el('b', { texto: F().inteiro(o.n) }), o.n === 1 ? ' pessoa' : ' pessoas']),
+        o.saldo ? el('span', { classe: 'turma-valor turma-saldo-opcao', title: textoSaldo(o.saldo.valor) }, [
+          el('b', { classe: 'turma-saldo-valor', dados: { sinal: sinalDoSaldo(o.saldo.valor) }, texto: F().moeda(o.saldo.valor, { sinal: true }) }),
+          emMedia(o.saldo.media),
+        ]) : null,
+        o.familia ? el('span', { classe: 'turma-valor turma-familia-opcao' }, [
+          el('span', { classe: 'turma-familia-valor', dados: { situacao: o.familia.situacao } }, [`${o.familia.situacao === 'devendo' ? 'devendo' : 'tem'} `, el('b', { texto: F().moeda(o.familia.valor) })]),
+          emMedia(o.familia.media),
+        ]) : null,
+        o.consequencias.length > 0 ? el('p', { classe: 'turma-consequencias' }, o.consequencias.map((g, i) => el('span', {
+          classe: 'turma-antes-item', dados: { motivo: g.motivo, pessoas: String(g.pessoas), valor: String(g.valor) },
+        }, [
+          i > 0 ? ' · ' : null,
+          // O mesmo motivo de novo (outro valor) não se repete.
+          ...(i > 0 && o.consequencias[i - 1].motivo === g.motivo ? [] : [...motivoEmDuasPartes(i === 0 ? maiuscula(g.motivo) : g.motivo), ' ']),
+          el('b', { texto: F().moeda(g.valor, { sinal: true }) }),
+          `: ${H.quantasDessas(g.pessoas, o.n)}`,
+        ]))) : null,
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-opcoes', role: 'list', 'aria-label': `O que cada opção deu ${doPeriodo}` }, [
+      el('div', { classe: 'turma-colunas', 'aria-hidden': 'true' }, [
+        el('span', { classe: 'turma-coluna-saldo', texto: `saldo ${doPeriodo}` }),
+        el('span', { classe: 'turma-coluna-familia', texto: 'a família' }),
+      ]),
+      ...linhas,
+    ]));
+    if (c.semVoto > 0) {
+      const letra = letraDe(rodada, rodada.padrao);
+      s.appendChild(el('p', { classe: 'turma-sem-voto', dados: { semVoto: String(c.semVoto) } }, c.semVoto === 1
+        ? `1 pessoa não escolheu e ficou na ${letra}, a opção de sempre.`
+        : `${F().inteiro(c.semVoto)} pessoas não escolheram e ficaram na ${letra}, a opção de sempre.`));
+    }
+    // Com a faixa de entrada embaixo (online), em 1024×768 e 1280×720: só
+    // quando a tela transborda (medido depois do desenho), os vãos e as
+    // entrelinhas diminuem (1); o título do mês encolhe (2); sai a frase do
+    // evento, e o título dele fica (3); sai o evento inteiro, que está no
+    // celular de cada um (4); a entrelinha fica a mínima (5); o motivo de cada
+    // consequência fica só com a parte principal, "a moto quebrou −R$ 790: 3
+    // dessas pessoas" (6); e sai a linha "O que a turma escolheu · 20 pessoas",
+    // que a soma das opções repete, e os nomes das colunas sobem para a linha
+    // do título (7). O pior caso medido: mar–abr com as cinco
+    // opções escolhidas e todas as consequências possíveis em cada uma (11
+    // linhas), em 1280×720 com a faixa de entrada. A letra fica nos 28 px.
+    app.depoisDeMedir.push(() => {
+      for (const degrau of ['1', '2', '3', '4', '5', '6', '7']) {
+        if (s.scrollHeight <= s.clientHeight + 1) return;
+        s.dataset.aperto = degrau;
+      }
     });
   }
 
@@ -3014,6 +3384,12 @@
   function paginasDoPlacar() {
     const equipes = equipesDoPlacar();
     if (equipes.length === 0) return [{ tipo: 'vazio' }];
+    // Modo individual (pedidos do Kleber de 13/10, 21h): nada por vaga. Sem "O
+    // caminho de cada equipe" (item 1); (1) "Quanto sobrou, ou ficou devendo":
+    // quantos terminaram com dinheiro sobrando e quantos devendo, e uma barra
+    // por pessoa, sem nome (item 2); (2) "As escolhas da turma", bimestre ×
+    // opção; (3) as combinações possíveis, como nas equipes.
+    if (simples() && individual()) return [{ tipo: 'fimDaTurma' }, { tipo: 'escolhasDaTurma' }, { tipo: 'combinacoes' }];
     if (simples()) return [{ tipo: 'caminho' }, { tipo: 'saldo' }, { tipo: 'combinacoes' }];
     const pior = configTemProtecao() ? [{ tipo: 'pior' }] : [];
     const historias = equipes.flatMap((eq) => {
@@ -3051,6 +3427,8 @@
     if (pagina.tipo === 'saldo') paginaSaldo(s, lado);
     else if (pagina.tipo === 'caminho') paginaCaminho(s, lado);
     else if (pagina.tipo === 'combinacoes') paginaCombinacoes(s, lado);
+    else if (pagina.tipo === 'fimDaTurma') paginaFimDaTurma(s, lado);
+    else if (pagina.tipo === 'escolhasDaTurma') paginaEscolhasDaTurma(s, lado);
     else if (pagina.tipo === 'escolhas') paginaEscolhas(s, lado);
     else if (pagina.tipo === 'pior') paginaPiorCaso(s, lado);
     else if (pagina.tipo === 'historia') paginaHistoria(s, pagina, lado);
@@ -3257,6 +3635,181 @@
       extremo('Melhor sequência:', c.melhor, 'combinacao-melhor'),
       extremo('Pior sequência:', c.pior, 'combinacao-pior'),
     ]));
+  }
+
+  // ---------- Placar final do modo individual ----------
+
+  // "o ano" com as 6 rodadas de 2 meses; "os 6 meses", "o mês" em um roteiro menor.
+  function periodoJogado(rodadas) {
+    const meses = rodadas * periodo().meses;
+    return meses === 12 ? 'o ano' : meses === 1 ? 'o mês' : `os ${meses} meses`;
+  }
+
+  // A vaga de "a turma" (soATurma): a que tem resultado.
+  const vagaDaTurma = () => equipesOrdem().find((v) => rodadasJogadas().some((r) => app.dados.resultados?.[r]?.[v])) ?? null;
+
+  // "tem R$ X" / "devendo R$ X" do fim, como palavra, e não só como cor.
+  function textoDaFamiliaFinal(valor) {
+    const d = N().historia.dinheiroDaFamilia({ renda: valor });
+    return { situacao: d.situacao, texto: `${d.situacao === 'devendo' ? 'devendo' : 'com'} ${F().moeda(d.valor)}` };
+  }
+
+  // A frase do destaque com os números em evidência. Tem de dizer, letra por
+  // letra, o mesmo que historia.fraseDoFimDaTurma (o celular do espectador usa
+  // aquela; o e2e confere as duas): "De 18 alunos, 3 terminaram com dinheiro
+  // sobrando e 15 terminaram devendo."
+  function fraseDoFimComNumeros(fim) {
+    const { el } = D();
+    const numero = (n, classe) => el('b', { classe: ['fim-turma-numero', classe], texto: F().inteiro(n) });
+    const parte = (n, resto, classe) => (n === 0 ? `nenhum terminou ${resto}` : [numero(n, classe), n === 1 ? ' terminou ' : ' terminaram ', resto]);
+    return [
+      'De ', numero(fim.pessoas, null), fim.pessoas === 1 ? ' aluno, ' : ' alunos, ',
+      parte(fim.positivos, 'com dinheiro sobrando', 'fim-turma-positivos'), ' e ', parte(fim.negativos, 'devendo', 'fim-turma-negativos'), '.',
+    ];
+  }
+
+  // Uma coluna por pessoa, sem nome, da que terminou com mais dinheiro para a
+  // que terminou com menos: acima da linha do zero, sobrou dinheiro (verde);
+  // abaixo, ficou devendo (vermelho). A posição diz o mesmo que a cor, que
+  // nunca é o único canal. A linha tracejada é a média da turma. Sem texto
+  // dentro do SVG: com 20 colunas, nenhum rótulo caberia nos 28 px.
+  function colunasDaTurma({ largura, altura, valores, media }) {
+    const { svg } = D();
+    const min = Math.min(0, ...valores, media ?? 0);
+    const max = Math.max(0, ...valores, media ?? 0);
+    const folga = (max - min || 1) * 0.06;
+    const y = (v) => ((max + folga - v) / (max - min + 2 * folga)) * altura;
+    const y0 = y(0);
+    // Com poucas pessoas, as colunas não viram paredes: no máximo 160 px por
+    // pessoa, e o grupo no meio.
+    const passo = Math.min(largura / Math.max(1, valores.length), 160);
+    const inicio = (largura - passo * valores.length) / 2;
+    const largo = Math.max(2, Math.min(passo * 0.72, passo - 4));
+    const filhos = valores.map((v, i) => {
+      const yv = y(v);
+      return svg('rect', {
+        x: inicio + i * passo + (passo - largo) / 2, y: Math.min(y0, yv), width: largo, height: Math.max(2, Math.abs(yv - y0)),
+        classe: v >= 0 ? 'coluna-sobrou' : 'coluna-devendo', dados: { valor: String(v) },
+      });
+    });
+    filhos.push(svg('line', { x1: 0, y1: y0, x2: largura, y2: y0, classe: 'eixo' }));
+    if (media !== null) filhos.push(svg('line', { x1: 0, y1: y(media), x2: largura, y2: y(media), classe: ['referencia', 'linha-media'], dados: { media: String(media) } }));
+    return svg('svg', {
+      viewBox: `0 0 ${largura} ${altura}`, width: largura, height: altura, role: 'img',
+      'aria-label': 'O dinheiro de cada aluno no fim, do maior para o menor, sem nomes',
+    }, filhos);
+  }
+
+  // Modo individual, página 1: "Quanto sobrou, ou ficou devendo" (pedido do
+  // Kleber de 13/10, 21h, item 2): do total de alunos, quantos terminaram com
+  // dinheiro sobrando (dinheiro da família ≥ R$ 0) e quantos devendo, em
+  // destaque e em linguagem simples (historia.fimDoAnoDaTurma; quem entrou no
+  // meio do ano fica de fora da conta, e uma linha diz isso), e, embaixo, uma
+  // coluna por aluno, sem nome, ordenada, com a média. "A turma" (sem
+  // celulares): como a família da turma terminou.
+  function paginaFimDaTurma(s, lado) {
+    const { el } = D();
+    const H = N().historia;
+    const fim = H.fimDoAnoDaTurma(app.config, app.dados.resultados);
+    const quando = periodoJogado(fim.rodadas);
+    if (soATurma()) {
+      // Uma frase e uma linha: maiores, no meio da tela.
+      s.classList.add('fim-turma-so');
+      const vaga = vagaDaTurma();
+      const familia = textoDaFamiliaFinal(fim.valores[0] ?? (vaga ? patrimonioNoPlacar(vaga) : 0));
+      s.appendChild(cabecalho(tituloDaPaginaSaldo(), [
+        `A turma terminou ${quando} `, el('span', { classe: 'fim-turma-valor', dados: { situacao: familia.situacao } }, familia.texto),
+      ], { extra: lado, classeTitulo: 'fim-turma-frase' }));
+      const jogadas = vaga ? rodadasJogadas().filter((r) => app.dados.resultados?.[r]?.[vaga]) : [];
+      if (jogadas.length > 0) {
+        const letras = jogadas.map((r) => letraDe(app.config.rodadas[r], app.dados.resultados[r][vaga].decisao));
+        s.appendChild(el('p', { classe: 'fim-turma-caminho', dados: { letras: letras.join('') } }, ['As escolhas da turma: ', el('b', { texto: letras.join(' ') })]));
+      }
+      return;
+    }
+    s.dataset.pessoas = String(fim.pessoas);
+    s.dataset.positivos = String(fim.positivos);
+    s.dataset.negativos = String(fim.negativos);
+    const titulo = fim.pessoas > 0 ? fraseDoFimComNumeros(fim) : 'Ninguém jogou todos os bimestres';
+    s.appendChild(cabecalho(tituloDaPaginaSaldo(), titulo, { extra: lado, classeTitulo: 'fim-turma-frase' }));
+    if (fim.valores.length > 0) {
+      s.appendChild(grafico('grafico-turma', (largura, altura) => colunasDaTurma({ largura, altura, valores: fim.valores, media: fim.media })));
+    }
+    const legenda = [];
+    if (fim.valores.length > 0) {
+      legenda.push(
+        el('span', { classe: 'fim-turma-chave' }, [el('span', { classe: ['amostra-coluna', 'amostra-sobrou'], 'aria-hidden': 'true' }), ' sobrou dinheiro']),
+        el('span', { classe: 'fim-turma-chave' }, [el('span', { classe: ['amostra-coluna', 'amostra-devendo'], 'aria-hidden': 'true' }), ' ficou devendo']),
+      );
+    }
+    if (fim.media !== null) {
+      // "devendo R$ 2.677" ou "R$ 300 sobrando": a palavra diz o sinal.
+      const media = fim.media < 0 ? `devendo ${F().moeda(-fim.media)}` : `${F().moeda(fim.media)} sobrando`;
+      legenda.push(el('span', { classe: 'fim-turma-media', dados: { media: String(fim.media) } }, [
+        el('span', { classe: 'amostra-media', 'aria-hidden': 'true' }), ' média da turma: ', el('b', { texto: media }),
+      ]));
+    }
+    const depois = H.fraseDosQueEntraramDepois(fim);
+    if (depois) legenda.push(el('span', { classe: 'fim-turma-depois', texto: depois }));
+    if (legenda.length > 0) s.appendChild(el('p', { classe: 'fim-turma-legenda' }, legenda));
+  }
+
+  // Modo individual, página 2: "As escolhas da turma" (historia.escolhasDaTurma),
+  // uma linha por bimestre e uma coluna por opção, com quantas pessoas ficaram
+  // com cada uma (a mais escolhida do bimestre em negrito). A letra é a mesma
+  // da decisão no telão e no celular; o rótulo vai na dica. Quem não votou
+  // ficou na opção de sempre, e a nota embaixo diz que ele está contado nela.
+  // "A turma" (sem celulares): o caminho que a turma escolheu.
+  function paginaEscolhasDaTurma(s, lado) {
+    const { el } = D();
+    if (soATurma()) return paginaCaminhoDaTurma(s, lado);
+    const linhas = N().historia.escolhasDaTurma(app.config, app.dados.resultados);
+    const colunas = Math.max(0, ...linhas.map((l) => l.porOpcao.length));
+    s.appendChild(cabecalho('Placar final · quantas pessoas escolheram cada opção', 'As escolhas da turma', { extra: lado }));
+    const cabeca = el('tr', {}, [
+      el('th', { scope: 'col', classe: 'turma-bimestre', texto: maiuscula(periodo().nome) }),
+      ...Array.from({ length: colunas }, (_, i) => el('th', { scope: 'col', texto: LETRAS[i] })),
+    ]);
+    const corpo = linhas.map((l) => {
+      const maior = Math.max(...l.porOpcao.map((o) => o.n));
+      return el('tr', { dados: { rodada: l.rodadaId, pessoas: String(l.pessoas) } }, [
+        el('th', { scope: 'row', classe: 'turma-bimestre', texto: l.rotulo }),
+        ...Array.from({ length: colunas }, (_, i) => {
+          const o = l.porOpcao[i];
+          if (!o) return el('td', { classe: 'turma-celula', texto: '—' });
+          return el('td', {
+            classe: ['turma-celula', o.n === 0 ? 'turma-celula-zero' : null, o.n > 0 && o.n === maior ? 'turma-celula-maior' : null],
+            title: o.rotulo, dados: { opcao: o.id, n: String(o.n) }, texto: F().inteiro(o.n),
+          });
+        }),
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-escolhas' }, [el('table', { classe: 'tabela-turma' }, [el('thead', {}, [cabeca]), el('tbody', {}, corpo)])]));
+    if (linhas.some((l) => l.semVoto > 0)) {
+      s.appendChild(el('p', { classe: 'turma-nota', texto: 'Quem não escolheu ficou na opção de sempre e está contado nela.' }));
+    }
+  }
+
+  // "A turma" (modo individual sem celulares), página 2: o caminho que a turma
+  // escolheu, um bimestre por linha: a letra, o rótulo e o saldo do bimestre.
+  function paginaCaminhoDaTurma(s, lado) {
+    const { el } = D();
+    const vaga = vagaDaTurma();
+    const { doPeriodo } = periodo();
+    s.appendChild(cabecalho(`Placar final · saldo ${doPeriodo}`, 'O caminho da turma', { extra: lado }));
+    const corpo = rodadasJogadas().map((r) => {
+      const res = vaga ? app.dados.resultados?.[r]?.[vaga] : null;
+      const rodada = app.config.rodadas[r];
+      if (!res) return el('tr', { dados: { rodada: r } }, [el('th', { scope: 'row', classe: 'turma-bimestre', texto: rotuloDaRodada(r) }), el('td', { texto: '—' }), el('td', { texto: '' })]);
+      const saldo = Math.round(mesDoResultado(r, vaga, res).saldoMes) + 0;
+      const rotulo = N().historia.textoDaOpcao(app.config, r, res.decisao, app.config.equipes[vaga]?.persona).rotulo || res.decisao;
+      return el('tr', { dados: { rodada: r, decisao: res.decisao, saldoMes: String(saldo) } }, [
+        el('th', { scope: 'row', classe: 'turma-bimestre', texto: rotuloDaRodada(r) }),
+        el('td', { classe: 'turma-escolha' }, [el('b', { classe: 'letra', texto: letraDe(rodada, res.decisao) }), ' ', rotulo]),
+        el('td', { classe: 'turma-saldo', dados: { sinal: sinalDoSaldo(saldo) }, texto: F().moeda(saldo, { sinal: true }) }),
+      ]);
+    });
+    s.appendChild(el('div', { classe: 'turma-escolhas' }, [el('table', { classe: ['tabela-turma', 'tabela-caminho-turma'] }, [el('tbody', {}, corpo)])]));
   }
 
   // D-066: o que faltou na mesa no ano, por equipe, embaixo do gráfico do saldo.
@@ -3623,7 +4176,28 @@
   // fim, eram os primeiros botões que a turma via depois do jogo.
   function telaFim(s) {
     s.appendChild(cabecalho(app.config.titulo, 'Fim'));
+    // Modo individual: a frase da turma, e não uma linha por vaga (pedido do
+    // Kleber de 13/10, 21h, item 1).
+    if (individual()) {
+      const frase = fraseDoFimNoFim();
+      if (frase) s.appendChild(D().el('p', { classe: ['texto-grande', 'fim-turma-resumo'], texto: frase }));
+      return;
+    }
     if (app.dados.placar && ativas(app.estado).length > 0) s.appendChild(placarResumido('placar-fim'));
+  }
+
+  // "De 18 alunos, 3 terminaram com dinheiro sobrando e 15 terminaram devendo."
+  // ("A turma terminou o ano devendo R$ X.", sem celulares), ou null antes de
+  // qualquer rodada.
+  function fraseDoFimNoFim() {
+    const H = N().historia;
+    const fim = H.fimDoAnoDaTurma(app.config, app.dados.resultados);
+    if (fim.rodadas === 0) return null;
+    if (soATurma()) {
+      const vaga = vagaDaTurma();
+      return `A turma terminou ${periodoJogado(fim.rodadas)} ${textoDaFamiliaFinal(fim.valores[0] ?? (vaga ? patrimonioNoPlacar(vaga) : 0)).texto}.`;
+    }
+    return H.fraseDoFimDaTurma(fim);
   }
 
   // ---------- Revendo: voltar só para ver (pedido 6 do Kleber, 05/10) ----------
@@ -3863,8 +4437,12 @@
       pausar: aberta,
       // decidindo e votando: desfazer a abertura (D-037); a prorrogação não.
       desfazer: (e.tipo === 'rodada' && ['decidindo', 'sorteio', 'resultado', 'fechando'].includes(e.subfase)) || (e.tipo === 'enquete' && ['votando', 'apurada', 'fechando'].includes(e.subfase)),
-      decidir: e.tipo === 'rodada' && (e.subfase === 'decidindo' || e.subfase === 'prorrogacao'),
-      mover: online,
+      // Modo individual: online, a escolha é de cada um, no próprio celular, e
+      // "decidir" passaria por cima de todos os votos; offline, é a escolha da
+      // turma ("Decidir pela turma"). Mover não existe: a vaga é o ano de uma
+      // pessoa (o anfitrião recusa).
+      decidir: e.tipo === 'rodada' && (e.subfase === 'decidindo' || e.subfase === 'prorrogacao') && (!individual() || !online),
+      mover: online && !individual(),
       removerInativos: online,
       entrada: online,
       rede: online,
@@ -3878,6 +4456,8 @@
     for (const [id, ativo] of Object.entries(conf)) { const bt = b(id); if (bt) bt.disabled = !ativo; }
     const bp = b('pausar');
     if (bp) bp.querySelector('.botao-rotulo').textContent = pausado ? 'Retomar' : 'Pausar';
+    const bd = b('decidir');
+    if (bd) bd.querySelector('.botao-rotulo').textContent = individual() ? 'Decidir pela turma' : 'Decidir por esta equipe';
     const be = b('entrada');
     if (be) {
       be.querySelector('.botao-rotulo').textContent = app.dados.meta?.entradaAberta === true ? 'Entrada aberta' : 'Entrada fechada';
@@ -4004,7 +4584,7 @@
       else avisar('Esta é a última afirmação: Enter encerra a enquete inteira.');
       return;
     }
-    executar(() => app.anf.avancar(), { geracao: e.geracao });
+    executar(() => app.anf.avancar(), vista(e));
   }
 
   // Offline, a enquete aberta pode ter votos de celular que chegaram antes da
@@ -4049,13 +4629,13 @@
     if (app.anf.desfazendoAbertura(e) && !(await confirmar('Esta votação foi aberta por engano, e o desfazer não terminou. Encerrar vai apurá-la assim mesmo. Para voltar ao passo anterior, cancele e use Ctrl+Z. Apurar mesmo assim?',
       'Apurar mesmo assim', { focarCancelar: true }))) return;
     if (!(await confirmarEncerrarEnquete(e))) return;
-    executar(() => app.anf.encerrar(), { geracao: e.geracao });
+    executar(() => app.anf.encerrar(), vista(e));
   }
 
   function pausarOuRetomar() {
     const e = app.estado;
     if (!e || !['votando', 'decidindo', 'prorrogacao'].includes(e.subfase)) return;
-    executar(() => (typeof e.restanteMs === 'number' ? app.anf.retomar() : app.anf.pausar()), { geracao: e.geracao });
+    executar(() => (typeof e.restanteMs === 'number' ? app.anf.retomar() : app.anf.pausar()), vista(e));
   }
 
   async function desfazer() {
@@ -4076,7 +4656,7 @@
     else if (e.tipo === 'rodada') texto = 'Desfazer a apuração desta rodada? As decisões e a semente continuam: encerrar de novo tira as mesmas cartas.';
     else if (e.tipo === 'enquete') texto = 'Reabrir a votação desta enquete? A apuração é apagada e refeita no próximo encerrar.';
     else return avisar('Nada para desfazer neste passo.');
-    if (await confirmar(texto, 'Desfazer', { focarCancelar: true })) executar(() => app.anf.desfazer(), { geracao: e.geracao });
+    if (await confirmar(texto, 'Desfazer', { focarCancelar: true })) executar(() => app.anf.desfazer(), vista(e));
   }
 
   async function pularPara() {
@@ -4085,7 +4665,7 @@
     const opcoes = app.passos.filter((p) => p.indice > e.indice).map((p) => ({ rotulo: `${p.indice + 1}. ${descreverPasso(p)}${p.opcional ? ' (opcional)' : ''}`, valor: p.indice }));
     if (opcoes.length === 0) return avisar('Não há passo depois deste.');
     const escolhido = await escolher('Pular para…', opcoes, { explicacao: 'Só para a frente. Os passos no meio ficam sem acontecer.' });
-    if (escolhido !== null && escolhido !== undefined) executar(() => app.anf.pularPara(escolhido), { geracao: e.geracao });
+    if (escolhido !== null && escolhido !== undefined) executar(() => app.anf.pularPara(escolhido), vista(e));
   }
 
   async function encerrarJogo() {
@@ -4093,13 +4673,24 @@
     if (!app.anf || !e) return;
     const fim = app.passos.findIndex((p) => p.tipo === 'fim');
     if (fim < 0 || fim <= e.indice) return avisar('Não há passo "fim" à frente no roteiro.');
-    executar(() => app.anf.pularPara(fim), { geracao: e.geracao });
+    executar(() => app.anf.pularPara(fim), vista(e));
   }
 
   async function decidirPorEquipe() {
     const e = app.estado;
     if (!e || e.tipo !== 'rodada' || !['decidindo', 'prorrogacao'].includes(e.subfase)) return avisar('Só com uma decisão aberta.');
     const rodada = app.config.rodadas[e.rodada];
+    // Modo individual: só offline, e pela turma inteira (andamentoDaTurma).
+    if (individual()) {
+      if (app.modo !== 'offline') return avisar('No modo individual, cada pessoa escolhe no próprio celular.');
+      const marcada = escolhaDaTurma(e);
+      const opcoes = ordemOpcoes(rodada).map((op) => ({ rotulo: `${letraDe(rodada, op)} · ${rodada.opcoes[op].rotulo}`, valor: op, marcada: marcada === op }));
+      if (marcada) opcoes.push({ rotulo: 'Tirar a escolha da turma', valor: '__nenhuma__' });
+      const op = await escolher('Decidir pela turma: qual opção?', opcoes, { explicacao: 'A opção que a turma escolheu de mão levantada.' });
+      if (!op) return;
+      executar(() => app.anf.decidirPelaTurma(op === '__nenhuma__' ? null : op), vista(e));
+      return;
+    }
     const equipes = ativas(e).filter((eq) => e.subfase === 'decidindo' || e.empatadas?.[eq]);
     const eq = await escolher('Decidir por esta equipe', equipes.map((id) => ({
       rotulo: `${numeroEquipe(id)} ${app.config.equipes[id].nome}${e.forcadas?.[id] ? ` (agora: ${letraDe(rodada, e.forcadas[id])})` : ''}`,
@@ -4111,11 +4702,12 @@
     if (e.forcadas?.[eq]) opcoes.push({ rotulo: 'Tirar a decisão do apresentador', valor: '__nenhuma__' });
     const op = await escolher(`${app.config.equipes[eq].nome}: qual opção?`, opcoes);
     if (!op) return;
-    executar(() => app.anf.decidirPorEquipe(eq, op === '__nenhuma__' ? null : op), { geracao: e.geracao });
+    executar(() => app.anf.decidirPorEquipe(eq, op === '__nenhuma__' ? null : op), vista(e));
   }
 
   async function moverAluno() {
     if (app.modo !== 'online' || !app.anf) return;
+    if (individual()) return avisar('No modo individual, cada pessoa tem a própria vaga: não dá para mover.');
     const { el } = D();
     const campo = el('input', { type: 'text', maxlength: '3', autocomplete: 'off', autofocus: true, classe: 'campo-cracha', 'aria-label': 'Código do crachá' });
     const codigo = await abrirModal('Mover aluno: código do crachá (as 3 letras depois do ·)', el('div', {}, [campo]), [
@@ -4227,7 +4819,15 @@
     if (app.el.modal.open) return; // o <dialog> cuida de Enter e Esc
     const alvo = ev.target;
     if (alvo && (alvo.tagName === 'INPUT' || alvo.tagName === 'TEXTAREA' || alvo.isContentEditable)) return;
-    if (!app.anf) return; // na abertura, o teclado é o do formulário
+    // Na abertura, o teclado é o do formulário; só o H abre e fecha a reserva
+    // do config (D-082), como abre a barra na sessão.
+    if (!app.anf) {
+      if ((ev.key === 'h' || ev.key === 'H') && !ev.ctrlKey && !ev.altKey && !ev.metaKey) {
+        alternarReservaConfig();
+        ev.preventDefault();
+      }
+      return;
+    }
     const tecla = ev.key;
     const numero = numeroDaTecla(ev);
     // Pedido 6 do Kleber (05/10), modo revendo: ← e PageUp voltam mais um

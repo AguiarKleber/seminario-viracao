@@ -8,6 +8,10 @@ Como publicar o site está no [README](../README.md). Como mudar o conteúdo est
 seminário, em **07/10** (quarta). O conteúdo e o código ficam congelados até
 06/10.
 
+**Para 14/10, vale primeiro a [seção 00](#00-o-jogo-individual-de-1410-d-081): o
+jogo individual (D-081), em que cada aluno joga no próprio celular.** O conteúdo
+e o que dizer em cada bimestre continuam os da seção 0.
+
 **Para 07/10, vale a [seção 0](#0-o-jogo-simples-de-0710-d-078-e-d-079): o jogo
 simples (D-078) com os ajustes de 06/10 de manhã (D-079) e de 06/10 à tarde
 (D-080).** Os blocos logo
@@ -171,7 +175,7 @@ rascunho, seção 8, item 15.
 4. [Teclas, barra e celular do apresentador](#4-teclas-barra-e-celular-do-apresentador)
 5. [Como conduzir cada passo](#5-como-conduzir-cada-passo)
 6. [Minuto a minuto: 60 min](#6-minuto-a-minuto-60-min)
-7. [Minuto a minuto: 120 min](#7-minuto-a-minuto-120-min)
+7. [Minuto a minuto: 120 min](#7-minuto-a-minuto-120-min) (saiu em 14/10, D-083)
 8. [Se a rede cair](#8-se-a-rede-cair)
 9. [Se o telão travar](#9-se-o-telão-travar)
 10. [Problemas comuns](#10-problemas-comuns)
@@ -180,6 +184,112 @@ rascunho, seção 8, item 15.
 13. [Teste no eduroam (30/09)](#13-teste-no-eduroam-3009)
 
 ---
+
+## 00. O jogo individual de 14/10 (D-081)
+
+Decisão do Kleber de 13/10 à noite (D-081). O conteúdo do jogo (o Jonas, os 6
+bimestres, as opções e os dados) é o da seção 0; aqui está só o que muda para
+quem conduz. Como cada tela fica: [jogo-simples.md](jogo-simples.md), seção "O
+jogo individual".
+
+**Em uma frase, para a turma:** "Cada um de vocês é o Jonas, motoboy do iFood,
+no próprio celular. Vocês decidem sozinhos o que ele faz em cada bimestre, e no
+fim a gente vê quantos fecharam o ano com dinheiro sobrando."
+
+**Antes de a turma chegar:**
+1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
+   (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
+   `2026-10-14-v5.1-individual` está na barra do pé da tela inicial: pare o
+   mouse na borda de baixo (ou aperte H). Não há mais o painel do config
+   (D-082): ele só aparece quando o config falta ou tem problema.
+2. Digite o PIN e clique em **Criar sala com celulares**.
+3. **Não entre como aluno com o seu celular nesta sala.** Para conferir o QR e
+   ver o que a turma vê, entre pelo **Sou apresentador** (seção 4). O aparelho
+   que entra como aluno ganha uma das 20 vagas, e ela só volta para a sala com
+   **Remover inativos**, quando alguém estiver esperando (veja "Sala cheia",
+   abaixo).
+
+**Na aula, passo a passo:**
+1. **O QR.** No lobby, o telão mostra o QR, o endereço e o código da sala. Diga:
+   "Leiam o QR com a câmera do celular, digitem o seu nome e toquem em Entrar."
+2. **Os nomes.** Cada aluno digita o nome (até 20 letras). O nome fica só no
+   celular dele: não vai para o servidor, e o telão nunca mostra nomes. Diga:
+   "O seu nome fica só no seu celular, e o seu voto não fica ligado ao seu
+   nome."
+3. **O contador.** O telão mostra "N pessoas na sala". Quando o número parar de
+   subir, aperte o Espaço. Quem chegar depois entra assim mesmo, no meio do jogo.
+   - Peça que cada um entre **uma vez só, pelo navegador do próprio celular**.
+     Abrir o link em outro navegador ou em aba anônima ocupa outra vaga. São 20
+     vagas.
+   - **Sala cheia.** Se um celular disser "A sala está cheia (20 pessoas)", já
+     há 20 aparelhos na sala. Se a turma tem menos de 20 pessoas, há uma vaga
+     presa: alguém entrou duas vezes, ou um celular entrou e saiu. Peça para
+     fecharem a aba repetida, espere 2 min e segure **Remover inativos**. A
+     vaga de quem está sem sinal há mais de 2 min e ainda não jogou nenhum
+     bimestre volta para quem está esperando (uma vaga por pessoa esperando).
+     Depois do 1º bimestre fechado, nenhuma vaga volta: quem sobrou acompanha
+     pelo telão ou com um colega.
+4. **A enquete de entrada**, como sempre.
+5. **Conheça o Jonas.** Aparece no telão e no celular. Com o "Li" (regras v5),
+   o celular tem o botão "Li, pode seguir", e ao lado do título o telão mostra
+   "12 de 20 leram": é só para você saber, e você avança quando quiser.
+6. **Cada bimestre** (os três tempos da seção 0):
+   - **Decisão.** O telão mostra "14 de 20 já escolheram". Quando todos
+     escolheram, a barra diz "Todos já escolheram. Enter encerra." Não há
+     prorrogação: o Enter vai direto ao resultado.
+   - **Resultado.** O telão mostra uma linha por opção (D-084): quantas
+     pessoas, o saldo do bimestre e a família de quem a escolheu ("em média",
+     quando os valores variam) e, embaixo, as consequências de escolhas
+     anteriores, com quantas dessas pessoas ("a moto quebrou (revisão adiada)
+     −R$ 790: 3 dessas pessoas"); embaixo de tudo, quantas não votaram (e
+     ficaram na opção de sempre). Nenhum nome. No celular, cada um vê o próprio
+     saldo; o seu celular, no modo espectador, mostra o mesmo resumo do telão.
+     Se o projetor for 1024×768 e a tela ficar apertada demais, clique em
+     **Entrada aberta**, na barra, para fechar a entrada: a faixa do QR sai e
+     sobra espaço (quem chegar depois não entra até você abrir de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
+     escolheu…" no lugar de "a equipe que…".
+   - **Dados.** O bloco aparece no telão e no celular (com o "Li", também o
+     botão "Li, pode seguir" e o "N de M leram"). Leia o contexto e um número.
+7. **O placar**, em 3 páginas (o Espaço passa):
+   1. **"Quanto sobrou, ou ficou devendo":** "De 18 alunos, 3 terminaram com
+      dinheiro sobrando e 15 terminaram devendo.", com uma coluna por aluno, sem
+      nome, e a média da turma. Diga: "Mesma casa, mesmo Jonas: a diferença é só
+      o caminho de cada um."
+   2. **"As escolhas da turma":** quantas pessoas escolheram cada opção em cada
+      bimestre.
+   3. **As combinações:** a melhor e a pior sequência (a fala da seção 0).
+
+   No celular, cada um vê as próprias escolhas, o próprio ano e quantos da
+   turma fecharam o ano com dinheiro sobrando.
+8. **O termômetro, a enquete do "depois", o comparativo, "Dados: e nos outros
+   aplicativos?" e o Fim**, como na seção 0. Os dois blocos finais aparecem
+   também no celular.
+
+**O que não existe no jogo individual:** a formação das equipes (as teclas 1 a
+6), a prorrogação, a tabela "O caminho de cada equipe" e o **Mover aluno**
+(fica apagado na barra). **Decidir pela turma** só funciona sem celulares.
+**Remover inativos** só tira quem tem vaga no caso da vaga presa (passo 3,
+"Sala cheia").
+
+**Quem chega no meio:** digita o nome e ganha uma vaga. Com a decisão aberta, o
+celular avisa que nesta fica a opção de sempre, e a pessoa vota a partir da
+seguinte. No placar, ela fica fora da conta, e a tela diz.
+
+**Se a internet cair:** segure **Continuar sem celulares** (seção 8). Em cada
+decisão, a turma combina por mão levantada, e você clica na letra em "Escolha
+da turma".
+- **Antes de o 1º bimestre fechar** (no lobby, no Jonas ou na 1ª decisão), o
+  telão passa a jogar um caminho só, "a turma", como no pendrive, e o placar
+  mostra o caminho da turma.
+- **Depois de algum bimestre fechado**, cada pessoa segue o próprio ano com a
+  escolha da turma, e o placar continua por pessoas ("De 18 alunos…").
+
+Sem internet desde o começo: pendrive → **Começar sem celulares**, e a turma
+joga junto desde o início.
+
+**O seu celular** (modo espectador, D-064): com o PIN, mostra o mesmo resumo da
+turma que o telão ("N pessoas na sala", "N de M já escolheram", quantas pessoas
+ficaram com cada opção e o placar da turma), e nunca a tela de um aluno.
 
 ## 0. O jogo simples de 07/10 (D-078 e D-079)
 
@@ -233,10 +343,8 @@ caminho fez com o dinheiro da família."
   setor; leia e abra a conversa. Logo antes, **"Dados: e nos outros
   aplicativos?"** (D-080) mostra a mesma lógica fora do delivery: os
   motoristas da Uber e da 99, com a renda, quem define o preço e o INSS (IBGE).
-- **No roteiro de 120 min,** a "Conversa em grupos: o mapa do patrão" mostra os
-  três passos da atividade, e "Caminhos" mostra um item por caminho
-  (regulação, proteção, organização e educação), cada um com um dado e a fonte
-  (D-080). Leia o item e pergunte qual caminho teria mudado o ano do Jonas.
+- **O roteiro de 120 min saiu em 14/10** (D-083), e com ele a "Conversa em
+  grupos: o mapa do patrão" e "Caminhos": o config tem só o de 60 min.
 - **O telão não baixa o JSON sozinho** (muda a D-015). Se quiser o arquivo,
   barra oculta → **Salvar estado** (por exemplo, depois de Mar–abr e de
   Set–out). Online, a sala fica no Firebase e se retoma com o PIN (seção 9).
@@ -305,8 +413,10 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
 ### Site e serviço
 
 - [ ] Nenhuma mudança no site depois do congelamento (06/10).
-- [ ] O telão publicado abre com "✓ Válido". Hash anotado: `________`.
-- [ ] O bloco 3 diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
+- [ ] O telão publicado abre sem aviso do config, e a barra do pé da tela
+      (mouse parado na borda de baixo, ou H) diz "✓ config.json válido". Hash
+      anotado: `________`.
+- [ ] O bloco **Com celulares** diz `Serviço conectado · regras v4 conferidas.`, sem `REGRAS
       ABERTAS`. Se o `firebase/regras.json` mudou depois do teste, a versão
       subiu junto (v4, v5…), e as regras novas já foram publicadas (README,
       passo 6).
@@ -314,7 +424,7 @@ risco que cresce com a jornada. Entregadores dizem: 'minha coluna é arrebentada
       ela aberta, o seu celular entrou pelo **Sou apresentador** e viu as
       equipes (seção 4). O PIN do celular é o mesmo do telão: se ele disse "O
       PIN não confere" com o PIN certo, as regras publicadas não são as v4 (o
-      bloco 3 do telão também avisa); publique-as (README, passo 6).
+      bloco **Com celulares** do telão também avisa); publique-as (README, passo 6).
 - [ ] A cota de contas anônimas está agendada para a aula, se o console oferecer
       (README, passo 9).
 - [ ] No pendrive, `telao/index.html` abre por duplo clique e mostra o mesmo hash.
@@ -381,9 +491,10 @@ Chegue 30 minutos antes.
    do Chrome ou do Edge, o mesmo navegador configurado na véspera: economia de
    memória desligada para o site e downloads automáticos permitidos (seção 2).
    Se o notebook do dia não for o da véspera, faça essa configuração agora.
-4. Confira o bloco 1 (config válido e o mesmo hash da véspera) e o bloco 3
-   (`regras v4 conferidas`). No bloco 2, escolha o roteiro: **60min** ou
-   **120min** (D-019).
+4. Confira a barra do pé da tela inicial (mouse parado na borda de baixo, ou
+   H: config válido e o mesmo hash da véspera) e o bloco **Com celulares**
+   (`regras v4 conferidas`). O roteiro é o de 60 min, o único do config
+   (D-083): o telão não pergunta.
 5. Digite o PIN e clique em **Criar sala com celulares**. **Anote o código da
    sala no papel.** Se o notebook travar, é com ele que a sala é retomada.
 6. Aperte **F11** para a janela do telão ficar em tela cheia (D-007). Abra os
@@ -462,7 +573,7 @@ topo da tela.
 | Pular para… | Vai para um passo à frente. Só para a frente, e os passos do meio não acontecem |
 | Decidir por esta equipe | Registra a opção de uma equipe sem celular, ou que anunciou em voz alta |
 | Mover aluno | Troca um aluno de equipe pelas 3 letras do crachá (só com celulares) |
-| Remover inativos (segure) | Apaga o registro de quem está sem sinal há mais de 2 min. Segure 2 s. O aviso diz só quantos saíram. Não tem tecla de atalho (só com celulares; veja a seção 10) |
+| Remover inativos (segure) | Apaga o registro de quem está sem sinal há mais de 2 min. Segure 2 s. O aviso diz só quantos saíram. Não tem tecla de atalho (só com celulares; veja a seção 10). No jogo individual, quem tem vaga só sai no caso da vaga presa (seção 00, passo 3) |
 | Entrada aberta / fechada | Abre ou fecha a entrada de novos celulares (só com celulares) |
 | Rede restrita | Troca o QR por um que força a conexão mais lenta e mais compatível (`?lp=1`) (só com celulares) |
 | Salvar estado | Baixa o JSON com o estado da sala, sem nenhum voto individual |
@@ -520,8 +631,8 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
    página: nunca é guardado no aparelho.
 4. PIN errado: "O PIN não confere com o cadastrado no console. Confira e tente
    de novo." Código errado: "Não há sala com o código …". Celular que já entrou
-   como aluno nesta sala: "Este aparelho já entrou como aluno nesta sala e conta
-   na equipe dele. Use outro aparelho para espiar as equipes." (veja
+   como aluno nesta sala: "Este aparelho já entrou como aluno nesta sala. Use
+   outro aparelho para o modo espectador." (veja
    "Cuidados", abaixo).
 
 **O que ele mostra**
@@ -555,7 +666,11 @@ equipe sem ir até ela, ou para ler em voz alta o que uma equipe está vendo.
   outro aparelho, ou abra o endereço do aluno numa **aba anônima** deste celular
   (o login anônimo é outro) e entre pelo **Sou apresentador**; feche a aba de
   aluno. O registro de aluno que ficou sai da contagem com **Remover inativos**,
-  depois de 2 min sem sinal (seção 10).
+  depois de 2 min sem sinal (seção 10). **No jogo individual, não:** o aparelho
+  que entrou como aluno ganhou uma vaga, e ela só sai no caso da vaga presa
+  (seção 00, passo 3: alguém esperando e nenhum bimestre fechado). Por isso,
+  nunca entre como aluno com o seu celular; use o **Sou apresentador** desde o
+  começo.
 - **Nunca no navegador do telão.** Não abra o modo espectador no notebook, no
   mesmo navegador (e no mesmo perfil) do telão, nem numa aba ao lado dele: as
   duas páginas têm o mesmo login anônimo e o mesmo pedido de PIN, e uma apaga o
@@ -1289,8 +1404,8 @@ básico")
 
 - **Afirmações (D-032):** no roteiro de 60 min, duas: t1 ("O aplicativo é o
   patrão.") e t3 ("Quem não prospera por conta própria é porque não se esforçou
-  o suficiente."). No de 120 min, três: t1, t2 ("Carteira assinada é coisa do
-  passado.") e t3.
+  o suficiente."). O de 120 min, com três (t1, t2 e t3), saiu em 14/10
+  (D-083).
 - **Telão:** uma afirmação por vez, com o gráfico **ao vivo**.
 - **Celular:** vota na afirmação da vez.
 - **Faça:** Espaço abre a primeira afirmação e, com a votação aberta, passa para a
@@ -1389,41 +1504,11 @@ rodadas.
 
 ## 7. Minuto a minuto: 120 min
 
-Os mesmos seis bimestres, com rodadas de 5:30 (os mesmos 120 s de decisão e mais
-tempo para ler as opções e comentar o resultado), um bloco de dados de 5:30
-depois de cada rodada, sem entrevistas, e o debrief em grupos depois do placar.
-As seis rodadas somam 33 min; com a formação das equipes, "Conheça o Jonas" e o
-placar final, o jogo ocupa 44 dos 120 min. Se atrasar, encurte o debrief e os
-blocos de dados, e nunca as rodadas.
-
-| # | Início | Passo (alvo) | Faça e diga |
-| --- | --- | --- | --- |
-| 1 | 0:00 | Lobby (2:30) | QR na tela (5.1) |
-| 2 | 2:30 | Enquete de entrada · antes (1:30), opcional | Espaço abre, Enter encerra (5.2) |
-| 3 | 4:00 | Bloco: Mapa do seminário (4:30) | A linha do tempo no telão é o mapa: os meses e os blocos de dados (5.3) |
-| 4 | 8:30 | Formação das equipes (2:00) | Teclas 1 a 6; Espaço trava (5.4) |
-| 5 | 10:30 | Conheça o Jonas (3:00) | As duas frases da seção 0 |
-| 6 | 13:30 | Rodada 1 · Jan–fev: quanto trabalhar no calor? (5:30) | (seção 0) |
-| 7 | 19:00 | Bloco: Dados: calor e jornada (5:30) | O contexto e os números da tela; os slides, se quiser |
-| 8 | 24:30 | Rodada 2 · Mar–abr: a lei que saiu de pauta (5:30) | (seção 0) |
-| 9 | 30:00 | Bloco: Dados: a greve de 14/04 e a lei (5:30) | Como o bloco 7 |
-| 10 | 35:30 | Rodada 3 · Mai–jun: chuva, frio e o Guaíba (5:30) | (seção 0) |
-| 11 | 41:00 | Bloco: Dados: chuva e acidentes (5:30) | Como o bloco 7 |
-| 12 | 46:30 | Rodada 4 · Jul–ago: a regra nova do app (5:30) | (seção 0) |
-| 13 | 52:00 | Bloco: Dados: gestão por algoritmo (5:30) | Como o bloco 7 |
-| 14 | 57:30 | Rodada 5 · Set–out: breque geral (5:30) | (seção 0) |
-| 15 | 63:00 | Bloco: Dados: o que é o breque (5:30) | Como o bloco 7 |
-| 16 | 68:30 | Rodada 6 · Nov–dez: Natal e nenhum 13º (5:30) | (seção 0) |
-| 17 | 74:00 | Bloco: Dados: fim de ano sem 13º (5:30) | Como o bloco 7 |
-| 18 | 79:30 | Placar final (6:00) | 3 páginas (seção 0) |
-| 19 | 85:30 | Bloco: Conversa em grupos: o mapa do patrão (10:00) | Atividade em grupos: os três passos da tela |
-| 20 | 95:30 | Bloco: Caminhos: regulação, proteção, organização e educação (6:30) | Os quatro caminhos da tela, um dado de cada; qual teria mudado o ano do Jonas? |
-| 21 | 102:00 | Termômetro (6:00), 3 afirmações | (5.8) |
-| 22 | 108:00 | Enquete de entrada · depois (1:30) | (5.9) |
-| 23 | 109:30 | Comparativo (2:30) | (5.10) |
-| 24 | 112:00 | Bloco: Dados: e nos outros aplicativos? (4:00) | O contexto e os quatro itens dos motoristas de app (5.11) |
-| 25 | 116:00 | Bloco: Fim: quem é o patrão? (4:00) | Os três números de quem manda e a conversa (5.11) |
-| 26 | 120:00 | Fim | Na barra: Exportar totais; segurar Apagar a sala (5.11) |
+**Saiu em 14/10 (D-083, pedido do Kleber de 13/10 à noite).** O config tem só o
+roteiro de 60 min (seção 6), e o telão usa esse sem perguntar. Com o de 120,
+saíram também os blocos que só ele tinha ("Mapa do seminário", "Conversa em
+grupos: o mapa do patrão" e "Caminhos") e o termômetro de 3 frases. A tabela
+antiga está no histórico do git deste arquivo.
 
 ## 8. Se a rede cair
 
@@ -1473,19 +1558,20 @@ guardado no celular e é reenviado. Não feche o telão.
 
 **O notebook reiniciou, e sem internet:**
 1. No pendrive, dê duplo clique em `telao/index.html` e clique em **Carregar
-   config.json**.
+   config.json**, na barra do pé da tela (por duplo clique, sem o config, ela
+   já abre aberta), ou arraste o `config.json` para a janela.
 2. Clique em **Carregar estado (JSON)** e escolha o `viracao-estado-….json` mais
    recente da pasta Downloads.
 3. O telão segue sem celulares, do ponto salvo.
 
-**Sem internet desde o começo:** pendrive → **Carregar config.json** →
-**Começar sem celulares**.
+**Sem internet desde o começo:** pendrive → **Carregar config.json** (na barra
+do pé da tela) → **Começar sem celulares**.
 
 ## 9. Se o telão travar
 
 O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 
-1. **Recarregue a página** (F5). No bloco 3, o código da última sala já vem
+1. **Recarregue a página** (F5). No bloco **Com celulares**, o código da última sala já vem
    preenchido: clique em **Retomar sala**. No mesmo navegador, não pede PIN. No
    placar final, o telão volta à página 1 (o caminho de cada equipe): dê Espaço
    até a página onde estava.
@@ -1511,7 +1597,7 @@ O estado da sala fica no banco, e os celulares guardam os votos. Nada se perde.
 | O celular diz "Entrada fechada" | Clique em **Entrada fechada** na barra para reabrir. O aluno entra sozinho |
 | O celular diz "Muitas entradas nesta rede" | Cota de contas anônimas daquele IP. O aluno usa o 4G (README, passo 9) |
 | O celular diz "Não foi possível baixar o app do servidor" | A rede bloqueou a CDN do Firebase. O celular recarrega a página sozinho, no máximo a cada 15 s, e volta à sala sem o aluno tocar em nada. Se não voltar, o aluno usa o 4G |
-| O bloco 3 do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
+| O bloco **Com celulares** do telão diz `Sem acesso ao serviço (…)` | Clique em **Tentar de novo**: ele recarrega a página, e o PIN tem de ser digitado de novo. Se não voltar, siga sem celulares (seção 8) |
 | "18 ativos / 21 membros": há membros que sumiram | Não atrapalha: o "n de m votaram" e o "n de m decidiram" contam só os ativos. Para limpar a conta, segure **Remover inativos**: só sai quem está sem sinal há mais de 2 min. Quem voltar depois entra de novo sozinho (com a entrada aberta), como quem chegou atrasado: não vota na decisão já aberta e pode cair noutra equipe (**Mover aluno** corrige) |
 | `Sem conexão com o serviço: o comando não foi enviado` | Espere o selo voltar a **Conectado** e aperte de novo (seção 8) |
 | O celular diz "Há uma versão nova do app: atualize a página" | O aluno recarrega a página. O voto guardado não se perde |
@@ -1703,7 +1789,7 @@ bloquear a tela. Um dos celulares no 4G, para comparar.
   fratura, e só se a carta quiser.
 - **Depois de cada correção (01 a 05/10):** se o `firebase/regras.json` mudou,
   publique as regras de novo (README, passo 6). A versão sobe junto (v4, v5…), e
-  é ela que o bloco 3 passa a mostrar em `regras vN conferidas`. Em toda máquina
+  é ela que o bloco **Com celulares** passa a mostrar em `regras vN conferidas`. Em toda máquina
   com o telão aberto, recarregue a página: o telão aberto continua com o código
   antigo.
   Veja "Depois de publicado: mudar alguma coisa", no README.

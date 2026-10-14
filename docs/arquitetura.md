@@ -58,7 +58,9 @@ adversariais. A seção 15 lista o que os revisores mudaram.
    Assim o `canal-firebase`, as regras e o simulador são testados localmente. O
    JDK 21 está instalado (D-021).
 10. **Dois roteiros no config, `60min` e `120min`.** O apresentador escolhe um ao
-    criar a sala (D-019).
+    criar a sala (D-019). Desde a D-083 (14/10), o config do dia tem só o
+    `60min`, e a abertura não pergunta; com mais de um (as fixtures), o bloco
+    "Roteiro" volta.
 
 ### Redesenho de 29/09 (D-041 a D-048)
 
@@ -1183,7 +1185,7 @@ Aparece como barra empilhada por equipe, e a tecla C reordena pelo critério esc
 
 **Como abre:**
 1. **Queda no meio da aula:** "Continuar sem celulares" (segurar 2 s) segue a partir do espelho local, que o telão mantém o tempo todo no mesmo formato do banco. O telão chama `goOffline()` e não volta: o caminho é só de ida.
-2. **Sem internet desde o início:** duplo clique em `telao/index.html` na pasta do pendrive. O botão "Começar sem celulares" aparece desde a primeira pintura. O modo offline é sempre **escolha explícita**, nunca dedução de falha. Como o `fetch` falha por `file://`, o telão pede "Carregar config.json" por seletor de arquivo ou arrastando o arquivo; os dois caminhos foram testados nesta máquina.
+2. **Sem internet desde o início:** duplo clique em `telao/index.html` na pasta do pendrive. O botão "Começar sem celulares" aparece desde a primeira pintura. O modo offline é sempre **escolha explícita**, nunca dedução de falha. Como o `fetch` falha por `file://`, o telão pede "Carregar config.json" por seletor de arquivo ou arrastando o arquivo; os dois caminhos foram testados nesta máquina. Desde a D-082, o seletor fica na barra do pé da tela inicial (a reserva do config), que abre sozinha quando falta o config ou ele tem problema, e com o mouse parado na borda de baixo (ou a tecla H) nos outros casos.
 
 **Como os dados entram:**
 - **Enquete:** 5 contadores, para mãos levantadas ou os cartões coloridos da trilha. As teclas 1 a 5 somam e Shift mais a tecla desconta.

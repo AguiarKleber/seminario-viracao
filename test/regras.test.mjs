@@ -73,9 +73,10 @@ test('a escrita de aluno existe só nos nós previstos (arquitetura, seção 6)'
     'salas/$s/membros/$uid', 'salas/$s/membros/$uid/equipe', 'salas/$s/meta', 'salas/$s/meta/hostUid', 'salas/$s/placar',
     'salas/$s/presenca/$uid', 'salas/$s/prorrogacoes/$r', 'salas/$s/pulso', 'salas/$s/resultados/$r', 'salas/$s/sementes/$r',
     'salas/$s/votosEnquete/$e/$m/$a/$uid',
+    'salas/$s/lidos/$uid', // [Li] regras v5: o "Li, pode seguir" do próprio aluno
   ].sort());
   // As escritas de aluno são sempre na chave do próprio uid.
-  for (const c of ['salas/$s/presenca/$uid', 'salas/$s/votosEnquete/$e/$m/$a/$uid', 'salas/$s/decisoes/$r/$eq/$uid', 'pedidosAnfitriao/$uid', 'regrasVersao/$uid']) {
+  for (const c of ['salas/$s/presenca/$uid', 'salas/$s/votosEnquete/$e/$m/$a/$uid', 'salas/$s/decisoes/$r/$eq/$uid', 'pedidosAnfitriao/$uid', 'regrasVersao/$uid', 'salas/$s/lidos/$uid']) {
     const no = todos.find(([x]) => x === c)[1];
     assert.match(no['.write'], /^auth != null && auth\.uid === \$uid/, c);
   }
@@ -118,7 +119,7 @@ test('o nó do membro é sempre um objeto com entrouEm', () => {
 test('toda escrita de aluno exige prioridade nula, nó a nó', () => {
   const doAluno = [
     regras.pedidosAnfitriao.$uid, regras.regrasVersao.$uid, sala.membros.$uid, sala.membros.$uid.entrouEm, sala.membros.$uid.equipe,
-    sala.presenca.$uid, sala.votosEnquete.$e.$m.$a.$uid, sala.decisoes.$r.$eq.$uid,
+    sala.presenca.$uid, sala.votosEnquete.$e.$m.$a.$uid, sala.decisoes.$r.$eq.$uid, sala.lidos.$uid,
   ];
   for (const no of doAluno) assert.match(no['.validate'], / && newData\.getPriority\(\) === null$/, no['.validate'].slice(0, 60));
 });
@@ -134,6 +135,7 @@ const HASH_POR_VERSAO = {
   v2: '962556dea5c3',
   v3: '7066bfc58f46', // D-035: salas/$s/prorrogacoes/$r
   v4: '56db60124643', // D-064: o apresentador com o PIN lê salas/$s/decisoes/$r/$eq (modo espectador)
+  v5: 'bb227ca4cc64', // [Li] salas/$s/lidos/$uid ("Li, pode seguir"), e regrasVersao aceita também "v4"
 };
 
 function versaoEHash() {
@@ -157,10 +159,31 @@ test('regrasVersao presa ao conteúdo: mudou o regras.json, suba a versão nos t
 });
 
 test('regrasVersao só aceita a própria versão; autoteste nunca; privado fechado; pedido de 8 a 32 caracteres', () => {
-  assert.match(regras.regrasVersao.$uid['.validate'], /^newData\.isString\(\) && newData\.val\(\) === '[^']+'/);
+  assert.match(regras.regrasVersao.$uid['.validate'], /^newData\.isString\(\) && \(?newData\.val\(\) === '[^']+'/);
   assert.deepEqual(regras.autoteste, { $uid: { '.write': false } });
   assert.deepEqual(regras.privado, { '.read': false, '.write': false });
   assert.match(regras.pedidosAnfitriao.$uid['.validate'], /isString\(\) && newData\.val\(\)\.length >= 8 && newData\.val\(\)\.length <= 32/);
+});
+
+// [Li] As regras v5 são as v4 mais o nó lidos, nada a menos, e aceitam também
+// o "v4" em regrasVersao: o telão da versão 11 (o plano B do dia 14/10) e o da
+// 12 sem o "Li" gravam "v4" no autoteste e continuam abrindo sala com as
+// regras v5 publicadas. Sem isso, colar as regras novas no console derrubava o
+// plano B, e a ordem "regras primeiro ou site primeiro" virava um risco.
+test('[Li] regras v5: regrasVersao aceita exatamente "v5" e "v4"', () => {
+  assert.equal(regras.regrasVersao.$uid['.validate'], "newData.isString() && (newData.val() === 'v5' || newData.val() === 'v4') && newData.getPriority() === null");
+});
+
+// [Li] "Li, pode seguir" (pedido do Kleber de 07/10): lidos/{uid} = o índice do
+// passo que o aluno leu. Só o próprio, já membro, só o passo atual e só número;
+// o aluno lê só o próprio, o espectador com o PIN lê todos (o anfitrião lê a
+// sala inteira pelo .read de salas/$s).
+test('[Li] lidos: o próprio membro grava o índice do passo atual; leitura do próprio e do espectador com o PIN', () => {
+  assert.equal(sala.lidos.$uid['.write'], "auth != null && auth.uid === $uid && root.child('salas/'+$s+'/membros/'+$uid).exists()");
+  assert.equal(sala.lidos.$uid['.validate'], "newData.isNumber() && newData.val() === root.child('salas/'+$s+'/estado/indice').val() && newData.getPriority() === null");
+  assert.equal(sala.lidos.$uid['.read'], 'auth != null && auth.uid === $uid');
+  assert.equal(sala.lidos['.read'], "auth != null && root.child('privado/pinApresentador').exists() && root.child('pedidosAnfitriao/'+auth.uid).val() === root.child('privado/pinApresentador').val()");
+  assert.equal(sala.lidos['.write'], undefined, 'o nó inteiro, ninguém grava');
 });
 
 test('toda expressão de prazo soma a graça (gracaSeg) e exige número', () => {
@@ -185,5 +208,5 @@ test('leitura nó a nó: sementes, prorrogações e presença sem leitura de alu
   assert.equal(sala.decisoes['.read'], undefined);
   assert.equal(sala.decisoes.$r['.read'], undefined);
   const leituras = expressoes.filter(([c]) => c.endsWith('/.read') && c.startsWith('salas/')).map(([c]) => c);
-  assert.equal(leituras.length, 11);
+  assert.equal(leituras.length, 13, 'as 11 da v4 e as duas de lidos ([Li], v5)');
 });

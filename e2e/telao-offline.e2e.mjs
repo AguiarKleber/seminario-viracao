@@ -1318,6 +1318,7 @@ const esperadosNoValidador = V.validarConfig.validar(brutoComErros).erros.length
 await page.setInputFiles('#arquivo-config', { name: 'config.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(brutoComErros)) });
 await page.waitForFunction((n) => document.querySelectorAll('#erros-config li').length === n, esperadosNoValidador);
 assert.ok(esperadosNoValidador >= 3, 'os três problemas plantados aparecem juntos');
+assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('reserva-config')).opacity), '1', 'com o config quebrado, a reserva do config fica aberta (D-082)');
 await conferirTela('abertura-com-erros', { criterios: false });
 
 // Arrastar o arquivo para a janela também carrega o config (seção 11).
@@ -1333,6 +1334,39 @@ const hashNaTela = await page.textContent('#hash-config');
 assert.equal(hashNaTela, V.validarConfig.hash(configNode), 'o telão mostra o hash do config carregado');
 // Por file:// o botão do modo com celulares nem aparece.
 assert.equal(await page.locator('[data-acao="criar-online"]').count(), 0);
+// D-082 (pedido do Kleber de 13/10 à noite): sem o painel "1. config.json". O
+// carregar à mão é a reserva de emergência, na barra do pé da tela: com o
+// config válido, ela fica escondida; com o mouse parado na faixa de baixo, ela
+// sobe, e o "Carregar config.json" dela abre o seletor de arquivo e carrega o
+// config; o H abre e fecha. Com o config quebrado (acima), ela ficou aberta de
+// vez, e o aviso com a lista dos erros, no meio da tela.
+{
+  const opacidade = (valor) => page.waitForFunction((v) => getComputedStyle(document.getElementById('reserva-config')).opacity === v, valor);
+  assert.equal(await page.locator('.abertura-bloco h2', { hasText: 'config.json' }).count(), 0, 'sem o painel do config');
+  assert.equal(await page.locator('#aviso-config').count(), 0, 'com o config válido, nenhum aviso do config no meio da tela');
+  assert.equal(await page.evaluate(() => document.getElementById('reserva-config').dataset.fixa), 'false');
+  await page.mouse.move(512, 300);
+  await opacidade('0');
+  // Passar pela faixa de baixo sem parar não abre.
+  await page.mouse.move(512, 768 - 4);
+  await page.mouse.move(512, 300);
+  await page.waitForTimeout(700);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('reserva-config')).opacity), '0', 'passar pela faixa não abre a reserva');
+  await page.mouse.move(512, 768 - 4);
+  await opacidade('1');
+  assert.match(await page.textContent('#reserva-config'), /config\.json válido · versão .+ · hash [0-9a-f]{8}/);
+  const [seletor] = await Promise.all([page.waitForEvent('filechooser'), page.click('#reserva-config label[for="arquivo-config"]')]);
+  await page.evaluate(() => { document.getElementById('hash-config').id = 'hash-antigo'; });
+  await seletor.setFiles(ARQUIVO_CONFIG);
+  await page.waitForSelector('#hash-config', { state: 'attached' });
+  assert.equal(await page.textContent('#hash-config'), V.validarConfig.hash(configNode), 'a reserva carrega o config pelo seletor de arquivo');
+  await page.mouse.move(512, 300);
+  await opacidade('0');
+  await page.keyboard.press('h');
+  await opacidade('1');
+  await page.keyboard.press('h');
+  await opacidade('0');
+}
 await conferirTela('abertura', { criterios: false });
 await page.check(`input[name="roteiro"][value="${ROTEIRO}"]`);
 await page.click('[data-acao="comecar-offline"]');
