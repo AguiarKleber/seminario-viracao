@@ -591,19 +591,6 @@ body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .op
 .tabela-turma tbody tr + tr > * { border-top: 1px solid var(--linha); }
 .tabela-turma td { font-size: 17px; font-weight: 700; }
 
-/* [Li] "Li, pode seguir" (pedido do Kleber de 07/10): o botão largo embaixo
-   do texto e, depois do toque, "Você já leu ✓" no mesmo lugar, com a mesma
-   altura (a tela não pula), em texto e com borda (nunca só cor, D-016). No
-   celular do apresentador, o "N de M leram" do telão. */
-.lido-feito {
-  min-height: var(--alvo);
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--linha-forte); border-radius: var(--raio);
-  font-size: 19px; font-weight: 700;
-}
-.lidos-contagem { font-size: 18px; }
-.lidos-contagem b { font-size: 22px; }
-
 @media (min-width: 600px) {
   body.aluno { font-size: 19px; }
   h1 { font-size: 30px; }
