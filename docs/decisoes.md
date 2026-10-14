@@ -1048,4 +1048,21 @@ do resultado da D-081).
   as consequências que o jogo permite, em mar–abr e em set–out): só em
   1024×768 **com** a faixa de entrada ele passa da altura; aí, fechar a
   entrada (a faixa sai) resolve.
+- **Nota de 14/10, antes do seminário: a linha do bloqueio** (pedido do Kleber).
+  Na greve (mar–abr, A), no protesto (jul–ago, B) e no breque (set–out, C), os
+  5 dias de bloqueio (−R$ 450) já estavam no dinheiro da opção, mas não
+  apareciam escritos. O efeito ganha `"destaque": true` e o rótulo "bloqueado 5
+  dias pelo app depois da greve" (do protesto, do breque), e o resultado mostra,
+  embaixo da opção e antes das consequências de escolhas anteriores, "Bloqueado
+  5 dias pelo app depois da greve −R$ 450: 3 dessas pessoas"; no celular de quem
+  parou, a mesma linha logo abaixo do saldo. O validador só aceita o destaque
+  booleano, em efeito de opção com soma na renda, rótulo e sem condição além de
+  persona, opção e rodada (a tela conta sem o motor); sem a chave, o hash não
+  muda.
+  Config `2026-10-14-v5.2-individual` (hash `2b4b2233`), versão 13 do site, as
+  mesmas regras v5 e o mesmo jogo (281 fecham; ADCEDA +R$ 1.714; DAECCC
+  −R$ 6.135). Medido no pior caso de mar–abr e de set–out (20 pessoas, todas as
+  consequências possíveis em cada opção): cabe em 1024×768, em 1280×720 com a
+  faixa de entrada e em 1920×1080; em 1024×768 com a faixa, como acima, fechar
+  a entrada resolve.
 

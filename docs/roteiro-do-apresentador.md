@@ -199,7 +199,7 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
 **Antes de a turma chegar:**
 1. Abra o telão e confira o bloco **Com celulares**: `regras v5 conferidas`
    (ou `regras v4 conferidas`, se o "Li" ficou de fora). A versão
-   `2026-10-14-v5.1-individual` está na barra do pé da tela inicial: pare o
+   `2026-10-14-v5.2-individual` está na barra do pé da tela inicial: pare o
    mouse na borda de baixo (ou aperte H). Não há mais o painel do config
    (D-082): ele só aparece quando o config falta ou tem problema.
 2. Digite o PIN e clique em **Criar sala com celulares**.
@@ -242,8 +242,13 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
      quando os valores variam) e, embaixo, as consequências de escolhas
      anteriores, com quantas dessas pessoas ("a moto quebrou (revisão adiada)
      −R$ 790: 3 dessas pessoas"); embaixo de tudo, quantas não votaram (e
-     ficaram na opção de sempre). Nenhum nome. No celular, cada um vê o próprio
-     saldo; o seu celular, no modo espectador, mostra o mesmo resumo do telão.
+     ficaram na opção de sempre). Na greve (mar–abr), no protesto (jul–ago) e
+     no breque (set–out), a primeira linha embaixo da opção de quem parou é o
+     bloqueio, que já estava no dinheiro da opção: "Bloqueado 5 dias pelo app
+     depois da greve −R$ 450: 3 dessas pessoas" (nota de 14/10 na D-084).
+     Nenhum nome. No celular, cada um vê o próprio saldo e, logo abaixo, a
+     mesma linha do bloqueio, se parou; o seu celular, no modo espectador,
+     mostra o mesmo resumo do telão.
      Se o projetor for 1024×768 e a tela ficar apertada demais, clique em
      **Entrada aberta**, na barra, para fechar a entrada: a faixa do QR sai e
      sobra espaço (quem chegar depois não entra até você abrir de novo). Diga a frase do bimestre (tabela da seção 0), com "quem
@@ -370,7 +375,7 @@ entre parênteses, as consequências que podem aparecer naquele bimestre):
 | Bimestre | Diga |
 | --- | --- |
 | Jan–fev | "Em um mês comum, já falta R$ 128. Quem fez 12 horas no sol fechou o bimestre melhor, por enquanto. Quem pagou o IPVA adiantado pagou no cheque especial: desconto é para quem tem dinheiro sobrando." |
-| Mar–abr | (As costas, o IPVA já pago, a parcela atrasada.) "Dois bimestres puxados seguidos: as costas cobraram R$ 1.230." "Quem parou na greve ficou cinco dias sem chamada: é o bloqueio branco." "No empréstimo, o dinheiro entrou e a dívida também." |
+| Mar–abr | (As costas, o IPVA já pago, a parcela atrasada.) "Dois bimestres puxados seguidos: as costas cobraram R$ 1.230." "Quem parou na greve ficou cinco dias sem chamada: é o bloqueio branco" (a linha "Bloqueado 5 dias pelo app depois da greve −R$ 450", embaixo da A). "No empréstimo, o dinheiro entrou e a dívida também." |
 | Mai–jun | (As costas.) "O pneu e a capa só custam no jogo; na rua, é o que separa voltar para casa ou não." |
 | Jul–ago | (As costas.) "O +Entregas paga R$ 3 por entrega e pede quase nenhuma recusa. Quem adiou a revisão ganhou R$ 100 agora." |
 | Set–out | (A moto, as costas.) "Quem adiou a revisão viu a moto quebrar: no jogo, sempre. Furar o breque rendeu; parar custou cinco dias de bloqueio. Quem paga a conta da organização?" |
