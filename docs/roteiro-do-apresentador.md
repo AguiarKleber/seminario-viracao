@@ -273,7 +273,9 @@ fim a gente vê quantos fecharam o ano com dinheiro sobrando."
      depois da greve −R$ 450: 3 dessas pessoas" (nota de 14/10 na D-084).
      Nenhum nome. No celular, cada um vê o próprio saldo e, logo abaixo, a
      mesma linha do bloqueio, se parou; o seu celular, no modo espectador,
-     mostra o mesmo resumo do telão.
+     mostra o mesmo resumo do telão. Desde a versão 15, a conta do bimestre
+     em detalhe vem aberta embaixo, no resultado e nos dados: ninguém precisa
+     tocar em "ver".
      Projetor 1024×768: **Ctrl+−** (90%) na montagem (seção 3). Se ainda
      cortar, feche a entrada (H → **Entrada aberta**) assim que todos
      entrarem: a faixa do QR sai (quem chegar depois não entra até você abrir
@@ -814,7 +816,8 @@ slides.
     comprar, até agora.";
   - o resumo e a dívida cabem inteiros em um celular de 360×740, sem rolar. O
     resto fica recolhido: "▸ ver" abre a conta do último bimestre, por exemplo
-    "Mar–abr: a conta em detalhe" (entrou, gastos, básico, juros, a multa e a
+    "Mar–abr: a conta em detalhe" (no jogo simples, desde a versão 15, aberta,
+    sem "▸ ver") (entrou, gastos, básico, juros, a multa e a
     mora das contas atrasadas, o que o limite fez, a decisão, a carta e o que
     aconteceu, em primeira pessoa). A família vem em uma linha só.
   Antes do primeiro mês, a família, o básico e os indicadores, sem resumo.
@@ -1193,7 +1196,7 @@ explicar quando aparecer)
   em uma linha; o **saldo do bimestre em destaque**, verde ou vermelho (no
   vermelho, também com a borda grossa); a dívida; e "Como ficou" (energia e
   proteção). A conta fica recolhida em "▸ ver" ("A conta do bimestre em
-  detalhe"): o que a carta custou (dias parado, renda perdida, gastos); "Entrou
+  detalhe"; no jogo simples, desde a versão 15, aberta, sem "▸ ver"): o que a carta custou (dias parado, renda perdida, gastos); "Entrou
   R$ X · gastos R$ G · o básico da casa custa R$ Y no bimestre" e o que
   faltou; de onde veio o "entrou" (o trabalho e a decisão, os custos fixos, a
   outra renda da casa) e, quando há, "Veio dos meses anteriores (já na conta):

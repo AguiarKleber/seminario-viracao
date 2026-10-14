@@ -532,9 +532,13 @@ body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .op
 
 /* O detalhe recolhido das telas de situação, resultado e fim (.recolhido,
    D-065) tem a mesma caixa e o mesmo marcador da situação na decisão. */
-.situacao-resumo, .recolhido {
+.situacao-resumo, .recolhido, .conta-aberta {
   background: var(--superficie); border: 1px solid var(--linha); border-radius: var(--raio);
 }
+/* A conta em detalhe sempre aberta do formato simples (.conta-aberta, pedido
+   de 14/10): a mesma caixa e o mesmo corpo do recolhido, com o título como um
+   subtítulo pequeno no lugar do summary, sem o "▸ ver" e sem toque. */
+.conta-aberta-titulo { margin: 0; padding: 12px 14px 10px; font-size: 15px; line-height: 1.3; }
 .situacao-resumo summary, .recolhido summary {
   min-height: 48px; padding: 12px 14px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -550,9 +554,9 @@ body.espectador .opcao-detalhe .opcao-votada, body.espectador .opcao-detalhe .op
 .recolhido-corpo { display: flex; flex-direction: column; gap: 10px; padding: 0 14px 12px; }
 /* Dentro da caixa, a conta do mês e os meses da história não levam outra caixa
    por cima: um cartão dentro do outro virava moldura sobre moldura. */
-.recolhido .conta-mes,
-.recolhido .conta-mes[data-resultado="faltou"] { padding: 10px 0 0; border: 0; border-top: 1px solid var(--linha); border-radius: 0; background: none; }
-.recolhido .conta-mes[data-resultado="faltou"] .conta-saldo { font-size: 22px; }
+.recolhido .conta-mes, .conta-aberta .conta-mes,
+.recolhido .conta-mes[data-resultado="faltou"], .conta-aberta .conta-mes[data-resultado="faltou"] { padding: 10px 0 0; border: 0; border-top: 1px solid var(--linha); border-radius: 0; background: none; }
+.recolhido .conta-mes[data-resultado="faltou"] .conta-saldo, .conta-aberta .conta-mes[data-resultado="faltou"] .conta-saldo { font-size: 22px; }
 .recolhido .historia-mes { background: var(--superficie-2); }
 .situacao-resumo .indicadores { border: 0; border-top: 1px solid var(--linha); border-radius: 0 0 var(--raio) var(--raio); }
 

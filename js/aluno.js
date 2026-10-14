@@ -25,7 +25,7 @@
   // Tem de ser igual ao ?v= das tags do aluno/index.html e à versaoApp do telão
   // (bin/versao.mjs sobe os três juntos). Diferente da meta da sala = o celular
   // está com código velho em cache: a faixa pede para atualizar.
-  const VERSAO_APP = '14';
+  const VERSAO_APP = '15';
   // Sem a versão na chave, de propósito: a faixa manda recarregar, e o voto
   // guardado pela versão velha precisa ser reenviado pela nova.
   const PREFIXO = 'viracao:aluno:';
@@ -97,7 +97,8 @@
     // retornoVisto: as frases da opção aberta no último desenho (retornoAVista).
     // nomeRascunho: o que está no campo do nome (modo individual), para a tela
     // remontada no meio da digitação não perder o texto.
-    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set(), nomeRascunho: '' },
+    // subirAoTopo: o passo mudou, e o resultado ou a situação começa do topo.
+    ui: { foco: null, chavePasso: null, nota: null, aberta: null, rolarAte: null, retornoVisto: null, recolhidos: new Set(), nomeRascunho: '', subirAoTopo: false },
     selo: null, wake: null, querAceso: false, chaveDesenho: null, repetirTimer: 0,
     // D-064: o modo espectador, o celular do apresentador. null fora dele;
     // dentro, { equipe, pin }: a equipe cuja tela ele vê e o PIN, só em memória
@@ -786,6 +787,8 @@
       app.ui.aberta = null;
       app.ui.rolarAte = null;
       app.ui.recolhidos.clear();
+      // O resultado e a situação do passo novo começam do topo (desenharAgora).
+      app.ui.subirAoTopo = true;
     }
     // O aviso de "movido de equipe" vale até a rodada acabar (a prorrogação é a
     // mesma rodada).
@@ -1429,6 +1432,17 @@
         D().acrescentar(alvo, D().botao('Sair do modo espectador', () => voltarParaEntrada(), { classe: 'botao-largo botao-sair-espectador', dados: { acao: 'sair-espectador' } }));
       }
       document.body.dataset.tela = tipo;
+      // Com a conta em detalhe aberta (pedido de 14/10), o resultado e a
+      // situação ficaram mais altos, e a rolagem da tela anterior (a decisão,
+      // rolada até o voto; o resultado, rolado até a conta) passava para a
+      // tela nova: no e2e, o resultado de set–out chegava 231 px abaixo do
+      // topo, sem o título do que aconteceu. Até a versão 14, a tela mais
+      // curta encostava a rolagem no topo. No passo novo, as duas começam do
+      // topo; as outras telas ficam como estavam.
+      if (app.ui.subirAoTopo && (tipo === 'resultado' || tipo === 'situacao')) {
+        app.ui.subirAoTopo = false;
+        raiz.scrollTo?.(0, 0);
+      }
       aplicarWakeLock(TELAS_ACESAS.has(tipo));
       // De novo depois do layout: a altura das opções só existe quando o
       // navegador pinta a tela nova. A opção recém-aberta rola para a vista
@@ -2826,6 +2840,24 @@
     return caixa;
   }
 
+  // A conta em detalhe sempre aberta, no formato simples (pedido do Kleber de
+  // 14/10, 14h30, no dia do seminário: "a aba de detalhe das contas deve ficar
+  // aberta sempre para o jogador, não ter a necessidade de clicar para
+  // abrir"). O mesmo título, como um subtítulo pequeno, e o mesmo corpo do
+  // recolhido, sem summary e sem toque. Até a versão 14, a conta do bimestre
+  // (o que entrou, o básico, os juros, o que faltou) só aparecia depois do
+  // "▸ ver". Fora do formato simples, a conta continua recolhida (D-065),
+  // e a história do ano no placar final também.
+  function contaAberta(chave, titulo, filhos) {
+    const { el } = D();
+    const corpo = [filhos].flat(Infinity).filter(Boolean);
+    if (corpo.length === 0) return null;
+    return el('section', { classe: 'conta-aberta', dados: { contaAberta: chave } }, [
+      el('h2', { classe: 'subtitulo conta-aberta-titulo', texto: titulo }),
+      el('div', { classe: 'recolhido-corpo' }, corpo),
+    ]);
+  }
+
   // A história da equipe, mês a mês (D-045): a opção, a carta e a conta de cada
   // mês. Carta grave aparece como as outras, sem destaque (arquitetura, seção 8).
   // Fica recolhida debaixo do resumo mês a mês (D-065): aberta, eram de 8 a 10
@@ -3070,9 +3102,11 @@
     if (!d.final && d.mes) {
       // O último mês, recolhido: a conta (D-044, D-052), a decisão e a carta, com
       // a narrativa em primeira pessoa (D-006). Carta grave: só o texto, sem
-      // destaque nenhum (arquitetura, seção 8, "tema sensível").
+      // destaque nenhum (arquitetura, seção 8, "tema sensível"). No formato
+      // simples, aberto, sem toque (pedido de 14/10, contaAberta).
       const rotulo = rotuloDoMes(d.mes.titulo, historia.length - 1);
-      filhos.push(recolhido(`mes:${d.mes.rodada}`, `${rotulo}: a conta em detalhe`, [
+      const caixaDoMes = simples() ? contaAberta : recolhido;
+      filhos.push(caixaDoMes(`mes:${d.mes.rodada}`, `${rotulo}: a conta em detalhe`, [
         contaDoMes(d.mes, d.persona),
         el('div', { classe: 'mes', dados: { tom: d.mes.carta?.tom || 'normal' } }, [
           el('p', {}, [rotuloDecisao(), el('b', { texto: descreverDecisao(d.mes.rodada, d.mes.decisao, d.mes.origem) })]),
@@ -3393,7 +3427,8 @@
   // Formato simples (decisão do Kleber de 05/10 à noite): o evento do mês (a
   // carta, a mesma de todas as equipes), a decisão, o saldo do bimestre em
   // destaque e o dinheiro da família no fim dele; a conta em detalhe fica
-  // recolhida. Sem a energia, a proteção e o detalhe da dívida.
+  // embaixo, aberta, sem toque (pedido de 14/10, contaAberta; até a versão 14,
+  // recolhida). Sem a energia, a proteção e o detalhe da dívida.
   function telaResultadoSimples(alvo, d) {
     const { el, acrescentar } = D();
     const mes = d.mes;
@@ -3416,7 +3451,7 @@
       linhaDestaque(d.rodada?.id, d.decisao?.id, d.equipe?.id),
       linhaConsequencia(d.deAntes),
       linhaDaFamilia(valoresDe(d.indicadores)),
-      recolhido(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
+      contaAberta(`resultado:${d.rodada?.id}`, `A conta ${periodo().doPeriodo} em detalhe`, [
         d.decisao?.narrativa ? el('blockquote', { classe: 'narrativa', texto: d.decisao.narrativa }) : null,
         contaDoMes(mes, persona, d.deAntes, d.protecaoDoMes, { comAcima: false }),
       ]),
